@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
-import com.hbm.ntm.api.entity.RadarEntry;
 import com.hbm.ntm.api.entity.RadarScreenDisplayProfile;
 import com.hbm.ntm.api.entity.RadarScreenSnapshot;
 import com.hbm.ntm.block.LegacyMachineDefinition;
@@ -14,7 +13,6 @@ import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -62,34 +60,29 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
                 .fullBright()
                 .withTranslucencyNoDepthWrite();
         RadarScreenSnapshot snapshot = screen.getSnapshot();
-        if (snapshot.linked()) {
-            renderLinkedOverlay(screen, snapshot, partialTick, overlayContext);
+        Level level = screen.getLevel();
+        long gameTime = level == null ? 0L : level.getGameTime();
+        RadarScreenDisplayProfile.WorldOverlay overlay =
+                RadarScreenDisplayProfile.overlay(snapshot, gameTime, partialTick, screen.getBlockPos());
+        if (overlay.linked()) {
+            renderLinkedOverlay(overlay, overlayContext);
         } else {
-            renderNoiseOverlay(screen, overlayContext);
+            renderNoiseOverlay(overlay, overlayContext);
         }
 
         poseStack.popPose();
     }
 
-    private static void renderLinkedOverlay(RadarScreenBlockEntity screen, RadarScreenSnapshot snapshot,
-            float partialTick,
-            ObjRenderContext context) {
-        Level level = screen.getLevel();
-        long gameTime = level == null ? 0L : level.getGameTime();
-        LegacyRadarDisplayRenderer.renderWorldLinkedSweep(context,
-                RadarScreenDisplayProfile.worldSweepOffset(gameTime, partialTick));
+    private static void renderLinkedOverlay(RadarScreenDisplayProfile.WorldOverlay overlay, ObjRenderContext context) {
+        LegacyRadarDisplayRenderer.renderWorldLinkedSweep(context, overlay.sweepOffset());
 
-        BlockPos ref = snapshot.refPos();
-        for (RadarEntry entry : snapshot.entries()) {
-            LegacyRadarDisplayRenderer.renderWorldBlip(RADAR_GUI_TEXTURE, context, entry, ref, snapshot.range());
-        }
+        RadarScreenDisplayProfile.forEachWorldBlip(overlay.snapshot(),
+                blip -> LegacyRadarDisplayRenderer.renderWorldBlip(RADAR_GUI_TEXTURE, context,
+                        blip.entry(), blip.reference(), blip.range()));
     }
 
-    private static void renderNoiseOverlay(RadarScreenBlockEntity screen, ObjRenderContext context) {
-        Level level = screen.getLevel();
-        long gameTime = level == null ? 0L : level.getGameTime();
+    private static void renderNoiseOverlay(RadarScreenDisplayProfile.WorldOverlay overlay, ObjRenderContext context) {
         LegacyRadarDisplayRenderer.renderWorldNoise(RADAR_GUI_TEXTURE, context,
-                LegacyRadarDisplayRenderer.noiseV(
-                        RadarScreenDisplayProfile.worldNoiseSeed(gameTime, screen.getBlockPos())));
+                LegacyRadarDisplayRenderer.noiseV(overlay.noiseSeed()));
     }
 }

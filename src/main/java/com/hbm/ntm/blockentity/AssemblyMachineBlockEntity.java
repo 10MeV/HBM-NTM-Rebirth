@@ -11,7 +11,6 @@ import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeRecipeFluidHandlerAdapter;
-import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -31,7 +30,6 @@ import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.AssemblyMachineMenu;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
@@ -135,7 +133,8 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AssemblyAccessibleItemHandler());
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
-            new ForgeRecipeFluidHandlerAdapter(List.of(inputTank), List.of(outputTank), 0, this::onFluidContentsChanged));
+            ForgeRecipeFluidHandlerAdapter.create(List.of(inputTank), List.of(outputTank), 0,
+                    this::onFluidContentsChanged));
     private final AssemblerArm[] arms = new AssemblerArm[] { new AssemblerArm(1L), new AssemblerArm(2L) };
 
     private boolean didProcess;
@@ -185,7 +184,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
             if (animate) {
                 arm.updateArm();
                 if (arm.struckThisTick()) {
-                    LegacyMachineAudioBridge.playLocal(blockEntity, ModSounds.BLOCK_ASSEMBLER_STRIKE.getId(),
+                    LegacyMachineAudioBridge.playLocal(blockEntity, "hbm:block.assemblerStrike",
                             0.5F, 1.0F, 50.0D);
                 }
             } else {
@@ -194,7 +193,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         }
         blockEntity.updateAudioLoop();
         if (blockEntity.wasClientProcessing && !blockEntity.didProcess) {
-            LegacyMachineAudioBridge.playLocal(blockEntity, ModSounds.BLOCK_ASSEMBLER_STOP.getId(),
+            LegacyMachineAudioBridge.playLocal(blockEntity, "hbm:block.assemblerStop",
                     0.25F, 1.5F, 50.0D);
         }
         blockEntity.wasClientProcessing = blockEntity.didProcess;
@@ -329,7 +328,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         if (level == null || !level.isClientSide) {
             return;
         }
-        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_MOTOR.getId(),
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.motor",
                 didProcess, 50.0D, 15.0F, 0.5F, 0.75F);
     }
 
@@ -359,7 +358,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
             if (ringDelay <= 0) {
                 ringTarget += (level.random.nextDouble() * 2.0D - 1.0D) * 135.0D;
                 ringSpeed = 10.0D + level.random.nextDouble() * 5.0D;
-                LegacyMachineAudioBridge.playLocal(this, ModSounds.BLOCK_ASSEMBLER_START.getId(),
+                LegacyMachineAudioBridge.playLocal(this, "hbm:block.assemblerStart",
                         0.25F, 1.25F + level.random.nextFloat() * 0.25F, 50.0D);
             }
         }
@@ -565,21 +564,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private void setupTanks(@Nullable GenericMachineRecipe recipe) {
-        if (recipe == null) {
-            return;
-        }
-        conformTank(inputTank, recipe.getFluidInputs().isEmpty() ? null : recipe.getFluidInputs().get(0));
-        conformTank(outputTank, recipe.getFluidOutputs().isEmpty() ? null : recipe.getFluidOutputs().get(0));
-    }
-
-    private void conformTank(HbmFluidTank tank, @Nullable HbmFluidStack stack) {
-        if (stack == null) {
-            tank.resetTank();
-            tank.changeTankSize(TANK_CAPACITY);
-            return;
-        }
-        tank.conform(stack);
-        tank.changeTankSize(Math.max(Math.max(tank.getFill(), stack.amount() * 2), TANK_CAPACITY));
+        GenericMachineRecipeRuntime.setupTanksReport(recipe, List.of(inputTank), List.of(outputTank), TANK_CAPACITY);
     }
 
     private void updateDynamicCapacity(@Nullable GenericMachineRecipe recipe) {

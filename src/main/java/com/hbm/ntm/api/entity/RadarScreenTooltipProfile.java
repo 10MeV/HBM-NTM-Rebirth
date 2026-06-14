@@ -82,6 +82,14 @@ public final class RadarScreenTooltipProfile {
         };
     }
 
+    public static List<Component> chrome(RadarScreenHoverProfile.Hover hover, boolean includeControlState,
+            RadarMenuState state) {
+        RadarMenuState safeState = state != null ? state : RadarMenuState.DEFAULT;
+        boolean active = hover.button() != null && safeState.controlActive(hover.button().control());
+        return chrome(hover, includeControlState, active, safeState.power(), safeState.maxPower(),
+                safeState.redstonePower());
+    }
+
     public static List<FormattedCharSequence> split(List<Component> tooltip) {
         return tooltip.stream().map(Component::getVisualOrderText).toList();
     }

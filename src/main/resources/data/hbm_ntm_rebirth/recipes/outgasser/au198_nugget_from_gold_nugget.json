@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:outgasser",
+  "input": {
+    "ingredient": {
+      "tag": "forge:nuggets/gold"
+    },
+    "count": 1,
+    "legacy_ore": "nuggetGold"
+  },
+  "solid_output": {
+    "item": "hbm_ntm_rebirth:nugget_au198"
+  }
+}

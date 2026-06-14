@@ -1,6 +1,6 @@
 {
-  "replace": false,
-  "values": [
-    "hbm_ntm_rebirth:mechanism_weaponsteel"
-  ]
+    "replace":  false,
+    "values":  [
+                   "hbm_ntm_rebirth:mechanism_weaponsteel"
+               ]
 }

@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "hbm_ntm_rebirth:block/rbmk_crane_console" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/rbmk_crane_console" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/rbmk_crane_console" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/rbmk_crane_console" }
+  }
+}

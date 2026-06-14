@@ -7,7 +7,7 @@ import com.hbm.ntm.itempool.HbmItemPoolIds;
 import com.hbm.ntm.itempool.HbmItemPoolRegistry;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -88,8 +88,7 @@ public class VendingMachineBlock extends LegacyXrMultiblockBlock implements Enti
                 Direction facing = state.getValue(FACING);
                 Block.popResource(level, pos.relative(facing), stack);
             }
-            level.playSound(null, pos, ModSounds.WEAPON_RELOAD_BOLT_OPEN.get(), net.minecraft.sounds.SoundSource.BLOCKS,
-                    1.0F, 0.75F);
+            LegacySoundPlayer.playLegacyBoltOpen(level, pos, 1.0F, 0.75F);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

@@ -5,40 +5,36 @@ import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.entity.RadarControl;
 import com.hbm.ntm.api.entity.RadarControlState;
-import com.hbm.ntm.api.entity.RadarContext;
+import com.hbm.ntm.api.entity.RadarClientControlProfile;
 import com.hbm.ntm.api.entity.RadarEnergyConnectionProfile;
+import com.hbm.ntm.api.entity.RadarHostEnergyProfile;
 import com.hbm.ntm.api.entity.RadarLaunchCommand;
+import com.hbm.ntm.api.entity.RadarLaunchLinkProfile;
 import com.hbm.ntm.api.entity.RadarDetectable;
 import com.hbm.ntm.api.entity.RadarEntry;
+import com.hbm.ntm.api.entity.RadarHostRedstoneProfile;
+import com.hbm.ntm.api.entity.RadarHostScanProfile;
+import com.hbm.ntm.api.entity.RadarHostStateProfile;
+import com.hbm.ntm.api.entity.RadarHostSyncProfile;
 import com.hbm.ntm.api.entity.RadarHostSyncState;
 import com.hbm.ntm.api.entity.RadarHostTickProfile;
-import com.hbm.ntm.api.entity.RadarLinkedReceiverCommand;
 import com.hbm.ntm.api.entity.RadarInventoryProfile;
 import com.hbm.ntm.api.entity.RadarMap;
-import com.hbm.ntm.api.entity.RadarMapScanOperation;
-import com.hbm.ntm.api.entity.RadarMapScanSlice;
+import com.hbm.ntm.api.entity.RadarMapScanPlan;
 import com.hbm.ntm.api.entity.RadarMapUpdate;
+import com.hbm.ntm.api.entity.RadarCommandResult;
 import com.hbm.ntm.api.entity.RadarScanProvider;
 import com.hbm.ntm.api.entity.RadarScanResult;
-import com.hbm.ntm.api.entity.RadarScanner;
 import com.hbm.ntm.api.entity.RadarRedstoneMode;
-import com.hbm.ntm.api.entity.RadarSatelliteCommand;
 import com.hbm.ntm.api.entity.RadarScreenLinkUpdate;
 import com.hbm.ntm.api.entity.RadarStatusSnapshot;
 import com.hbm.ntm.api.entity.RadarSyncSnapshot;
 import com.hbm.ntm.config.RadarConfig;
 import com.hbm.ntm.energy.HbmEnergyStorage;
-import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
-import com.hbm.ntm.item.ItemCoordinateBase;
 import com.hbm.ntm.menu.RadarMenu;
-import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
-import com.hbm.ntm.satellite.ISatelliteChip;
-import com.hbm.ntm.satellite.Satellite;
-import com.hbm.ntm.satellite.SatelliteSavedData;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -48,7 +44,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -62,7 +57,6 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,9 +80,7 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     public static final int MAP_SIZE = RadarMap.SIZE;
     public static final int MAP_SLICE_COUNT = RadarMap.SLICE_COUNT;
     public static final int MAP_SLICE_SIZE = RadarMap.SLICE_SIZE;
-    private static final String TAG_ENTRIES = "Entries";
     private static final String TAG_ITEMS = "Items";
-    private static final String TAG_LEGACY_POWER = "power";
 
     private boolean scanMissiles = true;
     private boolean scanShells = true;
@@ -151,33 +143,16 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
             radar.refreshEnergyConnections();
         }
 
-        HbmEnergyUtil.chargeStorageFromItem(radar.items.getStackInSlot(SLOT_BATTERY), radar.energy,
-                radar.energy.getReceiverSpeed());
+        RadarHostEnergyProfile.chargeFromBatterySlot(radar.items.getStackInSlot(SLOT_BATTERY), radar.energy);
         radar.allocateTargets(serverLevel);
         radar.updateSonarPing(serverLevel);
         boolean mapChanged = radar.updateMapScan(serverLevel);
         radar.lastRedPower = radar.getRedPower();
         radar.updateLinkedScreen();
 
-        RadarHostSyncState.SyncPlan syncPlan = previousSyncState.planAfter(radar.syncState(), mapChanged,
-                radar.mapClearDirty, level.getGameTime());
-
-        if (syncPlan.redstoneChanged()) {
-            level.updateNeighborsAt(pos, state.getBlock());
-            level.updateNeighbourForOutputSignal(pos, state.getBlock());
-        }
-
-        if (syncPlan.changed()) {
-            radar.setChanged();
-            if (syncPlan.mapSync()) {
-                ModMessages.syncTileToTracking(radar, radar);
-                radar.mapClearDirty = false;
-            }
-            if (syncPlan.blockUpdate()) {
-                level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-            }
-        }
-        radar.networkPackNT(50);
+        RadarHostSyncProfile.TickSyncPlan syncPlan = RadarHostSyncProfile.plan(level.getGameTime(),
+                previousSyncState, radar.syncState(), mapChanged, radar.mapClearDirty);
+        radar.mapClearDirty = RadarHostSyncProfile.apply(level, pos, state, radar, syncPlan, radar.mapClearDirty);
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, RadarBlockEntity radar) {
@@ -198,36 +173,23 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
 
     private void allocateTargets(ServerLevel serverLevel) {
         entries.clear();
-        jammed = false;
-
-        if (worldPosition.getY() < RadarConfig.radarAltitude()) {
-            return;
-        }
-        long consumption = RadarConfig.consumption();
-        if (energy.getPower() < consumption) {
-            energy.setPower(0L);
-            return;
-        }
-
-        energy.setPower(energy.getPower() - consumption);
-        RadarScanResult result = RadarScanner.scan(RadarContext.legacy(serverLevel, worldPosition, getRange(),
-                RadarConfig.radarBuffer(), RadarConfig.radarAltitude(), scanParams()));
-        jammed = result.jammed();
-        entries.addAll(result.entries());
+        RadarHostScanProfile.Allocation allocation = RadarHostScanProfile.allocate(serverLevel, worldPosition,
+                getRange(), RadarConfig.radarBuffer(), RadarConfig.radarAltitude(), energy.getPower(),
+                RadarConfig.consumption(), scanParams());
+        energy.setPower(allocation.powerAfter());
+        jammed = allocation.jammed();
+        entries.addAll(allocation.entries());
     }
 
     private void applyConfiguredEnergyLimits() {
-        long powerCap = RadarConfig.powerCap();
-        energy.setMaxPower(powerCap);
-        energy.setTransferRates(powerCap, 0L);
+        RadarHostEnergyProfile.applyConfiguredLimits(energy, RadarConfig.powerCap());
     }
 
     private void updateSonarPing(ServerLevel serverLevel) {
         RadarHostTickProfile.SonarPing ping = RadarHostTickProfile.sonarPing(pingTimer, energy.getPower());
         pingTimer = ping.timer();
         if (ping.playSound()) {
-            serverLevel.playSound(null, worldPosition, ModSounds.BLOCK_SONAR_PING.get(),
-                    SoundSource.BLOCKS, 5.0F, 1.0F);
+            LegacySoundPlayer.playLegacySonarPing(serverLevel, worldPosition, 5.0F, 1.0F);
         }
     }
 
@@ -236,27 +198,18 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     }
 
     private boolean updateMapScan(ServerLevel serverLevel) {
-        normalizeMap();
+        RadarMapScanPlan scanPlan = RadarMapScanPlan.forState(worldPosition, getRange(), serverLevel.getGameTime(),
+                clearFlag, showMap);
+        map = scanPlan.applyClear(map);
+        clearFlag = scanPlan.clearFlagAfter();
+        lastMapSlice = scanPlan.lastMapSliceAfter();
 
-        if (clearFlag) {
-            Arrays.fill(map, (byte) 0);
-            clearFlag = false;
+        if (scanPlan.clearMap()) {
             mapClearDirty = true;
-            lastMapSlice = -1;
-            return true;
         }
 
-        if (!showMap) {
-            lastMapSlice = -1;
-            return false;
-        }
-
-        RadarMapScanSlice scanSlice = RadarMapScanSlice.forGameTime(worldPosition, getRange(),
-                serverLevel.getGameTime());
-        RadarMapScanOperation.execute(serverLevel, map, scanSlice, RadarConfig.mapChunkLoadCap(),
-                RadarConfig.mapGenerateChunks());
-        lastMapSlice = scanSlice.slice();
-        return true;
+        scanPlan.executeScan(serverLevel, map, RadarConfig.mapChunkLoadCap(), RadarConfig.mapGenerateChunks());
+        return scanPlan.changed();
     }
 
     private void normalizeMap() {
@@ -264,7 +217,7 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     }
 
     private RadarHostSyncState syncState() {
-        return new RadarHostSyncState(energy.getPower(), jammed, lastRedPower, entries.size());
+        return RadarHostStateProfile.syncState(energy.getPower(), jammed, lastRedPower, entries.size());
     }
 
     public int getRange() {
@@ -272,7 +225,7 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     }
 
     public int getRedPower() {
-        return getRedstoneMode().power(entries, worldPosition, getRange());
+        return RadarHostRedstoneProfile.power(entries, worldPosition, getRange(), redMode);
     }
 
     @Override
@@ -285,11 +238,11 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     }
 
     public RadarScanResult getScanResultSnapshot() {
-        return new RadarScanResult(entries, jammed);
+        return RadarHostStateProfile.scanResult(entries, jammed);
     }
 
     public RadarStatusSnapshot getStatusSnapshot() {
-        return new RadarStatusSnapshot(worldPosition, getRange(), getPower(), getMaxPower(), jammed,
+        return RadarHostStateProfile.statusSnapshot(worldPosition, getRange(), getPower(), getMaxPower(), jammed,
                 entries.size(), redstoneOutput(), scanParams(), redMode, showMap);
     }
 
@@ -301,10 +254,7 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
         RadarDetectable.RadarScanParams settings = params != null
                 ? params
                 : RadarDetectable.RadarScanParams.DEFAULT;
-        scanMissiles = settings.scanMissiles();
-        scanShells = settings.scanShells();
-        scanPlayers = settings.scanPlayers();
-        smartMode = settings.smartMode();
+        setControlState(RadarHostStateProfile.controlState(settings, redMode, showMap));
         setChanged();
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
@@ -353,7 +303,7 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     }
 
     public RadarRedstoneMode getRedstoneMode() {
-        return RadarRedstoneMode.fromLegacyFlag(redMode);
+        return RadarHostRedstoneProfile.mode(redMode);
     }
 
     public int getLastRedPower() {
@@ -425,19 +375,20 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        if (RadarControl.isControlTag(tag)) {
-            return true;
-        }
-        return RadarLaunchCommand.isValidTag(tag, SLOT_LINKER);
+        return RadarClientControlProfile.accepts(tag, SLOT_LINKER);
     }
 
     @Override
     public void handleClientControl(ServerPlayer player, CompoundTag tag) {
-        boolean changed = applyControlState(tag);
-        if (RadarLaunchCommand.fromTag(tag).isPresent()) {
-            handleLaunchControl(player, tag);
+        RadarClientControlProfile.Request request = RadarClientControlProfile.parse(tag,
+                RadarHostStateProfile.controlState(scanParams(), redMode, showMap), SLOT_LINKER);
+        if (request.changedControls()) {
+            applyControlState(request.controlApplication());
         }
-        if (!changed) {
+        if (request.hasLaunchCommand()) {
+            handleLaunchControl(player, request.launchCommand());
+        }
+        if (!request.changedControls()) {
             return;
         }
         setChanged();
@@ -446,18 +397,11 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
         }
     }
 
-    private boolean applyControlState(CompoundTag tag) {
-        List<RadarControl> controls = RadarControl.controlsFromTag(tag);
-        if (controls.isEmpty()) {
-            return false;
-        }
-        RadarControlState.Application application =
-                RadarControlState.of(scanParams(), redMode, showMap).apply(controls);
+    private void applyControlState(RadarControlState.Application application) {
         setControlState(application.state());
         if (application.clearMap()) {
             clearFlag = true;
         }
-        return true;
     }
 
     private void setControlState(RadarControlState state) {
@@ -469,55 +413,22 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
         showMap = state.showMap();
     }
 
-    private void handleLaunchControl(ServerPlayer player, CompoundTag tag) {
-        RadarLaunchCommand command = RadarLaunchCommand.fromTag(tag).orElse(null);
-        if (command == null || !command.isValidLinkSlot(SLOT_LINKER)) {
-            return;
-        }
+    private void handleLaunchControl(ServerPlayer player, RadarLaunchCommand command) {
         int linkSlot = command.linkSlot();
         ItemStack link = items.getStackInSlot(linkSlot);
-        if (link.isEmpty()) {
-            return;
-        }
-        if (link.is(ModItems.SAT_RELAY.get())) {
-            handleSatelliteRelayControl(player, link, command);
-            return;
-        }
-        if (link.is(ModItems.RADAR_LINKER.get())) {
-            handleRadarLinkerControl(player, link, command);
-        }
-    }
-
-    private void handleSatelliteRelayControl(ServerPlayer player, ItemStack link, RadarLaunchCommand command) {
-        if (!(level instanceof ServerLevel serverLevel) || command.target().isEntity()) {
-            return;
-        }
-        Satellite satellite = SatelliteSavedData.get(serverLevel).getSatFromFreq(ISatelliteChip.getFrequencyFromStack(link));
-        if (satellite == null) {
-            return;
-        }
-        if (RadarSatelliteCommand.dispatch(serverLevel, player, satellite, command).successful()) {
-            playTechBleep(player);
-        }
-    }
-
-    private void handleRadarLinkerControl(ServerPlayer player, ItemStack link, RadarLaunchCommand command) {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
-        BlockPos receiverPos = ItemCoordinateBase.getPosition(link);
-        if (receiverPos == null) {
-            return;
-        }
-        if (RadarLinkedReceiverCommand.dispatch(serverLevel, worldPosition, receiverPos, command).successful()) {
+        RadarCommandResult result = RadarLaunchLinkProfile.dispatch(serverLevel, worldPosition, player, link,
+                command);
+        if (result.successful()) {
             playTechBleep(player);
         }
     }
 
     private void playTechBleep(ServerPlayer player) {
-        if (level instanceof ServerLevel serverLevel) {
-            serverLevel.playSound(null, player.blockPosition(), ModSounds.TOOL_TECH_BLEEP.get(),
-                    SoundSource.PLAYERS, 1.0F, 1.0F);
+        if (level instanceof ServerLevel) {
+            LegacySoundPlayer.playLegacyTechBleep(player, 1.0F, 1.0F);
         }
     }
 
@@ -530,34 +441,31 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        syncSnapshot(RadarMapUpdate.NONE).writeTo(tag, false);
+        RadarHostStateProfile.writeSyncSnapshot(tag, syncSnapshot(RadarMapUpdate.NONE), false);
         normalizeMap();
-        RadarMap.writeTo(tag, map);
+        RadarHostStateProfile.writeFullMap(tag, map);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        if (tag.contains(TAG_LEGACY_POWER, Tag.TAG_LONG)) {
-            energy.setPower(tag.getLong(TAG_LEGACY_POWER));
-        }
-        applySyncSnapshot(RadarSyncSnapshot.fromTag(tag), tag.contains(TAG_LEGACY_POWER, Tag.TAG_LONG), false);
-        map = RadarMap.readFrom(tag, map);
-        map = RadarMapUpdate.fromTag(tag).applyTo(map);
+        applySyncSnapshot(RadarHostStateProfile.applySyncSnapshot(RadarHostStateProfile.syncSnapshotFromTag(tag),
+                map, RadarHostStateProfile.hasLegacyPower(tag), false));
+        map = RadarHostStateProfile.fullMapFromTag(tag, map);
         if (tag.contains(TAG_ITEMS, Tag.TAG_COMPOUND)) {
             HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
         }
-        if (tag.contains(TAG_ENTRIES, Tag.TAG_LIST)) {
+        if (RadarHostStateProfile.hasEntries(tag)) {
             entries.clear();
-            RadarEntry.readListInto(tag.getList(TAG_ENTRIES, Tag.TAG_COMPOUND), entries);
+            entries.addAll(RadarHostStateProfile.entriesFromTag(tag));
         }
     }
 
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = super.getClientSyncTag();
-        syncSnapshot(mapUpdateSnapshot()).writeTo(tag, true);
+        RadarHostStateProfile.writeSyncSnapshot(tag, syncSnapshot(mapUpdateSnapshot()), true);
         return tag;
     }
 
@@ -569,8 +477,8 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
-        applySyncSnapshot(RadarSyncSnapshot.fromTag(tag), tag.contains(TAG_LEGACY_POWER, Tag.TAG_LONG),
-                tag.contains(TAG_ENTRIES, Tag.TAG_LIST));
+        applySyncSnapshot(RadarHostStateProfile.applySyncSnapshot(RadarHostStateProfile.syncSnapshotFromTag(tag),
+                map, RadarHostStateProfile.hasLegacyPower(tag), RadarHostStateProfile.hasEntries(tag)));
     }
 
     @Override
@@ -587,38 +495,27 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     }
 
     private RadarSyncSnapshot syncSnapshot(RadarMapUpdate mapUpdate) {
-        return RadarSyncSnapshot.of(getPower(), scanParams(), redMode, showMap, jammed, lastRedPower, entries,
-                mapUpdate);
+        return RadarHostStateProfile.syncSnapshot(getPower(), scanParams(), redMode, showMap, jammed, lastRedPower,
+                entries, mapUpdate);
     }
 
-    private void applySyncSnapshot(RadarSyncSnapshot snapshot, boolean applyPower, boolean includeEntries) {
-        if (applyPower) {
+    private void applySyncSnapshot(RadarHostStateProfile.AppliedSyncState snapshot) {
+        if (snapshot.applyPower()) {
             energy.setPower(snapshot.power());
         }
-        scanMissiles = snapshot.scanSettings().scanMissiles();
-        scanShells = snapshot.scanSettings().scanShells();
-        scanPlayers = snapshot.scanSettings().scanPlayers();
-        smartMode = snapshot.scanSettings().smartMode();
-        redMode = snapshot.redstoneProximityMode();
-        showMap = snapshot.showMap();
+        setControlState(RadarHostStateProfile.controlState(snapshot.scanSettings(),
+                snapshot.redstoneProximityMode(), snapshot.showMap()));
         jammed = snapshot.jammed();
         lastRedPower = snapshot.redstonePower();
-        if (includeEntries) {
+        if (snapshot.includeEntries()) {
             entries.clear();
             entries.addAll(snapshot.entries());
         }
-        map = snapshot.mapUpdate().applyTo(map);
+        map = snapshot.map();
     }
 
     private RadarMapUpdate mapUpdateSnapshot() {
-        if (mapClearDirty) {
-            return RadarMapUpdate.CLEAR;
-        }
-        if (!showMap || lastMapSlice < 0) {
-            return RadarMapUpdate.NONE;
-        }
-        normalizeMap();
-        return RadarMapUpdate.sliceFromMap(lastMapSlice, map);
+        return RadarMapScanPlan.mapUpdateSnapshot(mapClearDirty, showMap, lastMapSlice, map);
     }
 
 }

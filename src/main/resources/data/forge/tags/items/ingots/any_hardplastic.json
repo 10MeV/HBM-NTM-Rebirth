@@ -1,7 +1,7 @@
 {
-  "replace": false,
-  "values": [
-    "hbm_ntm_rebirth:ingot_pc",
-    "hbm_ntm_rebirth:ingot_pvc"
-  ]
+    "replace":  false,
+    "values":  [
+                   "hbm_ntm_rebirth:ingot_pc",
+                   "hbm_ntm_rebirth:ingot_pvc"
+               ]
 }

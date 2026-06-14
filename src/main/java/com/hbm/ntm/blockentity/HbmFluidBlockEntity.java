@@ -9,6 +9,7 @@ import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer.FluidIdentifierSlotReport;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransferResult;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer.TransferBatchReport;
@@ -592,7 +593,8 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected ForgeRecipeFluidHandlerAdapter createRecipeForgeFluidHandler(
             List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks, int inputPressure) {
-        return new ForgeRecipeFluidHandlerAdapter(inputTanks, outputTanks, inputPressure, this::onFluidContentsChanged);
+        return ForgeRecipeFluidHandlerAdapter.create(inputTanks, outputTanks, inputPressure,
+                this::onFluidContentsChanged);
     }
 
     protected RecipeForgeFluidHandlerView inspectRecipeForgeFluidHandler(
@@ -840,27 +842,49 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected boolean setFluidTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot,
             HbmFluidTank tank) {
-        return setFluidTankTypeFromIdentifierSlot(items, inputSlot, inputSlot, tank, 0, false);
+        return setFluidTankTypeFromIdentifierSlotReport(items, inputSlot, inputSlot, tank, 0, false).changed();
     }
 
     protected boolean setFluidTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot,
             HbmFluidTank tank) {
-        return setFluidTankTypeFromIdentifierSlot(items, inputSlot, outputSlot, tank, 0, false);
+        return setFluidTankTypeFromIdentifierSlotReport(items, inputSlot, outputSlot, tank, 0, false).changed();
     }
 
     protected boolean setFluidTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot,
             HbmFluidTank tank, int pressure, boolean forcePressure) {
-        return setFluidTankTypeFromIdentifierSlot(items, inputSlot, inputSlot, tank, pressure, forcePressure);
+        return setFluidTankTypeFromIdentifierSlotReport(items, inputSlot, inputSlot, tank, pressure, forcePressure)
+                .changed();
     }
 
     protected boolean setFluidTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot,
             HbmFluidTank tank, int pressure, boolean forcePressure) {
-        boolean changed = HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(
+        return setFluidTankTypeFromIdentifierSlotReport(items, inputSlot, outputSlot, tank, pressure, forcePressure)
+                .changed();
+    }
+
+    protected FluidIdentifierSlotReport setFluidTankTypeFromIdentifierSlotReport(IItemHandlerModifiable items,
+            int inputSlot, HbmFluidTank tank) {
+        return setFluidTankTypeFromIdentifierSlotReport(items, inputSlot, inputSlot, tank, 0, false);
+    }
+
+    protected FluidIdentifierSlotReport setFluidTankTypeFromIdentifierSlotReport(IItemHandlerModifiable items,
+            int inputSlot, int outputSlot, HbmFluidTank tank) {
+        return setFluidTankTypeFromIdentifierSlotReport(items, inputSlot, outputSlot, tank, 0, false);
+    }
+
+    protected FluidIdentifierSlotReport setFluidTankTypeFromIdentifierSlotReport(IItemHandlerModifiable items,
+            int inputSlot, HbmFluidTank tank, int pressure, boolean forcePressure) {
+        return setFluidTankTypeFromIdentifierSlotReport(items, inputSlot, inputSlot, tank, pressure, forcePressure);
+    }
+
+    protected FluidIdentifierSlotReport setFluidTankTypeFromIdentifierSlotReport(IItemHandlerModifiable items,
+            int inputSlot, int outputSlot, HbmFluidTank tank, int pressure, boolean forcePressure) {
+        FluidIdentifierSlotReport report = HbmFluidItemTransfer.setTankTypeFromIdentifierSlotReport(
                 items, inputSlot, outputSlot, tank, level, worldPosition, pressure, forcePressure);
-        if (changed) {
+        if (report.changed()) {
             onFluidContentsChanged();
         }
-        return changed;
+        return report;
     }
 
     @Override

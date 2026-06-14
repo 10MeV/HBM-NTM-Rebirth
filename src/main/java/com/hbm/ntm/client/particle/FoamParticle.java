@@ -8,6 +8,7 @@ import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -22,7 +23,7 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @OnlyIn(Dist.CLIENT)
-public class FoamParticle extends TextureSheetParticle {
+public class FoamParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
     private static final AtomicInteger NEXT_VISUAL_ID = new AtomicInteger();
 
     private final SpriteSet sprites;
@@ -117,6 +118,12 @@ public class FoamParticle extends TextureSheetParticle {
 
     @Override
     public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.enqueue(this, camera, this.x, this.y, this.z);
+    }
+
+    @Override
+    public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
+        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite());
         renderFoamBubbles(consumer, camera, Mth.lerp(partialTick, this.xo, this.x),
                 Mth.lerp(partialTick, this.yo, this.y),
                 Mth.lerp(partialTick, this.zo, this.z), this.quadSize, this.alpha);
@@ -168,7 +175,7 @@ public class FoamParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+        return HbmDeferredParticleRenderer.DEFERRED_RENDER_TYPE;
     }
 
     public static class Provider implements ParticleProvider<SimpleParticleType> {

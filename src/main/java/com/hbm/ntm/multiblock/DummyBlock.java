@@ -1,6 +1,13 @@
 package com.hbm.ntm.multiblock;
 
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayBlockProvider;
+import com.hbm.ntm.api.block.Toolable;
+import com.hbm.ntm.api.conveyor.IConveyorBelt;
+import com.hbm.ntm.api.conveyor.IConveyorItem;
+import com.hbm.ntm.api.conveyor.IConveyorPackage;
+import com.hbm.ntm.api.conveyor.IEnterableBlock;
 import com.hbm.ntm.api.multiblock.DummyPart;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
@@ -24,6 +31,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -33,7 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 @SuppressWarnings("deprecation")
-public class DummyBlock extends Block implements EntityBlock, DummyPart {
+public class DummyBlock extends Block implements EntityBlock, DummyPart, IConveyorBelt, IEnterableBlock, Toolable,
+        LegacyLookOverlayBlockProvider {
     private static final VoxelShape SHAPE = Shapes.block();
 
     public DummyBlock(Properties properties) {
@@ -69,6 +78,92 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart {
             return dummy.forwardUse(serverPlayer, hand, hit);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public boolean canItemStay(Level level, BlockPos pos, Vec3 itemPos) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        return core != null
+                && core.state().getBlock() instanceof IConveyorBelt belt
+                && belt.canItemStay(level, pos, itemPos);
+    }
+
+    @Override
+    public Vec3 getTravelLocation(Level level, BlockPos pos, Vec3 itemPos, double speed) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core != null && core.state().getBlock() instanceof IConveyorBelt belt) {
+            return belt.getTravelLocation(level, pos, itemPos, speed);
+        }
+        return itemPos;
+    }
+
+    @Override
+    public Vec3 getClosestSnappingPosition(Level level, BlockPos pos, Vec3 itemPos) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core != null && core.state().getBlock() instanceof IConveyorBelt belt) {
+            return belt.getClosestSnappingPosition(level, pos, itemPos);
+        }
+        return itemPos;
+    }
+
+    @Override
+    public boolean canItemEnter(Level level, BlockPos pos, Direction side, IConveyorItem entity) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        return core != null
+                && core.state().getBlock() instanceof IEnterableBlock enterable
+                && enterable.canItemEnter(level, pos, side, entity);
+    }
+
+    @Override
+    public void onItemEnter(Level level, BlockPos pos, Direction side, IConveyorItem entity) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core != null && core.state().getBlock() instanceof IEnterableBlock enterable) {
+            enterable.onItemEnter(level, pos, side, entity);
+        }
+    }
+
+    @Override
+    public boolean canPackageEnter(Level level, BlockPos pos, Direction side, IConveyorPackage entity) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        return core != null
+                && core.state().getBlock() instanceof IEnterableBlock enterable
+                && enterable.canPackageEnter(level, pos, side, entity);
+    }
+
+    @Override
+    public void onPackageEnter(Level level, BlockPos pos, Direction side, IConveyorPackage entity) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core != null && core.state().getBlock() instanceof IEnterableBlock enterable) {
+            enterable.onPackageEnter(level, pos, side, entity);
+        }
+    }
+
+    @Override
+    public boolean onToolUse(Level level, Player player, BlockPos pos, Direction side, Vec3 hit, ToolType tool) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        return core != null
+                && core.state().getBlock() instanceof Toolable toolable
+                && toolable.onToolUse(level, player, pos, side, hit, tool);
+    }
+
+    @Nullable
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos, BlockState viewedState) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, viewedPos);
+        if (core != null && core.state().getBlock() instanceof LegacyLookOverlayBlockProvider provider) {
+            return provider.getLookOverlay(level, viewedPos, viewedState);
+        }
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, Player player, BlockPos viewedPos, BlockState viewedState) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, viewedPos);
+        if (core != null && core.state().getBlock() instanceof LegacyLookOverlayBlockProvider provider) {
+            return provider.getLookOverlay(level, player, viewedPos, viewedState);
+        }
+        return null;
     }
 
     @Override
@@ -190,7 +285,11 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart {
     private BlockState particleState(BlockGetter level, BlockPos pos) {
         MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
         if (core != null && core.state().getBlock() instanceof MultiblockCoreBlock coreBlock) {
-            return coreBlock.multiblockParticleState(core.state(), level, core.pos());
+            BlockState particleState = coreBlock.multiblockParticleState(core.state(), level, core.pos());
+            if (particleState.getBlock() instanceof MultiblockCoreBlock || particleState.getBlock() instanceof DummyBlock) {
+                return MultiblockHelper.steelParticleState();
+            }
+            return particleState;
         }
         return MultiblockHelper.steelParticleState();
     }

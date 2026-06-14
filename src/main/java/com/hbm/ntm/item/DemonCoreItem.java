@@ -1,6 +1,7 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -20,8 +21,8 @@ public class DemonCoreItem extends Item {
     public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity) {
         if (!entity.level().isClientSide && entity.onGround()) {
             entity.setItem(new ItemStack(ModItems.DEMON_CORE_CLOSED.get()));
-            entity.level().addFreshEntity(new ItemEntity(entity.level(), entity.getX(), entity.getY(), entity.getZ(),
-                    new ItemStack(ModItems.SCREWDRIVER.get())));
+            HbmItemStackUtil.dropStack(entity.level(), entity.getX(), entity.getY(), entity.getZ(),
+                    new ItemStack(ModItems.SCREWDRIVER.get()));
             return true;
         }
         return false;

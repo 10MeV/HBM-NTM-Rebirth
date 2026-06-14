@@ -1,0 +1,29 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    " GL",
+                    "IBP",
+                    " GL"
+                ],
+    "key":  {
+                "G":  {
+                          "tag":  "forge:ingots/gun_metal"
+                      },
+                "L":  {
+                          "tag":  "forge:ingots/any_rubber"
+                      },
+                "B":  {
+                          "tag":  "forge:storage_blocks/steel"
+                      },
+                "P":  {
+                          "item":  "hbm_ntm_rebirth:piston_selenium"
+                      },
+                "I":  {
+                          "tag":  "forge:ingots/titanium"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_drill"
+               }
+}

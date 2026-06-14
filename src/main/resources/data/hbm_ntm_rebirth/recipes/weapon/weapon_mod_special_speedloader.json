@@ -1,0 +1,19 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    " B ",
+                    "BSB",
+                    " B "
+                ],
+    "key":  {
+                "B":  {
+                          "tag":  "forge:bolts/steel"
+                      },
+                "S":  {
+                          "tag":  "forge:plates/weapon_steel"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_speedloader"
+               }
+}

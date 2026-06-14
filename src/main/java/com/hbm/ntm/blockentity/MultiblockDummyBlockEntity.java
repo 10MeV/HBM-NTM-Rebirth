@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
+import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.util.HbmRegistryUtil;
 
 import com.hbm.ntm.energy.HbmEnergyConnector;
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmFluidConnector,
-        HbmFluidReceiver, RORValueProvider, RORInteractive {
+        HbmFluidReceiver, HeatSource, RORValueProvider, RORInteractive {
     private static final String TAG_CORE_POS = "CorePos";
     private static final String TAG_LEGACY_TARGET_X = "tx";
     private static final String TAG_LEGACY_TARGET_Y = "ty";
@@ -271,8 +272,40 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         return HbmFluidReceiver.super.getReceivingPressureRange(type);
     }
 
+    @Override
+    public int getHeatStored() {
+        if (!canProxyHeat()) {
+            return 0;
+        }
+        MultiblockHelper.CoreLookup core = validCore();
+        if (level == null || core == null) {
+            return 0;
+        }
+        ICapabilityProvider target = legacyProxyTarget(level.getBlockEntity(core.pos()));
+        return target instanceof HeatSource heatSource && target != this ? heatSource.getHeatStored() : 0;
+    }
+
+    @Override
+    public void useUpHeat(int heat) {
+        if (!canProxyHeat()) {
+            return;
+        }
+        MultiblockHelper.CoreLookup core = validCore();
+        if (level == null || core == null) {
+            return;
+        }
+        ICapabilityProvider target = legacyProxyTarget(level.getBlockEntity(core.pos()));
+        if (target instanceof HeatSource heatSource && target != this) {
+            heatSource.useUpHeat(heat);
+        }
+    }
+
     private boolean canProxyFluid() {
         return proxyMode.isProxy() && (proxyMode.fluid() || proxyMode.moltenMetal() || proxyMode.allCapabilities());
+    }
+
+    private boolean canProxyHeat() {
+        return proxyMode.isProxy() && (proxyMode.heat() || proxyMode.allCapabilities());
     }
 
     public InteractionResult forwardUse(ServerPlayer player, InteractionHand hand, BlockHitResult hit) {

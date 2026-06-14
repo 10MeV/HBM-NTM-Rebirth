@@ -3,7 +3,7 @@ package com.hbm.ntm.item;
 import com.hbm.ntm.api.item.DesignatorItem;
 import com.hbm.ntm.network.HbmItemActionReceiver;
 import com.hbm.ntm.network.HbmNetworkActions;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.RayTraceUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -11,7 +11,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -145,8 +144,7 @@ public class MissileDesignatorItem extends Item implements DesignatorItem, HbmIt
 
     private static void playSetSound(Level level, @Nullable Player player) {
         if (player != null) {
-            level.playSound(null, player.blockPosition(), ModSounds.TOOL_TECH_BLEEP.get(),
-                    SoundSource.PLAYERS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacyTechBleep(player, 1.0F, 1.0F);
         }
     }
 

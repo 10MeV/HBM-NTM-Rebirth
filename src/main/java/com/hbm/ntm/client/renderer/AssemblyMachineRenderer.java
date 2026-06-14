@@ -47,10 +47,15 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
         }
 
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) assembler.getRing(partialTick)));
+        LegacyTileRenderPlans.AssemblyMachinePlan plan = LegacyTileRenderPlans.assemblyMachinePlan(
+                assembler.getRing(partialTick),
+                assembler.getArm(0).getPositions(partialTick),
+                assembler.getArm(1).getPositions(partialTick));
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.ringDegrees()));
         MODEL.renderPart("Ring", poseStack, buffer, modelLight, packedOverlay);
-        renderArm(poseStack, buffer, modelLight, packedOverlay, assembler.getArm(0).getPositions(partialTick), false);
-        renderArm(poseStack, buffer, modelLight, packedOverlay, assembler.getArm(1).getPositions(partialTick), true);
+        for (LegacyTileRenderPlans.AssemblyArmPlan arm : plan.arms()) {
+            renderArmPlan(poseStack, buffer, modelLight, packedOverlay, arm);
+        }
         poseStack.popPose();
 
         if (LegacyRecipeIconRenderer.shouldRender(assembler)) {
@@ -61,29 +66,26 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
         poseStack.popPose();
     }
 
-    private static void renderArm(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, double[] arm, boolean mirrored) {
-        double zSign = mirrored ? -1.0D : 1.0D;
-        String suffix = mirrored ? "2" : "1";
-        double rotationSign = mirrored ? -1.0D : 1.0D;
-
+    private static void renderArmPlan(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, LegacyTileRenderPlans.AssemblyArmPlan arm) {
         poseStack.pushPose();
-        rotateAround(poseStack, 0.0D, 1.625D, 0.9375D * zSign, rotationSign * arm[0]);
-        MODEL.renderPart("ArmLower" + suffix, poseStack, buffer, packedLight, packedOverlay);
-
-        rotateAround(poseStack, 0.0D, 2.375D, 0.9375D * zSign, rotationSign * arm[1]);
-        MODEL.renderPart("ArmUpper" + suffix, poseStack, buffer, packedLight, packedOverlay);
-
-        rotateAround(poseStack, 0.0D, 2.375D, 0.4375D * zSign, rotationSign * arm[2]);
-        MODEL.renderPart("Head" + suffix, poseStack, buffer, packedLight, packedOverlay);
-        poseStack.translate(0.0D, arm[3], 0.0D);
-        MODEL.renderPart("Spike" + suffix, poseStack, buffer, packedLight, packedOverlay);
+        for (LegacyTileRenderPlans.PivotedModelPartPlan part : arm.rotations()) {
+            applyPivot(poseStack, part);
+            MODEL.renderPart(part.partName(), poseStack, buffer, packedLight, packedOverlay);
+        }
+        LegacyTileRenderPlans.TranslatedModelPartPlan tool = arm.tool();
+        if (tool != null && tool.active()) {
+            poseStack.translate(tool.translateX(), tool.translateY(), tool.translateZ());
+            MODEL.renderPart(tool.partName(), poseStack, buffer, packedLight, packedOverlay);
+        }
         poseStack.popPose();
     }
 
-    private static void rotateAround(PoseStack poseStack, double x, double y, double z, double degrees) {
-        poseStack.translate(x, y, z);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) degrees));
-        poseStack.translate(-x, -y, -z);
+    private static void applyPivot(PoseStack poseStack, LegacyTileRenderPlans.PivotedModelPartPlan part) {
+        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) part.angleDegrees()));
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
     }
 
     private static float blockstateModelYRotation(BlockState state) {

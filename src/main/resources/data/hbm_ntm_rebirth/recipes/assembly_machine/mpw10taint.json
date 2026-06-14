@@ -30,11 +30,11 @@
                             "count":  12
                         },
                         {
-                            "ingredient":  [
-                                               {
-                                                   "item":  "hbm_ntm_rebirth:bucket_mud"
-                                               }
-                                           ],
+                            "ingredient":  {
+                                               "type":  "hbm_ntm_rebirth:fluid_container",
+                                               "fluid":  "hbm_ntm_rebirth:watz",
+                                               "amount":  1000
+                                           },
                             "count":  1,
                             "fluid_container":  {
                                                     "fluid":  "hbm_ntm_rebirth:watz",

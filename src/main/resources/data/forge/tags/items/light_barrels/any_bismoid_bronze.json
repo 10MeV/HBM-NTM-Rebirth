@@ -1,0 +1,7 @@
+﻿{
+    "replace":  false,
+    "values":  [
+                   "hbm_ntm_rebirth:barrel_light_bismuth_bronze",
+                   "hbm_ntm_rebirth:barrel_light_arsenic_bronze"
+               ]
+}

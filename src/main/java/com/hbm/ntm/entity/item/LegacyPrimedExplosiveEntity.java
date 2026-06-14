@@ -3,8 +3,8 @@ package com.hbm.ntm.entity.item;
 import com.hbm.ntm.util.HbmRegistryUtil;
 
 import com.hbm.ntm.api.block.ChainExplodable;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -88,7 +88,7 @@ public class LegacyPrimedExplosiveEntity extends Entity {
                 explode();
             }
         } else if (level() instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.SMOKE, getX(), getY() + 0.5D, getZ(), 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            ParticleUtil.spawnLegacyPrimedSmoke(serverLevel, getX(), getY(), getZ());
         }
     }
 

@@ -188,6 +188,7 @@ public final class LegacySoundIds {
         put(map, "GUN_PISTOL_FIRE", "hbm:weapon.fire.pistol");
         put(map, "GUN_UZI_FIRE", "hbm:weapon.fire.uzi");
         put(map, "GUN_ABERRATOR_FIRE", "hbm:weapon.fire.aberrator");
+        put(map, "GUN_STAB_A_FUCKER", "hbm:weapon.fire.stab");
         put(map, "GUN_UNDERBARREL_FIRE", "hbm:weapon.hkShoot");
         put(map, "GUN_CONGO_FIRE", "hbm:weapon.glShoot");
         put(map, "GUN_CHARGE_FIRE", "hbm:weapon.fire.grenade");

@@ -32,7 +32,7 @@ import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionSavedData.PollutionSample;
 import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.registry.ModBlocks;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -228,10 +228,7 @@ public final class LegacyArtilleryImpactExecutor {
 
     @Nullable
     private static SoundEvent legacySound(String legacySound) {
-        if ("hbm:weapon.explosionMedium".equals(legacySound)) {
-            return ModSounds.WEAPON_EXPLOSION_MEDIUM.get();
-        }
-        return null;
+        return LegacySoundPlayer.resolveEvent(legacySound);
     }
 
     private static Vec3 sourcePositionOrHit(@Nullable Entity source, Vec3 hit) {

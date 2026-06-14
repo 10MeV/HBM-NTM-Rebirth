@@ -2,13 +2,14 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidRecipeIO;
+import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.VacuumRecipe;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -141,18 +142,18 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
         if (recipe == null) {
             return changed;
         }
-        if (energy.getPower() < POWER_PER_OPERATION || inputTank.getFill() < 100
-                || !hasSpace(heavyOilTank, recipe.heavyOil().amount())
-                || !hasSpace(reformateTank, recipe.reformate().amount())
-                || !hasSpace(lightOilTank, recipe.lightOil().amount())
-                || !hasSpace(sourGasTank, recipe.gas().amount())) {
+        if (energy.getPower() < POWER_PER_OPERATION) {
             return changed;
         }
-        inputTank.setFill(inputTank.getFill() - 100);
-        addFluid(heavyOilTank, recipe.heavyOil().type(), recipe.heavyOil().amount());
-        addFluid(reformateTank, recipe.reformate().type(), recipe.reformate().amount());
-        addFluid(lightOilTank, recipe.lightOil().type(), recipe.lightOil().amount());
-        addFluid(sourGasTank, recipe.gas().type(), recipe.gas().amount());
+        HbmFluidRecipeIO.RecipeFluidIoProcessReport report = HbmFluidRecipeIO.processLegacyFixedRecipeIoReport(
+                List.of(HbmFluidRecipeIO.requirementFromTank(inputTank, 100)),
+                List.of(recipe.outputs()),
+                List.of(inputTank),
+                List.of(heavyOilTank, reformateTank, lightOilTank, sourGasTank),
+                false);
+        if (!report.complete()) {
+            return changed;
+        }
         consumePower(POWER_PER_OPERATION);
         isOn = true;
         onFluidContentsChanged();
@@ -160,33 +161,17 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
     }
 
     private boolean setupRecipeTanks(VacuumRecipe recipe) {
-        if (recipe == null) {
-            boolean changed = heavyOilTank.getTankType() != HbmFluids.NONE
-                    || reformateTank.getTankType() != HbmFluids.NONE
-                    || lightOilTank.getTankType() != HbmFluids.NONE
-                    || sourGasTank.getTankType() != HbmFluids.NONE;
-            configureTank(heavyOilTank, HbmFluids.NONE);
-            configureTank(reformateTank, HbmFluids.NONE);
-            configureTank(lightOilTank, HbmFluids.NONE);
-            configureTank(sourGasTank, HbmFluids.NONE);
-            return changed;
-        }
-        boolean changed = heavyOilTank.getTankType() != recipe.heavyOil().type()
-                || reformateTank.getTankType() != recipe.reformate().type()
-                || lightOilTank.getTankType() != recipe.lightOil().type()
-                || sourGasTank.getTankType() != recipe.gas().type();
-        configureTank(heavyOilTank, recipe.heavyOil().type());
-        configureTank(reformateTank, recipe.reformate().type());
-        configureTank(lightOilTank, recipe.lightOil().type());
-        configureTank(sourGasTank, recipe.gas().type());
-        return changed;
+        List<HbmFluidStack> outputs = recipe == null ? List.of() : List.of(recipe.outputs());
+        return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
+                List.of(), outputs, List.of(), List.of(heavyOilTank, reformateTank, lightOilTank, sourGasTank))
+                .changed();
     }
 
     private void updateAudioLoop() {
         if (level == null || !level.isClientSide) {
             return;
         }
-        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_BOILER.getId(),
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.boiler",
                 isOn, 30.0D, 15.0F, 0.25F, 1.0F);
     }
 

@@ -33,28 +33,28 @@ public class LegacyLanternBlockEntityRenderer implements BlockEntityRenderer<Leg
     public void render(LegacyLanternBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
         VertexConsumer consumer = LegacyUntexturedQuadRenderer.solid(buffer);
-        float mult = (float) (Math.sin(System.currentTimeMillis() / 200.0D) / 2.0D + 0.5D) * 0.1F + 0.9F;
-        int red = Math.round(255.0F * mult);
-        int green = Math.round(255.0F * mult);
-        int blue = Math.round(179.0F * mult);
+        LegacyTileRenderPlans.LanternLightPlan plan =
+                LegacyTileRenderPlans.lanternLightPlan(System.currentTimeMillis());
         PoseStack.Pose pose = poseStack.last();
 
         for (int[] face : LIGHT_FACES) {
-            renderFace(consumer, pose, face, red, green, blue);
+            renderFace(consumer, pose, face, plan.red(), plan.green(), plan.blue(), plan.alpha());
             for (int i = face.length - 1; i >= 0; i--) {
-                renderVertex(consumer, pose, face[i], red, green, blue);
+                renderVertex(consumer, pose, face[i], plan.red(), plan.green(), plan.blue(), plan.alpha());
             }
         }
     }
 
-    private static void renderFace(VertexConsumer consumer, PoseStack.Pose pose, int[] face, int red, int green, int blue) {
+    private static void renderFace(VertexConsumer consumer, PoseStack.Pose pose, int[] face,
+            int red, int green, int blue, int alpha) {
         for (int index : face) {
-            renderVertex(consumer, pose, index, red, green, blue);
+            renderVertex(consumer, pose, index, red, green, blue, alpha);
         }
     }
 
-    private static void renderVertex(VertexConsumer consumer, PoseStack.Pose pose, int index, int red, int green, int blue) {
+    private static void renderVertex(VertexConsumer consumer, PoseStack.Pose pose, int index,
+            int red, int green, int blue, int alpha) {
         float[] vertex = LIGHT_VERTICES[index - 1];
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, vertex[0], vertex[1], vertex[2], red, green, blue, 255);
+        LegacyUntexturedQuadRenderer.vertex(consumer, pose, vertex[0], vertex[1], vertex[2], red, green, blue, alpha);
     }
 }

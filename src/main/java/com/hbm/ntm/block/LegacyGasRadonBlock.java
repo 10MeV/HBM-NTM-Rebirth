@@ -5,12 +5,11 @@ import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModBlocks;
-import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -109,11 +108,7 @@ public class LegacyGasRadonBlock extends LegacyGasBlock {
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         super.animateTick(state, level, pos, random);
         if (kind == Kind.DENSE) {
-            level.addParticle(ModParticleTypes.TOWN_AURA.get(),
-                    pos.getX() + random.nextFloat(),
-                    pos.getY() + random.nextFloat(),
-                    pos.getZ() + random.nextFloat(),
-                    0.0D, 0.0D, 0.0D);
+            ParticleUtil.spawnRandomTownAuraInBlock(level, pos, random);
         }
     }
 

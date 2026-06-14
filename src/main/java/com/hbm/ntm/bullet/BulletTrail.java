@@ -9,7 +9,13 @@ public enum BulletTrail {
     ZOMG(3),
     WORM(4),
     GLASS_CYAN(5),
-    GLASS_BLUE(6);
+    GLASS_BLUE(6),
+    SEDNA_LIGHTNING(100),
+    SEDNA_LIGHTNING_SUB(101),
+    SEDNA_CRACKLE(102),
+    SEDNA_BLACK_LIGHTNING(103),
+    SEDNA_NI4NI(104),
+    SEDNA_FOLLY(105);
 
     private final int legacyId;
 

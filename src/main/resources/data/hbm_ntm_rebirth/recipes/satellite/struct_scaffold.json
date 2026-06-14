@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SSS",
+    "DCD",
+    "SSS"
+  ],
+  "key": {
+    "S": { "item": "hbm_ntm_rebirth:steel_scaffold" },
+    "D": { "item": "hbm_ntm_rebirth:fluid_duct_neo" },
+    "C": { "item": "hbm_ntm_rebirth:red_cable" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:struct_scaffold",
+    "count": 8
+  }
+}

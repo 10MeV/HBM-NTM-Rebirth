@@ -7,6 +7,7 @@ import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts.LegacyPort;
 import com.hbm.ntm.fluid.HbmFluidPortMachine;
+import com.hbm.ntm.fluid.HbmFluidRecipeIO;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -98,52 +99,36 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
 
     private boolean setupTanks(PairRecipe recipe) {
         if (recipe == null) {
-            boolean changed = leftOutputTank.getTankType() != HbmFluids.NONE
-                    || rightOutputTank.getTankType() != HbmFluids.NONE
-                    || spentSteamTank.getTankType() != HbmFluids.NONE;
-            configureTank(leftOutputTank, HbmFluids.NONE);
-            configureTank(rightOutputTank, HbmFluids.NONE);
-            configureTank(spentSteamTank, HbmFluids.NONE);
-            return changed;
+            return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
+                    List.of(), List.of(), List.of(), List.of(leftOutputTank, rightOutputTank, spentSteamTank))
+                    .changed();
         }
-        boolean changed = steamTank.getTankType() != HbmFluids.STEAM
-                || leftOutputTank.getTankType() != recipe.left().type()
-                || rightOutputTank.getTankType() != recipe.right().type()
-                || spentSteamTank.getTankType() != HbmFluids.SPENTSTEAM;
-        configureTank(steamTank, HbmFluids.STEAM);
-        configureTank(leftOutputTank, recipe.left().type());
-        configureTank(rightOutputTank, recipe.right().type());
-        configureTank(spentSteamTank, HbmFluids.SPENTSTEAM);
-        return changed;
+        return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
+                List.of(new HbmFluidStack(HbmFluids.STEAM, 200, steamTank.getPressure())),
+                List.of(recipe.left(), recipe.right(), new HbmFluidStack(HbmFluids.SPENTSTEAM, 2)),
+                List.of(steamTank),
+                List.of(leftOutputTank, rightOutputTank, spentSteamTank)).changed();
     }
 
     private boolean crack(PairRecipe recipe) {
         int ops = 0;
         for (int i = 0; i < 2; i++) {
-            if (inputTank.getFill() < 100 || steamTank.getFill() < 200 || !hasOutputSpace(recipe)) {
+            HbmFluidRecipeIO.RecipeFluidIoProcessReport report = HbmFluidRecipeIO.processLegacyFixedRecipeIoReport(
+                    List.of(HbmFluidRecipeIO.requirementFromTank(inputTank, 100),
+                            HbmFluidRecipeIO.requirementFromTank(steamTank, 200)),
+                    List.of(recipe.left(), recipe.right(), new HbmFluidStack(HbmFluids.SPENTSTEAM, 2)),
+                    List.of(inputTank, steamTank),
+                    List.of(leftOutputTank, rightOutputTank, spentSteamTank),
+                    false);
+            if (!report.complete()) {
                 break;
             }
-            inputTank.setFill(inputTank.getFill() - 100);
-            steamTank.setFill(steamTank.getFill() - 200);
-            addOutput(leftOutputTank, recipe.left());
-            addOutput(rightOutputTank, recipe.right());
-            spentSteamTank.setFill(spentSteamTank.getFill() + 2);
             ops++;
         }
         if (ops > 0) {
             onFluidContentsChanged();
         }
         return ops > 0;
-    }
-
-    private boolean hasOutputSpace(PairRecipe recipe) {
-        return hasSpace(leftOutputTank, recipe.left().amount())
-                && hasSpace(rightOutputTank, recipe.right().amount())
-                && hasSpace(spentSteamTank, 2);
-    }
-
-    private static void addOutput(HbmFluidTank tank, HbmFluidStack stack) {
-        addFluid(tank, stack.type(), stack.amount());
     }
 
     @Override

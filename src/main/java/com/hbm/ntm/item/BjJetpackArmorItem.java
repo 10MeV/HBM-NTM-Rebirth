@@ -1,9 +1,8 @@
 package com.hbm.ntm.item;
 
-import com.hbm.ntm.armor.FsbPoweredArmor;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.player.HbmPlayerProperties;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.ArmorUtil;
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -30,7 +29,7 @@ public class BjJetpackArmorItem extends FsbPoweredArmorItem {
     @Override
     public void tickEquippedArmor(ItemStack stack, Level level, Player player) {
         super.tickEquippedArmor(stack, level, player);
-        if (!FsbPoweredArmor.hasFullPoweredSet(player)) {
+        if (!hasFullSet(player)) {
             return;
         }
 
@@ -42,8 +41,8 @@ public class BjJetpackArmorItem extends FsbPoweredArmorItem {
                 player.hasImpulse = true;
             }
             player.fallDistance = 0.0F;
-            level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                    ModSounds.WEAPON_IMMOLATOR_SHOOT.get(), player.getSoundSource(), 0.125F, 1.5F);
+            LegacySoundPlayer.playLegacyImmolatorShoot(level, player.getX(), player.getY(), player.getZ(),
+                    player.getSoundSource(), 0.125F, 1.5F);
             if (!level.isClientSide) {
                 ParticleUtil.spawnJetpackBj(level, player);
             }
@@ -62,7 +61,11 @@ public class BjJetpackArmorItem extends FsbPoweredArmorItem {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
-        tooltip.add(Component.literal("  + Electric jetpack").withStyle(ChatFormatting.RED));
-        tooltip.add(Component.literal("  + Glider").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.literal("  + ")
+                .append(Component.translatable("armor.electricJetpack"))
+                .withStyle(ChatFormatting.RED));
+        tooltip.add(Component.literal("  + ")
+                .append(Component.translatable("armor.glider"))
+                .withStyle(ChatFormatting.GRAY));
     }
 }

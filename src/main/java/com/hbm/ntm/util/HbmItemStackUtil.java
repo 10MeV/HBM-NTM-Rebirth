@@ -118,7 +118,8 @@ public final class HbmItemStackUtil {
         CompoundTag display = new CompoundTag();
         ListTag lore = new ListTag();
         for (String line : lines) {
-            Component text = Component.literal(line == null ? "" : line).withStyle(ChatFormatting.GRAY);
+            Component text = Component.literal(ChatFormatting.RESET + "" + ChatFormatting.GRAY
+                    + (line == null ? "" : line));
             lore.add(StringTag.valueOf(Component.Serializer.toJson(text)));
         }
         display.put("Lore", lore);
@@ -150,6 +151,10 @@ public final class HbmItemStackUtil {
         addStacksToNbt(container, stacks == null ? new ItemStack[0] : stacks.toArray(ItemStack[]::new));
     }
 
+    public static void addStacksToNBT(ItemStack container, List<ItemStack> stacks) {
+        addStacksToNbt(container, stacks);
+    }
+
     public static void setStacksToNbt(ItemStack container, ItemStack[] stacks, boolean removeWhenEmpty) {
         if (container == null || container.isEmpty()) {
             return;
@@ -158,12 +163,20 @@ public final class HbmItemStackUtil {
         putLegacyItems(container, list, removeWhenEmpty);
     }
 
+    public static void setStacksToNBT(ItemStack container, ItemStack[] stacks, boolean removeWhenEmpty) {
+        setStacksToNbt(container, stacks, removeWhenEmpty);
+    }
+
     public static void setStacksToNbt(ItemStack container, NonNullList<ItemStack> stacks, boolean removeWhenEmpty) {
         if (container == null || container.isEmpty()) {
             return;
         }
         ListTag list = saveLegacyItems(stacks).getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND);
         putLegacyItems(container, list, removeWhenEmpty);
+    }
+
+    public static void setStacksToNBT(ItemStack container, NonNullList<ItemStack> stacks, boolean removeWhenEmpty) {
+        setStacksToNbt(container, stacks, removeWhenEmpty);
     }
 
     public static boolean hasLegacyItemsTag(ItemStack container) {
@@ -191,9 +204,17 @@ public final class HbmItemStackUtil {
         return stacks.toArray(ItemStack[]::new);
     }
 
+    public static ItemStack[] readStackArrayFromNBT(ItemStack container) {
+        return readStackArrayFromNbt(container);
+    }
+
     public static ItemStack[] readStackArrayFromNbt(ItemStack container, int count) {
         NonNullList<ItemStack> stacks = readStacksFromNbt(container, count);
         return stacks.toArray(ItemStack[]::new);
+    }
+
+    public static ItemStack[] readStackArrayFromNBT(ItemStack container, int count) {
+        return readStackArrayFromNbt(container, count);
     }
 
     public static ItemStack[] readStacksFromNBT(ItemStack container) {
@@ -803,9 +824,13 @@ public final class HbmItemStackUtil {
             return;
         }
         RandomSource roll = random == null ? level.random : random;
-        for (int slot = 0; slot < items.getSlots(); slot++) {
-            spillStack(level, pos, items.getStackInSlot(slot), roll);
+        for (ItemStack stack : clearToDrops(items)) {
+            spillStack(level, pos, stack, roll);
         }
+    }
+
+    public static void spillItems(Level level, BlockPos pos, IItemHandler items) {
+        spillItems(level, pos, items, level == null ? null : level.random);
     }
 
     public static void spillItems(Level level, BlockPos pos, NonNullList<ItemStack> items, RandomSource random) {
@@ -813,9 +838,13 @@ public final class HbmItemStackUtil {
             return;
         }
         RandomSource roll = random == null ? level.random : random;
-        for (ItemStack stack : items) {
+        for (ItemStack stack : clearToDrops(items)) {
             spillStack(level, pos, stack, roll);
         }
+    }
+
+    public static void spillItems(Level level, BlockPos pos, NonNullList<ItemStack> items) {
+        spillItems(level, pos, items, level == null ? null : level.random);
     }
 
     public static void spillItems(Level level, BlockPos pos, ItemStack[] items, RandomSource random) {
@@ -823,9 +852,13 @@ public final class HbmItemStackUtil {
             return;
         }
         RandomSource roll = random == null ? level.random : random;
-        for (ItemStack stack : items) {
+        for (ItemStack stack : clearToDrops(items)) {
             spillStack(level, pos, stack, roll);
         }
+    }
+
+    public static void spillItems(Level level, BlockPos pos, ItemStack[] items) {
+        spillItems(level, pos, items, level == null ? null : level.random);
     }
 
     public static void spillItems(Level level, BlockPos pos, Container items, RandomSource random) {
@@ -833,29 +866,84 @@ public final class HbmItemStackUtil {
             return;
         }
         RandomSource roll = random == null ? level.random : random;
-        for (int slot = 0; slot < items.getContainerSize(); slot++) {
-            spillStack(level, pos, items.getItem(slot), roll);
+        for (ItemStack stack : clearToDrops(items)) {
+            spillStack(level, pos, stack, roll);
         }
     }
 
+    public static void spillItems(Level level, BlockPos pos, Container items) {
+        spillItems(level, pos, items, level == null ? null : level.random);
+    }
+
     public static void spillStack(Level level, BlockPos pos, ItemStack stack, RandomSource random) {
-        if (stack == null || stack.isEmpty()) {
+        if (level == null || pos == null || stack == null || stack.isEmpty() || level.isClientSide) {
             return;
         }
+        RandomSource roll = random == null ? level.random : random;
         ItemStack remainder = stack.copy();
-        float xOffset = random.nextFloat() * 0.8F + 0.1F;
-        float yOffset = random.nextFloat() * 0.8F + 0.1F;
-        float zOffset = random.nextFloat() * 0.8F + 0.1F;
+        float xOffset = roll.nextFloat() * 0.8F + 0.1F;
+        float yOffset = roll.nextFloat() * 0.8F + 0.1F;
+        float zOffset = roll.nextFloat() * 0.8F + 0.1F;
         while (!remainder.isEmpty()) {
-            int split = Math.min(remainder.getCount(), random.nextInt(21) + 10);
+            int split = Math.min(remainder.getCount(), roll.nextInt(21) + 10);
             ItemStack dropped = remainder.split(split);
             ItemEntity entity = new ItemEntity(level, pos.getX() + xOffset, pos.getY() + yOffset,
                     pos.getZ() + zOffset, dropped);
             float motion = 0.05F;
-            entity.setDeltaMovement(random.nextGaussian() * motion, random.nextGaussian() * motion + 0.2D,
-                    random.nextGaussian() * motion);
+            entity.setDeltaMovement(roll.nextGaussian() * motion, roll.nextGaussian() * motion + 0.2D,
+                    roll.nextGaussian() * motion);
             level.addFreshEntity(entity);
         }
+    }
+
+    public static void spillStack(Level level, BlockPos pos, ItemStack stack) {
+        spillStack(level, pos, stack, level == null ? null : level.random);
+    }
+
+    public static void dropStack(Level level, double x, double y, double z, ItemStack stack) {
+        if (level == null || level.isClientSide || stack == null || stack.isEmpty()) {
+            return;
+        }
+        level.addFreshEntity(new ItemEntity(level, x, y, z, stack.copy()));
+    }
+
+    public static void dropStack(Level level, BlockPos pos, ItemStack stack) {
+        if (pos == null) {
+            return;
+        }
+        dropStack(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stack);
+    }
+
+    public static void dropStacks(Level level, double x, double y, double z, Iterable<ItemStack> stacks) {
+        if (stacks == null) {
+            return;
+        }
+        for (ItemStack stack : stacks) {
+            dropStack(level, x, y, z, stack);
+        }
+    }
+
+    public static void dropStacks(Level level, BlockPos pos, Iterable<ItemStack> stacks) {
+        if (pos == null) {
+            return;
+        }
+        dropStacks(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stacks);
+    }
+
+    public static void dropStacks(Level level, double x, double y, double z, ItemStack[] stacks) {
+        if (stacks == null) {
+            return;
+        }
+        for (ItemStack stack : stacks) {
+            dropStack(level, x, y, z, stack);
+        }
+    }
+
+    public static void dropStacks(Level level, BlockPos pos, ItemStack[] stacks) {
+        if (pos == null) {
+            return;
+        }
+        dropStacks(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stacks);
     }
 
     public static boolean giveOrDrop(Player player, ItemStack stack) {
@@ -881,9 +969,87 @@ public final class HbmItemStackUtil {
         ItemStack copy = stack.copy();
         boolean inserted = player.getInventory().add(copy);
         if (!copy.isEmpty() && fallbackLevel != null && !fallbackLevel.isClientSide) {
-            fallbackLevel.addFreshEntity(new ItemEntity(fallbackLevel, x, y, z, copy));
+            dropStack(fallbackLevel, x, y, z, copy);
         }
         return inserted && copy.isEmpty();
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack, Level fallbackLevel, BlockPos pos) {
+        if (pos == null) {
+            return giveOrDrop(player, stack);
+        }
+        return giveOrDrop(player, stack, fallbackLevel, pos.getX() + 0.5D, pos.getY() + 0.5D,
+                pos.getZ() + 0.5D);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks) {
+        return giveOrDropAll(player, stacks, false);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks, boolean throwRandomly) {
+        if (stacks == null) {
+            return true;
+        }
+        boolean acceptedAll = true;
+        for (ItemStack stack : stacks) {
+            acceptedAll &= giveOrDrop(player, stack, throwRandomly);
+        }
+        return acceptedAll;
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks) {
+        return giveOrDropAll(player, stacks, false);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks, boolean throwRandomly) {
+        if (stacks == null) {
+            return true;
+        }
+        boolean acceptedAll = true;
+        for (ItemStack stack : stacks) {
+            acceptedAll &= giveOrDrop(player, stack, throwRandomly);
+        }
+        return acceptedAll;
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks, Level fallbackLevel, double x,
+            double y, double z) {
+        if (stacks == null) {
+            return true;
+        }
+        boolean acceptedAll = true;
+        for (ItemStack stack : stacks) {
+            acceptedAll &= giveOrDrop(player, stack, fallbackLevel, x, y, z);
+        }
+        return acceptedAll;
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks, Level fallbackLevel, BlockPos pos) {
+        if (pos == null) {
+            return giveOrDropAll(player, stacks);
+        }
+        return giveOrDropAll(player, stacks, fallbackLevel, pos.getX() + 0.5D, pos.getY() + 0.5D,
+                pos.getZ() + 0.5D);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks, Level fallbackLevel, double x, double y,
+            double z) {
+        if (stacks == null) {
+            return true;
+        }
+        boolean acceptedAll = true;
+        for (ItemStack stack : stacks) {
+            acceptedAll &= giveOrDrop(player, stack, fallbackLevel, x, y, z);
+        }
+        return acceptedAll;
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks, Level fallbackLevel, BlockPos pos) {
+        if (pos == null) {
+            return giveOrDropAll(player, stacks);
+        }
+        return giveOrDropAll(player, stacks, fallbackLevel, pos.getX() + 0.5D, pos.getY() + 0.5D,
+                pos.getZ() + 0.5D);
     }
 
     public static void giveChanceStacksToPlayer(Player player, List<ChanceStack> stacks, RandomSource random) {

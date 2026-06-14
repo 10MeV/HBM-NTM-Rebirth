@@ -1,0 +1,16 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "W ",
+                    " W",
+                    " W"
+                ],
+    "key":  {
+                "W":  {
+                          "tag":  "forge:ingots/rubber"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:grip_rubber"
+               }
+}

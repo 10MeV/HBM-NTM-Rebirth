@@ -151,6 +151,36 @@ public class TomImpactSavedData extends SavedData {
         save(tag);
     }
 
+    public boolean readLegacyImpact(CompoundTag tag) {
+        TomImpactSavedData loaded = load(tag == null ? new CompoundTag() : tag);
+        loadDiagnostics = loaded.loadDiagnostics;
+        return setImpactState(loaded.dust, loaded.fire, loaded.impact);
+    }
+
+    public void writeLegacyImpact(CompoundTag tag) {
+        if (tag != null) {
+            save(tag);
+        }
+    }
+
+    public CompoundTag writeLegacyImpactTag() {
+        CompoundTag tag = new CompoundTag();
+        writeLegacyImpact(tag);
+        return tag;
+    }
+
+    public static boolean hasAnyLegacyImpactTag(CompoundTag tag) {
+        return tag != null && (tag.contains(TAG_DUST) || tag.contains(TAG_FIRE) || tag.contains(TAG_IMPACT));
+    }
+
+    public static boolean hasCompleteLegacyImpactTag(CompoundTag tag) {
+        return tag != null && tag.contains(TAG_DUST) && tag.contains(TAG_FIRE) && tag.contains(TAG_IMPACT);
+    }
+
+    public static LoadDiagnostics inspectLegacyImpactTag(CompoundTag tag) {
+        return LoadDiagnostics.inspect(tag, readLegacyImpactTag(tag));
+    }
+
     public float dust() {
         return dust;
     }
@@ -259,8 +289,21 @@ public class TomImpactSavedData extends SavedData {
         }
     }
 
+    public boolean applyLegacyImpactTag(CompoundTag tag) {
+        Snapshot snapshot = readLegacyImpactTag(tag);
+        boolean changed = Float.compare(dust, snapshot.dust) != 0
+                || Float.compare(fire, snapshot.fire) != 0
+                || impact != snapshot.impact;
+        applySnapshot(snapshot);
+        return changed;
+    }
+
     public CompoundTag writeSnapshotTag() {
         return writeSnapshotTag(snapshot());
+    }
+
+    public CompoundTag writeLegacySnapshotTag() {
+        return writeSnapshotTag();
     }
 
     public void appendPermaSyncData(CompoundTag data) {
@@ -281,9 +324,17 @@ public class TomImpactSavedData extends SavedData {
         return tag;
     }
 
+    public static CompoundTag writeLegacyImpactTag(Snapshot snapshot) {
+        return writeSnapshotTag(snapshot);
+    }
+
     public static Snapshot readSnapshotTag(CompoundTag tag) {
         CompoundTag source = tag == null ? new CompoundTag() : tag;
         return new Snapshot(source.getFloat(TAG_DUST), source.getFloat(TAG_FIRE), source.getBoolean(TAG_IMPACT));
+    }
+
+    public static Snapshot readLegacyImpactTag(CompoundTag tag) {
+        return readSnapshotTag(tag);
     }
 
     public static Snapshot readPermaSyncData(CompoundTag data) {
@@ -297,6 +348,18 @@ public class TomImpactSavedData extends SavedData {
 
     public record Snapshot(float dust, float fire, boolean impact) {
         public static final Snapshot EMPTY = new Snapshot(0.0F, 0.0F, false);
+
+        public void writeLegacyImpact(CompoundTag tag) {
+            if (tag != null) {
+                tag.putFloat(TAG_DUST, dust);
+                tag.putFloat(TAG_FIRE, fire);
+                tag.putBoolean(TAG_IMPACT, impact);
+            }
+        }
+
+        public CompoundTag writeLegacyImpactTag() {
+            return TomImpactSavedData.writeLegacyImpactTag(this);
+        }
 
         public boolean hasClimate() {
             return dust > 0.0F || fire > 0.0F;

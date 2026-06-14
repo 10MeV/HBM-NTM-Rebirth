@@ -9,10 +9,9 @@ import com.hbm.ntm.entity.projectile.ChemicalProjectileEntity;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFillableItemCapabilityProvider;
 import com.hbm.ntm.fluid.HbmFluids;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -125,8 +124,7 @@ public class ChemthrowerItem extends SednaGunItem implements IFillableItem {
             }
         }
         addWearClamped(stack, gun.mode().configIndex(), 1, gun.mode().durability());
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.WEAPON_FLAMETHROWER_SHOOT.get(),
-                SoundSource.PLAYERS, 1.0F, 1.0F);
+        LegacySoundPlayer.playLegacyFlamethrowerShoot(player, 1.0F, 1.0F);
     }
 
     @Override

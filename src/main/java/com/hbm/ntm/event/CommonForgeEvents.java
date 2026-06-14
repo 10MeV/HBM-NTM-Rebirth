@@ -1,6 +1,8 @@
 package com.hbm.ntm.event;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.items.armor.IAttackHandler;
+import com.hbm.items.armor.IDamageHandler;
 import com.hbm.ntm.command.ModCommands;
 import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.config.RadiationConfig;
@@ -49,7 +51,7 @@ import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.uninos.HbmUninosNodespaces;
 import com.hbm.ntm.util.HbmCraftingAdvancementUtil;
 import com.hbm.ntm.world.BlockMigrationHelper;
@@ -138,11 +140,18 @@ public final class CommonForgeEvents {
         if (TrenchmasterArmorItem.tryCancelIncomingAttack(event)) {
             return;
         }
+        if (DnsArmorItem.tryCancelIncomingAttack(event)) {
+            return;
+        }
         if (DamageResistanceHandler.isAbsolute(event.getSource())) {
             return;
         }
 
         LivingEntity entity = event.getEntity();
+        dispatchLegacyArmorAttackHandlers(event, entity);
+        if (event.isCanceled()) {
+            return;
+        }
         float amount = event.getAmount();
 
         if (EntityDamageUtil.allowSpecialCancel()
@@ -156,6 +165,9 @@ public final class CommonForgeEvents {
         LivingEntity entity = event.getEntity();
         float amount = DamageResistanceHandler.applyLegacyPreResistanceDamageModifiers(entity, event.getSource(),
                 event.getAmount());
+        if (entity instanceof Player player) {
+            amount = DnsArmorItem.applyLegacyPreResistanceHurt(player, event.getSource(), amount);
+        }
         amount = DamageResistanceHandler.calculateDamage(entity, event.getSource(), amount);
 
         if (entity instanceof Player player) {
@@ -170,7 +182,35 @@ public final class CommonForgeEvents {
         }
 
         event.setAmount(amount);
-        DamageResistanceHandler.notifyDamageDealt(entity, event.getSource(), amount);
+        dispatchLegacyArmorDamageHandlers(event, entity);
+        DamageResistanceHandler.notifyDamageDealt(entity, event.getSource(), event.getAmount());
+    }
+
+    private static void dispatchLegacyArmorAttackHandlers(LivingAttackEvent event, LivingEntity entity) {
+        if (!(entity instanceof Player player)) {
+            return;
+        }
+        for (EquipmentSlot slot : ARMOR_TICK_SLOTS) {
+            ItemStack armor = player.getItemBySlot(slot);
+            if (armor.getItem() instanceof IAttackHandler handler) {
+                handler.handleAttack(event, armor);
+                if (event.isCanceled()) {
+                    return;
+                }
+            }
+        }
+    }
+
+    private static void dispatchLegacyArmorDamageHandlers(LivingHurtEvent event, LivingEntity entity) {
+        if (!(entity instanceof Player player)) {
+            return;
+        }
+        for (EquipmentSlot slot : ARMOR_TICK_SLOTS) {
+            ItemStack armor = player.getItemBySlot(slot);
+            if (armor.getItem() instanceof IDamageHandler handler) {
+                handler.handleDamage(event, armor);
+            }
+        }
     }
 
     @SubscribeEvent
@@ -323,8 +363,7 @@ public final class CommonForgeEvents {
             return;
         }
 
-        HbmLivingProperties.setBombTimer(entity, timer - 1);
-        if (timer == 1) {
+        if (HbmLivingProperties.decrementBombTimer(entity) <= 0) {
             ExplosionNukeSmall.explode(entity.level(), entity.getX(), entity.getY(), entity.getZ(),
                     ExplosionNukeSmall.PARAMS_MEDIUM);
         }
@@ -841,21 +880,21 @@ public final class CommonForgeEvents {
         int minute = 60 * 20;
 
         if (entity instanceof Player player) {
-            handlePlayerInventoryContagion(player, contagion, hour);
+            handlePlayerInventoryContagion(player, contagion);
         }
 
         if (contagion <= 0) {
             return;
         }
 
-        HbmLivingProperties.setContagion(entity, contagion - 1);
+        HbmLivingProperties.decrementContagion(entity);
 
         if (contagion < (2 * hour + 55 * minute) && contagion % 20 == 0 && entity.level() instanceof ServerLevel level) {
             double range = entity.isInWaterOrRain() ? 16.0D : 2.0D;
             AABB box = entity.getBoundingBox().inflate(range);
             for (Entity nearby : level.getEntities(entity, box)) {
                 if (nearby instanceof LivingEntity living && HbmLivingProperties.getContagion(living) <= 0 && !ArmorUtil.checkForMkuProtection(living)) {
-                    HbmLivingProperties.setContagion(living, 3 * hour);
+                    HbmLivingProperties.applyMkuContagion(living);
                 } else if (nearby instanceof ItemEntity itemEntity) {
                     tagContagious(itemEntity.getItem());
                 }
@@ -883,7 +922,7 @@ public final class CommonForgeEvents {
         }
     }
 
-    private static void handlePlayerInventoryContagion(Player player, int contagion, int hour) {
+    private static void handlePlayerInventoryContagion(Player player, int contagion) {
         ItemStack stack = randomInventoryContagionStack(player);
         if (stack.isEmpty() || stack.getMaxStackSize() != 1) {
             return;
@@ -892,7 +931,7 @@ public final class CommonForgeEvents {
         if (contagion > 0) {
             tagContagious(stack);
         } else if (isTaggedContagious(stack) && !ArmorUtil.checkForMkuProtection(player)) {
-            HbmLivingProperties.setContagion(player, 3 * hour);
+            HbmLivingProperties.applyMkuContagion(player);
         }
     }
 
@@ -915,8 +954,8 @@ public final class CommonForgeEvents {
 
     private static void handleLungDisease(LivingEntity entity) {
         if (entity instanceof Player player && player.isCreative()) {
-            HbmLivingProperties.setBlackLung(entity, 0);
-            HbmLivingProperties.setAsbestos(entity, 0);
+            HbmLivingProperties.clearBlackLung(entity);
+            HbmLivingProperties.clearAsbestos(entity);
             return;
         }
 
@@ -924,7 +963,7 @@ public final class CommonForgeEvents {
         int maxBlackLung = HbmLivingProperties.MAX_BLACK_LUNG;
         int maxAsbestos = HbmLivingProperties.MAX_ASBESTOS;
         if (blackLungRaw > 0 && blackLungRaw < maxBlackLung * 0.5D) {
-            HbmLivingProperties.setBlackLung(entity, blackLungRaw - 1);
+            HbmLivingProperties.reduceBlackLung(entity, 1);
         }
 
         double blackLung = Math.min(HbmLivingProperties.getBlackLung(entity), maxBlackLung);
@@ -953,8 +992,7 @@ public final class CommonForgeEvents {
         double total = 1.0D - blackLungDelta * asbestosDelta * sootDelta;
         int frequency = Math.max((int) (1000 - 950 * total), 20);
         if (entity.level().getGameTime() % frequency == Math.floorMod(entity.getId(), frequency) && entity.level() instanceof ServerLevel level) {
-            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), ModSounds.PLAYER_COUGH.get(),
-                    SoundSource.HOSTILE, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacyPlayerCough(entity);
             if (coughsBlood) {
                 spawnVomit(entity, ParticleUtil.VOMIT_BLOOD, 5);
             }
@@ -974,11 +1012,11 @@ public final class CommonForgeEvents {
             return;
         }
         if (entity.isOnFire() && entity.level() instanceof ServerLevel level) {
-            HbmLivingProperties.setOil(entity, 0);
+            HbmLivingProperties.clearOil(entity);
             WeaponExplosionUtil.explodeStandard(level, entity.getX(), entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ(), 3.0F, entity, true, true);
             return;
         }
-        HbmLivingProperties.setOil(entity, oil - 1);
+        HbmLivingProperties.decrementOil(entity);
         if (entity.tickCount % 5 == 0 && entity.level() instanceof ServerLevel level) {
             ParticleUtil.spawnSweat(entity, Blocks.COAL_BLOCK, 1);
         }
@@ -986,11 +1024,11 @@ public final class CommonForgeEvents {
 
     private static void handleTemperatureEffects(LivingEntity entity) {
         if (entity.fireImmune()) {
-            HbmLivingProperties.setFire(entity, 0);
-            HbmLivingProperties.setPhosphorus(entity, 0);
+            HbmLivingProperties.clearFire(entity);
+            HbmLivingProperties.clearPhosphorus(entity);
         }
         if (entity.isInWaterOrRain()) {
-            HbmLivingProperties.setFire(entity, 0);
+            HbmLivingProperties.clearFire(entity);
         }
 
         handleTemperatureEffect(entity, TemperatureEffect.FIRE);
@@ -1004,7 +1042,7 @@ public final class CommonForgeEvents {
         if (value <= 0) {
             return;
         }
-        effect.set(entity, value - 1);
+        effect.decrement(entity);
         if (effect.radiates) {
             RadiationUtil.contaminate(entity, HazardType.RADIATION, ContaminationType.CREATIVE, 5.0F);
         }
@@ -1036,7 +1074,7 @@ public final class CommonForgeEvents {
     }
 
     private static void playVomit(ServerLevel level, LivingEntity entity) {
-        level.playSound(null, entity.blockPosition(), com.hbm.ntm.registry.ModSounds.PLAYER_VOMIT.get(), SoundSource.HOSTILE, 1.0F, 1.0F);
+        LegacySoundPlayer.playLegacyPlayerVomit(entity);
         entity.addEffect(new MobEffectInstance(MobEffects.HUNGER, 60, 19));
     }
 
@@ -1049,19 +1087,19 @@ public final class CommonForgeEvents {
     private enum TemperatureEffect {
         FIRE(ParticleUtil.FLAMETHROWER_META_FIRE, 2.0F, false) {
             @Override int get(LivingEntity entity) { return HbmLivingProperties.getFire(entity); }
-            @Override void set(LivingEntity entity, int value) { HbmLivingProperties.setFire(entity, value); }
+            @Override void decrement(LivingEntity entity) { HbmLivingProperties.decrementFire(entity); }
         },
         PHOSPHORUS(ParticleUtil.FLAMETHROWER_META_FIRE, 5.0F, false) {
             @Override int get(LivingEntity entity) { return HbmLivingProperties.getPhosphorus(entity); }
-            @Override void set(LivingEntity entity, int value) { HbmLivingProperties.setPhosphorus(entity, value); }
+            @Override void decrement(LivingEntity entity) { HbmLivingProperties.decrementPhosphorus(entity); }
         },
         BALEFIRE(ParticleUtil.FLAMETHROWER_META_BALEFIRE, 5.0F, true) {
             @Override int get(LivingEntity entity) { return HbmLivingProperties.getBalefire(entity); }
-            @Override void set(LivingEntity entity, int value) { HbmLivingProperties.setBalefire(entity, value); }
+            @Override void decrement(LivingEntity entity) { HbmLivingProperties.decrementBalefire(entity); }
         },
         BLACK_FIRE(ParticleUtil.FLAMETHROWER_META_BLACK, 10.0F, true) {
             @Override int get(LivingEntity entity) { return HbmLivingProperties.getBlackFire(entity); }
-            @Override void set(LivingEntity entity, int value) { HbmLivingProperties.setBlackFire(entity, value); }
+            @Override void decrement(LivingEntity entity) { HbmLivingProperties.decrementBlackFire(entity); }
         };
 
         private final int flameMeta;
@@ -1075,7 +1113,7 @@ public final class CommonForgeEvents {
         }
 
         abstract int get(LivingEntity entity);
-        abstract void set(LivingEntity entity, int value);
+        abstract void decrement(LivingEntity entity);
     }
 
     private CommonForgeEvents() {

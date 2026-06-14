@@ -1,0 +1,22 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "PPP",
+                    "RCR",
+                    "PPP"
+                ],
+    "key":  {
+                "P":  {
+                          "tag":  "forge:ingots/any_hardplastic"
+                      },
+                "R":  {
+                          "item":  "hbm_ntm_rebirth:crystal_redstone"
+                      },
+                "C":  {
+                          "item":  "hbm_ntm_rebirth:circuit_advanced"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_las_shotgun"
+               }
+}

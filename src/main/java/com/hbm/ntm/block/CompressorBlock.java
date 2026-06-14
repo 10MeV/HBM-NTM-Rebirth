@@ -43,10 +43,13 @@ public class CompressorBlock extends LegacyVisibleMultiblockMachineBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide || type != ModBlockEntities.COMPRESSOR.get()) {
+        if (type != ModBlockEntities.COMPRESSOR.get()) {
             return null;
         }
-        return (tickLevel, tickPos, tickState, blockEntity) ->
+        return level.isClientSide
+                ? (tickLevel, tickPos, tickState, blockEntity) ->
+                CompressorBlockEntity.clientTick(tickLevel, tickPos, tickState, (CompressorBlockEntity) blockEntity)
+                : (tickLevel, tickPos, tickState, blockEntity) ->
                 CompressorBlockEntity.serverTick(tickLevel, tickPos, tickState, (CompressorBlockEntity) blockEntity);
     }
 

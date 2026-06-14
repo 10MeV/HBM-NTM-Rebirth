@@ -1,0 +1,18 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "  P",
+                    "BBB"
+                ],
+    "key":  {
+                "P":  {
+                          "tag":  "forge:plates/steel"
+                      },
+                "B":  {
+                          "tag":  "forge:bolts/steel"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_bayonet"
+               }
+}

@@ -8,8 +8,8 @@ import com.hbm.ntm.bullet.SednaMagazineConfig;
 import com.hbm.ntm.bullet.SednaReceiverConfig;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.network.HbmKeybind;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.sound.LegacySoundIds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -129,7 +129,8 @@ public class TauCannonItem extends SednaGunItem {
             SednaReceiverConfig receiver) {
         SoundEvent sound = LegacySoundIds.resolveEvent("GUN_TAU_FIRE");
         if (sound == null) {
-            sound = ModSounds.WEAPON_SHOTGUN_SHOOT.get();
+            LegacySoundPlayer.playLegacyShotgunShoot(player, receiver.fireVolume(), receiver.firePitch());
+            return;
         }
         level.playSound(null, player.getX(), player.getY(), player.getZ(), sound, SoundSource.PLAYERS,
                 receiver.fireVolume(), receiver.firePitch());
@@ -138,7 +139,8 @@ public class TauCannonItem extends SednaGunItem {
     private void playPrimaryReleaseSound(ServerPlayer player) {
         SoundEvent sound = LegacySoundIds.resolveEvent("GUN_TAU_STOPFIRE");
         if (sound == null) {
-            sound = ModSounds.WEAPON_FIRE_TAU_RELEASE.get();
+            LegacySoundPlayer.playLegacyTauRelease(player);
+            return;
         }
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), sound, SoundSource.PLAYERS,
                 1.0F, 1.0F);

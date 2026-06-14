@@ -3,9 +3,9 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.api.block.ChainExplodable;
 import com.hbm.ntm.entity.item.LegacyPrimedExplosiveEntity;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.registry.ModBlocks;
-import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -96,11 +96,7 @@ public class LegacyRadiationBarrelBlock extends Block implements ChainExplodable
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         super.animateTick(state, level, pos, random);
-        level.addParticle(ModParticleTypes.TOWN_AURA.get(),
-                pos.getX() + random.nextFloat() * 0.5F + 0.25F,
-                pos.getY() + 1.1F,
-                pos.getZ() + random.nextFloat() * 0.5F + 0.25F,
-                0.0D, 0.0D, 0.0D);
+        ParticleUtil.spawnRandomTownAuraOnBarrel(level, pos, random);
     }
 
     @Override

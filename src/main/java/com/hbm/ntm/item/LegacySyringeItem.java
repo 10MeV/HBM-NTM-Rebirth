@@ -1,13 +1,12 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.config.PotionConfig;
-import com.hbm.ntm.radiation.RadiationData;
+import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.InventoryUtil;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -86,7 +85,7 @@ public class LegacySyringeItem extends Item {
                 target.addEffect(new MobEffectInstance(ModEffects.TAINT.get(), 60 * 20, 0));
                 target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 5 * 20, 0));
             }
-            case MKUNICORN -> RadiationData.setContagion(target, 3 * 60 * 60 * 20);
+            case MKUNICORN -> HbmLivingProperties.applyMkuContagion(target);
         }
 
         stack.shrink(1);
@@ -101,16 +100,12 @@ public class LegacySyringeItem extends Item {
     }
 
     private static void playSyringeSound(Level level, LivingEntity target) {
-        level.playSound(null, target.getX(), target.getY(), target.getZ(),
-                ModSounds.TOOL_SYRINGE.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+        LegacySoundPlayer.playLegacySyringe(target);
     }
 
     private static void giveContainer(LivingEntity source, ItemStack stack) {
         if (source instanceof Player player) {
-            ItemStack remainder = InventoryUtil.tryAddItemToInventory(player, stack);
-            if (!remainder.isEmpty()) {
-                player.drop(remainder, false);
-            }
+            InventoryUtil.giveOrDrop(player, stack);
         }
     }
 

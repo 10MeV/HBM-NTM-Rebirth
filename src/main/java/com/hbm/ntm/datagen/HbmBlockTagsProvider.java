@@ -42,14 +42,16 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.CHAIN.get());
         ModBlocks.CAP_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CAP_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
-        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.PRIBRIS.get(), ModBlocks.PRIBRIS_BURNING.get(),
+                ModBlocks.PRIBRIS_RADIATING.get(), ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),
                 ModBlocks.RAD_LAVA_BLOCK.get(), ModBlocks.SELLAFIELD.get(), ModBlocks.SELLAFIELD_SLAKED.get(),
                 ModBlocks.SELLAFIELD_BEDROCK.get(), ModBlocks.ORE_SELLAFIELD_DIAMOND.get(),
                 ModBlocks.ORE_SELLAFIELD_EMERALD.get(), ModBlocks.ORE_SELLAFIELD_URANIUM_SCORCHED.get(),
                 ModBlocks.ORE_SELLAFIELD_SCHRABIDIUM.get(), ModBlocks.ORE_SELLAFIELD_RADGEM.get(),
                 ModBlocks.GLASS_TRINITITE.get(), ModBlocks.REINFORCED_LAMINATE.get(),
                 ModBlocks.REINFORCED_LAMINATE_PANE.get());
-        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.PRIBRIS.get(), ModBlocks.PRIBRIS_BURNING.get(),
+                ModBlocks.PRIBRIS_RADIATING.get(), ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),
                 ModBlocks.RAD_LAVA_BLOCK.get(), ModBlocks.SELLAFIELD.get(), ModBlocks.SELLAFIELD_SLAKED.get(),
                 ModBlocks.SELLAFIELD_BEDROCK.get(), ModBlocks.ORE_SELLAFIELD_DIAMOND.get(),
                 ModBlocks.ORE_SELLAFIELD_EMERALD.get(), ModBlocks.ORE_SELLAFIELD_URANIUM_SCORCHED.get(),
@@ -129,6 +131,7 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         addLegacyForgeOreTag("asbestos", "ore_asbestos", "ore_gneiss_asbestos");
         addLegacyForgeOreTag("coal", "ore_nether_coal");
         addLegacyForgeTag("storage_blocks/lead", "block_lead");
+        addLegacyForgeTag("storage_blocks/niobium", "block_niobium");
     }
 
     private void addLegacyForgeOreTag(String material, String... blockNames) {

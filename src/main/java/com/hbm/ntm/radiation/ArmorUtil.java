@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
@@ -94,6 +95,10 @@ public final class ArmorUtil {
         HazmatRegistry.registerDefaultProtections();
     }
 
+    public static void registerDefaultProtections() {
+        HazmatRegistry.registerDefaultProtections();
+    }
+
     public static void registerProtection(Item item, HazardClass... hazardClasses) {
         HazmatRegistry.registerProtection(item, hazardClasses);
     }
@@ -152,6 +157,14 @@ public final class ArmorUtil {
         HazmatRegistry.clearExternalProtections();
     }
 
+    public static void replaceProtections(Map<Item, ? extends Collection<HazardClass>> protections) {
+        HazmatRegistry.replaceProtections(protections);
+    }
+
+    public static void replaceExternalProtections(Map<Item, ? extends Collection<HazardClass>> protections) {
+        HazmatRegistry.replaceExternalProtections(protections);
+    }
+
     public static Set<HazardClass> getProtection(ItemStack stack) {
         return HazmatRegistry.getProtection(stack);
     }
@@ -162,6 +175,10 @@ public final class ArmorUtil {
 
     public static Map<Item, EnumSet<HazardClass>> protectionSnapshot() {
         return HazmatRegistry.protectionSnapshot();
+    }
+
+    public static Map<Item, EnumSet<HazardClass>> externalProtectionDefaultsSnapshot() {
+        return HazmatRegistry.externalProtectionDefaultsSnapshot();
     }
 
     public static boolean checkForHazmat(LivingEntity entity) {

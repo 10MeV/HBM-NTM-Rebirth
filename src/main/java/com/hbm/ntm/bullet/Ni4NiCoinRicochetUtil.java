@@ -2,6 +2,7 @@ package com.hbm.ntm.bullet;
 
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.entity.projectile.CoinEntity;
+import com.hbm.ntm.particle.ParticleUtil;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -53,8 +54,8 @@ public final class Ni4NiCoinRicochetUtil {
         redirected.overrideDamage = redirectedDamage(config, bullet.level(), overrideDamage);
         bullet.level().addFreshEntity(redirected);
         if (bullet.level() instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.EXPLOSION, coinHit.location().x,
-                    coinHit.location().y, coinHit.location().z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            ParticleUtil.spawnVanillaExtLargeExplode(serverLevel, coinHit.location().x,
+                    coinHit.location().y, coinHit.location().z, 1.5F, 1);
         }
         return true;
     }

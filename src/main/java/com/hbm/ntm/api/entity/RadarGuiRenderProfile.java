@@ -5,6 +5,7 @@ import net.minecraft.util.Mth;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public final class RadarGuiRenderProfile {
@@ -49,9 +50,28 @@ public final class RadarGuiRenderProfile {
         return active ^ (jammed && flicker);
     }
 
+    public static boolean shouldRenderMainControlIcon(RadarMenuState state, RadarControlPanel.Button button,
+            boolean flicker) {
+        return shouldRenderMainControlIcon(controlActive(state, button), state != null && state.jammed(), flicker);
+    }
+
+    public static boolean controlActive(RadarMenuState state, RadarControlPanel.Button button) {
+        return state != null && button != null && state.controlActive(button.control());
+    }
+
     public static TextureBlit mainControlIcon(int leftPos, int topPos, RadarControlPanel.Button button) {
         return new TextureBlit(leftPos + button.mainX(), topPos + button.mainY(), button.iconU(), button.iconV(),
                 RadarControlPanel.BUTTON_SIZE, RadarControlPanel.BUTTON_SIZE);
+    }
+
+    public static void forEachVisibleMainControlIcon(int leftPos, int topPos, RadarMenuState state,
+            BooleanSupplier flicker, Consumer<TextureBlit> consumer) {
+        for (RadarControlPanel.Button button : RadarControlPanel.buttons()) {
+            boolean flickerValue = flicker != null && flicker.getAsBoolean();
+            if (shouldRenderMainControlIcon(state, button, flickerValue)) {
+                consumer.accept(mainControlIcon(leftPos, topPos, button));
+            }
+        }
     }
 
     public static TextureBlit slotControlIcon(int leftPos, int topPos, RadarControlPanel.Button button) {
@@ -66,6 +86,25 @@ public final class RadarGuiRenderProfile {
     public static SlotToggleFrame slotToggleFrame(RadarControlPanel.Button button, boolean active) {
         return new SlotToggleFrame(button.slotX(), button.slotY(),
                 active ? SLOT_TOGGLE_ACTIVE_BORDER : SLOT_TOGGLE_INACTIVE_BORDER);
+    }
+
+    public static SlotToggleFrame slotToggleFrame(RadarControlPanel.Button button, RadarMenuState state) {
+        return slotToggleFrame(button, controlActive(state, button));
+    }
+
+    public static void forEachSlotToggle(int leftPos, int topPos, RadarMenuState state, Consumer<SlotToggle> consumer) {
+        for (RadarControlPanel.Button button : RadarControlPanel.buttons()) {
+            boolean active = controlActive(state, button);
+            consumer.accept(new SlotToggle(slotToggleFrame(button, active), slotControlIcon(leftPos, topPos, button),
+                    active));
+        }
+    }
+
+    public static MainContentPlan mainContent(RadarMenuState state, long consumption) {
+        if (state == null || !state.hasOperatingPower(consumption)) {
+            return MainContentPlan.EMPTY;
+        }
+        return new MainContentPlan(true, state.jammed(), state.showMap());
     }
 
     public static EnergyBar mainEnergyBar(int leftPos, int topPos, int width) {
@@ -171,5 +210,16 @@ public final class RadarGuiRenderProfile {
     }
 
     public record Blip(double x, double y, int level) {
+    }
+
+    public record MainContentPlan(boolean renderContent, boolean renderNoise, boolean renderMap) {
+        public static final MainContentPlan EMPTY = new MainContentPlan(false, false, false);
+
+        public boolean renderSweepAndBlips() {
+            return renderContent && !renderNoise;
+        }
+    }
+
+    public record SlotToggle(SlotToggleFrame frame, TextureBlit icon, boolean active) {
     }
 }

@@ -138,15 +138,25 @@ public final class LegacyRbmkMachineRenderer {
     public static void renderCraneConsole(ObjRenderContext context, CraneConsoleState state, float partialTick,
             long currentMillis) {
         CraneConsoleState safe = state == null ? CraneConsoleState.EMPTY : state;
+        renderCraneConsolePlan(context, LegacyTileRenderPlans.craneConsolePlan(
+                safe.lastTiltFront(), safe.tiltFront(), safe.lastTiltLeft(), safe.tiltLeft(),
+                safe.loadedHeat(), safe.loadedEnrichment(), safe.loading(), safe.loaded(), safe.validTarget(),
+                null, currentMillis, partialTick));
+    }
+
+    public static void renderCraneConsolePlan(ObjRenderContext context, LegacyTileRenderPlans.CraneConsolePlan plan) {
+        if (plan == null) {
+            return;
+        }
         PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
-        poseStack.translate(CRANE_CONSOLE_X, 0.0D, 0.0D);
+        poseStack.translate(plan.translateX(), 0.0D, 0.0D);
         ObjRbmkModels.CRANE_CONSOLE.renderPart("Console_Coonsole", ObjRbmkModels.CRANE_CONSOLE_TEXTURE, context);
-        renderCraneJoystick(context, safe.lastTiltFront(), safe.tiltFront(), safe.lastTiltLeft(), safe.tiltLeft(), partialTick);
-        renderCraneMeter(context, "Meter1", CRANE_METER1_PIVOT_Z, safe.loadedHeat(), currentMillis);
-        renderCraneMeter(context, "Meter2", CRANE_METER2_PIVOT_Z, safe.loadedEnrichment(), currentMillis);
-        renderCraneLamp(context, "Lamp1", loadingLampColor(safe.loading(), safe.loaded()));
-        renderCraneLamp(context, "Lamp2", targetLampColor(safe.validTarget()));
+        renderCraneJoystick(context, plan.joystick());
+        renderCraneMeter(context, plan.meterHeat());
+        renderCraneMeter(context, plan.meterEnrichment());
+        renderCraneLamp(context, plan.loadingLamp());
+        renderCraneLamp(context, plan.targetLamp());
         poseStack.popPose();
     }
 
@@ -162,6 +172,20 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.popPose();
     }
 
+    public static void renderCraneJoystick(ObjRenderContext context, LegacyTileRenderPlans.CraneJoystickPlan plan) {
+        if (plan == null) {
+            return;
+        }
+        PoseStack poseStack = context.poseStack();
+        poseStack.pushPose();
+        poseStack.translate(plan.pivotX(), plan.pivotY(), 0.0D);
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) plan.tiltFrontDegrees()));
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) plan.tiltLeftDegrees()));
+        poseStack.translate(-plan.pivotX(), plan.restoreY(), 0.0D);
+        ObjRbmkModels.CRANE_CONSOLE.renderPart("JoyStick", ObjRbmkModels.CRANE_CONSOLE_TEXTURE, context);
+        poseStack.popPose();
+    }
+
     public static void renderCraneMeter(ObjRenderContext context, String partName, double pivotZ, double value,
             long currentMillis) {
         PoseStack poseStack = context.poseStack();
@@ -173,8 +197,30 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.popPose();
     }
 
+    public static void renderCraneMeter(ObjRenderContext context, LegacyTileRenderPlans.CraneMeterPlan plan) {
+        if (plan == null) {
+            return;
+        }
+        PoseStack poseStack = context.poseStack();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, plan.pivotY(), plan.pivotZ());
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) plan.angleDegrees()));
+        poseStack.translate(0.0D, -plan.pivotY(), -plan.pivotZ());
+        ObjRbmkModels.CRANE_CONSOLE.renderPart(plan.partName(), ObjRbmkModels.CRANE_CONSOLE_TEXTURE, context);
+        poseStack.popPose();
+    }
+
     public static void renderCraneLamp(ObjRenderContext context, String partName, int color) {
         ObjRbmkModels.CRANE_CONSOLE.renderPartUntextured(partName, context.fullBright().withColor(color));
+    }
+
+    public static void renderCraneLamp(ObjRenderContext context, LegacyTileRenderPlans.ModelPartTintPlan plan) {
+        if (plan == null || !plan.active()) {
+            return;
+        }
+        LegacyTileRenderPlans.RgbaPlan color = plan.color();
+        ObjRbmkModels.CRANE_CONSOLE.renderPartUntextured(plan.partName(),
+                context.fullBright().withRgba(color.redByte(), color.greenByte(), color.blueByte(), color.alphaByte()));
     }
 
     public static double craneMeterAngle(double value, long currentMillis) {

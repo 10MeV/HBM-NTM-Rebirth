@@ -29,19 +29,25 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public class AnnihilatorSavedData extends SavedData {
     public static final String DATA_NAME = "annihilator";
     public static final String KEY = DATA_NAME;
-    private static final String TAG_POOLS = "pools";
-    private static final String TAG_POOL_NAME = "poolname";
-    private static final String TAG_POOL = "pool";
-    private static final String TAG_KEY = "key";
-    private static final String TAG_ITEM = "item";
-    private static final String TAG_META = "meta";
-    private static final String TAG_FLUID = "fluid";
-    private static final String TAG_DICT = "dict";
-    private static final String TAG_AMOUNT = "amount";
+    public static final String TAG_POOLS = "pools";
+    public static final String TAG_POOL_NAME = "poolname";
+    public static final String TAG_POOL = "pool";
+    public static final String TAG_KEY = "key";
+    public static final String TAG_ITEM = "item";
+    public static final String TAG_META = "meta";
+    public static final String TAG_FLUID = "fluid";
+    public static final String TAG_DICT = "dict";
+    public static final String TAG_AMOUNT = "amount";
+    public static final byte KEY_ITEM = 0;
+    public static final byte KEY_ITEM_META = 1;
+    public static final byte KEY_FLUID = 2;
+    public static final byte KEY_ORE_DICT = 3;
 
     public final HashMap<String, AnnihilatorPool> pools = new DirtyTrackingPoolMap();
     private LoadDiagnostics loadDiagnostics = LoadDiagnostics.empty();
@@ -191,6 +197,183 @@ public class AnnihilatorSavedData extends SavedData {
 
     public void writeToNBT(CompoundTag tag) {
         save(tag);
+    }
+
+    public int readLegacyPools(CompoundTag tag) {
+        return readLegacyPools(tag, true);
+    }
+
+    public int readLegacyPools(CompoundTag tag, boolean clearExisting) {
+        AnnihilatorSavedData loaded = load(tag == null ? new CompoundTag() : tag);
+        if (clearExisting) {
+            pools.clear();
+        }
+        loaded.pools.forEach((name, pool) -> pools.put(name, pool.copy(this::setDirty)));
+        loadDiagnostics = loaded.loadDiagnostics;
+        poolLoadDiagnostics = loaded.poolLoadDiagnostics;
+        if (loaded.poolCount() > 0) {
+            setDirty();
+        }
+        return loaded.poolCount();
+    }
+
+    public int readLegacyPools(LegacyPools legacyPools) {
+        return readLegacyPools(legacyPools, true);
+    }
+
+    public int readLegacyPools(LegacyPools legacyPools, boolean clearExisting) {
+        if (legacyPools == null) {
+            return 0;
+        }
+        if (clearExisting) {
+            pools.clear();
+        }
+        for (LegacyPool pool : legacyPools.pools()) {
+            pools.put(pool.name(), pool.toPool(this::setDirty));
+        }
+        if (!legacyPools.isEmpty()) {
+            setDirty();
+        }
+        return legacyPools.poolCount();
+    }
+
+    public int readLegacyPools(ListTag pools) {
+        return readLegacyPools(pools, true);
+    }
+
+    public int readLegacyPools(ListTag pools, boolean clearExisting) {
+        if (pools == null) {
+            return 0;
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.put(TAG_POOLS, pools);
+        return readLegacyPools(tag, clearExisting);
+    }
+
+    public void writeLegacyPools(CompoundTag tag) {
+        if (tag != null) {
+            tag.put(TAG_POOLS, writeLegacyPoolsList());
+        }
+    }
+
+    public CompoundTag writeLegacyPoolsTag() {
+        CompoundTag tag = new CompoundTag();
+        writeLegacyPools(tag);
+        return tag;
+    }
+
+    public ListTag writeLegacyPoolsList() {
+        ListTag poolsTag = new ListTag();
+        for (Map.Entry<String, AnnihilatorPool> entry : pools.entrySet()) {
+            poolsTag.add(writeLegacyPoolTag(entry.getKey(), entry.getValue()));
+        }
+        return poolsTag;
+    }
+
+    public LegacyPools legacyPoolsSnapshot() {
+        return new LegacyPools(pools.entrySet().stream()
+                .map(entry -> new LegacyPool(entry.getKey(), entry.getValue().entriesSnapshot().stream()
+                        .map(poolEntry -> new AnnihilatorPool.PoolEntry(poolEntry.getKey(),
+                                poolEntry.getKey().toLegacyObject(), poolEntry.getValue()))
+                        .toList()))
+                .toList());
+    }
+
+    public boolean readLegacyPool(CompoundTag tag) {
+        Optional<LegacyPool> legacyPool = readLegacyPoolTag(tag);
+        legacyPool.ifPresent(pool -> pools.put(pool.name(), pool.toPool(this::setDirty)));
+        return legacyPool.isPresent();
+    }
+
+    public boolean readLegacyPool(String poolName, ListTag entries) {
+        if (poolName == null || poolName.isBlank() || entries == null) {
+            return false;
+        }
+        AnnihilatorPool pool = createPool();
+        pool.deserialize(entries);
+        pools.put(poolName, pool);
+        setDirty();
+        return true;
+    }
+
+    public boolean readLegacyEntry(String poolName, CompoundTag tag) {
+        if (poolName == null || poolName.isBlank() || tag == null) {
+            return false;
+        }
+        boolean loaded = grabPool(poolName).deserializeEntry(tag);
+        if (loaded) {
+            setDirty();
+        }
+        return loaded;
+    }
+
+    public static void writeLegacyPool(CompoundTag tag, String poolName, AnnihilatorPool pool) {
+        if (tag == null || poolName == null || poolName.isBlank() || pool == null) {
+            return;
+        }
+        tag.putString(TAG_POOL_NAME, poolName);
+        tag.put(TAG_POOL, pool.serialize());
+    }
+
+    public static CompoundTag writeLegacyPoolTag(String poolName, AnnihilatorPool pool) {
+        CompoundTag tag = new CompoundTag();
+        writeLegacyPool(tag, poolName, pool);
+        return tag;
+    }
+
+    public static LegacyPools readLegacyPoolsTag(CompoundTag tag) {
+        if (tag == null || !tag.contains(TAG_POOLS, Tag.TAG_LIST)) {
+            return LegacyPools.EMPTY;
+        }
+        return new LegacyPools(readLegacyPoolsList(tag.getList(TAG_POOLS, Tag.TAG_COMPOUND)));
+    }
+
+    public static List<LegacyPool> readLegacyPoolsList(ListTag pools) {
+        if (pools == null) {
+            return List.of();
+        }
+        List<LegacyPool> result = new ArrayList<>();
+        for (int i = 0; i < pools.size(); i++) {
+            readLegacyPoolTag(pools.getCompound(i)).ifPresent(result::add);
+        }
+        return List.copyOf(result);
+    }
+
+    public static void writeLegacyPools(CompoundTag tag, Collection<LegacyPool> pools) {
+        if (tag != null) {
+            tag.put(TAG_POOLS, writeLegacyPoolsList(pools));
+        }
+    }
+
+    public static CompoundTag writeLegacyPoolsTag(Collection<LegacyPool> pools) {
+        CompoundTag tag = new CompoundTag();
+        writeLegacyPools(tag, pools);
+        return tag;
+    }
+
+    public static ListTag writeLegacyPoolsList(Collection<LegacyPool> pools) {
+        ListTag poolsTag = new ListTag();
+        if (pools != null) {
+            for (LegacyPool pool : pools) {
+                if (pool != null) {
+                    poolsTag.add(pool.writeTag());
+                }
+            }
+        }
+        return poolsTag;
+    }
+
+    public static Optional<LegacyPool> readLegacyPoolTag(CompoundTag tag) {
+        if (tag == null || !tag.contains(TAG_POOL_NAME, Tag.TAG_STRING)
+                || !tag.contains(TAG_POOL, Tag.TAG_LIST)) {
+            return Optional.empty();
+        }
+        String poolName = tag.getString(TAG_POOL_NAME);
+        if (poolName.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(new LegacyPool(poolName,
+                AnnihilatorPool.readLegacyEntries(tag.getList(TAG_POOL, Tag.TAG_COMPOUND))));
     }
 
     public AnnihilatorPool grabPool(String pool) {
@@ -524,6 +707,15 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         @Override
+        public AnnihilatorPool putIfAbsent(String key, AnnihilatorPool value) {
+            AnnihilatorPool previous = super.putIfAbsent(key, bindPool(value));
+            if (previous == null) {
+                setDirty();
+            }
+            return previous;
+        }
+
+        @Override
         public AnnihilatorPool remove(Object key) {
             AnnihilatorPool previous = super.remove(key);
             if (previous != null) {
@@ -533,11 +725,100 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         @Override
+        public boolean remove(Object key, Object value) {
+            boolean removed = super.remove(key, value);
+            if (removed) {
+                setDirty();
+            }
+            return removed;
+        }
+
+        @Override
+        public AnnihilatorPool replace(String key, AnnihilatorPool value) {
+            AnnihilatorPool previous = super.replace(key, bindPool(value));
+            if (previous != null && previous != value) {
+                setDirty();
+            }
+            return previous;
+        }
+
+        @Override
+        public boolean replace(String key, AnnihilatorPool oldValue, AnnihilatorPool newValue) {
+            boolean replaced = super.replace(key, oldValue, bindPool(newValue));
+            if (replaced && oldValue != newValue) {
+                setDirty();
+            }
+            return replaced;
+        }
+
+        @Override
         public void putAll(Map<? extends String, ? extends AnnihilatorPool> map) {
             if (!map.isEmpty()) {
                 for (Map.Entry<? extends String, ? extends AnnihilatorPool> entry : map.entrySet()) {
                     super.put(entry.getKey(), bindPool(entry.getValue()));
                 }
+                setDirty();
+            }
+        }
+
+        @Override
+        public AnnihilatorPool computeIfAbsent(String key,
+                                               Function<? super String, ? extends AnnihilatorPool> mappingFunction) {
+            boolean hadKey = containsKey(key);
+            AnnihilatorPool result = super.computeIfAbsent(key, poolName -> bindPool(mappingFunction.apply(poolName)));
+            if (!hadKey && result != null) {
+                setDirty();
+            }
+            return result;
+        }
+
+        @Override
+        public AnnihilatorPool compute(String key,
+                                       BiFunction<? super String, ? super AnnihilatorPool,
+                                               ? extends AnnihilatorPool> remappingFunction) {
+            boolean hadKey = containsKey(key);
+            AnnihilatorPool previous = super.get(key);
+            AnnihilatorPool result = super.compute(key,
+                    (poolName, pool) -> bindPool(remappingFunction.apply(poolName, pool)));
+            if (hadKey != containsKey(key) || previous != result) {
+                setDirty();
+            }
+            return result;
+        }
+
+        @Override
+        public AnnihilatorPool computeIfPresent(String key,
+                                                BiFunction<? super String, ? super AnnihilatorPool,
+                                                        ? extends AnnihilatorPool> remappingFunction) {
+            boolean hadKey = containsKey(key);
+            AnnihilatorPool previous = super.get(key);
+            AnnihilatorPool result = super.computeIfPresent(key,
+                    (poolName, pool) -> bindPool(remappingFunction.apply(poolName, pool)));
+            if (hadKey && (previous != result || !containsKey(key))) {
+                setDirty();
+            }
+            return result;
+        }
+
+        @Override
+        public AnnihilatorPool merge(String key, AnnihilatorPool value,
+                                     BiFunction<? super AnnihilatorPool, ? super AnnihilatorPool,
+                                             ? extends AnnihilatorPool> remappingFunction) {
+            boolean hadKey = containsKey(key);
+            AnnihilatorPool previous = super.get(key);
+            AnnihilatorPool result = super.merge(key, bindPool(value),
+                    (oldPool, newPool) -> bindPool(remappingFunction.apply(oldPool, newPool)));
+            if (!hadKey || previous != result) {
+                setDirty();
+            }
+            return result;
+        }
+
+        @Override
+        public void replaceAll(BiFunction<? super String, ? super AnnihilatorPool,
+                ? extends AnnihilatorPool> function) {
+            if (!isEmpty()) {
+                super.replaceAll((name, pool) -> bindPool(function.apply(name, pool)));
                 setDirty();
             }
         }
@@ -665,6 +946,7 @@ public class AnnihilatorSavedData extends SavedData {
             List<Map.Entry<Object, BigInteger>> entries = new ArrayList<>();
             for (Map.Entry<Object, BigInteger> entry : items.entrySet()) {
                 PoolKey.fromLegacyObject(entry.getKey())
+                        .map(PoolKey::toLegacyObject)
                         .ifPresent(key -> entries.add(new AbstractMap.SimpleImmutableEntry<>(key, entry.getValue())));
             }
             return List.copyOf(entries);
@@ -721,15 +1003,51 @@ public class AnnihilatorSavedData extends SavedData {
                 if (key.isEmpty()) {
                     continue;
                 }
-                CompoundTag tag = new CompoundTag();
-                serializeKey(tag, key.get());
-                tag.putByteArray(TAG_AMOUNT, entry.getValue().toByteArray());
-                list.add(tag);
+                list.add(serializeEntryTag(key.get(), entry.getValue()));
             }
+        }
+
+        public static void serializeEntry(CompoundTag tag, Object legacyKey, BigInteger amount) {
+            if (tag == null || amount == null) {
+                return;
+            }
+            PoolKey.fromLegacyObject(legacyKey).ifPresent(key -> {
+                key.save(tag);
+                writeLegacyAmount(tag, amount);
+            });
+        }
+
+        public static CompoundTag serializeEntryTag(Object legacyKey, BigInteger amount) {
+            CompoundTag tag = new CompoundTag();
+            serializeEntry(tag, legacyKey, amount);
+            return tag;
         }
 
         public void deserialize(ListTag list) {
             deserializeWithDiagnostics(list);
+        }
+
+        public static List<PoolEntry> readLegacyEntries(ListTag list) {
+            if (list == null) {
+                return List.of();
+            }
+            List<PoolEntry> entries = new ArrayList<>();
+            for (int i = 0; i < list.size(); i++) {
+                readLegacyEntryTag(list.getCompound(i)).ifPresent(entries::add);
+            }
+            return List.copyOf(entries);
+        }
+
+        public static ListTag writeLegacyEntriesList(Iterable<PoolEntry> entries) {
+            ListTag list = new ListTag();
+            if (entries != null) {
+                for (PoolEntry entry : entries) {
+                    if (entry != null) {
+                        list.add(entry.writeTag());
+                    }
+                }
+            }
+            return list;
         }
 
         public PoolEntryLoadDiagnostics deserializeWithDiagnostics(ListTag list) {
@@ -740,24 +1058,93 @@ public class AnnihilatorSavedData extends SavedData {
             int duplicateKeys = 0;
             for (int i = 0; i < list.size(); i++) {
                 CompoundTag tag = list.getCompound(i);
-                Optional<PoolKey> key = deserializePoolKey(tag);
-                if (key.isEmpty()) {
-                    invalidKeys++;
+                Optional<PoolEntry> entry = readLegacyEntryTag(tag);
+                if (entry.isEmpty()) {
+                    if (deserializePoolKey(tag).isEmpty()) {
+                        invalidKeys++;
+                    } else {
+                        invalidAmounts++;
+                    }
                     continue;
                 }
-                Optional<BigInteger> amount = readAmount(tag);
-                if (amount.isEmpty()) {
-                    invalidAmounts++;
-                    continue;
-                }
-                if (items.containsKey(key.get())) {
+                PoolEntry value = entry.get();
+                if (items.containsKey(value.key())) {
                     duplicateKeys++;
                 }
-                items.put(key.get(), amount.get());
+                items.put(value.key(), value.amount());
                 entriesLoaded++;
             }
             return new PoolEntryLoadDiagnostics(list.size(), entriesLoaded, invalidKeys, invalidAmounts,
                     duplicateKeys);
+        }
+
+        public boolean deserializeEntry(CompoundTag tag) {
+            Optional<PoolEntry> entry = readLegacyEntryTag(tag);
+            entry.ifPresent(value -> items.put(value.key(), value.amount()));
+            return entry.isPresent();
+        }
+
+        public Optional<Map.Entry<PoolKey, BigInteger>> readEntry(CompoundTag tag) {
+            return readLegacyEntryTag(tag).map(PoolEntry::modernEntry);
+        }
+
+        public Optional<PoolEntry> readLegacyEntry(CompoundTag tag) {
+            return readLegacyEntryTag(tag);
+        }
+
+        public static Optional<PoolEntry> readLegacyEntryTag(CompoundTag tag) {
+            if (tag == null) {
+                return Optional.empty();
+            }
+            Optional<PoolKey> key = PoolKey.load(tag);
+            if (key.isEmpty()) {
+                return Optional.empty();
+            }
+            Optional<BigInteger> amount = readAmount(tag);
+            if (amount.isEmpty()) {
+                return Optional.empty();
+            }
+            return Optional.of(new PoolEntry(key.get(), key.get().toLegacyObject(), amount.get()));
+        }
+
+        public static Optional<BigInteger> readLegacyAmount(CompoundTag tag) {
+            return tag == null ? Optional.empty() : readAmount(tag);
+        }
+
+        public static void writeLegacyAmount(CompoundTag tag, BigInteger amount) {
+            if (tag != null && amount != null) {
+                tag.putByteArray(TAG_AMOUNT, amount.toByteArray());
+            }
+        }
+
+        public record PoolEntry(PoolKey key, Object legacyKey, BigInteger amount) {
+            public PoolEntry {
+                Objects.requireNonNull(key, "key");
+                legacyKey = legacyKey == null ? key.toLegacyObject() : legacyKey;
+                Objects.requireNonNull(amount, "amount");
+            }
+
+            public Map.Entry<PoolKey, BigInteger> modernEntry() {
+                return new AbstractMap.SimpleImmutableEntry<>(key, amount);
+            }
+
+            public Optional<Map.Entry<Object, BigInteger>> legacyEntry() {
+                return legacyKey == null ? Optional.empty()
+                        : Optional.of(new AbstractMap.SimpleImmutableEntry<>(legacyKey, amount));
+            }
+
+            public void write(CompoundTag tag) {
+                if (tag != null) {
+                    key.save(tag);
+                    writeLegacyAmount(tag, amount);
+                }
+            }
+
+            public CompoundTag writeTag() {
+                CompoundTag tag = new CompoundTag();
+                write(tag);
+                return tag;
+            }
         }
 
         public void serializeKey(CompoundTag tag, Object legacyKey) {
@@ -766,11 +1153,17 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         public Object deserializeKey(CompoundTag tag) {
-            return deserializePoolKey(tag).orElse(null);
+            return deserializeLegacyKey(tag);
         }
 
         public Optional<PoolKey> deserializePoolKey(CompoundTag tag) {
             return tag == null ? Optional.empty() : PoolKey.load(tag);
+        }
+
+        public Object deserializeLegacyKey(CompoundTag tag) {
+            return deserializePoolKey(tag)
+                    .map(PoolKey::toLegacyObject)
+                    .orElse(null);
         }
 
         private AnnihilatorPool copy() {
@@ -834,6 +1227,19 @@ public class AnnihilatorSavedData extends SavedData {
             }
 
             @Override
+            public BigInteger putIfAbsent(Object key, BigInteger value) {
+                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
+                if (poolKey.isEmpty()) {
+                    return null;
+                }
+                BigInteger previous = super.putIfAbsent(poolKey.get(), value);
+                if (previous == null) {
+                    markDirty();
+                }
+                return previous;
+            }
+
+            @Override
             public BigInteger remove(Object key) {
                 BigInteger previous = PoolKey.fromLegacyObject(key)
                         .map(poolKey -> super.remove(poolKey))
@@ -845,11 +1251,121 @@ public class AnnihilatorSavedData extends SavedData {
             }
 
             @Override
+            public boolean remove(Object key, Object value) {
+                boolean removed = PoolKey.fromLegacyObject(key)
+                        .map(poolKey -> super.remove(poolKey, value))
+                        .orElse(false);
+                if (removed) {
+                    markDirty();
+                }
+                return removed;
+            }
+
+            @Override
+            public BigInteger replace(Object key, BigInteger value) {
+                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
+                if (poolKey.isEmpty()) {
+                    return null;
+                }
+                BigInteger previous = super.replace(poolKey.get(), value);
+                if (previous != null && !Objects.equals(previous, value)) {
+                    markDirty();
+                }
+                return previous;
+            }
+
+            @Override
+            public boolean replace(Object key, BigInteger oldValue, BigInteger newValue) {
+                boolean replaced = PoolKey.fromLegacyObject(key)
+                        .map(poolKey -> super.replace(poolKey, oldValue, newValue))
+                        .orElse(false);
+                if (replaced && !Objects.equals(oldValue, newValue)) {
+                    markDirty();
+                }
+                return replaced;
+            }
+
+            @Override
             public void putAll(Map<?, ? extends BigInteger> map) {
                 if (!map.isEmpty()) {
                     for (Map.Entry<?, ? extends BigInteger> entry : map.entrySet()) {
                         put(entry.getKey(), entry.getValue());
                     }
+                }
+            }
+
+            @Override
+            public BigInteger computeIfAbsent(Object key,
+                                              Function<? super Object, ? extends BigInteger> mappingFunction) {
+                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
+                if (poolKey.isEmpty()) {
+                    return null;
+                }
+                boolean hadKey = super.containsKey(poolKey.get());
+                BigInteger result = super.computeIfAbsent(poolKey.get(), ignored -> mappingFunction.apply(key));
+                if (!hadKey && result != null) {
+                    markDirty();
+                }
+                return result;
+            }
+
+            @Override
+            public BigInteger compute(Object key,
+                                      BiFunction<? super Object, ? super BigInteger,
+                                              ? extends BigInteger> remappingFunction) {
+                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
+                if (poolKey.isEmpty()) {
+                    return null;
+                }
+                boolean hadKey = super.containsKey(poolKey.get());
+                BigInteger previous = super.get(poolKey.get());
+                BigInteger result = super.compute(poolKey.get(), (ignored, amount) -> remappingFunction.apply(key, amount));
+                if (hadKey != super.containsKey(poolKey.get()) || !Objects.equals(previous, result)) {
+                    markDirty();
+                }
+                return result;
+            }
+
+            @Override
+            public BigInteger computeIfPresent(Object key,
+                                               BiFunction<? super Object, ? super BigInteger,
+                                                       ? extends BigInteger> remappingFunction) {
+                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
+                if (poolKey.isEmpty()) {
+                    return null;
+                }
+                BigInteger previous = super.get(poolKey.get());
+                BigInteger result = super.computeIfPresent(poolKey.get(),
+                        (ignored, amount) -> remappingFunction.apply(key, amount));
+                if (!Objects.equals(previous, result)) {
+                    markDirty();
+                }
+                return result;
+            }
+
+            @Override
+            public BigInteger merge(Object key, BigInteger value,
+                                    BiFunction<? super BigInteger, ? super BigInteger,
+                                            ? extends BigInteger> remappingFunction) {
+                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
+                if (poolKey.isEmpty()) {
+                    return null;
+                }
+                boolean hadKey = super.containsKey(poolKey.get());
+                BigInteger previous = super.get(poolKey.get());
+                BigInteger result = super.merge(poolKey.get(), value, remappingFunction);
+                if (!hadKey || !Objects.equals(previous, result)) {
+                    markDirty();
+                }
+                return result;
+            }
+
+            @Override
+            public void replaceAll(BiFunction<? super Object, ? super BigInteger,
+                    ? extends BigInteger> function) {
+                if (!isEmpty()) {
+                    super.replaceAll((key, amount) -> function.apply(key, amount));
+                    markDirty();
                 }
             }
 
@@ -980,16 +1496,26 @@ public class AnnihilatorSavedData extends SavedData {
             return kind == Kind.FLUID ? HbmFluids.fromName(fluid) : HbmFluids.NONE;
         }
 
+        public Object toLegacyObject() {
+            return switch (kind) {
+                case ITEM -> HbmRegistryUtil.item(item).map(Object.class::cast).orElse(item);
+                case ITEM_META -> new LegacyItemKey(item, meta);
+                case FLUID -> HbmFluids.fromName(fluid);
+                case ORE_DICT -> oreDict;
+                case UNKNOWN -> null;
+            };
+        }
+
         private static Optional<ResourceLocation> readItem(CompoundTag tag) {
             return Optional.ofNullable(ResourceLocation.tryParse(tag.getString(TAG_ITEM)));
         }
     }
 
     public enum Kind {
-        ITEM(0),
-        ITEM_META(1),
-        FLUID(2),
-        ORE_DICT(3),
+        ITEM(KEY_ITEM),
+        ITEM_META(KEY_ITEM_META),
+        FLUID(KEY_FLUID),
+        ORE_DICT(KEY_ORE_DICT),
         UNKNOWN(-1);
 
         private final byte legacyId;
@@ -1000,6 +1526,10 @@ public class AnnihilatorSavedData extends SavedData {
 
         public String commandName() {
             return name().toLowerCase(java.util.Locale.ROOT);
+        }
+
+        public byte legacyId() {
+            return legacyId;
         }
 
         public static Optional<Kind> byCommandName(String name) {
@@ -1015,7 +1545,7 @@ public class AnnihilatorSavedData extends SavedData {
             return Optional.empty();
         }
 
-        private static Kind byLegacyId(byte legacyId) {
+        public static Kind byLegacyId(byte legacyId) {
             for (Kind kind : values()) {
                 if (kind.legacyId == legacyId) {
                     return kind;
@@ -1215,6 +1745,88 @@ public class AnnihilatorSavedData extends SavedData {
         private static PoolSummary of(String name, AnnihilatorPool pool) {
             return new PoolSummary(name, pool.size(), pool.totalAmount(),
                     pool.keyKindCounts(), pool.keyKindTotals());
+        }
+    }
+
+    public record LegacyPool(String name, List<AnnihilatorPool.PoolEntry> entries) {
+        public LegacyPool {
+            if (name == null || name.isBlank()) {
+                throw new IllegalArgumentException("name");
+            }
+            entries = entries == null ? List.of() : List.copyOf(entries);
+        }
+
+        public AnnihilatorPool toPool() {
+            return toPool(null);
+        }
+
+        private AnnihilatorPool toPool(Runnable dirtyCallback) {
+            AnnihilatorPool pool = new AnnihilatorPool(dirtyCallback);
+            for (AnnihilatorPool.PoolEntry entry : entries) {
+                pool.items.put(entry.key(), entry.amount());
+            }
+            return pool;
+        }
+
+        public void write(CompoundTag tag) {
+            if (tag != null) {
+                tag.putString(TAG_POOL_NAME, name);
+                tag.put(TAG_POOL, AnnihilatorPool.writeLegacyEntriesList(entries));
+            }
+        }
+
+        public CompoundTag writeTag() {
+            CompoundTag tag = new CompoundTag();
+            write(tag);
+            return tag;
+        }
+    }
+
+    public record LegacyPools(List<LegacyPool> pools) {
+        public static final LegacyPools EMPTY = new LegacyPools(List.of());
+
+        public LegacyPools {
+            pools = pools == null ? List.of() : pools.stream()
+                    .filter(Objects::nonNull)
+                    .toList();
+        }
+
+        public boolean isEmpty() {
+            return pools.isEmpty();
+        }
+
+        public int poolCount() {
+            return pools.size();
+        }
+
+        public int entryCount() {
+            return pools.stream().mapToInt(pool -> pool.entries().size()).sum();
+        }
+
+        public List<String> poolNames() {
+            return pools.stream().map(LegacyPool::name).toList();
+        }
+
+        public AnnihilatorSavedData toData() {
+            AnnihilatorSavedData data = new AnnihilatorSavedData();
+            data.pools.clear();
+            for (LegacyPool pool : pools) {
+                data.pools.put(pool.name(), pool.toPool(data::setDirty));
+            }
+            data.setDirty(false);
+            return data;
+        }
+
+        public void write(CompoundTag tag) {
+            writeLegacyPools(tag, pools);
+        }
+
+        public CompoundTag writeTag() {
+            return writeLegacyPoolsTag(pools);
+        }
+
+        public ListTag writeList() {
+            return writeLegacyPoolsList(pools);
         }
     }
 }

@@ -224,7 +224,7 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
 
     private static float largeRotation(Direction facing) {
         return switch (facing) {
-            case NORTH -> 90.0F;
+            case SOUTH -> 90.0F;
             case WEST -> 135.0F;
             case EAST -> 45.0F;
             default -> 0.0F;

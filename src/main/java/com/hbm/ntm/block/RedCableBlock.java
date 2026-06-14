@@ -25,6 +25,10 @@ public class RedCableBlock extends HbmEnergyNodeBlock {
         super(properties);
     }
 
+    public boolean usesBlockEntityRenderer(BlockState state) {
+        return true;
+    }
+
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {

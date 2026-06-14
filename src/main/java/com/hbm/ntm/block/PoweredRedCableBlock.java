@@ -1,9 +1,8 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.PoweredRedCableBlockEntity;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -110,8 +109,7 @@ public class PoweredRedCableBlock extends HbmEnergyNodeBlock {
         BlockState updated = state.setValue(ACTIVE, active);
         level.setBlock(pos, updated, Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
         if (playSound) {
-            level.playSound(null, pos, ModSounds.BLOCK_REACTOR_START.get(), SoundSource.BLOCKS, 1.0F,
-                    active ? 1.0F : 0.85F);
+            LegacySoundPlayer.playLegacyReactorStart(level, pos, 1.0F, active ? 1.0F : 0.85F);
         }
         updateEnergyConnectionGraph(level, pos);
     }

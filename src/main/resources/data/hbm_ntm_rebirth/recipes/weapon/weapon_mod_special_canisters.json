@@ -1,0 +1,22 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    " R ",
+                    "CCC",
+                    "SSS"
+                ],
+    "key":  {
+                "R":  {
+                          "tag":  "forge:pipes/rubber"
+                      },
+                "C":  {
+                          "item":  "hbm_ntm_rebirth:canister_empty"
+                      },
+                "S":  {
+                          "tag":  "forge:plates/steel"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_canisters"
+               }
+}

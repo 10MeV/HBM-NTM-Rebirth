@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:block_slag" } },
+  "outputs": [
+    { "item": "minecraft:gravel" },
+    { "item": "hbm_ntm_rebirth:powder_fire" },
+    { "item": "hbm_ntm_rebirth:powder_calcium" },
+    { "item": "hbm_ntm_rebirth:dust" }
+  ]
+}

@@ -6,6 +6,7 @@ import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.item.ConveyorWandItem;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
+import com.hbm.ntm.item.FluidDuctVariantBlockItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
@@ -233,6 +234,8 @@ public final class HbmJeiPlugin implements IModPlugin {
         } else if (item instanceof FluidPipeBlockItem) {
             registration.registerSubtypeInterpreter(item, (stack, context) -> "fluid="
                     + FluidPipeBlockItem.getFluidType(stack).getName());
+        } else if (item instanceof FluidDuctVariantBlockItem duct) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> "variant=" + duct.getLegacyMetadata(stack));
         } else if (item instanceof LegacyStateBlockItem stateItem) {
             registration.registerSubtypeInterpreter(item, (stack, context) -> "variant=" + stateItem.getVariant(stack));
         } else if (item instanceof LegacyStateMultiblockBlockItem stateItem) {

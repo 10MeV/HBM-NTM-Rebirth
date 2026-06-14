@@ -34,7 +34,7 @@ public record RBMKDialSettings(
                 0.2D,
                 1.0D,
                 0.2D,
-                4,
+                3,
                 true,
                 0.1D,
                 1.0D,

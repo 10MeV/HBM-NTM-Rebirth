@@ -1,8 +1,7 @@
 package com.hbm.ntm.block;
 
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.GasFlareBlockEntity;
-import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -38,10 +37,10 @@ public class GasFlareBlock extends LegacyVisibleMultiblockMachineBlock {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof GasFlareBlockEntity gasFlare) {
             ItemStack held = player.getItemInHand(hand);
-            if (player.isShiftKeyDown() && held.getItem() instanceof IFluidIdentifierItem identifier) {
-                FluidType type = identifier.getIdentifiedFluid(level, pos, held);
-                if (type != null && type != gasFlare.getTank().getTankType()) {
-                    gasFlare.getTank().setTankType(type);
+            if (player.isShiftKeyDown()) {
+                var identifier = HbmFluidItemTransfer.setTankTypeFromIdentifierStackReport(
+                        held, gasFlare.getTank(), level, pos);
+                if (identifier.changed()) {
                     gasFlare.setChanged();
                     level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
                     return InteractionResult.CONSUME;

@@ -5,8 +5,10 @@ import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
 import com.hbm.ntm.block.RBMKPanelBlock;
 import com.hbm.ntm.menu.RBMKPanelMenu;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
+import com.hbm.ntm.neutron.RBMKConsolePlanner;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -37,6 +39,13 @@ public class RBMKPanelBlockEntity extends BlockEntity
     private RBMKPanelPlanner.KeyUnit[] keys = defaultKeys();
     private RBMKPanelPlanner.LeverUnit[] levers = defaultLevers();
     private RBMKPanelPlanner.NumitronUnit[] numitrons = defaultNumitrons();
+    private RBMKPanelPlanner.TerminalState terminal = RBMKPanelPlanner.TerminalState.empty();
+    private int targetX;
+    private int targetY;
+    private int targetZ;
+    private int displayRotation;
+    private RBMKConsolePlanner.ColumnSnapshot[] displayColumns = new RBMKConsolePlanner.ColumnSnapshot[
+            RBMKPanelPlanner.DISPLAY_COLUMN_COUNT];
 
     public RBMKPanelBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.RBMK_PANEL.get(), pos, state);
@@ -76,6 +85,35 @@ public class RBMKPanelBlockEntity extends BlockEntity
         return numitrons;
     }
 
+    public RBMKPanelPlanner.TerminalState terminal() {
+        return terminal;
+    }
+
+    public RBMKConsolePlanner.ColumnSnapshot[] displayColumns() {
+        return displayColumns.clone();
+    }
+
+    public void setDisplayTarget(BlockPos target) {
+        if (target == null) {
+            return;
+        }
+        targetX = target.getX();
+        targetY = target.getY();
+        targetZ = target.getZ();
+        if (level != null && !level.isClientSide) {
+            rescanDisplay(level);
+        }
+        setChangedAndSync(false);
+    }
+
+    public void rotateDisplay() {
+        displayRotation = RBMKPanelPlanner.rotateDisplay(displayRotation);
+        if (level != null && !level.isClientSide) {
+            rescanDisplay(level);
+        }
+        setChangedAndSync(false);
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, RBMKPanelBlockEntity panel) {
         boolean changed = switch (panel.panelType()) {
             case GAUGE -> panel.tickGauges(level);
@@ -84,7 +122,8 @@ public class RBMKPanelBlockEntity extends BlockEntity
             case KEYPAD -> panel.tickKeys(level);
             case LEVER -> panel.tickLevers(level);
             case NUMITRON -> panel.tickNumitrons(level);
-            case TERMINAL, DISPLAY -> false;
+            case TERMINAL -> panel.tickTerminal(level);
+            case DISPLAY -> level.getGameTime() % RBMKPanelPlanner.DISPLAY_SCAN_INTERVAL == 0 && panel.rescanDisplay(level);
         };
         if (changed) {
             panel.setChangedAndSync(false);
@@ -278,6 +317,50 @@ public class RBMKPanelBlockEntity extends BlockEntity
         return changed;
     }
 
+    private boolean tickTerminal(Level level) {
+        RBMKPanelPlanner.TerminalTickPlan plan = RBMKPanelPlanner.tickTerminal(terminal);
+        terminal = plan.state();
+        broadcast(level, plan.broadcast());
+        return plan.broadcast() != null;
+    }
+
+    private boolean rescanDisplay(Level level) {
+        boolean changed = false;
+        BlockPos target = new BlockPos(targetX, targetY, targetZ);
+        for (int index = 0; index < displayColumns.length; index++) {
+            BlockPos scanPos = target.offset(
+                    RBMKPanelPlanner.displayRelativeX(index, displayRotation),
+                    0,
+                    RBMKPanelPlanner.displayRelativeZ(index, displayRotation));
+            RBMKConsolePlanner.ColumnSnapshot next = displayColumnAt(level, scanPos);
+            if (!columnEquals(displayColumns[index], next)) {
+                changed = true;
+            }
+            displayColumns[index] = next;
+        }
+        return changed;
+    }
+
+    private RBMKConsolePlanner.ColumnSnapshot displayColumnAt(Level level, BlockPos pos) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core == null) {
+            return null;
+        }
+        BlockEntity blockEntity = level.getBlockEntity(core.pos());
+        return blockEntity instanceof RBMKColumnBlockEntity column ? column.displaySnapshot() : null;
+    }
+
+    private static boolean columnEquals(RBMKConsolePlanner.ColumnSnapshot left,
+            RBMKConsolePlanner.ColumnSnapshot right) {
+        if (left == right) {
+            return true;
+        }
+        if (left == null || right == null) {
+            return false;
+        }
+        return left.type() == right.type() && left.data().equals(right.data());
+    }
+
     private RBMKPanelPlanner.RttySignal signal(Level level, String channelName) {
         RTTYSystem.RTTYChannel channel = RTTYSystem.listen(level, channelName);
         if (channel == null) {
@@ -304,7 +387,13 @@ public class RBMKPanelBlockEntity extends BlockEntity
             case LEVER -> levers = RBMKPanelPlanner.planLeverControl(levers, active, polling, leverEntries(tag)).units();
             case NUMITRON -> numitrons = RBMKPanelPlanner.planNumitronControl(numitrons, active, polling,
                     tag.getByte("shorten_number"), tag.getByte("leading_zeroes"), numitronEntries(tag)).units();
-            case TERMINAL, DISPLAY -> {
+            case TERMINAL -> {
+                RBMKPanelPlanner.TerminalControlPlan plan =
+                        RBMKPanelPlanner.planTerminalControl(terminal, tag.getString("cmd"), tag.contains("cmd"));
+                terminal = plan.state();
+                broadcast(level, plan.broadcast());
+            }
+            case DISPLAY -> {
             }
         }
     }
@@ -374,8 +463,8 @@ public class RBMKPanelBlockEntity extends BlockEntity
             case KEYPAD -> writeKeys(tag);
             case LEVER -> writeLevers(tag);
             case NUMITRON -> writeNumitrons(tag);
-            case TERMINAL, DISPLAY -> {
-            }
+            case TERMINAL -> writeTerminal(tag);
+            case DISPLAY -> writeDisplay(tag);
         }
     }
 
@@ -435,8 +524,8 @@ public class RBMKPanelBlockEntity extends BlockEntity
                             tag.getString("label" + i), tag.getString("rtty" + i), tag.getLong("value" + i));
                 }
             }
-            case TERMINAL, DISPLAY -> {
-            }
+            case TERMINAL -> readTerminal(tag);
+            case DISPLAY -> readDisplay(tag);
         }
     }
 
@@ -530,6 +619,61 @@ public class RBMKPanelBlockEntity extends BlockEntity
         }
     }
 
+    private void writeTerminal(CompoundTag tag) {
+        RBMKPanelPlanner.TerminalNbtSnapshot snapshot = RBMKPanelPlanner.terminalNbtSnapshot(terminal);
+        tag.putString("channel", snapshot.channel());
+        tag.putString("repeatCmd", snapshot.repeatCommand());
+        tag.putBoolean("ocMode", snapshot.ocMode());
+        tag.putBoolean("doesRepeat", !terminal.repeatCommand().isEmpty());
+        for (int i = 0; i < snapshot.history().length; i++) {
+            tag.putString("history" + i, snapshot.history()[i]);
+        }
+    }
+
+    private void readTerminal(CompoundTag tag) {
+        String[] history = new String[RBMKPanelPlanner.TERMINAL_HISTORY_SIZE];
+        for (int i = 0; i < history.length; i++) {
+            history[i] = tag.getString("history" + i);
+        }
+        terminal = RBMKPanelPlanner.terminalStateFromNbt(tag.getString("channel"),
+                tag.getString("repeatCmd"), tag.getBoolean("ocMode"), history);
+    }
+
+    private void writeDisplay(CompoundTag tag) {
+        RBMKPanelPlanner.DisplayNbtSnapshot snapshot =
+                RBMKPanelPlanner.displayNbtSnapshot(targetX, targetY, targetZ, displayRotation);
+        tag.putInt("tX", snapshot.targetX());
+        tag.putInt("tY", snapshot.targetY());
+        tag.putInt("tZ", snapshot.targetZ());
+        tag.putByte("rotation", (byte) snapshot.rotation());
+        for (int i = 0; i < displayColumns.length; i++) {
+            RBMKConsolePlanner.ColumnSnapshot column = displayColumns[i];
+            if (column == null || column.type() == null) {
+                tag.putByte("columnType" + i, (byte) -1);
+            } else {
+                tag.putByte("columnType" + i, (byte) column.type().ordinal());
+                tag.put("columnData" + i, column.data().copy());
+            }
+        }
+    }
+
+    private void readDisplay(CompoundTag tag) {
+        targetX = tag.getInt("tX");
+        targetY = tag.getInt("tY");
+        targetZ = tag.getInt("tZ");
+        displayRotation = tag.getByte("rotation");
+        RBMKConsolePlanner.ColumnType[] types = RBMKConsolePlanner.ColumnType.values();
+        for (int i = 0; i < displayColumns.length; i++) {
+            int ordinal = tag.getByte("columnType" + i);
+            if (ordinal < 0 || ordinal >= types.length) {
+                displayColumns[i] = null;
+            } else {
+                displayColumns[i] = new RBMKConsolePlanner.ColumnSnapshot(
+                        types[ordinal], tag.getCompound("columnData" + i));
+            }
+        }
+    }
+
     private List<String> activeChannels() {
         List<String> channels = new ArrayList<>();
         switch (panelType()) {
@@ -551,7 +695,8 @@ public class RBMKPanelBlockEntity extends BlockEntity
             case NUMITRON -> {
                 for (RBMKPanelPlanner.NumitronUnit unit : numitrons) channels.add(unit.rtty());
             }
-            case TERMINAL, DISPLAY -> {
+            case TERMINAL -> channels.add(terminal.channel());
+            case DISPLAY -> {
             }
         }
         return channels.stream().distinct().toList();

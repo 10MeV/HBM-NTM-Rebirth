@@ -2,12 +2,12 @@ package com.hbm.ntm.entity.projectile;
 
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.explosion.ExplosionNT;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -41,7 +41,7 @@ public class ShrapnelEntity extends LegacyThrowableEntity {
     public void tick() {
         super.tick();
         if (level().isClientSide() && mode() == MODE_TRAIL) {
-            level().addParticle(ParticleTypes.FLAME, getX(), getY(), getZ(), 0.0D, 0.0D, 0.0D);
+            ParticleUtil.spawnLegacyShrapnelTrailFlame(level(), getX(), getY(), getZ());
         }
     }
 
@@ -111,8 +111,7 @@ public class ShrapnelEntity extends LegacyThrowableEntity {
     }
 
     private void spawnLavaSplash(ServerLevel level, HitResult hit) {
-        level.sendParticles(ParticleTypes.LAVA, hit.getLocation().x, hit.getLocation().y, hit.getLocation().z,
-                5, 0.15D, 0.15D, 0.15D, 0.0D);
+        ParticleUtil.spawnLegacyShrapnelLavaSplash(level, hit.getLocation());
     }
 
     private static boolean canReplace(Level level, BlockPos pos) {

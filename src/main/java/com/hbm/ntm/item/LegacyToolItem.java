@@ -1,6 +1,7 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.api.block.Toolable;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionResult;
@@ -25,7 +26,8 @@ public class LegacyToolItem extends Item {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         BlockState state = level.getBlockState(pos);
-        if (!(state.getBlock() instanceof Toolable toolable)) {
+        ToolTarget target = resolveToolTarget(level, pos, state);
+        if (target == null) {
             return InteractionResult.PASS;
         }
 
@@ -35,7 +37,7 @@ public class LegacyToolItem extends Item {
         }
         Direction side = context.getClickedFace();
         Vec3 hit = context.getClickLocation();
-        boolean used = toolable.onToolUse(level, player, pos, side, hit, toolType);
+        boolean used = target.toolable().onToolUse(level, player, target.pos(), side, hit, toolType);
         if (!used) {
             return InteractionResult.PASS;
         }
@@ -49,5 +51,19 @@ public class LegacyToolItem extends Item {
 
     public Toolable.ToolType getToolType() {
         return toolType;
+    }
+
+    private static ToolTarget resolveToolTarget(Level level, BlockPos pos, BlockState state) {
+        if (state.getBlock() instanceof Toolable toolable) {
+            return new ToolTarget(pos, toolable);
+        }
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core != null && core.state().getBlock() instanceof Toolable toolable) {
+            return new ToolTarget(core.pos(), toolable);
+        }
+        return null;
+    }
+
+    private record ToolTarget(BlockPos pos, Toolable toolable) {
     }
 }

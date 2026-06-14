@@ -75,8 +75,8 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
         ItemStack chip = dock.items.getStackInSlot(SLOT_CHIP);
         if (chip.getItem() instanceof ISatelliteChip) {
             int frequency = ISatelliteChip.getFrequencyFromStack(chip);
-            Satellite satellite = data.getSatFromFreq(frequency);
-            if (satellite != null && satellite.cargoPool().isPresent()
+            Satellite satellite = data.getCargoSatellite(frequency);
+            if (satellite != null
                     && satellite.lastOperationMillis() + CARGO_DELAY_MILLIS < System.currentTimeMillis()) {
                 MinerRocketEntity rocket = new MinerRocketEntity(serverLevel);
                 rocket.setPos(pos.getX() + 0.5D, 300.0D, pos.getZ() + 0.5D);
@@ -100,7 +100,7 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
                     break;
                 }
                 if (rocket.mode() == MinerRocketEntity.MODE_UNLOADING && rocket.timer() == 50) {
-                    Satellite satellite = data.getSatFromFreq(frequency);
+                    Satellite satellite = data.getCargoSatellite(frequency);
                     if (satellite != null) {
                         satellite.cargoPool().ifPresent(pool -> dock.unloadCargo(serverLevel, pool));
                     }

@@ -8,6 +8,7 @@ import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -20,7 +21,7 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @OnlyIn(Dist.CLIENT)
-public class HbmSmokeParticle extends TextureSheetParticle {
+public class HbmSmokeParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
     private static final AtomicInteger NEXT_VISUAL_ID = new AtomicInteger();
     private static final int LEGACY_EX_QUAD_COUNT = 6;
     private static SpriteSet exSmokeSprites;
@@ -69,6 +70,12 @@ public class HbmSmokeParticle extends TextureSheetParticle {
 
     @Override
     public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.enqueue(this, camera, this.x, this.y, this.z);
+    }
+
+    @Override
+    public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
+        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite());
         if (!this.legacyExSmoke) {
             super.render(consumer, camera, partialTick);
             return;
@@ -116,7 +123,7 @@ public class HbmSmokeParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+        return HbmDeferredParticleRenderer.DEFERRED_RENDER_TYPE;
     }
 
     public static class ExSmokeProvider implements ParticleProvider<SimpleParticleType> {

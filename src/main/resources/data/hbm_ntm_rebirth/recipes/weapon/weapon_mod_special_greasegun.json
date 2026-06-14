@@ -1,0 +1,27 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "BRM",
+                    "P G"
+                ],
+    "key":  {
+                "B":  {
+                          "tag":  "forge:light_barrels/weapon_steel"
+                      },
+                "R":  {
+                          "tag":  "forge:light_receivers/weapon_steel"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/weapon_steel"
+                      },
+                "P":  {
+                          "tag":  "forge:plates/dura_steel"
+                      },
+                "G":  {
+                          "tag":  "forge:grips/any_plastic"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_greasegun"
+               }
+}

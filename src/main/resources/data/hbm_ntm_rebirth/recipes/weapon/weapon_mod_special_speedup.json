@@ -1,0 +1,22 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "PIP",
+                    "WWW",
+                    "PIP"
+                ],
+    "key":  {
+                "P":  {
+                          "tag":  "forge:plates/weapon_steel"
+                      },
+                "I":  {
+                          "tag":  "forge:ingots/gun_metal"
+                      },
+                "W":  {
+                          "tag":  "forge:dense_wires/gold"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_speedup"
+               }
+}

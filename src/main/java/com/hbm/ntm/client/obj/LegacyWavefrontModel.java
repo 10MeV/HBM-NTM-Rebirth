@@ -154,6 +154,13 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, legacyTextureMatrix(uScale, vScale, rotationDegrees, uTranslate, vTranslate));
     }
 
+    public synchronized void renderPartGlintWithLegacyTextureMatrix(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+            float uScale, float vScale, float rotationDegrees, float uTranslate, float vTranslate) {
+        renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false,
+                LegacyTexturedRenderMode.GLINT_EQUAL_DEPTH, legacyTextureMatrix(uScale, vScale, rotationDegrees, uTranslate, vTranslate));
+    }
+
     private synchronized void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {

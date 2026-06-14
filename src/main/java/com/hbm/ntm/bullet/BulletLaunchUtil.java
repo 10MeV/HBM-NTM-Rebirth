@@ -60,7 +60,8 @@ public final class BulletLaunchUtil {
         float spread = config.spread() * (accuracyBoost ? 0.25F : 1.0F);
         Vec3 motion = BulletKinematicsUtil.shootWithSpread(direction, BulletKinematicsUtil.DEFAULT_THROW_FORCE,
                 spread, random);
-        return launchPlan(config, position, motion, shooter.getYRot(), shooter.getXRot(), true);
+        Rotation rotation = rotationFromMotion(motion);
+        return launchPlan(config, position, motion, rotation.yaw(), rotation.pitch(), true);
     }
 
     public static LaunchPlan aimedLaunchPlan(BulletConfig config, LivingEntity shooter, LivingEntity target,
@@ -83,7 +84,8 @@ public final class BulletLaunchUtil {
         float yaw = (float) (Math.atan2(dz, dx) * 180.0D / Math.PI) - 90.0F;
         float pitch = (float) (-(Math.atan2(dy, horizontal) * 180.0D / Math.PI));
         Vec3 motion = BulletKinematicsUtil.shootWithSpread(new Vec3(dx, dy, dz), throwForce, deviation, random);
-        return launchPlan(config, new Vec3(x, y, z), motion, yaw, pitch, true);
+        Rotation rotation = rotationFromMotion(motion);
+        return launchPlan(config, new Vec3(x, y, z), motion, rotation.yaw(), rotation.pitch(), true);
     }
 
     public static LaunchPlan directedLaunchPlan(BulletConfig config, Vec3 position, Vec3 heading, float throwForce,
@@ -117,7 +119,7 @@ public final class BulletLaunchUtil {
                 BulletKinematicsUtil.ENTITY_SIZE, BulletKinematicsUtil.RENDER_DISTANCE_WEIGHT, valid);
     }
 
-    private static Rotation rotationFromMotion(Vec3 motion) {
+    public static Rotation rotationFromMotion(Vec3 motion) {
         if (motion == null || motion.lengthSqr() <= 1.0E-7D) {
             return new Rotation(0.0F, 0.0F);
         }

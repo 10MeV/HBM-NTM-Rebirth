@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:outgasser",
+  "input": {
+    "ingredient": {
+      "tag": "forge:dusts/coal"
+    },
+    "count": 1,
+    "legacy_ore": "dustCoal"
+  },
+  "solid_output": {
+    "item": "hbm_ntm_rebirth:oil_tar_coal"
+  },
+  "fluid_output": {
+    "fluid": "SYNGAS",
+    "amount": 50
+  }
+}

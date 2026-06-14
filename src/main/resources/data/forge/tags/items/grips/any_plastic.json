@@ -1,0 +1,7 @@
+﻿{
+    "replace":  false,
+    "values":  [
+                   "hbm_ntm_rebirth:grip_polymer",
+                   "hbm_ntm_rebirth:grip_bakelite"
+               ]
+}

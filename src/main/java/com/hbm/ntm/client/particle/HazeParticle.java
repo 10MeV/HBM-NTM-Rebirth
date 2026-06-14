@@ -1,23 +1,14 @@
 package com.hbm.ntm.client.particle;
 
-import com.hbm.ntm.client.renderer.HbmClientRenderUtil;
-
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
@@ -30,32 +21,8 @@ import org.joml.Vector3f;
 import java.util.Random;
 
 @OnlyIn(Dist.CLIENT)
-public class HazeParticle extends TextureSheetParticle {
+public class HazeParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
     private static SpriteSet sharedSprites;
-    private static final ParticleRenderType RENDER_TYPE = new ParticleRenderType() {
-        @Override
-        public void begin(BufferBuilder builder, TextureManager textureManager) {
-            RenderSystem.depthMask(false);
-            RenderSystem.enableBlend();
-            RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-            RenderSystem.setShader(GameRenderer::getParticleShader);
-            HbmClientRenderUtil.bindParticleAtlas();
-            builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
-        }
-
-        @Override
-        public void end(Tesselator tesselator) {
-            tesselator.end();
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.depthMask(true);
-        }
-
-        @Override
-        public String toString() {
-            return "HBM_HAZE";
-        }
-    };
-
     private final SpriteSet sprites;
 
     private HazeParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites) {
@@ -99,10 +66,16 @@ public class HazeParticle extends TextureSheetParticle {
 
     @Override
     public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.enqueue(this, camera, this.x, this.y, this.z);
+    }
+
+    @Override
+    public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
         float alpha = (float) Math.sin(this.age * Math.PI / 400.0D) * 0.025F;
         if (alpha <= 0.0F) {
             return;
         }
+        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite());
         Vec3 cameraPos = camera.getPosition();
         Quaternionf rotation = camera.rotation();
         Random fixed = new Random(50L);
@@ -135,7 +108,7 @@ public class HazeParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return RENDER_TYPE;
+        return HbmDeferredParticleRenderer.DEFERRED_RENDER_TYPE;
     }
 
     @Override

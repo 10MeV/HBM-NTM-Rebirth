@@ -1,0 +1,20 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    " M ",
+                    "MAM",
+                    " M "
+                ],
+    "key":  {
+                "A":  {
+                          "item":  "hbm_ntm_rebirth:gun_light_revolver"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/weapon_steel"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_light_revolver_atlas"
+               }
+}

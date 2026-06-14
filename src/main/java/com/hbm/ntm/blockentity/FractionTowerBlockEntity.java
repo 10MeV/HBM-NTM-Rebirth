@@ -7,6 +7,7 @@ import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts;
+import com.hbm.ntm.fluid.HbmFluidRecipeIO;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.PairRecipe;
@@ -82,30 +83,24 @@ public class FractionTowerBlockEntity extends LegacyRemoteFluidMachineBlockEntit
 
     private boolean setupTanks(PairRecipe recipe) {
         if (recipe == null) {
-            boolean changed = inputTank.getTankType() != HbmFluids.NONE
-                    || leftOutputTank.getTankType() != HbmFluids.NONE
-                    || rightOutputTank.getTankType() != HbmFluids.NONE;
-            configureTank(inputTank, HbmFluids.NONE);
-            configureTank(leftOutputTank, HbmFluids.NONE);
-            configureTank(rightOutputTank, HbmFluids.NONE);
-            return changed;
+            return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
+                    List.of(), List.of(), List.of(inputTank), List.of(leftOutputTank, rightOutputTank)).changed();
         }
-        boolean changed = leftOutputTank.getTankType() != recipe.left().type()
-                || rightOutputTank.getTankType() != recipe.right().type();
-        configureTank(leftOutputTank, recipe.left().type());
-        configureTank(rightOutputTank, recipe.right().type());
-        return changed;
+        return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
+                List.of(), List.of(recipe.left(), recipe.right()),
+                List.of(), List.of(leftOutputTank, rightOutputTank)).changed();
     }
 
     private boolean fractionate(PairRecipe recipe) {
-        if (inputTank.getFill() < 100
-                || !hasSpace(leftOutputTank, recipe.left().amount())
-                || !hasSpace(rightOutputTank, recipe.right().amount())) {
+        HbmFluidRecipeIO.RecipeFluidIoProcessReport report = HbmFluidRecipeIO.processLegacyFixedRecipeIoReport(
+                List.of(HbmFluidRecipeIO.requirementFromTank(inputTank, 100)),
+                List.of(recipe.left(), recipe.right()),
+                List.of(inputTank),
+                List.of(leftOutputTank, rightOutputTank),
+                false);
+        if (!report.complete()) {
             return false;
         }
-        inputTank.setFill(inputTank.getFill() - 100);
-        addOutput(leftOutputTank, recipe.left());
-        addOutput(rightOutputTank, recipe.right());
         onFluidContentsChanged();
         return true;
     }
@@ -142,10 +137,6 @@ public class FractionTowerBlockEntity extends LegacyRemoteFluidMachineBlockEntit
         tower.onFluidContentsChanged();
         onFluidContentsChanged();
         return true;
-    }
-
-    private static void addOutput(HbmFluidTank tank, HbmFluidStack stack) {
-        addFluid(tank, stack.type(), stack.amount());
     }
 
     @Override

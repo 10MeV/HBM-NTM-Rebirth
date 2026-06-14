@@ -22,6 +22,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
 public class FluidPipeBlock extends HbmFluidNodeBlock {
+    public static final IntegerProperty LEGACY_STYLE = IntegerProperty.create("legacy_style", 0, 2);
     private static final VoxelShape CORE = box(5.0D, 5.0D, 5.0D, 11.0D, 11.0D, 11.0D);
     private static final VoxelShape NORTH_ARM = box(5.0D, 5.0D, 0.0D, 11.0D, 11.0D, 5.0D);
     private static final VoxelShape EAST_ARM = box(11.0D, 5.0D, 5.0D, 16.0D, 11.0D, 11.0D);
@@ -44,6 +47,7 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
 
     public FluidPipeBlock(Properties properties) {
         super(properties);
+        registerDefaultState(defaultBlockState().setValue(LEGACY_STYLE, 0));
     }
 
     @Override
@@ -149,6 +153,16 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
                 | (down ? 4 : 0)
                 | (south ? 2 : 0)
                 | (north ? 1 : 0);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(LEGACY_STYLE);
+    }
+
+    public static int clampLegacyStyle(int style) {
+        return Math.max(0, Math.min(2, style));
     }
 
 }

@@ -1,0 +1,23 @@
+{
+    "type":  "minecraft:crafting_shapeless",
+    "ingredients":  [
+                        {
+                            "tag":  "forge:gun_mechanisms/saturnite"
+                        },
+                        {
+                            "tag":  "forge:cast_plates/any_bismoid_bronze"
+                        },
+                        {
+                            "tag":  "forge:cast_plates/any_bismoid_bronze"
+                        },
+                        {
+                            "tag":  "forge:cast_plates/any_bismoid_bronze"
+                        },
+                        {
+                            "item":  "hbm_ntm_rebirth:ducttape"
+                        }
+                    ],
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_generic_bronze_damage"
+               }
+}

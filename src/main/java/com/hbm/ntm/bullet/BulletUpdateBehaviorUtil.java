@@ -57,7 +57,7 @@ public final class BulletUpdateBehaviorUtil {
         }
 
         if (config.hasBehavior(BulletBehaviorTag.FOLLY_SUPERMATTER_BEAM)) {
-            applyFollySupermatterBeam(config, projectile, shooter, overrideDamage);
+            applyFollySupermatterBeam(config, projectile, shooter, motion, overrideDamage);
             return new KnownUpdateResult(Vec3.ZERO, currentHomingTarget, false, false, 0, currentAcceleration,
                     false, false);
         }
@@ -106,16 +106,15 @@ public final class BulletUpdateBehaviorUtil {
     }
 
     private static void applyFollySupermatterBeam(BulletConfig config, Entity projectile, @Nullable Entity shooter,
-            float overrideDamage) {
+            Vec3 motion, float overrideDamage) {
         if (projectile.level().isClientSide()) {
             return;
         }
 
-        Vec3 direction = BulletKinematicsUtil.directionFromRotation(projectile.getYRot(), projectile.getXRot());
+        Vec3 direction = motion.lengthSqr() > 1.0E-7D ? motion.normalize() : legacyBulletRotationDirection(projectile);
         if (direction.lengthSqr() <= 1.0E-7D) {
             return;
         }
-        direction = direction.normalize();
         spawnFollySupermatterVisual(projectile.level(), projectile.position(), direction,
                 projectile.getXRot(), projectile.getYRot(), projectile.tickCount);
 
@@ -162,6 +161,12 @@ public final class BulletUpdateBehaviorUtil {
                 }
             }
         }
+    }
+
+    private static Vec3 legacyBulletRotationDirection(Entity projectile) {
+        float yaw = projectile.getYRot() * ((float) Math.PI / 180.0F);
+        float pitch = projectile.getXRot() * ((float) Math.PI / 180.0F);
+        return new Vec3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
     }
 
     private static void spawnFollySupermatterVisual(Level level, Vec3 origin, Vec3 direction,
@@ -264,12 +269,12 @@ public final class BulletUpdateBehaviorUtil {
 
     private static float applyRocketAcceleration(BulletConfig config, @Nullable Entity shooter,
             float currentAcceleration) {
-        if (config.hasBehavior(BulletBehaviorTag.ROCKET_ACCELERATE)) {
-            return currentAcceleration < 7.0F ? currentAcceleration + 0.4F : currentAcceleration;
-        }
         if (config.hasBehavior(BulletBehaviorTag.ROCKET_STEER)) {
             float limit = isQdSteeringRocket(config) && !(shooter instanceof Player) ? 7.0F : 4.0F;
             return currentAcceleration < limit ? currentAcceleration + 0.4F : currentAcceleration;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.ROCKET_ACCELERATE)) {
+            return currentAcceleration < 7.0F ? currentAcceleration + 0.4F : currentAcceleration;
         }
         return currentAcceleration;
     }

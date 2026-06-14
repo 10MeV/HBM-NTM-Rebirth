@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:outgasser",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/lithium"
+    },
+    "count": 1,
+    "legacy_ore": "ingotLithium"
+  },
+  "fluid_output": {
+    "fluid": "TRITIUM",
+    "amount": 1000
+  }
+}

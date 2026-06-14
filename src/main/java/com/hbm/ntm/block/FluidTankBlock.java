@@ -1,10 +1,9 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.FluidTankBlockEntity;
-import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
@@ -60,12 +59,12 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof FluidTankBlockEntity tank && !tank.isExploded()) {
             ItemStack held = player.getItemInHand(hand);
-            if (player.isShiftKeyDown() && held.getItem() instanceof IFluidIdentifierItem identifier) {
-                FluidType type = identifier.getIdentifiedFluid(level, pos, held);
-                if (tank.setIdentifiedType(type)) {
+            var identifier = HbmFluidItemTransfer.identifyFluidFromStackReport(held, level, pos);
+            if (player.isShiftKeyDown() && identifier.identifierItem()) {
+                if (!identifier.selectedNone() && tank.setIdentifiedType(identifier.selectedType())) {
                     serverPlayer.displayClientMessage(Component.literal("Changed type to ")
                             .withStyle(ChatFormatting.YELLOW)
-                            .append(type.getDisplayName())
+                            .append(identifier.selectedType().getDisplayName())
                             .append(Component.literal("!").withStyle(ChatFormatting.YELLOW)), true);
                     return InteractionResult.CONSUME;
                 }

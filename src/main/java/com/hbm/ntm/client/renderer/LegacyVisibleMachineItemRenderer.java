@@ -2,6 +2,8 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.CargoElevatorBlock;
+import com.hbm.ntm.block.CraneSplitterBlock;
+import com.hbm.ntm.block.CustomMissileLauncherBlock;
 import com.hbm.ntm.block.ElectricPressBlock;
 import com.hbm.ntm.block.LegacyConnectorBlock;
 import com.hbm.ntm.block.LegacyLargePylonBlock;
@@ -12,16 +14,20 @@ import com.hbm.ntm.block.LegacyMediumPylonBlock;
 import com.hbm.ntm.block.LegacySmallPylonBlock;
 import com.hbm.ntm.block.LegacySubstationBlock;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
+import com.hbm.ntm.block.LaunchPadBlock;
 import com.hbm.ntm.block.RadioAutocalBlock;
 import com.hbm.ntm.block.RadioTelexBlock;
+import com.hbm.ntm.block.RustedLaunchPadBlock;
 import com.hbm.ntm.block.AssemblyMachineBlock;
 import com.hbm.ntm.block.MachineBatterySocketBlock;
 import com.hbm.ntm.block.MachineLpw2Block;
+import com.hbm.ntm.block.MissileAssemblyBlock;
 import com.hbm.ntm.block.VendingMachineBlock;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.obj.ObjLaunchModels;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -62,9 +68,14 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         if (!(stack.getItem() instanceof BlockItem blockItem)
                 || !(blockItem.getBlock() instanceof LegacyVisibleMultiblockMachineBlock
                 || blockItem.getBlock() instanceof AssemblyMachineBlock
+                || blockItem.getBlock() instanceof CustomMissileLauncherBlock
+                || blockItem.getBlock() instanceof LaunchPadBlock
+                || blockItem.getBlock() instanceof RustedLaunchPadBlock
+                || blockItem.getBlock() instanceof MissileAssemblyBlock
                 || blockItem.getBlock() instanceof MachineBatterySocketBlock
                 || blockItem.getBlock() instanceof MachineLpw2Block
                 || blockItem.getBlock() instanceof CargoElevatorBlock
+                || blockItem.getBlock() instanceof CraneSplitterBlock
                 || blockItem.getBlock() instanceof ElectricPressBlock
                 || blockItem.getBlock() instanceof VendingMachineBlock
                 || blockItem.getBlock() instanceof LegacyConnectorBlock
@@ -81,12 +92,22 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             renderVisibleMachineItem(block, displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof AssemblyMachineBlock) {
             renderAssemblyMachineItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof CustomMissileLauncherBlock launcher) {
+            renderCustomMissileLauncherItem(launcher.kind(), displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof LaunchPadBlock) {
+            renderLaunchPadItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof RustedLaunchPadBlock) {
+            renderRustedLaunchPadItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof MissileAssemblyBlock) {
+            renderMissileAssemblyItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof MachineBatterySocketBlock) {
             renderBatterySocketItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof MachineLpw2Block) {
             renderLpw2Item(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof CargoElevatorBlock) {
             renderCargoElevatorItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof CraneSplitterBlock block) {
+            CraneSplitterRenderer.renderItem(displayContext, block.defaultBlockState(), poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof ElectricPressBlock) {
             renderElectricPressItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof VendingMachineBlock block) {
@@ -106,6 +127,87 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         } else if (blockItem.getBlock() instanceof RadioTelexBlock) {
             renderTelexItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         }
+    }
+
+    private static void renderRustedLaunchPadItem(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        AABB bounds = transformBounds(ObjLaunchModels.MISSILE_PAD.boundsAll(), point -> point.scale(3.0D));
+
+        poseStack.pushPose();
+        if (displayContext == ItemDisplayContext.GUI) {
+            applyLegacyItemBaseInventoryTransform(poseStack, bounds);
+            poseStack.translate(0.0D, -1.0D, 0.0D);
+            poseStack.scale(3.0F, 3.0F, 3.0F);
+        } else {
+            poseStack.translate(0.5D, 0.5D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            poseStack.scale(0.35F, 0.35F, 0.35F);
+        }
+        ObjLaunchModels.MISSILE_PAD.renderAll(ObjLaunchModels.MISSILE_PAD_RUSTED_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderLaunchPadItem(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        AABB bounds = transformBounds(ObjLaunchModels.MISSILE_PAD.boundsAll(), point -> point.scale(3.0D));
+
+        poseStack.pushPose();
+        if (displayContext == ItemDisplayContext.GUI) {
+            applyLegacyItemBaseInventoryTransform(poseStack, bounds);
+            poseStack.translate(0.0D, -1.0D, 0.0D);
+            poseStack.scale(3.0F, 3.0F, 3.0F);
+        } else {
+            poseStack.translate(0.5D, 0.5D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            poseStack.scale(0.35F, 0.35F, 0.35F);
+        }
+        ObjLaunchModels.MISSILE_PAD.renderAll(ObjLaunchModels.MISSILE_PAD_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderMissileAssemblyItem(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        AABB bounds = transformBounds(ObjLaunchModels.MISSILE_ASSEMBLY.boundsAll(),
+                point -> point.scale(10.0D).add(0.0D, -2.5D, 0.0D));
+
+        poseStack.pushPose();
+        if (displayContext == ItemDisplayContext.GUI) {
+            applyLegacyItemBaseInventoryTransform(poseStack, bounds);
+            poseStack.translate(0.0D, -2.5D, 0.0D);
+            poseStack.scale(10.0F, 10.0F, 10.0F);
+        } else {
+            poseStack.translate(0.5D, 0.5D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            poseStack.scale(0.25F, 0.25F, 0.25F);
+        }
+        ObjLaunchModels.MISSILE_ASSEMBLY.renderAll(ObjLaunchModels.MISSILE_ASSEMBLY_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderCustomMissileLauncherItem(CustomMissileLauncherBlock.Kind kind,
+            ItemDisplayContext displayContext, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay) {
+        AABB bounds = kind == CustomMissileLauncherBlock.Kind.COMPACT_LAUNCHER
+                ? ObjLaunchModels.COMPACT_LAUNCHER.boundsAll()
+                : union(ObjLaunchModels.LAUNCH_TABLE_BASE_LEGACY.boundsAll(),
+                        ObjLaunchModels.LAUNCH_TABLE_SMALL_PAD_LEGACY.boundsAll());
+
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, bounds,
+                kind == CustomMissileLauncherBlock.Kind.COMPACT_LAUNCHER ? 0.68F : 0.84F, 0.0F);
+        if (kind == CustomMissileLauncherBlock.Kind.COMPACT_LAUNCHER) {
+            ObjLaunchModels.COMPACT_LAUNCHER.renderAll(ObjLaunchModels.COMPACT_LAUNCHER_TEXTURE,
+                    poseStack, buffer, packedLight, packedOverlay);
+        } else {
+            ObjLaunchModels.LAUNCH_TABLE_BASE_LEGACY.renderAll(ObjLaunchModels.LAUNCH_TABLE_BASE_TEXTURE,
+                    poseStack, buffer, packedLight, packedOverlay);
+            ObjLaunchModels.LAUNCH_TABLE_SMALL_PAD_LEGACY.renderAll(ObjLaunchModels.LAUNCH_TABLE_SMALL_PAD_TEXTURE,
+                    poseStack, buffer, packedLight, packedOverlay);
+        }
+        poseStack.popPose();
     }
 
     private static void renderVisibleMachineItem(LegacyVisibleMultiblockMachineBlock block, ItemDisplayContext displayContext,
@@ -269,7 +371,12 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         AABB bounds = transformBounds(rawBounds, point -> point.scale(2.0D));
 
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 7.0F);
+        if (displayContext == ItemDisplayContext.GUI) {
+            applyLegacyInventoryObjTransform(poseStack,
+                    kind == LegacyConnectorBlock.Kind.SUPER ? -5.0D : -3.5D, 7.0D);
+        } else {
+            applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 7.0F);
+        }
         poseStack.scale(2.0F, 2.0F, 2.0F);
         if (kind == LegacyConnectorBlock.Kind.SUPER) {
             ObjNetworkModels.CONNECTOR_SUPER_LEGACY.renderAll(LegacyPylonRenderer.CONNECTOR_SUPER_TEXTURE,
@@ -287,7 +394,11 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                 point -> point.scale(0.5D));
 
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 2.25F);
+        if (displayContext == ItemDisplayContext.GUI) {
+            applyLegacyInventoryObjTransform(poseStack, -5.0D, 2.25D);
+        } else {
+            applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 2.25F);
+        }
         poseStack.scale(0.5F, 0.5F, 0.5F);
         ObjNetworkModels.PYLON_LARGE_LEGACY.renderAll(LegacyPylonRenderer.PYLON_LARGE_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
@@ -367,6 +478,29 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             poseStack.translate(0.0D, 0.1D, 0.0D);
             poseStack.scale(0.85F, 0.85F, 0.85F);
         }
+    }
+
+    private static void applyLegacyItemBaseInventoryTransform(PoseStack poseStack, AABB bounds) {
+        Vec3 center = bounds.getCenter();
+        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
+        float fitScale = (float) Math.max(0.025D,
+                Math.min(0.32D, LEGACY_GUI_MAX_OCCUPANCY / Math.max(1.0D, maxSize)));
+
+        poseStack.translate(0.5D, 0.5D, 0.5D);
+        poseStack.mulPose(Axis.XN.rotationDegrees(30.0F));
+        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        poseStack.scale(-fitScale, -fitScale, -fitScale);
+        poseStack.translate(-center.x, -center.y, -center.z);
+    }
+
+    private static void applyLegacyInventoryObjTransform(PoseStack poseStack, double yOffsetPixels,
+            double inventoryScale) {
+        poseStack.translate(0.5D, 0.625D, 0.0D);
+        poseStack.mulPose(Axis.XP.rotationDegrees(-30.0F));
+        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        poseStack.scale(-0.0625F, -0.0625F, -0.0625F);
+        poseStack.translate(0.0D, yOffsetPixels, 0.0D);
+        poseStack.scale((float) inventoryScale, (float) inventoryScale, (float) inventoryScale);
     }
 
     private static AABB transformVisibleBounds(AABB bounds, LegacyMachineDefinition definition, BlockState state) {
@@ -468,15 +602,28 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             return true;
         }
         if (definition.renderProfile() == LegacyMachineRenderProfile.RADGEN_STATIC_SPECIAL) {
-            renderRadgenStatic(definition, model, context);
+            LegacyVisibleMachineRenderer.renderVisibleMachineStaticPlan(definition, model,
+                    LegacyTileRenderPlans.radgenStaticPlan(false), context);
             return true;
         }
         if (definition.renderProfile() == LegacyMachineRenderProfile.BATTERY_REDD_STATIC_SPECIAL) {
-            renderBatteryReddStatic(definition, model, context);
+            LegacyVisibleMachineRenderer.renderVisibleMachineStaticPlan(definition, model,
+                    LegacyTileRenderPlans.batteryReddStaticPlan(), context);
             return true;
         }
         if (definition.renderProfile() == LegacyMachineRenderProfile.CRYSTALLIZER_STATIC_SPECIAL) {
-            renderCrystallizerStatic(definition, model, context);
+            LegacyVisibleMachineRenderer.renderVisibleMachineStaticPlan(definition, model,
+                    LegacyTileRenderPlans.crystallizerStaticPlan(false), context);
+            return true;
+        }
+        if (definition.renderProfile() == LegacyMachineRenderProfile.COMPRESSOR_RUNNING_PARTS) {
+            LegacyVisibleMachineRenderer.renderCompressorPlan(definition, model,
+                    LegacyTileRenderPlans.compressorItemPlan(currentMillis), context, poseStack);
+            return true;
+        }
+        if (definition.renderProfile() == LegacyMachineRenderProfile.PUMP_RUNNING_PARTS) {
+            LegacyVisibleMachineRenderer.renderPumpPlan(definition, model,
+                    LegacyTileRenderPlans.pumpItemPlan(currentMillis), context, poseStack);
             return true;
         }
         if (definition.renderProfile() == LegacyMachineRenderProfile.TURBOFAN_ITEM_PREVIEW) {
@@ -486,65 +633,12 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         return false;
     }
 
-    private static void renderRadgenStatic(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            ObjRenderContext context) {
-        model.renderPart("Base", definition.textureLocation(), context);
-        model.renderPart("Rotor", definition.textureLocation(), context);
-        renderTintedPart(model, definition.textureLocation(), LegacyTileRenderPlans.radgenLightPlan(false), context);
-        renderTintedPart(model, definition.textureLocation(), LegacyTileRenderPlans.radgenGlassPlan(), context);
-        model.renderPart("Glass", definition.textureLocation(), context);
-    }
-
-    private static void renderBatteryReddStatic(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            ObjRenderContext context) {
-        model.renderPart("Base", definition.textureLocation(), context);
-        model.renderPart("Wheel", definition.textureLocation(), context);
-        model.renderPart("Lights", definition.textureLocation(), context.fullBright());
-    }
-
-    private static void renderCrystallizerStatic(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            ObjRenderContext context) {
-        model.renderPart("Body", definition.textureLocation(), context);
-        model.renderPart("Spinner", definition.textureLocation(), context);
-        renderTintedPart(model, definition.textureLocation(), LegacyTileRenderPlans.crystallizerFluidPlan(false),
-                context);
-    }
-
     private static void renderTurbofanItem(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             ObjRenderContext context) {
         model.renderPart("Body", definition.textureLocation(), context);
         model.renderPart("Blades", definition.textureLocation(), context);
         model.renderPart("Afterburner", definition.itemPartTextures().getOrDefault("Afterburner",
                 definition.partTextures().getOrDefault("Afterburner", definition.textureLocation())), context);
-    }
-
-    private static void renderTintedPart(LegacyWavefrontModel model, net.minecraft.resources.ResourceLocation texture,
-            LegacyTileRenderPlans.ModelPartTintPlan plan, ObjRenderContext context) {
-        if (!plan.active()) {
-            return;
-        }
-        ObjRenderContext resolved = applyTintPlan(context, plan);
-        if (plan.textured()) {
-            model.renderPart(plan.partName(), texture, resolved);
-        } else {
-            model.renderPartUntextured(plan.partName(), resolved);
-        }
-    }
-
-    private static ObjRenderContext applyTintPlan(ObjRenderContext context,
-            LegacyTileRenderPlans.ModelPartTintPlan plan) {
-        ObjRenderContext resolved = context;
-        if (plan.blend() != null) {
-            resolved = resolved.withRenderMode(plan.blend().modernRenderMode());
-        }
-        if (plan.color() != null) {
-            resolved = resolved.withRgba(plan.color().redByte(), plan.color().greenByte(),
-                    plan.color().blueByte(), plan.color().alphaByte());
-        }
-        if (plan.fullbright() != null) {
-            resolved = resolved.withLegacyLightmap(plan.fullbright().lightmapX(), plan.fullbright().lightmapY());
-        }
-        return resolved;
     }
 
     private static void renderMachineParts(LegacyMachineDefinition definition, LegacyWavefrontModel model,

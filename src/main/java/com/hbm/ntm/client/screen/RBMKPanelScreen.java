@@ -14,6 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -60,11 +61,22 @@ public class RBMKPanelScreen extends AbstractContainerScreen<RBMKPanelMenu> {
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
+        if (panelType == RBMKPanelPlanner.PanelType.TERMINAL) {
+            graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xff000000);
+            return;
+        }
+        if (panelType == RBMKPanelPlanner.PanelType.DISPLAY) {
+            return;
+        }
         graphics.blit(texture(), leftPos, topPos, 0, 0, imageWidth, imageHeight, 256, Math.max(256, imageHeight));
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (panelType == RBMKPanelPlanner.PanelType.TERMINAL) {
+            renderTerminalLabels(graphics);
+            return;
+        }
         String name = title.getString();
         graphics.drawString(font, name, imageWidth / 2 - font.width(name) / 2, titleLabelY, 0x404040, false);
     }
@@ -74,6 +86,43 @@ public class RBMKPanelScreen extends AbstractContainerScreen<RBMKPanelMenu> {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (panelType == RBMKPanelPlanner.PanelType.TERMINAL
+                && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)) {
+            sendTerminalCommand();
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    private void renderTerminalLabels(GuiGraphics graphics) {
+        RBMKPanelPlanner.TerminalState state = menu.getBlockEntity().terminal();
+        RBMKPanelScreenPlanner.TerminalScreenPlan plan = RBMKPanelScreenPlanner.terminalScreenPlan(false);
+        for (RBMKPanelScreenPlanner.HelpLine line : plan.helpLines()) {
+            graphics.drawString(font, line.text(), line.x(), line.y(), 0x808080, false);
+        }
+        String[] history = state.history();
+        for (int i = 0; i < history.length; i++) {
+            String line = history[i] == null ? "" : history[i];
+            if (!line.isEmpty()) {
+                graphics.drawString(font, "> " + line, 2, 68 + i * 5, state.repeatCommand().isEmpty()
+                        ? 0x00ff00 : 0xff8000, false);
+            }
+        }
+    }
+
+    private void sendTerminalCommand() {
+        EditBox box = fields.get("cmd");
+        if (box == null) {
+            return;
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putString("cmd", box.getValue());
+        ModMessages.sendTileControl(menu.getBlockEntity().getBlockPos(), tag);
+        box.setValue("");
     }
 
     private void initMasks() {
@@ -131,7 +180,8 @@ public class RBMKPanelScreen extends AbstractContainerScreen<RBMKPanelMenu> {
             case KEYPAD -> keyValue(panel.keys()[i], plan.name());
             case LEVER -> leverValue(panel.levers()[i], plan.name());
             case NUMITRON -> numitronValue(panel.numitrons()[i], plan.name());
-            case TERMINAL, DISPLAY -> "";
+            case TERMINAL -> plan.name().equals("line") ? "" : "";
+            case DISPLAY -> "";
         };
     }
 

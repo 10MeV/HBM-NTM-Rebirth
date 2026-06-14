@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "item": "minecraft:poisonous_potato" } },
+  "output": { "item": "hbm_ntm_rebirth:powder_poison" }
+}

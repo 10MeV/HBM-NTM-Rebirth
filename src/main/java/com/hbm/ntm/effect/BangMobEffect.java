@@ -4,9 +4,8 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.explosion.ExplosionLarge;
 import com.hbm.ntm.radiation.ModDamageSources;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
@@ -35,8 +34,7 @@ public class BangMobEffect extends MobEffect {
         if (!(entity instanceof Player)) {
             entity.discard();
         }
-        entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                ModSounds.WEAPON_LASER_BANG.get(), SoundSource.HOSTILE, 100.0F, 1.0F);
+        LegacySoundPlayer.playLegacyLaserBang(entity);
         ExplosionLarge.spawnParticles(entity.level(), entity.getX(), entity.getY(), entity.getZ(), 10);
         dropCowCheese(entity);
     }

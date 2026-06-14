@@ -15,7 +15,7 @@ public record RBMKNeutronSettings(
     private static final double DEFAULT_REFLECTOR_EFFICIENCY = 1.0D;
     private static final double DEFAULT_ABSORBER_EFFICIENCY = 1.0D;
     private static final double DEFAULT_ABSORBER_HEAT_CONVERSION = 0.05D;
-    private static final int DEFAULT_COLUMN_HEIGHT_ABOVE = 4;
+    private static final int DEFAULT_COLUMN_HEIGHT_ABOVE = 3;
     private static final int DEFAULT_FLUX_RANGE = 5;
     private static final int DEFAULT_REASIM_RANGE = 10;
 

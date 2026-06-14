@@ -3,10 +3,10 @@ package com.hbm.ntm.entity.missile;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModEntityTypes;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.NonNullList;
@@ -17,7 +17,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
@@ -64,8 +63,7 @@ public class SoyuzEntity extends Entity {
         super.tick();
 
         if (!level().isClientSide && tickCount == 1) {
-            level().playSound(null, getX(), getY(), getZ(), ModSounds.ENTITY_SOYUZ_TAKEOFF.get(),
-                    SoundSource.PLAYERS, 100.0F, 1.1F);
+            LegacySoundPlayer.playLegacySoyuzTakeoff(this);
         }
 
         if (getDeltaMovement().y < 2.0D) {
@@ -97,8 +95,7 @@ public class SoyuzEntity extends Entity {
                     0.0D, 0.0F, 0.0F);
             if (entity instanceof Player && !exhaustSoundPlayed) {
                 exhaustSoundPlayed = true;
-                level().playSound(null, getX(), getY(), getZ(), ModSounds.ALARM_SOYUZED.get(),
-                        SoundSource.RECORDS, 100.0F, 1.0F);
+                LegacySoundPlayer.playLegacySoyuzedAlarm(this);
             }
         }
     }

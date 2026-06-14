@@ -45,6 +45,7 @@ public final class HbmCommonConfig {
         AshpitConfig.define(builder);
         SteamEngineConfig.define(builder);
         CoolingTowerConfig.define(builder);
+        PoweredCondenserConfig.define(builder);
         SteamTurbineConfig.define(builder);
         OilDrillConfig.define(builder);
         BoilerConfig.define(builder);

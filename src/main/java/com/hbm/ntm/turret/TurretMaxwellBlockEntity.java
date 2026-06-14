@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements LegacyUpgradeInfoProvider {
+    private static final String TAG_BEAM_SHOT = "BeamShot";
     private static final Map<UpgradeType, Integer> VALID_UPGRADES = createValidUpgrades();
 
     private int speedLevel;
@@ -32,6 +33,7 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
     private int overdriveLevel;
     private int checkDelay;
     private boolean screm;
+    private boolean didJustShootBeam;
 
     public TurretMaxwellBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.TURRET_MAXWELL.get(), pos, state, 10_000_000L, 10_000_000L);
@@ -142,6 +144,11 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
     }
 
     @Override
+    protected void tickClientSpecificAnimations() {
+        updateClientBeamDistanceFromTarget();
+    }
+
+    @Override
     protected void updateFiringTick() {
         if (level == null) {
             return;
@@ -159,7 +166,7 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
         if (afterburnLevel > 0) {
             target.setSecondsOnFire(afterburnLevel * 3);
         }
-        triggerBeam(5);
+        didJustShootBeam = true;
         if (!target.isAlive() && target instanceof LivingEntity) {
             ParticleUtil.spawnGiblets(target, ParticleUtil.GIBLET_MEAT);
             if (screm) {
@@ -172,6 +179,36 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
             }
         }
         setPower(getPower() - demand);
+    }
+
+    @Override
+    protected boolean shouldSyncBeamState() {
+        return false;
+    }
+
+    @Override
+    public net.minecraft.nbt.CompoundTag getClientSyncTag() {
+        net.minecraft.nbt.CompoundTag tag = super.getClientSyncTag();
+        writeMaxwellBeamSync(tag);
+        return tag;
+    }
+
+    @Override
+    public net.minecraft.nbt.CompoundTag getUpdateTag() {
+        return getClientSyncTag();
+    }
+
+    @Override
+    public void handleClientSyncTag(net.minecraft.nbt.CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.getBoolean(TAG_BEAM_SHOT)) {
+            triggerClientBeamFromTarget(5);
+        }
+    }
+
+    private void writeMaxwellBeamSync(net.minecraft.nbt.CompoundTag tag) {
+        tag.putBoolean(TAG_BEAM_SHOT, didJustShootBeam);
+        didJustShootBeam = false;
     }
 
     @Override

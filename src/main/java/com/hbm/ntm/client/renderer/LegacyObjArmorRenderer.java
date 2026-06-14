@@ -9,11 +9,15 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import java.util.Locale;
 import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.Model;
+import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -21,6 +25,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +44,11 @@ public final class LegacyObjArmorRenderer {
             public @NotNull Model getGenericArmorModel(LivingEntity livingEntity, ItemStack itemStack,
                                                        EquipmentSlot equipmentSlot, HumanoidModel<?> original) {
                 return specFor(itemStack).isSupportedSlot(equipmentSlot) ? EMPTY_ARMOR_MODEL : original;
+            }
+
+            @Override
+            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                return ItemRendererHolder.INSTANCE;
             }
         });
     }
@@ -279,6 +289,13 @@ public final class LegacyObjArmorRenderer {
         return "bj_plate_jetpack".equals(path);
     }
 
+    private static EquipmentSlot slotFor(ItemStack stack) {
+        if (!(stack.getItem() instanceof ArmorItem armor)) {
+            return null;
+        }
+        return slotFor(armor.getType());
+    }
+
     private static final Spec T51 = standard(ObjArmorModels.T51, ObjArmorModels.T51_HELMET_TEXTURE,
             ObjArmorModels.T51_CHEST_TEXTURE, ObjArmorModels.T51_ARM_TEXTURE, ObjArmorModels.T51_LEG_TEXTURE);
     private static final Spec STEAMSUIT = headBody(ObjArmorModels.STEAMSUIT, ObjArmorModels.STEAMSUIT_HELMET_TEXTURE,
@@ -359,6 +376,191 @@ public final class LegacyObjArmorRenderer {
         @Override
         public void renderToBuffer(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay,
                                    float red, float green, float blue, float alpha) {
+        }
+    }
+
+    private static final class LegacyObjArmorItemRenderer extends BlockEntityWithoutLevelRenderer {
+        private LegacyObjArmorItemRenderer(BlockEntityRenderDispatcher dispatcher, EntityModelSet modelSet) {
+            super(dispatcher, modelSet);
+        }
+
+        @Override
+        public void renderByItem(ItemStack stack, ItemDisplayContext displayContext, PoseStack poseStack,
+                MultiBufferSource buffer, int packedLight, int packedOverlay) {
+            Spec spec = specFor(stack);
+            EquipmentSlot slot = slotFor(stack);
+            if (slot == null || !spec.isSupportedSlot(slot)) {
+                return;
+            }
+
+            poseStack.pushPose();
+            applyLegacyItemBaseTransform(displayContext, poseStack);
+            applyLegacyArmorInventoryTransform(stack, slot, displayContext, poseStack);
+            renderLegacyItemSlot(spec, stack, slot, poseStack, buffer, packedLight, packedOverlay);
+            poseStack.popPose();
+        }
+
+        private static void applyLegacyItemBaseTransform(ItemDisplayContext displayContext, PoseStack poseStack) {
+            if (displayContext == ItemDisplayContext.GUI) {
+                poseStack.translate(0.5D, 0.625D, 0.0D);
+                poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
+                poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+                poseStack.scale(-0.0625F, -0.0625F, -0.0625F);
+                return;
+            }
+
+            if (displayContext == ItemDisplayContext.GROUND) {
+                poseStack.translate(0.5D, 0.5D, 0.5D);
+                poseStack.scale(1.5F, 1.5F, 1.5F);
+            } else {
+                poseStack.translate(0.5D, 0.25D, 0.0D);
+            }
+            poseStack.scale(0.25F, 0.25F, 0.25F);
+            if (displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
+                    && displayContext != ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
+                poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            }
+        }
+
+        private static void applyLegacyArmorInventoryTransform(ItemStack stack, EquipmentSlot slot,
+                ItemDisplayContext displayContext, PoseStack poseStack) {
+            if (displayContext == ItemDisplayContext.GUI) {
+                applyLegacyArmorSpecialInventoryTransform(stack, slot, poseStack);
+                poseStack.translate(0.0D, -1.5D, 0.0D);
+                poseStack.scale(3.25F, 3.25F, 3.25F);
+                poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
+                poseStack.mulPose(Axis.YP.rotationDegrees(-135.0F));
+                poseStack.mulPose(Axis.XP.rotationDegrees(-20.0F));
+                return;
+            }
+
+            poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
+            poseStack.scale(0.75F, 0.75F, 0.75F);
+            poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+        }
+
+        private static void applyLegacyArmorSpecialInventoryTransform(ItemStack stack, EquipmentSlot slot,
+                PoseStack poseStack) {
+            ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+            String path = id == null ? "" : id.getPath().toLowerCase(Locale.ROOT);
+            if (path.startsWith("dns_") && slot == EquipmentSlot.HEAD) {
+                poseStack.translate(0.0D, -1.0D, 0.0D);
+            } else if (path.startsWith("fau_") && slot == EquipmentSlot.HEAD) {
+                poseStack.scale(0.875F, 0.875F, 0.875F);
+                poseStack.translate(0.0D, -2.0D, 0.0D);
+            } else if ((path.startsWith("taurun_") || path.startsWith("trenchmaster_"))
+                    && slot == EquipmentSlot.HEAD) {
+                poseStack.translate(0.0D, 1.0D, 0.0D);
+            } else if ((path.startsWith("taurun_") || path.startsWith("trenchmaster_"))
+                    && slot == EquipmentSlot.CHEST) {
+                poseStack.translate(0.0D, 1.5D, 0.0D);
+            }
+        }
+
+        private static void renderLegacyItemSlot(Spec spec, ItemStack stack, EquipmentSlot slot, PoseStack poseStack,
+                MultiBufferSource buffer, int packedLight, int packedOverlay) {
+            switch (slot) {
+                case HEAD -> {
+                    poseStack.scale(0.3125F, 0.3125F, 0.3125F);
+                    poseStack.translate(0.0D, 1.0D, 0.0D);
+                    renderParts(spec, spec.headTexture(), poseStack, buffer, packedLight, packedOverlay, spec.headParts());
+                    renderItemExtras(spec, stack, poseStack, buffer, packedLight, packedOverlay, spec.headExtras());
+                }
+                case CHEST -> {
+                    poseStack.scale(0.225F, 0.225F, 0.225F);
+                    poseStack.translate(0.0D, -10.0D, 0.0D);
+                    renderParts(spec, spec.chestTexture(), poseStack, buffer, packedLight, packedOverlay, spec.chestParts());
+                    poseStack.translate(0.0D, 0.0D, 0.1D);
+                    renderParts(spec, spec.armTexture(), poseStack, buffer, packedLight, packedOverlay, spec.leftArmParts());
+                    renderParts(spec, spec.armTexture(), poseStack, buffer, packedLight, packedOverlay, spec.rightArmParts());
+                    if (spec.jetpackTexture() != null && shouldRenderJetpack(spec, stack)) {
+                        renderParts(spec, spec.jetpackTexture(), poseStack, buffer, packedLight, packedOverlay, "Jetpack");
+                    }
+                    if (spec.cassetteTexture() != null) {
+                        renderTranslucentParts(spec, spec.cassetteTexture(), poseStack, buffer, packedLight,
+                                packedOverlay, "Cassette");
+                    }
+                    renderItemExtras(spec, stack, poseStack, buffer, packedLight, packedOverlay, spec.chestExtras());
+                }
+                case LEGS -> {
+                    poseStack.scale(0.25F, 0.25F, 0.25F);
+                    poseStack.translate(0.0D, -20.0D, 0.0D);
+                    renderParts(spec, spec.legTexture(), poseStack, buffer, packedLight, packedOverlay, spec.leftLegParts());
+                    poseStack.translate(0.0D, 0.0D, 0.1D);
+                    renderParts(spec, spec.legTexture(), poseStack, buffer, packedLight, packedOverlay, spec.rightLegParts());
+                }
+                case FEET -> {
+                    poseStack.scale(0.25F, 0.25F, 0.25F);
+                    poseStack.translate(0.0D, -22.0D, 0.0D);
+                    renderParts(spec, spec.legTexture(), poseStack, buffer, packedLight, packedOverlay, spec.leftBootParts());
+                    poseStack.translate(0.0D, 0.0D, 0.1D);
+                    renderParts(spec, spec.legTexture(), poseStack, buffer, packedLight, packedOverlay, spec.rightBootParts());
+                }
+                default -> {
+                }
+            }
+        }
+
+        private static void renderParts(Spec spec, ResourceLocation texture, PoseStack poseStack,
+                MultiBufferSource buffer, int packedLight, int packedOverlay, String... parts) {
+            if (texture == null) {
+                return;
+            }
+            for (String part : parts) {
+                if (part == null || part.isBlank()) {
+                    continue;
+                }
+                spec.model().renderPart(part, texture, poseStack, buffer, packedLight, packedOverlay);
+            }
+        }
+
+        private static void renderTranslucentParts(Spec spec, ResourceLocation texture, PoseStack poseStack,
+                MultiBufferSource buffer, int packedLight, int packedOverlay, String... parts) {
+            if (texture == null) {
+                return;
+            }
+            for (String part : parts) {
+                spec.model().renderPartTranslucent(part, texture, poseStack, buffer, packedLight, packedOverlay,
+                        255, 255, 255, 255);
+            }
+        }
+
+        private static void renderItemExtras(Spec spec, ItemStack stack, PoseStack poseStack, MultiBufferSource buffer,
+                int packedLight, int packedOverlay, ExtraPart... extras) {
+            for (ExtraPart extra : extras) {
+                if (!extra.shouldRender(stack)) {
+                    continue;
+                }
+                int light = extra.fullBright() ? FULL_BRIGHT : packedLight;
+                if (extra.untextured()) {
+                    ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, light, packedOverlay)
+                            .withColor((extra.red() << 16) | (extra.green() << 8) | extra.blue())
+                            .withAlpha(extra.alpha());
+                    if (extra.additive()) {
+                        spec.model().renderPartUntexturedAdditive(extra.part(), context);
+                    } else {
+                        spec.model().renderPartUntextured(extra.part(), context);
+                    }
+                } else if (extra.additive()) {
+                    spec.model().renderPartAdditive(extra.part(), extra.texture(), poseStack, buffer, FULL_BRIGHT,
+                            packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());
+                } else if (extra.translucent()) {
+                    spec.model().renderPartTranslucent(extra.part(), extra.texture(), poseStack, buffer, light,
+                            packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());
+                } else {
+                    spec.model().renderPart(extra.part(), extra.texture(), poseStack, buffer, light,
+                            packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());
+                }
+            }
+        }
+    }
+
+    private static final class ItemRendererHolder {
+        private static final LegacyObjArmorItemRenderer INSTANCE = new LegacyObjArmorItemRenderer(
+                Minecraft.getInstance().getBlockEntityRenderDispatcher(),
+                Minecraft.getInstance().getEntityModels());
+
+        private ItemRendererHolder() {
         }
     }
 

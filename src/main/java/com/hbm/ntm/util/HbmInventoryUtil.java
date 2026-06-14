@@ -3,6 +3,7 @@ package com.hbm.ntm.util;
 import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.recipe.HbmItemOutput;
 import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
@@ -12,6 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
@@ -497,8 +499,21 @@ public final class HbmInventoryUtil {
         return true;
     }
 
+    public static boolean doesArrayHaveSpace(ItemStack[] inventory, ItemStack... items) {
+        return inventory != null && doesInventoryHaveSpace(inventory, 0, inventory.length - 1, items);
+    }
+
+    public static boolean doesArrayHaveSpace(ItemStack[] inventory, List<ItemStack> items) {
+        return inventory != null && doesArrayHaveSpace(inventory, 0, inventory.length - 1, items);
+    }
+
     public static boolean doesArrayHaveSpace(ItemStack[] inventory, int start, int end, ItemStack[] items) {
         return doesInventoryHaveSpace(inventory, start, end, items);
+    }
+
+    public static boolean doesArrayHaveSpace(ItemStack[] inventory, int start, int end, List<ItemStack> items) {
+        return doesInventoryHaveSpace(inventory, start, end, items == null ? new ItemStack[0]
+                : items.toArray(ItemStack[]::new));
     }
 
     public static boolean doesInventoryHaveSpace(IItemHandler inventory, int start, int end, List<ItemStack> items) {
@@ -549,6 +564,10 @@ public final class HbmInventoryUtil {
     public static boolean doesArrayHaveIngredients(ItemStack[] inventory, int start, int end,
             HbmIngredient... ingredients) {
         return doesInventoryHaveIngredients(inventory, start, end, ingredients);
+    }
+
+    public static boolean doesArrayHaveIngredients(ItemStack[] inventory, HbmIngredient... ingredients) {
+        return inventory != null && doesArrayHaveIngredients(inventory, 0, inventory.length - 1, ingredients);
     }
 
     public static boolean doesInventoryHaveIngredients(IItemHandler inventory, int[] slots,
@@ -1562,6 +1581,141 @@ public final class HbmInventoryUtil {
     public static void consumeOreDictMatches(Container inventory, int start, int end, String legacyOreName,
             int count) {
         consumeLegacyOreMatches(inventory, start, end, legacyOreName, count);
+    }
+
+    public static List<ItemStack> clearToDrops(NonNullList<ItemStack> items) {
+        return HbmItemStackUtil.clearToDrops(items);
+    }
+
+    public static List<ItemStack> clearToDrops(ItemStack[] items) {
+        return HbmItemStackUtil.clearToDrops(items);
+    }
+
+    public static List<ItemStack> clearToDrops(Container items) {
+        return HbmItemStackUtil.clearToDrops(items);
+    }
+
+    public static List<ItemStack> clearToDrops(IItemHandler items) {
+        return HbmItemStackUtil.clearToDrops(items);
+    }
+
+    public static List<ItemStack> clearToDrops(ItemStackHandler items) {
+        return HbmItemStackUtil.clearToDrops(items);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, IItemHandler items, RandomSource random) {
+        HbmItemStackUtil.spillItems(level, pos, items, random);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, IItemHandler items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, NonNullList<ItemStack> items, RandomSource random) {
+        HbmItemStackUtil.spillItems(level, pos, items, random);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, NonNullList<ItemStack> items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, ItemStack[] items, RandomSource random) {
+        HbmItemStackUtil.spillItems(level, pos, items, random);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, ItemStack[] items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, Container items, RandomSource random) {
+        HbmItemStackUtil.spillItems(level, pos, items, random);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, Container items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
+    public static void spillStack(Level level, BlockPos pos, ItemStack stack, RandomSource random) {
+        HbmItemStackUtil.spillStack(level, pos, stack, random);
+    }
+
+    public static void spillStack(Level level, BlockPos pos, ItemStack stack) {
+        HbmItemStackUtil.spillStack(level, pos, stack);
+    }
+
+    public static void dropStack(Level level, double x, double y, double z, ItemStack stack) {
+        HbmItemStackUtil.dropStack(level, x, y, z, stack);
+    }
+
+    public static void dropStack(Level level, BlockPos pos, ItemStack stack) {
+        HbmItemStackUtil.dropStack(level, pos, stack);
+    }
+
+    public static void dropStacks(Level level, double x, double y, double z, Iterable<ItemStack> stacks) {
+        HbmItemStackUtil.dropStacks(level, x, y, z, stacks);
+    }
+
+    public static void dropStacks(Level level, BlockPos pos, Iterable<ItemStack> stacks) {
+        HbmItemStackUtil.dropStacks(level, pos, stacks);
+    }
+
+    public static void dropStacks(Level level, double x, double y, double z, ItemStack[] stacks) {
+        HbmItemStackUtil.dropStacks(level, x, y, z, stacks);
+    }
+
+    public static void dropStacks(Level level, BlockPos pos, ItemStack[] stacks) {
+        HbmItemStackUtil.dropStacks(level, pos, stacks);
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack) {
+        return HbmItemStackUtil.giveOrDrop(player, stack);
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack, boolean throwRandomly) {
+        return HbmItemStackUtil.giveOrDrop(player, stack, throwRandomly);
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack, Level fallbackLevel, double x, double y,
+            double z) {
+        return HbmItemStackUtil.giveOrDrop(player, stack, fallbackLevel, x, y, z);
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack, Level fallbackLevel, BlockPos pos) {
+        return HbmItemStackUtil.giveOrDrop(player, stack, fallbackLevel, pos);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks, boolean throwRandomly) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, throwRandomly);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks, boolean throwRandomly) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, throwRandomly);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks, Level fallbackLevel, double x,
+            double y, double z) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, fallbackLevel, x, y, z);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks, Level fallbackLevel, BlockPos pos) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, fallbackLevel, pos);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks, Level fallbackLevel, double x, double y,
+            double z) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, fallbackLevel, x, y, z);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks, Level fallbackLevel, BlockPos pos) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, fallbackLevel, pos);
     }
 
     public static void giveChanceStacksToPlayer(Player player, List<HbmItemStackUtil.ChanceStack> stacks) {

@@ -7,6 +7,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 
 public enum HbmArmorMaterials implements ArmorMaterial {
@@ -26,11 +27,12 @@ public enum HbmArmorMaterials implements ArmorMaterial {
     SECURITY("security", 100, 15, () -> legacyIngredient("plate_kevlar")),
     STARMETAL("starmetal", 150, 100, () -> legacyIngredient("ingot_starmetal")),
     BISMUTH("bismuth", 100, 100, () -> legacyIngredient("plate_bismuth")),
-    ROBES("robes", 15, 12, () -> legacyIngredient("rag")),
+    ROBES("robes", 15, 12, () -> Ingredient.of(Items.IRON_INGOT)),
     ZIRCONIUM("zirconium", 1000, 1000, () -> legacyIngredient("ingot_zirconium")),
     DNT("dnt", 3, 0, () -> legacyIngredient("ingot_dineutronium")),
     JACKET("jackt", 30, 5, () -> legacyIngredient("ingot_steel")),
     JACKET2("jackt2", 30, 5, () -> legacyIngredient("ingot_steel")),
+    MASK_OF_INFAMY("maskofinfamy", 15, 9, () -> Ingredient.of(Items.IRON_INGOT)),
     T51("t51", 150, 0, () -> legacyIngredient("plate_armor_titanium")),
     DESH_POWERED("desh_powered", 150, 0, () -> legacyIngredient("ingot_desh")),
     DIESEL("dieselsuit", 150, 0, () -> legacyIngredient("plate_copper"), 0.25F),
@@ -43,7 +45,7 @@ public enum HbmArmorMaterials implements ArmorMaterial {
     TAURUN("taurun", 150, 10, () -> legacyIngredient("plate_iron")),
     TRENCHMASTER("trenchmaster", 150, 0, () -> legacyIngredient("plate_iron")),
     ASBESTOS("asbestos", 20, 5, () -> Ingredient.of(ModItems.legacyItem("asbestos_cloth").get())),
-    RAGS("rags", 150, 0, () -> Ingredient.EMPTY);
+    RAGS("rags", 150, 0, () -> legacyIngredient("rag"));
 
     private final String name;
     private final int durabilityMultiplier;
@@ -97,6 +99,14 @@ public enum HbmArmorMaterials implements ArmorMaterial {
         }
         if (this == DNT) {
             return 1;
+        }
+        if (this == MASK_OF_INFAMY) {
+            return switch (type) {
+                case HELMET -> 2;
+                case CHESTPLATE -> 6;
+                case LEGGINGS -> 5;
+                case BOOTS -> 2;
+            };
         }
         if (this == STEEL || this == TITANIUM || this == ALLOY || this == COBALT || this == PAA
                 || this == HAZMAT_PAA || this == LIQUIDATOR || this == SCHRABIDIUM || this == EUPHEMIUM

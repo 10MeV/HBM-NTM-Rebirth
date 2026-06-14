@@ -2,6 +2,7 @@ package com.hbm.ntm.client;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.armor.ArmorModHandler;
+import com.hbm.ntm.armor.ArmorModItem;
 import com.hbm.ntm.armor.ArmorModItems;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
 import com.hbm.ntm.client.overlay.LegacyHelmetOverlayRenderer;
@@ -9,6 +10,7 @@ import com.hbm.ntm.client.overlay.LegacyHevHudRenderer;
 import com.hbm.ntm.client.overlay.LegacyLookOverlayRenderer;
 import com.hbm.ntm.client.obj.ObjArmorModels;
 import com.hbm.ntm.client.overlay.ToolAbilityHudRenderer;
+import com.hbm.ntm.client.particle.HbmDeferredParticleRenderer;
 import com.hbm.ntm.client.render.HbmBlackHoleEffects;
 import com.hbm.ntm.client.render.HbmOverheadMarkers;
 import com.hbm.ntm.client.render.HbmRenderEffects;
@@ -18,6 +20,7 @@ import com.hbm.ntm.client.renderer.LegacyHeadArmorRenderer;
 import com.hbm.ntm.client.renderer.LegacyJetpackRenderer;
 import com.hbm.ntm.client.renderer.LegacyObjArmorRenderer;
 import com.hbm.ntm.client.renderer.LegacyScreenQuadRenderer;
+import com.hbm.ntm.client.screen.ArmorTableScreen;
 import com.hbm.ntm.client.renderer.SednaGunHudRenderer;
 import com.hbm.ntm.client.renderer.SednaGunItemRenderer;
 import com.hbm.ntm.client.sound.LegacyMovingEntitySound;
@@ -61,6 +64,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -105,7 +109,33 @@ public final class ClientForgeEvents {
         DamageResistanceTooltipUtil.addResistanceInformation(event.getItemStack(), event.getToolTip());
         addHazmatProtectionInformation(event.getItemStack(), event.getToolTip());
         addCustomNukeInformation(event.getItemStack(), event.getToolTip());
+        addInstalledArmorModInformation(event);
         addItemTagInformation(event);
+    }
+
+    private static void addInstalledArmorModInformation(ItemTooltipEvent event) {
+        ItemStack stack = event.getItemStack();
+        if (!(stack.getItem() instanceof ArmorItem) || !ArmorModHandler.hasMods(stack)) {
+            return;
+        }
+
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!Screen.hasShiftDown() && !(minecraft.screen instanceof ArmorTableScreen)) {
+            event.getToolTip().add(Component.literal("Hold <")
+                    .append(Component.literal("LSHIFT").withStyle(ChatFormatting.YELLOW, ChatFormatting.ITALIC))
+                    .append(Component.literal("> to display installed armor mods"))
+                    .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+            return;
+        }
+
+        event.getToolTip().add(Component.literal("Mods:").withStyle(ChatFormatting.YELLOW));
+        ItemStack[] mods = ArmorModHandler.pryMods(stack);
+        for (int i = 0; i < ArmorModHandler.battery; i++) {
+            ItemStack mod = mods[i];
+            if (mod.getItem() instanceof ArmorModItem armorMod) {
+                armorMod.appendInstalledArmorModTooltip(mod, stack, event.getToolTip(), event.getFlags());
+            }
+        }
     }
 
     private static void addItemTagInformation(ItemTooltipEvent event) {
@@ -252,6 +282,8 @@ public final class ClientForgeEvents {
         }
         SednaGunHudRenderer.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(),
                 event.getWindow().getGuiScaledHeight(), player);
+        ArmorModuleHud.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(),
+                event.getWindow().getGuiScaledHeight(), player);
         DashHud.render(event.getGuiGraphics(), event.getWindow().getGuiScaledHeight());
         ClientInformMessages.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
     }
@@ -306,6 +338,8 @@ public final class ClientForgeEvents {
 
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
             renderNukeTorexCloudlets(minecraft, event);
+            HbmDeferredParticleRenderer.renderAfterLevel(event.getCamera(), event.getPartialTick(),
+                    minecraft.renderBuffers().bufferSource());
         }
 
         if (HbmBlackHoleEffects.isRenderStage(event.getStage())) {
@@ -374,6 +408,7 @@ public final class ClientForgeEvents {
 
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
+            HbmDeferredParticleRenderer.clear();
             if (hadLevel) {
                 clearNetworkState();
                 hadLevel = false;
@@ -381,7 +416,24 @@ public final class ClientForgeEvents {
             return;
         }
         hadLevel = true;
+        tickClientArmorMods(minecraft.player);
         spawnRadiationAura(minecraft);
+    }
+
+    private static void tickClientArmorMods(Player player) {
+        if (player == null) {
+            return;
+        }
+        for (ItemStack armor : player.getArmorSlots()) {
+            if (!ArmorModHandler.hasMods(armor)) {
+                continue;
+            }
+            for (ItemStack mod : ArmorModHandler.pryMods(armor)) {
+                if (mod.getItem() instanceof ArmorModItem armorMod) {
+                    armorMod.onClientArmorModTick(player, armor, mod);
+                }
+            }
+        }
     }
 
     private static void showEmptyGasMaskFilterWarning() {

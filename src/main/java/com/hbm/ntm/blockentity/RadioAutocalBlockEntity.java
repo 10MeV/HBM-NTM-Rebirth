@@ -36,8 +36,10 @@ public class RadioAutocalBlockEntity extends BlockEntity implements MenuProvider
         blockEntity.ticksExisted++;
         blockEntity.autocal.setMaxClockSpeed(ServerConfig.autocalMaxClockSpeed());
         blockEntity.autocal.tick(level);
-        if (blockEntity.ticksExisted % 15L == 0L || blockEntity.autocal.isOn()) {
+        if (blockEntity.ticksExisted % 60L == 0L) {
             blockEntity.setChanged();
+        }
+        if (blockEntity.ticksExisted % 15L == 0L || blockEntity.autocal.isOn()) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
         blockEntity.networkPackNT(15);

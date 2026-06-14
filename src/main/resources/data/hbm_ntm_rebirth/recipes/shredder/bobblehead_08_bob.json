@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:bobblehead" },
+    "partial_nbt": "{Variant:8}"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:scrap_plastic",
+    "nbt": "{ScrapType:15}"
+  }
+}

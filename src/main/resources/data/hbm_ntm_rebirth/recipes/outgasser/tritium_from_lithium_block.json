@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:outgasser",
+  "input": {
+    "ingredient": {
+      "tag": "forge:storage_blocks/lithium"
+    },
+    "count": 1,
+    "legacy_ore": "blockLithium"
+  },
+  "fluid_output": {
+    "fluid": "TRITIUM",
+    "amount": 10000
+  }
+}

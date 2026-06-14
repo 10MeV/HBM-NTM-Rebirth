@@ -1,5 +1,6 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.api.redstoneoverradio.ROR;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.blockentity.RadioTorchBlockEntity;
@@ -92,12 +93,12 @@ public abstract class RadioTorchBlock extends BaseEntityBlock {
 
     protected boolean hasAttachedRorValueProvider(LevelReader level, BlockPos pos, Direction facing) {
         BlockEntity blockEntity = level.getBlockEntity(pos.relative(facing.getOpposite()));
-        return blockEntity instanceof RORValueProvider;
+        return blockEntity instanceof RORValueProvider provider && ROR.hasValueInfo(provider);
     }
 
     protected boolean hasAttachedRorInteractive(LevelReader level, BlockPos pos, Direction facing) {
         BlockEntity blockEntity = level.getBlockEntity(pos.relative(facing.getOpposite()));
-        return blockEntity instanceof RORInteractive;
+        return blockEntity instanceof RORInteractive interactive && ROR.hasFunctionInfo(interactive);
     }
 
     protected boolean hasAttachedItemHandler(LevelReader level, BlockPos pos, Direction facing) {

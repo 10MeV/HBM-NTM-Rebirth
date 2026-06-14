@@ -16,19 +16,19 @@ import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.LegacySatelliteType;
 import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SatelliteSavedData;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -96,6 +96,13 @@ public final class ArmorModItems {
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
         }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.YELLOW,
+                    " (+" + radiationResistance + " radiation resistance)"));
+        }
     }
 
     public static class IronCladding extends ArmorModItem {
@@ -108,6 +115,12 @@ public final class ArmorModItems {
             tooltip.add(Component.literal("+0.5 knockback resistance").withStyle(ChatFormatting.WHITE));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.WHITE, " (+0.5 knockback resistence)"));
         }
 
         @Override
@@ -134,6 +147,12 @@ public final class ArmorModItems {
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
         }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.DARK_PURPLE, " (Item indestructible)"));
+        }
     }
 
     public static class Health extends ArmorModItem {
@@ -156,6 +175,13 @@ public final class ArmorModItems {
                 tooltip.add(Component.empty());
             }
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, blink(ChatFormatting.RED, ChatFormatting.LIGHT_PURPLE),
+                    " (+" + Math.round(health * 10.0F) * 0.1F + " health)"));
         }
 
         @Override
@@ -194,6 +220,21 @@ public final class ArmorModItems {
             }
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            if (!(armor.getItem() instanceof ArmorItem armorItem)) {
+                return;
+            }
+            if (armorItem.getType() == ArmorItem.Type.CHESTPLATE) {
+                tooltip.add(installedLine(mod, ChatFormatting.DARK_PURPLE,
+                        desh ? " (Haste III / Damage +150%)" : " (Haste I / Damage +50%)"));
+            } else if (armorItem.getType() == ArmorItem.Type.LEGGINGS) {
+                tooltip.add(installedLine(mod, ChatFormatting.DARK_PURPLE,
+                        desh ? " (Speed +50% / Jump III)" : " (Speed +25% / Jump II)"));
+            }
         }
 
         @Override
@@ -245,10 +286,28 @@ public final class ArmorModItems {
         }
 
         @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, blink(ChatFormatting.BLUE, ChatFormatting.YELLOW),
+                    " (-80% armor wear / +2 HP)"));
+        }
+
+        @Override
         public void onArmorModHurt(LivingHurtEvent event, ItemStack armor, ItemStack mod) {
             if (armor.getDamageValue() > 0 && event.getEntity().getRandom().nextInt(5) != 0) {
                 armor.setDamageValue(armor.getDamageValue() - 1);
             }
+        }
+
+        @Override
+        public void onClientArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
+            if (entity.hurtTime <= 0) {
+                return;
+            }
+            double x = entity.getX() + (entity.getRandom().nextDouble() - 0.5D) * entity.getBbWidth() * 2.0D;
+            double y = entity.getY() + entity.getRandom().nextDouble() * entity.getBbHeight();
+            double z = entity.getZ() + (entity.getRandom().nextDouble() - 0.5D) * entity.getBbWidth() * 2.0D;
+            ParticleUtil.spawnVanillaExtRedDust(entity.level(), x, y, z, 0.01D, 0.5D, 0.8D);
         }
 
         @Override
@@ -277,6 +336,12 @@ public final class ArmorModItems {
             tooltip.add(Component.literal("Grants horizontal dashes").withStyle(ChatFormatting.WHITE));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.RED, " (Dashes)"));
         }
 
         @Override
@@ -319,6 +384,13 @@ public final class ArmorModItems {
             tooltip.add(Component.literal("Can be worn on its own!").withStyle(ChatFormatting.GOLD));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.RED,
+                    " (" + fuelType.getDisplayName().getString() + ": " + getFuel(mod) + "mB / " + maxFuel + "mB)"));
         }
 
         @Override
@@ -365,6 +437,21 @@ public final class ArmorModItems {
                 return 0;
             }
             return stack.getTag().getInt(FUEL_TAG);
+        }
+
+        public int getMaxFuel() {
+            return maxFuel;
+        }
+
+        public int getFuelColor() {
+            return fuelType.getColor();
+        }
+
+        public float getFuelFraction(ItemStack stack) {
+            if (maxFuel <= 0) {
+                return 0.0F;
+            }
+            return Mth.clamp((float) getFuel(stack) / (float) maxFuel, 0.0F, 1.0F);
         }
 
         public void setFuel(ItemStack stack, int fuel) {
@@ -489,8 +576,7 @@ public final class ArmorModItems {
         }
 
         private void play(Player player, float pitch) {
-            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                    ModSounds.WEAPON_FLAMETHROWER_SHOOT.get(), SoundSource.PLAYERS, 0.25F, pitch);
+            LegacySoundPlayer.playLegacyFlamethrowerShoot(player, 0.25F, pitch);
         }
 
         private void useUpFuel(Player player, ItemStack stack, int rate) {
@@ -672,6 +758,13 @@ public final class ArmorModItems {
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
         }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, blink(ChatFormatting.YELLOW, ChatFormatting.GOLD),
+                    " (+" + Math.round(shield * 10.0F) * 0.1F + " health)"));
+        }
     }
 
     public static class Pads extends ArmorModItem {
@@ -694,6 +787,14 @@ public final class ArmorModItems {
             }
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.DARK_PURPLE,
+                    " (-" + Math.round((1.0F - damageMod) * 100.0F)
+                            + (staticCharge ? "% fall dmg / passive charge)" : "% fall dmg)")));
         }
 
         @Override
@@ -741,6 +842,12 @@ public final class ArmorModItems {
         }
 
         @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.BLUE, " (5% chance to nullify damage)"));
+        }
+
+        @Override
         public void onArmorModHurt(LivingHurtEvent event, ItemStack armor, ItemStack mod) {
             if (event.getEntity().getRandom().nextInt(20) == 0) {
                 event.setAmount(0.0F);
@@ -758,6 +865,12 @@ public final class ArmorModItems {
             tooltip.add(Component.literal("3% chance for full heal when damaged").withStyle(ChatFormatting.RED));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.RED, " (3% chance for full heal)"));
         }
 
         @Override
@@ -783,6 +896,12 @@ public final class ArmorModItems {
         }
 
         @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.BLUE, " (replaces poison with strength)"));
+        }
+
+        @Override
         public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
             if (entity.hasEffect(MobEffects.POISON)) {
                 entity.removeEffect(MobEffects.POISON);
@@ -804,6 +923,12 @@ public final class ArmorModItems {
         }
 
         @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.DARK_GRAY, " (-10 RAD when hit)"));
+        }
+
+        @Override
         public void onArmorModHurt(LivingHurtEvent event, ItemStack armor, ItemStack mod) {
             HbmLivingProperties.incrementRadiation(event.getEntity(), -10.0F);
         }
@@ -820,6 +945,13 @@ public final class ArmorModItems {
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.LIGHT_PURPLE,
+                    " (5% for resistance, wither immunity)"));
         }
 
         @Override
@@ -852,6 +984,12 @@ public final class ArmorModItems {
             tooltip.add(Component.literal("Item attraction range: " + range).withStyle(ChatFormatting.DARK_GRAY));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.DARK_GRAY, " (Magnetic range: " + range + ")"));
         }
 
         @Override
@@ -890,6 +1028,15 @@ public final class ArmorModItems {
         }
 
         @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod,
+                    wither ? blink(ChatFormatting.GREEN, ChatFormatting.YELLOW)
+                            : blink(ChatFormatting.BLUE, ChatFormatting.LIGHT_PURPLE),
+                    " (Poisons attackers)"));
+        }
+
+        @Override
         public void onArmorModHurt(LivingHurtEvent event, ItemStack armor, ItemStack mod) {
             Entity attacker = event.getSource().getEntity();
             if (attacker instanceof LivingEntity livingAttacker) {
@@ -909,6 +1056,12 @@ public final class ArmorModItems {
             tooltip.add(Component.literal("Removes bad potion effects").withStyle(ChatFormatting.WHITE));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.WHITE, " (Removes bad potion effects)"));
         }
 
         @Override
@@ -949,6 +1102,12 @@ public final class ArmorModItems {
         }
 
         @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.LIGHT_PURPLE, " (10% chance to nullify damage)"));
+        }
+
+        @Override
         public void onArmorModHurt(LivingHurtEvent event, ItemStack armor, ItemStack mod) {
             LivingEntity entity = event.getEntity();
             if (entity.getRandom().nextInt(10) != 0) {
@@ -975,13 +1134,18 @@ public final class ArmorModItems {
         }
 
         @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.BLUE, ""));
+        }
+
+        @Override
         public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
             if (HbmLivingProperties.getDigamma(entity) < 5.0F) {
                 return;
             }
             ArmorModHandler.removeMod(armor, ArmorModHandler.extra);
-            entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                    ModSounds.TOOL_SYRINGE.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacySyringe(entity);
             HbmLivingProperties.incrementDigamma(entity, -5.0F);
             entity.addEffect(new MobEffectInstance(ModEffects.STABILITY.get(), 60 * 20, 0));
             entity.heal(20.0F);
@@ -1005,6 +1169,12 @@ public final class ArmorModItems {
         }
 
         @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.RED, ""));
+        }
+
+        @Override
         public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
             if (entity.level().isClientSide || entity.tickCount % 50 != 0 || entity.getMaxHealth() <= 2.0F) {
                 return;
@@ -1015,8 +1185,8 @@ public final class ArmorModItems {
                 return;
             }
 
-            entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                    ModSounds.ENTITY_SLICER.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacySlicer(entity);
+            ParticleUtil.spawnVomit(entity, ParticleUtil.VOMIT_BLOOD, 25);
 
             double currentMax = entity.getMaxHealth();
             maxHealth.removeModifier(TRIGAMMA_UUID);
@@ -1060,6 +1230,12 @@ public final class ArmorModItems {
         }
 
         @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.YELLOW, " (Defuses creepers)"));
+        }
+
+        @Override
         public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
             Level level = entity.level();
             if (level.isClientSide || level.getGameTime() % 20 != 0) {
@@ -1094,8 +1270,7 @@ public final class ArmorModItems {
             }
 
             if (dropItem) {
-                creeper.level().playSound(null, creeper.getX(), creeper.getY(), creeper.getZ(),
-                        ModSounds.TOOL_PIN_BREAK.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+                LegacySoundPlayer.playLegacyPinBreak(creeper);
                 RegistryObject<Item> fuse = ModItems.legacyItem("safety_fuse");
                 if (fuse != null) {
                     creeper.spawnAtLocation(new ItemStack(fuse.get()), 0.0F);
@@ -1159,6 +1334,12 @@ public final class ArmorModItems {
                     .withStyle(ChatFormatting.AQUA));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.AQUA, " (Freq: " + getFrequency(mod) + ")"));
         }
 
         @Override
@@ -1261,6 +1442,12 @@ public final class ArmorModItems {
         }
 
         @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.YELLOW, " (Grants night vision)"));
+        }
+
+        @Override
         public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
             if (!(entity instanceof Player player) || !(armor.getItem() instanceof FsbPoweredArmor powered)
                     || !FsbPoweredArmor.hasFullPoweredSet(player)) {
@@ -1282,6 +1469,9 @@ public final class ArmorModItems {
     }
 
     public static class BackTesla extends ArmorModItem {
+        @Nullable
+        private static final EntityDataAccessor<Boolean> CREEPER_POWERED = findCreeperPoweredAccessor();
+
         public BackTesla(Item.Properties properties) {
             super(properties, ArmorModHandler.ArmorModSlot.PLATE_ONLY, false, true, false, false);
         }
@@ -1292,6 +1482,12 @@ public final class ArmorModItems {
                     .withStyle(ChatFormatting.YELLOW));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(noIndentInstalledLine(mod, ChatFormatting.YELLOW, " (zaps nearby entities)"));
         }
 
         @Override
@@ -1321,11 +1517,15 @@ public final class ArmorModItems {
                     continue;
                 }
 
+                if (target instanceof Creeper creeper && chargeCreeper(creeper)) {
+                    zapped = true;
+                    continue;
+                }
+
                 if (!(target instanceof Player player && ArmorUtil.checkForFaraday(player))) {
                     float damage = Mth.clamp(target.getMaxHealth() * 0.5F, 3.0F, 20.0F) / Math.max(1, nearby.size());
                     if (EntityDamageUtil.attackEntityFromNt(target, ModDamageSources.electric(level), damage)) {
-                        level.playSound(null, target.getX(), target.getY(), target.getZ(),
-                                ModSounds.WEAPON_TESLA.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+                        LegacySoundPlayer.playLegacyTesla(target);
                     }
                 }
                 zapped = true;
@@ -1339,6 +1539,31 @@ public final class ArmorModItems {
             return hit.getType() == HitResult.Type.BLOCK
                     && hit.getLocation().distanceToSqr(origin) + 0.25D < targetPoint.distanceToSqr(origin);
         }
+
+        private static boolean chargeCreeper(Creeper creeper) {
+            if (CREEPER_POWERED == null) {
+                return false;
+            }
+            creeper.getEntityData().set(CREEPER_POWERED, true);
+            return true;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Nullable
+        private static EntityDataAccessor<Boolean> findCreeperPoweredAccessor() {
+            for (String name : List.of("DATA_IS_POWERED", "f_32274_")) {
+                try {
+                    Field field = Creeper.class.getDeclaredField(name);
+                    field.setAccessible(true);
+                    Object value = field.get(null);
+                    if (value instanceof EntityDataAccessor<?> accessor) {
+                        return (EntityDataAccessor<Boolean>) accessor;
+                    }
+                } catch (IllegalAccessException | NoSuchFieldException ignored) {
+                }
+            }
+            return null;
+        }
     }
 
     public static class Medal extends ArmorModItem {
@@ -1351,6 +1576,12 @@ public final class ArmorModItems {
             tooltip.add(Component.literal("-10 RAD/s").withStyle(ChatFormatting.GOLD));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.GOLD, " (-10 RAD/s)"));
         }
 
         @Override
@@ -1371,6 +1602,12 @@ public final class ArmorModItems {
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
         }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.YELLOW, " (Shotgun punches)"));
+        }
     }
 
     public static class Card extends ArmorModItem {
@@ -1388,10 +1625,17 @@ public final class ArmorModItems {
                 tooltip.add(Component.literal("33% chance to tank damage with no cap").withStyle(ChatFormatting.RED));
             } else {
                 tooltip.add(Component.literal("Top of the line!").withStyle(ChatFormatting.RED));
-                tooltip.add(Component.literal("Ammo consumption hook pending").withStyle(ChatFormatting.DARK_GRAY));
+                tooltip.add(Component.literal("Guns now have a 33% chance to not consume ammo.")
+                        .withStyle(ChatFormatting.RED));
             }
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(noIndentInstalledLine(mod, ChatFormatting.RED, ""));
         }
 
         @Override
@@ -1428,6 +1672,12 @@ public final class ArmorModItems {
         }
 
         @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.GOLD, ""));
+        }
+
+        @Override
         public void onArmorModHurt(LivingHurtEvent event, ItemStack armor, ItemStack mod) {
             if (!event.getSource().is(ModDamageSources.BROADCAST)) {
                 return;
@@ -1449,6 +1699,12 @@ public final class ArmorModItems {
             tooltip.add(Component.literal("Works in the inventory or when applied to armor").withStyle(ChatFormatting.YELLOW));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.YELLOW, " (Detects gasses)"));
         }
 
         @Override
@@ -1475,8 +1731,7 @@ public final class ArmorModItems {
                     for (int k = -RANGE; k <= RANGE; k++) {
                         Block block = level.getBlockState(center.offset(i * 2, j * 2, k * 2)).getBlock();
                         if (isPoisonGas(block)) {
-                            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                                    ModSounds.TOOL_TECH_BOOP.get(), SoundSource.PLAYERS, 2.0F, 1.5F);
+                            LegacySoundPlayer.playLegacyTechBoop(entity, 2.0F, 1.5F);
                             return;
                         }
                     }
@@ -1528,6 +1783,13 @@ public final class ArmorModItems {
             super.appendHoverText(stack, level, tooltip, flag);
         }
 
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.GOLD,
+                    " (" + (mod.getMaxDamage() - mod.getDamageValue()) + " revives left)"));
+        }
+
         public void handleDeath(LivingDeathEvent event, ItemStack armor, ItemStack mod) {
             damageInstalledRevive(armor, mod);
             revive(event.getEntity());
@@ -1557,6 +1819,12 @@ public final class ArmorModItems {
             tooltip.add(Component.literal("Infinite revives left").withStyle(ChatFormatting.GOLD));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            tooltip.add(installedLine(mod, ChatFormatting.GOLD, " (infinite revives left)"));
         }
 
         public void handleDeath(LivingDeathEvent event, ItemStack armor, ItemStack mod) {
@@ -1620,6 +1888,29 @@ public final class ArmorModItems {
         }
 
         @Override
+        public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                                   TooltipFlag flag) {
+            List<String> desc = new ArrayList<>();
+            if (damageMod != 1.0F) {
+                desc.add((damageMod < 1.0F ? "-" : "+")
+                        + Math.abs(Math.round((1.0F - damageMod) * 100.0F)) + "% dmg");
+            }
+            if (projectileMod != 1.0F) {
+                desc.add("-" + Math.round((1.0F - projectileMod) * 100.0F) + "% proj");
+            }
+            if (explosionMod != 1.0F) {
+                desc.add("-" + Math.round((1.0F - explosionMod) * 100.0F) + "% exp");
+                desc.add("-" + Math.round((1.0F - speed) * 100.0F) + "% speed");
+            }
+            if (polonium) {
+                desc.add("+100 RAD/s");
+            }
+            tooltip.add(installedLine(mod, ChatFormatting.DARK_PURPLE,
+                    " (" + String.join(" / ", desc) + " / "
+                            + (mod.getMaxDamage() - mod.getDamageValue()) + "HP)"));
+        }
+
+        @Override
         public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
             if (polonium && !entity.level().isClientSide) {
                 HbmLivingProperties.incrementRadiation(entity, 100.0F);
@@ -1673,6 +1964,23 @@ public final class ArmorModItems {
             int percent = Math.abs(Math.round((1.0F - modifier) * 100.0F));
             return (modifier < 1.0F ? "-" : "+") + percent + "% " + label;
         }
+    }
+
+    private static ChatFormatting blink(ChatFormatting first, ChatFormatting second) {
+        return System.currentTimeMillis() % 1000L < 500L ? first : second;
+    }
+
+    private static Component installedLine(ItemStack stack, ChatFormatting color, String suffix) {
+        return Component.literal("  ")
+                .append(stack.getHoverName())
+                .append(Component.literal(suffix))
+                .withStyle(color);
+    }
+
+    private static Component noIndentInstalledLine(ItemStack stack, ChatFormatting color, String suffix) {
+        return stack.getHoverName().copy()
+                .append(Component.literal(suffix))
+                .withStyle(color);
     }
 
     private ArmorModItems() {

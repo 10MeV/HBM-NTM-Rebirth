@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:outgasser",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/gold"
+    },
+    "count": 1,
+    "legacy_ore": "ingotGold"
+  },
+  "solid_output": {
+    "item": "hbm_ntm_rebirth:ingot_au198"
+  }
+}

@@ -1,0 +1,18 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    "UMU"
+                ],
+    "key":  {
+                "U":  {
+                          "item":  "hbm_ntm_rebirth:gun_uzi"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/weapon_steel"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_uzi_akimbo"
+               }
+}

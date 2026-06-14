@@ -42,6 +42,14 @@ public final class ArmorRegistry {
         HazmatRegistry.registerProtection(item, hazards);
     }
 
+    public static void register() {
+        ArmorUtil.register();
+    }
+
+    public static void registerDefaultProtections() {
+        HazmatRegistry.registerDefaultProtections();
+    }
+
     public static void registerProtection(Item item, HazardClass... hazards) {
         HazmatRegistry.registerProtection(item, hazards);
     }
@@ -90,16 +98,48 @@ public final class ArmorRegistry {
         return HazmatRegistry.removeExternalProtection(item);
     }
 
+    public static EnumSet<HazardClass> removeExternalProtection(Item item) {
+        return removeExternalHazard(item);
+    }
+
     public static boolean removeExternalHazard(ResourceLocation itemId) {
         return HazmatRegistry.removeExternalProtection(itemId);
+    }
+
+    public static boolean removeExternalProtection(ResourceLocation itemId) {
+        return removeExternalHazard(itemId);
     }
 
     public static boolean removeExternalHazard(String itemId) {
         return HazmatRegistry.removeExternalProtection(itemId);
     }
 
+    public static boolean removeExternalProtection(String itemId) {
+        return removeExternalHazard(itemId);
+    }
+
     public static void clearExternalHazards() {
         HazmatRegistry.clearExternalProtections();
+    }
+
+    public static void clearExternalProtections() {
+        clearExternalHazards();
+    }
+
+    public static void replaceHazards(Map<Item, ? extends Collection<HazardClass>> hazards) {
+        HazmatRegistry.replaceProtections(hazards);
+    }
+
+    public static void replaceProtections(Map<Item, ? extends Collection<HazardClass>> hazards) {
+        replaceHazards(hazards);
+    }
+
+    public static void replaceExternalHazards(Map<Item, ? extends Collection<HazardClass>> hazards) {
+        HazmatRegistry.replaceExternalProtections(hazards);
+    }
+
+    public static void replaceExternalProtections(Map<Item, ? extends Collection<HazardClass>> hazards) {
+        replaceExternalHazards(hazards);
     }
 
     public static ArrayList<HazardClass> removeHazard(Item item) {
@@ -107,9 +147,17 @@ public final class ArmorRegistry {
         return previous == null ? null : new ArrayList<>(previous);
     }
 
+    public static ArrayList<HazardClass> removeProtection(Item item) {
+        return removeHazard(item);
+    }
+
     public static boolean removeHazard(ResourceLocation itemId) {
         Item item = HazmatRegistry.resolveItem(itemId);
         return item != null && removeHazard(item) != null;
+    }
+
+    public static boolean removeProtection(ResourceLocation itemId) {
+        return removeHazard(itemId);
     }
 
     public static boolean removeHazard(String itemId) {
@@ -117,8 +165,16 @@ public final class ArmorRegistry {
         return item != null && removeHazard(item) != null;
     }
 
+    public static boolean removeProtection(String itemId) {
+        return removeHazard(itemId);
+    }
+
     public static void clearHazards() {
         HazmatRegistry.clearProtections();
+    }
+
+    public static void clearProtections() {
+        clearHazards();
     }
 
     public static ArrayList<HazardClass> getProtection(ItemStack stack) {
@@ -491,6 +547,10 @@ public final class ArmorRegistry {
 
     public static Map<Item, EnumSet<HazardClass>> protectionSnapshot() {
         return HazmatRegistry.protectionSnapshot();
+    }
+
+    public static Map<Item, EnumSet<HazardClass>> externalProtectionDefaultsSnapshot() {
+        return HazmatRegistry.externalProtectionDefaultsSnapshot();
     }
 
     public static EquipmentSlot legacyEquipmentSlot(int legacyArmorSlot) {

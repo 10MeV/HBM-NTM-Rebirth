@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "hbm_ntm_rebirth:block/crane_splitter" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/crane_splitter" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/crane_splitter" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/crane_splitter" }
+  }
+}

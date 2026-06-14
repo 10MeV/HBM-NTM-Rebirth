@@ -5,7 +5,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
-import java.util.Locale;
 
 public final class HazardTooltipUtil {
     public static void addHazardInformation(ItemStack stack, List<Component> tooltip) {
@@ -13,21 +12,8 @@ public final class HazardTooltipUtil {
             return;
         }
 
-        float radiation = HazardRegistry.getHazardLevel(stack, HazardType.RADIATION);
-        if (radiation > 0.0F) {
-            tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.radiation.single", format(radiation))
-                    .withStyle(colorForRadiation(radiation)));
-            if (stack.getCount() > 1) {
-                tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.radiation.total", format(radiation * stack.getCount()))
-                        .withStyle(ChatFormatting.RED));
-            }
-        }
-
         for (HazardEntry entry : HazardRegistry.getHazards(stack)) {
-            if (entry.type() != HazardType.RADIATION) {
-                tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.hazard." + entry.type().name().toLowerCase(Locale.ROOT), format(entry.modifiedLevel(stack, null)))
-                        .withStyle(ChatFormatting.GOLD));
-            }
+            addHazardEntryInformation(stack, tooltip, entry);
         }
 
         double resistance = HazmatRegistry.getResistance(stack);
@@ -38,17 +24,84 @@ public final class HazardTooltipUtil {
         }
     }
 
-    private static ChatFormatting colorForRadiation(float radiation) {
-        if (radiation < 1.0F) {
-            return ChatFormatting.YELLOW;
+    private static void addHazardEntryInformation(ItemStack stack, List<Component> tooltip, HazardEntry entry) {
+        float level = entry.modifiedLevel(stack, null);
+        if (entry.type() == HazardType.RADIATION) {
+            addRadiationInformation(stack, tooltip, level);
+            return;
         }
-        if (radiation < 10.0F) {
-            return ChatFormatting.GOLD;
+        if (entry.type() == HazardType.DIGAMMA) {
+            addDigammaInformation(stack, tooltip, level);
+            return;
         }
-        if (radiation < 100.0F) {
-            return ChatFormatting.RED;
+        if (entry.type() == HazardType.HOT && level <= 0.0F) {
+            return;
         }
-        return ChatFormatting.DARK_RED;
+        tooltip.add(Component.literal("[")
+                .append(Component.translatable(traitKey(entry.type())))
+                .append(Component.literal("]"))
+                .withStyle(colorForHazard(entry.type())));
+    }
+
+    private static void addRadiationInformation(ItemStack stack, List<Component> tooltip, float radiation) {
+        if (radiation < 1.0e-5F) {
+            return;
+        }
+        tooltip.add(Component.literal("[")
+                .append(Component.translatable("trait.radioactive"))
+                .append(Component.literal("]"))
+                .withStyle(ChatFormatting.GREEN));
+        tooltip.add(Component.literal(formatLegacyRadiation(radiation) + "RAD/s")
+                .withStyle(ChatFormatting.YELLOW));
+        if (stack.getCount() > 1) {
+            tooltip.add(Component.literal("Stack: " + formatLegacyRadiation(radiation * stack.getCount()) + "RAD/s")
+                    .withStyle(ChatFormatting.YELLOW));
+        }
+    }
+
+    private static void addDigammaInformation(ItemStack stack, List<Component> tooltip, float digamma) {
+        tooltip.add(Component.literal("[")
+                .append(Component.translatable("trait.digamma"))
+                .append(Component.literal("]"))
+                .withStyle(ChatFormatting.RED));
+        tooltip.add(Component.literal(formatLegacyDigamma(digamma) + "mDRX/s")
+                .withStyle(ChatFormatting.DARK_RED));
+        if (stack.getCount() > 1) {
+            tooltip.add(Component.literal("Stack: " + formatLegacyDigamma(digamma * stack.getCount()) + "mDRX/s")
+                    .withStyle(ChatFormatting.DARK_RED));
+        }
+    }
+
+    private static ChatFormatting colorForHazard(HazardType type) {
+        return switch (type) {
+            case HOT -> ChatFormatting.GOLD;
+            case BLINDING -> ChatFormatting.DARK_AQUA;
+            case ASBESTOS -> ChatFormatting.WHITE;
+            case COAL -> ChatFormatting.DARK_GRAY;
+            case HYDROACTIVE, EXPLOSIVE -> ChatFormatting.RED;
+            default -> ChatFormatting.GOLD;
+        };
+    }
+
+    private static String traitKey(HazardType type) {
+        return switch (type) {
+            case RADIATION -> "trait.radioactive";
+            case DIGAMMA -> "trait.digamma";
+            case HOT -> "trait.hot";
+            case BLINDING -> "trait.blinding";
+            case ASBESTOS -> "trait.asbestos";
+            case COAL -> "trait.coal";
+            case HYDROACTIVE -> "trait.hydro";
+            case EXPLOSIVE -> "trait.explosive";
+        };
+    }
+
+    private static String formatLegacyRadiation(float value) {
+        return Double.toString(Math.floor(value * 1000.0D) / 1000.0D);
+    }
+
+    private static String formatLegacyDigamma(float value) {
+        return Double.toString(Math.floor(value * 10000.0D) / 10.0D);
     }
 
     private static String format(double value) {

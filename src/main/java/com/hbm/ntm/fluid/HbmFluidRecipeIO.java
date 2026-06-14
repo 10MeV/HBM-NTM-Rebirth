@@ -31,6 +31,23 @@ public final class HbmFluidRecipeIO {
                 Math.max(0, safeOutputs.size() - safeOutputTanks.size()));
     }
 
+    public static RecipeTankSetupReport setupLegacyFixedRecipeTanks(
+            @Nullable List<HbmFluidStack> inputStacks, @Nullable List<HbmFluidStack> outputStacks,
+            @Nullable List<HbmFluidTank> inputTanks, @Nullable List<HbmFluidTank> outputTanks) {
+        return setupRecipeTanks(inputStacks, outputStacks, inputTanks, outputTanks, 0);
+    }
+
+    public static RecipeFluidIoProcessReport processLegacyFixedRecipeIoReport(
+            List<HbmFluidStack> inputStacks, List<HbmFluidStack> outputStacks,
+            List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks, boolean simulate) {
+        return processRecipeIoReport(inputStacks, outputStacks, inputTanks, outputTanks, simulate);
+    }
+
+    public static HbmFluidStack requirementFromTank(HbmFluidTank tank, int amount) {
+        HbmFluidTank.TankState state = snapshot(tank);
+        return new HbmFluidStack(state.type(), amount, state.pressure());
+    }
+
     public static TankConformReport conformTankReport(
             HbmFluidTank tank, @Nullable HbmFluidStack stack, int defaultCapacity) {
         return conformTankReport(0, tank, stack, defaultCapacity);

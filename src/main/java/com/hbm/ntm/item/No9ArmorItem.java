@@ -33,15 +33,11 @@ public class No9ArmorItem extends ObjArmorItem {
         }
         stack.getOrCreateTag().putBoolean(TAG_IS_ON, turnOn);
 
-        int blackLung = HbmLivingProperties.getBlackLung(player);
         int maxBlackLung = HbmLivingProperties.MAX_BLACK_LUNG;
         int cap = (int) (maxBlackLung * 0.9D);
-        if (blackLung > cap) {
-            blackLung = cap;
-            HbmLivingProperties.setBlackLung(player, blackLung);
-        }
+        int blackLung = HbmLivingProperties.capBlackLung(player, cap);
         if (blackLung >= maxBlackLung * 0.25D) {
-            HbmLivingProperties.setBlackLung(player, blackLung - 1);
+            HbmLivingProperties.reduceBlackLung(player, 1);
         }
     }
 

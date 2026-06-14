@@ -12,6 +12,7 @@ import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.hbm.ntm.energy.HbmCreativeBatteryItem;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
+import com.hbm.ntm.item.AmmoBagItem;
 import com.hbm.ntm.item.ArcElectrodeItem;
 import com.hbm.ntm.item.ArtilleryDesignatorItem;
 import com.hbm.ntm.item.BjJetpackArmorItem;
@@ -23,8 +24,10 @@ import com.hbm.ntm.item.DemonCoreItem;
 import com.hbm.ntm.item.DieselSuitArmorItem;
 import com.hbm.ntm.item.DnsArmorItem;
 import com.hbm.ntm.item.DosimeterItem;
+import com.hbm.ntm.item.DynamiteStickItem;
 import com.hbm.ntm.item.AntimatterClusterItem;
 import com.hbm.ntm.item.BjArmorItem;
+import com.hbm.ntm.item.CasingBagItem;
 import com.hbm.ntm.item.ChemthrowerItem;
 import com.hbm.ntm.item.ChocolateItem;
 import com.hbm.ntm.item.DigammaParticleItem;
@@ -48,6 +51,7 @@ import com.hbm.ntm.item.FsbPoweredArmorItem;
 import com.hbm.ntm.item.GeigerCounterItem;
 import com.hbm.ntm.item.GasMaskArmorItem;
 import com.hbm.ntm.item.GasMaskFilterItem;
+import com.hbm.ntm.item.GunRepairKitItem;
 import com.hbm.ntm.item.HbmAbilitySwordItem;
 import com.hbm.ntm.item.HbmAbilityToolItem;
 import com.hbm.ntm.item.HazmatArmorItem;
@@ -66,6 +70,7 @@ import com.hbm.ntm.item.ItemBlueprints;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.item.ItemPressStamp;
+import com.hbm.ntm.item.JetpackTankItem;
 import com.hbm.ntm.item.LegacyToolItem;
 import com.hbm.ntm.item.LegacyArtilleryAmmoItem;
 import com.hbm.ntm.item.LegacySyringeItem;
@@ -83,6 +88,7 @@ import com.hbm.ntm.item.OreByproductItem;
 import com.hbm.ntm.item.PACoilItem;
 import com.hbm.ntm.item.PollutionDetectorItem;
 import com.hbm.ntm.item.PlanCItem;
+import com.hbm.ntm.item.PlasticScrapItem;
 import com.hbm.ntm.item.RadawayItem;
 import com.hbm.ntm.item.RadarLinkerItem;
 import com.hbm.ntm.item.PistonSetItem;
@@ -90,6 +96,7 @@ import com.hbm.ntm.item.RedPillItem;
 import com.hbm.ntm.item.RTTYPagerItem;
 import com.hbm.ntm.item.RBMKFuelRodItem;
 import com.hbm.ntm.item.RBMKPelletItem;
+import com.hbm.ntm.item.RBMKToolItem;
 import com.hbm.ntm.item.SettingsToolItem;
 import com.hbm.ntm.item.SednaGunItem;
 import com.hbm.ntm.item.SingularityItem;
@@ -102,6 +109,7 @@ import com.hbm.ntm.item.TrenchmasterArmorItem;
 import com.hbm.ntm.item.TurretBiometryItem;
 import com.hbm.ntm.item.TurretChipItem;
 import com.hbm.ntm.item.VodkaCanteenItem;
+import com.hbm.ntm.item.WeaponModItem;
 import com.hbm.ntm.item.XanaxItem;
 import com.hbm.ntm.item.ZirnoxRodItem;
 import com.hbm.ntm.item.missile.CustomMissileItem;
@@ -118,6 +126,7 @@ import com.hbm.ntm.satellite.SatelliteChipItem;
 import com.hbm.ntm.satellite.SatelliteDesignatorItem;
 import com.hbm.ntm.satellite.SatelliteInterfaceItem;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
+import com.hbm.ntm.item.AmmoContainerItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterials;
@@ -181,6 +190,8 @@ public final class ModItems {
     public static final RegistryObject<Item> STEEL_POWDER = part("powder_steel");
     public static final RegistryObject<Item> BORON_POWDER = part("powder_boron");
     public static final RegistryObject<Item> LEAD_POWDER = part("powder_lead");
+    public static final RegistryObject<Item> SCRAP_PLASTIC = registerLegacy("scrap_plastic",
+            () -> new PlasticScrapItem(new Item.Properties()));
 
     public static final RegistryObject<Item> COPPER_COIL = part("coil_copper");
     public static final RegistryObject<Item> TUNGSTEN_COIL = part("coil_tungsten");
@@ -230,6 +241,20 @@ public final class ModItems {
             () -> new ItemPressStamp(new Item.Properties().durability(1_000), ItemPressStamp.StampType.C9));
     public static final RegistryObject<Item> STAMP_50 = registerLegacy("stamp_50",
             () -> new ItemPressStamp(new Item.Properties().durability(1_000), ItemPressStamp.StampType.C50));
+    public static final RegistryObject<Item> AMMO_BAG = registerLegacy("ammo_bag",
+            () -> new AmmoBagItem(new Item.Properties(), false));
+    public static final RegistryObject<Item> AMMO_BAG_INFINITE = registerLegacy("ammo_bag_infinite",
+            () -> new AmmoBagItem(new Item.Properties(), true));
+    public static final RegistryObject<Item> CASING_BAG = registerLegacy("casing_bag",
+            () -> new CasingBagItem(new Item.Properties()));
+    public static final RegistryObject<Item> GUN_KIT_1 = registerLegacy("gun_kit_1",
+            () -> new GunRepairKitItem(new Item.Properties(), 10));
+    public static final RegistryObject<Item> GUN_KIT_2 = registerLegacy("gun_kit_2",
+            () -> new GunRepairKitItem(new Item.Properties(), 100));
+    public static final RegistryObject<Item> AMMO_CONTAINER = registerLegacy("ammo_container",
+            () -> new AmmoContainerItem(new Item.Properties(), false));
+    public static final RegistryObject<Item> AMMO_CONTAINER_ALT = registerLegacy("ammo_container_alt",
+            () -> new AmmoContainerItem(new Item.Properties(), true));
     public static final RegistryObject<Item> AMMO_STANDARD_STONE = simpleItem("ammo_standard_stone");
     public static final RegistryObject<Item> AMMO_STANDARD_STONE_AP = simpleItem("ammo_standard_stone_ap");
     public static final RegistryObject<Item> AMMO_STANDARD_STONE_IRON = simpleItem("ammo_standard_stone_iron");
@@ -332,6 +357,150 @@ public final class ModItems {
     public static final RegistryObject<Item> AMMO_STANDARD_CT_MORTAR = simpleItem("ammo_standard_ct_mortar");
     public static final RegistryObject<Item> AMMO_STANDARD_CT_MORTAR_CHARGE = simpleItem(
             "ammo_standard_ct_mortar_charge");
+    private static final List<WeaponModItem.Spec> WEAPON_MOD_SPECS = List.of(
+            WeaponModItem.Spec.test("firerate", 0),
+            WeaponModItem.Spec.test("damage", 1),
+            WeaponModItem.Spec.test("multi", 2),
+            WeaponModItem.Spec.test("override_2_5", 3),
+            WeaponModItem.Spec.test("override_5", 4),
+            WeaponModItem.Spec.test("override_7_5", 5),
+            WeaponModItem.Spec.test("override_10", 6),
+            WeaponModItem.Spec.test("override_12_5", 7),
+            WeaponModItem.Spec.test("override_15", 8),
+            WeaponModItem.Spec.test("override_20", 9),
+            WeaponModItem.Spec.generic("iron_damage", 0),
+            WeaponModItem.Spec.generic("iron_dura", 1),
+            WeaponModItem.Spec.generic("steel_damage", 2),
+            WeaponModItem.Spec.generic("steel_dura", 3),
+            WeaponModItem.Spec.generic("dura_damage", 4),
+            WeaponModItem.Spec.generic("dura_dura", 5),
+            WeaponModItem.Spec.generic("desh_damage", 6),
+            WeaponModItem.Spec.generic("desh_dura", 7),
+            WeaponModItem.Spec.generic("wsteel_damage", 8),
+            WeaponModItem.Spec.generic("wsteel_dura", 9),
+            WeaponModItem.Spec.generic("ferro_damage", 10),
+            WeaponModItem.Spec.generic("ferro_dura", 11),
+            WeaponModItem.Spec.generic("tcalloy_damage", 12),
+            WeaponModItem.Spec.generic("tcalloy_dura", 13),
+            WeaponModItem.Spec.generic("bigmt_damage", 14),
+            WeaponModItem.Spec.generic("bigmt_dura", 15),
+            WeaponModItem.Spec.generic("bronze_damage", 16),
+            WeaponModItem.Spec.generic("bronze_dura", 17),
+            WeaponModItem.Spec.special("silencer", 0),
+            WeaponModItem.Spec.special("scope", 1),
+            WeaponModItem.Spec.special("saw", 2),
+            WeaponModItem.Spec.special("greasegun", 3),
+            WeaponModItem.Spec.special("slowdown", 4),
+            WeaponModItem.Spec.special("speedup", 5),
+            WeaponModItem.Spec.special("choke", 6),
+            WeaponModItem.Spec.special("speedloader", 7),
+            WeaponModItem.Spec.special("furniture_green", 8),
+            WeaponModItem.Spec.special("furniture_black", 9),
+            WeaponModItem.Spec.special("bayonet", 10),
+            WeaponModItem.Spec.special("stack_mag", 11),
+            WeaponModItem.Spec.special("skin_saturnite", 12),
+            WeaponModItem.Spec.special("las_shotgun", 13),
+            WeaponModItem.Spec.special("las_capacitor", 14),
+            WeaponModItem.Spec.special("las_auto", 15),
+            WeaponModItem.Spec.special("nickel", 16),
+            WeaponModItem.Spec.special("doubloons", 17),
+            WeaponModItem.Spec.special("drill_hss", 18),
+            WeaponModItem.Spec.special("drill_weaponsteel", 19),
+            WeaponModItem.Spec.special("drill_tcalloy", 20),
+            WeaponModItem.Spec.special("drill_saturnite", 21),
+            WeaponModItem.Spec.special("engine_diesel", 22),
+            WeaponModItem.Spec.special("engine_aviation", 23),
+            WeaponModItem.Spec.special("engine_electric", 24),
+            WeaponModItem.Spec.special("engine_turbo", 25),
+            WeaponModItem.Spec.special("magnet", 26),
+            WeaponModItem.Spec.special("sifter", 27),
+            WeaponModItem.Spec.special("canisters", 28),
+            WeaponModItem.Spec.caliber("p9", 0),
+            WeaponModItem.Spec.caliber("p45", 1),
+            WeaponModItem.Spec.caliber("p22", 2),
+            WeaponModItem.Spec.caliber("m357", 3),
+            WeaponModItem.Spec.caliber("m44", 4),
+            WeaponModItem.Spec.caliber("r556", 5),
+            WeaponModItem.Spec.caliber("r762", 6),
+            WeaponModItem.Spec.caliber("bmg50", 7)
+    );
+    public static final List<RegistryObject<Item>> WEAPON_MOD_ITEMS = WEAPON_MOD_SPECS.stream()
+            .map(ModItems::weaponMod)
+            .toList();
+    public static final List<RegistryObject<Item>> WEAPON_MOD_CREATIVE_ITEMS = WEAPON_MOD_SPECS.stream()
+            .filter(WeaponModItem.Spec::creativeTab)
+            .map(spec -> ITEMS_BY_LEGACY_NAME.get(spec.modernName()))
+            .toList();
+    public static final List<RegistryObject<Item>> WEAPON_MOD_TEST_ITEMS = WEAPON_MOD_SPECS.stream()
+            .filter(spec -> !spec.creativeTab())
+            .map(spec -> ITEMS_BY_LEGACY_NAME.get(spec.modernName()))
+            .toList();
+    public static final List<RegistryObject<Item>> SEDNA_GUN_PART_ITEMS = simpleParts(
+            "barrel_light_steel",
+            "barrel_light_gunmetal",
+            "barrel_light_dura_steel",
+            "barrel_light_desh",
+            "barrel_light_weaponsteel",
+            "barrel_light_saturnite",
+            "barrel_light_bismuth_bronze",
+            "barrel_light_arsenic_bronze",
+            "barrel_light_tcalloy",
+            "barrel_light_cdalloy",
+            "barrel_heavy_steel",
+            "barrel_heavy_gunmetal",
+            "barrel_heavy_dura_steel",
+            "barrel_heavy_desh",
+            "barrel_heavy_weaponsteel",
+            "barrel_heavy_saturnite",
+            "barrel_heavy_ferrouranium",
+            "barrel_heavy_tcalloy",
+            "barrel_heavy_cdalloy",
+            "receiver_light_steel",
+            "receiver_light_gunmetal",
+            "receiver_light_dura_steel",
+            "receiver_light_desh",
+            "receiver_light_weaponsteel",
+            "receiver_light_saturnite",
+            "receiver_light_bismuth_bronze",
+            "receiver_light_arsenic_bronze",
+            "receiver_light_tcalloy",
+            "receiver_light_cdalloy",
+            "receiver_heavy_dura_steel",
+            "receiver_heavy_gunmetal",
+            "receiver_heavy_weaponsteel",
+            "receiver_heavy_saturnite",
+            "receiver_heavy_ferrouranium",
+            "receiver_heavy_tcalloy",
+            "receiver_heavy_cdalloy",
+            "receiver_heavy_bismuth_bronze",
+            "receiver_heavy_arsenic_bronze",
+            "stock_wood",
+            "stock_polymer",
+            "stock_bakelite",
+            "stock_pc",
+            "stock_pvc",
+            "stock_desh",
+            "stock_gunmetal",
+            "stock_weaponsteel",
+            "stock_saturnite",
+            "grip_wood",
+            "grip_ivory",
+            "grip_steel",
+            "grip_dura_steel",
+            "grip_desh",
+            "grip_gunmetal",
+            "grip_weaponsteel",
+            "grip_saturnite",
+            "grip_polymer",
+            "grip_bakelite",
+            "grip_pc",
+            "grip_pvc",
+            "grip_rubber",
+            "plate_cast_desh",
+            "plate_cast_weaponsteel",
+            "plate_cast_saturnite",
+            "plate_cast_tcalloy",
+            "plate_cast_cdalloy");
     public static final RegistryObject<Item> AMMO_DGK = simpleItem("ammo_dgk");
     public static final RegistryObject<Item> AMMO_SHELL_STOCK = simpleItem("ammo_shell_stock");
     public static final RegistryObject<Item> AMMO_SHELL_EXPLOSIVE = simpleItem("ammo_shell_explosive");
@@ -584,6 +753,8 @@ public final class ModItems {
             () -> new GasMaskFilterItem(new Item.Properties()));
     public static final RegistryObject<Item> GAS_MASK_FILTER_PISS = registerLegacy("gas_mask_filter_piss",
             () -> new GasMaskFilterItem(new Item.Properties()));
+    public static final RegistryObject<Item> JETPACK_TANK = registerLegacy("jetpack_tank",
+            () -> new JetpackTankItem(new Item.Properties()));
     public static final RegistryObject<Item> ATTACHMENT_MASK = registerLegacy("attachment_mask",
             () -> new ArmorModGasMaskItem(new Item.Properties(), false));
     public static final RegistryObject<Item> ATTACHMENT_MASK_MONO = registerLegacy("attachment_mask_mono",
@@ -598,6 +769,8 @@ public final class ModItems {
     public static final RegistryObject<Item> GAS_MASK_M65 = gasMaskArmor("gas_mask_m65", false);
     public static final RegistryObject<Item> GAS_MASK_MONO = gasMaskArmor("gas_mask_mono", true);
     public static final RegistryObject<Item> GAS_MASK_OLDE = gasMaskArmor("gas_mask_olde", false);
+    public static final RegistryObject<Item> MASK_OF_INFAMY = armor("mask_of_infamy",
+            HbmArmorMaterials.MASK_OF_INFAMY, ArmorItem.Type.HELMET);
     public static final RegistryObject<Item> MASK_RAG = ragsHeadArmor("mask_rag");
     public static final RegistryObject<Item> MASK_PISS = ragsHeadArmor("mask_piss");
     public static final RegistryObject<Item> STEEL_HELMET = fsbArmor("steel_helmet", HbmArmorMaterials.STEEL,
@@ -1018,6 +1191,8 @@ public final class ModItems {
             () -> new LegacyToolItem(new Item.Properties().stacksTo(1).durability(100), Toolable.ToolType.SCREWDRIVER));
     public static final RegistryObject<Item> HAND_DRILL = registerLegacy("hand_drill",
             () -> new LegacyToolItem(new Item.Properties().stacksTo(1).durability(100), Toolable.ToolType.HAND_DRILL));
+    public static final RegistryObject<Item> WRENCH = registerLegacy("wrench",
+            () -> new LegacyToolItem(new Item.Properties().stacksTo(1).durability(750), Toolable.ToolType.WRENCH));
     public static final RegistryObject<Item> DRILLBIT_STEEL = drillbit("drillbit_steel", DrillbitItem.Type.STEEL);
     public static final RegistryObject<Item> DRILLBIT_STEEL_DIAMOND = drillbit("drillbit_steel_diamond", DrillbitItem.Type.STEEL_DIAMOND);
     public static final RegistryObject<Item> DRILLBIT_HSS = drillbit("drillbit_hss", DrillbitItem.Type.HSS);
@@ -1028,6 +1203,7 @@ public final class ModItems {
     public static final RegistryObject<Item> DRILLBIT_TCALLOY_DIAMOND = drillbit("drillbit_tcalloy_diamond", DrillbitItem.Type.TCALLOY_DIAMOND);
     public static final RegistryObject<Item> DRILLBIT_FERRO = drillbit("drillbit_ferro", DrillbitItem.Type.FERRO);
     public static final RegistryObject<Item> DRILLBIT_FERRO_DIAMOND = drillbit("drillbit_ferro_diamond", DrillbitItem.Type.FERRO_DIAMOND);
+    public static final RegistryObject<Item> PISTON_SELENIUM = simpleStackOneItem("piston_selenium");
     public static final RegistryObject<Item> PISTON_SET_STEEL = pistonSet("piston_set_steel", PistonSetItem.Type.STEEL);
     public static final RegistryObject<Item> PISTON_SET_DURA = pistonSet("piston_set_dura", PistonSetItem.Type.DURA);
     public static final RegistryObject<Item> PISTON_SET_DESH = pistonSet("piston_set_desh", PistonSetItem.Type.DESH);
@@ -1213,12 +1389,9 @@ public final class ModItems {
                     .addAbility(WeaponAbilities.BEHEADER, 0)
                     .playGavelHitSound());
     public static final RegistryObject<Item> CHAINSAW = fueledAbilityAxe("chainsaw", 25.0F, -0.05D, HbmToolTiers.ELEC,
-            5_000, 1, 250, item -> item.addAbility(ToolAreaAbilities.HAMMER, 0)
-                    .addAbility(ToolAreaAbilities.HAMMER_FLAT, 0)
-                    .addAbility(ToolAreaAbilities.RECURSION, 2)
+            5_000, 1, 250, item -> item.addAbility(ToolAreaAbilities.RECURSION, 2)
                     .addAbility(ToolHarvestAbilities.SILK, 0)
-                    .addAbility(ToolHarvestAbilities.LUCK, 1)
-                    .addAbility(WeaponAbilities.CHAINSAW, 0)
+                    .addAbility(WeaponAbilities.CHAINSAW, 1)
                     .addAbility(WeaponAbilities.BEHEADER, 0)
                     .setShears(),
             HbmFluids.DIESEL,
@@ -1451,7 +1624,7 @@ public final class ModItems {
             () -> new RangefinderItem(new Item.Properties().stacksTo(1)));
 
     public static final List<RegistryObject<Item>> HIDDEN_RECIPE_ITEMS = Stream.concat(
-            Stream.concat(STAMP_BOOK_ITEMS.stream(), PAGE_OF_ITEMS.stream()),
+            Stream.concat(Stream.concat(STAMP_BOOK_ITEMS.stream(), PAGE_OF_ITEMS.stream()), WEAPON_MOD_TEST_ITEMS.stream()),
             Stream.of(TEMPLATE_FOLDER, HOLOTAPE_IMAGE_RESTORED, HOLOTAPE_DAMAGED, FLUID_ICON, WATCH)).toList();
 
     public static final RegistryObject<Item> SAT_HEAD_MAPPER = part("sat_head_mapper");
@@ -1489,6 +1662,9 @@ public final class ModItems {
             () -> new SatelliteDesignatorItem(new Item.Properties()));
     public static final RegistryObject<Item> SAT_RELAY = registerLegacy("sat_relay",
             () -> new SatelliteChipItem(new Item.Properties()));
+    public static final RegistryObject<Item> LAUNCH_CODE_PIECE = simpleStackOneItem("launch_code_piece");
+    public static final RegistryObject<Item> LAUNCH_CODE = simpleStackOneItem("launch_code");
+    public static final RegistryObject<Item> LAUNCH_KEY = simpleStackOneItem("launch_key");
     public static final RegistryObject<Item> MISSILE_SOYUZ = registerLegacy("missile_soyuz",
             () -> new SoyuzRocketItem(new Item.Properties()));
     public static final RegistryObject<Item> MISSILE_SOYUZ_LANDER = simpleStackOneItem("missile_soyuz_lander");
@@ -1531,6 +1707,8 @@ public final class ModItems {
             MissileItem.FormFactor.ATLAS, MissileItem.Tier.TIER4);
     public static final RegistryObject<Item> MISSILE_DOOMSDAY = missile("missile_doomsday",
             MissileItem.FormFactor.ATLAS, MissileItem.Tier.TIER4);
+    public static final RegistryObject<Item> MISSILE_DOOMSDAY_RUSTED = missile("missile_doomsday_rusted",
+            MissileItem.FormFactor.ATLAS, MissileItem.Tier.TIER4, false);
     public static final RegistryObject<Item> MISSILE_VOLCANO = missile("missile_volcano",
             MissileItem.FormFactor.ATLAS, MissileItem.Tier.TIER4);
     public static final RegistryObject<Item> MISSILE_MICRO = missile("missile_micro",
@@ -1637,6 +1815,7 @@ public final class ModItems {
             MISSILE_NUCLEAR,
             MISSILE_NUCLEAR_CLUSTER,
             MISSILE_DOOMSDAY,
+            MISSILE_DOOMSDAY_RUSTED,
             MISSILE_VOLCANO,
             MISSILE_MICRO,
             MISSILE_TAINT,
@@ -1693,8 +1872,12 @@ public final class ModItems {
                     .saturationMod(5.0F)
                     .meat()
                     .build())));
+    public static final RegistryObject<Item> STICK_DYNAMITE = registerLegacy("stick_dynamite",
+            () -> new DynamiteStickItem(new Item.Properties()));
     public static final RegistryObject<Item> BOTTLE_MERCURY = registerLegacy("bottle_mercury",
             () -> new Item(new Item.Properties().craftRemainder(Items.GLASS_BOTTLE)));
+    public static final RegistryObject<Item> CAN_EMPTY = registerLegacy("can_empty",
+            () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> RAG = registerLegacy("rag",
             () -> new HbmRagItem(new Item.Properties()));
 
@@ -1783,6 +1966,13 @@ public final class ModItems {
             "lithium",
             "powder_lithium",
             "powder_lithium_tiny",
+            "powder_ice",
+            "powder_neodymium_tiny",
+            "powder_boron_tiny",
+            "powder_niobium_tiny",
+            "powder_cerium_tiny",
+            "powder_lanthanium_tiny",
+            "powder_paleogenite_tiny",
             "powder_beryllium",
             "powder_aluminium",
             "powder_cobalt",
@@ -1814,6 +2004,12 @@ public final class ModItems {
             "powder_lapis",
             "powder_diamond",
             "powder_emerald",
+            "powder_meteorite",
+            "powder_meteorite_tiny",
+            "powder_steel_tiny",
+            "powder_poison",
+            "powder_red_copper",
+            "powder_magnetized_tungsten",
             "powder_sawdust",
             "powder_magic",
             "powder_polymer",
@@ -1848,6 +2044,7 @@ public final class ModItems {
             "plate_welded_tcalloy",
             "plate_welded_cdalloy",
             "wire_gold",
+            "wire_fine_aluminium",
             "wire_fine_copper",
             "wire_fine_mingrade",
             "wire_fine_tungsten",
@@ -1871,6 +2068,8 @@ public final class ModItems {
             "shell_copper",
             "shell_steel",
             "shell_titanium",
+            "shell_weaponsteel",
+            "shell_saturnite",
             "mechanism_gunmetal",
             "mechanism_weaponsteel",
             "mechanism_saturnite",
@@ -1937,6 +2136,9 @@ public final class ModItems {
             "turbine_tungsten",
             "entanglement_kit",
             "dysfunctional_reactor",
+            "coil_copper_torus",
+            "coil_gold_torus",
+            "coil_magnetized_tungsten",
             "part_lithium",
             "part_beryllium",
             "part_carbon",
@@ -2015,6 +2217,7 @@ public final class ModItems {
             "powder_schrabidate",
             "powder_caesium",
             "dust",
+            "dust_tiny",
             "fragment_coltan",
             "powder_coltan_ore",
             "powder_coltan",
@@ -2024,9 +2227,20 @@ public final class ModItems {
             "powder_cement",
             "powder_paleogenite",
             "powder_balefire",
+            "powder_semtex_mix",
+            "powder_desh_ready",
             "crystal_starmetal",
             "gem_volcanic",
+            "fragment_neodymium",
+            "fragment_cobalt",
+            "fragment_niobium",
+            "fragment_cerium",
+            "fragment_lanthanium",
+            "fragment_actinium",
+            "fragment_boron",
             "fragment_meteorite",
+            "scrap",
+            "scrap_oil",
             "ring_starmetal",
             "ingot_mud",
             "ingot_cft",
@@ -2275,6 +2489,7 @@ public final class ModItems {
     private static final List<RegistryObject<Item>> LEGACY_TOOL_ITEMS = List.of(
             SCREWDRIVER,
             HAND_DRILL,
+            WRENCH,
             DEFUSER
     );
 
@@ -2292,6 +2507,7 @@ public final class ModItems {
     );
 
     public static final List<RegistryObject<Item>> PISTON_SET_ITEMS = List.of(
+            PISTON_SELENIUM,
             PISTON_SET_STEEL,
             PISTON_SET_DURA,
             PISTON_SET_DESH,
@@ -2446,7 +2662,8 @@ public final class ModItems {
     public static final RegistryObject<Item> RBMK_LID = simpleItem("rbmk_lid");
     public static final RegistryObject<Item> RBMK_LID_GLASS = simpleItem("rbmk_lid_glass");
     public static final RegistryObject<Item> RBMK_FUEL_EMPTY = simpleItem("rbmk_fuel_empty");
-    public static final RegistryObject<Item> RBMK_TOOL = simpleStackOneItem("rbmk_tool");
+    public static final RegistryObject<Item> RBMK_TOOL = registerLegacy("rbmk_tool",
+            () -> new RBMKToolItem(new Item.Properties().stacksTo(1)));
 
     public static final List<RegistryObject<Item>> RBMK_FUEL_ROD_ITEMS = List.of(
             rbmkFuelRod("rbmk_fuel_ueu"),
@@ -2685,12 +2902,16 @@ public final class ModItems {
             STAMP_44,
             STAMP_9,
             STAMP_50,
+            LAUNCH_CODE_PIECE,
+            LAUNCH_CODE,
+            LAUNCH_KEY,
             WIRING_RED_COPPER,
             INGOT_SEMTEX,
             BOTTLE_MERCURY
-    ), Stream.concat(SATELLITE_PART_ITEMS.stream(), EXTRA_PARTS_TAB_ITEMS.stream())).toList();
+    ), Stream.concat(SEDNA_GUN_PART_ITEMS.stream(),
+            Stream.concat(SATELLITE_PART_ITEMS.stream(), EXTRA_PARTS_TAB_ITEMS.stream()))).toList();
 
-    public static final List<RegistryObject<Item>> WEAPON_TAB_ITEMS = List.of(
+    public static final List<RegistryObject<Item>> WEAPON_TAB_ITEMS = Stream.concat(Stream.of(
             AMMO_STANDARD_G12_BP,
             AMMO_STANDARD_G12_BP_MAGNUM,
             AMMO_STANDARD_G12_BP_SLUG,
@@ -2758,6 +2979,7 @@ public final class ModItems {
             AMMO_STANDARD_ROCKET_DEMO,
             AMMO_STANDARD_ROCKET_INC,
             AMMO_STANDARD_ROCKET_PHOSPHORUS,
+            STICK_DYNAMITE,
             AMMO_STANDARD_CAPACITOR,
             AMMO_STANDARD_CAPACITOR_OVERCHARGE,
             AMMO_STANDARD_CAPACITOR_IR,
@@ -2809,6 +3031,8 @@ public final class ModItems {
             AMMO_HIMARS_STANDARD_MINI_NUKE,
             AMMO_HIMARS_SINGLE,
             AMMO_HIMARS_SINGLE_TB,
+            AMMO_CONTAINER,
+            AMMO_CONTAINER_ALT,
             TURRET_BIOMETRY,
             TURRET_CHIP,
             GUN_PEPPERBOX,
@@ -2877,7 +3101,7 @@ public final class ModItems {
             GUN_CHARGE_THROWER,
             GUN_NI4NI,
             GUN_DRILL
-    );
+    ), WEAPON_MOD_CREATIVE_ITEMS.stream()).toList();
 
     public static final List<RegistryObject<Item>> CONSUMABLE_TAB_ITEMS = Stream.of(
             RBMK_TOOL,
@@ -2885,6 +3109,11 @@ public final class ModItems {
             DOSIMETER,
             DIGAMMA_DIAGNOSTIC,
             POLLUTION_DETECTOR,
+            AMMO_BAG,
+            AMMO_BAG_INFINITE,
+            CASING_BAG,
+            GUN_KIT_1,
+            GUN_KIT_2,
             RADAWAY,
             RADAWAY_STRONG,
             RADAWAY_FLUSH,
@@ -2914,6 +3143,7 @@ public final class ModItems {
             BOTTLE_NUKA,
             BOTTLE_CHERRY,
             BOTTLE_QUANTUM,
+            CAN_EMPTY,
             CAN_BEPIS,
             CAN_LUNA,
             CAN_MUG,
@@ -2929,6 +3159,7 @@ public final class ModItems {
             GAS_MASK_FILTER_COMBO,
             GAS_MASK_FILTER_RAG,
             GAS_MASK_FILTER_PISS,
+            JETPACK_TANK,
             ATTACHMENT_MASK,
             ATTACHMENT_MASK_MONO,
             GOGGLES,
@@ -2939,6 +3170,7 @@ public final class ModItems {
             GAS_MASK_M65,
             GAS_MASK_MONO,
             GAS_MASK_OLDE,
+            MASK_OF_INFAMY,
             MASK_RAG,
             MASK_PISS,
             STEEL_HELMET,
@@ -3518,9 +3750,9 @@ public final class ModItems {
                 .vats()
                 .geigerSound()
                 .hardLanding()
-                .step(ModSounds.STEP_METAL)
-                .jump(ModSounds.STEP_IRON_JUMP)
-                .fall(ModSounds.STEP_IRON_LAND)
+                .step("hbm:step.metal")
+                .jump("hbm:step.iron_jump")
+                .fall("hbm:step.iron_land")
                 .build();
     }
 
@@ -3536,9 +3768,9 @@ public final class ModItems {
                 .vats()
                 .geigerSound()
                 .hardLanding()
-                .step(ModSounds.STEP_POWERED)
-                .jump(ModSounds.STEP_POWERED)
-                .fall(ModSounds.STEP_POWERED)
+                .step("hbm:step.powered")
+                .jump("hbm:step.powered")
+                .fall("hbm:step.powered")
                 .build();
     }
 
@@ -3548,9 +3780,9 @@ public final class ModItems {
                 .thermal()
                 .geigerSound()
                 .hardLanding()
-                .step(ModSounds.STEP_METAL)
-                .jump(ModSounds.STEP_IRON_JUMP)
-                .fall(ModSounds.STEP_IRON_LAND)
+                .step("hbm:step.metal")
+                .jump("hbm:step.iron_jump")
+                .fall("hbm:step.iron_land")
                 .build();
     }
 
@@ -3566,9 +3798,9 @@ public final class ModItems {
                 .thermal()
                 .geigerSound()
                 .hardLanding()
-                .step(ModSounds.STEP_METAL)
-                .jump(ModSounds.STEP_IRON_JUMP)
-                .fall(ModSounds.STEP_IRON_LAND)
+                .step("hbm:step.metal")
+                .jump("hbm:step.iron_jump")
+                .fall("hbm:step.iron_land")
                 .build();
     }
 
@@ -3578,9 +3810,9 @@ public final class ModItems {
                 .thermal()
                 .geigerSound()
                 .hardLanding()
-                .step(ModSounds.STEP_METAL)
-                .jump(ModSounds.STEP_IRON_JUMP)
-                .fall(ModSounds.STEP_IRON_LAND)
+                .step("hbm:step.metal")
+                .jump("hbm:step.iron_jump")
+                .fall("hbm:step.iron_land")
                 .build();
     }
 
@@ -3945,6 +4177,10 @@ public final class ModItems {
 
     private static RegistryObject<Item> sednaGun(SednaGunConfig config) {
         return registerLegacy(config.legacyName(), () -> new SednaGunItem(new Item.Properties(), config));
+    }
+
+    private static RegistryObject<Item> weaponMod(WeaponModItem.Spec spec) {
+        return registerLegacy(spec.modernName(), () -> new WeaponModItem(new Item.Properties(), spec));
     }
 
     private static boolean isLegacyDepletedFuel(String name) {

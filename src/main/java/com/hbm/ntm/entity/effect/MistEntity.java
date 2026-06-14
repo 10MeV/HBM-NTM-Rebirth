@@ -166,8 +166,7 @@ public class MistEntity extends Entity {
                 double x = Mth.lerp(progress, startX, living.getX()) + (random.nextDouble() - 0.5D) * living.getBbWidth();
                 double y = Mth.lerp(progress, startY, living.getY()) + random.nextDouble() * living.getBbHeight();
                 double z = Mth.lerp(progress, startZ, living.getZ()) + (random.nextDouble() - 0.5D) * living.getBbWidth();
-                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.PORTAL, x, y, z,
-                        1, 0.0D, 0.0D, 0.0D, 0.0D);
+                ParticleUtil.spawnPortalParticle(serverLevel, x, y, z, 0.0D, 0.0D, 0.0D);
             }
             level().playSound(null, startX, startY, startZ, SoundEvents.ENDERMAN_TELEPORT,
                     SoundSource.HOSTILE, 1.0F, 1.0F);

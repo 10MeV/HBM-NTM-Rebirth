@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "hbm_ntm_rebirth:block/machine_missile_assembly", "y": 180 },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/machine_missile_assembly" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/machine_missile_assembly", "y": 90 },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/machine_missile_assembly", "y": 270 }
+  }
+}

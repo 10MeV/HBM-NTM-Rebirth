@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:ore_nether_fire" } },
+  "outputs": [
+    { "item": "minecraft:blaze_powder", "count": 2 },
+    { "item": "hbm_ntm_rebirth:powder_fire", "count": 2 },
+    { "item": "hbm_ntm_rebirth:ingot_phosphorus" },
+    { "item": "minecraft:netherrack" }
+  ]
+}

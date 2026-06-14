@@ -1,0 +1,22 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    " C ",
+                    "RFR",
+                    " C "
+                ],
+    "key":  {
+                "C":  {
+                          "item":  "hbm_ntm_rebirth:circuit_chip_bismoid"
+                      },
+                "R":  {
+                          "item":  "hbm_ntm_rebirth:crystal_redstone"
+                      },
+                "F":  {
+                          "tag":  "forge:heavy_receivers/any_bismoid_bronze"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_las_auto"
+               }
+}

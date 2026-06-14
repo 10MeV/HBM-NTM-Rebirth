@@ -2,6 +2,8 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidRecipeIO;
+import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts.LegacyPort;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -141,38 +143,29 @@ public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockE
         if (recipe == null || !hasCatalyst()) {
             return changed;
         }
-        if (energy.getPower() < POWER_PER_OPERATION || inputTank.getFill() < 100
-                || !hasSpace(reformateTank, recipe.first().amount())
-                || !hasSpace(petroleumTank, recipe.second().amount())
-                || !hasSpace(hydrogenTank, recipe.third().amount())) {
+        if (energy.getPower() < POWER_PER_OPERATION) {
             return changed;
         }
-        inputTank.setFill(inputTank.getFill() - 100);
-        addFluid(reformateTank, recipe.first().type(), recipe.first().amount());
-        addFluid(petroleumTank, recipe.second().type(), recipe.second().amount());
-        addFluid(hydrogenTank, recipe.third().type(), recipe.third().amount());
+        HbmFluidRecipeIO.RecipeFluidIoProcessReport report = HbmFluidRecipeIO.processLegacyFixedRecipeIoReport(
+                List.of(HbmFluidRecipeIO.requirementFromTank(inputTank, 100)),
+                List.of(recipe.first(), recipe.second(), recipe.third()),
+                List.of(inputTank),
+                List.of(reformateTank, petroleumTank, hydrogenTank),
+                false);
+        if (!report.complete()) {
+            return changed;
+        }
         consumePower(POWER_PER_OPERATION);
         onFluidContentsChanged();
         return true;
     }
 
     private boolean setupRecipeTanks(TripleRecipe recipe) {
-        if (recipe == null) {
-            boolean changed = reformateTank.getTankType() != HbmFluids.NONE
-                    || petroleumTank.getTankType() != HbmFluids.NONE
-                    || hydrogenTank.getTankType() != HbmFluids.NONE;
-            configureTank(reformateTank, HbmFluids.NONE);
-            configureTank(petroleumTank, HbmFluids.NONE);
-            configureTank(hydrogenTank, HbmFluids.NONE);
-            return changed;
-        }
-        boolean changed = reformateTank.getTankType() != recipe.first().type()
-                || petroleumTank.getTankType() != recipe.second().type()
-                || hydrogenTank.getTankType() != recipe.third().type();
-        configureTank(reformateTank, recipe.first().type());
-        configureTank(petroleumTank, recipe.second().type());
-        configureTank(hydrogenTank, recipe.third().type());
-        return changed;
+        List<HbmFluidStack> outputs = recipe == null
+                ? List.of()
+                : List.of(recipe.first(), recipe.second(), recipe.third());
+        return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
+                List.of(), outputs, List.of(), List.of(reformateTank, petroleumTank, hydrogenTank)).changed();
     }
 
     private boolean hasCatalyst() {

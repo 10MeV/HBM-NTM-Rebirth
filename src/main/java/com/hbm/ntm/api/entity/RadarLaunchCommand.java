@@ -62,8 +62,11 @@ public record RadarLaunchCommand(int linkSlot, Target target) {
     }
 
     public static boolean isValidTag(CompoundTag tag, int linkSlotCount) {
-        Optional<RadarLaunchCommand> command = fromTag(tag);
-        return command.isPresent() && command.get().isValidLinkSlot(linkSlotCount);
+        return validFromTag(tag, linkSlotCount).isPresent();
+    }
+
+    public static Optional<RadarLaunchCommand> validFromTag(CompoundTag tag, int linkSlotCount) {
+        return fromTag(tag).filter(command -> command.isValidLinkSlot(linkSlotCount));
     }
 
     public boolean isValidLinkSlot(int linkSlotCount) {

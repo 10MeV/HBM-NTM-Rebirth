@@ -3,6 +3,7 @@ package com.hbm.ntm.armor;
 import api.hbm.item.IGasMask;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.radiation.ArmorUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -36,6 +37,16 @@ public class ArmorModGasMaskItem extends ArmorModItem implements IGasMask {
         super.appendHoverText(stack, level, tooltip, flag);
         ArmorUtil.addGasMaskTooltip(stack, null, tooltip, flag);
         ArmorUtil.addGasMaskBlacklistTooltip(stack, null, tooltip);
+    }
+
+    @Override
+    public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                               TooltipFlag flag) {
+        tooltip.add(Component.literal("  ")
+                .append(mod.getHoverName())
+                .append(Component.literal(" (gas protection)"))
+                .withStyle(ChatFormatting.GREEN));
+        ArmorUtil.addGasMaskTooltip(mod, null, tooltip, flag);
     }
 
     @Override

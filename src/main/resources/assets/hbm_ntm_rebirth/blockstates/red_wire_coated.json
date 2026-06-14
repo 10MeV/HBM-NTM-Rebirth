@@ -1,0 +1,5 @@
+{
+  "multipart": [
+    { "apply": { "model": "hbm_ntm_rebirth:block/red_wire_coated" } }
+  ]
+}

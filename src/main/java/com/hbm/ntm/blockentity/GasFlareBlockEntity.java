@@ -168,7 +168,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             ParticleUtil.spawnGasFlareVentSmoke(level, pos, type.getColor());
         }
         if (blockEntity.burn && flammable != null) {
-            if (level.random.nextBoolean()) {
+            if (level.getGameTime() % 2L == 0L) {
                 ParticleUtil.spawnGasFlareSmoke(level, pos.getX() + 1.5D, pos.getY() + 10.75D, pos.getZ() + 1.5D);
             } else {
                 ParticleUtil.spawnGasFlareSmoke(level, pos.getX() + 1.125D, pos.getY() + 11.75D, pos.getZ() - 0.5D);

@@ -373,42 +373,43 @@ public final class WorldSavedDataDiagnostics {
 
     public record SatelliteSummary(boolean present, int entries,
                                    Map<LegacySatelliteType, Integer> typeCounts,
+                                   Map<LegacySatelliteType, Integer> cargoTypeCounts,
+                                   Map<String, Integer> cargoPoolCounts,
                                    List<Integer> frequencies,
+                                   List<Integer> cargoFrequencies,
                                    List<SatelliteSavedData.SatelliteSummary> satellites,
                                    int legacyEntryDiagnostics,
                                    int modernEntryDiagnostics,
                                    int problemEntries,
-                                   SatelliteSavedData.LoadDiagnostics loadDiagnostics) {
+                                   SatelliteSavedData.LoadDiagnostics loadDiagnostics,
+                                   SatelliteSavedData.SatelliteStats stats) {
         public SatelliteSummary {
             typeCounts = typeCounts == null ? Map.of() : Map.copyOf(typeCounts);
+            cargoTypeCounts = cargoTypeCounts == null ? Map.of() : Map.copyOf(cargoTypeCounts);
+            cargoPoolCounts = cargoPoolCounts == null ? Map.of() : Map.copyOf(cargoPoolCounts);
             frequencies = frequencies == null ? List.of() : List.copyOf(frequencies);
+            cargoFrequencies = cargoFrequencies == null ? List.of() : List.copyOf(cargoFrequencies);
             satellites = satellites == null ? List.of() : List.copyOf(satellites);
             loadDiagnostics = loadDiagnostics == null ? SatelliteSavedData.LoadDiagnostics.empty()
                     : loadDiagnostics;
+            stats = stats == null ? SatelliteSavedData.SatelliteStats.empty() : stats;
         }
 
         public static SatelliteSummary absent() {
-            return new SatelliteSummary(false, 0, Map.of(), List.of(), List.of(),
-                    0, 0, 0, SatelliteSavedData.LoadDiagnostics.empty());
+            return new SatelliteSummary(false, 0, Map.of(), Map.of(), Map.of(), List.of(), List.of(), List.of(),
+                    0, 0, 0, SatelliteSavedData.LoadDiagnostics.empty(), SatelliteSavedData.SatelliteStats.empty());
         }
 
         public static SatelliteSummary of(SatelliteSavedData data) {
-            return new SatelliteSummary(true, data.size(), data.typeCounts(),
-                    data.frequenciesSnapshot(16), data.satelliteSummariesSnapshot(8),
-                    data.legacyEntryLoadDiagnosticsSnapshot().size(),
-                    data.modernEntryLoadDiagnosticsSnapshot().size(),
-                    data.problemEntryLoadDiagnosticsSnapshot().size(),
-                    data.loadDiagnostics());
+            SatelliteSavedData.SatelliteStats stats = data.statsSnapshot(16, 8);
+            return new SatelliteSummary(true, stats.entries(), stats.typeCounts(), stats.cargoTypeCounts(),
+                    stats.cargoPoolCounts(), stats.frequencies(), stats.cargoFrequencies(), stats.satellites(),
+                    stats.legacyEntryDiagnostics(), stats.modernEntryDiagnostics(), stats.problemEntries(),
+                    stats.loadDiagnostics(), stats);
         }
 
         public String detail() {
-            return "entries=" + entries
-                    + " types=" + typeCounts
-                    + " frequencies=" + frequencies
-                    + " legacyEntryDiagnostics=" + legacyEntryDiagnostics
-                    + " modernEntryDiagnostics=" + modernEntryDiagnostics
-                    + " problemEntries=" + problemEntries
-                    + " load={" + loadDiagnostics.summary() + "}";
+            return stats.detail();
         }
     }
 

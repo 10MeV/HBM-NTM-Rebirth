@@ -1,0 +1,23 @@
+{
+    "type":  "minecraft:crafting_shapeless",
+    "ingredients":  [
+                        {
+                            "tag":  "forge:gun_mechanisms/gun_metal"
+                        },
+                        {
+                            "tag":  "forge:cast_plates/dura_steel"
+                        },
+                        {
+                            "tag":  "forge:cast_plates/dura_steel"
+                        },
+                        {
+                            "tag":  "forge:cast_plates/dura_steel"
+                        },
+                        {
+                            "item":  "hbm_ntm_rebirth:ducttape"
+                        }
+                    ],
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_generic_dura_damage"
+               }
+}

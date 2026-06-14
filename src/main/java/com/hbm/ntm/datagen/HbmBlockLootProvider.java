@@ -1,6 +1,8 @@
 package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
+import com.hbm.ntm.block.RedCableBoxBlock;
+import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.advancements.critereon.StatePropertiesPredicate;
@@ -19,6 +21,7 @@ import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraftforge.registries.RegistryObject;
 
 import java.util.Set;
@@ -45,6 +48,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 .filter(block -> block != ModBlocks.CRATE_IRON
                         && block != ModBlocks.CRATE_STEEL)
                 .filter(block -> block != ModBlocks.VENDING_MACHINE)
+                .filter(block -> block != ModBlocks.RED_CABLE_BOX)
                 .forEach(block -> dropSelf(block.get()));
         ModBlocks.TURRET_TAB_BLOCKS.stream()
                 .filter(block -> block != ModBlocks.TURRET_HOWARD_DAMAGED
@@ -59,6 +63,8 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.BARREL_PLASTIC.get(), noDrop());
         dropSelf(ModBlocks.BARREL_CORRODED.get());
         dropSelf(ModBlocks.MACHINE_FENSU.get());
+        add(ModBlocks.RED_CABLE_BOX.get(),
+                legacyStateVariantDrop(ModBlocks.RED_CABLE_BOX.get(), RedCableBoxBlock.SIZE, 5));
         add(ModBlocks.BARREL_STEEL.get(), noDrop());
         add(ModBlocks.BARREL_TCALLOY.get(), noDrop());
         add(ModBlocks.BARREL_ANTIMATTER.get(), noDrop());
@@ -71,8 +77,14 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         dropSelf(ModBlocks.MACHINE_SATLINKER.get());
         dropSelf(ModBlocks.SAT_DOCK.get());
         dropSelf(ModBlocks.SOYUZ_CAPSULE.get());
-        dropSelf(ModBlocks.SOYUZ_LAUNCHER.get());
+        add(ModBlocks.SOYUZ_LAUNCHER.get(), noDrop());
+        dropSelf(ModBlocks.STRUCT_LAUNCHER.get());
+        dropSelf(ModBlocks.STRUCT_SCAFFOLD.get());
+        dropSelf(ModBlocks.STRUCT_SOYUZ_CORE.get());
         dropSelf(ModBlocks.LAUNCH_PAD.get());
+        dropSelf(ModBlocks.LAUNCH_TABLE.get());
+        dropSelf(ModBlocks.COMPACT_LAUNCHER.get());
+        dropSelf(ModBlocks.MACHINE_MISSILE_ASSEMBLY.get());
         add(ModBlocks.OIL_PIPE.get(), noDrop());
         add(ModBlocks.CONVEYOR.get(), conveyorWandDrop("REGULAR"));
         add(ModBlocks.CONVEYOR_EXPRESS.get(), conveyorWandDrop("EXPRESS"));
@@ -231,6 +243,22 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                         .setRolls(ConstantValue.exactly(1.0F))
                         .add(LootItem.lootTableItem(item))
                         .when(ExplosionCondition.survivesExplosion()));
+    }
+
+    private LootTable.Builder legacyStateVariantDrop(Block block, IntegerProperty property, int variants) {
+        LootTable.Builder table = LootTable.lootTable();
+        for (int variant = 0; variant < variants; variant++) {
+            CompoundTag tag = new CompoundTag();
+            tag.putInt(LegacyStateBlockItem.TAG_VARIANT, variant);
+            table.withPool(LootPool.lootPool()
+                    .setRolls(ConstantValue.exactly(1.0F))
+                    .add(LootItem.lootTableItem(block).apply(SetNbtFunction.setTag(tag)))
+                    .when(ExplosionCondition.survivesExplosion())
+                    .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
+                            .setProperties(StatePropertiesPredicate.Builder.properties()
+                                    .hasProperty(property, variant))));
+        }
+        return table;
     }
 
     private LootTable.Builder stackDrop(Item item, float count) {

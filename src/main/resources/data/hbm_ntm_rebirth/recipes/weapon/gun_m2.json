@@ -1,0 +1,26 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    "  G",
+                    "BRM",
+                    "  G"
+                ],
+    "key":  {
+                "G":  {
+                          "tag":  "forge:grips/wood"
+                      },
+                "R":  {
+                          "tag":  "forge:heavy_receivers/ferrouranium"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/weapon_steel"
+                      },
+                "B":  {
+                          "tag":  "forge:heavy_barrels/ferrouranium"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_m2"
+               }
+}

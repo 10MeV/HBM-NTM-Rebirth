@@ -12,8 +12,7 @@ public class SioxItem extends LegacyPillItem {
 
     @Override
     protected void applyPillEffects(ItemStack stack, Level level, Player player) {
-        HbmLivingProperties.setAsbestos(player, 0);
-        HbmLivingProperties.setBlackLung(player,
-                Math.min(HbmLivingProperties.getBlackLung(player), HbmLivingProperties.MAX_BLACK_LUNG / 5));
+        HbmLivingProperties.clearAsbestos(player);
+        HbmLivingProperties.capBlackLung(player, HbmLivingProperties.MAX_BLACK_LUNG / 5);
     }
 }

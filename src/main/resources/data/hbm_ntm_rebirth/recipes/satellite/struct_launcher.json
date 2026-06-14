@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "PPP",
+    "SDS",
+    "CCC"
+  ],
+  "key": {
+    "P": { "tag": "forge:plates/steel" },
+    "S": { "item": "hbm_ntm_rebirth:steel_scaffold" },
+    "D": { "tag": "forge:pipes/steel" },
+    "C": { "tag": "forge:any/concrete" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:struct_launcher",
+    "count": 8
+  }
+}

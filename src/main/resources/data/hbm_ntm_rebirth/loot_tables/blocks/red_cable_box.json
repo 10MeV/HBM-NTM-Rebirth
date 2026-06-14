@@ -1,0 +1,140 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "block": "hbm_ntm_rebirth:red_cable_box",
+          "condition": "minecraft:block_state_property",
+          "properties": {
+            "size": "0"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:0}"
+            }
+          ],
+          "name": "hbm_ntm_rebirth:red_cable_box"
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "block": "hbm_ntm_rebirth:red_cable_box",
+          "condition": "minecraft:block_state_property",
+          "properties": {
+            "size": "1"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:1}"
+            }
+          ],
+          "name": "hbm_ntm_rebirth:red_cable_box"
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "block": "hbm_ntm_rebirth:red_cable_box",
+          "condition": "minecraft:block_state_property",
+          "properties": {
+            "size": "2"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:2}"
+            }
+          ],
+          "name": "hbm_ntm_rebirth:red_cable_box"
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "block": "hbm_ntm_rebirth:red_cable_box",
+          "condition": "minecraft:block_state_property",
+          "properties": {
+            "size": "3"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:3}"
+            }
+          ],
+          "name": "hbm_ntm_rebirth:red_cable_box"
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "block": "hbm_ntm_rebirth:red_cable_box",
+          "condition": "minecraft:block_state_property",
+          "properties": {
+            "size": "4"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:4}"
+            }
+          ],
+          "name": "hbm_ntm_rebirth:red_cable_box"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ]
+}

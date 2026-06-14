@@ -1,20 +1,13 @@
 package com.hbm.ntm.client.particle;
 
 import com.hbm.ntm.HbmNtm;
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleRenderType;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -27,34 +20,9 @@ import org.joml.Vector3f;
 import java.util.Random;
 
 @OnlyIn(Dist.CLIENT)
-public class MukeFlashParticle extends Particle {
+public class MukeFlashParticle extends Particle implements HbmDeferredParticleRenderer.DeferredParticle {
     private static final ResourceLocation TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/flare.png");
-    private static final ParticleRenderType RENDER_TYPE = new ParticleRenderType() {
-        @Override
-        public void begin(BufferBuilder builder, TextureManager textureManager) {
-            RenderSystem.depthMask(false);
-            RenderSystem.enableBlend();
-            RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
-            RenderSystem.setShader(GameRenderer::getParticleShader);
-            RenderSystem.setShaderTexture(0, TEXTURE);
-            RenderSystem.disableCull();
-            builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
-        }
-
-        @Override
-        public void end(Tesselator tesselator) {
-            tesselator.end();
-            RenderSystem.enableCull();
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.depthMask(true);
-        }
-
-        @Override
-        public String toString() {
-            return "HBM_MUKE_FLASH";
-        }
-    };
 
     private final boolean balefire;
 
@@ -120,11 +88,17 @@ public class MukeFlashParticle extends Particle {
 
     @Override
     public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.enqueue(this, camera, this.x, this.y, this.z);
+    }
+
+    @Override
+    public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
         float progressAge = this.age + partialTick;
         float alpha = Mth.clamp(1.0F - progressAge / (float) this.lifetime, 0.0F, 1.0F) * 0.5F;
         if (alpha <= 0.0F) {
             return;
         }
+        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.texturedAdditiveNoDepthWrite(TEXTURE));
         float scale = progressAge * 3.0F + 1.0F;
         Vec3 cameraPos = camera.getPosition();
         double x = Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x();
@@ -162,7 +136,7 @@ public class MukeFlashParticle extends Particle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return RENDER_TYPE;
+        return HbmDeferredParticleRenderer.DEFERRED_RENDER_TYPE;
     }
 
     @Override

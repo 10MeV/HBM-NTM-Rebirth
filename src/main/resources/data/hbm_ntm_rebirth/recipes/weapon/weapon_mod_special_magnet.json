@@ -1,0 +1,22 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "RGR",
+                    "GBG",
+                    "RGR"
+                ],
+    "key":  {
+                "R":  {
+                          "tag":  "forge:ingots/rubber"
+                      },
+                "G":  {
+                          "tag":  "forge:dense_wires/gold"
+                      },
+                "B":  {
+                          "tag":  "forge:storage_blocks/niobium"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_magnet"
+               }
+}

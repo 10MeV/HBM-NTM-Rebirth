@@ -1,9 +1,5 @@
 package com.hbm.ntm.client.particle;
 
-import com.hbm.ntm.registry.ModSounds;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraftforge.registries.RegistryObject;
-
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -18,6 +14,10 @@ public final class SpentCasingDefinition {
     public static final int COLOR_CASE_16INCH_PHOS = 0xC8C8C8;
     public static final int COLOR_CASE_16INCH_NUKE = 0x495443;
     public static final int COLOR_CASE_40MM = 0x515151;
+    private static final String PLINK_SHELL = "hbm:weapon.casing.shell";
+    private static final String PLINK_SMALL = "hbm:weapon.casing.small";
+    private static final String PLINK_MEDIUM = "hbm:weapon.casing.medium";
+    private static final String PLINK_LARGE = "hbm:weapon.casing.large";
 
     private static final Map<String, SpentCasingDefinition> DEFINITIONS = new HashMap<>();
 
@@ -42,14 +42,15 @@ public final class SpentCasingDefinition {
     private float scaleY = 1.0F;
     private float scaleZ = 1.0F;
     private int[] colors;
-    private RegistryObject<SoundEvent> bounceSound;
+    private String bounceSound;
+    private boolean largeBounceSound;
     private float bounceYaw = 1.0F;
     private float bouncePitch = 1.0F;
     private int maxAge = 240;
 
     private SpentCasingDefinition(CasingType type) {
         this.type = type;
-        this.bounceSound = type == CasingType.SHOTGUN ? ModSounds.WEAPON_CASING_SHELL : ModSounds.WEAPON_CASING_SMALL;
+        this.bounceSound = type == CasingType.SHOTGUN ? PLINK_SHELL : PLINK_SMALL;
     }
 
     public static SpentCasingDefinition fromName(String name) {
@@ -123,6 +124,7 @@ public final class SpentCasingDefinition {
         copy.scaleZ = scaleZ;
         copy.colors = colors == null ? null : colors.clone();
         copy.bounceSound = bounceSound;
+        copy.largeBounceSound = largeBounceSound;
         copy.bounceYaw = bounceYaw;
         copy.bouncePitch = bouncePitch;
         copy.maxAge = maxAge;
@@ -138,9 +140,11 @@ public final class SpentCasingDefinition {
         this.scaleY = y;
         this.scaleZ = z;
         if (x * y * z >= 100.0F && type != CasingType.SHOTGUN) {
-            this.bounceSound = ModSounds.WEAPON_CASING_LARGE;
+            this.bounceSound = PLINK_LARGE;
+            this.largeBounceSound = true;
         } else if (x * y * z >= 3.0F && type != CasingType.SHOTGUN) {
-            this.bounceSound = ModSounds.WEAPON_CASING_MEDIUM;
+            this.bounceSound = PLINK_MEDIUM;
+            this.largeBounceSound = false;
         }
         return this;
     }
@@ -198,8 +202,12 @@ public final class SpentCasingDefinition {
         return colors[Math.min(index, colors.length - 1)];
     }
 
-    public RegistryObject<SoundEvent> bounceSound() {
+    public String bounceSound() {
         return bounceSound;
+    }
+
+    public boolean largeBounceSound() {
+        return largeBounceSound;
     }
 
     public float bounceYaw() {

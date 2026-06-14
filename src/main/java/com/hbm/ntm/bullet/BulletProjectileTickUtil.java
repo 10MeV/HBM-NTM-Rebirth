@@ -13,6 +13,8 @@ import java.util.Collections;
 import java.util.List;
 
 public final class BulletProjectileTickUtil {
+    public static final double LEGACY_BEAM_RANGE = 250.0D;
+
     public static TickResult applyEntityTick(BulletConfig config, Entity projectile, @Nullable Entity shooter,
             @Nullable LivingEntity currentHomingTarget, int ticksExisted, int ticksInAir, boolean hasTauTrailNodes,
             @Nullable Vec3 previousPosition, @Nullable RandomSource random, float overrideDamage, boolean inGround,
@@ -76,7 +78,14 @@ public final class BulletProjectileTickUtil {
                     BulletProjectileHitUtil.HitApplication.NONE, update, tauTrail, preMoveParticles,
                     flameTrailParticles + fireExtinguisherParticles, lifetime, true, false, meteorFlameParticles,
                     Collections.unmodifiableList(spawnRequests),
-                    updatedAcceleration);
+                    updatedAcceleration, 0.0D);
+        }
+
+        if (config.plink() == BulletPlink.ENERGY) {
+            return applyBeamTick(config, level, projectile, shooter, currentHomingTarget, projectileBounds, position,
+                    motion, ticksInAir, update, tauTrail, preMoveParticles, flameTrailParticles,
+                    fireExtinguisherParticles, lifetime, meteorFlameParticles, spawnRequests, random, overrideDamage,
+                    inGround, updatedAcceleration);
         }
 
         BulletCollisionUtil.CollisionScan scan = projectile == null
@@ -110,7 +119,70 @@ public final class BulletProjectileTickUtil {
 
         return new TickResult(nextPosition, nextMotion, update.homingTarget(), hit, update, tauTrail,
                 preMoveParticles, trailParticles, lifetime, discardProjectile, hit.enteredPortal(),
-                meteorFlameParticles, Collections.unmodifiableList(spawnRequests), updatedAcceleration);
+                meteorFlameParticles, Collections.unmodifiableList(spawnRequests), updatedAcceleration, 0.0D);
+    }
+
+    private static TickResult applyBeamTick(BulletConfig config, Level level, @Nullable Entity projectile,
+            @Nullable Entity shooter, @Nullable LivingEntity currentHomingTarget, AABB projectileBounds,
+            Vec3 position, Vec3 motion, int ticksInAir, BulletUpdateBehaviorUtil.KnownUpdateResult update,
+            BulletTauTrailUtil.TauTrailAppend tauTrail, int preMoveParticles, int flameTrailParticles,
+            int fireExtinguisherParticles, BulletKinematicsUtil.LifetimeCheck lifetime, int meteorFlameParticles,
+            List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests, @Nullable RandomSource random,
+            float overrideDamage, boolean inGround, float updatedAcceleration) {
+        Vec3 direction = beamDirection(projectile, motion);
+        Vec3 rangedMotion = direction.scale(LEGACY_BEAM_RANGE / Math.max(config.velocity(), 1.0E-7F));
+        BulletCollisionUtil.CollisionScan scan = projectile == null
+                ? BulletCollisionUtil.scan(config, level, null, shooter, projectileBounds, position, rangedMotion,
+                        ticksInAir, 0.0F)
+                : BulletCollisionUtil.scan(config, level, projectile, shooter, projectileBounds, position,
+                        rangedMotion, ticksInAir, 0.0F);
+        BulletProjectileHitUtil.HitApplication hit = projectile != null && ticksInAir <= 1 && hasLegacyBeamImpact(config)
+                ? BulletProjectileHitUtil.applyScannedHits(config, level, projectile, shooter, rangedMotion, scan,
+                        random, overrideDamage, inGround, ticksInAir)
+                : new BulletProjectileHitUtil.HitApplication(scan, Collections.emptyList(),
+                        BulletRicochetUtil.BlockHitResult.NONE, rangedMotion, false, false, Collections.emptyList(),
+                        overrideDamage, false);
+        spawnRequests.addAll(hit.spawnRequests());
+        boolean discardProjectile = lifetime.shouldDiscard() || update.discardProjectile() || hit.discardProjectile();
+        double beamLength = beamLength(scan);
+        return new TickResult(position, motion, update.homingTarget(), hit, update, tauTrail, preMoveParticles,
+                flameTrailParticles + fireExtinguisherParticles, lifetime, discardProjectile, hit.enteredPortal(),
+                meteorFlameParticles, Collections.unmodifiableList(spawnRequests), updatedAcceleration, beamLength);
+    }
+
+    private static boolean hasLegacyBeamImpact(BulletConfig config) {
+        return config.hasBehavior(BulletBehaviorTag.STANDARD_BEAM_HIT)
+                || config.hasBehavior(BulletBehaviorTag.LIGHTNING_BEAM_HIT)
+                || config.hasBehavior(BulletBehaviorTag.LIGHTNING_BEAM_SPLIT)
+                || config.hasBehavior(BulletBehaviorTag.INFRARED_BEAM_HIT)
+                || config.hasBehavior(BulletBehaviorTag.BEAM_HIT)
+                || config.hasBehavior(BulletBehaviorTag.BLACK_FIRE_BEAM_HIT)
+                || config.hasBehavior(BulletBehaviorTag.SHREDDER_BEAM_SPLIT)
+                || config.hasBehavior(BulletBehaviorTag.GRENADE_LASER_BEAM_HIT)
+                || config.hasBehavior(BulletBehaviorTag.BATTERY_SOCKET_DISCHARGE_BEAM);
+    }
+
+    private static Vec3 beamDirection(@Nullable Entity projectile, Vec3 motion) {
+        if (motion != null && motion.lengthSqr() > 1.0E-7D) {
+            return motion.normalize();
+        }
+        if (projectile != null) {
+            float yaw = projectile.getYRot() * ((float) Math.PI / 180.0F);
+            float pitch = projectile.getXRot() * ((float) Math.PI / 180.0F);
+            return new Vec3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch),
+                    Math.cos(yaw) * Math.cos(pitch)).normalize();
+        }
+        return new Vec3(0.0D, 0.0D, 1.0D);
+    }
+
+    private static double beamLength(BulletCollisionUtil.CollisionScan scan) {
+        if (scan == null || scan.start() == null) {
+            return LEGACY_BEAM_RANGE;
+        }
+        Vec3 end = scan.primaryHit() == BulletCollisionUtil.PrimaryHit.MISS
+                ? scan.clippedEnd()
+                : scan.primaryLocation();
+        return end == null ? LEGACY_BEAM_RANGE : scan.start().distanceTo(end);
     }
 
     private static Vec3 moveBase(Vec3 position, BulletCollisionUtil.CollisionScan scan,
@@ -126,13 +198,13 @@ public final class BulletProjectileTickUtil {
             BulletTauTrailUtil.TauTrailAppend tauTrail, int preMoveParticles, int trailParticles,
             BulletKinematicsUtil.LifetimeCheck lifetime, boolean discardProjectile, boolean enteredPortal,
             int meteorFlameParticles, List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests,
-            float acceleration) {
+            float acceleration, double beamLength) {
         public static final TickResult NONE = new TickResult(Vec3.ZERO, Vec3.ZERO, null,
                 BulletProjectileHitUtil.HitApplication.NONE,
                 BulletUpdateBehaviorUtil.KnownUpdateResult.NONE,
                 BulletTauTrailUtil.TauTrailAppend.NONE, 0, 0,
                 new BulletKinematicsUtil.LifetimeCheck(true, false), true, false, 0, Collections.emptyList(),
-                0.0F);
+                0.0F, 0.0D);
     }
 
     private BulletProjectileTickUtil() {

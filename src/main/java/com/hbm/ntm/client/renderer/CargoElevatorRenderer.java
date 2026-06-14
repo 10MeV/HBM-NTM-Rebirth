@@ -33,30 +33,30 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
 
-        if (elevator.shouldRenderPlatform()) {
-            double extension = elevator.getPrevExtension()
-                    + (elevator.getExtension() - elevator.getPrevExtension()) * partialTick;
+        LegacyTileRenderPlans.CargoElevatorPlan plan = LegacyTileRenderPlans.cargoElevatorPlan(
+                elevator.shouldRenderPlatform(), elevator.getPrevExtension(), elevator.getExtension(),
+                partialTick, elevator.getHeight());
+        if (plan.renderPlatform()) {
             ObjMachineModels.ELEVATOR_LEGACY.renderPart("Base", TEXTURE, poseStack, buffer, modelLight, packedOverlay);
+            renderTranslatedParts(plan.platformParts(), poseStack, buffer, modelLight, packedOverlay);
+        }
 
-            poseStack.pushPose();
-            poseStack.translate(0.0D, extension, 0.0D);
-            ObjMachineModels.ELEVATOR_LEGACY.renderPart("Platform", TEXTURE, poseStack, buffer, modelLight,
-                    packedOverlay);
-            for (int i = 0; i < extension + 1.0D; i++) {
-                ObjMachineModels.ELEVATOR_LEGACY.renderPart("Piston", TEXTURE, poseStack, buffer, modelLight,
-                        packedOverlay);
-                poseStack.translate(0.0D, -1.0D, 0.0D);
+        renderTranslatedParts(plan.guides(), poseStack, buffer, modelLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderTranslatedParts(
+            Iterable<LegacyTileRenderPlans.TranslatedModelPartPlan> parts, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        for (LegacyTileRenderPlans.TranslatedModelPartPlan part : parts) {
+            if (!part.active()) {
+                continue;
             }
+            poseStack.pushPose();
+            poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
+            ObjMachineModels.ELEVATOR_LEGACY.renderPart(part.partName(), TEXTURE, poseStack, buffer,
+                    packedLight, packedOverlay);
             poseStack.popPose();
         }
-
-        poseStack.pushPose();
-        for (int i = 0; i <= elevator.getHeight(); i++) {
-            ObjMachineModels.ELEVATOR_LEGACY.renderPart("Guides", TEXTURE, poseStack, buffer, modelLight,
-                    packedOverlay);
-            poseStack.translate(0.0D, 1.0D, 0.0D);
-        }
-        poseStack.popPose();
-        poseStack.popPose();
     }
 }

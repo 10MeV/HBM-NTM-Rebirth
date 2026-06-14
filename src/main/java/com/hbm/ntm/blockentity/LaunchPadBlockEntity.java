@@ -8,6 +8,7 @@ import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.entity.missile.AntiBallisticMissileEntity;
+import com.hbm.ntm.entity.missile.CustomMissileEntity;
 import com.hbm.ntm.entity.missile.MissileEntity;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
@@ -16,6 +17,8 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
+import com.hbm.ntm.item.missile.CustomMissileItem;
+import com.hbm.ntm.item.missile.CustomMissilePartProfile;
 import com.hbm.ntm.item.missile.MissileItem;
 import com.hbm.ntm.menu.LaunchPadMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
@@ -261,6 +264,15 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         ItemStack stack = items.getStackInSlot(SLOT_MISSILE);
         Entity missile;
         MissileEntity.Variant variant;
+        CustomMissilePartProfile.Assembly customAssembly = CustomMissilePartProfile.assemblyFromStack(stack);
+        if (customAssembly != null && customAssembly.isCompleteForLaunch()) {
+            CustomMissileEntity custom = new CustomMissileEntity(ModEntityTypes.MISSILE_CUSTOM.get(), level);
+            custom.configureParts(customAssembly);
+            int[] adjustedTarget = adjustedCustomTarget(level, targetX, targetZ, customAssembly);
+            custom.configureLaunch(worldPosition.getX() + 0.5D, worldPosition.getY() + 1.0D,
+                    worldPosition.getZ() + 0.5D, adjustedTarget[0], adjustedTarget[1]);
+            return custom;
+        }
         if (stack.is(ModItems.MISSILE_GENERIC.get())) {
             variant = MissileEntity.Variant.GENERIC;
             missile = new MissileEntity(ModEntityTypes.MISSILE_GENERIC.get(), level, variant);
@@ -350,6 +362,23 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         return missile;
     }
 
+    private int[] adjustedCustomTarget(ServerLevel level, int targetX, int targetZ,
+            CustomMissilePartProfile.Assembly assembly) {
+        float inaccuracy = assembly.launchInaccuracy();
+        if (inaccuracy <= 0.0F) {
+            return new int[] { targetX, targetZ };
+        }
+        double offsetX = (worldPosition.getX() - targetX) * inaccuracy;
+        double offsetZ = (worldPosition.getZ() - targetZ) * inaccuracy;
+        double angle = level.random.nextFloat() * Math.PI * 2.0D;
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        return new int[] {
+                targetX + (int) (offsetX * cos + offsetZ * sin),
+                targetZ + (int) (offsetZ * cos - offsetX * sin)
+        };
+    }
+
     private void finalizeLaunch(ServerLevel level, Entity missile) {
         level.addFreshEntity(missile);
         LegacySoundPlayer.playSoundEffect(level, worldPosition.getX() + 0.5D, worldPosition.getY(),
@@ -359,6 +388,8 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (stack.getItem() instanceof MissileItem missileItem && missileItem.fuel() != MissileItem.Fuel.SOLID) {
             fuelTank().drain(missileItem.fuelCap(), false);
             oxidizerTank().drain(missileItem.fuelCap(), false);
+        } else {
+            drainCustomMissileFuel(stack);
         }
         items.extractItem(SLOT_MISSILE, 1, false);
         delay = RELOAD_DELAY;
@@ -391,7 +422,8 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || stack.is(ModItems.MISSILE_NUCLEAR_CLUSTER.get())
                 || stack.is(ModItems.MISSILE_VOLCANO.get())
                 || stack.is(ModItems.MISSILE_DOOMSDAY.get())
-                || stack.is(ModItems.MISSILE_ANTI_BALLISTIC.get());
+                || stack.is(ModItems.MISSILE_ANTI_BALLISTIC.get())
+                || isCustomMissileComplete(stack);
     }
 
     public boolean isMissileValid() {
@@ -400,8 +432,13 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public boolean isMissileValid(ItemStack stack) {
         return !stack.isEmpty()
-                && stack.getItem() instanceof MissileItem missile
-                && missile.launchable();
+                && ((stack.getItem() instanceof MissileItem missile && missile.launchable())
+                        || (stack.getItem() instanceof CustomMissileItem && isCustomMissileComplete(stack)));
+    }
+
+    private static boolean isCustomMissileComplete(ItemStack stack) {
+        CustomMissilePartProfile.Assembly assembly = CustomMissilePartProfile.assemblyFromStack(stack);
+        return assembly != null && assembly.isCompleteForLaunch();
     }
 
     public boolean hasFuel() {
@@ -410,7 +447,8 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         ItemStack stack = items.getStackInSlot(SLOT_MISSILE);
         if (!(stack.getItem() instanceof MissileItem missile)) {
-            return false;
+            CustomMissilePartProfile.Assembly assembly = CustomMissilePartProfile.assemblyFromStack(stack);
+            return assembly != null && assembly.isCompleteForLaunch() && hasCustomMissileFuel(assembly);
         }
         return missile.fuel() == MissileItem.Fuel.SOLID
                 || (fuelTank().getFill() >= missile.fuelCap() && oxidizerTank().getFill() >= missile.fuelCap());
@@ -427,7 +465,16 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
     private int getGaugeState(int tank) {
         ItemStack stack = items.getStackInSlot(SLOT_MISSILE);
         if (!(stack.getItem() instanceof MissileItem missile) || missile.fuel() == MissileItem.Fuel.SOLID) {
-            return 0;
+            CustomMissilePartProfile.Assembly assembly = CustomMissilePartProfile.assemblyFromStack(stack);
+            if (assembly == null || !assembly.isCompleteForLaunch()) {
+                return 0;
+            }
+            CustomFluidPair pair = customFluidPair(assembly);
+            if (pair.fuel == null || (tank == 1 && pair.oxidizer == null)) {
+                return 0;
+            }
+            HbmFluidTank selected = tank == 0 ? fuelTank() : oxidizerTank();
+            return selected.getFill() >= customFuelRequired(assembly) ? 1 : -1;
         }
         HbmFluidTank selected = tank == 0 ? fuelTank() : oxidizerTank();
         return selected.getFill() >= missile.fuelCap() ? 1 : -1;
@@ -436,6 +483,16 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
     private void updateFuelTankTypes() {
         ItemStack stack = items.getStackInSlot(SLOT_MISSILE);
         if (!(stack.getItem() instanceof MissileItem missile)) {
+            CustomMissilePartProfile.Assembly assembly = CustomMissilePartProfile.assemblyFromStack(stack);
+            if (assembly != null && assembly.isCompleteForLaunch()) {
+                CustomFluidPair pair = customFluidPair(assembly);
+                if (pair.fuel != null) {
+                    fuelTank().setTankType(pair.fuel);
+                }
+                if (pair.oxidizer != null) {
+                    oxidizerTank().setTankType(pair.oxidizer);
+                }
+            }
             return;
         }
         FluidPair pair = fluidPair(missile.fuel());
@@ -619,6 +676,11 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox() {
+        return new net.minecraft.world.phys.AABB(worldPosition).inflate(16.0D);
+    }
+
+    @Override
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
@@ -656,5 +718,52 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private record FluidPair(@Nullable FluidType fuel, @Nullable FluidType oxidizer) {
+    }
+
+    private boolean hasCustomMissileFuel(CustomMissilePartProfile.Assembly assembly) {
+        CustomFluidPair pair = customFluidPair(assembly);
+        if (pair.fuel == null) {
+            return true;
+        }
+        int required = customFuelRequired(assembly);
+        return fuelTank().getFill() >= required
+                && (pair.oxidizer == null || oxidizerTank().getFill() >= required);
+    }
+
+    private void drainCustomMissileFuel(ItemStack stack) {
+        CustomMissilePartProfile.Assembly assembly = CustomMissilePartProfile.assemblyFromStack(stack);
+        if (assembly == null || !assembly.isCompleteForLaunch()) {
+            return;
+        }
+        CustomFluidPair pair = customFluidPair(assembly);
+        if (pair.fuel == null) {
+            return;
+        }
+        int required = customFuelRequired(assembly);
+        fuelTank().drain(required, false);
+        if (pair.oxidizer != null) {
+            oxidizerTank().drain(required, false);
+        }
+    }
+
+    private static int customFuelRequired(CustomMissilePartProfile.Assembly assembly) {
+        return Math.max(0, Math.round(assembly.fuselage().profile().fuel()));
+    }
+
+    private static CustomFluidPair customFluidPair(CustomMissilePartProfile.Assembly assembly) {
+        CustomMissilePartProfile.FuelType fuel = assembly.fuselage().profile().fuelType();
+        if (fuel == null) {
+            return new CustomFluidPair(null, null);
+        }
+        return switch (fuel) {
+            case KEROSENE -> new CustomFluidPair(HbmFluids.KEROSENE, HbmFluids.PEROXIDE);
+            case HYDROGEN -> new CustomFluidPair(HbmFluids.HYDROGEN, HbmFluids.OXYGEN);
+            case XENON -> new CustomFluidPair(HbmFluids.XENON, null);
+            case BALEFIRE -> new CustomFluidPair(HbmFluids.BALEFIRE, HbmFluids.PEROXIDE);
+            case SOLID -> new CustomFluidPair(null, null);
+        };
+    }
+
+    private record CustomFluidPair(@Nullable FluidType fuel, @Nullable FluidType oxidizer) {
     }
 }

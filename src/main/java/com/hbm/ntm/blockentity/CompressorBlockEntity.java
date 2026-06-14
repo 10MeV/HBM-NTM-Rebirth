@@ -20,6 +20,8 @@ import com.hbm.ntm.menu.CompressorMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -36,6 +38,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.Mth;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -91,6 +94,12 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     private int processTime = 100;
     private int powerRequirement = BASE_POWER_REQUIREMENT;
     private boolean on;
+    private float fanSpin;
+    private float prevFanSpin;
+    private float piston;
+    private float prevPiston;
+    private boolean pistonDir;
+    private float pistonReturnSpeed = 0.1F;
 
     public CompressorBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state,
@@ -146,6 +155,44 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
     }
 
+    public static void clientTick(Level level, BlockPos pos, BlockState state, CompressorBlockEntity compressor) {
+        if (!level.isClientSide) {
+            return;
+        }
+        compressor.prevFanSpin = compressor.fanSpin;
+        compressor.prevPiston = compressor.piston;
+        if (!compressor.on) {
+            return;
+        }
+        if (compressor.isCompact()) {
+            compressor.advanceFan(45.0F);
+            return;
+        }
+        compressor.advanceFan(15.0F);
+        if (compressor.pistonDir) {
+            compressor.piston -= compressor.pistonReturnSpeed;
+            if (compressor.piston <= 0.0F) {
+                LegacySoundPlayer.playSoundClient(pos, "hbm:item.boltgun", compressor.getVolume(0.5F), 0.75F);
+                compressor.pistonDir = false;
+            }
+        } else {
+            compressor.piston += 0.05F;
+            if (compressor.piston >= 1.0F) {
+                compressor.pistonReturnSpeed = 0.085F + level.random.nextFloat() * 0.03F;
+                compressor.pistonDir = true;
+            }
+        }
+        compressor.piston = Mth.clamp(compressor.piston, 0.0F, 1.0F);
+    }
+
+    private void advanceFan(float step) {
+        fanSpin += step;
+        if (fanSpin >= 360.0F) {
+            prevFanSpin -= 360.0F;
+            fanSpin -= 360.0F;
+        }
+    }
+
     public HbmFluidTank getInputTank() {
         return inputTank;
     }
@@ -176,6 +223,14 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public boolean isOn() {
         return on;
+    }
+
+    public float getFanSpin(float partialTick) {
+        return prevFanSpin + (fanSpin - prevFanSpin) * partialTick;
+    }
+
+    public float getPiston(float partialTick) {
+        return prevPiston + (piston - prevPiston) * partialTick;
     }
 
     @Override
@@ -355,7 +410,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.hbm_ntm_rebirth.machine_compressor");
+        return Component.translatable(getBlockState().getBlock().getDescriptionId());
     }
 
     @Nullable
@@ -430,6 +485,9 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private List<FluidPort> compressorFluidPortsForState() {
+        if (isCompact()) {
+            return compressorCompactFluidPortsForState();
+        }
         Direction facing = facing();
         Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
@@ -439,6 +497,9 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private List<EnergyPort> compressorEnergyPortsForState() {
+        if (isCompact()) {
+            return compressorCompactEnergyPortsForState();
+        }
         Direction facing = facing();
         Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
@@ -447,11 +508,44 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
                 new EnergyPort(LegacyMultiblockOffsets.relative(facing, rot, -2, 0, 0), facing.getOpposite()));
     }
 
+    private List<FluidPort> compressorCompactFluidPortsForState() {
+        Direction facing = facing();
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return List.of(
+                new FluidPort(LegacyMultiblockOffsets.relative(facing, rot, 0, 4, 1), rot),
+                new FluidPort(LegacyMultiblockOffsets.relative(facing, rot, 0, -4, 1), rot.getOpposite()),
+                new FluidPort(LegacyMultiblockOffsets.relative(facing, rot, 2, -1, 1), facing),
+                new FluidPort(LegacyMultiblockOffsets.relative(facing, rot, 2, 1, 1), facing),
+                new FluidPort(LegacyMultiblockOffsets.relative(facing, rot, -2, -1, 1), facing.getOpposite()),
+                new FluidPort(LegacyMultiblockOffsets.relative(facing, rot, -2, 1, 1), facing.getOpposite()));
+    }
+
+    private List<EnergyPort> compressorCompactEnergyPortsForState() {
+        Direction facing = facing();
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return List.of(
+                new EnergyPort(LegacyMultiblockOffsets.relative(facing, rot, 0, 4, 1), rot),
+                new EnergyPort(LegacyMultiblockOffsets.relative(facing, rot, 0, -4, 1), rot.getOpposite()),
+                new EnergyPort(LegacyMultiblockOffsets.relative(facing, rot, 2, -1, 1), facing),
+                new EnergyPort(LegacyMultiblockOffsets.relative(facing, rot, 2, 1, 1), facing),
+                new EnergyPort(LegacyMultiblockOffsets.relative(facing, rot, -2, -1, 1), facing.getOpposite()),
+                new EnergyPort(LegacyMultiblockOffsets.relative(facing, rot, -2, 1, 1), facing.getOpposite()));
+    }
+
     private Direction facing() {
         BlockState state = getBlockState();
         return state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
+    }
+
+    private boolean isCompact() {
+        return getBlockState().is(ModBlocks.MACHINE_COMPRESSOR_COMPACT.get());
+    }
+
+    @Override
+    public float getVolume(float baseVolume) {
+        return baseVolume;
     }
 
 }

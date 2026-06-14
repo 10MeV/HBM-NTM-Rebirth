@@ -3,8 +3,11 @@ package com.hbm.ntm.particle;
 import com.hbm.ntm.network.ModMessages;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -589,6 +592,97 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
+    public static void spawnTownAura(Level level, double x, double y, double z) {
+        spawnVanillaExtTownAura(level, x, y, z, 0.0D, 0.0D, 0.0D);
+    }
+
+    public static void spawnRandomTownAuraInBlock(Level level, BlockPos pos, RandomSource random) {
+        RandomSource rand = randomOrLevel(level, random);
+        if (level == null || pos == null || rand == null) {
+            return;
+        }
+        spawnTownAura(level,
+                pos.getX() + rand.nextFloat(),
+                pos.getY() + rand.nextFloat(),
+                pos.getZ() + rand.nextFloat());
+    }
+
+    public static void spawnRandomTownAuraAboveBlock(Level level, BlockPos pos, RandomSource random) {
+        RandomSource rand = randomOrLevel(level, random);
+        if (level == null || pos == null || rand == null) {
+            return;
+        }
+        spawnTownAura(level,
+                pos.getX() + rand.nextFloat(),
+                pos.getY() + 1.1D,
+                pos.getZ() + rand.nextFloat());
+    }
+
+    public static void spawnRandomTownAuraOnBarrel(Level level, BlockPos pos, RandomSource random) {
+        RandomSource rand = randomOrLevel(level, random);
+        if (level == null || pos == null || rand == null) {
+            return;
+        }
+        spawnTownAura(level,
+                pos.getX() + rand.nextFloat() * 0.5F + 0.25F,
+                pos.getY() + 1.1D,
+                pos.getZ() + rand.nextFloat() * 0.5F + 0.25F);
+    }
+
+    public static void spawnRandomSmokeInBlock(Level level, BlockPos pos, RandomSource random) {
+        RandomSource rand = randomOrLevel(level, random);
+        if (level == null || pos == null || rand == null) {
+            return;
+        }
+        spawnVanillaSmoke(level,
+                pos.getX() + rand.nextFloat(),
+                pos.getY() + rand.nextFloat(),
+                pos.getZ() + rand.nextFloat());
+    }
+
+    public static void spawnDeadLeafDrop(Level level, BlockPos pos, RandomSource random) {
+        RandomSource rand = randomOrLevel(level, random);
+        if (level == null || pos == null || rand == null) {
+            return;
+        }
+        spawnDeadLeaf(level,
+                pos.getX() + rand.nextDouble(),
+                pos.getY() - 0.05D,
+                pos.getZ() + rand.nextDouble());
+    }
+
+    public static void spawnOutgasTownAuraBurst(Level level, BlockPos pos, RandomSource random, int count) {
+        for (int i = 0; i < count; i++) {
+            spawnRandomTownAuraAboveBlock(level, pos, random);
+        }
+    }
+
+    public static void spawnTownAuraOnOpenFaces(Level level, BlockPos pos, RandomSource random) {
+        spawnHazardOpenFaceEffect(level, pos, random, false);
+    }
+
+    public static void spawnSchrabFogOnOpenFaces(Level level, BlockPos pos, RandomSource random) {
+        spawnHazardOpenFaceEffect(level, pos, random, true);
+    }
+
+    private static void spawnHazardOpenFaceEffect(Level level, BlockPos pos, RandomSource random, boolean schrab) {
+        RandomSource rand = randomOrLevel(level, random);
+        if (level == null || pos == null || rand == null) {
+            return;
+        }
+        for (Direction direction : Direction.values()) {
+            if (!level.isEmptyBlock(pos.relative(direction))) {
+                continue;
+            }
+            Vec3 point = randomLegacyOpenFacePoint(pos, direction, rand);
+            if (schrab) {
+                spawnSchrabFog(level, point.x, point.y, point.z);
+            } else {
+                spawnTownAura(level, point.x, point.y, point.z);
+            }
+        }
+    }
+
     public static void spawnVanish(Level level, Entity entity) {
         if (entity == null) {
             return;
@@ -828,6 +922,11 @@ public final class ParticleUtil {
         spawnVanilla(level, x, y, z, VANILLA_CLOUD, motionX, motionY, motionZ);
     }
 
+    public static void spawnVanillaSmoke(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ) {
+        spawnVanilla(level, x, y, z, VANILLA_SMOKE, motionX, motionY, motionZ);
+    }
+
     public static void spawnVanillaExplode(Level level, double x, double y, double z, double motionX, double motionY, double motionZ) {
         spawnVanilla(level, x, y, z, VANILLA_EXPLODE, motionX, motionY, motionZ);
     }
@@ -996,6 +1095,46 @@ public final class ParticleUtil {
 
     public static void spawnLegacyExplosionLarge(Level level, double x, double y, double z) {
         spawnExplosionLarge(level, x, y, z, 30, 6.5F, 2.0F, 65.0F, 25, 16, 50, 1.25F, 3.0F, -2.0F, 350.0F);
+    }
+
+    public static void spawnLegacyShrapnelTrailFlame(Level level, double x, double y, double z) {
+        spawnVanillaFlame(level, x, y, z);
+    }
+
+    public static void spawnLegacyShrapnelLavaSplash(ServerLevel level, Vec3 position) {
+        if (level == null || position == null) {
+            return;
+        }
+        level.sendParticles(ParticleTypes.LAVA, position.x, position.y, position.z,
+                5, 0.15D, 0.15D, 0.15D, 0.0D);
+    }
+
+    public static void spawnLegacyArtillerySmokeTrail(Level level, double x, double y, double z) {
+        spawnVanillaSmoke(level, x, y + 0.5D, z, 0.0D, 0.1D, 0.0D);
+    }
+
+    public static void spawnLegacyPrimedSmoke(ServerLevel level, double x, double y, double z) {
+        if (level == null) {
+            return;
+        }
+        level.sendParticles(ParticleTypes.SMOKE, x, y + 0.5D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+    }
+
+    public static void spawnEmpMachineBurst(ServerLevel level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return;
+        }
+        level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.PURPLE_STAINED_GLASS.defaultBlockState()),
+                pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D,
+                8, 0.25D, 0.25D, 0.25D, 0.05D);
+    }
+
+    public static void spawnPortalParticle(ServerLevel level, double x, double y, double z,
+            double motionX, double motionY, double motionZ) {
+        if (level == null) {
+            return;
+        }
+        level.sendParticles(ParticleTypes.PORTAL, x, y, z, 1, motionX, motionY, motionZ, 0.0D);
     }
 
     public static void spawnExplosionLarge(Level level, double x, double y, double z, int cloudCount, float cloudScale, float cloudSpeedMult,
@@ -1600,6 +1739,29 @@ public final class ParticleUtil {
                     level.random.nextGaussian() * speed,
                     CHAOS_CLOUD_ORANGE);
         }
+    }
+
+    private static RandomSource randomOrLevel(Level level, RandomSource random) {
+        if (random != null) {
+            return random;
+        }
+        return level == null ? null : level.random;
+    }
+
+    private static Vec3 randomLegacyOpenFacePoint(BlockPos pos, Direction direction, RandomSource random) {
+        double x = pos.getX() + 0.5D + direction.getStepX() + random.nextDouble() * 3.0D - 1.5D;
+        double y = pos.getY() + 0.5D + direction.getStepY() + random.nextDouble() * 3.0D - 1.5D;
+        double z = pos.getZ() + 0.5D + direction.getStepZ() + random.nextDouble() * 3.0D - 1.5D;
+        if (direction.getStepX() != 0) {
+            x = pos.getX() + 0.5D + direction.getStepX() * 0.5D + random.nextDouble() * direction.getStepX();
+        }
+        if (direction.getStepY() != 0) {
+            y = pos.getY() + 0.5D + direction.getStepY() * 0.5D + random.nextDouble() * direction.getStepY();
+        }
+        if (direction.getStepZ() != 0) {
+            z = pos.getZ() + 0.5D + direction.getStepZ() * 0.5D + random.nextDouble() * direction.getStepZ();
+        }
+        return new Vec3(x, y, z);
     }
 
     private static CompoundTag smokeTag(String mode, int count) {

@@ -1,14 +1,13 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.multiblock.MultiblockHelper;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.turret.ArtilleryTargetReceiver;
 import com.hbm.ntm.util.RayTraceUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -47,7 +46,7 @@ public class ArtilleryDesignatorItem extends Item {
             tag.putInt(TAG_X, corePos.getX());
             tag.putInt(TAG_Y, corePos.getY());
             tag.putInt(TAG_Z, corePos.getZ());
-            play(level, context.getPlayer(), ModSounds.TOOL_TECH_BLEEP.get());
+            playBleep(context.getPlayer());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -67,9 +66,8 @@ public class ArtilleryDesignatorItem extends Item {
             BlockEntity blockEntity = level.getBlockEntity(new BlockPos(tag.getInt(TAG_X), tag.getInt(TAG_Y), tag.getInt(TAG_Z)));
             if (blockEntity instanceof ArtilleryTargetReceiver receiver) {
                 BlockPos pos = hit.getBlockPos();
-                if (receiver.enqueueTarget(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D)) {
-                    play(level, player, ModSounds.TOOL_TECH_BOOP.get());
-                }
+                receiver.enqueueTarget(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+                LegacySoundPlayer.playLegacyTechBoop(player, 1.0F, 1.0F);
             }
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
@@ -86,9 +84,9 @@ public class ArtilleryDesignatorItem extends Item {
                 + ", " + tag.getInt(TAG_Z)).withStyle(ChatFormatting.YELLOW));
     }
 
-    private static void play(Level level, @Nullable Player player, net.minecraft.sounds.SoundEvent sound) {
+    private static void playBleep(@Nullable Player player) {
         if (player != null) {
-            level.playSound(null, player.blockPosition(), sound, SoundSource.PLAYERS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacyTechBleep(player, 1.0F, 1.0F);
         }
     }
 }

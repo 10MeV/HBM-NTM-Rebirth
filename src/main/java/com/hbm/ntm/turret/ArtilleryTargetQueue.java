@@ -26,11 +26,16 @@ final class ArtilleryTargetQueue {
 
     boolean sendCommandPosition(TurretBlockEntityBase turret, int x, int y, int z) {
         Vec3 target = RadarCommandReceiver.centeredPositionTarget(x, y, z);
-        return enqueue(turret, target.x, target.y, target.z);
+        enqueue(turret, target.x, target.y, target.z);
+        return true;
     }
 
     boolean sendCommandEntity(TurretBlockEntityBase turret, Entity target) {
-        return target != null && enqueue(turret, target.getX(), target.getY(), target.getZ());
+        if (target == null) {
+            return false;
+        }
+        enqueue(turret, target.getX(), target.getY(), target.getZ());
+        return true;
     }
 
     void applyManualTarget(TurretBlockEntityBase turret, boolean manualMode) {

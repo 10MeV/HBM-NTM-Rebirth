@@ -7,6 +7,7 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -18,7 +19,7 @@ import org.joml.Vector3f;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @OnlyIn(Dist.CLIENT)
-public class DeadLeafParticle extends TextureSheetParticle {
+public class DeadLeafParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
     private static final AtomicInteger NEXT_VISUAL_ID = new AtomicInteger();
     private final SpriteSet sprites;
     private final boolean flipU;
@@ -59,6 +60,12 @@ public class DeadLeafParticle extends TextureSheetParticle {
 
     @Override
     public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.enqueue(this, camera, this.x, this.y, this.z);
+    }
+
+    @Override
+    public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
+        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite());
         Vec3 cameraPos = camera.getPosition();
         float x = (float) (Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x());
         float y = (float) (Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y());
@@ -87,7 +94,7 @@ public class DeadLeafParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+        return HbmDeferredParticleRenderer.DEFERRED_RENDER_TYPE;
     }
 
     public static class Provider implements ParticleProvider<SimpleParticleType> {

@@ -1,0 +1,35 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    " RD",
+                    "CTT",
+                    "GMS"
+                ],
+    "key":  {
+                "R":  {
+                          "tag":  "forge:light_receivers/saturnite"
+                      },
+                "G":  {
+                          "tag":  "forge:grips/any_hardplastic"
+                      },
+                "S":  {
+                          "tag":  "forge:stocks/any_hardplastic"
+                      },
+                "T":  {
+                          "item":  "hbm_ntm_rebirth:coil_copper_torus"
+                      },
+                "C":  {
+                          "tag":  "forge:pipes/copper"
+                      },
+                "D":  {
+                          "item":  "hbm_ntm_rebirth:circuit_chip_bismoid"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/saturnite"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_tau"
+               }
+}

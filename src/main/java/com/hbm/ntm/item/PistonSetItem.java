@@ -54,7 +54,7 @@ public class PistonSetItem extends Item {
         MEDIUM("Medium"),
         HIGH("High"),
         AERO("Aero"),
-        BALEFIRE("Balefire");
+        GAS("Gaseous");
 
         private final String label;
 

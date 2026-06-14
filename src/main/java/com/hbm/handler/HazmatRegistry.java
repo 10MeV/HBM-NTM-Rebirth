@@ -1,8 +1,8 @@
 package com.hbm.handler;
 
 import com.google.gson.Gson;
-import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.radiation.HazmatResistanceConfig;
+import com.hbm.util.ArmorRegistry.HazardClass;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -10,7 +10,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,6 +51,10 @@ public final class HazmatRegistry {
         syncWeightsToModern();
         com.hbm.ntm.radiation.HazmatRegistry.registerDefaults();
         syncWeightsFromModern();
+    }
+
+    public static void registerDefaultProtections() {
+        com.hbm.ntm.radiation.HazmatRegistry.registerDefaultProtections();
     }
 
     public static void registerHazmat(Item item, double resistance) {
@@ -103,31 +110,31 @@ public final class HazmatRegistry {
     }
 
     public static void registerProtection(Item item, HazardClass... protections) {
-        com.hbm.ntm.radiation.HazmatRegistry.registerProtection(item, protections);
+        com.hbm.ntm.radiation.HazmatRegistry.registerProtection(item, modern(protections));
     }
 
     public static boolean registerProtection(ResourceLocation itemId, HazardClass... protections) {
-        return com.hbm.ntm.radiation.HazmatRegistry.registerProtection(itemId, protections);
+        return com.hbm.ntm.radiation.HazmatRegistry.registerProtection(itemId, modern(protections));
     }
 
     public static boolean registerProtection(String itemId, HazardClass... protections) {
-        return com.hbm.ntm.radiation.HazmatRegistry.registerProtection(itemId, protections);
+        return com.hbm.ntm.radiation.HazmatRegistry.registerProtection(itemId, modern(protections));
     }
 
     public static void registerExternalProtection(Item item, HazardClass... protections) {
-        com.hbm.ntm.radiation.HazmatRegistry.registerExternalProtection(item, protections);
+        com.hbm.ntm.radiation.HazmatRegistry.registerExternalProtection(item, modern(protections));
     }
 
     public static boolean registerExternalProtection(ResourceLocation itemId, HazardClass... protections) {
-        return com.hbm.ntm.radiation.HazmatRegistry.registerExternalProtection(itemId, protections);
+        return com.hbm.ntm.radiation.HazmatRegistry.registerExternalProtection(itemId, modern(protections));
     }
 
     public static boolean registerExternalProtection(String itemId, HazardClass... protections) {
-        return com.hbm.ntm.radiation.HazmatRegistry.registerExternalProtection(itemId, protections);
+        return com.hbm.ntm.radiation.HazmatRegistry.registerExternalProtection(itemId, modern(protections));
     }
 
     public static EnumSet<HazardClass> removeProtection(Item item) {
-        return com.hbm.ntm.radiation.HazmatRegistry.removeProtection(item);
+        return legacyNullableSet(com.hbm.ntm.radiation.HazmatRegistry.removeProtection(item));
     }
 
     public static boolean removeProtection(ResourceLocation itemId) {
@@ -141,7 +148,7 @@ public final class HazmatRegistry {
     }
 
     public static EnumSet<HazardClass> removeExternalProtection(Item item) {
-        return com.hbm.ntm.radiation.HazmatRegistry.removeExternalProtection(item);
+        return legacyNullableSet(com.hbm.ntm.radiation.HazmatRegistry.removeExternalProtection(item));
     }
 
     public static boolean removeExternalProtection(ResourceLocation itemId) {
@@ -172,12 +179,50 @@ public final class HazmatRegistry {
         com.hbm.ntm.radiation.HazmatRegistry.replaceResistances(resistances);
     }
 
+    public static void replaceHazmats(Map<Item, Double> resistances) {
+        com.hbm.ntm.radiation.HazmatRegistry.replaceHazmats(resistances);
+    }
+
+    public static void replaceProtections(Map<Item, ? extends Collection<HazardClass>> protections) {
+        com.hbm.ntm.radiation.HazmatRegistry.replaceProtections(modernProtectionMap(protections));
+    }
+
+    public static void replaceExternalHazmats(Map<Item, Double> resistances) {
+        com.hbm.ntm.radiation.HazmatRegistry.replaceExternalHazmats(resistances);
+    }
+
+    public static void replaceExternalResistances(Map<Item, Double> resistances) {
+        com.hbm.ntm.radiation.HazmatRegistry.replaceExternalResistances(resistances);
+    }
+
+    public static void replaceExternalProtections(Map<Item, ? extends Collection<HazardClass>> protections) {
+        com.hbm.ntm.radiation.HazmatRegistry.replaceExternalProtections(modernProtectionMap(protections));
+    }
+
     public static Map<Item, Double> resistanceSnapshot() {
         return com.hbm.ntm.radiation.HazmatRegistry.resistanceSnapshot();
     }
 
+    public static Map<Item, Double> externalResistanceDefaultsSnapshot() {
+        return com.hbm.ntm.radiation.HazmatRegistry.externalResistanceDefaultsSnapshot();
+    }
+
     public static Map<Item, EnumSet<HazardClass>> protectionSnapshot() {
-        return com.hbm.ntm.radiation.HazmatRegistry.protectionSnapshot();
+        Map<Item, EnumSet<HazardClass>> snapshot = new LinkedHashMap<>();
+        for (Map.Entry<Item, EnumSet<com.hbm.ntm.api.item.HazardClass>> entry :
+                com.hbm.ntm.radiation.HazmatRegistry.protectionSnapshot().entrySet()) {
+            snapshot.put(entry.getKey(), legacySet(entry.getValue()));
+        }
+        return snapshot;
+    }
+
+    public static Map<Item, EnumSet<HazardClass>> externalProtectionDefaultsSnapshot() {
+        Map<Item, EnumSet<HazardClass>> snapshot = new LinkedHashMap<>();
+        for (Map.Entry<Item, EnumSet<com.hbm.ntm.api.item.HazardClass>> entry :
+                com.hbm.ntm.radiation.HazmatRegistry.externalProtectionDefaultsSnapshot().entrySet()) {
+            snapshot.put(entry.getKey(), legacySet(entry.getValue()));
+        }
+        return snapshot;
     }
 
     public static com.hbm.ntm.radiation.HazmatRegistry.RegistrySnapshot registrySnapshot() {
@@ -197,15 +242,15 @@ public final class HazmatRegistry {
     }
 
     public static Set<HazardClass> getProtection(ItemStack stack) {
-        return com.hbm.ntm.radiation.HazmatRegistry.getProtection(stack);
+        return legacySet(com.hbm.ntm.radiation.HazmatRegistry.getProtection(stack));
     }
 
     public static Set<HazardClass> getProtectionFromItem(ItemStack stack, LivingEntity entity) {
-        return com.hbm.ntm.radiation.HazmatRegistry.getProtectionFromItem(stack, entity);
+        return legacySet(com.hbm.ntm.radiation.HazmatRegistry.getProtectionFromItem(stack, entity));
     }
 
     public static Set<HazardClass> getProtection(LivingEntity entity, EquipmentSlot slot) {
-        return com.hbm.ntm.radiation.HazmatRegistry.getProtection(entity, slot);
+        return legacySet(com.hbm.ntm.radiation.HazmatRegistry.getProtection(entity, slot));
     }
 
     public static Set<HazardClass> getProtection(LivingEntity entity, int legacyArmorSlot) {
@@ -214,7 +259,8 @@ public final class HazmatRegistry {
     }
 
     public static boolean hasProtection(LivingEntity entity, EquipmentSlot slot, HazardClass hazardClass) {
-        return com.hbm.ntm.radiation.HazmatRegistry.hasProtection(entity, slot, hazardClass);
+        return hazardClass != null
+                && com.hbm.ntm.radiation.HazmatRegistry.hasProtection(entity, slot, hazardClass.modern());
     }
 
     public static boolean hasProtection(LivingEntity entity, int legacyArmorSlot, HazardClass hazardClass) {
@@ -223,7 +269,7 @@ public final class HazmatRegistry {
     }
 
     public static boolean hasAllProtection(LivingEntity entity, EquipmentSlot slot, HazardClass... hazardClasses) {
-        return com.hbm.ntm.radiation.HazmatRegistry.hasAllProtection(entity, slot, hazardClasses);
+        return com.hbm.ntm.radiation.HazmatRegistry.hasAllProtection(entity, slot, modern(hazardClasses));
     }
 
     public static boolean hasAllProtection(LivingEntity entity, int legacyArmorSlot, HazardClass... hazardClasses) {
@@ -232,7 +278,7 @@ public final class HazmatRegistry {
     }
 
     public static boolean hasAnyProtection(LivingEntity entity, EquipmentSlot slot, HazardClass... hazardClasses) {
-        return com.hbm.ntm.radiation.HazmatRegistry.hasAnyProtection(entity, slot, hazardClasses);
+        return com.hbm.ntm.radiation.HazmatRegistry.hasAnyProtection(entity, slot, modern(hazardClasses));
     }
 
     public static boolean hasAnyProtection(LivingEntity entity, int legacyArmorSlot, HazardClass... hazardClasses) {
@@ -309,6 +355,54 @@ public final class HazmatRegistry {
         return com.hbm.ntm.radiation.HazmatRegistry.resolveItem(itemId);
     }
 
+    private static com.hbm.ntm.api.item.HazardClass[] modern(HazardClass... hazards) {
+        if (hazards == null) {
+            return new com.hbm.ntm.api.item.HazardClass[0];
+        }
+        com.hbm.ntm.api.item.HazardClass[] mapped = new com.hbm.ntm.api.item.HazardClass[hazards.length];
+        for (int i = 0; i < hazards.length; i++) {
+            mapped[i] = hazards[i] == null ? null : hazards[i].modern();
+        }
+        return mapped;
+    }
+
+    private static Map<Item, Collection<com.hbm.ntm.api.item.HazardClass>> modernProtectionMap(
+            Map<Item, ? extends Collection<HazardClass>> protections) {
+        Map<Item, Collection<com.hbm.ntm.api.item.HazardClass>> mapped = new LinkedHashMap<>();
+        if (protections == null) {
+            return mapped;
+        }
+        for (Map.Entry<Item, ? extends Collection<HazardClass>> entry : protections.entrySet()) {
+            Collection<com.hbm.ntm.api.item.HazardClass> converted = new ArrayList<>();
+            Collection<HazardClass> value = entry.getValue();
+            if (value != null) {
+                for (HazardClass hazard : value) {
+                    if (hazard != null) {
+                        converted.add(hazard.modern());
+                    }
+                }
+            }
+            mapped.put(entry.getKey(), converted);
+        }
+        return mapped;
+    }
+
+    private static EnumSet<HazardClass> legacySet(Collection<com.hbm.ntm.api.item.HazardClass> hazards) {
+        EnumSet<HazardClass> mapped = EnumSet.noneOf(HazardClass.class);
+        if (hazards != null) {
+            for (com.hbm.ntm.api.item.HazardClass hazard : hazards) {
+                if (hazard != null) {
+                    mapped.add(HazardClass.valueOf(hazard.name()));
+                }
+            }
+        }
+        return mapped;
+    }
+
+    private static EnumSet<HazardClass> legacyNullableSet(Collection<com.hbm.ntm.api.item.HazardClass> hazards) {
+        return hazards == null ? null : legacySet(hazards);
+    }
+
     private static void syncWeightsToModern() {
         com.hbm.ntm.radiation.HazmatRegistry.helmet = helmet;
         com.hbm.ntm.radiation.HazmatRegistry.chest = chest;
@@ -338,15 +432,22 @@ public final class HazmatRegistry {
 
         @Override
         public void add(int index, com.hbm.util.Tuple.Pair<Item, Double> element) {
+            if (element == null || element.getKey() == null || element.getValue() == null) {
+                return;
+            }
             com.hbm.ntm.radiation.HazmatRegistry.external.add(index, element);
         }
 
         @Override
         public com.hbm.util.Tuple.Pair<Item, Double> set(int index,
                 com.hbm.util.Tuple.Pair<Item, Double> element) {
-            com.hbm.ntm.util.HbmTuple.Pair<Item, Double> previous =
+            com.hbm.util.Tuple.Pair<Item, Double> previous = get(index);
+            if (element == null || element.getKey() == null || element.getValue() == null) {
+                return previous;
+            }
+            com.hbm.ntm.util.HbmTuple.Pair<Item, Double> replaced =
                     com.hbm.ntm.radiation.HazmatRegistry.external.set(index, element);
-            return new com.hbm.util.Tuple.Pair<>(previous.getKey(), previous.getValue());
+            return new com.hbm.util.Tuple.Pair<>(replaced.getKey(), replaced.getValue());
         }
 
         @Override
@@ -358,27 +459,55 @@ public final class HazmatRegistry {
 
         @Override
         public boolean contains(Object object) {
-            return com.hbm.ntm.radiation.HazmatRegistry.external.contains(object);
+            return indexOf(object) >= 0;
         }
 
         @Override
         public int indexOf(Object object) {
-            return com.hbm.ntm.radiation.HazmatRegistry.external.indexOf(object);
+            if (!(object instanceof com.hbm.ntm.util.HbmTuple.Pair<?, ?> pair)) {
+                return -1;
+            }
+            for (int index = 0; index < size(); index++) {
+                if (matches(get(index), pair)) {
+                    return index;
+                }
+            }
+            return -1;
         }
 
         @Override
         public int lastIndexOf(Object object) {
-            return com.hbm.ntm.radiation.HazmatRegistry.external.lastIndexOf(object);
+            if (!(object instanceof com.hbm.ntm.util.HbmTuple.Pair<?, ?> pair)) {
+                return -1;
+            }
+            for (int index = size() - 1; index >= 0; index--) {
+                if (matches(get(index), pair)) {
+                    return index;
+                }
+            }
+            return -1;
         }
 
         @Override
         public boolean remove(Object object) {
-            return com.hbm.ntm.radiation.HazmatRegistry.external.remove(object);
+            int index = indexOf(object);
+            if (index < 0) {
+                return false;
+            }
+            remove(index);
+            return true;
         }
 
         @Override
         public void clear() {
             com.hbm.ntm.radiation.HazmatRegistry.external.clear();
+        }
+
+        private boolean matches(com.hbm.util.Tuple.Pair<Item, Double> entry,
+                com.hbm.ntm.util.HbmTuple.Pair<?, ?> candidate) {
+            return entry.getKey() == candidate.getKey()
+                    && candidate.getValue() instanceof Number resistance
+                    && Double.compare(entry.getValue(), resistance.doubleValue()) == 0;
         }
     }
 

@@ -1,0 +1,7 @@
+{
+    "replace":  false,
+    "values":  [
+                   "hbm_ntm_rebirth:plate_cast_tcalloy",
+                   "hbm_ntm_rebirth:plate_cast_cdalloy"
+               ]
+}

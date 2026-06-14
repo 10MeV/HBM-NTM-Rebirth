@@ -7,7 +7,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticEndpoint;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticItemAccess;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNetwork;
@@ -18,7 +18,6 @@ import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -120,8 +119,7 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
             compair().drain(AIR_COST_PER_SEND, false);
             setChanged();
             if (soundDelay <= 0) {
-                level.playSound(null, worldPosition, ModSounds.WEAPON_RELOAD_TUBE_FWOOMP.get(), SoundSource.BLOCKS,
-                        0.25F, 0.9F + level.random.nextFloat() * 0.2F);
+                LegacySoundPlayer.playLegacyTubeFwoomp(level, worldPosition, 0.25F, 0.9F, 0.2F);
                 soundDelay = 20;
             }
         }

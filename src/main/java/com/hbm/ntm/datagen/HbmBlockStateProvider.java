@@ -7,6 +7,7 @@ import com.hbm.ntm.block.FluidDuctPaintableBlock;
 import com.hbm.ntm.block.FluidPipeAnchorBlock;
 import com.hbm.ntm.block.FluidValveBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.HbmEnergyNodeBlock;
 import com.hbm.ntm.block.LegacyChargeBlock;
 import com.hbm.ntm.block.LegacyChainBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
@@ -17,6 +18,7 @@ import com.hbm.ntm.block.LegacyNtmGlassPaneBlock;
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
 import com.hbm.ntm.block.PoweredRedCableBlock;
 import com.hbm.ntm.block.RBMKColumnBlock;
+import com.hbm.ntm.block.RedCableBoxBlock;
 import com.hbm.ntm.block.RedCableGaugeBlock;
 import com.hbm.ntm.block.SteelScaffoldBlock;
 import com.hbm.ntm.block.VendingMachineBlock;
@@ -84,7 +86,18 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "armor_table_side",
                 "armor_table_side",
                 "armor_table_side");
+        simpleSidedCubeWithItem(ModBlocks.MACHINE_WEAPON_TABLE,
+                "gun_table_bottom",
+                "gun_table_top",
+                "gun_table_side",
+                "gun_table_side",
+                "gun_table_side",
+                "gun_table_side");
         redCableWithItem();
+        redCableClassicWithItem();
+        simpleBlockWithItem(ModBlocks.RED_WIRE_COATED.get(), models().cubeAll("red_wire_coated",
+                new ResourceLocation(HbmNtm.MOD_ID, "block/red_wire_coated")));
+        redCableBoxWithItem();
         redCableGaugeWithItem();
         poweredRedCableWithItem(ModBlocks.CABLE_SWITCH, "cable_switch_off", "cable_switch_on");
         poweredRedCableWithItem(ModBlocks.CABLE_DETECTOR, "cable_detector_off", "cable_detector_on");
@@ -147,14 +160,23 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.SAT_DOCK, "utility/sat_dock");
         soyuzCapsuleWithItem();
         visibleMachineWithItemRenderer(ModBlocks.SOYUZ_LAUNCHER, "launch_table/soyuz_launcher_table");
+        simpleCubeWithItem(ModBlocks.STRUCT_LAUNCHER, "struct_launcher");
+        simpleCubeWithItem(ModBlocks.STRUCT_SCAFFOLD, "struct_scaffold");
+        simpleCubeWithItem(ModBlocks.STRUCT_SOYUZ_CORE, "struct_soyuz_core");
         existingModelWithItem(ModBlocks.LAUNCH_PAD, "launch_pad");
+        existingModelWithCustomItem(ModBlocks.LAUNCH_PAD_RUSTED, "launch_pad");
+        existingModelWithCustomItem(ModBlocks.LAUNCH_TABLE, "launch_table/launch_table_base");
+        existingModelWithCustomItem(ModBlocks.COMPACT_LAUNCHER, "launch_table/compact_launcher");
+        existingModelWithCustomItem(ModBlocks.MACHINE_MISSILE_ASSEMBLY, "machine_missile_assembly");
         existingModelWithItem(ModBlocks.RBMK_DISPLAY_BLANK, "rbmk_panel_base");
+        existingModelWithItem(ModBlocks.RBMK_DISPLAY, "rbmk_panel_base");
         existingModelWithItem(ModBlocks.RBMK_GAUGE, "rbmk_panel_base");
         existingModelWithItem(ModBlocks.RBMK_GRAPH, "rbmk_panel_base");
         existingModelWithItem(ModBlocks.RBMK_INDICATOR, "rbmk_panel_base");
         existingModelWithItem(ModBlocks.RBMK_KEY_PAD, "rbmk_panel_base");
         existingModelWithItem(ModBlocks.RBMK_LEVER, "rbmk_panel_base");
         existingModelWithItem(ModBlocks.RBMK_NUMITRON, "rbmk_panel_base");
+        existingModelWithItem(ModBlocks.RBMK_TERMINAL, "rbmk_panel_base");
         rbmkColumnWithItem(ModBlocks.RBMK_BLANK, "rbmk_blank");
         rbmkColumnWithItem(ModBlocks.RBMK_MODERATOR, "rbmk_moderator");
         rbmkColumnWithItem(ModBlocks.RBMK_REFLECTOR, "rbmk_reflector");
@@ -168,6 +190,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         rbmkColumnWithItem(ModBlocks.RBMK_COOLER, "rbmk_cooler");
         rbmkColumnWithItem(ModBlocks.RBMK_OUTGASSER, "rbmk_outgasser");
         rbmkColumnWithItem(ModBlocks.RBMK_STORAGE, "rbmk_storage");
+        simpleCubeWithItem(ModBlocks.RBMK_AUTOLOADER, "rbmk_autoloader");
+        existingModelWithItem(ModBlocks.RBMK_CRANE_CONSOLE, "rbmk_crane_console");
         rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL, "rbmk_control");
         rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL_MOD, "rbmk_control_mod");
         rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL_AUTO, "rbmk_control_auto");
@@ -318,6 +342,9 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.ASH_DIGAMMA, "ash_digamma");
         crossBlockOnly(ModBlocks.FIRE_DIGAMMA, "fire_digamma");
         crossBlockOnly(ModBlocks.BALEFIRE, "balefire");
+        simpleCubeWithItem(ModBlocks.PRIBRIS, "rbmk/rbmk_debris");
+        simpleCubeWithItem(ModBlocks.PRIBRIS_BURNING, "rbmk/rbmk_debris_burning");
+        simpleCubeAllStatesWithItem(ModBlocks.PRIBRIS_RADIATING, "rbmk/rbmk_debris_radiating");
         simpleCubeWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk_debris_digamma");
         simpleCubeWithItem(ModBlocks.VOLCANIC_LAVA_BLOCK, "volcanic_lava_still");
         simpleCubeWithItem(ModBlocks.RAD_LAVA_BLOCK, "rad_lava_still");
@@ -720,6 +747,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(block.get(), model);
     }
 
+    private void simpleCubeAllStatesWithItem(RegistryObject<Block> block, String textureName) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
+        getVariantBuilder(block.get()).forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
+        simpleBlockItem(block.get(), model);
+    }
+
     private void simpleCubeWithItem(String legacyName, String textureName) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(legacyName);
         if (block == null) {
@@ -872,6 +906,43 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
     }
 
+    private void redCableClassicWithItem() {
+        ModelFile core = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID,
+                "block/red_cable_classic_core"));
+        ModelFile north = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID,
+                "block/red_cable_classic_north"));
+        ModelFile east = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID,
+                "block/red_cable_classic_east"));
+        ModelFile south = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID,
+                "block/red_cable_classic_south"));
+        ModelFile west = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID,
+                "block/red_cable_classic_west"));
+        ModelFile up = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID,
+                "block/red_cable_classic_up"));
+        ModelFile down = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID,
+                "block/red_cable_classic_down"));
+        var builder = getMultipartBuilder(ModBlocks.RED_CABLE_CLASSIC.get());
+        builder.part().modelFile(core).addModel().end();
+        builder.part().modelFile(north).addModel().condition(HbmEnergyNodeBlock.NORTH, true).end();
+        builder.part().modelFile(east).addModel().condition(HbmEnergyNodeBlock.EAST, true).end();
+        builder.part().modelFile(south).addModel().condition(HbmEnergyNodeBlock.SOUTH, true).end();
+        builder.part().modelFile(west).addModel().condition(HbmEnergyNodeBlock.WEST, true).end();
+        builder.part().modelFile(up).addModel().condition(HbmEnergyNodeBlock.UP, true).end();
+        builder.part().modelFile(down).addModel().condition(HbmEnergyNodeBlock.DOWN, true).end();
+        simpleBlockItem(ModBlocks.RED_CABLE_CLASSIC.get(), core);
+    }
+
+    private void redCableBoxWithItem() {
+        ModelFile model = models().cubeAll("red_cable_box",
+                new ResourceLocation(HbmNtm.MOD_ID, "block/boxduct_cable_straight"));
+        getVariantBuilder(ModBlocks.RED_CABLE_BOX.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .build());
+        itemModels().getBuilder(ModBlocks.RED_CABLE_BOX.getId().getPath())
+                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/red_cable_box")));
+    }
+
     private void redCableGaugeWithItem() {
         ModelFile[] models = new ModelFile[Direction.values().length];
         for (Direction direction : Direction.values()) {
@@ -931,11 +1002,12 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     private void fluidPipeWithItem() {
         ModelFile marker = models().getBuilder(ModBlocks.FLUID_DUCT_NEO.getId().getPath())
                 .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/pipe_neo"));
-        simpleBlock(ModBlocks.FLUID_DUCT_NEO.get(), marker);
-        itemModels().getBuilder(ModBlocks.FLUID_DUCT_NEO.getId().getPath())
-                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
-                .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "item/duct"))
-                .texture("layer1", new ResourceLocation(HbmNtm.MOD_ID, "item/duct_overlay"));
+        getMultipartBuilder(ModBlocks.FLUID_DUCT_NEO.get())
+                .part()
+                .modelFile(marker)
+                .addModel()
+                .end();
+        customBlockItem(ModBlocks.FLUID_DUCT_NEO);
     }
 
     private void fluidValveWithItem(RegistryObject<Block> block, String offTexture, String onTexture) {
@@ -963,16 +1035,17 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     private void fluidDuctBoxWithItem(RegistryObject<Block> block, String texturePrefix) {
         String blockName = block.getId().getPath();
         ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + texturePrefix));
-        simpleBlock(block.get(), model);
+        getMultipartBuilder(block.get())
+                .part()
+                .modelFile(model)
+                .addModel()
+                .end();
         if (block == ModBlocks.FLUID_DUCT_PAINTABLE_BLOCK_EXHAUST) {
             itemModels().getBuilder(blockName)
                     .parent(new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID,
                             "block/fluid_duct_paintable_block_exhaust_overlay")));
         } else {
-            itemModels().getBuilder(blockName)
-                    .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
-                    .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "item/duct"))
-                    .texture("layer1", new ResourceLocation(HbmNtm.MOD_ID, "item/duct_overlay"));
+            customBlockItem(block);
         }
     }
 
@@ -981,10 +1054,14 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         for (Direction direction : Direction.values()) {
             models[direction.ordinal()] = fluidDuctGaugeModel("fluid_duct_gauge_" + direction.getName(), direction);
         }
-        getVariantBuilder(ModBlocks.FLUID_DUCT_GAUGE.get())
-                .forAllStates(state -> ConfiguredModel.builder()
-                        .modelFile(models[state.getValue(FluidDuctGaugeBlock.FACING).ordinal()])
-                        .build());
+        var builder = getMultipartBuilder(ModBlocks.FLUID_DUCT_GAUGE.get());
+        for (Direction direction : Direction.values()) {
+            builder.part()
+                    .modelFile(models[direction.ordinal()])
+                    .addModel()
+                    .condition(FluidDuctGaugeBlock.FACING, direction)
+                    .end();
+        }
         itemModels().getBuilder(ModBlocks.FLUID_DUCT_GAUGE.getId().getPath())
                 .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
                 .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "item/duct"))

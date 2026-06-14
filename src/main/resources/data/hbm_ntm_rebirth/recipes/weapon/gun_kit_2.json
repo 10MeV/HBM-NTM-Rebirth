@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:gun_kit_1" },
+    { "item": "hbm_ntm_rebirth:wrench" },
+    { "item": "hbm_ntm_rebirth:ducttape" },
+    {
+      "type": "hbm_ntm_rebirth:fluid_container",
+      "fluid": "hbm_ntm_rebirth:lubricant",
+      "amount": 1000
+    }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:gun_kit_2" }
+}

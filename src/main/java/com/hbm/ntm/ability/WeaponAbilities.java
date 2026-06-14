@@ -8,10 +8,9 @@ import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ExperienceOrb;
@@ -144,8 +143,8 @@ public final class WeaponAbilities {
             }
 
             ParticleUtil.spawnGiblets(living, ParticleUtil.GIBLET_MEAT);
-            serverLevel.playSound(null, living.getX(), living.getY() + living.getBbHeight() * 0.5D, living.getZ(),
-                    ModSounds.WEAPON_CHAINSAW.get(), SoundSource.PLAYERS, 0.5F, 1.0F);
+            LegacySoundPlayer.playLegacyChainsaw(serverLevel,
+                    living.getX(), living.getY() + living.getBbHeight() * 0.5D, living.getZ());
         }
     };
 
@@ -156,14 +155,14 @@ public final class WeaponAbilities {
                 return;
             }
 
-            if (living instanceof Skeleton) {
-                drop(living, new ItemStack(Items.SKELETON_SKULL));
-            } else if (living instanceof WitherSkeleton) {
+            if (living instanceof WitherSkeleton) {
                 if (living.level().random.nextInt(20) == 0) {
                     drop(living, new ItemStack(Items.WITHER_SKELETON_SKULL));
                 } else {
                     drop(living, new ItemStack(Items.COAL, 3));
                 }
+            } else if (living instanceof Skeleton) {
+                drop(living, new ItemStack(Items.SKELETON_SKULL));
             } else if (living instanceof Zombie) {
                 drop(living, new ItemStack(Items.ZOMBIE_HEAD));
             } else if (living instanceof Creeper) {

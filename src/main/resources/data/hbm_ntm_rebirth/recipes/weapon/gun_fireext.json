@@ -1,0 +1,22 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    "HB",
+                    " T"
+                ],
+    "key":  {
+                "T":  {
+                          "item":  "hbm_ntm_rebirth:tank_steel"
+                      },
+                "B":  {
+                          "tag":  "forge:bolts/steel"
+                      },
+                "H":  {
+                          "tag":  "forge:pipes/steel"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_fireext"
+               }
+}

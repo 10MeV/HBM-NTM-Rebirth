@@ -1,8 +1,8 @@
 package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.config.RadiationConfig;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlocks;
-import com.hbm.ntm.registry.ModParticleTypes;
 import com.hbm.ntm.world.saveddata.WorldSavedDataHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -76,7 +76,7 @@ public final class ChunkRadiationManager {
     }
 
     public static void spawnDebugRadiationFog(ServerLevel level, BlockPos pos) {
-        level.sendParticles(ModParticleTypes.RADIATION_FOG.get(), pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        ParticleUtil.spawnRadiationFog(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
     }
 
     public static void tick(ServerLevel level) {
@@ -162,7 +162,7 @@ public final class ChunkRadiationManager {
     private static void spawnRadiationFog(ServerLevel level, ChunkPos chunkPos) {
         int x = chunkPos.getMinBlockX() + level.random.nextInt(16);
         int z = chunkPos.getMinBlockZ() + level.random.nextInt(16);
-        level.sendParticles(ModParticleTypes.RADIATION_FOG.get(), x, LegacyRadiationWorldUtil.legacyHeightValue(level, x, z) + level.random.nextInt(5), z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        ParticleUtil.spawnRadiationFog(level, x, LegacyRadiationWorldUtil.legacyHeightValue(level, x, z) + level.random.nextInt(5), z);
     }
 
     private static BlockPos legacyWorldEffectSurface(ServerLevel level, int x, int z) {

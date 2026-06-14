@@ -1,0 +1,29 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    "BMG",
+                    "BRE",
+                    "BGM"
+                ],
+    "key":  {
+                "G":  {
+                          "tag":  "forge:grips/any_plastic"
+                      },
+                "E":  {
+                          "item":  "hbm_ntm_rebirth:motor_desh"
+                      },
+                "R":  {
+                          "tag":  "forge:heavy_receivers/any_resistant_alloy"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/weapon_steel"
+                      },
+                "B":  {
+                          "tag":  "forge:light_barrels/any_resistant_alloy"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_minigun"
+               }
+}

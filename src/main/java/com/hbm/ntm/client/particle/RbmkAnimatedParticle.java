@@ -1,23 +1,14 @@
 package com.hbm.ntm.client.particle;
 
-import com.hbm.ntm.client.renderer.HbmClientRenderUtil;
-
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -27,35 +18,10 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
-public class RbmkAnimatedParticle extends TextureSheetParticle {
+public class RbmkAnimatedParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
     private static SpriteSet flameSprites;
     private static SpriteSet steamSprites;
     private static SpriteSet mushSprites;
-    private static final ParticleRenderType ADDITIVE_RENDER_TYPE = new ParticleRenderType() {
-        @Override
-        public void begin(BufferBuilder builder, TextureManager textureManager) {
-            RenderSystem.depthMask(false);
-            RenderSystem.setShader(GameRenderer::getParticleShader);
-            HbmClientRenderUtil.bindParticleAtlas();
-            RenderSystem.enableBlend();
-            RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
-            RenderSystem.disableCull();
-            builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
-        }
-
-        @Override
-        public void end(Tesselator tesselator) {
-            tesselator.end();
-            RenderSystem.enableCull();
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.depthMask(true);
-        }
-
-        @Override
-        public String toString() {
-            return "HBM_RBMK_ANIMATED";
-        }
-    };
 
     private final SpriteSet sprites;
     private final Mode mode;
@@ -108,6 +74,11 @@ public class RbmkAnimatedParticle extends TextureSheetParticle {
 
     @Override
     public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.enqueue(this, camera, this.x, this.y, this.z);
+    }
+
+    @Override
+    public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
         float renderAge = Math.min(this.age + partialTick, this.lifetime);
         float alpha = switch (mode) {
             case FLAME -> flameAlpha(renderAge) * 0.5F;
@@ -117,6 +88,7 @@ public class RbmkAnimatedParticle extends TextureSheetParticle {
         if (alpha <= 0.0F) {
             return;
         }
+        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetAdditiveNoDepthWrite());
         Vec3 cameraPos = camera.getPosition();
         float x = (float) (Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x());
         float y = (float) (Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y());
@@ -175,7 +147,7 @@ public class RbmkAnimatedParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return ADDITIVE_RENDER_TYPE;
+        return HbmDeferredParticleRenderer.DEFERRED_RENDER_TYPE;
     }
 
     private enum Mode {

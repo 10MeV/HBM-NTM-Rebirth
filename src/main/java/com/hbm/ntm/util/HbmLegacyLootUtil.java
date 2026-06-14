@@ -45,9 +45,11 @@ public final class HbmLegacyLootUtil {
             LOOT_SHIT);
 
     private static final Map<String, String> ITEM_POOL_LOOT_NAMES = Map.ofEntries(
+            entry(LOOT_MEDICINE, HbmItemPoolIds.POOL_PILE_MED_PILLS),
             entry(LOOT_BONES, HbmItemPoolIds.POOL_PILE_BONES),
             entry(LOOT_GLYPHID_HIVE, HbmItemPoolIds.POOL_PILE_HIVE),
             entry(LOOT_CAPSTASH, HbmItemPoolIds.POOL_PILE_CAPS),
+            entry(LOOT_MAKESHIFT_GUN, HbmItemPoolIds.POOL_PILE_MAKESHIFT_GUN),
             entry(LOOT_SHIT, HbmItemPoolIds.POOL_PILE_OF_GARBAGE),
             entry(LOOT_MECHANICAL, HbmItemPoolIds.POOL_PILE_MECHANICAL),
             entry(LOOT_GEAR, HbmItemPoolIds.POOL_PILE_MECHANICAL)
@@ -83,8 +85,14 @@ public final class HbmLegacyLootUtil {
 
         RandomSource roll = random == null ? RandomSource.create() : random;
         Vec3 lootOrigin = origin == null ? Vec3.ZERO : origin;
+        if (LOOT_MEDICINE.equals(lootName)) {
+            return rollMedicine(level, lootOrigin, roll);
+        }
         if (LOOT_CAPSTASH.equals(lootName)) {
             return rollCapStash(level, poolId.get(), lootOrigin, roll);
+        }
+        if (LOOT_MAKESHIFT_GUN.equals(lootName)) {
+            return rollMakeshiftGun(level, lootOrigin, roll);
         }
 
         int limit = mappedRollCount(lootName, roll);
@@ -94,6 +102,22 @@ public final class HbmLegacyLootUtil {
             if (!stack.isEmpty()) {
                 stacks.add(withDeviation(stack, roll.nextDouble() - 0.5D, i * 0.03125D, roll.nextDouble() - 0.5D, roll));
             }
+        }
+        return List.copyOf(stacks);
+    }
+
+    private static List<PlacedLootStack> rollMedicine(ServerLevel level, Vec3 origin, RandomSource random) {
+        List<PlacedLootStack> stacks = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            ItemStack stack = HbmItemPoolRegistry.getStack(level, HbmItemPoolIds.POOL_PILE_MED_SYRINGE, origin);
+            if (!stack.isEmpty()) {
+                stacks.add(withDeviation(stack, 0.125D, i * 0.03125D, 0.25D, random));
+            }
+        }
+
+        ItemStack pill = HbmItemPoolRegistry.getStack(level, HbmItemPoolIds.POOL_PILE_MED_PILLS, origin);
+        if (!pill.isEmpty()) {
+            stacks.add(withDeviation(pill, -0.25D, 0.0D, -0.125D, random));
         }
         return List.copyOf(stacks);
     }
@@ -112,6 +136,40 @@ public final class HbmLegacyLootUtil {
             }
         }
         return List.copyOf(stacks);
+    }
+
+    private static List<PlacedLootStack> rollMakeshiftGun(ServerLevel level, Vec3 origin, RandomSource random) {
+        List<PlacedLootStack> stacks = new ArrayList<>();
+        boolean hasGun = random.nextBoolean();
+        if (hasGun) {
+            addPoolStack(stacks, level, HbmItemPoolIds.POOL_PILE_MAKESHIFT_GUN, origin,
+                    0.125D, 0.025D, 0.25D, random);
+        }
+        if (!hasGun || random.nextBoolean()) {
+            addPoolStack(stacks, level, HbmItemPoolIds.POOL_PILE_MAKESHIFT_WRENCH, origin,
+                    -0.25D, 0.0D, -0.28125D, random);
+        }
+
+        int count = random.nextInt(2) + 1;
+        for (int i = 0; i < count; i++) {
+            addPoolStack(stacks, level, HbmItemPoolIds.POOL_PILE_MAKESHIFT_PLATES, origin,
+                    -0.25D, i * 0.03125D, 0.3125D, random);
+        }
+
+        count = random.nextInt(2) + 2;
+        for (int i = 0; i < count; i++) {
+            addPoolStack(stacks, level, HbmItemPoolIds.POOL_PILE_MAKESHIFT_WIRE, origin,
+                    0.25D, i * 0.03125D, 0.1875D, random);
+        }
+        return List.copyOf(stacks);
+    }
+
+    private static void addPoolStack(List<PlacedLootStack> stacks, ServerLevel level, String poolId, Vec3 origin,
+                                     double x, double y, double z, RandomSource random) {
+        ItemStack stack = HbmItemPoolRegistry.getStack(level, poolId, origin);
+        if (!stack.isEmpty()) {
+            stacks.add(withDeviation(stack, x, y, z, random));
+        }
     }
 
     private static int mappedRollCount(String lootName, RandomSource random) {

@@ -258,7 +258,9 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
 
     public JsonObject toJson() {
         JsonObject entry = new JsonObject();
-        entry.add("ingredient", ingredient.toJson());
+        entry.add("ingredient", fluidContainerType == null
+                ? ingredient.toJson()
+                : HbmFluidContainerIngredient.of(fluidContainerType, fluidContainerAmount).toJson());
         entry.addProperty("count", count);
         if (hasExactStack() && exactStack.hasTag() && !exactStack.getTag().isEmpty()) {
             entry.add("exact_stack", itemStackJson(exactStack));

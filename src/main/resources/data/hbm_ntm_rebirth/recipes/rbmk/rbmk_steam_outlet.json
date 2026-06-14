@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SCS",
+    "CBC",
+    "SCS"
+  ],
+  "key": {
+    "S": {
+      "item": "hbm_ntm_rebirth:ingot_steel"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:plate_copper"
+    },
+    "B": {
+      "item": "hbm_ntm_rebirth:tank_steel"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_steam_outlet"
+  }
+}

@@ -2,7 +2,7 @@ package com.hbm.ntm.client.particle;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -201,8 +201,11 @@ public class SpentCasingParticle extends Particle {
         if (this.definition.bounceSound() == null) {
             return;
         }
-        SoundEvent sound = this.definition.bounceSound().get();
-        float volume = sound == ModSounds.WEAPON_CASING_LARGE.get() ? 1.0F : 0.5F;
+        SoundEvent sound = LegacySoundPlayer.resolveEvent(this.definition.bounceSound());
+        if (sound == null) {
+            return;
+        }
+        float volume = this.definition.largeBounceSound() ? 1.0F : 0.5F;
         float pitch = 1.0F + this.random.nextFloat() * 0.2F;
         this.level.playLocalSound(this.x, this.y, this.z, sound, SoundSource.BLOCKS, volume, pitch, false);
     }

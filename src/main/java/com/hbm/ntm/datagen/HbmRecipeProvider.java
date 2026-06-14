@@ -136,6 +136,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         legacySandMixRecipes(consumer);
         legacyToolRecipes(consumer);
         legacyPartRecipes(consumer);
+        missileSystemRecipes(consumer);
         legacyStructuralRecipes(consumer);
         legacyUpgradeRecipes(consumer);
         legacyWeaponPartRecipes(consumer);
@@ -149,6 +150,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
         legacyArtilleryAmmoRecipes(consumer);
         legacyCustomMissilePartRecipes(consumer);
         legacyAmmunitionRecipes(consumer);
+        legacyWeaponTableRecipes(consumer);
+        legacyWeaponModRecipes(consumer);
+        legacySednaGunRecipes(consumer);
         legacyTurretRecipes(consumer);
 
         chemicalPlantSourceRecipes(consumer);
@@ -158,6 +162,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         satelliteRecipes(consumer);
         fluidContainerRecipes(consumer);
         fluidNetworkRecipes(consumer);
+        outgasserRecipes(consumer);
         liquefactionRecipes(consumer);
         pyroOvenRecipes(consumer);
         pressRecipes(consumer);
@@ -243,6 +248,14 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_concrete_asbestos", has(block("concrete_asbestos")))
                 .save(consumer, id("redstone_over_radio/rbmk_display_blank"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_DISPLAY.get())
+                .pattern("C")
+                .pattern("B")
+                .define('C', item("crt_display"))
+                .define('B', ModBlocks.RBMK_DISPLAY_BLANK.get())
+                .unlockedBy("has_rbmk_display_blank", has(ModBlocks.RBMK_DISPLAY_BLANK.get()))
+                .save(consumer, id("redstone_over_radio/rbmk_display"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_KEY_PAD.get())
                 .pattern("R")
                 .pattern("C")
@@ -302,6 +315,17 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('B', ModBlocks.RBMK_DISPLAY_BLANK.get())
                 .unlockedBy("has_rbmk_display_blank", has(ModBlocks.RBMK_DISPLAY_BLANK.get()))
                 .save(consumer, id("redstone_over_radio/rbmk_indicator"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_TERMINAL.get())
+                .pattern("R ")
+                .pattern("CD")
+                .pattern("B ")
+                .define('R', ModBlocks.RADIO_TORCH_SENDER.get())
+                .define('C', forgeTag("circuits/analog"))
+                .define('D', item("crt_display"))
+                .define('B', ModBlocks.RBMK_DISPLAY_BLANK.get())
+                .unlockedBy("has_rbmk_display_blank", has(ModBlocks.RBMK_DISPLAY_BLANK.get()))
+                .save(consumer, id("redstone_over_radio/rbmk_terminal"));
     }
 
     private static void rbmkRecipes(Consumer<FinishedRecipe> consumer) {
@@ -488,6 +512,15 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_rbmk_blank", has(ModBlocks.RBMK_BLANK.get()))
                 .save(consumer, id("rbmk/rbmk_cooler"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_CRANE_CONSOLE.get())
+                .pattern("BCD")
+                .pattern("DDD")
+                .define('B', forgeTag("ingots/boron"))
+                .define('C', forgeTag("circuits/analog"))
+                .define('D', block("deco_rbmk"))
+                .unlockedBy("has_deco_rbmk", has(block("deco_rbmk")))
+                .save(consumer, id("rbmk/rbmk_crane_console"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_CONTROL.get())
                 .pattern(" B ")
                 .pattern("GRG")
@@ -632,6 +665,65 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .requires(billetItem, 8)
                 .unlockedBy("has_empty_rbmk_fuel_rod", has(emptyRod))
                 .save(consumer, id("rbmk/" + result));
+    }
+
+    private static void outgasserRecipes(Consumer<FinishedRecipe> consumer) {
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("blockLithium", 1))
+                .outputFluid(HbmFluids.TRITIUM, 10_000)
+                .save(consumer, id("outgasser/tritium_from_lithium_block"));
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("ingotLithium", 1))
+                .outputFluid(HbmFluids.TRITIUM, 1_000)
+                .save(consumer, id("outgasser/tritium_from_lithium_ingot"));
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("dustLithium", 1))
+                .outputFluid(HbmFluids.TRITIUM, 1_000)
+                .save(consumer, id("outgasser/tritium_from_lithium_dust"));
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("dustTinyLithium", 1))
+                .outputFluid(HbmFluids.TRITIUM, 100)
+                .save(consumer, id("outgasser/tritium_from_lithium_tiny_dust"));
+
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("ingotGold", 1))
+                .outputItem(item("ingot_au198"))
+                .save(consumer, id("outgasser/au198_ingot_from_gold_ingot"));
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("nuggetGold", 1))
+                .outputItem(item("nugget_au198"))
+                .save(consumer, id("outgasser/au198_nugget_from_gold_nugget"));
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("dustGold", 1))
+                .outputItem(item("powder_au198"))
+                .save(consumer, id("outgasser/au198_powder_from_gold_dust"));
+
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("ingotTh232", 1))
+                .outputItem(item("ingot_thorium_fuel"))
+                .save(consumer, id("outgasser/thorium_fuel_ingot_from_th232_ingot"));
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("nuggetTh232", 1))
+                .outputItem(item("nugget_thorium_fuel"))
+                .save(consumer, id("outgasser/thorium_fuel_nugget_from_th232_nugget"));
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("billetTh232", 1))
+                .outputItem(item("billet_thorium_fuel"))
+                .save(consumer, id("outgasser/thorium_fuel_billet_from_th232_billet"));
+
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("gemCoal", 1))
+                .outputItem(item("oil_tar_coal"))
+                .outputFluid(HbmFluids.SYNGAS, 50)
+                .save(consumer, id("outgasser/coal_tar_from_coal"));
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("dustCoal", 1))
+                .outputItem(item("oil_tar_coal"))
+                .outputFluid(HbmFluids.SYNGAS, 50)
+                .save(consumer, id("outgasser/coal_tar_from_coal_dust"));
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("blockCoal", 1))
+                .outputItem(new ItemStack(item("oil_tar_coal"), 9))
+                .outputFluid(HbmFluids.SYNGAS, 500)
+                .save(consumer, id("outgasser/coal_tar_from_coal_block"));
+
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("ingotPvc", 1))
+                .outputItem(item("ingot_c4"))
+                .outputFluid(HbmFluids.COLLOID, 250)
+                .save(consumer, id("outgasser/c4_from_pvc"));
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("coaltar", 1))
+                .outputFluid(HbmFluids.COALOIL, 100)
+                .save(consumer, id("outgasser/coaloil_from_coal_tar"));
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.of(item("oil_tar_wax"), 1))
+                .outputFluid(HbmFluids.RADIOSOLVENT, 100)
+                .save(consumer, id("outgasser/radiosolvent_from_wax_tar"));
     }
 
     private static void legacyToolRecipes(Consumer<FinishedRecipe> consumer) {
@@ -994,6 +1086,13 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('F', forgeTag("plates/iron"))
                 .unlockedBy("has_any_rubber", has(forgeTag("ingots/any_rubber")))
                 .save(consumer, id("armor/gas_mask_mono"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.MASK_OF_INFAMY.get())
+                .pattern("III")
+                .pattern("III")
+                .pattern(" I ")
+                .define('I', forgeTag("plates/iron"))
+                .unlockedBy("has_iron_plate", has(forgeTag("plates/iron")))
+                .save(consumer, id("armor/mask_of_infamy"));
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.MASK_RAG.get())
                 .pattern("RRR")
                 .define('R', item("rag_damp"))
@@ -2249,6 +2348,14 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('I', forgeTag("ingots/titanium"))
                 .unlockedBy("has_titanium_plate", has(forgeTag("plates/titanium")))
                 .save(consumer, id("parts/fins_quad_titanium"));
+    }
+
+    private static void missileSystemRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.LAUNCH_CODE.get())
+                .requires(ModItems.LAUNCH_CODE_PIECE.get(), 8)
+                .requires(item("circuit_advanced"))
+                .unlockedBy("has_launch_code_piece", has(ModItems.LAUNCH_CODE_PIECE.get()))
+                .save(consumer, id("parts/launch_code"));
     }
 
     private static void legacyStructuralRecipes(Consumer<FinishedRecipe> consumer) {
@@ -3958,6 +4065,60 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_sat_chip", has(ModItems.SAT_CHIP.get()))
                 .save(consumer, id("satellite/sat_relay"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.STRUCT_LAUNCHER.get(), 8)
+                .pattern("PPP")
+                .pattern("SDS")
+                .pattern("CCC")
+                .define('P', forgeTag("plates/steel"))
+                .define('S', block("steel_scaffold"))
+                .define('D', forgeTag("pipes/steel"))
+                .define('C', forgeTag("any/concrete"))
+                .unlockedBy("has_steel_scaffold", has(block("steel_scaffold")))
+                .save(consumer, id("satellite/struct_launcher"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.STRUCT_SCAFFOLD.get(), 8)
+                .pattern("SSS")
+                .pattern("DCD")
+                .pattern("SSS")
+                .define('S', block("steel_scaffold"))
+                .define('D', block("fluid_duct_neo"))
+                .define('C', block("red_cable"))
+                .unlockedBy("has_steel_scaffold", has(block("steel_scaffold")))
+                .save(consumer, id("satellite/struct_scaffold"));
+
+        GenericMachineRecipeBuilder.assembly("ass.soyuzcore", 1_200, 100)
+                .inputLegacyOre("plateSextupleSteel", 16)
+                .inputItem(item("upgrade_speed_3"), 1)
+                .inputItem(item("upgrade_power_3"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 13, 4)
+                .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2, 1)
+                .outputItem(ModBlocks.STRUCT_SOYUZ_CORE.get())
+                .pool(LegacyBlueprintPools.PREFIX_DISCOVER + "soyuz")
+                .save(consumer, id("assembly_machine/soyuz_core"));
+
+        GenericMachineRecipeBuilder.assembly("ass.soyuz", 6_000, 100)
+                .inputLegacyOre("shellTitanium", 32)
+                .inputLegacyOre("ingotRubber", 64)
+                .inputItem(item("rocket_fuel"), 64)
+                .inputItem(item("thruster_small"), 12)
+                .inputItem(item("thruster_medium"), 12)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 13, 4)
+                .inputLegacyMeta(LegacyMetaItemMappings.PART_GENERIC, 3, 32)
+                .outputItem(ModItems.MISSILE_SOYUZ.get())
+                .pool(LegacyBlueprintPools.PREFIX_DISCOVER + "soyuz")
+                .save(consumer, id("assembly_machine/soyuz"));
+
+        GenericMachineRecipeBuilder.assembly("ass.lander", 2_400, 100)
+                .inputLegacyOre("shellAluminum", 4)
+                .inputLegacyOre("ingotRubber", 16)
+                .inputItem(item("rocket_fuel"), 16)
+                .inputItem(item("thruster_small"), 3)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 14, 3)
+                .inputLegacyMeta(LegacyMetaItemMappings.PART_GENERIC, 3, 12)
+                .outputItem(ModItems.MISSILE_SOYUZ_LANDER.get())
+                .pool(LegacyBlueprintPools.PREFIX_DISCOVER + "soyuz")
+                .save(consumer, id("assembly_machine/soyuz_lander"));
+
         GenericMachineRecipeBuilder.assembly("ass.satellitebase", 600, 100)
                 .inputLegacyOre("ingotRubber", 12)
                 .inputLegacyOre("shellTitanium", 3)
@@ -4545,8 +4706,436 @@ public final class HbmRecipeProvider extends RecipeProvider {
         return LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BATTERY_SC, legacyMeta).get();
     }
 
+    private static ItemLike legacyCircuit(int legacyMeta) {
+        return LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CIRCUIT, legacyMeta).get();
+    }
+
     private static ItemLike legacyMetaItem(ResourceLocation legacyId, int legacyMeta) {
         return LegacyMetaItemMappings.requireItem(legacyId, legacyMeta).get();
+    }
+
+    private static void legacyWeaponTableRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModBlocks.MACHINE_WEAPON_TABLE.get())
+                .pattern("PPP")
+                .pattern("TCT")
+                .pattern("TST")
+                .define('P', forgeTag("plates/gun_metal"))
+                .define('T', forgeTag("ingots/steel"))
+                .define('C', Blocks.CRAFTING_TABLE)
+                .define('S', block("block_steel"))
+                .unlockedBy("has_gunmetal_plate", has(forgeTag("plates/gun_metal")))
+                .save(consumer, id("weapon/machine_weapon_table"));
+    }
+
+    private static void legacyWeaponModRecipes(Consumer<FinishedRecipe> consumer) {
+        weaponModGenericRecipe(consumer, "iron_damage", "ingots/gun_metal", "ingots/iron", true);
+        weaponModGenericRecipe(consumer, "iron_dura", "ingots/gun_metal", "ingots/iron", false);
+        weaponModGenericRecipe(consumer, "steel_damage", "gun_mechanisms/gun_metal", "cast_plates/steel", true);
+        weaponModGenericRecipe(consumer, "steel_dura", "plates/gun_metal", "cast_plates/steel", false);
+        weaponModGenericRecipe(consumer, "dura_damage", "gun_mechanisms/gun_metal", "cast_plates/dura_steel", true);
+        weaponModGenericRecipe(consumer, "dura_dura", "plates/gun_metal", "cast_plates/dura_steel", false);
+        weaponModGenericRecipe(consumer, "desh_damage", "gun_mechanisms/gun_metal", "cast_plates/desh", true);
+        weaponModGenericRecipe(consumer, "desh_dura", "plates/gun_metal", "cast_plates/desh", false);
+        weaponModGenericRecipe(consumer, "wsteel_damage", "gun_mechanisms/weapon_steel", "cast_plates/weapon_steel", true);
+        weaponModGenericRecipe(consumer, "wsteel_dura", "plates/weapon_steel", "cast_plates/weapon_steel", false);
+        weaponModGenericRecipe(consumer, "ferro_damage", "gun_mechanisms/weapon_steel", "cast_plates/ferrouranium", true);
+        weaponModGenericRecipe(consumer, "ferro_dura", "plates/weapon_steel", "cast_plates/ferrouranium", false);
+        weaponModGenericRecipe(consumer, "tcalloy_damage", "gun_mechanisms/weapon_steel", "cast_plates/any_resistant_alloy", true);
+        weaponModGenericRecipe(consumer, "tcalloy_dura", "plates/weapon_steel", "cast_plates/any_resistant_alloy", false);
+        weaponModGenericRecipe(consumer, "bigmt_damage", "gun_mechanisms/saturnite", "cast_plates/saturnite", true);
+        weaponModGenericRecipe(consumer, "bigmt_dura", "plates/saturnite", "cast_plates/saturnite", false);
+        weaponModGenericRecipe(consumer, "bronze_damage", "gun_mechanisms/saturnite", "cast_plates/any_bismoid_bronze", true);
+        weaponModGenericRecipe(consumer, "bronze_dura", "plates/saturnite", "cast_plates/any_bismoid_bronze", false);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_silencer"))
+                .pattern("P")
+                .pattern("B")
+                .pattern("P")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('B', forgeTag("light_barrels/steel"))
+                .unlockedBy("has_steel_barrel", has(forgeTag("light_barrels/steel")))
+                .save(consumer, id("weapon/weapon_mod_special_silencer"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_scope"))
+                .pattern("SPS")
+                .pattern("G G")
+                .pattern("SPS")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('S', forgeTag("plates/steel"))
+                .define('G', forgeTag("glass_panes"))
+                .unlockedBy("has_glass_pane", has(forgeTag("glass_panes")))
+                .save(consumer, id("weapon/weapon_mod_special_scope"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_saw"))
+                .pattern("BBS")
+                .pattern("BHS")
+                .define('B', forgeTag("bolts/steel"))
+                .define('S', forgeTag("rods/wooden"))
+                .define('H', forgeTag("plates/dura_steel"))
+                .unlockedBy("has_dura_plate", has(forgeTag("plates/dura_steel")))
+                .save(consumer, id("weapon/weapon_mod_special_saw"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_speedloader"))
+                .pattern(" B ")
+                .pattern("BSB")
+                .pattern(" B ")
+                .define('B', forgeTag("bolts/steel"))
+                .define('S', forgeTag("plates/weapon_steel"))
+                .unlockedBy("has_weaponsteel_plate", has(forgeTag("plates/weapon_steel")))
+                .save(consumer, id("weapon/weapon_mod_special_speedloader"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_slowdown"))
+                .pattern(" I ")
+                .pattern(" M ")
+                .pattern("I I")
+                .define('I', forgeTag("ingots/weapon_steel"))
+                .define('M', forgeTag("gun_mechanisms/weapon_steel"))
+                .unlockedBy("has_weaponsteel_mechanism", has(forgeTag("gun_mechanisms/weapon_steel")))
+                .save(consumer, id("weapon/weapon_mod_special_slowdown"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_speedup"))
+                .pattern("PIP")
+                .pattern("WWW")
+                .pattern("PIP")
+                .define('P', forgeTag("plates/weapon_steel"))
+                .define('I', forgeTag("ingots/gun_metal"))
+                .define('W', forgeTag("dense_wires/gold"))
+                .unlockedBy("has_gold_dense_wire", has(forgeTag("dense_wires/gold")))
+                .save(consumer, id("weapon/weapon_mod_special_speedup"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_greasegun"))
+                .pattern("BRM")
+                .pattern("P G")
+                .define('B', forgeTag("light_barrels/weapon_steel"))
+                .define('R', forgeTag("light_receivers/weapon_steel"))
+                .define('M', forgeTag("gun_mechanisms/weapon_steel"))
+                .define('P', forgeTag("plates/dura_steel"))
+                .define('G', forgeTag("grips/any_plastic"))
+                .unlockedBy("has_weaponsteel_mechanism", has(forgeTag("gun_mechanisms/weapon_steel")))
+                .save(consumer, id("weapon/weapon_mod_special_greasegun"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_choke"))
+                .pattern("P")
+                .pattern("B")
+                .pattern("P")
+                .define('P', forgeTag("plates/weapon_steel"))
+                .define('B', forgeTag("light_barrels/dura_steel"))
+                .unlockedBy("has_dura_barrel", has(forgeTag("light_barrels/dura_steel")))
+                .save(consumer, id("weapon/weapon_mod_special_choke"));
+        weaponModFurnitureRecipe(consumer, "furniture_green", "dyes/green");
+        weaponModFurnitureRecipe(consumer, "furniture_black", "dyes/black");
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_skin_saturnite"))
+                .pattern("BRM")
+                .pattern(" P ")
+                .define('B', forgeTag("light_barrels/saturnite"))
+                .define('R', forgeTag("light_receivers/saturnite"))
+                .define('M', forgeTag("gun_mechanisms/saturnite"))
+                .define('P', forgeTag("plates/saturnite"))
+                .unlockedBy("has_saturnite_mechanism", has(forgeTag("gun_mechanisms/saturnite")))
+                .save(consumer, id("weapon/weapon_mod_special_skin_saturnite"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_stack_mag"))
+                .pattern("P P")
+                .pattern("P P")
+                .pattern("PMP")
+                .define('P', forgeTag("plates/weapon_steel"))
+                .define('M', forgeTag("gun_mechanisms/saturnite"))
+                .unlockedBy("has_saturnite_mechanism", has(forgeTag("gun_mechanisms/saturnite")))
+                .save(consumer, id("weapon/weapon_mod_special_stack_mag"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_bayonet"))
+                .pattern("  P")
+                .pattern("BBB")
+                .define('P', forgeTag("plates/steel"))
+                .define('B', forgeTag("bolts/steel"))
+                .unlockedBy("has_steel_bolt", has(forgeTag("bolts/steel")))
+                .save(consumer, id("weapon/weapon_mod_special_bayonet"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_las_shotgun"))
+                .pattern("PPP")
+                .pattern("RCR")
+                .pattern("PPP")
+                .define('P', forgeTag("ingots/any_hardplastic"))
+                .define('R', item("crystal_redstone"))
+                .define('C', legacyCircuit(9))
+                .unlockedBy("has_advanced_circuit", has(legacyCircuit(9)))
+                .save(consumer, id("weapon/weapon_mod_special_las_shotgun"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_las_capacitor"))
+                .pattern("CCC")
+                .pattern("PIP")
+                .define('C', legacyCircuit(2))
+                .define('P', forgeTag("ingots/any_hardplastic"))
+                .define('I', legacyCircuit(6))
+                .unlockedBy("has_tantalium_capacitor", has(legacyCircuit(2)))
+                .save(consumer, id("weapon/weapon_mod_special_las_capacitor"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_las_auto"))
+                .pattern(" C ")
+                .pattern("RFR")
+                .pattern(" C ")
+                .define('C', legacyCircuit(6))
+                .define('R', item("crystal_redstone"))
+                .define('F', forgeTag("heavy_receivers/any_bismoid_bronze"))
+                .unlockedBy("has_bismoid_chip", has(legacyCircuit(6)))
+                .save(consumer, id("weapon/weapon_mod_special_las_auto"));
+        weaponModDrillRecipe(consumer, "drill_hss", "ingots/dura_steel", "ingots/any_plastic", "gun_mechanisms/gun_metal");
+        weaponModDrillRecipe(consumer, "drill_weaponsteel", "ingots/weapon_steel", "ingots/rubber", "gun_mechanisms/gun_metal");
+        weaponModDrillRecipe(consumer, "drill_tcalloy", "ingots/any_resistant_alloy", "ingots/rubber", "gun_mechanisms/weapon_steel");
+        weaponModDrillRecipe(consumer, "drill_saturnite", "ingots/saturnite", "ingots/any_hardplastic", "gun_mechanisms/weapon_steel");
+        weaponModEngineRecipe(consumer, "engine_diesel", "plates/dura_steel", item("piston_selenium"), forgeTag("pipes/steel"));
+        weaponModEngineRecipe(consumer, "engine_aviation", "cast_plates/dura_steel", item("piston_selenium"), forgeTag("gun_mechanisms/gun_metal"));
+        weaponModEngineRecipe(consumer, "engine_electric", "ingots/any_plastic", forgeTag("dense_wires/gold"), legacyBatteryPack(7));
+        weaponModEngineRecipe(consumer, "engine_turbo", "cast_plates/any_bismoid_bronze", item("piston_selenium"), forgeTag("gun_mechanisms/weapon_steel"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_magnet"))
+                .pattern("RGR")
+                .pattern("GBG")
+                .pattern("RGR")
+                .define('R', forgeTag("ingots/rubber"))
+                .define('G', forgeTag("dense_wires/gold"))
+                .define('B', forgeTag("storage_blocks/niobium"))
+                .unlockedBy("has_niobium_block", has(forgeTag("storage_blocks/niobium")))
+                .save(consumer, id("weapon/weapon_mod_special_magnet"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_sifter"))
+                .pattern("IGI")
+                .pattern("IGI")
+                .define('I', forgeTag("ingots/dura_steel"))
+                .define('G', block("steel_grate"))
+                .unlockedBy("has_steel_grate", has(block("steel_grate")))
+                .save(consumer, id("weapon/weapon_mod_special_sifter"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_canisters"))
+                .pattern(" R ")
+                .pattern("CCC")
+                .pattern("SSS")
+                .define('R', forgeTag("pipes/rubber"))
+                .define('C', item("canister_empty"))
+                .define('S', forgeTag("plates/steel"))
+                .unlockedBy("has_empty_canister", has(item("canister_empty")))
+                .save(consumer, id("weapon/weapon_mod_special_canisters"));
+    }
+
+    private static void legacySednaGunRecipes(Consumer<FinishedRecipe> consumer) {
+        legacyGunRecipe(consumer, "gun_pepperbox", new String[] { "IIW", "  C" },
+                'I', forgeTag("ingots/iron"), 'W', vanillaTag("planks"), 'C', forgeTag("ingots/copper"));
+        legacyGunRecipe(consumer, "gun_light_revolver", new String[] { "BRM", "  G" },
+                'B', forgeTag("light_barrels/steel"), 'R', forgeTag("light_receivers/steel"),
+                'M', forgeTag("gun_mechanisms/gun_metal"), 'G', forgeTag("grips/wood"));
+        legacyGunRecipe(consumer, "gun_light_revolver_atlas", new String[] { " M ", "MAM", " M " },
+                'M', forgeTag("gun_mechanisms/weapon_steel"), 'A', item("gun_light_revolver"));
+        legacyGunRecipe(consumer, "gun_henry", new String[] { "BRP", "BMS" },
+                'B', forgeTag("light_barrels/steel"), 'R', forgeTag("light_receivers/gun_metal"),
+                'M', forgeTag("gun_mechanisms/gun_metal"), 'S', forgeTag("stocks/wood"),
+                'P', forgeTag("plates/gun_metal"));
+        legacyGunRecipe(consumer, "gun_greasegun", new String[] { "BRS", "SMG" },
+                'B', forgeTag("light_barrels/steel"), 'R', forgeTag("light_receivers/steel"),
+                'S', forgeTag("bolts/steel"), 'M', forgeTag("gun_mechanisms/gun_metal"),
+                'G', forgeTag("grips/steel"));
+        legacyGunRecipe(consumer, "gun_maresleg", new String[] { "BRM", "BGS" },
+                'B', forgeTag("light_barrels/steel"), 'R', forgeTag("light_receivers/steel"),
+                'M', forgeTag("gun_mechanisms/gun_metal"), 'G', forgeTag("bolts/steel"),
+                'S', forgeTag("stocks/wood"));
+        legacyGunRecipe(consumer, "gun_maresleg_akimbo", new String[] { "SMS" },
+                'S', item("gun_maresleg"), 'M', forgeTag("gun_mechanisms/weapon_steel"));
+        legacyGunRecipe(consumer, "gun_flaregun", new String[] { "BRM", "  G" },
+                'B', forgeTag("heavy_barrels/steel"), 'R', forgeTag("light_receivers/steel"),
+                'M', forgeTag("gun_mechanisms/gun_metal"), 'G', forgeTag("grips/steel"));
+        legacyGunRecipe(consumer, "gun_am180", new String[] { "BRS", "GMG" },
+                'B', forgeTag("light_barrels/dura_steel"), 'R', forgeTag("light_receivers/dura_steel"),
+                'M', forgeTag("gun_mechanisms/gun_metal"), 'G', forgeTag("grips/wood"),
+                'S', forgeTag("stocks/wood"));
+        legacyGunRecipe(consumer, "gun_liberator", new String[] { "BB ", "BBM", "G G" },
+                'B', forgeTag("light_barrels/dura_steel"), 'M', forgeTag("gun_mechanisms/gun_metal"),
+                'G', forgeTag("grips/wood"));
+        legacyGunRecipe(consumer, "gun_congolake", new String[] { "BM ", "BRS", "G  " },
+                'B', forgeTag("heavy_barrels/dura_steel"), 'M', forgeTag("gun_mechanisms/gun_metal"),
+                'R', forgeTag("light_receivers/dura_steel"), 'S', forgeTag("stocks/wood"),
+                'G', forgeTag("grips/wood"));
+        legacyGunRecipe(consumer, "gun_flamer", new String[] { " MG", "BBR", " GM" },
+                'M', forgeTag("gun_mechanisms/gun_metal"), 'G', forgeTag("grips/dura_steel"),
+                'B', forgeTag("heavy_barrels/dura_steel"), 'R', forgeTag("heavy_receivers/dura_steel"));
+        legacyGunRecipe(consumer, "gun_flamer_topaz", new String[] { " M ", "MFM", " M " },
+                'M', forgeTag("gun_mechanisms/weapon_steel"), 'F', item("gun_flamer"));
+        legacyGunRecipe(consumer, "gun_heavy_revolver", new String[] { "BRM", "  G" },
+                'B', forgeTag("light_barrels/desh"), 'R', forgeTag("light_receivers/desh"),
+                'M', forgeTag("gun_mechanisms/gun_metal"), 'G', forgeTag("grips/wood"));
+        legacyGunRecipe(consumer, "gun_carbine", new String[] { "BRM", "G S" },
+                'B', forgeTag("light_barrels/desh"), 'R', forgeTag("light_receivers/desh"),
+                'M', forgeTag("gun_mechanisms/gun_metal"), 'G', forgeTag("grips/wood"),
+                'S', forgeTag("stocks/wood"));
+        legacyGunRecipe(consumer, "gun_uzi", new String[] { "BRS", " GM" },
+                'B', forgeTag("light_barrels/desh"), 'R', forgeTag("light_receivers/desh"),
+                'S', forgeTag("stocks/any_plastic"), 'G', forgeTag("grips/any_plastic"),
+                'M', forgeTag("gun_mechanisms/gun_metal"));
+        legacyGunRecipe(consumer, "gun_uzi_akimbo", new String[] { "UMU" },
+                'U', item("gun_uzi"), 'M', forgeTag("gun_mechanisms/weapon_steel"));
+        legacyGunRecipe(consumer, "gun_spas12", new String[] { "BRM", "BGS" },
+                'B', forgeTag("light_barrels/desh"), 'R', forgeTag("light_receivers/desh"),
+                'M', forgeTag("gun_mechanisms/gun_metal"), 'G', forgeTag("grips/any_plastic"),
+                'S', forgeTag("stocks/desh"));
+        legacyGunRecipe(consumer, "gun_panzerschreck", new String[] { "BBB", "PGM" },
+                'B', forgeTag("heavy_barrels/desh"), 'P', forgeTag("cast_plates/steel"),
+                'G', forgeTag("grips/desh"), 'M', forgeTag("gun_mechanisms/gun_metal"));
+        legacyGunRecipe(consumer, "gun_star_f", new String[] { "BRM", "  G" },
+                'B', forgeTag("light_barrels/weapon_steel"), 'R', forgeTag("light_receivers/weapon_steel"),
+                'M', forgeTag("gun_mechanisms/weapon_steel"), 'G', forgeTag("grips/any_plastic"));
+        legacyGunRecipe(consumer, "gun_star_f_akimbo", new String[] { "UMU" },
+                'U', item("gun_star_f"), 'M', forgeTag("gun_mechanisms/saturnite"));
+        legacyGunRecipe(consumer, "gun_g3", new String[] { "BRM", "WGS" },
+                'B', forgeTag("light_barrels/weapon_steel"), 'R', forgeTag("light_receivers/weapon_steel"),
+                'M', forgeTag("gun_mechanisms/weapon_steel"), 'W', forgeTag("grips/wood"),
+                'G', forgeTag("grips/rubber"), 'S', forgeTag("stocks/wood"));
+        legacyGunRecipe(consumer, "gun_g3_zebra", new String[] { " M ", "MPM", " M " },
+                'M', forgeTag("gun_mechanisms/saturnite"), 'P', item("gun_g3"));
+        legacyGunRecipe(consumer, "gun_stinger", new String[] { "BBB", "PGM" },
+                'B', forgeTag("heavy_barrels/weapon_steel"), 'P', legacyCircuit(9),
+                'G', forgeTag("grips/weapon_steel"), 'M', forgeTag("gun_mechanisms/weapon_steel"));
+        legacyGunRecipe(consumer, "gun_mk108", new String[] { " GG", "BRM", " D " },
+                'G', forgeTag("grips/any_plastic"), 'B', forgeTag("heavy_barrels/weapon_steel"),
+                'R', forgeTag("heavy_receivers/weapon_steel"), 'M', forgeTag("gun_mechanisms/weapon_steel"),
+                'D', forgeTag("shells/weapon_steel"));
+        legacyGunRecipe(consumer, "gun_chemthrower", new String[] { "MHW", "PSS" },
+                'M', forgeTag("gun_mechanisms/weapon_steel"), 'H', forgeTag("pipes/rubber"),
+                'W', item("wrench"), 'P', forgeTag("heavy_barrels/weapon_steel"),
+                'S', forgeTag("shells/weapon_steel"));
+        legacyGunRecipe(consumer, "gun_amat", new String[] { " C ", "BRS", " MG" },
+                'G', forgeTag("grips/wood"), 'B', forgeTag("heavy_barrels/ferrouranium"),
+                'R', forgeTag("heavy_receivers/ferrouranium"), 'M', forgeTag("gun_mechanisms/weapon_steel"),
+                'C', item("weapon_mod_special_scope"), 'S', forgeTag("stocks/wood"));
+        legacyGunRecipe(consumer, "gun_m2", new String[] { "  G", "BRM", "  G" },
+                'G', forgeTag("grips/wood"), 'B', forgeTag("heavy_barrels/ferrouranium"),
+                'R', forgeTag("heavy_receivers/ferrouranium"), 'M', forgeTag("gun_mechanisms/weapon_steel"));
+        legacyGunRecipe(consumer, "gun_autoshotgun", new String[] { "BRM", "G G" },
+                'B', forgeTag("heavy_barrels/ferrouranium"), 'R', forgeTag("heavy_receivers/ferrouranium"),
+                'M', forgeTag("gun_mechanisms/weapon_steel"), 'G', forgeTag("grips/any_plastic"));
+        legacyGunRecipe(consumer, "gun_autoshotgun_shredder", new String[] { " M ", "MAM", " M " },
+                'M', forgeTag("gun_mechanisms/saturnite"), 'A', item("gun_autoshotgun"));
+        legacyGunRecipe(consumer, "gun_quadro", new String[] { "BCB", "BMB", "GG " },
+                'B', forgeTag("heavy_barrels/ferrouranium"), 'C', legacyCircuit(9),
+                'M', forgeTag("gun_mechanisms/weapon_steel"), 'G', forgeTag("grips/any_plastic"));
+        legacyGunRecipe(consumer, "gun_lag", new String[] { "BRM", "  G" },
+                'B', forgeTag("light_barrels/any_resistant_alloy"),
+                'R', forgeTag("light_receivers/any_resistant_alloy"),
+                'M', forgeTag("gun_mechanisms/weapon_steel"), 'G', forgeTag("grips/any_plastic"));
+        legacyGunRecipe(consumer, "gun_minigun", new String[] { "BMG", "BRE", "BGM" },
+                'B', forgeTag("light_barrels/any_resistant_alloy"),
+                'M', forgeTag("gun_mechanisms/weapon_steel"), 'G', forgeTag("grips/any_plastic"),
+                'R', forgeTag("heavy_receivers/any_resistant_alloy"), 'E', item("motor_desh"));
+        legacyGunRecipe(consumer, "gun_missile_launcher", new String[] { " CM", "BBB", "G  " },
+                'C', legacyCircuit(9), 'M', forgeTag("gun_mechanisms/weapon_steel"),
+                'B', forgeTag("heavy_barrels/any_resistant_alloy"), 'G', forgeTag("grips/any_plastic"));
+        legacyGunRecipe(consumer, "gun_tesla_cannon", new String[] { "CCC", "BRB", "MGE" },
+                'C', item("coil_copper"), 'B', forgeTag("heavy_barrels/any_resistant_alloy"),
+                'R', forgeTag("heavy_receivers/any_resistant_alloy"),
+                'M', forgeTag("gun_mechanisms/weapon_steel"), 'G', forgeTag("grips/any_plastic"),
+                'E', legacyCircuit(9));
+        legacyGunRecipe(consumer, "gun_laser_pistol", new String[] { "CRM", "GG " },
+                'C', item("crystal_redstone"), 'R', forgeTag("light_receivers/saturnite"),
+                'M', forgeTag("gun_mechanisms/saturnite"), 'G', forgeTag("grips/any_hardplastic"));
+        legacyGunRecipe(consumer, "gun_laser_pistol_pew_pew", new String[] { " M ", "MPM", " M " },
+                'M', forgeTag("gun_mechanisms/saturnite"), 'P', item("gun_laser_pistol"));
+        legacyGunRecipe(consumer, "gun_stg77", new String[] { " D ", "BRS", "GGM" },
+                'D', item("weapon_mod_special_scope"), 'B', forgeTag("light_barrels/saturnite"),
+                'R', forgeTag("light_receivers/saturnite"), 'S', forgeTag("stocks/any_hardplastic"),
+                'G', forgeTag("grips/any_hardplastic"), 'M', forgeTag("gun_mechanisms/saturnite"));
+        legacyGunRecipe(consumer, "gun_fatman", new String[] { "PPP", "BSR", "G M" },
+                'P', forgeTag("plates/saturnite"), 'B', forgeTag("heavy_barrels/saturnite"),
+                'S', forgeTag("shells/saturnite"), 'R', forgeTag("heavy_receivers/saturnite"),
+                'G', forgeTag("grips/any_hardplastic"), 'M', forgeTag("gun_mechanisms/saturnite"));
+        legacyGunRecipe(consumer, "gun_tau", new String[] { " RD", "CTT", "GMS" },
+                'D', legacyCircuit(6), 'C', forgeTag("pipes/copper"), 'T', item("coil_copper_torus"),
+                'G', forgeTag("grips/any_hardplastic"), 'R', forgeTag("light_receivers/saturnite"),
+                'M', forgeTag("gun_mechanisms/saturnite"), 'S', forgeTag("stocks/any_hardplastic"));
+        legacyGunRecipe(consumer, "gun_lasrifle", new String[] { "DLC", "BRS", "MG " },
+                'D', item("crystal_redstone"), 'L', item("weapon_mod_special_scope"), 'C', legacyCircuit(6),
+                'B', forgeTag("light_barrels/any_bismoid_bronze"),
+                'R', forgeTag("light_receivers/any_bismoid_bronze"),
+                'S', forgeTag("stocks/any_hardplastic"), 'M', forgeTag("gun_mechanisms/saturnite"),
+                'G', forgeTag("grips/any_hardplastic"));
+        legacyGunRecipe(consumer, "gun_charge_thrower", "gun_charge_thrower_leather",
+                new String[] { "MMM", "BBL", "GG " },
+                'M', forgeTag("gun_mechanisms/gun_metal"), 'B', forgeTag("heavy_barrels/steel"),
+                'G', forgeTag("grips/steel"), 'L', Items.LEATHER);
+        legacyGunRecipe(consumer, "gun_charge_thrower", "gun_charge_thrower_rubber",
+                new String[] { "MMM", "BBL", "GG " },
+                'M', forgeTag("gun_mechanisms/gun_metal"), 'B', forgeTag("heavy_barrels/steel"),
+                'G', forgeTag("grips/steel"), 'L', forgeTag("ingots/any_rubber"));
+        legacyGunRecipe(consumer, "gun_drill", new String[] { " GL", "IBP", " GL" },
+                'G', forgeTag("ingots/gun_metal"), 'L', forgeTag("ingots/any_rubber"),
+                'I', forgeTag("ingots/titanium"), 'B', forgeTag("storage_blocks/steel"),
+                'P', item("piston_selenium"));
+        legacyGunRecipe(consumer, "gun_fireext", new String[] { "HB", " T" },
+                'H', forgeTag("pipes/steel"), 'B', forgeTag("bolts/steel"), 'T', item("tank_steel"));
+    }
+
+    private static void legacyGunRecipe(Consumer<FinishedRecipe> consumer, String result, String[] pattern,
+            Object... definitions) {
+        legacyGunRecipe(consumer, result, result, pattern, definitions);
+    }
+
+    private static void legacyGunRecipe(Consumer<FinishedRecipe> consumer, String result, String recipeName,
+            String[] pattern, Object... definitions) {
+        ShapedRecipeBuilder builder = ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item(result));
+        for (String row : pattern) {
+            builder.pattern(row);
+        }
+        for (int i = 0; i < definitions.length; i += 2) {
+            defineIngredient(builder, (Character) definitions[i], definitions[i + 1]);
+        }
+        builder.unlockedBy("has_weapon_table", has(ModBlocks.MACHINE_WEAPON_TABLE.get()))
+                .save(consumer, id("weapon/" + recipeName));
+    }
+
+    private static void weaponModGenericRecipe(Consumer<FinishedRecipe> consumer, String suffix, String coreTag,
+            String materialTag, boolean damage) {
+        ShapelessRecipeBuilder builder = ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT,
+                        item("weapon_mod_generic_" + suffix))
+                .requires(forgeTag(coreTag))
+                .requires(forgeTag(materialTag))
+                .requires(item("ducttape"))
+                .unlockedBy("has_ducttape", has(item("ducttape")));
+        if (damage) {
+            builder.requires(forgeTag(materialTag)).requires(forgeTag(materialTag));
+        }
+        builder.save(consumer, id("weapon/weapon_mod_generic_" + suffix));
+    }
+
+    private static void weaponModFurnitureRecipe(Consumer<FinishedRecipe> consumer, String suffix, String dyeTag) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_" + suffix))
+                .pattern("PDS")
+                .pattern("  G")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('D', forgeTag(dyeTag))
+                .define('S', forgeTag("stocks/any_plastic"))
+                .define('G', forgeTag("grips/any_plastic"))
+                .unlockedBy("has_any_plastic", has(forgeTag("ingots/any_plastic")))
+                .save(consumer, id("weapon/weapon_mod_special_" + suffix));
+    }
+
+    private static void weaponModDrillRecipe(Consumer<FinishedRecipe> consumer, String suffix, String ingotTag,
+            String gripTag, String mechanismTag) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("weapon_mod_special_" + suffix))
+                .pattern(" IP")
+                .pattern("IIM")
+                .pattern(" IP")
+                .define('I', forgeTag(ingotTag))
+                .define('P', forgeTag(gripTag))
+                .define('M', forgeTag(mechanismTag))
+                .unlockedBy("has_drill_material", has(forgeTag(ingotTag)))
+                .save(consumer, id("weapon/weapon_mod_special_" + suffix));
+    }
+
+    private static void weaponModEngineRecipe(Consumer<FinishedRecipe> consumer, String suffix, String frameTag,
+            Object pistonIngredient, Object centerIngredient) {
+        ShapedRecipeBuilder builder = ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT,
+                        item("weapon_mod_special_" + suffix))
+                .pattern("DSD")
+                .pattern("PPP")
+                .pattern("DSD")
+                .define('D', forgeTag(frameTag))
+                .unlockedBy("has_engine_frame", has(forgeTag(frameTag)));
+        defineIngredient(builder, 'P', pistonIngredient);
+        defineIngredient(builder, 'S', centerIngredient);
+        builder.save(consumer, id("weapon/weapon_mod_special_" + suffix));
+    }
+
+    private static void defineIngredient(ShapedRecipeBuilder builder, char key, Object ingredient) {
+        if (ingredient instanceof TagKey<?> tag) {
+            @SuppressWarnings("unchecked")
+            TagKey<Item> itemTag = (TagKey<Item>) tag;
+            builder.define(key, itemTag);
+        } else if (ingredient instanceof ItemLike itemLike) {
+            builder.define(key, itemLike);
+        } else {
+            throw new IllegalArgumentException("Unsupported recipe ingredient: " + ingredient);
+        }
     }
 
     private static void legacyArtilleryAmmoRecipes(Consumer<FinishedRecipe> consumer) {
@@ -5326,6 +5915,19 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void legacyWeaponPartRecipes(Consumer<FinishedRecipe> consumer) {
+        stockRecipe(consumer, "stock_wood", vanillaTag("planks"));
+        gripRecipe(consumer, "grip_wood", vanillaTag("planks"));
+        stockRecipe(consumer, "stock_polymer", forgeTag("ingots/polymer"));
+        gripRecipe(consumer, "grip_polymer", forgeTag("ingots/polymer"));
+        stockRecipe(consumer, "stock_bakelite", forgeTag("ingots/bakelite"));
+        gripRecipe(consumer, "grip_bakelite", forgeTag("ingots/bakelite"));
+        stockRecipe(consumer, "stock_pc", forgeTag("ingots/pc"));
+        gripRecipe(consumer, "grip_pc", forgeTag("ingots/pc"));
+        stockRecipe(consumer, "stock_pvc", forgeTag("ingots/pvc"));
+        gripRecipe(consumer, "grip_pvc", forgeTag("ingots/pvc"));
+        gripRecipe(consumer, "grip_rubber", forgeTag("ingots/rubber"));
+        gripRecipe(consumer, "grip_ivory", Items.BONE);
+
         GenericMachineRecipeBuilder.assembly("ass.clusterpellets", 50, 100)
                 .inputLegacyOre("plateSteel", 4)
                 .inputLegacyOre("ingotAnyHighExplosive", 1)
@@ -5338,6 +5940,35 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(item("pellet_buckshot"))
                 .sourceOrder(195)
                 .save(consumer, id("assembly_machine/buckshot"));
+    }
+
+    private static void stockRecipe(Consumer<FinishedRecipe> consumer, String result, TagKey<Item> material) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item(result))
+                .pattern("WWW")
+                .pattern("  W")
+                .define('W', material)
+                .unlockedBy("has_stock_material", has(material))
+                .save(consumer, id("weapon/" + result));
+    }
+
+    private static void gripRecipe(Consumer<FinishedRecipe> consumer, String result, TagKey<Item> material) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item(result))
+                .pattern("W ")
+                .pattern(" W")
+                .pattern(" W")
+                .define('W', material)
+                .unlockedBy("has_grip_material", has(material))
+                .save(consumer, id("weapon/" + result));
+    }
+
+    private static void gripRecipe(Consumer<FinishedRecipe> consumer, String result, ItemLike material) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item(result))
+                .pattern("W ")
+                .pattern(" W")
+                .pattern(" W")
+                .define('W', material)
+                .unlockedBy("has_grip_material", has(material))
+                .save(consumer, id("weapon/" + result));
     }
 
     private static void legacyAmmunitionRecipes(Consumer<FinishedRecipe> consumer) {
@@ -5686,6 +6317,88 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
     private static TagKey<Item> vanillaTag(String path) {
         return TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", path));
+    }
+
+    private static final class OutgasserRecipeBuilder {
+        private final HbmIngredient input;
+        @Nullable
+        private ItemStack outputItem;
+        @Nullable
+        private JsonObject outputFluid;
+
+        private OutgasserRecipeBuilder(HbmIngredient input) {
+            this.input = input;
+        }
+
+        private static OutgasserRecipeBuilder outgasser(HbmIngredient input) {
+            return new OutgasserRecipeBuilder(input);
+        }
+
+        private OutgasserRecipeBuilder outputItem(ItemLike item) {
+            return outputItem(new ItemStack(item));
+        }
+
+        private OutgasserRecipeBuilder outputItem(ItemStack stack) {
+            outputItem = stack.copy();
+            return this;
+        }
+
+        private OutgasserRecipeBuilder outputFluid(FluidType fluid, int amount) {
+            JsonObject object = new JsonObject();
+            object.addProperty("fluid", fluid.getName());
+            object.addProperty("amount", amount);
+            outputFluid = object;
+            return this;
+        }
+
+        private void save(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId) {
+            if ((outputItem == null || outputItem.isEmpty()) && outputFluid == null) {
+                throw new IllegalStateException("HBM outgasser recipe has no output: " + recipeId);
+            }
+            consumer.accept(new FinishedRecipe() {
+                @Override
+                public void serializeRecipeData(JsonObject json) {
+                    json.add("input", input.toJson());
+                    if (outputItem != null && !outputItem.isEmpty()) {
+                        json.add("solid_output", itemStackJson(outputItem));
+                    }
+                    if (outputFluid != null) {
+                        json.add("fluid_output", outputFluid);
+                    }
+                }
+
+                @Override
+                public ResourceLocation getId() {
+                    return recipeId;
+                }
+
+                @Override
+                public RecipeSerializer<?> getType() {
+                    return HbmRegistryUtil.recipeSerializer(id("outgasser")).orElseThrow();
+                }
+
+                @Nullable
+                @Override
+                public JsonObject serializeAdvancement() {
+                    return null;
+                }
+
+                @Nullable
+                @Override
+                public ResourceLocation getAdvancementId() {
+                    return null;
+                }
+            });
+        }
+
+        private static JsonObject itemStackJson(ItemStack stack) {
+            JsonObject object = new JsonObject();
+            object.addProperty("item", HbmRegistryUtil.itemKey(stack.getItem()).toString());
+            if (stack.getCount() > 1) {
+                object.addProperty("count", stack.getCount());
+            }
+            return object;
+        }
     }
 
     private static final class GenericMachineRecipeBuilder {

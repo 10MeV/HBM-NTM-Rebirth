@@ -8,6 +8,7 @@ import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -19,7 +20,7 @@ import org.joml.Vector3f;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @OnlyIn(Dist.CLIENT)
-public class LegacySplashParticle extends TextureSheetParticle {
+public class LegacySplashParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
     private static final AtomicInteger NEXT_VISUAL_ID = new AtomicInteger();
     private static SpriteSet sharedSprites;
     private final SpriteSet sprites;
@@ -80,6 +81,12 @@ public class LegacySplashParticle extends TextureSheetParticle {
 
     @Override
     public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.enqueue(this, camera, this.x, this.y, this.z);
+    }
+
+    @Override
+    public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
+        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite());
         renderFlippedBillboard(consumer, camera, partialTick, this.flipU, this.flipV);
     }
 
@@ -112,7 +119,7 @@ public class LegacySplashParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+        return HbmDeferredParticleRenderer.DEFERRED_RENDER_TYPE;
     }
 
     public static final class Provider implements ParticleProvider<SimpleParticleType> {

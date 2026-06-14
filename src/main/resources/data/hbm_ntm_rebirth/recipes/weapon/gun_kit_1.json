@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    { "tag": "forge:ingots/rubber" },
+    {
+      "type": "hbm_ntm_rebirth:fluid_container",
+      "fluid": "hbm_ntm_rebirth:woodoil",
+      "amount": 1000
+    },
+    { "tag": "forge:ingots/iron" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:gun_kit_1" }
+}

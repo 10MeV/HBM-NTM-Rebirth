@@ -311,6 +311,10 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
     @Override
     protected void tickServerSpecificAnimations() {
         tickBarrelAnimation();
+    }
+
+    @Override
+    protected void updateServerTickAfterTargeting() {
         tickArtyCasingDelay();
     }
 

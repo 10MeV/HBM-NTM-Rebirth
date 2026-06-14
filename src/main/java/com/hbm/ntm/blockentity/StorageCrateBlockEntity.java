@@ -3,11 +3,11 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.block.CrateBlock;
 import com.hbm.ntm.menu.CrateMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -63,15 +63,13 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
 
     public void playOpenSound() {
         if (level != null && !level.isClientSide) {
-            level.playSound(null, worldPosition, com.hbm.ntm.registry.ModSounds.BLOCK_CRATE_OPEN.get(),
-                    SoundSource.BLOCKS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacyCrateOpen(level, worldPosition, 1.0F, 1.0F);
         }
     }
 
     public void playCloseSound() {
         if (level != null && !level.isClientSide) {
-            level.playSound(null, worldPosition, com.hbm.ntm.registry.ModSounds.BLOCK_CRATE_CLOSE.get(),
-                    SoundSource.BLOCKS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacyCrateClose(level, worldPosition, 1.0F, 1.0F);
         }
     }
 

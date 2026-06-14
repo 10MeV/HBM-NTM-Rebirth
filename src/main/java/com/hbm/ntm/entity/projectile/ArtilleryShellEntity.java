@@ -12,6 +12,7 @@ import com.hbm.ntm.artillery.LegacyArtilleryImpactExecutor;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -28,7 +29,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
@@ -266,8 +266,7 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
         }
 
         if (new Vec3(syncPosX - getX(), syncPosY - getY(), syncPosZ - getZ()).length() < 0.2D) {
-            level().addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE,
-                    getX(), getY() + 0.5D, getZ(), 0.0D, 0.1D, 0.0D);
+            ParticleUtil.spawnLegacyArtillerySmokeTrail(level(), getX(), getY(), getZ());
         }
     }
 
@@ -314,10 +313,7 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
     public InteractionResult interact(Player player, InteractionHand hand) {
         if (!level().isClientSide()) {
             if (!cargo.isEmpty()) {
-                ItemStack copy = cargo.copy();
-                if (!player.getInventory().add(copy) && !copy.isEmpty()) {
-                    level().addFreshEntity(new ItemEntity(level(), getX(), getY(), getZ(), copy));
-                }
+                HbmItemStackUtil.giveOrDrop(player, cargo, level(), getX(), getY(), getZ());
             }
             discard();
         }

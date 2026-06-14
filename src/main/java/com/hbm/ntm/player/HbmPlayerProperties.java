@@ -7,7 +7,7 @@ import com.hbm.ntm.api.item.ArmorDashProvider;
 import com.hbm.ntm.item.FsbArmorItem;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.HbmKeybind;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -79,12 +79,52 @@ public final class HbmPlayerProperties {
         setFloat(player, KEY_SHIELD, Math.max(0.0F, shield));
     }
 
+    public static float addShield(Player player, float amount) {
+        float shield = Math.max(0.0F, getShield(player) + amount);
+        setShield(player, shield);
+        return shield;
+    }
+
+    public static float ensureShield(Player player, float minimum) {
+        float target = Math.max(0.0F, minimum);
+        if (getShield(player) < target) {
+            setShield(player, target);
+        }
+        return getShield(player);
+    }
+
+    public static float clampShieldToEffectiveMax(Player player) {
+        float effectiveMax = getEffectiveMaxShield(player);
+        if (getShield(player) > effectiveMax) {
+            setShield(player, effectiveMax);
+        }
+        return getShield(player);
+    }
+
+    public static float fillShield(Player player) {
+        float effectiveMax = getEffectiveMaxShield(player);
+        setShield(player, effectiveMax);
+        return effectiveMax;
+    }
+
     public static float getMaxShield(Player player) {
         return getTag(player).getFloat(KEY_MAX_SHIELD);
     }
 
     public static void setMaxShield(Player player, float maxShield) {
         setFloat(player, KEY_MAX_SHIELD, Math.max(0.0F, maxShield));
+    }
+
+    public static float addMaxShield(Player player, float amount) {
+        float maxShield = Math.max(0.0F, getMaxShield(player) + amount);
+        setMaxShield(player, maxShield);
+        return maxShield;
+    }
+
+    public static float addMaxShieldCapped(Player player, float amount) {
+        float maxShield = Mth.clamp(getMaxShield(player) + amount, 0.0F, SHIELD_CAP);
+        setMaxShield(player, maxShield);
+        return maxShield;
     }
 
     public static boolean canApplyShieldInfusion(Player player) {
@@ -165,6 +205,14 @@ public final class HbmPlayerProperties {
         return reputation;
     }
 
+    public static int incrementReputation(Player player) {
+        return addReputation(player, 1);
+    }
+
+    public static int decrementReputation(Player player) {
+        return addReputation(player, -1);
+    }
+
     public static boolean decrementReputationAbove(Player player, int floor) {
         int reputation = getReputation(player);
         if (reputation <= floor) {
@@ -190,12 +238,68 @@ public final class HbmPlayerProperties {
         setBoolean(player, KEY_IS_ON_LADDER, onLadder);
     }
 
+    public static void markOnLadder(Player player) {
+        setOnLadder(player, true);
+    }
+
     public static boolean getKeyPressed(Player player, HbmKeybind keybind) {
         if (player == null || keybind == null) {
             return false;
         }
         EnumSet<HbmKeybind> keys = PRESSED_KEYS.get(player.getUUID());
         return keys != null && keys.contains(keybind);
+    }
+
+    public static boolean isToolAltPressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.TOOL_ALT);
+    }
+
+    public static boolean isToolCtrlPressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.TOOL_CTRL);
+    }
+
+    public static boolean isAbilityCyclePressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.ABILITY_CYCLE);
+    }
+
+    public static boolean isAbilityAltPressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.ABILITY_ALT);
+    }
+
+    public static boolean isGunPrimaryPressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.GUN_PRIMARY);
+    }
+
+    public static boolean isGunSecondaryPressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.GUN_SECONDARY);
+    }
+
+    public static boolean isGunTertiaryPressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.GUN_TERTIARY);
+    }
+
+    public static boolean isReloadPressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.RELOAD);
+    }
+
+    public static boolean isCraneUpPressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.CRANE_UP);
+    }
+
+    public static boolean isCraneDownPressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.CRANE_DOWN);
+    }
+
+    public static boolean isCraneLeftPressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.CRANE_LEFT);
+    }
+
+    public static boolean isCraneRightPressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.CRANE_RIGHT);
+    }
+
+    public static boolean isCraneLoadPressed(Player player) {
+        return getKeyPressed(player, HbmKeybind.CRANE_LOAD);
     }
 
     public static void setKeyPressed(ServerPlayer player, HbmKeybind keybind, boolean pressed) {
@@ -228,11 +332,30 @@ public final class HbmPlayerProperties {
         }
     }
 
+    public static void clearKeyState(Player player, HbmKeybind keybind) {
+        if (player == null || keybind == null) {
+            return;
+        }
+        EnumSet<HbmKeybind> keys = PRESSED_KEYS.get(player.getUUID());
+        if (keys == null) {
+            return;
+        }
+        keys.remove(keybind);
+        if (keys.isEmpty()) {
+            PRESSED_KEYS.remove(player.getUUID());
+        }
+    }
+
     public static void clearKeyState(ServerPlayer player, HbmKeybind keybind) {
         setKeyPressed(player, keybind, false);
     }
 
     public static void clearMovementKeyStates(ServerPlayer player) {
+        clearKeyState(player, HbmKeybind.JETPACK);
+        clearKeyState(player, HbmKeybind.DASH);
+    }
+
+    public static void clearMovementKeyStates(Player player) {
         clearKeyState(player, HbmKeybind.JETPACK);
         clearKeyState(player, HbmKeybind.DASH);
     }
@@ -403,9 +526,8 @@ public final class HbmPlayerProperties {
         if (stamina < data.totalDashCount * perDash) {
             stamina++;
             if (stamina % perDash == perDash - 1) {
-                player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                        ModSounds.TOOL_TECH_BOOP.get(), SoundSource.PLAYERS,
-                        1.0F, 1.0F + (1.0F / 12.0F) * (stamina / perDash));
+                LegacySoundPlayer.playLegacyTechBoop(player, 1.0F,
+                        1.0F + (1.0F / 12.0F) * (stamina / perDash));
                 stamina++;
             }
         }
@@ -447,8 +569,7 @@ public final class HbmPlayerProperties {
         Vec3 motion = player.getDeltaMovement();
         player.setDeltaMovement(motion.x, 0.0D, motion.z);
         player.fallDistance = 0.0F;
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                ModSounds.WEAPON_ROCKET_FLAME.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+        LegacySoundPlayer.playLegacyRocketFlame(player, 1.0F, 1.0F);
     }
 
     private static void handleFauxLadder(Player player) {

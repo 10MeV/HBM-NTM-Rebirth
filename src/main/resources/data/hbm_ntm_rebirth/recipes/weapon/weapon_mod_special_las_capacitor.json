@@ -1,0 +1,21 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "CCC",
+                    "PIP"
+                ],
+    "key":  {
+                "C":  {
+                          "item":  "hbm_ntm_rebirth:circuit_capacitor_tantalium"
+                      },
+                "P":  {
+                          "tag":  "forge:ingots/any_hardplastic"
+                      },
+                "I":  {
+                          "item":  "hbm_ntm_rebirth:circuit_chip_bismoid"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_las_capacitor"
+               }
+}

@@ -1,0 +1,7 @@
+﻿{
+    "replace":  false,
+    "values":  [
+                   "hbm_ntm_rebirth:receiver_light_tcalloy",
+                   "hbm_ntm_rebirth:receiver_light_cdalloy"
+               ]
+}

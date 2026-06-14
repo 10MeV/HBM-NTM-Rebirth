@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "hbm_ntm_rebirth:block/launch_table/launch_table_base", "y": 180 },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/launch_table/launch_table_base" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/launch_table/launch_table_base", "y": 90 },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/launch_table/launch_table_base", "y": 270 }
+  }
+}

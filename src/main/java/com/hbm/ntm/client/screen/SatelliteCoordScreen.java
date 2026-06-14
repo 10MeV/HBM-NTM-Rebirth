@@ -2,8 +2,8 @@ package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.ClientSatelliteData;
+import com.hbm.ntm.client.sound.LegacyClientSoundPlayer;
 import com.hbm.ntm.network.ModMessages;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SatelliteInterfaceItem;
@@ -11,7 +11,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
@@ -139,7 +138,7 @@ public class SatelliteCoordScreen extends Screen {
             y = parsedY;
         }
         ModMessages.sendSatCoord(hand, x, y, z, currentFrequency());
-        minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.TOOL_TECH_BLEEP.get(), 1.0F));
+        LegacyClientSoundPlayer.playUi("hbm:item.techBleep", 1.0F);
         onClose();
         return true;
     }

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "I": {
+      "tag": "forge:plates/iron"
+    }
+  },
+  "pattern": [
+    "III",
+    "III",
+    " I "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:mask_of_infamy"
+  },
+  "show_notification": true
+}

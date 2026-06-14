@@ -1,0 +1,11 @@
+{
+  "multipart": [
+    { "apply": { "model": "hbm_ntm_rebirth:block/red_cable_classic_core" } },
+    { "when": { "north": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/red_cable_classic_north" } },
+    { "when": { "east": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/red_cable_classic_east" } },
+    { "when": { "south": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/red_cable_classic_south" } },
+    { "when": { "west": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/red_cable_classic_west" } },
+    { "when": { "up": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/red_cable_classic_up" } },
+    { "when": { "down": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/red_cable_classic_down" } }
+  ]
+}

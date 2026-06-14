@@ -12,7 +12,6 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeRecipeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidPortMachine;
-import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -32,7 +31,6 @@ import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -166,9 +164,9 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new ChemicalPlantAccessibleItemHandler());
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
-            new ForgeRecipeFluidHandlerAdapter(inputTankList, outputTankList, 0, this::onFluidContentsChanged));
+            ForgeRecipeFluidHandlerAdapter.create(inputTankList, outputTankList, 0, this::onFluidContentsChanged));
     private final LazyOptional<IFluidHandler> allFluidHandler = LazyOptional.of(() ->
-            new ForgeRecipeFluidHandlerAdapter(inputTankList, outputTankList, 0, this::onFluidContentsChanged));
+            ForgeRecipeFluidHandlerAdapter.create(inputTankList, outputTankList, 0, this::onFluidContentsChanged));
 
     private boolean didProcess;
     private int prevAnim;
@@ -346,7 +344,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
         if (level == null || !level.isClientSide) {
             return;
         }
-        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_CHEMICAL_PLANT.getId(),
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.chemicalPlant",
                 didProcess, 30.0D, 15.0F, 1.0F, 1.0F);
     }
 
@@ -559,25 +557,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private void setupTanks(@Nullable GenericMachineRecipe recipe) {
-        if (recipe == null) {
-            return;
-        }
-        List<HbmFluidStack> fluidInputs = recipe.getFluidInputs();
-        List<HbmFluidStack> fluidOutputs = recipe.getFluidOutputs();
-        for (int i = 0; i < 3; i++) {
-            conformTank(inputTanks[i], i < fluidInputs.size() ? fluidInputs.get(i) : null);
-            conformTank(outputTanks[i], i < fluidOutputs.size() ? fluidOutputs.get(i) : null);
-        }
-    }
-
-    private void conformTank(HbmFluidTank tank, @Nullable HbmFluidStack stack) {
-        if (stack == null) {
-            tank.resetTank();
-            tank.changeTankSize(Math.max(tank.getFill(), TANK_CAPACITY));
-            return;
-        }
-        tank.conform(stack);
-        tank.changeTankSize(Math.max(Math.max(tank.getFill(), stack.amount() * 2), TANK_CAPACITY));
+        GenericMachineRecipeRuntime.setupTanksReport(recipe, inputTankList, outputTankList, TANK_CAPACITY);
     }
 
     private void updateDynamicCapacity(@Nullable GenericMachineRecipe recipe) {

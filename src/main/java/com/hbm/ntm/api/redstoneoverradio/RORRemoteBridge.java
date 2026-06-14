@@ -7,7 +7,7 @@ public final class RORRemoteBridge {
         if (provider == null || name == null || name.isEmpty()) {
             return null;
         }
-        return provider.provideRORValue(ROR.value(name));
+        return provider.provideRORValue(ROR.valueName(name));
     }
 
     public static boolean broadcastValue(Level level, String channel, RORValueProvider provider, String name,

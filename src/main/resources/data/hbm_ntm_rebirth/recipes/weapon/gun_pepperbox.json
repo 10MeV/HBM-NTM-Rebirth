@@ -1,0 +1,22 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    "IIW",
+                    "  C"
+                ],
+    "key":  {
+                "C":  {
+                          "tag":  "forge:ingots/copper"
+                      },
+                "W":  {
+                          "tag":  "minecraft:planks"
+                      },
+                "I":  {
+                          "tag":  "forge:ingots/iron"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_pepperbox"
+               }
+}

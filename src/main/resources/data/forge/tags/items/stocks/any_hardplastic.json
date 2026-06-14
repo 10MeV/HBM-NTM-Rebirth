@@ -1,0 +1,7 @@
+﻿{
+    "replace":  false,
+    "values":  [
+                   "hbm_ntm_rebirth:stock_pc",
+                   "hbm_ntm_rebirth:stock_pvc"
+               ]
+}

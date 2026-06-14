@@ -6,6 +6,8 @@ import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -35,7 +37,14 @@ public class RBMKPanelRenderer implements BlockEntityRenderer<RBMKPanelBlockEnti
             case KEYPAD -> LegacyRbmkPanelRenderer.renderKeys(context, panel.keys());
             case LEVER -> LegacyRbmkPanelRenderer.renderLevers(context, panel.levers(), partialTick);
             case NUMITRON -> LegacyRbmkPanelRenderer.renderNumitrons(context, panel.numitrons());
-            case TERMINAL, DISPLAY -> {
+            case TERMINAL -> {
+                Font font = Minecraft.getInstance().font;
+                LegacyRbmkMachineRenderer.renderTerminalModel(context);
+                LegacyRbmkMachineRenderer.renderTerminalText(font, context.fullBright(), panel.terminal(), "",
+                        (System.currentTimeMillis() / 500L) % 2L == 0L);
+            }
+            case DISPLAY -> {
+                LegacyRbmkDisplayRenderer.renderDisplay(context, panel.displayColumns());
             }
         }
         poseStack.popPose();

@@ -1,6 +1,7 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.radiation.ModDamageSources;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import java.util.List;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
@@ -23,9 +24,7 @@ public class BjArmorItem extends FsbPoweredArmorItem {
 
         ItemStack helmet = player.getItemBySlot(EquipmentSlot.HEAD).copy();
         player.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
-        if (!player.getInventory().add(helmet)) {
-            player.drop(helmet, false);
-        }
+        HbmItemStackUtil.giveOrDrop(player, helmet);
         player.hurt(ModDamageSources.source(level, ModDamageSources.LUNAR, player), 1000.0F);
     }
 }

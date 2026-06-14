@@ -11,11 +11,10 @@ import com.hbm.ntm.neutron.PileNeutronColumn;
 import com.hbm.ntm.neutron.PileNeutronDetectorState;
 import com.hbm.ntm.neutron.PileNeutronPassthroughReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -81,12 +80,8 @@ public class PileNeutronDetectorBlockEntity extends PileGraphiteBlockEntity
     }
 
     private static void playPlannedSound(Level level, PileGraphiteBlockEntityPlanner.SoundPlan sound) {
-        SoundEvent soundEvent = switch (sound.legacySoundId()) {
-            case "hbm:item.techBleep" -> ModSounds.ITEM_TECH_BLEEP.get();
-            default -> null;
-        };
-        if (soundEvent != null) {
-            level.playSound(null, sound.pos(), soundEvent, SoundSource.BLOCKS, sound.volume(), sound.pitch());
+        if ("hbm:item.techBleep".equals(sound.legacySoundId())) {
+            LegacySoundPlayer.playLegacyTechBleep(level, sound.pos(), SoundSource.BLOCKS, sound.volume(), sound.pitch());
         }
     }
 

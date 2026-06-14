@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BCD",
+    "DDD"
+  ],
+  "key": {
+    "B": {
+      "tag": "forge:ingots/boron"
+    },
+    "C": {
+      "tag": "forge:circuits/analog"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:deco_rbmk"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_crane_console"
+  }
+}

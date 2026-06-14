@@ -1327,12 +1327,11 @@ public final class ModCommands {
             return 0;
         }
         SatelliteSavedData satellites = data.get();
-        source.sendSuccess(() -> Component.literal("satellites summary entries=" + satellites.size()
-                + " types=" + satellites.typeCounts()
-                + " frequencies=" + satellites.frequenciesSnapshot(16)
+        SatelliteSavedData.SatelliteStats stats = satellites.statsSnapshot(16, 8);
+        source.sendSuccess(() -> Component.literal("satellites summary " + stats.summary()
                 + " readOnly=true"), false);
-        sendSatelliteSummaries(source, satellites.satelliteSummariesSnapshot(8));
-        return satellites.size();
+        sendSatelliteSummaries(source, stats.satellites());
+        return stats.entries();
     }
 
     private static int worldSavedDataSatelliteSummaryAll(CommandSourceStack source) {
@@ -1581,9 +1580,12 @@ public final class ModCommands {
             source.sendSuccess(() -> Component.literal("satellites absent"), false);
             return 0;
         }
-        Map<LegacySatelliteType, Integer> counts = data.get().typeCounts();
-        source.sendSuccess(() -> Component.literal("satellites types=" + counts + " readOnly=true"), false);
-        return counts.values().stream().mapToInt(Integer::intValue).sum();
+        SatelliteSavedData satellites = data.get();
+        source.sendSuccess(() -> Component.literal("satellites types=" + satellites.typeCounts()
+                + " cargoTypes=" + satellites.cargoTypeCounts()
+                + " cargoPools=" + satellites.cargoPoolCounts()
+                + " readOnly=true"), false);
+        return satellites.size();
     }
 
     private static int worldSavedDataSatelliteFrequencies(CommandSourceStack source, int limit) {
@@ -1602,15 +1604,8 @@ public final class ModCommands {
 
     private static void sendSatelliteSummaries(CommandSourceStack source,
                                                List<SatelliteSavedData.SatelliteSummary> satellites) {
-        satellites.forEach(satellite -> source.sendSuccess(() -> Component.literal(" - freq="
-                + satellite.frequency()
-                + " id=" + satellite.legacyId()
-                + " name=" + satellite.legacyName()
-                + " interface=" + satellite.satelliteInterface()
-                + " interfaceActions=" + satellite.interfaceActions()
-                + " coordActions=" + satellite.coordActions()
-                + " cargo=" + satellite.cargoPool().orElse("")
-                + " lastOp=" + satellite.lastOperationMillis()), false));
+        satellites.forEach(satellite -> source.sendSuccess(() -> Component.literal(" - "
+                + satellite.detail()), false));
     }
 
     private static Optional<Item> parseItem(CommandSourceStack source, ResourceLocation id) {
@@ -1647,8 +1642,8 @@ public final class ModCommands {
                 .then(Commands.literal("descend")
                         .then(Commands.argument("frequency", IntegerArgumentType.integer())
                                 .suggests((context, builder) -> SharedSuggestionProvider.suggest(
-                                        SatelliteSavedData.get(context.getSource().getLevel()).entriesSnapshot().stream()
-                                                .map(entry -> String.valueOf(entry.getKey())),
+                                        SatelliteSavedData.get(context.getSource().getLevel()).frequenciesSnapshot().stream()
+                                                .map(String::valueOf),
                                         builder))
                                 .executes(context -> descendSatellite(
                                         context.getSource(),
@@ -1728,18 +1723,13 @@ public final class ModCommands {
             return 0;
         }
 
-        for (Map.Entry<Integer, Satellite> entry : data.entriesSnapshot()) {
-            Satellite satellite = entry.getValue();
-            source.sendSuccess(() -> Component.literal(entry.getKey() + " - " + satellite.legacyName()
-                    + " (legacyId=" + satellite.legacyId() + ", interface="
-                    + satellite.satelliteInterface().name().toLowerCase(Locale.ROOT) + ")"), false);
-        }
+        sendSatelliteSummaries(source, data.satelliteSummariesSnapshot(data.size()));
         return data.size();
     }
 
     private static int satelliteStats(CommandSourceStack source) {
         SatelliteSavedData data = SatelliteSavedData.get(source.getLevel());
-        source.sendSuccess(() -> Component.literal("Satellite data: entries=" + data.size()
+        source.sendSuccess(() -> Component.literal("Satellite data: " + data.statsSnapshot(16, 8).summary()
                 + " savedData=" + SatelliteSavedData.DATA_NAME), false);
         return data.size();
     }
@@ -3745,12 +3735,13 @@ public final class ModCommands {
             source.sendFailure(Component.literal("No HBM ROR value provider at " + pos.toShortString()));
             return 0;
         }
-        String value = provider.provideRORValue(name);
+        String valueName = ROR.valueName(name);
+        String value = provider.provideRORValue(valueName);
         if (value == null) {
             source.sendFailure(Component.literal("No ROR value '" + name + "' at " + pos.toShortString()));
             return 0;
         }
-        source.sendSuccess(() -> Component.literal("ROR value " + name + " at " + pos.toShortString() + ": " + value), false);
+        source.sendSuccess(() -> Component.literal("ROR value " + valueName + " at " + pos.toShortString() + ": " + value), false);
         return 1;
     }
 
@@ -3858,16 +3849,14 @@ public final class ModCommands {
             source.sendFailure(Component.literal("No HBM ROR value provider at " + pos.toShortString()));
             return 0;
         }
-        String valueName = name.startsWith(RORInfo.PREFIX_VALUE)
-                ? name.substring(RORInfo.PREFIX_VALUE.length())
-                : name;
+        String valueName = ROR.valueName(name);
         String value = RORRemoteBridge.readValue(provider, valueName);
         if (value == null) {
             source.sendFailure(Component.literal("No ROR value '" + name + "' at " + pos.toShortString()));
             return 0;
         }
         RTTYSystem.broadcast(source.getLevel(), channel, value);
-        source.sendSuccess(() -> Component.literal("Queued ROR value " + ROR.value(valueName)
+        source.sendSuccess(() -> Component.literal("Queued ROR value " + valueName
                 + " from " + pos.toShortString()
                 + " on RTTY channel " + channel
                 + ": " + value), true);

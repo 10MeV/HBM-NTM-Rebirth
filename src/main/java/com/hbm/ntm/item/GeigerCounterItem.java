@@ -2,8 +2,7 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.radiation.RadiationUtil;
-import com.hbm.ntm.registry.ModSounds;
-import net.minecraft.sounds.SoundSource;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
@@ -53,13 +52,13 @@ public class GeigerCounterItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (!level.isClientSide) {
-            level.playSound(null, player.blockPosition(), ModSounds.TOOL_TECH_BOOP.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacyTechBoop(player, 1.0F, 1.0F);
             RadiationUtil.printGeigerData(player);
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
 
     private static void playGeiger(Level level, Entity entity, int sound) {
-        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), ModSounds.geiger(sound), SoundSource.PLAYERS, 1.0F, 1.0F);
+        LegacySoundPlayer.playLegacyGeiger(level, entity, sound);
     }
 }

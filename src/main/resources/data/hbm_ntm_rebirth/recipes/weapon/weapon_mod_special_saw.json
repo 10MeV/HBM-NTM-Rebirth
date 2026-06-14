@@ -1,0 +1,21 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "BBS",
+                    "BHS"
+                ],
+    "key":  {
+                "B":  {
+                          "tag":  "forge:bolts/steel"
+                      },
+                "S":  {
+                          "tag":  "forge:rods/wooden"
+                      },
+                "H":  {
+                          "tag":  "forge:plates/dura_steel"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_saw"
+               }
+}

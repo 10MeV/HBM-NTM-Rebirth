@@ -315,6 +315,9 @@ public final class DamageResistanceConfig {
         expect(problems, "fau laser resistance",
                 hasExact(statsForSet(setStats, "fau_helmet", "fau_plate", "fau_legs", "fau_boots"),
                         DamageClass.LASER.name(), 25.0F, 0.95F));
+        expect(problems, "dns explosion reduction",
+                hasCategory(statsForSet(setStats, "dns_helmet", "dns_plate", "dns_legs", "dns_boots"),
+                        DamageResistanceHandler.CATEGORY_EXPLOSION, 100.0F, 0.99F));
         expect(problems, "euphemium other immunity",
                 hasOther(statsForSet(setStats, "euphemium_helmet", "euphemium_plate", "euphemium_legs", "euphemium_boots"),
                         1_000_000.0F, 1.0F));

@@ -1,11 +1,10 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.config.RadiationConfig;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.RadiationUtil;
-import com.hbm.ntm.registry.ModParticleTypes;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -38,11 +37,7 @@ public class RadioactiveWasteEarthBlock extends Block {
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         super.animateTick(state, level, pos, random);
         if (mycelium) {
-            level.addParticle(ModParticleTypes.TOWN_AURA.get(),
-                    pos.getX() + random.nextFloat(),
-                    pos.getY() + 1.1D,
-                    pos.getZ() + random.nextFloat(),
-                    0.0D, 0.0D, 0.0D);
+            ParticleUtil.spawnRandomTownAuraAboveBlock(level, pos, random);
         }
     }
 

@@ -1,6 +1,6 @@
 {
-  "replace": false,
-  "values": [
-    "hbm_ntm_rebirth:mechanism_gunmetal"
-  ]
+    "replace":  false,
+    "values":  [
+                   "hbm_ntm_rebirth:mechanism_gunmetal"
+               ]
 }

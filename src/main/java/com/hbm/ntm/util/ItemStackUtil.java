@@ -77,12 +77,24 @@ public final class ItemStackUtil {
         HbmItemStackUtil.addStacksToNbt(stack, stacks);
     }
 
+    public static void addStacksToNBT(ItemStack stack, List<ItemStack> stacks) {
+        HbmItemStackUtil.addStacksToNBT(stack, stacks);
+    }
+
     public static void setStacksToNbt(ItemStack stack, ItemStack[] stacks, boolean removeWhenEmpty) {
         HbmItemStackUtil.setStacksToNbt(stack, stacks, removeWhenEmpty);
     }
 
+    public static void setStacksToNBT(ItemStack stack, ItemStack[] stacks, boolean removeWhenEmpty) {
+        HbmItemStackUtil.setStacksToNBT(stack, stacks, removeWhenEmpty);
+    }
+
     public static void setStacksToNbt(ItemStack stack, NonNullList<ItemStack> stacks, boolean removeWhenEmpty) {
         HbmItemStackUtil.setStacksToNbt(stack, stacks, removeWhenEmpty);
+    }
+
+    public static void setStacksToNBT(ItemStack stack, NonNullList<ItemStack> stacks, boolean removeWhenEmpty) {
+        HbmItemStackUtil.setStacksToNBT(stack, stacks, removeWhenEmpty);
     }
 
     public static ItemStack[] readStacksFromNBT(ItemStack stack) {
@@ -97,8 +109,16 @@ public final class ItemStackUtil {
         return HbmItemStackUtil.readStackArrayFromNbt(stack);
     }
 
+    public static ItemStack[] readStackArrayFromNBT(ItemStack stack) {
+        return HbmItemStackUtil.readStackArrayFromNBT(stack);
+    }
+
     public static ItemStack[] readStackArrayFromNbt(ItemStack stack, int count) {
         return HbmItemStackUtil.readStackArrayFromNbt(stack, count);
+    }
+
+    public static ItemStack[] readStackArrayFromNBT(ItemStack stack, int count) {
+        return HbmItemStackUtil.readStackArrayFromNBT(stack, count);
     }
 
     public static NonNullList<ItemStack> readStacksFromNbt(ItemStack stack) {
@@ -414,20 +434,64 @@ public final class ItemStackUtil {
         HbmItemStackUtil.spillItems(level, pos, items, random);
     }
 
+    public static void spillItems(Level level, BlockPos pos, ItemStack[] items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
     public static void spillItems(Level level, BlockPos pos, NonNullList<ItemStack> items, RandomSource random) {
         HbmItemStackUtil.spillItems(level, pos, items, random);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, NonNullList<ItemStack> items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
     }
 
     public static void spillItems(Level level, BlockPos pos, IItemHandler items, RandomSource random) {
         HbmItemStackUtil.spillItems(level, pos, items, random);
     }
 
+    public static void spillItems(Level level, BlockPos pos, IItemHandler items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
     public static void spillItems(Level level, BlockPos pos, Container items, RandomSource random) {
         HbmItemStackUtil.spillItems(level, pos, items, random);
     }
 
+    public static void spillItems(Level level, BlockPos pos, Container items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
     public static void spillStack(Level level, BlockPos pos, ItemStack stack, RandomSource random) {
         HbmItemStackUtil.spillStack(level, pos, stack, random);
+    }
+
+    public static void spillStack(Level level, BlockPos pos, ItemStack stack) {
+        HbmItemStackUtil.spillStack(level, pos, stack);
+    }
+
+    public static void dropStack(Level level, double x, double y, double z, ItemStack stack) {
+        HbmItemStackUtil.dropStack(level, x, y, z, stack);
+    }
+
+    public static void dropStack(Level level, BlockPos pos, ItemStack stack) {
+        HbmItemStackUtil.dropStack(level, pos, stack);
+    }
+
+    public static void dropStacks(Level level, double x, double y, double z, Iterable<ItemStack> stacks) {
+        HbmItemStackUtil.dropStacks(level, x, y, z, stacks);
+    }
+
+    public static void dropStacks(Level level, BlockPos pos, Iterable<ItemStack> stacks) {
+        HbmItemStackUtil.dropStacks(level, pos, stacks);
+    }
+
+    public static void dropStacks(Level level, double x, double y, double z, ItemStack[] stacks) {
+        HbmItemStackUtil.dropStacks(level, x, y, z, stacks);
+    }
+
+    public static void dropStacks(Level level, BlockPos pos, ItemStack[] stacks) {
+        HbmItemStackUtil.dropStacks(level, pos, stacks);
     }
 
     public static boolean giveOrDrop(Player player, ItemStack stack) {
@@ -440,6 +504,44 @@ public final class ItemStackUtil {
 
     public static boolean giveOrDrop(Player player, ItemStack stack, Level fallbackLevel, double x, double y, double z) {
         return HbmItemStackUtil.giveOrDrop(player, stack, fallbackLevel, x, y, z);
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack, Level fallbackLevel, BlockPos pos) {
+        return HbmItemStackUtil.giveOrDrop(player, stack, fallbackLevel, pos);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks, boolean throwRandomly) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, throwRandomly);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks, boolean throwRandomly) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, throwRandomly);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks, Level fallbackLevel, double x,
+            double y, double z) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, fallbackLevel, x, y, z);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks, Level fallbackLevel, BlockPos pos) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, fallbackLevel, pos);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks, Level fallbackLevel, double x, double y,
+            double z) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, fallbackLevel, x, y, z);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks, Level fallbackLevel, BlockPos pos) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, fallbackLevel, pos);
     }
 
     public static void giveChanceStacksToPlayer(Player player, List<HbmItemStackUtil.ChanceStack> stacks) {

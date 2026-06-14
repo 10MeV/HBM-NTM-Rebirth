@@ -1,0 +1,25 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    "BBB",
+                    "PGM"
+                ],
+    "key":  {
+                "G":  {
+                          "tag":  "forge:grips/desh"
+                      },
+                "P":  {
+                          "tag":  "forge:cast_plates/steel"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/gun_metal"
+                      },
+                "B":  {
+                          "tag":  "forge:heavy_barrels/desh"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_panzerschreck"
+               }
+}

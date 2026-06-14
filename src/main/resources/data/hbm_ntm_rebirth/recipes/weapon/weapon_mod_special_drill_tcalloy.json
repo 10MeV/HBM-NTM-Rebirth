@@ -1,0 +1,22 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    " IP",
+                    "IIM",
+                    " IP"
+                ],
+    "key":  {
+                "I":  {
+                          "tag":  "forge:ingots/any_resistant_alloy"
+                      },
+                "P":  {
+                          "tag":  "forge:ingots/rubber"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/weapon_steel"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_drill_tcalloy"
+               }
+}

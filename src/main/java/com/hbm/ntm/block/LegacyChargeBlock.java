@@ -12,7 +12,7 @@ import com.hbm.ntm.explosion.vnt.standard.EntityProcessorStandard;
 import com.hbm.ntm.explosion.vnt.standard.PlayerProcessorStandard;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -144,11 +144,11 @@ public class LegacyChargeBlock extends BaseEntityBlock implements ChainExplodabl
             if (player.isShiftKeyDown()) {
                 if (charge.getTimer() > 0) {
                     charge.setStarted(true);
-                    level.playSound(null, pos, ModSounds.WEAPON_FSTBMB_START.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
+                    LegacySoundPlayer.playLegacyFstbmbStart(level, pos, 1.0F, 1.0F);
                 }
             } else {
                 charge.cycleTimer();
-                level.playSound(null, pos, ModSounds.ITEM_TECH_BOOP.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
+                LegacySoundPlayer.playLegacyTechBoop(level, pos, SoundSource.BLOCKS, 1.0F, 1.0F);
             }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
@@ -162,7 +162,7 @@ public class LegacyChargeBlock extends BaseEntityBlock implements ChainExplodabl
         if (!level.isClientSide) {
             if (charge.isStarted()) {
                 charge.setStarted(false);
-                level.playSound(null, pos, ModSounds.WEAPON_FSTBMB_START.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
+                LegacySoundPlayer.playLegacyFstbmbStart(level, pos, 1.0F, 1.0F);
             } else {
                 level.removeBlock(pos, false);
                 popResource(level, pos, new ItemStack(this));

@@ -9,6 +9,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.AbstractList;
+import java.util.AbstractMap;
 import java.util.EnumSet;
 import java.util.EnumMap;
 import java.util.IdentityHashMap;
@@ -19,13 +21,30 @@ import java.util.Set;
 
 public abstract class Satellite {
     private static final Map<Item, LegacySatelliteType> ITEM_TYPES = new IdentityHashMap<>();
+    private static final Map<Class<? extends Satellite>, LegacySatelliteType> CLASS_TYPES = new IdentityHashMap<>();
+    private static final EnumMap<LegacySatelliteType, Class<? extends Satellite>> TYPE_CLASSES =
+            new EnumMap<>(LegacySatelliteType.class);
     private static final EnumMap<LegacySatelliteType, String> CARGO_POOLS = new EnumMap<>(LegacySatelliteType.class);
+    public static final List<Class<? extends Satellite>> satellites = new LegacySatelliteClassList();
+    public static final Map<Item, Class<? extends Satellite>> itemToClass = new LegacySatelliteItemClassMap();
 
     protected final EnumSet<InterfaceAction> interfaceActions = EnumSet.noneOf(InterfaceAction.class);
     protected final EnumSet<CoordAction> coordActions = EnumSet.noneOf(CoordAction.class);
     protected SatelliteInterface satelliteInterface = SatelliteInterface.NONE;
+    public final List<InterfaceActions> ifaceAcs = new LegacyInterfaceActionList();
+    public final List<CoordActions> coordAcs = new LegacyCoordActionList();
+    public Interfaces satIface = Interfaces.NONE;
 
     static {
+        registerSatelliteClass(SatelliteMapper.class, LegacySatelliteType.MAPPER);
+        registerSatelliteClass(SatelliteScanner.class, LegacySatelliteType.SCANNER);
+        registerSatelliteClass(SatelliteRadar.class, LegacySatelliteType.RADAR);
+        registerSatelliteClass(SatelliteLaser.class, LegacySatelliteType.LASER);
+        registerSatelliteClass(SatelliteResonator.class, LegacySatelliteType.RESONATOR);
+        registerSatelliteClass(SatelliteRelay.class, LegacySatelliteType.RELAY);
+        registerSatelliteClass(SatelliteMiner.class, LegacySatelliteType.MINER);
+        registerSatelliteClass(SatelliteLunarMiner.class, LegacySatelliteType.LUNAR_MINER);
+        registerSatelliteClass(SatelliteHorizons.class, LegacySatelliteType.HORIZONS);
         for (LegacySatelliteType type : LegacySatelliteType.values()) {
             type.defaultCargoPool().ifPresent(cargo -> CARGO_POOLS.put(type, cargo));
         }
@@ -33,6 +52,13 @@ public abstract class Satellite {
 
     public static Satellite create(int legacyId) {
         LegacySatelliteType type = LegacySatelliteType.byLegacyId(legacyId);
+        if (type == null) {
+            return null;
+        }
+        return create(type);
+    }
+
+    public static Satellite create(LegacySatelliteType type) {
         if (type == null) {
             return null;
         }
@@ -47,6 +73,12 @@ public abstract class Satellite {
             case LUNAR_MINER -> new SatelliteLunarMiner();
             case HORIZONS -> new SatelliteHorizons();
         };
+    }
+
+    public static Satellite create(Class<? extends Satellite> satelliteClass) {
+        return getTypeFromClass(satelliteClass)
+                .map(Satellite::create)
+                .orElse(null);
     }
 
     public static Satellite load(int legacyId, CompoundTag data) {
@@ -71,6 +103,13 @@ public abstract class Satellite {
         return type != null && orbit(level, type.legacyId(), frequency, x, y, z);
     }
 
+    public static boolean orbit(ServerLevel level, Class<? extends Satellite> satelliteClass, int frequency,
+                                double x, double y, double z) {
+        return getTypeFromClass(satelliteClass)
+                .map(type -> orbit(level, type, frequency, x, y, z))
+                .orElse(false);
+    }
+
     public static boolean orbit(ServerLevel level, Item item, int frequency, double x, double y, double z) {
         return orbit(level, getLegacyIdFromItem(item), frequency, x, y, z);
     }
@@ -80,8 +119,17 @@ public abstract class Satellite {
     }
 
     public static void registerSatelliteItem(Item item, LegacySatelliteType type) {
-        if (item != null && type != null) {
+        if (item != null && type != null && !ITEM_TYPES.containsKey(item) && !ITEM_TYPES.containsValue(type)) {
             ITEM_TYPES.put(item, type);
+        }
+    }
+
+    public static void registerSatelliteClass(Class<? extends Satellite> satelliteClass, LegacySatelliteType type) {
+        if (satelliteClass != null && type != null
+                && !CLASS_TYPES.containsKey(satelliteClass)
+                && !TYPE_CLASSES.containsKey(type)) {
+            CLASS_TYPES.put(satelliteClass, type);
+            TYPE_CLASSES.put(type, satelliteClass);
         }
     }
 
@@ -93,6 +141,10 @@ public abstract class Satellite {
         registerSatelliteItem(item, LegacySatelliteType.byLegacyId(legacyId));
     }
 
+    public static void registerSatellite(Class<? extends Satellite> satelliteClass, Item item) {
+        getTypeFromClass(satelliteClass).ifPresent(type -> registerSatellite(type, item));
+    }
+
     public static Optional<LegacySatelliteType> getTypeFromItem(Item item) {
         if (item instanceof SatelliteChipItem chipItem && chipItem.satelliteType() != null) {
             return Optional.of(chipItem.satelliteType());
@@ -102,6 +154,34 @@ public abstract class Satellite {
 
     public static Optional<LegacySatelliteType> getTypeFromStack(ItemStack stack) {
         return stack == null || stack.isEmpty() ? Optional.empty() : getTypeFromItem(stack.getItem());
+    }
+
+    public static Optional<LegacySatelliteType> getTypeFromClass(Class<? extends Satellite> satelliteClass) {
+        return Optional.ofNullable(satelliteClass == null ? null : CLASS_TYPES.get(satelliteClass));
+    }
+
+    public static Optional<LegacySatelliteType> getTypeFromSatellite(Satellite satellite) {
+        return Optional.ofNullable(satellite == null ? null : satellite.type());
+    }
+
+    public static Optional<Class<? extends Satellite>> getClassFromType(LegacySatelliteType type) {
+        return Optional.ofNullable(type == null ? null : TYPE_CLASSES.get(type));
+    }
+
+    public static Optional<Class<? extends Satellite>> getClassFromLegacyId(int legacyId) {
+        return getClassFromType(LegacySatelliteType.byLegacyId(legacyId));
+    }
+
+    public static Optional<Class<? extends Satellite>> getClassFromItem(Item item) {
+        return getTypeFromItem(item).flatMap(Satellite::getClassFromType);
+    }
+
+    public static Optional<Class<? extends Satellite>> getClassFromStack(ItemStack stack) {
+        return getTypeFromStack(stack).flatMap(Satellite::getClassFromType);
+    }
+
+    public static Optional<Class<? extends Satellite>> getClassFromSatellite(Satellite satellite) {
+        return getTypeFromSatellite(satellite).flatMap(Satellite::getClassFromType);
     }
 
     public static int getLegacyIdFromItem(Item item) {
@@ -116,8 +196,28 @@ public abstract class Satellite {
                 .orElse(-1);
     }
 
+    public static int getLegacyIdFromClass(Class<? extends Satellite> satelliteClass) {
+        return getTypeFromClass(satelliteClass)
+                .map(LegacySatelliteType::legacyId)
+                .orElse(-1);
+    }
+
+    public static int getLegacyIdFromSatellite(Satellite satellite) {
+        return getTypeFromSatellite(satellite)
+                .map(LegacySatelliteType::legacyId)
+                .orElse(-1);
+    }
+
     public static int getIDFromItem(Item item) {
         return getLegacyIdFromItem(item);
+    }
+
+    public static int getIDFromClass(Class<? extends Satellite> satelliteClass) {
+        return getLegacyIdFromClass(satelliteClass);
+    }
+
+    public static int getIDFromSatellite(Satellite satellite) {
+        return getLegacyIdFromSatellite(satellite);
     }
 
     public static Optional<String> getCargoPoolFromItem(Item item) {
@@ -128,6 +228,14 @@ public abstract class Satellite {
         return getTypeFromStack(stack).flatMap(Satellite::cargoPoolForType);
     }
 
+    public static Optional<String> getCargoPoolFromClass(Class<? extends Satellite> satelliteClass) {
+        return getTypeFromClass(satelliteClass).flatMap(Satellite::cargoPoolForType);
+    }
+
+    public static Optional<String> getCargoPoolFromSatellite(Satellite satellite) {
+        return getTypeFromSatellite(satellite).flatMap(Satellite::cargoPoolForType);
+    }
+
     @Nullable
     public static String getCargoForItem(Item item) {
         return getCargoPoolFromItem(item).orElse(null);
@@ -136,6 +244,16 @@ public abstract class Satellite {
     @Nullable
     public static String getCargoForStack(ItemStack stack) {
         return getCargoPoolFromStack(stack).orElse(null);
+    }
+
+    @Nullable
+    public static String getCargoForClass(Class<? extends Satellite> satelliteClass) {
+        return getCargoPoolFromClass(satelliteClass).orElse(null);
+    }
+
+    @Nullable
+    public static String getCargoForSatellite(Satellite satellite) {
+        return getCargoPoolFromSatellite(satellite).orElse(null);
     }
 
     public static void registerCargo(LegacySatelliteType type, String cargoPool) {
@@ -149,8 +267,28 @@ public abstract class Satellite {
         registerCargo(LegacySatelliteType.byLegacyId(legacyId), cargoPool);
     }
 
+    public static void registerCargo(Class<? extends Satellite> satelliteClass, String cargoPool) {
+        getTypeFromClass(satelliteClass).ifPresent(type -> registerCargo(type, cargoPool));
+    }
+
     public static Optional<String> cargoPoolForType(LegacySatelliteType type) {
         return Optional.ofNullable(type == null ? null : CARGO_POOLS.get(type));
+    }
+
+    public static boolean hasCargoPool(LegacySatelliteType type) {
+        return cargoPoolForType(type).isPresent();
+    }
+
+    public static boolean hasCargoPool(Class<? extends Satellite> satelliteClass) {
+        return getTypeFromClass(satelliteClass)
+                .filter(Satellite::hasCargoPool)
+                .isPresent();
+    }
+
+    public static boolean hasCargoPool(Satellite satellite) {
+        return getTypeFromSatellite(satellite)
+                .filter(Satellite::hasCargoPool)
+                .isPresent();
     }
 
     @Nullable
@@ -162,12 +300,86 @@ public abstract class Satellite {
         return List.of(LegacySatelliteType.values());
     }
 
+    public static Map<Class<? extends Satellite>, LegacySatelliteType> classTypesSnapshot() {
+        return Map.copyOf(CLASS_TYPES);
+    }
+
+    public static Map<LegacySatelliteType, Class<? extends Satellite>> typeClassesSnapshot() {
+        return Map.copyOf(TYPE_CLASSES);
+    }
+
+    public static List<Class<? extends Satellite>> satelliteClassesSnapshot() {
+        return satelliteTypesSnapshot().stream()
+                .map(TYPE_CLASSES::get)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
     public static Map<Item, LegacySatelliteType> itemTypesSnapshot() {
         return Map.copyOf(ITEM_TYPES);
     }
 
+    public static Map<Item, Class<? extends Satellite>> itemClassesSnapshot() {
+        return Map.copyOf(itemToClass);
+    }
+
     public static Map<LegacySatelliteType, String> cargoPoolsSnapshot() {
         return Map.copyOf(CARGO_POOLS);
+    }
+
+    private static final class LegacySatelliteClassList extends AbstractList<Class<? extends Satellite>> {
+        @Override
+        public Class<? extends Satellite> get(int index) {
+            LegacySatelliteType type = LegacySatelliteType.byLegacyId(index);
+            if (type == null) {
+                throw new IndexOutOfBoundsException(index);
+            }
+            Class<? extends Satellite> satelliteClass = TYPE_CLASSES.get(type);
+            if (satelliteClass == null) {
+                throw new IndexOutOfBoundsException(index);
+            }
+            return satelliteClass;
+        }
+
+        @Override
+        public int size() {
+            return (int) satelliteTypesSnapshot().stream()
+                    .map(TYPE_CLASSES::get)
+                    .filter(java.util.Objects::nonNull)
+                    .count();
+        }
+    }
+
+    private static final class LegacySatelliteItemClassMap extends AbstractMap<Item, Class<? extends Satellite>> {
+        @Override
+        public Class<? extends Satellite> get(Object key) {
+            if (!(key instanceof Item item)) {
+                return null;
+            }
+            return getClassFromItem(item).orElse(null);
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return get(key) != null;
+        }
+
+        @Override
+        public boolean containsValue(Object value) {
+            return value instanceof Class<?> satelliteClass
+                    && Satellite.class.isAssignableFrom(satelliteClass)
+                    && CLASS_TYPES.containsKey(satelliteClass);
+        }
+
+        @Override
+        public Set<Entry<Item, Class<? extends Satellite>>> entrySet() {
+            return ITEM_TYPES.entrySet().stream()
+                    .map(entry -> getClassFromType(entry.getValue())
+                            .map(satelliteClass -> new AbstractMap.SimpleImmutableEntry<Item,
+                                    Class<? extends Satellite>>(entry.getKey(), satelliteClass)))
+                    .flatMap(Optional::stream)
+                    .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        }
     }
 
     public abstract LegacySatelliteType type();
@@ -189,7 +401,7 @@ public abstract class Satellite {
     }
 
     public SatelliteInterface satelliteInterface() {
-        return satelliteInterface;
+        return satIface == null ? SatelliteInterface.NONE : satIface.modern();
     }
 
     public Set<InterfaceAction> interfaceActions() {
@@ -198,6 +410,162 @@ public abstract class Satellite {
 
     public Set<CoordAction> coordActions() {
         return Set.copyOf(coordActions);
+    }
+
+    public boolean hasInterfaceAction(InterfaceAction action) {
+        return action != null && interfaceActions.contains(action);
+    }
+
+    public boolean hasInterfaceAction(InterfaceActions action) {
+        return action != null && hasInterfaceAction(action.modern());
+    }
+
+    public boolean hasCoordAction(CoordAction action) {
+        return action != null && coordActions.contains(action);
+    }
+
+    public boolean hasCoordAction(CoordActions action) {
+        return action != null && hasCoordAction(action.modern());
+    }
+
+    protected void setSatelliteInterface(SatelliteInterface satelliteInterface) {
+        this.satelliteInterface = satelliteInterface == null ? SatelliteInterface.NONE : satelliteInterface;
+        this.satIface = Interfaces.fromModern(this.satelliteInterface);
+    }
+
+    protected void setSatelliteInterface(Interfaces satelliteInterface) {
+        this.satIface = satelliteInterface == null ? Interfaces.NONE : satelliteInterface;
+        this.satelliteInterface = this.satIface.modern();
+    }
+
+    protected void addInterfaceAction(InterfaceAction action) {
+        if (action != null) {
+            interfaceActions.add(action);
+        }
+    }
+
+    protected void addInterfaceAction(InterfaceActions action) {
+        if (action != null) {
+            addInterfaceAction(action.modern());
+        }
+    }
+
+    protected void addCoordAction(CoordAction action) {
+        if (action != null) {
+            coordActions.add(action);
+        }
+    }
+
+    protected void addCoordAction(CoordActions action) {
+        if (action != null) {
+            addCoordAction(action.modern());
+        }
+    }
+
+    public Interfaces legacySatelliteInterface() {
+        return Interfaces.fromModern(satelliteInterface());
+    }
+
+    private final class LegacyInterfaceActionList extends AbstractList<InterfaceActions> {
+        @Override
+        public InterfaceActions get(int index) {
+            int current = 0;
+            for (InterfaceActions action : InterfaceActions.values()) {
+                if (interfaceActions.contains(action.modern())) {
+                    if (current == index) {
+                        return action;
+                    }
+                    current++;
+                }
+            }
+            throw new IndexOutOfBoundsException(index);
+        }
+
+        @Override
+        public int size() {
+            return interfaceActions.size();
+        }
+
+        @Override
+        public void add(int index, InterfaceActions element) {
+            addInterfaceAction(element);
+        }
+
+        @Override
+        public InterfaceActions set(int index, InterfaceActions element) {
+            InterfaceActions old = get(index);
+            remove(index);
+            addInterfaceAction(element);
+            return old;
+        }
+
+        @Override
+        public InterfaceActions remove(int index) {
+            InterfaceActions old = get(index);
+            interfaceActions.remove(old.modern());
+            return old;
+        }
+
+        @Override
+        public boolean remove(Object object) {
+            return object instanceof InterfaceActions action && interfaceActions.remove(action.modern());
+        }
+
+        @Override
+        public void clear() {
+            interfaceActions.clear();
+        }
+    }
+
+    private final class LegacyCoordActionList extends AbstractList<CoordActions> {
+        @Override
+        public CoordActions get(int index) {
+            int current = 0;
+            for (CoordActions action : CoordActions.values()) {
+                if (coordActions.contains(action.modern())) {
+                    if (current == index) {
+                        return action;
+                    }
+                    current++;
+                }
+            }
+            throw new IndexOutOfBoundsException(index);
+        }
+
+        @Override
+        public int size() {
+            return coordActions.size();
+        }
+
+        @Override
+        public void add(int index, CoordActions element) {
+            addCoordAction(element);
+        }
+
+        @Override
+        public CoordActions set(int index, CoordActions element) {
+            CoordActions old = get(index);
+            remove(index);
+            addCoordAction(element);
+            return old;
+        }
+
+        @Override
+        public CoordActions remove(int index) {
+            CoordActions old = get(index);
+            coordActions.remove(old.modern());
+            return old;
+        }
+
+        @Override
+        public boolean remove(Object object) {
+            return object instanceof CoordActions action && coordActions.remove(action.modern());
+        }
+
+        @Override
+        public void clear() {
+            coordActions.clear();
+        }
     }
 
     public CompoundTag saveData() {
@@ -270,5 +638,39 @@ public abstract class Satellite {
         NONE,
         SAT_PANEL,
         SAT_COORD
+    }
+
+    public enum InterfaceActions {
+        HAS_MAP,
+        CAN_CLICK,
+        SHOW_COORDS,
+        HAS_RADAR,
+        HAS_ORES;
+
+        private InterfaceAction modern() {
+            return InterfaceAction.valueOf(name());
+        }
+    }
+
+    public enum CoordActions {
+        HAS_Y;
+
+        private CoordAction modern() {
+            return CoordAction.valueOf(name());
+        }
+    }
+
+    public enum Interfaces {
+        NONE,
+        SAT_PANEL,
+        SAT_COORD;
+
+        private SatelliteInterface modern() {
+            return SatelliteInterface.valueOf(name());
+        }
+
+        private static Interfaces fromModern(SatelliteInterface satelliteInterface) {
+            return satelliteInterface == null ? NONE : Interfaces.valueOf(satelliteInterface.name());
+        }
     }
 }

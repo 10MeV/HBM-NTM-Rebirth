@@ -31,7 +31,6 @@ import com.hbm.ntm.recipe.GenericMachineRecipeRuntime.ProcessingResult;
 import com.hbm.ntm.recipe.GenericMachineRecipeSelector;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
@@ -170,7 +169,7 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
         receivingTankList = inputTankList;
         sendingTankList = outputTankList;
         allTankList = join(join(inputTankList, outputTankList), List.of(water, spentSteam));
-        IFluidHandler recipeFluidHandler = new ForgeRecipeFluidHandlerAdapter(receivingTankList, sendingTankList, 0,
+        IFluidHandler recipeFluidHandler = ForgeRecipeFluidHandlerAdapter.create(receivingTankList, sendingTankList, 0,
                 this::onFluidContentsChanged);
         fluidHandler = LazyOptional.of(() -> recipeFluidHandler);
         coolingDelegate = new CapabilityDelegate(null, new ForgeFluidHandlerAdapter(List.of(water), List.of(spentSteam), 0,
@@ -291,7 +290,8 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
         }
         setSelectedRecipe(module, selectedRecipe);
         GenericMachineRecipe recipe = getSelectedRecipeDefinition(module);
-        GenericMachineRecipeRuntime.setupTanks(recipe, moduleInputTanks(module), moduleOutputTanks(module), RECIPE_TANK_CAPACITY);
+        GenericMachineRecipeRuntime.setupTanksReport(recipe, moduleInputTanks(module), moduleOutputTanks(module),
+                RECIPE_TANK_CAPACITY);
         updateDynamicCapacity();
         if (!level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
@@ -630,7 +630,7 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
         for (boolean processing : didProcess) {
             active |= processing;
         }
-        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_CHEMPLANT_OPERATE.getId(),
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.chemplantOperate",
                 active, 50.0D, 15.0F, 1.0F, 1.0F);
     }
 

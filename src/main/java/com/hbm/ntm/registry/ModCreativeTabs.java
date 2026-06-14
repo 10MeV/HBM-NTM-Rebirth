@@ -6,6 +6,7 @@ import com.hbm.ntm.item.ConveyorWandItem;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
+import com.hbm.ntm.item.FluidDuctVariantBlockItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
@@ -143,6 +144,8 @@ public final class ModCreativeTabs {
             stateItem.addCreativeStacks(output);
         } else if (item instanceof LegacyStateBlockItem stateItem) {
             stateItem.addCreativeStacks(output);
+        } else if (item instanceof FluidDuctVariantBlockItem duct) {
+            duct.addCreativeStacks(output);
         } else {
             acceptSingleStack(output, item);
         }

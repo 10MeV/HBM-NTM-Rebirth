@@ -22,6 +22,7 @@ public final class HbmLivingProperties {
     public static final UUID DIGAMMA_UUID = RadiationData.DIGAMMA_UUID;
     @Deprecated(forRemoval = false)
     public static final UUID digamma_UUID = DIGAMMA_UUID;
+    public static final int MKU_CONTAGION_TICKS = 3 * 60 * 60 * 20;
     public static final int MAX_ASBESTOS = RadiationData.MAX_ASBESTOS;
     public static final int MAX_BLACK_LUNG = RadiationData.MAX_BLACK_LUNG;
     @Deprecated
@@ -41,6 +42,20 @@ public final class HbmLivingProperties {
         RadiationData.incrementRadiation(entity, amount);
     }
 
+    public static float addRadiation(LivingEntity entity, float amount) {
+        incrementRadiation(entity, amount);
+        return getRadiation(entity);
+    }
+
+    public static float reduceRadiation(LivingEntity entity, float amount) {
+        incrementRadiation(entity, -Math.max(0.0F, amount));
+        return getRadiation(entity);
+    }
+
+    public static void clearRadiation(LivingEntity entity) {
+        setRadiation(entity, 0.0F);
+    }
+
     public static float getDigamma(LivingEntity entity) {
         return RadiationData.getDigamma(entity);
     }
@@ -51,6 +66,28 @@ public final class HbmLivingProperties {
 
     public static void incrementDigamma(LivingEntity entity, float amount) {
         RadiationData.incrementDigamma(entity, amount);
+    }
+
+    public static float addDigamma(LivingEntity entity, float amount) {
+        incrementDigamma(entity, amount);
+        return getDigamma(entity);
+    }
+
+    public static float reduceDigamma(LivingEntity entity, float amount) {
+        incrementDigamma(entity, -Math.max(0.0F, amount));
+        return getDigamma(entity);
+    }
+
+    public static float capDigamma(LivingEntity entity, float maximum) {
+        float cap = Math.max(0.0F, maximum);
+        if (getDigamma(entity) > cap) {
+            setDigamma(entity, cap);
+        }
+        return getDigamma(entity);
+    }
+
+    public static void clearDigamma(LivingEntity entity) {
+        setDigamma(entity, 0.0F);
     }
 
     public static void applyDigammaModifier(LivingEntity entity) {
@@ -369,6 +406,29 @@ public final class HbmLivingProperties {
         RadiationData.incrementAsbestos(entity, amount);
     }
 
+    public static void ensureAsbestos(LivingEntity entity, int minimum) {
+        if (getAsbestos(entity) < minimum) {
+            setAsbestos(entity, minimum);
+        }
+    }
+
+    public static int reduceAsbestos(LivingEntity entity, int amount) {
+        setAsbestos(entity, getAsbestos(entity) - Math.max(0, amount));
+        return getAsbestos(entity);
+    }
+
+    public static int capAsbestos(LivingEntity entity, int maximum) {
+        int cap = Math.max(0, maximum);
+        if (getAsbestos(entity) > cap) {
+            setAsbestos(entity, cap);
+        }
+        return getAsbestos(entity);
+    }
+
+    public static void clearAsbestos(LivingEntity entity) {
+        setAsbestos(entity, 0);
+    }
+
     public static int getBlackLung(LivingEntity entity) {
         return RadiationData.getBlackLung(entity);
     }
@@ -381,6 +441,29 @@ public final class HbmLivingProperties {
         RadiationData.incrementBlackLung(entity, amount);
     }
 
+    public static void ensureBlackLung(LivingEntity entity, int minimum) {
+        if (getBlackLung(entity) < minimum) {
+            setBlackLung(entity, minimum);
+        }
+    }
+
+    public static int reduceBlackLung(LivingEntity entity, int amount) {
+        setBlackLung(entity, getBlackLung(entity) - Math.max(0, amount));
+        return getBlackLung(entity);
+    }
+
+    public static int capBlackLung(LivingEntity entity, int maximum) {
+        int cap = Math.max(0, maximum);
+        if (getBlackLung(entity) > cap) {
+            setBlackLung(entity, cap);
+        }
+        return getBlackLung(entity);
+    }
+
+    public static void clearBlackLung(LivingEntity entity) {
+        setBlackLung(entity, 0);
+    }
+
     public static int getTimer(LivingEntity entity) {
         return RadiationData.getBombTimer(entity);
     }
@@ -389,12 +472,40 @@ public final class HbmLivingProperties {
         RadiationData.setBombTimer(entity, bombTimer);
     }
 
+    public static int addTimer(LivingEntity entity, int amount) {
+        int timer = Math.max(0, getTimer(entity) + amount);
+        setTimer(entity, timer);
+        return timer;
+    }
+
+    public static int decrementTimer(LivingEntity entity) {
+        return addTimer(entity, -1);
+    }
+
+    public static void ensureTimer(LivingEntity entity, int minimum) {
+        if (getTimer(entity) < minimum) {
+            setTimer(entity, minimum);
+        }
+    }
+
+    public static void clearTimer(LivingEntity entity) {
+        setTimer(entity, 0);
+    }
+
     public static int getBombTimer(LivingEntity entity) {
         return RadiationData.getBombTimer(entity);
     }
 
     public static void setBombTimer(LivingEntity entity, int bombTimer) {
         RadiationData.setBombTimer(entity, bombTimer);
+    }
+
+    public static int decrementBombTimer(LivingEntity entity) {
+        return addTimer(entity, -1);
+    }
+
+    public static void clearBombTimer(LivingEntity entity) {
+        setBombTimer(entity, 0);
     }
 
     public static int getContagion(LivingEntity entity) {
@@ -406,6 +517,34 @@ public final class HbmLivingProperties {
 
     public static void setContagion(LivingEntity entity, int contagion) {
         RadiationData.setContagion(entity, contagion);
+    }
+
+    public static int addContagion(LivingEntity entity, int amount) {
+        int contagion = Math.max(0, RadiationData.getContagion(entity) + amount);
+        setContagion(entity, contagion);
+        return contagion;
+    }
+
+    public static void ensureContagion(LivingEntity entity, int minimum) {
+        if (RadiationData.getContagion(entity) < minimum) {
+            setContagion(entity, minimum);
+        }
+    }
+
+    public static void applyMkuContagion(LivingEntity entity) {
+        setContagion(entity, MKU_CONTAGION_TICKS);
+    }
+
+    public static int decrementContagion(LivingEntity entity) {
+        return addContagion(entity, -1);
+    }
+
+    public static int reduceContagion(LivingEntity entity, int amount) {
+        return addContagion(entity, -Math.max(0, amount));
+    }
+
+    public static void clearContagion(LivingEntity entity) {
+        setContagion(entity, 0);
     }
 
     public static int getOil(LivingEntity entity) {
@@ -426,6 +565,20 @@ public final class HbmLivingProperties {
         }
     }
 
+    public static int decrementOil(LivingEntity entity) {
+        setOil(entity, getOil(entity) - 1);
+        return getOil(entity);
+    }
+
+    public static int reduceOil(LivingEntity entity, int amount) {
+        setOil(entity, getOil(entity) - Math.max(0, amount));
+        return getOil(entity);
+    }
+
+    public static void clearOil(LivingEntity entity) {
+        setOil(entity, 0);
+    }
+
     public static int getFire(LivingEntity entity) {
         return RadiationData.getFire(entity);
     }
@@ -442,6 +595,20 @@ public final class HbmLivingProperties {
         if (getFire(entity) < minimum) {
             setFire(entity, minimum);
         }
+    }
+
+    public static int decrementFire(LivingEntity entity) {
+        setFire(entity, getFire(entity) - 1);
+        return getFire(entity);
+    }
+
+    public static int reduceFire(LivingEntity entity, int amount) {
+        setFire(entity, getFire(entity) - Math.max(0, amount));
+        return getFire(entity);
+    }
+
+    public static void clearFire(LivingEntity entity) {
+        setFire(entity, 0);
     }
 
     public static int getPhosphorus(LivingEntity entity) {
@@ -462,6 +629,20 @@ public final class HbmLivingProperties {
         }
     }
 
+    public static int decrementPhosphorus(LivingEntity entity) {
+        setPhosphorus(entity, getPhosphorus(entity) - 1);
+        return getPhosphorus(entity);
+    }
+
+    public static int reducePhosphorus(LivingEntity entity, int amount) {
+        setPhosphorus(entity, getPhosphorus(entity) - Math.max(0, amount));
+        return getPhosphorus(entity);
+    }
+
+    public static void clearPhosphorus(LivingEntity entity) {
+        setPhosphorus(entity, 0);
+    }
+
     public static int getBalefire(LivingEntity entity) {
         return RadiationData.getBalefire(entity);
     }
@@ -480,6 +661,20 @@ public final class HbmLivingProperties {
         }
     }
 
+    public static int decrementBalefire(LivingEntity entity) {
+        setBalefire(entity, getBalefire(entity) - 1);
+        return getBalefire(entity);
+    }
+
+    public static int reduceBalefire(LivingEntity entity, int amount) {
+        setBalefire(entity, getBalefire(entity) - Math.max(0, amount));
+        return getBalefire(entity);
+    }
+
+    public static void clearBalefire(LivingEntity entity) {
+        setBalefire(entity, 0);
+    }
+
     public static int getBlackFire(LivingEntity entity) {
         return RadiationData.getBlackFire(entity);
     }
@@ -496,6 +691,44 @@ public final class HbmLivingProperties {
         if (getBlackFire(entity) < minimum) {
             setBlackFire(entity, minimum);
         }
+    }
+
+    public static int decrementBlackFire(LivingEntity entity) {
+        setBlackFire(entity, getBlackFire(entity) - 1);
+        return getBlackFire(entity);
+    }
+
+    public static int reduceBlackFire(LivingEntity entity, int amount) {
+        setBlackFire(entity, getBlackFire(entity) - Math.max(0, amount));
+        return getBlackFire(entity);
+    }
+
+    public static void clearBlackFire(LivingEntity entity) {
+        setBlackFire(entity, 0);
+    }
+
+    public static int ensureBlackFireOrAdd(LivingEntity entity, int minimum, int amount) {
+        int blackFire = getBlackFire(entity);
+        if (blackFire < minimum) {
+            setBlackFire(entity, minimum);
+            return minimum;
+        }
+        addBlackFire(entity, amount);
+        return getBlackFire(entity);
+    }
+
+    public static boolean hasTemperatureEffects(LivingEntity entity) {
+        return getFire(entity) > 0
+                || getPhosphorus(entity) > 0
+                || getBalefire(entity) > 0
+                || getBlackFire(entity) > 0;
+    }
+
+    public static void clearTemperatureEffects(LivingEntity entity) {
+        clearFire(entity);
+        clearPhosphorus(entity);
+        clearBalefire(entity);
+        clearBlackFire(entity);
     }
 
     public static void copyForRespawn(LivingEntity original, LivingEntity replacement) {

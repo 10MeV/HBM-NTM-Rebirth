@@ -71,7 +71,11 @@ public class RBMKPanelBlock extends BaseEntityBlock implements Toolable {
         }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof RBMKPanelBlockEntity panel) {
-            NetworkHooks.openScreen(serverPlayer, panel, pos);
+            if (panelType == RBMKPanelPlanner.PanelType.DISPLAY) {
+                panel.rotateDisplay();
+            } else {
+                NetworkHooks.openScreen(serverPlayer, panel, pos);
+            }
         }
         return true;
     }
@@ -85,6 +89,10 @@ public class RBMKPanelBlock extends BaseEntityBlock implements Toolable {
                     ? InteractionResult.sidedSuccess(level.isClientSide) : InteractionResult.PASS;
         }
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof RBMKPanelBlockEntity panel) {
+            if (panelType == RBMKPanelPlanner.PanelType.TERMINAL && player instanceof ServerPlayer serverPlayer) {
+                NetworkHooks.openScreen(serverPlayer, panel, pos);
+                return InteractionResult.CONSUME;
+            }
             if (panelType == RBMKPanelPlanner.PanelType.KEYPAD) {
                 RBMKPanelBlockPlanner.KeypadHitPlan plan = RBMKPanelBlockPlanner.planKeypadHit(
                         state.getValue(FACING).ordinal(), hit.getDirection().ordinal(),

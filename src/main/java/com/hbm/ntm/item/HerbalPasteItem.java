@@ -15,10 +15,9 @@ public class HerbalPasteItem extends LegacyPillItem {
 
     @Override
     protected void applyPillEffects(ItemStack stack, Level level, Player player) {
-        HbmLivingProperties.setAsbestos(player, 0);
-        HbmLivingProperties.setBlackLung(player,
-                Math.min(HbmLivingProperties.getBlackLung(player), HbmLivingProperties.MAX_BLACK_LUNG / 5));
-        HbmLivingProperties.incrementRadiation(player, -100.0F);
+        HbmLivingProperties.clearAsbestos(player);
+        HbmLivingProperties.capBlackLung(player, HbmLivingProperties.MAX_BLACK_LUNG / 5);
+        HbmLivingProperties.reduceRadiation(player, 100.0F);
 
         player.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 10 * 20, 0));
         player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 10 * 60 * 20, 2));

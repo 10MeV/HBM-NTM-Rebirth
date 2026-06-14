@@ -1,0 +1,24 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "PDS",
+                    "  G"
+                ],
+    "key":  {
+                "P":  {
+                          "tag":  "forge:ingots/any_plastic"
+                      },
+                "D":  {
+                          "tag":  "forge:dyes/green"
+                      },
+                "S":  {
+                          "tag":  "forge:stocks/any_plastic"
+                      },
+                "G":  {
+                          "tag":  "forge:grips/any_plastic"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_furniture_green"
+               }
+}

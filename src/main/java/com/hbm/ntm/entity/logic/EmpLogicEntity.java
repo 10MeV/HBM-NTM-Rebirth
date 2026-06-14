@@ -1,10 +1,9 @@
 package com.hbm.ntm.entity.logic;
 
 import com.hbm.ntm.energy.HbmEnergyHandler;
+import com.hbm.ntm.particle.ParticleUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -12,7 +11,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.energy.IEnergyStorage;
@@ -83,10 +81,7 @@ public class EmpLogicEntity extends Entity {
         for (BlockPos pos : machines) {
             BlockEntity blockEntity = level().isLoaded(pos) ? level().getBlockEntity(pos) : null;
             if (emp(blockEntity) && level().random.nextInt(20) == 0 && level() instanceof ServerLevel serverLevel) {
-                serverLevel.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK,
-                                Blocks.PURPLE_STAINED_GLASS.defaultBlockState()),
-                        pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D,
-                        8, 0.25D, 0.25D, 0.25D, 0.05D);
+                ParticleUtil.spawnEmpMachineBurst(serverLevel, pos);
             }
         }
     }

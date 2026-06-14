@@ -33,6 +33,11 @@ public class FluidDuctPaintableBlock extends FluidDuctBoxBlock implements Toolab
         registerDefaultState(defaultBlockState().setValue(OVERLAY, true));
     }
 
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
+    }
+
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {

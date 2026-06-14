@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:block_euphemium_cluster" } },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:nugget_euphemium", "count": 7 },
+    { "item": "hbm_ntm_rebirth:powder_schrabidium", "count": 4 },
+    { "item": "hbm_ntm_rebirth:ingot_starmetal", "count": 2 },
+    { "item": "hbm_ntm_rebirth:nugget_solinium", "count": 2 }
+  ]
+}

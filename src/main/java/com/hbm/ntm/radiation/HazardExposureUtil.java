@@ -45,6 +45,14 @@ public final class HazardExposureUtil {
         return false;
     }
 
+    public static void applyHazards(LivingEntity entity, ItemStack stack) {
+        applyEquippedHazards(entity, stack, HazardExposureContext.of(entity));
+    }
+
+    public static void applyHazard(LivingEntity entity, ItemStack stack, HazardType type, float level) {
+        applyHazard(entity, stack, type, level, HazardExposureContext.of(entity));
+    }
+
     private static void applyInventoryHazards(LivingEntity entity, Iterable<ItemStack> stacks, HazardExposureContext context) {
         for (ItemStack stack : stacks) {
             applyEquippedHazards(entity, stack, context);
@@ -99,7 +107,7 @@ public final class HazardExposureUtil {
                 if (entity.isOnFire() && entity.level() instanceof ServerLevel levelAccessor) {
                     stack.shrink(stack.getCount());
                     WeaponExplosionUtil.explodeStandard(levelAccessor, entity.getX(), entity.getEyeY(), entity.getZ(),
-                            level, entity, true, true);
+                            level, entity, true, false);
                 }
             }
         }
@@ -128,7 +136,7 @@ public final class HazardExposureUtil {
         }
     }
 
-    private static boolean applyDroppedHazard(ItemEntity itemEntity, HazardType type, float level) {
+    public static boolean applyDroppedHazard(ItemEntity itemEntity, HazardType type, float level) {
         if (level <= 0.0F || itemEntity.isRemoved()) {
             return false;
         }
@@ -148,7 +156,7 @@ public final class HazardExposureUtil {
                     itemEntity.discard();
                     WeaponExplosionUtil.explodeStandard(levelAccessor, itemEntity.getX(),
                             itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(),
-                            level, itemEntity, true, true);
+                            level, itemEntity, true, false);
                     return true;
                 }
             }

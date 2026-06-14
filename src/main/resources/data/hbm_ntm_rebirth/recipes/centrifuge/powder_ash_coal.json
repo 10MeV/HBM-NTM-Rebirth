@@ -1,0 +1,9 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:powder_ash_coal" } },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_coal_tiny", "count": 2 },
+    { "item": "hbm_ntm_rebirth:powder_boron_tiny" },
+    { "item": "hbm_ntm_rebirth:dust_tiny", "count": 6 }
+  ]
+}

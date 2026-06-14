@@ -1,0 +1,22 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "DSD",
+                    "PPP",
+                    "DSD"
+                ],
+    "key":  {
+                "D":  {
+                          "tag":  "forge:plates/dura_steel"
+                      },
+                "P":  {
+                          "item":  "hbm_ntm_rebirth:piston_selenium"
+                      },
+                "S":  {
+                          "tag":  "forge:pipes/steel"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_engine_diesel"
+               }
+}

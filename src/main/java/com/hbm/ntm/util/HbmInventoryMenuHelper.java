@@ -3,11 +3,13 @@ package com.hbm.ntm.util;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.item.ItemMachineUpgrade;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.player.Inventory;
@@ -15,6 +17,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -130,6 +133,10 @@ public final class HbmInventoryMenuHelper {
         return new LegacyMachineSlot(items, slot, x, y);
     }
 
+    public static Slot legacyContainerSlot(Container items, int slot, int x, int y) {
+        return new LegacyContainerSlot(items, slot, x, y);
+    }
+
     public static SlotItemHandler deprecatedSlot(IItemHandler items, int slot, int x, int y) {
         return new SlotItemHandler(items, slot, x, y) {
             @Override
@@ -166,14 +173,15 @@ public final class HbmInventoryMenuHelper {
     public static void addPlayerInventory(SlotSink sink, Inventory inventory, int x, int y) {
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 9; column++) {
-                sink.add(new Slot(inventory, column + row * 9 + 9, x + column * 18, y + row * 18));
+                sink.add(legacyContainerSlot(inventory, column + row * 9 + 9, x + column * 18,
+                        y + row * 18));
             }
         }
     }
 
     public static void addHotbar(SlotSink sink, Inventory inventory, int x, int y) {
         for (int column = 0; column < 9; column++) {
-            sink.add(new Slot(inventory, column, x + column * 18, y));
+            sink.add(legacyContainerSlot(inventory, column, x + column * 18, y));
         }
     }
 
@@ -181,7 +189,7 @@ public final class HbmInventoryMenuHelper {
         for (int column = 0; column < 9; column++) {
             sink.add(column == lockedHotbarSlot
                     ? lockedPlayerSlot(inventory, column, x + column * 18, y)
-                    : new Slot(inventory, column, x + column * 18, y));
+                    : legacyContainerSlot(inventory, column, x + column * 18, y));
         }
     }
 
@@ -203,7 +211,7 @@ public final class HbmInventoryMenuHelper {
 
     public static void addSlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows, int columns,
             int slotSize) {
-        addSlotGrid(sink, items, from, x, y, rows, columns, slotSize, HbmInventoryMenuHelper::validatedSlot);
+        addSlotGrid(sink, items, from, x, y, rows, columns, slotSize, HbmInventoryMenuHelper::legacyMachineSlot);
     }
 
     public static void addOutputSlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows,
@@ -390,6 +398,38 @@ public final class HbmInventoryMenuHelper {
             return false;
         }
         modeCycler.accept(slotId - firstSlot);
+        if (changeBroadcaster != null) {
+            changeBroadcaster.run();
+        }
+        return true;
+    }
+
+    public static boolean handleLegacyPatternSlotClick(java.util.List<Slot> slots, int slotId, int button,
+            ClickType clickType, ItemStack carried, int firstSlot, int slotCount, IntConsumer modeCycler,
+            PatternSlotUpdater patternUpdater, Runnable changeBroadcaster) {
+        if (slotId < firstSlot || slotId >= firstSlot + slotCount || slotId < 0 || slotId >= slots.size()) {
+            return false;
+        }
+        Slot slot = slots.get(slotId);
+        if (!isLegacyPatternSlot(slot)) {
+            return false;
+        }
+
+        int relativeSlot = slotId - firstSlot;
+        if (clickType == ClickType.PICKUP && button == 1 && slot.hasItem()) {
+            if (modeCycler != null) {
+                modeCycler.accept(relativeSlot);
+            }
+            if (changeBroadcaster != null) {
+                changeBroadcaster.run();
+            }
+            return true;
+        }
+
+        slot.set(carried == null ? ItemStack.EMPTY : carried);
+        if (patternUpdater != null) {
+            patternUpdater.update(relativeSlot, slot.getItem());
+        }
         if (changeBroadcaster != null) {
             changeBroadcaster.run();
         }
@@ -702,6 +742,133 @@ public final class HbmInventoryMenuHelper {
         return HbmItemStackUtil.clearToDrops(items);
     }
 
+    public static java.util.List<ItemStack> clearToDrops(IItemHandler items) {
+        return HbmItemStackUtil.clearToDrops(items);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, ItemStackHandler items, RandomSource random) {
+        HbmItemStackUtil.spillItems(level, pos, items, random);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, IItemHandler items, RandomSource random) {
+        HbmItemStackUtil.spillItems(level, pos, items, random);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, ItemStack[] items, RandomSource random) {
+        HbmItemStackUtil.spillItems(level, pos, items, random);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, NonNullList<ItemStack> items, RandomSource random) {
+        HbmItemStackUtil.spillItems(level, pos, items, random);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, Container items, RandomSource random) {
+        HbmItemStackUtil.spillItems(level, pos, items, random);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, ItemStackHandler items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, IItemHandler items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, ItemStack[] items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, NonNullList<ItemStack> items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, Container items) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
+    public static void spillStack(Level level, BlockPos pos, ItemStack stack, RandomSource random) {
+        HbmItemStackUtil.spillStack(level, pos, stack, random);
+    }
+
+    public static void spillStack(Level level, BlockPos pos, ItemStack stack) {
+        HbmItemStackUtil.spillStack(level, pos, stack);
+    }
+
+    public static void dropStack(Level level, double x, double y, double z, ItemStack stack) {
+        HbmItemStackUtil.dropStack(level, x, y, z, stack);
+    }
+
+    public static void dropStack(Level level, BlockPos pos, ItemStack stack) {
+        HbmItemStackUtil.dropStack(level, pos, stack);
+    }
+
+    public static void dropStacks(Level level, double x, double y, double z, Iterable<ItemStack> stacks) {
+        HbmItemStackUtil.dropStacks(level, x, y, z, stacks);
+    }
+
+    public static void dropStacks(Level level, BlockPos pos, Iterable<ItemStack> stacks) {
+        HbmItemStackUtil.dropStacks(level, pos, stacks);
+    }
+
+    public static void dropStacks(Level level, double x, double y, double z, ItemStack[] stacks) {
+        HbmItemStackUtil.dropStacks(level, x, y, z, stacks);
+    }
+
+    public static void dropStacks(Level level, BlockPos pos, ItemStack[] stacks) {
+        HbmItemStackUtil.dropStacks(level, pos, stacks);
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack) {
+        return HbmItemStackUtil.giveOrDrop(player, stack);
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack, boolean throwRandomly) {
+        return HbmItemStackUtil.giveOrDrop(player, stack, throwRandomly);
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack, Level fallbackLevel, double x, double y,
+            double z) {
+        return HbmItemStackUtil.giveOrDrop(player, stack, fallbackLevel, x, y, z);
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack, Level fallbackLevel, BlockPos pos) {
+        return HbmItemStackUtil.giveOrDrop(player, stack, fallbackLevel, pos);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks, boolean throwRandomly) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, throwRandomly);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks, boolean throwRandomly) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, throwRandomly);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks, Level fallbackLevel, double x,
+            double y, double z) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, fallbackLevel, x, y, z);
+    }
+
+    public static boolean giveOrDropAll(Player player, Iterable<ItemStack> stacks, Level fallbackLevel, BlockPos pos) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, fallbackLevel, pos);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks, Level fallbackLevel, double x, double y,
+            double z) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, fallbackLevel, x, y, z);
+    }
+
+    public static boolean giveOrDropAll(Player player, ItemStack[] stacks, Level fallbackLevel, BlockPos pos) {
+        return HbmItemStackUtil.giveOrDropAll(player, stacks, fallbackLevel, pos);
+    }
+
     @FunctionalInterface
     public interface SlotSink {
         void add(Slot slot);
@@ -720,6 +887,11 @@ public final class HbmInventoryMenuHelper {
     @FunctionalInterface
     public interface StackMover {
         boolean move(ItemStack stack, int startIndex, int endIndex, boolean reverseDirection);
+    }
+
+    @FunctionalInterface
+    public interface PatternSlotUpdater {
+        void update(int slot, ItemStack stack);
     }
 
     private static class LegacyPatternSlot extends SlotItemHandler {
@@ -772,6 +944,32 @@ public final class HbmInventoryMenuHelper {
         @Override
         public boolean mayPlace(ItemStack stack) {
             return items.isItemValid(itemSlot, stack);
+        }
+
+        @Override
+        public int getMaxStackSize() {
+            return Math.max(super.getMaxStackSize(), hasItem() ? getItem().getCount() : 1);
+        }
+
+        @Override
+        public int getMaxStackSize(ItemStack stack) {
+            return Math.max(super.getMaxStackSize(stack), hasItem() ? getItem().getCount() : 1);
+        }
+    }
+
+    private static class LegacyContainerSlot extends Slot {
+        private final Container items;
+        private final int itemSlot;
+
+        private LegacyContainerSlot(Container items, int slot, int x, int y) {
+            super(items, slot, x, y);
+            this.items = items;
+            this.itemSlot = slot;
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return items.canPlaceItem(itemSlot, stack);
         }
 
         @Override

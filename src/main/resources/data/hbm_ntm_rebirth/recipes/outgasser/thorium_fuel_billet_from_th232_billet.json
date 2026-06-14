@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:outgasser",
+  "input": {
+    "ingredient": {
+      "tag": "forge:billets/th232"
+    },
+    "count": 1,
+    "legacy_ore": "billetTh232"
+  },
+  "solid_output": {
+    "item": "hbm_ntm_rebirth:billet_thorium_fuel"
+  }
+}

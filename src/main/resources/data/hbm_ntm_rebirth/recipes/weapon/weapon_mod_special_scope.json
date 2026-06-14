@@ -1,0 +1,22 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "SPS",
+                    "G G",
+                    "SPS"
+                ],
+    "key":  {
+                "P":  {
+                          "tag":  "forge:ingots/any_plastic"
+                      },
+                "S":  {
+                          "tag":  "forge:plates/steel"
+                      },
+                "G":  {
+                          "tag":  "forge:glass_panes"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_scope"
+               }
+}

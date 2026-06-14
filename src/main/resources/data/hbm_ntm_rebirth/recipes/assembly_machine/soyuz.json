@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.soyuz",
+  "duration": 6000,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:shells/titanium" }, "count": 32, "legacy_ore": "shellTitanium" },
+    { "ingredient": { "tag": "forge:ingots/rubber" }, "count": 64, "legacy_ore": "ingotRubber" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:rocket_fuel" }, "count": 64 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:thruster_small" }, "count": 12 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:thruster_medium" }, "count": 12 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_controller" }, "count": 4, "legacy_id": "hbm:circuit", "legacy_meta": 13 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:part_generic_lde" }, "count": 32, "legacy_id": "hbm:part_generic", "legacy_meta": 3 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:missile_soyuz" }
+  ],
+  "output_fluids": [],
+  "pools": [
+    "discover.soyuz"
+  ]
+}

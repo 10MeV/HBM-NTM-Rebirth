@@ -3,9 +3,11 @@ package com.hbm.ntm.item;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.item.ArmorDashProvider;
 import com.hbm.ntm.client.renderer.LegacyObjArmorRenderer;
+import com.hbm.ntm.radiation.HazmatRegistry;
+import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -14,7 +16,6 @@ import java.util.function.Supplier;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -32,7 +33,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
 public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
@@ -113,12 +113,14 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         if (!fullSetEffects.isEmpty() || dashCount > 0 || !fullSetTraits.isEmpty()) {
-            tooltip.add(Component.literal("Full set bonus").withStyle(ChatFormatting.GOLD));
+            tooltip.add(Component.translatable("armor.fullSetBonus").withStyle(ChatFormatting.GOLD));
             for (FullSetEffect effect : fullSetEffects) {
                 tooltip.add(Component.literal("  " + effect.tooltip()).withStyle(ChatFormatting.AQUA));
             }
             if (dashCount > 0) {
-                tooltip.add(Component.literal("  Dashes: " + dashCount).withStyle(ChatFormatting.AQUA));
+                tooltip.add(Component.literal("  ")
+                        .append(Component.translatable("armor.dash", dashCount))
+                        .withStyle(ChatFormatting.AQUA));
             }
             for (Component line : fullSetTraits.tooltipLines()) {
                 tooltip.add(line);
@@ -231,7 +233,7 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
                 || player.getInventory().contains(new ItemStack(ModItems.DOSIMETER.get()))) {
             return;
         }
-        float bufferedRadiation = RadiationData.getRadBuf(player);
+        float bufferedRadiation = RadiationData.getRadBuf(player) * HazmatRegistry.calculateRadiationModifier(player);
         if (bufferedRadiation <= 1.0E-5F) {
             return;
         }
@@ -266,14 +268,12 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
         }
         int sound = possibleSounds.get(level.random.nextInt(possibleSounds.size()));
         if (sound > 0) {
-            level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.geiger(sound),
-                    SoundSource.PLAYERS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacyGeiger(level, player, sound);
         }
     }
 
     public record FullSetTraits(boolean vats, boolean thermal, boolean geigerSound, boolean customGeiger,
-            boolean hardLanding, int stepSize, RegistryObject<SoundEvent> stepSound,
-            RegistryObject<SoundEvent> jumpSound, RegistryObject<SoundEvent> fallSound) {
+            boolean hardLanding, int stepSize, String stepSound, String jumpSound, String fallSound) {
         public static final FullSetTraits NONE = builder().build();
 
         public boolean isEmpty() {
@@ -284,22 +284,34 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
         private List<Component> tooltipLines() {
             List<Component> lines = new ArrayList<>();
             if (geigerSound) {
-                lines.add(Component.literal("  Geiger sound").withStyle(ChatFormatting.GOLD));
+                lines.add(Component.literal("  ")
+                        .append(Component.translatable("armor.geigerSound"))
+                        .withStyle(ChatFormatting.GOLD));
             }
             if (customGeiger) {
-                lines.add(Component.literal("  Geiger HUD").withStyle(ChatFormatting.GOLD));
+                lines.add(Component.literal("  ")
+                        .append(Component.translatable("armor.geigerHUD"))
+                        .withStyle(ChatFormatting.GOLD));
             }
             if (vats) {
-                lines.add(Component.literal("  VATS").withStyle(ChatFormatting.RED));
+                lines.add(Component.literal("  ")
+                        .append(Component.translatable("armor.vats"))
+                        .withStyle(ChatFormatting.RED));
             }
             if (thermal) {
-                lines.add(Component.literal("  Thermal sight").withStyle(ChatFormatting.RED));
+                lines.add(Component.literal("  ")
+                        .append(Component.translatable("armor.thermal"))
+                        .withStyle(ChatFormatting.RED));
             }
             if (hardLanding) {
-                lines.add(Component.literal("  Hard landing").withStyle(ChatFormatting.RED));
+                lines.add(Component.literal("  ")
+                        .append(Component.translatable("armor.hardLanding"))
+                        .withStyle(ChatFormatting.RED));
             }
             if (stepSize > 0) {
-                lines.add(Component.literal("  Step height: " + stepSize).withStyle(ChatFormatting.BLUE));
+                lines.add(Component.literal("  ")
+                        .append(Component.translatable("armor.stepSize", stepSize))
+                        .withStyle(ChatFormatting.BLUE));
             }
             return lines;
         }
@@ -344,15 +356,16 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
                 }
                 double intensity = 3.0D - distance;
                 entity.push(offset.x * intensity * -2.0D, 0.1D * intensity, offset.z * intensity * -2.0D);
+                entity.hurt(ModDamageSources.source(player.level(), ModDamageSources.RUBBLE, player),
+                        (float) (intensity * 10.0D));
             }
         }
 
-        private static void play(Player player, RegistryObject<SoundEvent> sound, float volume) {
-            if (player == null || sound == null) {
+        private static void play(Player player, String sound, float volume) {
+            if (player == null || sound == null || sound.isBlank()) {
                 return;
             }
-            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), sound.get(),
-                    SoundSource.PLAYERS, volume, 1.0F);
+            LegacySoundPlayer.playSoundAtPlayer(player, sound, SoundSource.PLAYERS, volume, 1.0F);
         }
 
         public static Builder builder() {
@@ -366,9 +379,9 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
             private boolean customGeiger;
             private boolean hardLanding;
             private int stepSize;
-            private RegistryObject<SoundEvent> stepSound;
-            private RegistryObject<SoundEvent> jumpSound;
-            private RegistryObject<SoundEvent> fallSound;
+            private String stepSound;
+            private String jumpSound;
+            private String fallSound;
 
             public Builder vats() {
                 this.vats = true;
@@ -400,17 +413,17 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
                 return this;
             }
 
-            public Builder step(RegistryObject<SoundEvent> sound) {
+            public Builder step(String sound) {
                 this.stepSound = sound;
                 return this;
             }
 
-            public Builder jump(RegistryObject<SoundEvent> sound) {
+            public Builder jump(String sound) {
                 this.jumpSound = sound;
                 return this;
             }
 
-            public Builder fall(RegistryObject<SoundEvent> sound) {
+            public Builder fall(String sound) {
                 this.fallSound = sound;
                 return this;
             }

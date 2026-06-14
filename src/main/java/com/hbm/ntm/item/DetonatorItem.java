@@ -3,14 +3,13 @@ package com.hbm.ntm.item;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.RemoteDetonatableBlock;
 import com.hbm.ntm.config.HbmCommonConfig;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -62,7 +61,7 @@ public class DetonatorItem extends Item {
         tag.putInt(Z_KEY, pos.getZ());
 
         Level level = context.getLevel();
-        level.playSound(null, player.blockPosition(), ModSounds.TOOL_TECH_BOOP.get(), SoundSource.PLAYERS, 2.0F, 1.0F);
+        LegacySoundPlayer.playLegacyTechBoop(player, 2.0F, 1.0F);
         if (!level.isClientSide()) {
             player.displayClientMessage(prefixed(Component.translatable("msg.hbm_ntm_rebirth.detonator.position_set")
                     .withStyle(ChatFormatting.GREEN)), false);
@@ -84,7 +83,7 @@ public class DetonatorItem extends Item {
         BlockPos pos = linkedPosition(stack);
         Block block = level.getBlockState(pos).getBlock();
         if (block instanceof RemoteDetonatableBlock detonatable) {
-            level.playSound(null, player.blockPosition(), ModSounds.TOOL_TECH_BLEEP.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacyTechBleep(player, 1.0F, 1.0F);
             if (!level.isClientSide()) {
                 RemoteDetonatableBlock.BombReturnCode code = detonatable.detonateFromRemote(level, pos);
                 if (extendedLoggingEnabled()) {

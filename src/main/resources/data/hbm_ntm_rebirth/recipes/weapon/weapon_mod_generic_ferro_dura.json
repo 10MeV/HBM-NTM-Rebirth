@@ -1,0 +1,17 @@
+{
+    "type":  "minecraft:crafting_shapeless",
+    "ingredients":  [
+                        {
+                            "tag":  "forge:plates/weapon_steel"
+                        },
+                        {
+                            "tag":  "forge:cast_plates/ferrouranium"
+                        },
+                        {
+                            "item":  "hbm_ntm_rebirth:ducttape"
+                        }
+                    ],
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_generic_ferro_dura"
+               }
+}

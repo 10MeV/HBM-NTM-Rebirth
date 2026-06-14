@@ -14,6 +14,7 @@ import com.hbm.ntm.fluid.HbmFluidRepairMaterials;
 import com.hbm.ntm.fluid.HbmFluidRepairMaterials.HbmRepairMaterial;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidOverpressurable;
+import com.hbm.ntm.fluid.HbmFluidRecipeIO;
 import com.hbm.ntm.fluid.HbmFluidRepairable;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
@@ -27,7 +28,6 @@ import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryUtil;
@@ -488,7 +488,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (level == null || !level.isClientSide) {
             return;
         }
-        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_BOILER.getId(),
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.boiler",
                 isOn, 30.0D, 15.0F, 0.25F, 1.0F);
     }
 
@@ -506,16 +506,16 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (energy.getPower() < POWER_PER_OPERATION || inputTank().getFill() < INPUT_PER_OPERATION) {
             return changed;
         }
-        for (int i = 0; i < outputs.length; i++) {
-            if (!canFitOutput(outputTank(i), outputs[i])) {
-                return changed;
-            }
+        HbmFluidRecipeIO.RecipeFluidIoProcessReport report = HbmFluidRecipeIO.processLegacyFixedRecipeIoReport(
+                List.of(HbmFluidRecipeIO.requirementFromTank(inputTank(), INPUT_PER_OPERATION)),
+                List.of(outputs),
+                List.of(inputTank()),
+                getAllTanks().subList(1, 5),
+                false);
+        if (!report.complete()) {
+            return changed;
         }
-        inputTank().setFill(inputTank().getFill() - INPUT_PER_OPERATION);
         energy.setPower(energy.getPower() - POWER_PER_OPERATION);
-        for (int i = 0; i < outputs.length; i++) {
-            outputTank(i).fill(outputs[i].type(), outputs[i].amount(), outputs[i].pressure(), false);
-        }
         sulfur++;
         if (sulfur >= MAX_SULFUR) {
             addSolid(recipe.solidStack());
@@ -531,28 +531,9 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean setupRecipeTanks(@Nullable RefineryRecipe recipe) {
-        if (recipe == null) {
-            boolean changed = false;
-            for (int i = 0; i < 4; i++) {
-                HbmFluidTank tank = outputTank(i);
-                changed |= tank.getTankType() != HbmFluids.NONE;
-                tank.setTankType(HbmFluids.NONE);
-            }
-            return changed;
-        }
-        HbmFluidStack[] outputs = recipe.outputs();
-        boolean changed = false;
-        for (int i = 0; i < outputs.length; i++) {
-            HbmFluidTank tank = outputTank(i);
-            changed |= tank.getTankType() != outputs[i].type();
-            tank.setTankType(outputs[i].type());
-        }
-        return changed;
-    }
-
-    private static boolean canFitOutput(HbmFluidTank tank, HbmFluidStack output) {
-        return output.isEmpty() || tank.getTankType() == output.type()
-                && tank.getFill() + output.amount() <= tank.getMaxFill();
+        return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
+                List.of(), recipe == null ? List.of() : List.of(recipe.outputs()),
+                List.of(), getAllTanks().subList(1, 5)).changed();
     }
 
     private void addSolid(ItemStack stack) {

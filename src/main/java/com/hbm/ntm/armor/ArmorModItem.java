@@ -71,11 +71,19 @@ public class ArmorModItem extends Item {
     public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
     }
 
+    public void onClientArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
+    }
+
     public void onArmorModHurt(LivingHurtEvent event, ItemStack armor, ItemStack mod) {
     }
 
     public void addArmorModAttributeModifiers(ItemStack armor, ItemStack mod,
                                               Multimap<Attribute, AttributeModifier> modifiers) {
+    }
+
+    public void appendInstalledArmorModTooltip(ItemStack mod, ItemStack armor, List<Component> tooltip,
+                                               TooltipFlag flag) {
+        tooltip.add(mod.getHoverName());
     }
 
     @Override

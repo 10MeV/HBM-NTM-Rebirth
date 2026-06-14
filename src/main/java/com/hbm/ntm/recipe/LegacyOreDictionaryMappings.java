@@ -156,6 +156,8 @@ public final class LegacyOreDictionaryMappings {
 
     private static String materialPath(String materialName) {
         return splitCamel(materialName)
+                .replace("-", "_")
+                .replaceAll("_+", "_")
                 .replace("aluminum", "aluminium")
                 .replace("nether_quartz", "quartz")
                 .replace("advanced_alloy", "advanced_alloy")

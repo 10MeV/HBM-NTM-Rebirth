@@ -4,7 +4,7 @@ import com.hbm.ntm.client.NukeHudEffects;
 import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoadingEntity;
 import com.hbm.ntm.registry.ModEntityTypes;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.nbt.CompoundTag;
@@ -14,7 +14,6 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -375,8 +374,7 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
 
         double soundRange = (tickCount * 1.5D + 1.0D) * 1.5D;
         if (player.distanceToSqr(x, y, z) < soundRange * soundRange) {
-            level().playLocalSound(x, y, z, ModSounds.WEAPON_NUCLEAR_EXPLOSION.get(), SoundSource.BLOCKS,
-                    10_000.0F, 1.0F, false);
+            LegacySoundPlayer.playLegacyNuclearExplosionClient(level(), x, y, z, 10_000.0F, 1.0F);
             didPlaySound = true;
             applyClientShockwaveShake(player);
         }

@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HbmFluidNodeBlock;
+import com.hbm.ntm.block.FluidPipeBlock;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -10,6 +11,9 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEntity> {
+    private static final String[] BASE_TEXTURES = {"pipe_neo", "pipe_silver", "pipe_colored"};
+    private static final String[] OVERLAY_TEXTURES = {"pipe_neo_overlay", "pipe_silver_overlay", "pipe_colored_overlay"};
+
     public FluidPipeRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -28,6 +32,9 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
 
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(pipe, packedLight);
         int color = pipe.getFluidType().getColor();
+        int style = state.hasProperty(FluidPipeBlock.LEGACY_STYLE)
+                ? FluidPipeBlock.clampLegacyStyle(state.getValue(FluidPipeBlock.LEGACY_STYLE))
+                : 0;
 
         boolean east = state.getValue(HbmFluidNodeBlock.EAST);
         boolean west = state.getValue(HbmFluidNodeBlock.WEST);
@@ -46,23 +53,24 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
         poseStack.translate(0.5D, 0.5D, 0.5D);
 
         if (mask == 0) {
-            renderDuct("pX", color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("nX", color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("pY", color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("nY", color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("pZ", color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("nZ", color, poseStack, buffer, modelLight, packedOverlay);
+            renderDuct("pX", style, color, poseStack, buffer, modelLight, packedOverlay);
+            renderDuct("nX", style, color, poseStack, buffer, modelLight, packedOverlay);
+            renderDuct("pY", style, color, poseStack, buffer, modelLight, packedOverlay);
+            renderDuct("nY", style, color, poseStack, buffer, modelLight, packedOverlay);
+            renderDuct("pZ", style, color, poseStack, buffer, modelLight, packedOverlay);
+            renderDuct("nZ", style, color, poseStack, buffer, modelLight, packedOverlay);
         } else if ((east || west) && !up && !down && !south && !north) {
-            renderDuct("pX", color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("nX", color, poseStack, buffer, modelLight, packedOverlay);
+            renderDuct("pX", style, color, poseStack, buffer, modelLight, packedOverlay);
+            renderDuct("nX", style, color, poseStack, buffer, modelLight, packedOverlay);
         } else if ((up || down) && !east && !west && !south && !north) {
-            renderDuct("pY", color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("nY", color, poseStack, buffer, modelLight, packedOverlay);
+            renderDuct("pY", style, color, poseStack, buffer, modelLight, packedOverlay);
+            renderDuct("nY", style, color, poseStack, buffer, modelLight, packedOverlay);
         } else if ((south || north) && !east && !west && !up && !down) {
-            renderDuct("pZ", color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("nZ", color, poseStack, buffer, modelLight, packedOverlay);
+            renderDuct("pZ", style, color, poseStack, buffer, modelLight, packedOverlay);
+            renderDuct("nZ", style, color, poseStack, buffer, modelLight, packedOverlay);
         } else {
-            renderConnectedParts(east, west, up, down, south, north, color, poseStack, buffer, modelLight, packedOverlay);
+            renderConnectedParts(east, west, up, down, south, north, style, color, poseStack, buffer, modelLight,
+                    packedOverlay);
         }
 
         poseStack.popPose();
@@ -78,31 +86,31 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
     }
 
     private static void renderConnectedParts(boolean east, boolean west, boolean up, boolean down,
-            boolean south, boolean north, int color, PoseStack poseStack, MultiBufferSource buffer,
+            boolean south, boolean north, int style, int color, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        if (east) renderDuct("pX", color, poseStack, buffer, packedLight, packedOverlay);
-        if (west) renderDuct("nX", color, poseStack, buffer, packedLight, packedOverlay);
-        if (up) renderDuct("pY", color, poseStack, buffer, packedLight, packedOverlay);
-        if (down) renderDuct("nY", color, poseStack, buffer, packedLight, packedOverlay);
-        if (south) renderDuct("nZ", color, poseStack, buffer, packedLight, packedOverlay);
-        if (north) renderDuct("pZ", color, poseStack, buffer, packedLight, packedOverlay);
+        if (east) renderDuct("pX", style, color, poseStack, buffer, packedLight, packedOverlay);
+        if (west) renderDuct("nX", style, color, poseStack, buffer, packedLight, packedOverlay);
+        if (up) renderDuct("pY", style, color, poseStack, buffer, packedLight, packedOverlay);
+        if (down) renderDuct("nY", style, color, poseStack, buffer, packedLight, packedOverlay);
+        if (south) renderDuct("nZ", style, color, poseStack, buffer, packedLight, packedOverlay);
+        if (north) renderDuct("pZ", style, color, poseStack, buffer, packedLight, packedOverlay);
 
-        if (!east && !up && !south) renderDuct("ppn", color, poseStack, buffer, packedLight, packedOverlay);
-        if (!east && !up && !north) renderDuct("ppp", color, poseStack, buffer, packedLight, packedOverlay);
-        if (!west && !up && !south) renderDuct("npn", color, poseStack, buffer, packedLight, packedOverlay);
-        if (!west && !up && !north) renderDuct("npp", color, poseStack, buffer, packedLight, packedOverlay);
-        if (!east && !down && !south) renderDuct("pnn", color, poseStack, buffer, packedLight, packedOverlay);
-        if (!east && !down && !north) renderDuct("pnp", color, poseStack, buffer, packedLight, packedOverlay);
-        if (!west && !down && !south) renderDuct("nnn", color, poseStack, buffer, packedLight, packedOverlay);
-        if (!west && !down && !north) renderDuct("nnp", color, poseStack, buffer, packedLight, packedOverlay);
+        if (!east && !up && !south) renderDuct("ppn", style, color, poseStack, buffer, packedLight, packedOverlay);
+        if (!east && !up && !north) renderDuct("ppp", style, color, poseStack, buffer, packedLight, packedOverlay);
+        if (!west && !up && !south) renderDuct("npn", style, color, poseStack, buffer, packedLight, packedOverlay);
+        if (!west && !up && !north) renderDuct("npp", style, color, poseStack, buffer, packedLight, packedOverlay);
+        if (!east && !down && !south) renderDuct("pnn", style, color, poseStack, buffer, packedLight, packedOverlay);
+        if (!east && !down && !north) renderDuct("pnp", style, color, poseStack, buffer, packedLight, packedOverlay);
+        if (!west && !down && !south) renderDuct("nnn", style, color, poseStack, buffer, packedLight, packedOverlay);
+        if (!west && !down && !north) renderDuct("nnp", style, color, poseStack, buffer, packedLight, packedOverlay);
     }
 
-    private static void renderDuct(String part, int color, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderDuct(String part, int style, int color, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        ObjBlockModels.PIPE_NEO.renderPart(part, ObjBlockModels.PIPE_NEO_TEXTURE,
+        ObjBlockModels.PIPE_NEO.renderPart(part, ObjBlockModels.texture(BASE_TEXTURES[style]),
                 poseStack, buffer, packedLight, packedOverlay,
                 255, 255, 255, 255, true);
-        ObjBlockModels.PIPE_NEO.renderPart(part, ObjBlockModels.PIPE_NEO_OVERLAY_TEXTURE,
+        ObjBlockModels.PIPE_NEO.renderPart(part, ObjBlockModels.texture(OVERLAY_TEXTURES[style]),
                 poseStack, buffer, packedLight, packedOverlay,
                 color >> 16 & 255, color >> 8 & 255, color & 255, 255, true);
     }

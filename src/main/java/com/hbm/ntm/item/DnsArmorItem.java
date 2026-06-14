@@ -2,12 +2,15 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.player.HbmPlayerProperties;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.ArmorUtil;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -17,6 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import org.jetbrains.annotations.Nullable;
 
 public class DnsArmorItem extends FsbPoweredArmorItem {
@@ -102,16 +106,51 @@ public class DnsArmorItem extends FsbPoweredArmorItem {
         }
     }
 
+    public static boolean tryCancelIncomingAttack(LivingAttackEvent event) {
+        if (!(event.getEntity() instanceof Player player) || !hasDnsFullSet(player)) {
+            return false;
+        }
+        if (event.getSource().is(DamageTypeTags.IS_EXPLOSION)) {
+            return false;
+        }
+        HbmPlayerProperties.plink(player, SoundEvents.ITEM_BREAK, 0.5F,
+                1.0F + player.level().random.nextFloat() * 0.5F);
+        event.setCanceled(true);
+        return true;
+    }
+
+    public static float applyLegacyPreResistanceHurt(Player player, DamageSource source, float amount) {
+        if (!hasDnsFullSet(player)) {
+            return amount;
+        }
+        if (source != null && source.is(DamageTypeTags.IS_EXPLOSION)) {
+            return amount * 0.001F;
+        }
+        return 0.0F;
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
-        tooltip.add(Component.literal("  + Rocket boots").withStyle(ChatFormatting.AQUA));
-        tooltip.add(Component.literal("  + Fast fall").withStyle(ChatFormatting.AQUA));
-        tooltip.add(Component.literal("  + Sprint boost").withStyle(ChatFormatting.AQUA));
+        tooltip.add(Component.literal("  + ")
+                .append(Component.translatable("armor.rocketBoots"))
+                .withStyle(ChatFormatting.AQUA));
+        tooltip.add(Component.literal("  + ")
+                .append(Component.translatable("armor.fastFall"))
+                .withStyle(ChatFormatting.AQUA));
+        tooltip.add(Component.literal("  + ")
+                .append(Component.translatable("armor.sprintBoost"))
+                .withStyle(ChatFormatting.AQUA));
     }
 
     private static void playJetSound(Level level, Player player) {
-        level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                ModSounds.WEAPON_IMMOLATOR_SHOOT.get(), player.getSoundSource(), 0.125F, 1.5F);
+        LegacySoundPlayer.playLegacyImmolatorShoot(level, player.getX(), player.getY(), player.getZ(),
+                player.getSoundSource(), 0.125F, 1.5F);
+    }
+
+    private static boolean hasDnsFullSet(Player player) {
+        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        return chest.getItem() instanceof DnsArmorItem dns && dns.getType() == Type.CHESTPLATE
+                && dns.hasFullSet(player);
     }
 }

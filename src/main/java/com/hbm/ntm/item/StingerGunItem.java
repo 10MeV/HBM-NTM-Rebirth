@@ -5,11 +5,10 @@ import com.hbm.ntm.bullet.SednaGunConfig;
 import com.hbm.ntm.bullet.SednaReceiverConfig;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.network.HbmKeybind;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -176,8 +175,7 @@ public class StingerGunItem extends SednaGunItem {
         int progress = lockonProgress(stack) + 1;
         setLockonProgress(stack, progress);
         if (progress >= LOCKON_TICKS && !isLockedOn(stack)) {
-            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                    ModSounds.ITEM_TECH_BLEEP.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacyTechBleep(player, 1.0F, 1.0F);
             setLockedOn(stack, true);
         }
     }

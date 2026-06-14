@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 600,
+  "fluid": { "fluid": "PEROXIDE", "amount": 500 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:powder_semtex_mix" } },
+  "output": { "item": "hbm_ntm_rebirth:ingot_semtex" }
+}

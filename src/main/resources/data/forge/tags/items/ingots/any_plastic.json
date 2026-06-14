@@ -1,7 +1,7 @@
 {
-  "replace": false,
-  "values": [
-    "hbm_ntm_rebirth:ingot_polymer",
-    "hbm_ntm_rebirth:ingot_bakelite"
-  ]
+    "replace":  false,
+    "values":  [
+                   "hbm_ntm_rebirth:ingot_polymer",
+                   "hbm_ntm_rebirth:ingot_bakelite"
+               ]
 }

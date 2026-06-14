@@ -178,7 +178,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
                         0.0D,
                         facing.getStepZ() * 0.5D - side.getStepZ() * 2.25D);
         for (Player player : level.getEntitiesOfClass(Player.class, ladderBox)) {
-            HbmPlayerProperties.setOnLadder(player, true);
+            HbmPlayerProperties.markOnLadder(player);
         }
     }
 

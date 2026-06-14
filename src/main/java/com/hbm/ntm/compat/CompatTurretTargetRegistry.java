@@ -143,6 +143,9 @@ public final class CompatTurretTargetRegistry {
     }
 
     public static boolean isPlayer(Entity entity) {
+        if (entity instanceof FakePlayer) {
+            return false;
+        }
         return PLAYER.stream().anyMatch(predicate -> predicate.test(entity))
                 || PLAYER_CLASSES.stream().anyMatch(clazz -> clazz.isAssignableFrom(entity.getClass()));
     }

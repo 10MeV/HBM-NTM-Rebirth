@@ -1,8 +1,7 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.radiation.RadiationUtil;
-import com.hbm.ntm.registry.ModSounds;
-import net.minecraft.sounds.SoundSource;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -19,7 +18,7 @@ public class DigammaDiagnosticItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (!level.isClientSide) {
-            level.playSound(null, player.blockPosition(), ModSounds.TOOL_TECH_BOOP.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacyTechBoop(player, 1.0F, 1.0F);
             RadiationUtil.printDiagnosticData(player);
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);

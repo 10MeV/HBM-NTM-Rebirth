@@ -42,7 +42,7 @@ public class FiveHtpItem extends Item {
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         if (!level.isClientSide && entity instanceof Player player) {
             PotionConfig.applyPotionSickness(player, 5);
-            HbmLivingProperties.setDigamma(player, 0.0F);
+            HbmLivingProperties.clearDigamma(player);
             player.addEffect(new MobEffectInstance(ModEffects.STABILITY.get(), 10 * 60 * 20, 0));
             if (!player.getAbilities().instabuild) {
                 stack.shrink(1);

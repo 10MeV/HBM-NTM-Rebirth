@@ -10,9 +10,8 @@ import com.hbm.ntm.bullet.BulletLaunchUtil;
 import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -116,8 +115,7 @@ public final class ArmorModEvents {
             bullet.overrideDamage = 15.0F * ammo.config().damageMin();
             level.addFreshEntity(bullet);
         }
-        level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                ModSounds.WEAPON_SHOTGUN_SHOOT.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+        LegacySoundPlayer.playLegacyShotgunShoot(player, 1.0F, 1.0F);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -180,8 +178,9 @@ public final class ArmorModEvents {
                 .yRot(-player.getYRot() * Mth.DEG_TO_RAD);
         Vec3 position = new Vec3(player.getX(), player.getY() + player.getEyeHeight(), player.getZ()).add(offset);
         Vec3 motion = BulletKinematicsUtil.directionFromRotation(player.getYRot(), player.getXRot());
+        BulletLaunchUtil.Rotation rotation = BulletLaunchUtil.rotationFromMotion(motion);
         return new BulletLaunchUtil.LaunchPlan(config, BulletConfigSyncRegistry.syncedState(config), position, motion,
-                player.getYRot(), player.getXRot(), BulletKinematicsUtil.ENTITY_SIZE,
+                rotation.yaw(), rotation.pitch(), BulletKinematicsUtil.ENTITY_SIZE,
                 BulletKinematicsUtil.RENDER_DISTANCE_WEIGHT, true);
     }
 

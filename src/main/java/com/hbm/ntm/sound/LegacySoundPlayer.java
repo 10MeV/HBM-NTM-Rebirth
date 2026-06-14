@@ -95,6 +95,185 @@ public final class LegacySoundPlayer {
                 source == null ? SoundSource.PLAYERS : source, volume, pitch);
     }
 
+    public static void playLegacyTechBoop(Entity entity, float volume, float pitch) {
+        playSoundAtEntity(entity, "hbm:item.techBoop", SoundSource.PLAYERS, volume, pitch);
+    }
+
+    public static void playLegacyTechBoop(Level level, BlockPos pos, SoundSource source, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:item.techBoop", source, volume, pitch);
+    }
+
+    public static void playLegacyTechBoop(Level level, double x, double y, double z,
+            SoundSource source, float volume, float pitch) {
+        playSoundEffect(level, x, y, z, "hbm:item.techBoop", source, volume, pitch);
+    }
+
+    public static void playLegacyTechBleep(Entity entity, float volume, float pitch) {
+        playSoundAtEntity(entity, "hbm:item.techBleep", SoundSource.PLAYERS, volume, pitch);
+    }
+
+    public static void playLegacyTechBleep(Level level, BlockPos pos, SoundSource source, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:item.techBleep", source, volume, pitch);
+    }
+
+    public static void playLegacyGeiger(Level level, Entity entity, int sound) {
+        if (entity == null) {
+            return;
+        }
+        playLegacyGeiger(level, entity.getX(), entity.getY(), entity.getZ(), sound);
+    }
+
+    public static void playLegacyGeiger(Level level, double x, double y, double z, int sound) {
+        playSoundEffect(level, x, y, z, "hbm:item.geiger" + clampGeigerLevel(sound),
+                SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
+    public static void playLegacyGasMaskScrew(Entity entity) {
+        playSoundAtEntity(entity, "hbm:item.gasmaskScrew", SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
+    public static void playLegacyRadaway(Entity entity) {
+        playSoundAtEntity(entity, "hbm:item.radaway", SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
+    public static void playLegacySyringe(Entity entity) {
+        playSoundAtEntity(entity, "hbm:item.syringe", SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
+    public static void playLegacyUpgradePlug(Level level, BlockPos pos, SoundSource source, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:item.upgradePlug", source, volume, pitch);
+    }
+
+    public static void playLegacyJetpackTank(Entity entity) {
+        playSoundAtEntity(entity, "hbm:item.jetpackTank", SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
+    public static void playLegacyPressOperate(Level level, BlockPos pos, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:block.pressOperate", SoundSource.BLOCKS, volume, pitch);
+    }
+
+    public static void playLegacyCrateOpen(Level level, BlockPos pos, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:block.crateOpen", SoundSource.BLOCKS, volume, pitch);
+    }
+
+    public static void playLegacyCrateClose(Level level, BlockPos pos, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:block.crateClose", SoundSource.BLOCKS, volume, pitch);
+    }
+
+    public static void playLegacySonarPing(Level level, BlockPos pos, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:block.sonarPing", SoundSource.BLOCKS, volume, pitch);
+    }
+
+    public static void playLegacyReactorStart(Level level, BlockPos pos, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:block.reactorStart", SoundSource.BLOCKS, volume, pitch);
+    }
+
+    public static void playLegacyFstbmbStart(Level level, BlockPos pos, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:weapon.fstbmbStart", SoundSource.BLOCKS, volume, pitch);
+    }
+
+    public static void playLegacyFstbmbPing(Level level, BlockPos pos, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:weapon.fstbmbPing", SoundSource.BLOCKS, volume, pitch);
+    }
+
+    public static void playLegacyTubeFwoomp(Level level, BlockPos pos, float volume,
+            float basePitch, float randomPitch) {
+        playSoundEffectRandomPitch(level, pos, "hbm:weapon.reload.tubeFwoomp",
+                SoundSource.BLOCKS, volume, basePitch, randomPitch);
+    }
+
+    public static void playLegacyFlamethrowerShoot(Entity entity, float volume, float pitch) {
+        playSoundAtEntity(entity, "hbm:weapon.flamethrowerShoot", SoundSource.PLAYERS, volume, pitch);
+    }
+
+    public static void playLegacyFlamethrowerShoot(Level level, double x, double y, double z,
+            SoundSource source, float volume, float pitch) {
+        playSoundEffect(level, x, y, z, "hbm:weapon.flamethrowerShoot", source, volume, pitch);
+    }
+
+    public static void playLegacyImmolatorShoot(Level level, double x, double y, double z,
+            SoundSource source, float volume, float pitch) {
+        playSoundEffect(level, x, y, z, "hbm:weapon.immolatorShoot", source, volume, pitch);
+    }
+
+    public static void playLegacyRocketFlame(Entity entity, float volume, float pitch) {
+        playSoundAtEntity(entity, "hbm:weapon.rocketFlame", SoundSource.PLAYERS, volume, pitch);
+    }
+
+    public static void playLegacyGavelWhack(Level level, double x, double y, double z, float volume, float pitch) {
+        playSoundEffect(level, x, y, z, "hbm:weapon.whack", SoundSource.PLAYERS, volume, pitch);
+    }
+
+    public static void playLegacyBoltOpen(Level level, BlockPos pos, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:weapon.reload.boltOpen", SoundSource.BLOCKS, volume, pitch);
+    }
+
+    public static void playLegacySlicer(Entity entity) {
+        playSoundAtEntity(entity, "hbm:entity.slicer", SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
+    public static void playLegacyPinBreak(Entity entity) {
+        playSoundAtEntity(entity, "hbm:item.pinBreak", SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
+    public static void playLegacyTesla(Entity entity) {
+        playSoundAtEntity(entity, "hbm:weapon.tesla", SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
+    public static void playLegacyShotgunShoot(Entity entity, float volume, float pitch) {
+        playSoundAtEntity(entity, "hbm:weapon.shotgunShoot", SoundSource.PLAYERS, volume, pitch);
+    }
+
+    public static void playLegacyPlayerCough(Entity entity) {
+        playSoundAtEntity(entity, "hbm:player.cough", SoundSource.HOSTILE, 1.0F, 1.0F);
+    }
+
+    public static void playLegacyPlayerVomit(Entity entity) {
+        playSoundAtEntity(entity, "hbm:player.vomit", SoundSource.HOSTILE, 1.0F, 1.0F);
+    }
+
+    public static void playLegacySoyuzTakeoff(Entity entity) {
+        playSoundAtEntity(entity, "hbm:entity.soyuzTakeoff", SoundSource.PLAYERS, 100.0F, 1.1F);
+    }
+
+    public static void playLegacySoyuzedAlarm(Entity entity) {
+        playSoundAtEntity(entity, "hbm:alarm.soyuzed", SoundSource.RECORDS, 100.0F, 1.0F);
+    }
+
+    public static void playLegacyLaserBang(Entity entity) {
+        playSoundAtEntity(entity, "hbm:weapon.laserBang", SoundSource.HOSTILE, 100.0F, 1.0F);
+    }
+
+    public static void playLegacyFlamethrowerIgnite(Level level, BlockPos pos,
+            float volume, float basePitch, float randomPitch) {
+        playSoundEffectRandomPitch(level, pos, "hbm:weapon.flamethrowerIgnite",
+                SoundSource.BLOCKS, volume, basePitch, randomPitch);
+    }
+
+    public static void playLegacyNuclearExplosionClient(Level level, double x, double y, double z,
+            float volume, float pitch) {
+        playLocalSound(level, x, y, z, "hbm:weapon.nuclearExplosion", SoundSource.BLOCKS, volume, pitch, false);
+    }
+
+    public static void playLegacyChainsaw(Level level, double x, double y, double z) {
+        playSoundEffect(level, x, y, z, "hbm:weapon.chainsaw", SoundSource.PLAYERS, 0.5F, 1.0F);
+    }
+
+    public static void playLegacyWeaponSwitchMode(Entity entity, int previousMode) {
+        playSoundAtEntity(entity, previousMode == 0 ? "hbm:weapon.switchmode1" : "hbm:weapon.switchmode2",
+                SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
+    public static void playLegacyFireStab(Level level, double x, double y, double z,
+            float volume, float basePitch, float randomPitch) {
+        playSoundEffectRandomPitch(level, x, y, z, "hbm:weapon.fire.stab",
+                SoundSource.PLAYERS, volume, basePitch, randomPitch);
+    }
+
+    public static void playLegacyTauRelease(Entity entity) {
+        playSoundAtEntity(entity, "hbm:weapon.fire.tauRelease", SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
     public static void playLocalSound(Level level, double x, double y, double z, String sound, SoundSource source,
             float volume, float pitch, boolean distanceDelay) {
         SoundEvent event = resolveEvent(sound);
@@ -240,6 +419,10 @@ public final class LegacySoundPlayer {
             return basePitch;
         }
         return basePitch + level.random.nextFloat() * randomPitch;
+    }
+
+    private static int clampGeigerLevel(int sound) {
+        return Math.max(1, Math.min(6, sound));
     }
 
     private static float legacyExplosionPitch(@Nullable Level level) {

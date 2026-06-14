@@ -1,9 +1,11 @@
 package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.config.RadiationConfig;
+import com.hbm.ntm.compat.Compat;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.neutron.RBMKFuelRodRegistry;
+import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
@@ -44,6 +46,7 @@ public final class HazardRegistry {
         registerVanillaHazards();
         registerLegacyTagHazards();
         registerLegacyTagBlacklists();
+        registerLegacyOptionalCompatHazards();
         registerLegacyExplosiveComponentHazards();
         register(ModItems.URANIUM_INGOT.get(), HazardType.RADIATION, RadiationConstants.U * RadiationConstants.INGOT);
         register(ModItems.URANIUM_233_INGOT.get(), HazardType.RADIATION, RadiationConstants.U233 * RadiationConstants.INGOT);
@@ -91,6 +94,10 @@ public final class HazardRegistry {
         register(ModItems.PARTICLE_DIGAMMA.get(), HazardType.DIGAMMA, 1000.0F / 60.0F);
     }
 
+    public static void registerTransformer(HazardTransformer transformer) {
+        TRANSFORMERS.add(transformer);
+    }
+
     private static void registerTransformers() {
         TRANSFORMERS.add(new NbtRadiationHazardTransformer());
         // LBSM hazard bypasses are intentionally not modernized; keep legacy standard-mode behavior.
@@ -102,8 +109,6 @@ public final class HazardRegistry {
         register(net.minecraft.world.item.Items.GUNPOWDER, HazardType.EXPLOSIVE, 1.0F);
         register(net.minecraft.world.item.Items.TNT, HazardType.EXPLOSIVE, 4.0F);
         register(net.minecraft.world.item.Items.PUMPKIN_PIE, HazardType.EXPLOSIVE, 1.0F);
-        register(net.minecraft.world.item.Items.COAL, HazardType.COAL, RadiationConstants.POWDER_MULTIPLIER);
-        register(net.minecraft.world.item.Items.CHARCOAL, HazardType.COAL, RadiationConstants.POWDER_MULTIPLIER);
     }
 
     private static void registerLegacyTagHazards() {
@@ -119,8 +124,56 @@ public final class HazardRegistry {
         blacklist(forgeItemTag("ores/uranium"));
     }
 
+    private static void registerLegacyOptionalCompatHazards() {
+        registerLegacyReactorCraftWasteHazards();
+        registerLegacyGregTechNaquadahHazards();
+    }
+
+    private static void registerLegacyReactorCraftWasteHazards() {
+        Item reactorCraftWaste = Compat.tryLoadItem(Compat.MOD_REC, "reactorcraft_item_waste");
+        if (reactorCraftWaste == null) {
+            return;
+        }
+        for (Compat.ReikaIsotope isotope : Compat.ReikaIsotope.values()) {
+            if (isotope.getRad() <= 0.0F) {
+                continue;
+            }
+            ItemStack stack = new ItemStack(reactorCraftWaste);
+            stack.setDamageValue(isotope.ordinal());
+            registerStack(stack, HazardType.RADIATION, isotope.getRad());
+        }
+    }
+
+    private static void registerLegacyGregTechNaquadahHazards() {
+        if (!Compat.isModLoaded(Compat.MOD_GT6)) {
+            return;
+        }
+        Set<ResourceLocation> registeredTags = new HashSet<>();
+        for (LegacyMaterialShape shape : LegacyMaterialShape.STANDARD_AUTOGEN_SHAPES) {
+            for (String prefix : shape.prefixes()) {
+                registerLegacyGregTechMaterialTag(prefix, "Naquadah", RadiationConstants.U, shape, registeredTags);
+                registerLegacyGregTechMaterialTag(prefix, "Naquadah-Enriched", RadiationConstants.U235, shape, registeredTags);
+                registerLegacyGregTechMaterialTag(prefix, "Naquadria", RadiationConstants.PU239, shape, registeredTags);
+            }
+        }
+    }
+
+    private static void registerLegacyGregTechMaterialTag(String prefix, String material, float baseRadiation,
+                                                          LegacyMaterialShape shape, Set<ResourceLocation> registeredTags) {
+        ResourceLocation tagId = LegacyOreDictionaryMappings.itemTagId(prefix + material);
+        if (!registeredTags.add(tagId)) {
+            return;
+        }
+        float level = baseRadiation * shape.quantity() / LegacyMaterialShape.INGOT_QUANTITY;
+        HazardData data = new HazardData()
+                .setMutex(0b1)
+                .addEntry(HazardType.RADIATION, level);
+        registerTag(TagKey.create(Registries.ITEM, tagId), data);
+    }
+
     private static void registerLegacyExplosiveComponentHazards() {
         registerByName("ball_dynamite", HazardType.EXPLOSIVE, 2.0F);
+        registerByName("stick_dynamite", HazardType.EXPLOSIVE, 1.0F);
         registerByName("stick_tnt", HazardType.EXPLOSIVE, 1.5F);
         registerByName("stick_semtex", HazardType.EXPLOSIVE, 2.5F);
         registerByName("stick_c4", HazardType.EXPLOSIVE, 2.5F);
@@ -1165,7 +1218,7 @@ public final class HazardRegistry {
         }
     }
 
-    private static boolean isBlacklisted(ItemStack stack) {
+    public static boolean isBlacklisted(ItemStack stack) {
         if (STACK_BLACKLIST.contains(HazardStackKey.of(stack))) {
             return true;
         }
@@ -1210,6 +1263,36 @@ public final class HazardRegistry {
 
     public static float getStackRadiation(ItemStack stack) {
         return getStackHazardLevel(stack, HazardType.RADIATION);
+    }
+
+    private record LegacyMaterialShape(int quantity, List<String> prefixes) {
+        private static final float INGOT_QUANTITY = 72.0F;
+        private static final List<LegacyMaterialShape> STANDARD_AUTOGEN_SHAPES = List.of(
+                new LegacyMaterialShape(8, List.of("nugget", "tiny")),
+                new LegacyMaterialShape(8, List.of("bedrockorefragment")),
+                new LegacyMaterialShape(8, List.of("dustTiny")),
+                new LegacyMaterialShape(9, List.of("wireFine")),
+                new LegacyMaterialShape(9, List.of("bolt")),
+                new LegacyMaterialShape(48, List.of("billet")),
+                new LegacyMaterialShape(72, List.of("ingot")),
+                new LegacyMaterialShape(72, List.of("gem")),
+                new LegacyMaterialShape(72, List.of("crystal")),
+                new LegacyMaterialShape(72, List.of("dust")),
+                new LegacyMaterialShape(72, List.of("wireDense")),
+                new LegacyMaterialShape(72, List.of("plate")),
+                new LegacyMaterialShape(216, List.of("plateTriple")),
+                new LegacyMaterialShape(432, List.of("plateSextuple")),
+                new LegacyMaterialShape(288, List.of("shell")),
+                new LegacyMaterialShape(216, List.of("ntmpipe")),
+                new LegacyMaterialShape(648, List.of("block")),
+                new LegacyMaterialShape(216, List.of("barrelLight")),
+                new LegacyMaterialShape(432, List.of("barrelHeavy")),
+                new LegacyMaterialShape(288, List.of("receiverLight")),
+                new LegacyMaterialShape(648, List.of("receiverHeavy")),
+                new LegacyMaterialShape(288, List.of("gunMechanism")),
+                new LegacyMaterialShape(288, List.of("stock")),
+                new LegacyMaterialShape(144, List.of("grip"))
+        );
     }
 
     private HazardRegistry() {

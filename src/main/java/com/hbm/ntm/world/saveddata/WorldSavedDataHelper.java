@@ -61,9 +61,45 @@ public final class WorldSavedDataHelper {
         return level.getDataStorage().computeIfAbsent(loader, factory, name);
     }
 
+    public static <T extends SavedData> T getWithFallback(MinecraftServer server, String name,
+            Function<CompoundTag, T> loader, Supplier<T> factory, String... fallbackNames) {
+        return getWithFallback(server.overworld(), name, loader, factory, fallbackNames);
+    }
+
+    public static <T extends SavedData> Optional<T> getWithFallback(MinecraftServer server,
+            ResourceKey<Level> dimension, String name, Function<CompoundTag, T> loader, Supplier<T> factory,
+            String... fallbackNames) {
+        ServerLevel level = server.getLevel(dimension);
+        return level == null ? Optional.empty()
+                : Optional.of(getWithFallback(level, name, loader, factory, fallbackNames));
+    }
+
+    public static <T extends SavedData> Optional<T> getWithFallback(Level level, String name,
+            Function<CompoundTag, T> loader, Supplier<T> factory, String... fallbackNames) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return Optional.empty();
+        }
+        return Optional.of(getWithFallback(serverLevel, name, loader, factory, fallbackNames));
+    }
+
     public static <T extends SavedData> Optional<T> getExistingWithFallback(ServerLevel level, String name,
             Function<CompoundTag, T> loader, String... fallbackNames) {
         return findExistingWithFallback(level, name, loader, fallbackNames).map(ExistingDataLookup::data);
+    }
+
+    public static <T extends SavedData> Optional<T> getExistingWithFallback(Level level, String name,
+            Function<CompoundTag, T> loader, String... fallbackNames) {
+        return findExistingWithFallback(level, name, loader, fallbackNames).map(ExistingDataLookup::data);
+    }
+
+    public static <T extends SavedData> Optional<T> getExistingWithFallback(MinecraftServer server, String name,
+            Function<CompoundTag, T> loader, String... fallbackNames) {
+        return findExistingWithFallback(server, name, loader, fallbackNames).map(ExistingDataLookup::data);
+    }
+
+    public static <T extends SavedData> Optional<T> getExistingWithFallback(MinecraftServer server,
+            ResourceKey<Level> dimension, String name, Function<CompoundTag, T> loader, String... fallbackNames) {
+        return findExistingWithFallback(server, dimension, name, loader, fallbackNames).map(ExistingDataLookup::data);
     }
 
     public static <T extends SavedData> Optional<T> promoteExistingWithFallback(ServerLevel level, String name,
@@ -75,6 +111,26 @@ public final class WorldSavedDataHelper {
             return Optional.of(result.data());
         }
         return Optional.empty();
+    }
+
+    public static <T extends SavedData> Optional<T> promoteExistingWithFallback(Level level, String name,
+            Function<CompoundTag, T> loader, String... fallbackNames) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return Optional.empty();
+        }
+        return promoteExistingWithFallback(serverLevel, name, loader, fallbackNames);
+    }
+
+    public static <T extends SavedData> Optional<T> promoteExistingWithFallback(MinecraftServer server, String name,
+            Function<CompoundTag, T> loader, String... fallbackNames) {
+        return promoteExistingWithFallback(server.overworld(), name, loader, fallbackNames);
+    }
+
+    public static <T extends SavedData> Optional<T> promoteExistingWithFallback(MinecraftServer server,
+            ResourceKey<Level> dimension, String name, Function<CompoundTag, T> loader, String... fallbackNames) {
+        ServerLevel level = server.getLevel(dimension);
+        return level == null ? Optional.empty()
+                : promoteExistingWithFallback(level, name, loader, fallbackNames);
     }
 
     public static <T extends SavedData> Optional<ExistingDataLookup<T>> findExistingWithFallback(ServerLevel level,
@@ -104,6 +160,11 @@ public final class WorldSavedDataHelper {
             return Optional.empty();
         }
         return findExistingWithFallback(serverLevel, name, loader, fallbackNames);
+    }
+
+    public static <T extends SavedData> Optional<ExistingDataLookup<T>> findExistingWithFallback(
+            MinecraftServer server, String name, Function<CompoundTag, T> loader, String... fallbackNames) {
+        return findExistingWithFallback(server.overworld(), name, loader, fallbackNames);
     }
 
     public static <T extends SavedData> Optional<ExistingDataLookup<T>> findExistingWithFallback(MinecraftServer server,

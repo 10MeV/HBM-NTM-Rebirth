@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "III",
+    "PCP",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "tag": "forge:ingots/steel"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:part_generic_piston_pneumatic"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_vacuum_tube"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:crane_splitter"
+  }
+}

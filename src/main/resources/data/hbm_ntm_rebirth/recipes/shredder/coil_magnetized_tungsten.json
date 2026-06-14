@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:coil_magnetized_tungsten" } },
+  "output": { "item": "hbm_ntm_rebirth:powder_magnetized_tungsten" }
+}

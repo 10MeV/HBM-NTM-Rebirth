@@ -309,6 +309,7 @@ public final class LegacySednaRuntimeBulletConfigs {
                 .blockDamage(true)
                 .appearance(style(config), trail(config), plink(config), particle(config))
                 .spentCasingName(config.spentCasingName())
+                .casingItem(config.casingItemName(), config.casingItemStackSize(), config.casingItemAmount())
                 .damageType(damageType(config.damageClass()))
                 .damageFlags(damageProjectile(config.damageClass()), damageFire(config.damageClass()),
                         damageExplosion(config.damageClass()), damageBypass(config.damageClass())),
@@ -349,10 +350,16 @@ public final class LegacySednaRuntimeBulletConfigs {
             return BulletStyle.BOLT;
         }
         String renderer = config.rendererName();
+        if (renderer.contains("FLARE")) {
+            return BulletStyle.NORMAL;
+        }
+        if (renderer.contains("FLECHETTE_BULLET") || renderer.contains("FRAGMENTATION")) {
+            return BulletStyle.NORMAL;
+        }
         if (renderer.contains("FLECHETTE")) {
             return BulletStyle.FLECHETTE;
         }
-        if (renderer.contains("GRENADE") || renderer.contains("FLARE") || renderer.contains("BOMB")
+        if (renderer.contains("GRENADE") || renderer.contains("BOMB")
                 || renderer.contains("FRAGMENTATION") || renderer.contains("MORTAR")) {
             return BulletStyle.GRENADE;
         }
@@ -368,12 +375,111 @@ public final class LegacySednaRuntimeBulletConfigs {
 
     private static int trail(SednaBulletConfig config) {
         String beam = config.beamRendererName();
-        if (beam.contains("TAU")) {
+        if (beam.contains("TAU_CHARGE")) {
             return 1;
         }
-        if (beam.contains("LASER") || beam.contains("LIGHTNING") || beam.contains("CRACKLE")
-                || beam.contains("NI4NI")) {
+        if (beam.contains("TAU")) {
+            return 0;
+        }
+        if (beam.contains("LASER_PURPLE")) {
+            return BulletTrail.LACUNAE.legacyId();
+        }
+        if (beam.contains("LASER_EMERALD")) {
+            return BulletTrail.WORM.legacyId();
+        }
+        if (beam.contains("LASER_CYAN")) {
+            return BulletTrail.GLASS_CYAN.legacyId();
+        }
+        if (beam.contains("LASER_RED")) {
             return BulletTrail.LASER.legacyId();
+        }
+        if (beam.contains("BLACK_LIGHTNING")) {
+            return BulletTrail.SEDNA_BLACK_LIGHTNING.legacyId();
+        }
+        if (beam.contains("LIGHTNING_SUB")) {
+            return BulletTrail.SEDNA_LIGHTNING_SUB.legacyId();
+        }
+        if (beam.contains("LIGHTNING")) {
+            return BulletTrail.SEDNA_LIGHTNING.legacyId();
+        }
+        if (beam.contains("CRACKLE")) {
+            return BulletTrail.SEDNA_CRACKLE.legacyId();
+        }
+        if (beam.contains("NI4NI")) {
+            return BulletTrail.SEDNA_NI4NI.legacyId();
+        }
+        if (beam.contains("FOLLY")) {
+            return BulletTrail.SEDNA_FOLLY.legacyId();
+        }
+        String renderer = config.rendererName();
+        if (renderer.contains("FLARE_WEAPON")) {
+            return LegacySednaBulletAppearance.FLARE_WEAPON;
+        }
+        if (renderer.contains("FLARE_SUPPLY")) {
+            return LegacySednaBulletAppearance.FLARE_SUPPLY;
+        }
+        if (renderer.contains("FLARE")) {
+            return LegacySednaBulletAppearance.FLARE;
+        }
+        if (renderer.contains("NUKE_BALEFIRE")) {
+            return LegacySednaBulletAppearance.MINI_NUKE_BALEFIRE;
+        }
+        if (renderer.contains("BIG_NUKE")) {
+            return LegacySednaBulletAppearance.BIG_NUKE_MIRV;
+        }
+        if (renderer.contains("NUKE")) {
+            return LegacySednaBulletAppearance.MINI_NUKE;
+        }
+        if (renderer.contains("HIVE")) {
+            return LegacySednaBulletAppearance.HIVE_ROCKET;
+        }
+        if (renderer.contains("BOMB")) {
+            return LegacySednaBulletAppearance.CLUSTER_BOMB;
+        }
+        if (renderer.contains("GRENADE")) {
+            return LegacySednaBulletAppearance.GRENADE;
+        }
+        if (renderer.contains("CT_HOOK")) {
+            return LegacySednaBulletAppearance.CHARGE_HOOK;
+        }
+        if (renderer.contains("CT_MORTAR_CHARGE")) {
+            return LegacySednaBulletAppearance.CHARGE_MORTAR_CHARGE;
+        }
+        if (renderer.contains("CT_MORTAR")) {
+            return LegacySednaBulletAppearance.CHARGE_MORTAR;
+        }
+        if (renderer.contains("FRAGMENTATION")) {
+            return LegacySednaBulletAppearance.FRAGMENTATION;
+        }
+        if (renderer.contains("FLECHETTE_BULLET")) {
+            return LegacySednaBulletAppearance.FLECHETTE;
+        }
+        if (renderer.contains("AP_BULLET")) {
+            return LegacySednaBulletAppearance.AP;
+        }
+        if (renderer.contains("EXPRESS_BULLET")) {
+            return LegacySednaBulletAppearance.EXPRESS;
+        }
+        if (renderer.contains("DU_BULLET")) {
+            return LegacySednaBulletAppearance.DU;
+        }
+        if (renderer.contains("HE_BULLET")) {
+            return LegacySednaBulletAppearance.HE;
+        }
+        if (renderer.contains("SM_BULLET")) {
+            return LegacySednaBulletAppearance.SM;
+        }
+        if (renderer.contains("BLACK_BULLET")) {
+            return LegacySednaBulletAppearance.BLACK;
+        }
+        if (renderer.contains("LEGENDARY_BULLET")) {
+            return LegacySednaBulletAppearance.LEGENDARY;
+        }
+        if (renderer.contains("STANDARD_BULLET")) {
+            return LegacySednaBulletAppearance.STANDARD;
+        }
+        if (renderer.contains("RPZB") || renderer.contains("QD") || renderer.contains("ML")) {
+            return LegacySednaBulletAppearance.ROCKET_THRUST;
         }
         return 0;
     }

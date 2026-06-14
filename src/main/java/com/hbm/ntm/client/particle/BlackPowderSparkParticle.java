@@ -1,16 +1,19 @@
 package com.hbm.ntm.client.particle;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public class BlackPowderSparkParticle extends TextureSheetParticle {
+public class BlackPowderSparkParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
     private final SpriteSet sprites;
 
     private BlackPowderSparkParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed,
@@ -37,13 +40,23 @@ public class BlackPowderSparkParticle extends TextureSheetParticle {
     }
 
     @Override
+    public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.enqueue(this, camera, this.x, this.y, this.z);
+    }
+
+    @Override
+    public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
+        super.render(buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite()), camera, partialTick);
+    }
+
+    @Override
     protected int getLightColor(float partialTick) {
         return 0xF000F0;
     }
 
     @Override
     public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+        return HbmDeferredParticleRenderer.DEFERRED_RENDER_TYPE;
     }
 
     public static class Provider implements ParticleProvider<SimpleParticleType> {

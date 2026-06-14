@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
 public final class HbmExtendedProperties {
@@ -87,6 +88,40 @@ public final class HbmExtendedProperties {
 
     public static void deserializeLegacySyncedData(Player player, FriendlyByteBuf buffer) {
         applyLegacySyncedData(player, decodeLegacySyncedData(buffer));
+    }
+
+    public static CompoundTag writePersistentData(Player player) {
+        CompoundTag tag = new CompoundTag();
+        HbmLivingProperties.saveNBTData(player, tag);
+        HbmPlayerProperties.saveNBTData(player, tag);
+        return tag;
+    }
+
+    public static void readPersistentData(Player player, CompoundTag data) {
+        if (player == null || data == null) {
+            return;
+        }
+        HbmLivingProperties.loadNBTData(player, data);
+        HbmPlayerProperties.loadNBTData(player, data);
+    }
+
+    public static void saveNBTData(Player player, CompoundTag nbt) {
+        if (nbt != null) {
+            nbt.merge(writePersistentData(player));
+        }
+    }
+
+    public static void loadNBTData(Player player, CompoundTag nbt) {
+        readPersistentData(player, nbt);
+    }
+
+    public static void copyForRespawn(LivingEntity original, Player replacement) {
+        if (original != null && replacement != null) {
+            HbmLivingProperties.copyForRespawn(original, replacement);
+            if (original instanceof Player originalPlayer) {
+                HbmPlayerProperties.copyForRespawn(originalPlayer, replacement);
+            }
+        }
     }
 
     public static void applySyncedData(Player player, SyncData data) {

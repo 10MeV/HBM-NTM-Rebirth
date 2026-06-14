@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.api.entity.RadarControl;
-import com.hbm.ntm.api.entity.RadarControlPanel;
 import com.hbm.ntm.api.entity.RadarGuiRenderProfile;
 import com.hbm.ntm.api.entity.RadarGuiTargetProfile;
 import com.hbm.ntm.api.entity.RadarLaunchCommand;
@@ -126,19 +125,16 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
             graphics.blit(RADAR_TEXTURE, bar.x(), bar.y(), bar.u(), bar.v(), bar.width(), bar.height());
         }
 
-        for (RadarControlPanel.Button controlButton : RadarControlPanel.buttons()) {
-            if (RadarGuiRenderProfile.shouldRenderMainControlIcon(active(controlButton), menu.jammed(),
-                    random.nextBoolean())) {
-                blit(graphics, RADAR_TEXTURE,
-                        RadarGuiRenderProfile.mainControlIcon(leftPos, topPos, controlButton));
-            }
-        }
+        RadarGuiRenderProfile.forEachVisibleMainControlIcon(leftPos, topPos, menu.getState(),
+                random::nextBoolean, icon -> blit(graphics, RADAR_TEXTURE, icon));
 
-        if (!menu.hasOperatingPower(RadarBlockEntity.CONSUMPTION)) {
+        RadarGuiRenderProfile.MainContentPlan content =
+                RadarGuiRenderProfile.mainContent(menu.getState(), RadarBlockEntity.CONSUMPTION);
+        if (!content.renderContent()) {
             return;
         }
 
-        if (menu.jammed()) {
+        if (content.renderNoise()) {
             for (RadarGuiRenderProfile.NoiseTile tile : RadarGuiRenderProfile.noiseTiles()) {
                 LegacyRadarDisplayRenderer.renderGuiNoiseTile(RADAR_TEXTURE, graphics,
                         leftPos + tile.x(), topPos + tile.y(),
@@ -147,11 +143,13 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
             return;
         }
 
-        if (menu.showMap()) {
+        if (content.renderMap()) {
             renderMap(graphics, radar.getMap());
         }
-        renderSweep(graphics, partialTick);
-        renderBlips(graphics, radar);
+        if (content.renderSweepAndBlips()) {
+            renderSweep(graphics, partialTick);
+            renderBlips(graphics, radar);
+        }
     }
 
     private void renderMap(GuiGraphics graphics, byte[] map) {
@@ -173,9 +171,8 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
     }
 
     private void renderToggleStrip(GuiGraphics graphics) {
-        for (RadarControlPanel.Button controlButton : RadarControlPanel.buttons()) {
-            RadarGuiRenderProfile.SlotToggleFrame frame =
-                    RadarGuiRenderProfile.slotToggleFrame(controlButton, active(controlButton));
+        RadarGuiRenderProfile.forEachSlotToggle(leftPos, topPos, menu.getState(), toggle -> {
+            RadarGuiRenderProfile.SlotToggleFrame frame = toggle.frame();
             int x = leftPos + frame.x();
             int y = topPos + frame.y();
             int border = frame.borderColor();
@@ -189,11 +186,10 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
             graphics.fill(leftPos + frame.outerLeft(), y, x, topPos + frame.iconBottom(), border);
             graphics.fill(leftPos + frame.iconRight(), y, leftPos + frame.outerRight(),
                     topPos + frame.iconBottom(), border);
-            if (active(controlButton)) {
-                blit(graphics, RADAR_TEXTURE,
-                        RadarGuiRenderProfile.slotControlIcon(leftPos, topPos, controlButton));
+            if (toggle.active()) {
+                blit(graphics, RADAR_TEXTURE, toggle.icon());
             }
-        }
+        });
     }
 
     private void renderHoveredTooltips(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -220,14 +216,9 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
         if (hover.type() == RadarScreenHoverProfile.Type.NONE) {
             return false;
         }
-        boolean active = hover.button() != null && active(hover.button());
         graphics.renderTooltip(font, split(RadarScreenTooltipProfile.chrome(hover, includeControlState,
-                active, menu.getPower(), menu.getMaxPower(), menu.getRedPower())), mouseX, mouseY);
+                menu.getState())), mouseX, mouseY);
         return true;
-    }
-
-    private boolean active(RadarControlPanel.Button controlButton) {
-        return menu.getState().controlActive(controlButton.control());
     }
 
     private void sendButton(RadarControl button) {

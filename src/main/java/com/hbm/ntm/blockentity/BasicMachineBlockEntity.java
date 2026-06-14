@@ -4,9 +4,9 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.menu.BasicMachineMenu;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.PressRecipe;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
@@ -26,7 +26,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.ForgeHooks;
@@ -372,7 +371,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
         ItemStack result = recipe.getResultItem(level.registryAccess());
         HbmInventoryUtil.tryAddItemToHandlerUnchecked(items, SLOT_OUTPUT, SLOT_OUTPUT, result);
 
-        level.playSound(null, worldPosition, ModSounds.BLOCK_PRESS_OPERATE.get(), SoundSource.BLOCKS, 1.5F, 1.0F);
+        LegacySoundPlayer.playLegacyPressOperate(level, worldPosition, 1.5F, 1.0F);
 
         items.extractItem(SLOT_INPUT, 1, false);
         ItemStack stamp = items.getStackInSlot(SLOT_STAMP);

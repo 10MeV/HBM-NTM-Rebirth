@@ -23,6 +23,7 @@ import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -39,13 +40,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.entity.IEntityAdditionalSpawnData;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.registries.RegistryObject;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MissileEntity extends Entity implements LegacyMissileRadarDetectable {
+public class MissileEntity extends Entity implements LegacyMissileRadarDetectable, IEntityAdditionalSpawnData {
     private static final EntityDataAccessor<Integer> VARIANT =
             SynchedEntityData.defineId(MissileEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> HEALTH =
@@ -59,6 +61,15 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
     private double decelY;
     private double accelXZ;
     private boolean cluster;
+    private int turnProgress;
+    private double syncPosX;
+    private double syncPosY;
+    private double syncPosZ;
+    private double syncYaw;
+    private double syncPitch;
+    private double velocityX;
+    private double velocityY;
+    private double velocityZ;
 
     public MissileEntity(EntityType<? extends MissileEntity> type, Level level) {
         super(type, level);
@@ -80,72 +91,95 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         setPos(startX, startY, startZ);
         setDeltaMovement(0.0D, 2.0D, 0.0D);
         double distance = Math.max(1.0D, Math.sqrt((targetX - startX) * (targetX - startX) + (targetZ - startZ) * (targetZ - startZ)));
-        this.decelY = -0.01D;
-        this.accelXZ = 0.15D / distance;
+        this.decelY = 2.0D / distance;
+        this.accelXZ = 1.0D / distance;
+        this.velocity = 0.0D;
+        setYRot((float) (Mth.atan2(targetX - startX, targetZ - startZ) * Mth.RAD_TO_DEG));
+        yRotO = getYRot();
+        xRotO = getXRot();
     }
 
     @Override
     public void tick() {
         super.tick();
-        HitResult hit = traceNextBlockHit();
-        if (hit.getType() != HitResult.Type.MISS) {
-            setPos(hit.getLocation().x, hit.getLocation().y, hit.getLocation().z);
-            if (!level().isClientSide) {
-                onMissileImpact(hit);
-                discard();
+        if (level().isClientSide) {
+            tickClientInterpolation();
+            if (hasPropulsion()) {
+                spawnContrail();
             }
             return;
         }
 
-        updateFlight();
         Vec3 motion = getDeltaMovement();
-        if (!level().isClientSide && cluster && motion.y < -1.5D) {
+        HitResult hit = traceNextBlockHit();
+        if (hit.getType() != HitResult.Type.MISS) {
+            setPos(hit.getLocation().x, hit.getLocation().y, hit.getLocation().z);
+            onMissileImpact(hit);
+            discard();
+            return;
+        }
+
+        setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
+        updateFlight();
+        motion = getDeltaMovement();
+        if (cluster && motion.y < -1.5D) {
             explodeClusterInFlight();
             discard();
             return;
         }
-        setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
         updateRotationFromMotion(motion);
 
-        if (level().isClientSide && hasPropulsion() && tickCount % 2 == 0) {
-            spawnContrail();
-        }
-        if (!level().isClientSide && getY() < level().getMinBuildHeight() - 64.0D) {
+        if (getY() < level().getMinBuildHeight() - 64.0D) {
             discard();
         }
     }
 
-    private HitResult traceNextBlockHit() {
+    protected HitResult traceNextBlockHit() {
         Vec3 start = position();
         Vec3 end = start.add(getDeltaMovement());
         return level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
     }
 
-    private void updateFlight() {
+    protected void updateFlight() {
         Vec3 motion = getDeltaMovement();
         if (hasPropulsion()) {
             velocity += Mth.clamp(tickCount / 60.0D * 0.05D, 0.0D, 0.05D);
             velocity = Math.min(velocity, 4.0D);
             double deltaX = targetX - startX;
             double deltaZ = targetZ - startZ;
-            double factor = motion.y > 0.0D ? accelXZ : -accelXZ;
+            double distance = Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
+            double normX = distance > 1.0E-7D ? deltaX / distance : 0.0D;
+            double normZ = distance > 1.0E-7D ? deltaZ / distance : 0.0D;
+            double factor = motion.y > 0.0D ? accelXZ * velocity : -accelXZ * velocity;
             motion = new Vec3(
-                    Mth.clamp(motion.x + deltaX * factor, -velocity, velocity),
-                    motion.y + decelY,
-                    Mth.clamp(motion.z + deltaZ * factor, -velocity, velocity));
+                    motion.x + normX * factor,
+                    motion.y - decelY * velocity,
+                    motion.z + normZ * factor);
         } else {
-            motion = new Vec3(motion.x * 0.99D, Math.max(motion.y - 0.03D, -1.5D), motion.z * 0.99D);
+            motion = new Vec3(motion.x * 0.99D, Math.max(motion.y - 0.05D, -1.5D), motion.z * 0.99D);
         }
         setDeltaMovement(motion);
     }
 
-    private void updateRotationFromMotion(Vec3 motion) {
+    protected void updateRotationFromMotion(Vec3 motion) {
         double horizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
         if (horizontal > 1.0E-4D || Math.abs(motion.y) > 1.0E-4D) {
-            setYRot((float) (Mth.atan2(motion.x, motion.z) * Mth.RAD_TO_DEG));
-            setXRot((float) (Mth.atan2(motion.y, horizontal) * Mth.RAD_TO_DEG));
-            yRotO = getYRot();
-            xRotO = getXRot();
+            float yaw = (float) (Mth.atan2(targetX - getX(), targetZ - getZ()) * Mth.RAD_TO_DEG);
+            float pitch = (float) (Mth.atan2(motion.y, horizontal) * Mth.RAD_TO_DEG) - 90.0F;
+            setYRot(yaw);
+            setXRot(pitch);
+            while (getXRot() - xRotO < -180.0F) {
+                xRotO -= 360.0F;
+            }
+            while (getXRot() - xRotO >= 180.0F) {
+                xRotO += 360.0F;
+            }
+            while (getYRot() - yRotO < -180.0F) {
+                yRotO -= 360.0F;
+            }
+            while (getYRot() - yRotO >= 180.0F) {
+                yRotO += 360.0F;
+            }
         }
     }
 
@@ -296,6 +330,10 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         spawnClusterSubmunitions(variant.clusterCount());
     }
 
+    protected double flightVelocity() {
+        return velocity;
+    }
+
     public void killMissile() {
         if (!level().isClientSide) {
             ExplosionLarge.explode(level(), getX(), getY(), getZ(), 5.0F, true, false, true, this);
@@ -308,10 +346,43 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         }
     }
 
-    private void spawnContrail() {
-        CompoundTag data = new CompoundTag();
-        data.putString("type", ParticleUtil.TYPE_MISSILE_CONTRAIL);
-        ParticleUtil.spawnAux(level(), getX(), getY(), getZ(), data, 150.0D);
+    protected void spawnContrail() {
+        spawnContrailWithOffset(0.0D, 0.0D, 0.0D);
+    }
+
+    protected void spawnContrailWithOffset(double offsetX, double offsetY, double offsetZ) {
+        Vec3 trail = new Vec3(xo - getX(), yo - getY(), zo - getZ());
+        double len = trail.length();
+        Vec3 direction = len > 1.0E-7D ? trail.normalize() : Vec3.ZERO;
+        Vec3 thrust = legacyThrustVector();
+        int count = Math.max(Math.min((int) len, 10), 1);
+        for (int i = 0; i < count; i++) {
+            double j = i - len;
+            ParticleUtil.spawnMissileContrail(level(),
+                    getX() - direction.x * j + offsetX,
+                    getY() - direction.y * j + offsetY,
+                    getZ() - direction.z * j + offsetZ,
+                    -thrust.x,
+                    -thrust.y,
+                    -thrust.z,
+                    contrailScale(),
+                    60 + random.nextInt(20));
+        }
+    }
+
+    protected float contrailScale() {
+        return 1.0F;
+    }
+
+    private Vec3 legacyThrustVector() {
+        double pitch = Math.toRadians(getXRot());
+        double yaw = Math.toRadians(getYRot() + 90.0F);
+        double sinPitch = Math.sin(pitch);
+        double cosPitch = Math.cos(pitch);
+        double x = -sinPitch * Math.sin(yaw);
+        double y = cosPitch;
+        double z = sinPitch * Math.cos(yaw);
+        return new Vec3(x, y, z);
     }
 
     @Override
@@ -410,6 +481,67 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
+    @Override
+    public void writeSpawnData(FriendlyByteBuf buffer) {
+        buffer.writeDouble(startX);
+        buffer.writeDouble(startZ);
+        buffer.writeDouble(targetX);
+        buffer.writeDouble(targetZ);
+        buffer.writeDouble(velocity);
+        buffer.writeDouble(decelY);
+        buffer.writeDouble(accelXZ);
+        Vec3 motion = getDeltaMovement();
+        buffer.writeDouble(motion.x);
+        buffer.writeDouble(motion.y);
+        buffer.writeDouble(motion.z);
+    }
+
+    @Override
+    public void readSpawnData(FriendlyByteBuf additionalData) {
+        startX = additionalData.readDouble();
+        startZ = additionalData.readDouble();
+        targetX = additionalData.readDouble();
+        targetZ = additionalData.readDouble();
+        velocity = additionalData.readDouble();
+        decelY = additionalData.readDouble();
+        accelXZ = additionalData.readDouble();
+        setDeltaMovement(additionalData.readDouble(), additionalData.readDouble(), additionalData.readDouble());
+    }
+
+    @Override
+    public void lerpMotion(double x, double y, double z) {
+        velocityX = x;
+        velocityY = y;
+        velocityZ = z;
+        setDeltaMovement(x, y, z);
+    }
+
+    @Override
+    public void lerpTo(double x, double y, double z, float yaw, float pitch, int steps, boolean teleport) {
+        syncPosX = x;
+        syncPosY = y;
+        syncPosZ = z;
+        syncYaw = yaw;
+        syncPitch = pitch;
+        turnProgress = steps;
+        setDeltaMovement(velocityX, velocityY, velocityZ);
+    }
+
+    private void tickClientInterpolation() {
+        if (turnProgress > 0) {
+            double interpX = getX() + (syncPosX - getX()) / (double) turnProgress;
+            double interpY = getY() + (syncPosY - getY()) / (double) turnProgress;
+            double interpZ = getZ() + (syncPosZ - getZ()) / (double) turnProgress;
+            double deltaYaw = Mth.wrapDegrees(syncYaw - (double) getYRot());
+            setYRot((float) ((double) getYRot() + deltaYaw / (double) turnProgress));
+            setXRot((float) ((double) getXRot() + (syncPitch - (double) getXRot()) / (double) turnProgress));
+            turnProgress--;
+            setPos(interpX, interpY, interpZ);
+        } else {
+            setPos(getX(), getY(), getZ());
+        }
+    }
+
     public enum Variant {
         GENERIC(MissileItem.FormFactor.V2, LegacyMissileRadarProfile.TIER1, 25.0F,
                 Impact.STANDARD, 15.0F, 24, 0, 0, 0, 0, 0,
@@ -481,6 +613,8 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
                 Impact.VOLCANO, 0.0F, 0, 0, 0, 0, 0, 0,
                 "plate_titanium", 16, "plate_steel", 20, "plate_aluminium", 12, "thruster_large", 1),
         DOOMSDAY(MissileItem.FormFactor.ATLAS, LegacyMissileRadarProfile.TIER4, 40.0F,
+                Impact.DOOMSDAY, 0.0F, 0, 0, 0, 0, 0, 0),
+        DOOMSDAY_RUSTED(MissileItem.FormFactor.ATLAS, LegacyMissileRadarProfile.TIER4, 40.0F,
                 Impact.DOOMSDAY, 0.0F, 0, 0, 0, 0, 0, 0);
 
         private final MissileItem.FormFactor formFactor;

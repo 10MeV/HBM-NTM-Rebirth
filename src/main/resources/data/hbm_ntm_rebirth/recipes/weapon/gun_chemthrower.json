@@ -1,0 +1,28 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    "MHW",
+                    "PSS"
+                ],
+    "key":  {
+                "W":  {
+                          "item":  "hbm_ntm_rebirth:wrench"
+                      },
+                "S":  {
+                          "tag":  "forge:shells/weapon_steel"
+                      },
+                "P":  {
+                          "tag":  "forge:heavy_barrels/weapon_steel"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/weapon_steel"
+                      },
+                "H":  {
+                          "tag":  "forge:pipes/rubber"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_chemthrower"
+               }
+}

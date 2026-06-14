@@ -43,6 +43,8 @@ public final class ModRecipes {
             register("centrifuge", () -> new ItemProcessingRecipe.Serializer(ItemProcessingRecipe.Machine.CENTRIFUGE));
     public static final RecipeHolder<ItemProcessingRecipe> CRYSTALLIZER =
             register("crystallizer", () -> new ItemProcessingRecipe.Serializer(ItemProcessingRecipe.Machine.CRYSTALLIZER));
+    public static final RecipeHolder<OutgasserRecipe> OUTGASSER =
+            register("outgasser", OutgasserRecipe.Serializer::new);
 
     public static void register(IEventBus modBus) {
         RECIPE_TYPES.register(modBus);

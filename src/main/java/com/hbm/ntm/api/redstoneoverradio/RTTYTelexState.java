@@ -5,7 +5,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -80,31 +79,16 @@ public class RTTYTelexState {
         }
         tag.putString("txChan", txChannel);
         tag.putString("rxChan", rxChannel);
-        tag.putInt("sendingLine", sendingLine);
-        tag.putInt("sendingIndex", sendingIndex);
-        tag.putBoolean("isSending", sending);
-        tag.putInt("sendingWait", sendingWait);
-        tag.putInt("writingLine", writingLine);
-        tag.putBoolean("printAfterRx", printAfterRx);
-        tag.putBoolean("deleteOnReceive", deleteOnReceive);
-        tag.putInt("sendingChar", sendingChar);
     }
 
     public void load(CompoundTag tag) {
         for (int i = 0; i < LINE_COUNT; i++) {
             txBuffer[i] = truncate(tag.getString("tx" + i));
-            rxBuffer[i] = truncate(tag.getString("rx" + i));
+            rxBuffer[i] = clean(tag.getString("rx" + i));
         }
         txChannel = clean(tag.getString("txChan"));
         rxChannel = clean(tag.getString("rxChan"));
-        sendingLine = clampLine(tag.getInt("sendingLine"));
-        sendingIndex = Math.max(0, tag.getInt("sendingIndex"));
-        sending = tag.getBoolean("isSending");
-        sendingWait = Math.max(0, tag.getInt("sendingWait"));
-        writingLine = clampLine(tag.getInt("writingLine"));
-        printAfterRx = tag.getBoolean("printAfterRx");
-        deleteOnReceive = !tag.contains("deleteOnReceive") || tag.getBoolean("deleteOnReceive");
-        sendingChar = (char) tag.getInt("sendingChar");
+        resetTransientState();
     }
 
     public void saveClient(CompoundTag tag) {
@@ -121,7 +105,7 @@ public class RTTYTelexState {
     public void loadClient(CompoundTag tag) {
         for (int i = 0; i < LINE_COUNT; i++) {
             txBuffer[i] = truncate(tag.getString("tx" + i));
-            rxBuffer[i] = truncate(tag.getString("rx" + i));
+            rxBuffer[i] = clean(tag.getString("rx" + i));
         }
         txChannel = clean(tag.getString("txChan"));
         rxChannel = clean(tag.getString("rxChan"));
@@ -228,7 +212,7 @@ public class RTTYTelexState {
             printAfterRx = true;
         } else if (c == CLEAR) {
             clearReceive();
-        } else if (rxBuffer[writingLine].length() < LINE_WIDTH) {
+        } else {
             rxBuffer[writingLine] += c;
         }
     }
@@ -242,12 +226,23 @@ public class RTTYTelexState {
                 .toArray(String[]::new);
         ItemStack stack = HbmItemStackUtil.addTooltipToStack(new ItemStack(Items.PAPER), lines);
         stack.setHoverName(net.minecraft.network.chat.Component.literal("Message"));
-        level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, stack));
+        HbmItemStackUtil.dropStack(level, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, stack);
     }
 
     private void clearReceive() {
         Arrays.fill(rxBuffer, "");
         writingLine = 0;
+    }
+
+    private void resetTransientState() {
+        sendingLine = 0;
+        sendingIndex = 0;
+        sending = false;
+        sendingWait = 0;
+        writingLine = 0;
+        printAfterRx = false;
+        deleteOnReceive = true;
+        sendingChar = ' ';
     }
 
     private static String clean(String value) {

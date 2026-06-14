@@ -20,6 +20,7 @@ import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmWorldUtil;
 import com.hbm.ntm.api.redstoneoverradio.ROR;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import net.minecraft.core.BlockPos;
@@ -43,13 +44,11 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -228,8 +227,8 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         if (turret.usesEnergy()) {
             HbmEnergyUtil.chargeStorageFromItem(turret.items.getStackInSlot(SLOT_BATTERY), turret, turret.getReceiverSpeed());
         }
-        turret.tickCasingDelay();
         turret.updateServerTickAfterTargeting();
+        turret.tickCasingDelay();
 
         boolean changed = oldPower != turret.getPower()
                 || oldOn != turret.isActive()
@@ -687,9 +686,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         if (pitchDeg < -getTurretDepression() || pitchDeg > getTurretElevation()) {
             return false;
         }
-        HitResult result = level.clip(new ClipContext(pos, entityPos, ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE, entity));
-        return result.getType() == HitResult.Type.MISS;
+        return !HbmWorldUtil.isObstructedOpaque(level, entityPos, pos);
     }
 
     protected boolean entityInSurfaceTargetEnvelope(Entity entity) {
@@ -1008,6 +1005,14 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         triggerRightBarrelRecoil();
     }
 
+    protected boolean shouldSyncBarrelRecoilPositions() {
+        return true;
+    }
+
+    protected boolean shouldSyncBeamState() {
+        return true;
+    }
+
     protected void triggerBeam(int ticks) {
         Vec3 target = getTargetPos();
         if (target == null) {
@@ -1015,6 +1020,18 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         }
         beamTicks = ticks;
         beamDistance = Math.max(0.0D, target.distanceTo(getTurretPos()));
+    }
+
+    protected void triggerClientBeamFromTarget(int ticks) {
+        updateClientBeamDistanceFromTarget();
+        beamTicks = ticks;
+    }
+
+    protected void updateClientBeamDistanceFromTarget() {
+        Vec3 target = getTargetPos();
+        if (target != null) {
+            beamDistance = Math.max(0.0D, target.distanceTo(getTurretPos()));
+        }
     }
 
     protected void decayClientAnimations() {
@@ -1090,12 +1107,12 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
 
     @Override
     public void handleClientControl(ServerPlayer player, CompoundTag tag) {
-        if (tag.contains("name")) {
-            addName(tag.getString("name"));
-            return;
-        }
         if (tag.contains("del")) {
             removeName(tag.getInt("del"));
+            return;
+        }
+        if (tag.contains("name")) {
+            addName(tag.getString("name"));
             return;
         }
         String action = tag.getString(TAG_ACTION);
@@ -1156,24 +1173,39 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
             params = new String[0];
         }
         if (ROR.function("setActive").equals(name) && params.length > 0) {
-            isOn = parseLegacyBool(params[0]);
-            syncRuntimeToTracking();
+            Boolean value = parseLegacyBool(params[0]);
+            if (value != null) {
+                isOn = value;
+                syncRuntimeToTracking();
+            }
         }
         if (ROR.function("targetPlayers").equals(name) && params.length > 0) {
-            targetPlayers = parseLegacyBool(params[0]);
-            syncRuntimeToTracking();
+            Boolean value = parseLegacyBool(params[0]);
+            if (value != null) {
+                targetPlayers = value;
+                syncRuntimeToTracking();
+            }
         }
         if (ROR.function("targetAnimals").equals(name) && params.length > 0) {
-            targetFriendly = parseLegacyBool(params[0]);
-            syncRuntimeToTracking();
+            Boolean value = parseLegacyBool(params[0]);
+            if (value != null) {
+                targetFriendly = value;
+                syncRuntimeToTracking();
+            }
         }
         if (ROR.function("targetMobs").equals(name) && params.length > 0) {
-            targetHostile = parseLegacyBool(params[0]);
-            syncRuntimeToTracking();
+            Boolean value = parseLegacyBool(params[0]);
+            if (value != null) {
+                targetHostile = value;
+                syncRuntimeToTracking();
+            }
         }
         if (ROR.function("targetMachines").equals(name) && params.length > 0) {
-            targetMachines = parseLegacyBool(params[0]);
-            syncRuntimeToTracking();
+            Boolean value = parseLegacyBool(params[0]);
+            if (value != null) {
+                targetMachines = value;
+                syncRuntimeToTracking();
+            }
         }
         if (ROR.function("addWhitelist").equals(name) && params.length > 0) {
             addName(params[0]);
@@ -1190,11 +1222,11 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         return null;
     }
 
-    private static boolean parseLegacyBool(String value) {
+    private static @Nullable Boolean parseLegacyBool(String value) {
         try {
             return Integer.parseInt(value) == 1;
         } catch (NumberFormatException ex) {
-            return false;
+            return null;
         }
     }
 
@@ -1285,12 +1317,16 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
                 lastSpin += lastSpin < spin ? 360.0F : -360.0F;
             }
         }
-        lastBarrelLeftPos = barrelLeftPos;
-        lastBarrelRightPos = barrelRightPos;
-        barrelLeftPos = tag.getFloat(TAG_BARREL_LEFT);
-        barrelRightPos = tag.getFloat(TAG_BARREL_RIGHT);
-        beamTicks = tag.getInt(TAG_BEAM_TICKS);
-        beamDistance = tag.getDouble(TAG_BEAM_DISTANCE);
+        if (tag.contains(TAG_BARREL_LEFT) && tag.contains(TAG_BARREL_RIGHT)) {
+            lastBarrelLeftPos = barrelLeftPos;
+            lastBarrelRightPos = barrelRightPos;
+            barrelLeftPos = tag.getFloat(TAG_BARREL_LEFT);
+            barrelRightPos = tag.getFloat(TAG_BARREL_RIGHT);
+        }
+        if (tag.contains(TAG_BEAM_TICKS) && tag.contains(TAG_BEAM_DISTANCE)) {
+            beamTicks = tag.getInt(TAG_BEAM_TICKS);
+            beamDistance = tag.getDouble(TAG_BEAM_DISTANCE);
+        }
         isOn = tag.getBoolean(TAG_IS_ON);
         targetPlayers = tag.getBoolean(TAG_TARGET_PLAYERS);
         targetFriendly = tag.getBoolean(TAG_TARGET_FRIENDLY);
@@ -1321,10 +1357,14 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         }
         tag.putDouble(TAG_ROTATION_PITCH, rotationPitch);
         tag.putDouble(TAG_ROTATION_YAW, rotationYaw);
-        tag.putFloat(TAG_BARREL_LEFT, barrelLeftPos);
-        tag.putFloat(TAG_BARREL_RIGHT, barrelRightPos);
-        tag.putInt(TAG_BEAM_TICKS, beamTicks);
-        tag.putDouble(TAG_BEAM_DISTANCE, beamDistance);
+        if (shouldSyncBarrelRecoilPositions()) {
+            tag.putFloat(TAG_BARREL_LEFT, barrelLeftPos);
+            tag.putFloat(TAG_BARREL_RIGHT, barrelRightPos);
+        }
+        if (shouldSyncBeamState()) {
+            tag.putInt(TAG_BEAM_TICKS, beamTicks);
+            tag.putDouble(TAG_BEAM_DISTANCE, beamDistance);
+        }
         tag.putBoolean(TAG_IS_ON, isActive());
         tag.putBoolean(TAG_TARGET_PLAYERS, targetPlayers);
         tag.putBoolean(TAG_TARGET_FRIENDLY, targetFriendly);

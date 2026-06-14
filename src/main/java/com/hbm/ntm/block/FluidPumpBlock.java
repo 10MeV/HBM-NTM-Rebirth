@@ -3,6 +3,7 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.FluidPumpBlockEntity;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -100,7 +101,11 @@ public class FluidPumpBlock extends BaseEntityBlock implements EntityBlock {
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         if (!level.isClientSide) {
-            FluidType type = identifier.getIdentifiedFluid(level, pos, held);
+            var identifierReport = HbmFluidItemTransfer.identifyFluidFromStackReport(held, level, pos);
+            if (identifierReport.selectedNone()) {
+                return InteractionResult.sidedSuccess(false);
+            }
+            FluidType type = identifierReport.selectedType();
             pump.setIdentifiedType(type);
             if (player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.displayClientMessage(Component.literal("Changed type to ").append(type.getDisplayName()), false);

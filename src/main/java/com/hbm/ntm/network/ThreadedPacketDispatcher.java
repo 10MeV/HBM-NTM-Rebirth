@@ -228,21 +228,22 @@ public final class ThreadedPacketDispatcher {
     }
 
     private static Object prepareMessage(Object message) {
-        if (!ModMessages.validateMessageForSend(message, "threaded-queue", "S2C")) {
+        Object payload = ModMessages.unwrapLegacyPacket(message);
+        if (!ModMessages.validateMessageForSend(payload, "threaded-queue", "S2C")) {
             DISCARDED_INVALID_MESSAGE.incrementAndGet();
             TOTAL_DISCARDED.incrementAndGet();
             lastFailureMessage = "Unregistered threaded packet message.";
             return null;
         }
         try {
-            boolean preparableMessage = message instanceof HbmPreparablePacket;
+            boolean preparableMessage = payload instanceof HbmPreparablePacket;
             Object prepared;
             if (preparableMessage) {
                 PREPARABLE_MESSAGES.incrementAndGet();
-                prepared = ((HbmPreparablePacket) message).prepareForThreadedSend();
+                prepared = ((HbmPreparablePacket) payload).prepareForThreadedSend();
             } else {
                 NON_PREPARABLE_MESSAGES.incrementAndGet();
-                prepared = message;
+                prepared = payload;
             }
             if (prepared == null) {
                 TOTAL_PREPARE_FAILED.incrementAndGet();
@@ -251,7 +252,7 @@ public final class ThreadedPacketDispatcher {
                 lastFailureMessage = "Threaded packet prepare returned null.";
                 return null;
             }
-            if (prepared == message) {
+            if (prepared == payload) {
                 PREPARED_SAME_INSTANCE.incrementAndGet();
             } else {
                 PREPARED_COPY_INSTANCE.incrementAndGet();

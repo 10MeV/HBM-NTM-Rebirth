@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:crt_display"
+    },
+    "B": {
+      "item": "hbm_ntm_rebirth:rbmk_display_blank"
+    }
+  },
+  "pattern": [
+    "C",
+    "B"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_display"
+  },
+  "show_notification": true
+}

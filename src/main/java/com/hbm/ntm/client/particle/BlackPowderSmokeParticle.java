@@ -7,6 +7,7 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
@@ -16,7 +17,7 @@ import java.awt.Color;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @OnlyIn(Dist.CLIENT)
-public class BlackPowderSmokeParticle extends TextureSheetParticle {
+public class BlackPowderSmokeParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
     private static final AtomicInteger NEXT_VISUAL_ID = new AtomicInteger();
     private static SpriteSet sharedSprites;
 
@@ -69,8 +70,13 @@ public class BlackPowderSmokeParticle extends TextureSheetParticle {
 
     @Override
     public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.enqueue(this, camera, this.x, this.y, this.z);
+    }
+
+    @Override
+    public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
         this.updateVisuals((this.age + partialTick) / (float) this.lifetime);
-        super.render(consumer, camera, partialTick);
+        super.render(buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite()), camera, partialTick);
     }
 
     private void updateVisuals(float progress) {
@@ -87,7 +93,7 @@ public class BlackPowderSmokeParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+        return HbmDeferredParticleRenderer.DEFERRED_RENDER_TYPE;
     }
 
     public static class Provider implements ParticleProvider<SimpleParticleType> {

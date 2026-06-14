@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:outgasser",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/th232"
+    },
+    "count": 1,
+    "legacy_ore": "ingotTh232"
+  },
+  "solid_output": {
+    "item": "hbm_ntm_rebirth:ingot_thorium_fuel"
+  }
+}

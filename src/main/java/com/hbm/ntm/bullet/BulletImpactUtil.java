@@ -30,7 +30,6 @@ import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEffects;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -192,9 +191,7 @@ public final class BulletImpactUtil {
             fire = true;
         }
         if (config.hasBehavior(BulletBehaviorTag.INCENDIARY_PHOSPHORUS) && target instanceof LivingEntity living) {
-            if (HbmLivingProperties.getPhosphorus(living) < 300) {
-                HbmLivingProperties.setPhosphorus(living, 300);
-            }
+            HbmLivingProperties.ensurePhosphorus(living, 300);
             fire = true;
         }
         if (config.hasBehavior(BulletBehaviorTag.INFRARED_BEAM_HIT) && target instanceof LivingEntity living) {
@@ -442,8 +439,7 @@ public final class BulletImpactUtil {
         }
         boolean placed = level.setBlock(firePos, fireState, 3);
         if (placed && !legacyFlamer) {
-            level.playSound(null, firePos, ModSounds.WEAPON_FLAMETHROWER_IGNITE.get(),
-                    SoundSource.BLOCKS, 0.75F, 0.9F + level.random.nextFloat() * 0.2F);
+            LegacySoundPlayer.playLegacyFlamethrowerIgnite(level, firePos, 0.75F, 0.9F, 0.2F);
         }
         return placed;
     }
@@ -456,14 +452,8 @@ public final class BulletImpactUtil {
         boolean changed = target.getRemainingFireTicks() > 0;
         target.clearFire();
         if (target instanceof LivingEntity living) {
-            changed |= HbmLivingProperties.getFire(living) > 0
-                    || HbmLivingProperties.getPhosphorus(living) > 0
-                    || HbmLivingProperties.getBalefire(living) > 0
-                    || HbmLivingProperties.getBlackFire(living) > 0;
-            HbmLivingProperties.setFire(living, 0);
-            HbmLivingProperties.setPhosphorus(living, 0);
-            HbmLivingProperties.setBalefire(living, 0);
-            HbmLivingProperties.setBlackFire(living, 0);
+            changed |= HbmLivingProperties.hasTemperatureEffects(living);
+            HbmLivingProperties.clearTemperatureEffects(living);
         }
         return changed;
     }

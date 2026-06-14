@@ -114,7 +114,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new ArcWelderAccessibleItemHandler());
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
-            new ForgeRecipeFluidHandlerAdapter(List.of(inputTank), List.of(), 0, this::onFluidContentsChanged));
+            ForgeRecipeFluidHandlerAdapter.create(List.of(inputTank), List.of(), 0, this::onFluidContentsChanged));
 
     private int progress;
     private int processTime = 1;

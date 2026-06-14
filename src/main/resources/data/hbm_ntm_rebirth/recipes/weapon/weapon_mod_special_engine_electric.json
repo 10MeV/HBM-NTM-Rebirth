@@ -1,0 +1,22 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "DSD",
+                    "PPP",
+                    "DSD"
+                ],
+    "key":  {
+                "D":  {
+                          "tag":  "forge:ingots/any_plastic"
+                      },
+                "P":  {
+                          "tag":  "forge:dense_wires/gold"
+                      },
+                "S":  {
+                          "item":  "hbm_ntm_rebirth:capacitor_gold"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_engine_electric"
+               }
+}

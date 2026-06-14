@@ -1,6 +1,6 @@
 package com.hbm.ntm.client.sound;
 
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundIds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.AbstractSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -158,17 +158,17 @@ public class LegacyMovingEntitySound extends AbstractSoundInstance implements Ti
     }
 
     public static LegacyMovingEntitySound startChopperFlying(Entity entity, Predicate<Entity> keepPlaying) {
-        return startForEntity(ModSounds.ENTITY_CHOPPER_FLYING_LOOP.get().getLocation(), entity,
+        return startForEntity(LegacySoundIds.resolveLocation("hbm:entity.chopperFlyingLoop"), entity,
                 LoopType.SOUND_CHOPPER_LOOP, SoundSource.HOSTILE, 10.0F, 1.0F, keepPlaying);
     }
 
     public static LegacyMovingEntitySound startChopperCrashing(Entity entity, Predicate<Entity> keepPlaying) {
-        return startForEntity(ModSounds.ENTITY_CHOPPER_CRASHING_LOOP.get().getLocation(), entity,
+        return startForEntity(LegacySoundIds.resolveLocation("hbm:entity.chopperCrashingLoop"), entity,
                 LoopType.SOUND_CRASHING_LOOP, SoundSource.HOSTILE, 10.0F, 1.0F, keepPlaying);
     }
 
     public static LegacyMovingEntitySound startChopperMine(Entity entity, Predicate<Entity> keepPlaying) {
-        return startForEntity(ModSounds.ENTITY_CHOPPER_MINE_LOOP.get().getLocation(), entity,
+        return startForEntity(LegacySoundIds.resolveLocation("hbm:entity.chopperMineLoop"), entity,
                 LoopType.SOUND_MINE_LOOP, SoundSource.HOSTILE, 10.0F, 1.0F, keepPlaying);
     }
 

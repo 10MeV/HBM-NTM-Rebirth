@@ -19,6 +19,7 @@ import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.satellite.LegacySatelliteType;
 import com.hbm.ntm.satellite.Satellite;
@@ -345,7 +346,12 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public List<ItemStack> getDrops() {
-        return HbmInventoryMenuHelper.clearToDrops(items);
+        List<ItemStack> drops = new ArrayList<>(HbmInventoryMenuHelper.clearToDrops(items));
+        appendDropStacks(drops, ModBlocks.STRUCT_LAUNCHER.get(), 414);
+        appendDropStacks(drops, ModBlocks.legacyBlock("concrete_smooth").get(), 294);
+        appendDropStacks(drops, ModBlocks.STRUCT_SCAFFOLD.get(), 447);
+        appendDropStacks(drops, ModBlocks.STRUCT_SOYUZ_CORE.get(), 1);
+        return drops;
     }
 
     public int getMode() {
@@ -553,6 +559,16 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         return state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.EAST;
+    }
+
+    private static void appendDropStacks(List<ItemStack> drops, Block block, int count) {
+        int remaining = count;
+        int maxStackSize = new ItemStack(block).getMaxStackSize();
+        while (remaining > 0) {
+            int stackSize = Math.min(remaining, maxStackSize);
+            drops.add(new ItemStack(block, stackSize));
+            remaining -= stackSize;
+        }
     }
 
     private static boolean hasLegacyDesignatorCoords(ItemStack stack) {

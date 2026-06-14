@@ -9,7 +9,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -105,8 +105,7 @@ public class FluidValveBlock extends HbmFluidNodeBlock {
         BlockState updated = state.setValue(OPEN, open);
         level.setBlock(pos, updated, Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
         if (playSound) {
-            level.playSound(null, pos, ModSounds.BLOCK_REACTOR_START.get(), SoundSource.BLOCKS, 1.0F,
-                    open ? 1.0F : 0.85F);
+            LegacySoundPlayer.playLegacyReactorStart(level, pos, 1.0F, open ? 1.0F : 0.85F);
         }
         if (level.getBlockEntity(pos) instanceof FluidValveBlockEntity valve) {
             valve.onValveStateChanged();

@@ -10,6 +10,9 @@ import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import com.hbm.ntm.item.LegacyArtilleryAmmoItem;
 import com.hbm.ntm.item.SednaGunItem;
+import com.hbm.ntm.item.WeaponModItem;
+import com.hbm.ntm.item.missile.MissileItem;
+import com.hbm.ntm.item.missile.MissilePartItem;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -46,7 +49,22 @@ public class HbmItemModelProvider extends ItemModelProvider {
         if (hasManualItemModel(path)) {
             return;
         }
+        if (usesLegacyObjArmorItemRenderer(path)) {
+            getBuilder(path)
+                    .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
+            return;
+        }
         if (item instanceof HbmBatteryPackItem) {
+            getBuilder(path)
+                    .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
+            return;
+        }
+        if (item instanceof MissileItem missile && missile.usesObjItemRenderer()) {
+            getBuilder(path)
+                    .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
+            return;
+        }
+        if (item instanceof MissilePartItem part && part.usesObjItemRenderer()) {
             getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
             return;
@@ -92,6 +110,11 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.equals("fluid_pack_empty")) {
             generatedItem(path, "fluid_pack");
+            return;
+        }
+        String sednaPartTexture = sednaGunPartTexture(path);
+        if (sednaPartTexture != null) {
+            generatedItem(path, sednaPartTexture);
             return;
         }
         if (path.equals("blueprints")) {
@@ -194,6 +217,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "wire_red_copper");
             return;
         }
+        if (path.equals("wire_fine_aluminium")) {
+            generatedItem(path, "wire_aluminium");
+            return;
+        }
         if (path.equals("wire_fine_copper")) {
             generatedItem(path, "wire_copper");
             return;
@@ -212,6 +239,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.startsWith("mechanism_")) {
             generatedItem(path, "part_mechanism");
+            return;
+        }
+        if (path.startsWith("shell_")) {
+            generatedItem(path, "shell");
             return;
         }
         if (path.equals("pellet_charged")) {
@@ -332,6 +363,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.startsWith("ammo_standard_")) {
             generatedItem(path, "ammo_standard." + path.substring("ammo_standard_".length()));
+            return;
+        }
+        if (item instanceof WeaponModItem mod) {
+            generatedItem(path, mod.texturePath());
             return;
         }
         if (item instanceof SednaGunItem) {
@@ -484,6 +519,61 @@ public class HbmItemModelProvider extends ItemModelProvider {
         getBuilder(itemPath)
                 .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
                 .texture("layer0", modLoc("item/" + texturePath));
+    }
+
+    @Nullable
+    private static String sednaGunPartTexture(String path) {
+        if (path.startsWith("barrel_light_")) {
+            return "part_barrel_light";
+        }
+        if (path.startsWith("barrel_heavy_")) {
+            return "part_barrel_heavy";
+        }
+        if (path.startsWith("receiver_light_")) {
+            return "part_receiver_light";
+        }
+        if (path.startsWith("receiver_heavy_")) {
+            return "part_receiver_heavy";
+        }
+        if (path.startsWith("stock_")) {
+            return "part_stock";
+        }
+        if (path.startsWith("grip_")) {
+            return "part_grip";
+        }
+        if (path.startsWith("plate_cast_")) {
+            return "plate_cast";
+        }
+        return null;
+    }
+
+    private static boolean usesLegacyObjArmorItemRenderer(String path) {
+        if (!isLegacyObjArmorPiece(path)) {
+            return false;
+        }
+        return path.startsWith("t51_")
+                || path.startsWith("steamsuit_")
+                || path.startsWith("dieselsuit_")
+                || path.startsWith("ajr_")
+                || path.startsWith("ajro_")
+                || path.startsWith("rpa_")
+                || path.startsWith("ncrpa_")
+                || path.startsWith("bj_")
+                || path.startsWith("envsuit_")
+                || path.startsWith("hev_")
+                || path.startsWith("fau_")
+                || path.startsWith("dns_")
+                || path.startsWith("taurun_")
+                || path.startsWith("trenchmaster_")
+                || path.startsWith("bismuth_");
+    }
+
+    private static boolean isLegacyObjArmorPiece(String path) {
+        return path.endsWith("_helmet")
+                || path.endsWith("_plate")
+                || path.endsWith("_legs")
+                || path.endsWith("_boots")
+                || path.equals("bj_plate_jetpack");
     }
 
     private void handheldItem(String itemPath, String texturePath) {

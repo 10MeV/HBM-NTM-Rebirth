@@ -4,12 +4,11 @@ import com.hbm.ntm.block.LegacyChargeBlock;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -40,7 +39,7 @@ public class LegacyChargeBlockEntity extends BlockEntity implements HbmLegacyLoa
 
         blockEntity.timer--;
         if (blockEntity.timer > 0 && blockEntity.timer % 20 == 0) {
-            level.playSound(null, pos, ModSounds.WEAPON_FSTBMB_PING.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacyFstbmbPing(level, pos, 1.0F, 1.0F);
         }
         if (blockEntity.timer <= 0) {
             if (state.getBlock() instanceof LegacyChargeBlock charge) {

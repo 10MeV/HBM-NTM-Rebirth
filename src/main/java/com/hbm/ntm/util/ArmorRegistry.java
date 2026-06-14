@@ -10,16 +10,20 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
 import javax.annotation.Nullable;
+import java.util.AbstractCollection;
 import java.util.AbstractMap;
+import java.util.AbstractSet;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Legacy-name hazard protection facade.
@@ -40,6 +44,14 @@ public final class ArmorRegistry {
 
     public static void registerHazard(Item item, HazardClass... hazards) {
         com.hbm.ntm.radiation.ArmorRegistry.registerHazard(item, modern(hazards));
+    }
+
+    public static void register() {
+        ArmorUtil.register();
+    }
+
+    public static void registerDefaultProtections() {
+        com.hbm.ntm.radiation.ArmorRegistry.registerDefaultProtections();
     }
 
     public static void registerProtection(Item item, HazardClass... hazards) {
@@ -150,6 +162,22 @@ public final class ArmorRegistry {
         clearExternalHazards();
     }
 
+    public static void replaceHazards(Map<Item, ? extends Collection<HazardClass>> hazards) {
+        com.hbm.ntm.radiation.ArmorRegistry.replaceHazards(modernProtectionMap(hazards));
+    }
+
+    public static void replaceProtections(Map<Item, ? extends Collection<HazardClass>> hazards) {
+        replaceHazards(hazards);
+    }
+
+    public static void replaceExternalHazards(Map<Item, ? extends Collection<HazardClass>> hazards) {
+        com.hbm.ntm.radiation.ArmorRegistry.replaceExternalHazards(modernProtectionMap(hazards));
+    }
+
+    public static void replaceExternalProtections(Map<Item, ? extends Collection<HazardClass>> hazards) {
+        replaceExternalHazards(hazards);
+    }
+
     public static boolean hasAllProtection(LivingEntity entity, int slot, HazardClass... hazards) {
         return com.hbm.ntm.radiation.ArmorRegistry.hasAllProtection(entity, slot, modern(hazards));
     }
@@ -206,6 +234,15 @@ public final class ArmorRegistry {
         Map<Item, EnumSet<HazardClass>> snapshot = new LinkedHashMap<>();
         for (Map.Entry<Item, EnumSet<com.hbm.ntm.api.item.HazardClass>> entry :
                 com.hbm.ntm.radiation.ArmorRegistry.protectionSnapshot().entrySet()) {
+            snapshot.put(entry.getKey(), legacySet(entry.getValue()));
+        }
+        return snapshot;
+    }
+
+    public static Map<Item, EnumSet<HazardClass>> externalProtectionDefaultsSnapshot() {
+        Map<Item, EnumSet<HazardClass>> snapshot = new LinkedHashMap<>();
+        for (Map.Entry<Item, EnumSet<com.hbm.ntm.api.item.HazardClass>> entry :
+                com.hbm.ntm.radiation.ArmorRegistry.externalProtectionDefaultsSnapshot().entrySet()) {
             snapshot.put(entry.getKey(), legacySet(entry.getValue()));
         }
         return snapshot;
@@ -506,6 +543,27 @@ public final class ArmorRegistry {
         return mapped;
     }
 
+    static Map<Item, Collection<com.hbm.ntm.api.item.HazardClass>> modernProtectionMap(
+            Map<Item, ? extends Collection<HazardClass>> hazards) {
+        Map<Item, Collection<com.hbm.ntm.api.item.HazardClass>> mapped = new LinkedHashMap<>();
+        if (hazards == null) {
+            return mapped;
+        }
+        for (Entry<Item, ? extends Collection<HazardClass>> entry : hazards.entrySet()) {
+            Collection<HazardClass> value = entry.getValue();
+            List<com.hbm.ntm.api.item.HazardClass> converted = new ArrayList<>();
+            if (value != null) {
+                for (HazardClass hazard : value) {
+                    if (hazard != null) {
+                        converted.add(hazard.modern());
+                    }
+                }
+            }
+            mapped.put(entry.getKey(), converted);
+        }
+        return mapped;
+    }
+
     static ArrayList<HazardClass> legacy(Collection<com.hbm.ntm.api.item.HazardClass> hazards) {
         ArrayList<HazardClass> mapped = new ArrayList<>();
         if (hazards != null) {
@@ -556,9 +614,13 @@ public final class ArmorRegistry {
         @Override
         public ArrayList<HazardClass> put(Item item, ArrayList<HazardClass> hazards) {
             ArrayList<HazardClass> previous = get(item);
-            if (item != null && hazards != null) {
-                com.hbm.ntm.radiation.ArmorRegistry.registerHazard(item,
-                        modern(hazards.toArray(HazardClass[]::new)));
+            if (item != null) {
+                if (hazards == null) {
+                    com.hbm.ntm.radiation.ArmorRegistry.removeHazard(item);
+                } else {
+                    com.hbm.ntm.radiation.ArmorRegistry.registerHazard(item,
+                            modern(hazards.toArray(HazardClass[]::new)));
+                }
             }
             return previous;
         }
@@ -570,13 +632,38 @@ public final class ArmorRegistry {
             }
             ArrayList<com.hbm.ntm.api.item.HazardClass> modern =
                     com.hbm.ntm.radiation.ArmorRegistry.hazardClasses.get(item);
-            return modern == null ? null : legacy(modern);
+            return modern == null ? null : new BackedHazardClassList(item, legacy(modern));
         }
 
         @Override
         public boolean containsKey(Object key) {
             return key instanceof Item item
                     && com.hbm.ntm.radiation.ArmorRegistry.hazardClasses.containsKey(item);
+        }
+
+        @Override
+        public int size() {
+            return com.hbm.ntm.radiation.ArmorRegistry.hazardClasses.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return com.hbm.ntm.radiation.ArmorRegistry.hazardClasses.isEmpty();
+        }
+
+        @Override
+        public ArrayList<HazardClass> computeIfAbsent(Item item,
+                Function<? super Item, ? extends ArrayList<HazardClass>> mappingFunction) {
+            ArrayList<HazardClass> existing = get(item);
+            if (existing != null || item == null) {
+                return existing;
+            }
+            ArrayList<HazardClass> created = mappingFunction.apply(item);
+            if (created == null) {
+                return null;
+            }
+            put(item, created);
+            return get(item);
         }
 
         @Override
@@ -595,20 +682,291 @@ public final class ArmorRegistry {
         }
 
         @Override
-        public Set<Entry<Item, ArrayList<HazardClass>>> entrySet() {
-            Map<Item, ArrayList<HazardClass>> snapshot = new HashMap<>();
-            for (Entry<Item, ArrayList<com.hbm.ntm.api.item.HazardClass>> entry :
-                    com.hbm.ntm.radiation.ArmorRegistry.hazardClasses.entrySet()) {
-                snapshot.put(entry.getKey(), legacy(entry.getValue()));
+        public boolean containsValue(Object value) {
+            if (!(value instanceof Collection<?> collection)) {
+                return false;
             }
-            return snapshot.entrySet();
+            for (ArrayList<com.hbm.ntm.api.item.HazardClass> protections :
+                    com.hbm.ntm.radiation.ArmorRegistry.hazardClasses.values()) {
+                if (legacy(protections).equals(collection)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public Collection<ArrayList<HazardClass>> values() {
+            return new AbstractCollection<>() {
+                @Override
+                public Iterator<ArrayList<HazardClass>> iterator() {
+                    Iterator<Entry<Item, ArrayList<com.hbm.ntm.api.item.HazardClass>>> iterator =
+                            com.hbm.ntm.radiation.ArmorRegistry.hazardClasses.entrySet().iterator();
+                    return new Iterator<>() {
+                        @Nullable private Item current;
+
+                        @Override
+                        public boolean hasNext() {
+                            return iterator.hasNext();
+                        }
+
+                        @Override
+                        public ArrayList<HazardClass> next() {
+                            Entry<Item, ArrayList<com.hbm.ntm.api.item.HazardClass>> entry = iterator.next();
+                            current = entry.getKey();
+                            return new BackedHazardClassList(entry.getKey(), legacy(entry.getValue()));
+                        }
+
+                        @Override
+                        public void remove() {
+                            if (current == null) {
+                                throw new IllegalStateException();
+                            }
+                            iterator.remove();
+                            current = null;
+                        }
+                    };
+                }
+
+                @Override
+                public int size() {
+                    return HazardClassMap.this.size();
+                }
+
+                @Override
+                public boolean contains(Object object) {
+                    return HazardClassMap.this.containsValue(object);
+                }
+
+                @Override
+                public boolean remove(Object object) {
+                    if (!(object instanceof Collection<?> collection)) {
+                        return false;
+                    }
+                    Iterator<Entry<Item, ArrayList<com.hbm.ntm.api.item.HazardClass>>> iterator =
+                            com.hbm.ntm.radiation.ArmorRegistry.hazardClasses.entrySet().iterator();
+                    while (iterator.hasNext()) {
+                        Entry<Item, ArrayList<com.hbm.ntm.api.item.HazardClass>> entry = iterator.next();
+                        if (legacy(entry.getValue()).equals(collection)) {
+                            iterator.remove();
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                @Override
+                public void clear() {
+                    HazardClassMap.this.clear();
+                }
+            };
+        }
+
+        @Override
+        public Set<Entry<Item, ArrayList<HazardClass>>> entrySet() {
+            return new AbstractSet<>() {
+                @Override
+                public Iterator<Entry<Item, ArrayList<HazardClass>>> iterator() {
+                    Iterator<Entry<Item, ArrayList<com.hbm.ntm.api.item.HazardClass>>> iterator =
+                            com.hbm.ntm.radiation.ArmorRegistry.hazardClasses.entrySet().iterator();
+                    return new Iterator<>() {
+                        @Nullable private Item current;
+
+                        @Override
+                        public boolean hasNext() {
+                            return iterator.hasNext();
+                        }
+
+                        @Override
+                        public Entry<Item, ArrayList<HazardClass>> next() {
+                            Entry<Item, ArrayList<com.hbm.ntm.api.item.HazardClass>> entry = iterator.next();
+                            current = entry.getKey();
+                            return new BackedHazardClassEntry(entry.getKey());
+                        }
+
+                        @Override
+                        public void remove() {
+                            if (current == null) {
+                                throw new IllegalStateException();
+                            }
+                            iterator.remove();
+                            current = null;
+                        }
+                    };
+                }
+
+                @Override
+                public int size() {
+                    return HazardClassMap.this.size();
+                }
+
+                @Override
+                public boolean contains(Object object) {
+                    if (!(object instanceof Entry<?, ?> entry)) {
+                        return false;
+                    }
+                    ArrayList<HazardClass> value = HazardClassMap.this.get(entry.getKey());
+                    return value != null && value.equals(entry.getValue());
+                }
+
+                @Override
+                public boolean remove(Object object) {
+                    if (!contains(object) || !(object instanceof Entry<?, ?> entry)
+                            || !(entry.getKey() instanceof Item item)) {
+                        return false;
+                    }
+                    com.hbm.ntm.radiation.ArmorRegistry.removeHazard(item);
+                    return true;
+                }
+
+                @Override
+                public void clear() {
+                    HazardClassMap.this.clear();
+                }
+            };
         }
 
         @Override
         public void putAll(Map<? extends Item, ? extends ArrayList<HazardClass>> map) {
             for (Entry<? extends Item, ? extends ArrayList<HazardClass>> entry : map.entrySet()) {
-                put(entry.getKey(), new ArrayList<>(entry.getValue()));
+                put(entry.getKey(), entry.getValue() == null ? null : new ArrayList<>(entry.getValue()));
             }
+        }
+    }
+
+    private static final class BackedHazardClassEntry implements Entry<Item, ArrayList<HazardClass>> {
+        private final Item item;
+
+        private BackedHazardClassEntry(Item item) {
+            this.item = item;
+        }
+
+        @Override
+        public Item getKey() {
+            return item;
+        }
+
+        @Override
+        public ArrayList<HazardClass> getValue() {
+            return hazardClasses.get(item);
+        }
+
+        @Override
+        public ArrayList<HazardClass> setValue(ArrayList<HazardClass> value) {
+            ArrayList<HazardClass> previous = getValue();
+            if (value == null) {
+                com.hbm.ntm.radiation.ArmorRegistry.removeHazard(item);
+            } else {
+                com.hbm.ntm.radiation.ArmorRegistry.registerHazard(item,
+                        modern(value.toArray(HazardClass[]::new)));
+            }
+            return previous;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (!(object instanceof Entry<?, ?> entry)) {
+                return false;
+            }
+            return Objects.equals(item, entry.getKey()) && Objects.equals(getValue(), entry.getValue());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(item) ^ Objects.hashCode(getValue());
+        }
+    }
+
+    private static final class BackedHazardClassList extends ArrayList<HazardClass> {
+        private final Item item;
+
+        private BackedHazardClassList(Item item, Collection<HazardClass> hazards) {
+            super(hazards);
+            this.item = item;
+        }
+
+        @Override
+        public boolean add(HazardClass hazard) {
+            boolean changed = super.add(hazard);
+            sync();
+            return changed;
+        }
+
+        @Override
+        public void add(int index, HazardClass element) {
+            super.add(index, element);
+            sync();
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends HazardClass> collection) {
+            boolean changed = super.addAll(collection);
+            if (changed) {
+                sync();
+            }
+            return changed;
+        }
+
+        @Override
+        public boolean addAll(int index, Collection<? extends HazardClass> collection) {
+            boolean changed = super.addAll(index, collection);
+            if (changed) {
+                sync();
+            }
+            return changed;
+        }
+
+        @Override
+        public HazardClass set(int index, HazardClass element) {
+            HazardClass previous = super.set(index, element);
+            sync();
+            return previous;
+        }
+
+        @Override
+        public HazardClass remove(int index) {
+            HazardClass previous = super.remove(index);
+            sync();
+            return previous;
+        }
+
+        @Override
+        public boolean remove(Object object) {
+            boolean changed = super.remove(object);
+            if (changed) {
+                sync();
+            }
+            return changed;
+        }
+
+        @Override
+        public boolean removeAll(Collection<?> collection) {
+            boolean changed = super.removeAll(collection);
+            if (changed) {
+                sync();
+            }
+            return changed;
+        }
+
+        @Override
+        public boolean retainAll(Collection<?> collection) {
+            boolean changed = super.retainAll(collection);
+            if (changed) {
+                sync();
+            }
+            return changed;
+        }
+
+        @Override
+        public void clear() {
+            if (!isEmpty()) {
+                super.clear();
+                sync();
+            }
+        }
+
+        private void sync() {
+            com.hbm.ntm.radiation.ArmorRegistry.registerHazard(item, modern(toArray(HazardClass[]::new)));
         }
     }
 }

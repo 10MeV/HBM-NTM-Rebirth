@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:outgasser",
+  "input": {
+    "ingredient": {
+      "tag": "forge:nuggets/th232"
+    },
+    "count": 1,
+    "legacy_ore": "nuggetTh232"
+  },
+  "solid_output": {
+    "item": "hbm_ntm_rebirth:nugget_thorium_fuel"
+  }
+}

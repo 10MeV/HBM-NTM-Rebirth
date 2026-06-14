@@ -12,6 +12,7 @@ import net.minecraft.world.item.TooltipFlag;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -57,7 +58,11 @@ public final class ArmorUtil {
     }
 
     public static void register() {
-        com.hbm.ntm.radiation.HazmatRegistry.registerDefaults();
+        com.hbm.ntm.radiation.ArmorUtil.register();
+    }
+
+    public static void registerDefaultProtections() {
+        com.hbm.ntm.radiation.ArmorUtil.registerDefaultProtections();
     }
 
     public static void registerProtection(Item item, HazardClass... hazards) {
@@ -116,6 +121,14 @@ public final class ArmorUtil {
         com.hbm.ntm.radiation.ArmorUtil.clearExternalProtections();
     }
 
+    public static void replaceProtections(Map<Item, ? extends Collection<HazardClass>> protections) {
+        com.hbm.ntm.radiation.ArmorUtil.replaceProtections(ArmorRegistry.modernProtectionMap(protections));
+    }
+
+    public static void replaceExternalProtections(Map<Item, ? extends Collection<HazardClass>> protections) {
+        com.hbm.ntm.radiation.ArmorUtil.replaceExternalProtections(ArmorRegistry.modernProtectionMap(protections));
+    }
+
     public static ArrayList<HazardClass> getProtection(ItemStack stack) {
         return ArmorRegistry.legacy(com.hbm.ntm.radiation.ArmorUtil.getProtection(stack));
     }
@@ -128,6 +141,15 @@ public final class ArmorUtil {
         Map<Item, EnumSet<HazardClass>> snapshot = new LinkedHashMap<>();
         for (Map.Entry<Item, EnumSet<com.hbm.ntm.api.item.HazardClass>> entry :
                 com.hbm.ntm.radiation.ArmorUtil.protectionSnapshot().entrySet()) {
+            snapshot.put(entry.getKey(), legacySet(entry.getValue()));
+        }
+        return snapshot;
+    }
+
+    public static Map<Item, EnumSet<HazardClass>> externalProtectionDefaultsSnapshot() {
+        Map<Item, EnumSet<HazardClass>> snapshot = new LinkedHashMap<>();
+        for (Map.Entry<Item, EnumSet<com.hbm.ntm.api.item.HazardClass>> entry :
+                com.hbm.ntm.radiation.ArmorUtil.externalProtectionDefaultsSnapshot().entrySet()) {
             snapshot.put(entry.getKey(), legacySet(entry.getValue()));
         }
         return snapshot;
@@ -510,8 +532,55 @@ public final class ArmorUtil {
         }
 
         @Override
+        public boolean contains(Object object) {
+            return indexOf(object) >= 0;
+        }
+
+        @Override
+        public int indexOf(Object object) {
+            if (!(object instanceof HbmTuple.Pair<?, ?> pair)) {
+                return -1;
+            }
+            for (int index = 0; index < size(); index++) {
+                if (matches(get(index), pair)) {
+                    return index;
+                }
+            }
+            return -1;
+        }
+
+        @Override
+        public int lastIndexOf(Object object) {
+            if (!(object instanceof HbmTuple.Pair<?, ?> pair)) {
+                return -1;
+            }
+            for (int index = size() - 1; index >= 0; index--) {
+                if (matches(get(index), pair)) {
+                    return index;
+                }
+            }
+            return -1;
+        }
+
+        @Override
+        public boolean remove(Object object) {
+            int index = indexOf(object);
+            if (index < 0) {
+                return false;
+            }
+            remove(index);
+            return true;
+        }
+
+        @Override
         public void clear() {
             com.hbm.ntm.radiation.ArmorUtil.external.clear();
+        }
+
+        private boolean matches(Tuple.Pair<Item, HazardClass[]> entry, HbmTuple.Pair<?, ?> candidate) {
+            return entry.getKey() == candidate.getKey()
+                    && candidate.getValue() instanceof HazardClass[] hazards
+                    && Arrays.equals(entry.getValue(), hazards);
         }
     }
 }

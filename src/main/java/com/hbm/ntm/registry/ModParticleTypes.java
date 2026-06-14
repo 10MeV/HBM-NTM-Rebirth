@@ -85,6 +85,12 @@ public final class ModParticleTypes {
             PARTICLE_TYPES.register("plasma_blast", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> HAZE =
             PARTICLE_TYPES.register("haze", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> CHAOS_CLOUD_ORANGE =
+            PARTICLE_TYPES.register("chaos_cloud_orange", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> CHAOS_CLOUD_GREEN =
+            PARTICLE_TYPES.register("chaos_cloud_green", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> CHAOS_CLOUD_PINK =
+            PARTICLE_TYPES.register("chaos_cloud_pink", () -> new SimpleParticleType(false));
 
     private ModParticleTypes() {
     }

@@ -22,6 +22,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -115,6 +116,7 @@ public final class HazmatRegistry {
         registerLegacyFsbArmorSet("rpa", 2.0D, ArmorUtil.FULL_PACKAGE);
         registerLegacyFsbArmorSet("ncrpa", 1.7D, ArmorUtil.FULL_PACKAGE);
         registerLegacyFsbArmorSet("bj", 1.0D);
+        registerLegacyPiece("bj_plate_jetpack", 1.0D * HazmatRegistry.chest);
         registerLegacyFsbArmorSet("envsuit", 1.0D, ArmorUtil.FULL_PACKAGE);
         registerLegacyFsbArmorSet("hev", 2.3D, ArmorUtil.FULL_PACKAGE);
         registerLegacyFsbArmorSet("fau", 4.0D, ArmorUtil.FULL_PACKAGE);
@@ -309,8 +311,52 @@ public final class HazmatRegistry {
 
     public static void replaceResistances(Map<Item, Double> resistances) {
         clearResistances();
+        if (resistances == null) {
+            return;
+        }
         for (Map.Entry<Item, Double> entry : resistances.entrySet()) {
             registerHazmat(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public static void replaceHazmats(Map<Item, Double> resistances) {
+        replaceResistances(resistances);
+    }
+
+    public static void replaceProtections(Map<Item, ? extends Collection<HazardClass>> protections) {
+        clearProtections();
+        if (protections == null) {
+            return;
+        }
+        for (Map.Entry<Item, ? extends Collection<HazardClass>> entry : protections.entrySet()) {
+            Collection<HazardClass> value = entry.getValue();
+            registerProtection(entry.getKey(), value == null ? new HazardClass[0] : value.toArray(HazardClass[]::new));
+        }
+    }
+
+    public static void replaceExternalHazmats(Map<Item, Double> resistances) {
+        clearExternalHazmats();
+        if (resistances == null) {
+            return;
+        }
+        for (Map.Entry<Item, Double> entry : resistances.entrySet()) {
+            registerExternalHazmat(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public static void replaceExternalResistances(Map<Item, Double> resistances) {
+        replaceExternalHazmats(resistances);
+    }
+
+    public static void replaceExternalProtections(Map<Item, ? extends Collection<HazardClass>> protections) {
+        clearExternalProtections();
+        if (protections == null) {
+            return;
+        }
+        for (Map.Entry<Item, ? extends Collection<HazardClass>> entry : protections.entrySet()) {
+            Collection<HazardClass> value = entry.getValue();
+            registerExternalProtection(entry.getKey(),
+                    value == null ? new HazardClass[0] : value.toArray(HazardClass[]::new));
         }
     }
 
@@ -318,9 +364,21 @@ public final class HazmatRegistry {
         return Map.copyOf(RESISTANCE);
     }
 
+    public static Map<Item, Double> externalResistanceDefaultsSnapshot() {
+        return Map.copyOf(EXTERNAL_RESISTANCE_DEFAULTS);
+    }
+
     public static Map<Item, EnumSet<HazardClass>> protectionSnapshot() {
         Map<Item, EnumSet<HazardClass>> snapshot = new IdentityHashMap<>();
         for (Map.Entry<Item, EnumSet<HazardClass>> entry : PROTECTION.entrySet()) {
+            snapshot.put(entry.getKey(), EnumSet.copyOf(entry.getValue()));
+        }
+        return Map.copyOf(snapshot);
+    }
+
+    public static Map<Item, EnumSet<HazardClass>> externalProtectionDefaultsSnapshot() {
+        Map<Item, EnumSet<HazardClass>> snapshot = new IdentityHashMap<>();
+        for (Map.Entry<Item, EnumSet<HazardClass>> entry : EXTERNAL_PROTECTION_DEFAULTS.entrySet()) {
             snapshot.put(entry.getKey(), EnumSet.copyOf(entry.getValue()));
         }
         return Map.copyOf(snapshot);

@@ -1,5 +1,8 @@
 package com.hbm.ntm.item.missile;
 
+import com.hbm.ntm.client.renderer.CustomMissileItemRenderer;
+import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -8,10 +11,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class CustomMissileItem extends Item {
     public static final String TAG_CHIP = "chip";
@@ -22,6 +27,11 @@ public class CustomMissileItem extends Item {
 
     public CustomMissileItem(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> CustomMissileItemRenderer.INSTANCE);
     }
 
     @Override
@@ -49,6 +59,24 @@ public class CustomMissileItem extends Item {
         if (id != null) {
             tag.putString(key, id.toString());
         }
+    }
+
+    public static ItemStack buildMissile(ItemStack chip, ItemStack warhead, ItemStack fuselage,
+            @Nullable ItemStack stability, ItemStack thruster) {
+        ItemStack missile = new ItemStack(ModItems.MISSILE_CUSTOM.get());
+        setPart(missile, TAG_CHIP, chip);
+        setPart(missile, TAG_WARHEAD, warhead);
+        setPart(missile, TAG_FUSELAGE, fuselage);
+        if (stability != null && !stability.isEmpty()) {
+            setPart(missile, TAG_STABILITY, stability);
+        }
+        setPart(missile, TAG_THRUSTER, thruster);
+        return missile;
+    }
+
+    public static boolean isCompleteForLaunch(ItemStack stack) {
+        CustomMissilePartProfile.Assembly assembly = CustomMissilePartProfile.assemblyFromStack(stack);
+        return assembly != null && assembly.isCompleteForLaunch();
     }
 
     @Nullable

@@ -1,0 +1,18 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "IGI",
+                    "IGI"
+                ],
+    "key":  {
+                "I":  {
+                          "tag":  "forge:ingots/dura_steel"
+                      },
+                "G":  {
+                          "item":  "hbm_ntm_rebirth:steel_grate"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_sifter"
+               }
+}

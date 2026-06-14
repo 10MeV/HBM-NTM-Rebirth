@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:outgasser",
+  "input": {
+    "ingredient": {
+      "tag": "forge:dusts/gold"
+    },
+    "count": 1,
+    "legacy_ore": "dustGold"
+  },
+  "solid_output": {
+    "item": "hbm_ntm_rebirth:powder_au198"
+  }
+}

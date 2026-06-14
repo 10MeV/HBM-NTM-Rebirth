@@ -1,6 +1,3 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "hbm_ntm_rebirth:item/bj_plate_jetpack"
-  }
+  "parent": "minecraft:builtin/entity"
 }

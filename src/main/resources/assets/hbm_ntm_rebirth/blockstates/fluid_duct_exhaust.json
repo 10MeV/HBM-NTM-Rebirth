@@ -1,5 +1,7 @@
 {
-  "variants": {
-    "": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust" }
-  }
+  "multipart": [
+    {
+      "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust" }
+    }
+  ]
 }

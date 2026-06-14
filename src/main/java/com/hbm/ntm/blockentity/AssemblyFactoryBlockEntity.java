@@ -32,7 +32,6 @@ import com.hbm.ntm.recipe.GenericMachineRecipeRuntime.ProcessingResult;
 import com.hbm.ntm.recipe.GenericMachineRecipeSelector;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
@@ -171,7 +170,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         receivingTankList = inputTankList;
         sendingTankList = outputTankList;
         allTankList = join(join(inputTankList, outputTankList), List.of(water, spentSteam));
-        IFluidHandler recipeFluidHandler = new ForgeRecipeFluidHandlerAdapter(receivingTankList, sendingTankList, 0,
+        IFluidHandler recipeFluidHandler = ForgeRecipeFluidHandlerAdapter.create(receivingTankList, sendingTankList, 0,
                 this::onFluidContentsChanged);
         fluidHandler = LazyOptional.of(() -> recipeFluidHandler);
         coolingDelegate = new CapabilityDelegate(null, new ForgeFluidHandlerAdapter(List.of(water), List.of(spentSteam), 0,
@@ -286,7 +285,8 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         }
         setSelectedRecipe(module, selectedRecipe);
         GenericMachineRecipe recipe = getSelectedRecipeDefinition(module);
-        GenericMachineRecipeRuntime.setupTanks(recipe, List.of(inputTanks[module]), List.of(outputTanks[module]), TANK_CAPACITY);
+        GenericMachineRecipeRuntime.setupTanksReport(recipe, List.of(inputTanks[module]), List.of(outputTanks[module]),
+                TANK_CAPACITY);
         updateDynamicCapacity();
         if (!level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
@@ -598,7 +598,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         for (boolean processing : didProcess) {
             active |= processing;
         }
-        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_ASSEMBLER_OPERATE.getId(),
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.assemblerOperate",
                 active, 50.0D, 15.0F, 0.5F, 0.75F);
     }
 
@@ -846,7 +846,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
                         if (striker.state == ArmState.WAIT && saw.state == ArmState.WAIT) {
                             state = YuriState.SLIDING;
                             direction = !direction;
-                            LegacyMachineAudioBridge.playLocal(factory, ModSounds.BLOCK_ASSEMBLER_START.getId(),
+                            LegacyMachineAudioBridge.playLocal(factory, "hbm:block.assemblerStart",
                                     0.25F, 1.25F + factory.level.random.nextFloat() * 0.25F, 50.0D);
                         }
                     }
@@ -949,12 +949,12 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
                             if (saw) {
                                 state = ArmState.CUT;
                                 targetAngles[2] = -targetAngles[2];
-                                LegacyMachineAudioBridge.playLocal(factory, ModSounds.BLOCK_ASSEMBLER_CUT.getId(),
+                                LegacyMachineAudioBridge.playLocal(factory, "hbm:block.assemblerCut",
                                         0.5F, 1.0F + factory.level.random.nextFloat() * 0.25F, 50.0D);
                             } else {
                                 state = ArmState.RETRACT;
                                 targetAngles[3] = 0.0D;
-                                LegacyMachineAudioBridge.playLocal(factory, ModSounds.BLOCK_ASSEMBLER_STRIKE.getId(),
+                                LegacyMachineAudioBridge.playLocal(factory, "hbm:block.assemblerStrike",
                                         0.5F, 1.0F, 50.0D);
                             }
                         }

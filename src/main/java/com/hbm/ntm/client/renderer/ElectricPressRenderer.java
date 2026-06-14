@@ -12,8 +12,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressBlockEntity> {
-    private static final double LEGACY_IDLE_HEAD_Y = 1.875D;
-
     public ElectricPressRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -44,8 +42,10 @@ public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressB
                 poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
+        LegacyTileRenderPlans.ElectricPressPlan plan = LegacyTileRenderPlans.electricPressStaticPlan();
         poseStack.pushPose();
-        poseStack.translate(0.5D, LEGACY_IDLE_HEAD_Y, 0.5D);
+        LegacyTileRenderPlans.TranslatedModelPartPlan head = plan.head();
+        poseStack.translate(0.5D + head.translateX(), head.translateY(), 0.5D + head.translateZ());
         poseStack.mulPose(Axis.YP.rotationDegrees(yRotation));
         ObjMachineModels.EPRESS_HEAD.renderAll(ObjMachineModels.EPRESS_HEAD_TEXTURE,
                 poseStack, buffer, modelLight, packedOverlay);

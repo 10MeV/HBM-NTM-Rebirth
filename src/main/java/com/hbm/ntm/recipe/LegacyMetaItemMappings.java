@@ -91,6 +91,7 @@ public final class LegacyMetaItemMappings {
                 36, requireLegacyItem("plate_welded_tcalloy"),
                 43, requireLegacyItem("plate_welded_cdalloy")));
         registerSparse(WIRE_FINE, Map.of(
+                1_300, requireLegacyItem("wire_fine_aluminium"),
                 2_900, requireLegacyItem("wire_fine_copper"),
                 31, requireLegacyItem("wire_fine_mingrade"),
                 7_400, requireLegacyItem("wire_fine_tungsten"),
@@ -160,6 +161,15 @@ public final class LegacyMetaItemMappings {
                 5, requireLegacyItem("casing_buckshot"),
                 6, requireLegacyItem("casing_buckshot_advanced")));
         registerSparse(AMMO_STANDARD, Map.ofEntries(
+                Map.entry(5, requireLegacyItem("ammo_standard_m357_sp")),
+                Map.entry(6, requireLegacyItem("ammo_standard_m357_fmj")),
+                Map.entry(11, requireLegacyItem("ammo_standard_m44_sp")),
+                Map.entry(12, requireLegacyItem("ammo_standard_m44_fmj")),
+                Map.entry(20, requireLegacyItem("ammo_standard_p9_sp")),
+                Map.entry(21, requireLegacyItem("ammo_standard_p9_fmj")),
+                Map.entry(22, requireLegacyItem("ammo_standard_p9_jhp")),
+                Map.entry(28, requireLegacyItem("ammo_standard_r762_sp")),
+                Map.entry(32, requireLegacyItem("ammo_standard_r762_du")),
                 Map.entry(33, requireLegacyItem("ammo_standard_bmg50_sp")),
                 Map.entry(34, requireLegacyItem("ammo_standard_bmg50_fmj")),
                 Map.entry(35, requireLegacyItem("ammo_standard_bmg50_jhp")),
@@ -174,6 +184,14 @@ public final class LegacyMetaItemMappings {
                 Map.entry(47, requireLegacyItem("ammo_standard_g12_magnum")),
                 Map.entry(48, requireLegacyItem("ammo_standard_g12_explosive")),
                 Map.entry(49, requireLegacyItem("ammo_standard_g12_phosphorus")),
+                Map.entry(51, requireLegacyItem("ammo_standard_g26_flare_supply")),
+                Map.entry(52, requireLegacyItem("ammo_standard_g26_flare_weapon")),
+                Map.entry(53, requireLegacyItem("ammo_standard_g40_he")),
+                Map.entry(58, requireLegacyItem("ammo_standard_rocket_he")),
+                Map.entry(73, requireLegacyItem("ammo_standard_nuke_standard")),
+                Map.entry(74, requireLegacyItem("ammo_standard_nuke_demo")),
+                Map.entry(75, requireLegacyItem("ammo_standard_nuke_high")),
+                Map.entry(76, requireLegacyItem("ammo_standard_nuke_tots")),
                 Map.entry(83, requireLegacyItem("ammo_standard_bmg50_he")),
                 Map.entry(94, requireLegacyItem("ammo_standard_bmg50_sm"))));
         registerSparse(FUEL_ADDITIVE, Map.of(

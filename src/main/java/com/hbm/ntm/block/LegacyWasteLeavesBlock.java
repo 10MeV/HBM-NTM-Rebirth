@@ -1,7 +1,7 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlocks;
-import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -55,13 +55,7 @@ public class LegacyWasteLeavesBlock extends LeavesBlock {
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         super.animateTick(state, level, pos, random);
         if (random.nextInt(7) == 0 && level.getBlockState(pos.below()).isAir()) {
-            level.addParticle(ModParticleTypes.DEAD_LEAF.get(),
-                    pos.getX() + random.nextDouble(),
-                    pos.getY() - 0.05D,
-                    pos.getZ() + random.nextDouble(),
-                    0.0D,
-                    0.0D,
-                    0.0D);
+            ParticleUtil.spawnDeadLeafDrop(level, pos, random);
         }
     }
 }

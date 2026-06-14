@@ -1,0 +1,28 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    "BRM",
+                    "BGS"
+                ],
+    "key":  {
+                "G":  {
+                          "tag":  "forge:grips/any_plastic"
+                      },
+                "S":  {
+                          "tag":  "forge:stocks/desh"
+                      },
+                "R":  {
+                          "tag":  "forge:light_receivers/desh"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/gun_metal"
+                      },
+                "B":  {
+                          "tag":  "forge:light_barrels/desh"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_spas12"
+               }
+}

@@ -4,9 +4,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import com.hbm.ntm.item.HbmAbilityToolItem;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -69,10 +69,6 @@ public record ToolHarvestContext(Level level, BlockPos pos, Player player, ItemS
         if (stack.isEmpty() || !(level instanceof ServerLevel)) {
             return;
         }
-        level.addFreshEntity(new ItemEntity(level,
-                dropOrigin.getX() + 0.5D,
-                dropOrigin.getY() + 0.5D,
-                dropOrigin.getZ() + 0.5D,
-                stack.copy()));
+        HbmItemStackUtil.dropStack(level, dropOrigin, stack);
     }
 }

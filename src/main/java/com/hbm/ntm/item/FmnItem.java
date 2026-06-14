@@ -14,8 +14,7 @@ public class FmnItem extends LegacyPillItem {
 
     @Override
     protected void applyPillEffects(ItemStack stack, Level level, Player player) {
-        float digamma = HbmLivingProperties.getDigamma(player);
-        HbmLivingProperties.setDigamma(player, Math.min(digamma, 2.0F));
+        HbmLivingProperties.capDigamma(player, 2.0F);
         player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0));
     }
 }

@@ -2,6 +2,8 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.LegacyVisibleMachineBlockEntity;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
+import com.hbm.ntm.multiblock.MultiblockCoreBlock;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.world.level.BlockGetter;
@@ -112,7 +114,11 @@ public class LegacyVisibleMultiblockMachineBlock extends LegacyXrMultiblockBlock
         consumer.accept(new IClientBlockExtensions() {
             @Override
             public boolean addDestroyEffects(BlockState state, Level level, BlockPos pos, ParticleEngine manager) {
-                manager.destroy(pos, definition.particleState(state));
+                BlockState particleState = definition.particleState(state);
+                if (particleState.getBlock() instanceof MultiblockCoreBlock) {
+                    particleState = MultiblockHelper.steelParticleState();
+                }
+                manager.destroy(pos, particleState);
                 return true;
             }
         });

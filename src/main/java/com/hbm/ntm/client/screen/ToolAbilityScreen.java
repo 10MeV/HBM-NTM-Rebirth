@@ -9,11 +9,11 @@ import com.hbm.ntm.ability.ToolAbilityConfiguration;
 import com.hbm.ntm.ability.ToolAreaAbilities;
 import com.hbm.ntm.ability.ToolHarvestAbilities;
 import com.hbm.ntm.ability.ToolPreset;
+import com.hbm.ntm.client.sound.LegacyClientSoundPlayer;
 import com.hbm.ntm.item.HbmAbilityToolItem;
 import com.hbm.ntm.menu.ToolAbilityMenu;
 import com.hbm.ntm.network.HbmNetworkActions;
 import com.hbm.ntm.network.ModMessages;
-import com.hbm.ntm.registry.ModSounds;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -354,7 +354,7 @@ public class ToolAbilityScreen extends AbstractContainerScreen<ToolAbilityMenu> 
 
     private void playAbilityClick(float pitch) {
         if (minecraft != null) {
-            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.TOOL_TECH_BOOP.get(), pitch));
+            LegacyClientSoundPlayer.playUi("hbm:item.techBoop", pitch);
         }
     }
 

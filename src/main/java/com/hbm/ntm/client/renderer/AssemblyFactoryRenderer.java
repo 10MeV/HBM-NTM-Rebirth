@@ -11,7 +11,6 @@ import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -61,10 +60,11 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
         double[] arm3 = blockEntity.getAnimation(1).striker.getPositions(partialTick);
         double[] arm4 = blockEntity.getAnimation(1).saw.getPositions(partialTick);
 
-        renderSlider1(poseStack, buffer, modelLight, packedOverlay, slide1, arm1);
-        renderSlider2(poseStack, buffer, modelLight, packedOverlay, slide1, arm2);
-        renderSlider3(poseStack, buffer, modelLight, packedOverlay, slide2, arm3);
-        renderSlider4(poseStack, buffer, modelLight, packedOverlay, slide2, arm4);
+        LegacyTileRenderPlans.AssemblyFactoryPlan plan = LegacyTileRenderPlans.assemblyFactoryPlan(
+                slide1, slide2, arm1, arm2, arm3, arm4);
+        for (LegacyTileRenderPlans.AssemblyArmPlan slider : plan.sliders()) {
+            renderArmPlan(poseStack, buffer, modelLight, packedOverlay, slider);
+        }
 
         if (LegacyRecipeIconRenderer.shouldRender(blockEntity)) {
             renderRecipeIcons(blockEntity, poseStack, buffer, packedLight);
@@ -86,78 +86,36 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
         }
     }
 
-    private static void renderSlider1(PoseStack poseStack, MultiBufferSource buffer, int light, int overlay,
-            double slide, double[] arm) {
+    private static void renderArmPlan(PoseStack poseStack, MultiBufferSource buffer, int light, int overlay,
+            LegacyTileRenderPlans.AssemblyArmPlan arm) {
         poseStack.pushPose();
-        poseStack.translate(0.5D - slide, 0.0D, 0.0D);
-        MODEL.renderPart("Slider1", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 1.625D, -0.9375D, -arm[0]);
-        MODEL.renderPart("ArmLower1", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 2.375D, -0.9375D, -arm[1]);
-        MODEL.renderPart("ArmUpper1", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 2.375D, -0.4375D, -arm[2]);
-        MODEL.renderPart("Head1", poseStack, buffer, light, overlay);
-        poseStack.translate(0.0D, arm[3], 0.0D);
-        MODEL.renderPart("Striker1", poseStack, buffer, light, overlay);
+        LegacyTileRenderPlans.TranslatedModelPartPlan slider = arm.slider();
+        if (slider != null && slider.active()) {
+            poseStack.translate(slider.translateX(), slider.translateY(), slider.translateZ());
+            MODEL.renderPart(slider.partName(), poseStack, buffer, light, overlay);
+        }
+        for (LegacyTileRenderPlans.PivotedModelPartPlan part : arm.rotations()) {
+            applyPivot(poseStack, part);
+            MODEL.renderPart(part.partName(), poseStack, buffer, light, overlay);
+        }
+        LegacyTileRenderPlans.TranslatedModelPartPlan tool = arm.tool();
+        if (tool != null && tool.active()) {
+            poseStack.translate(tool.translateX(), tool.translateY(), tool.translateZ());
+            MODEL.renderPart(tool.partName(), poseStack, buffer, light, overlay);
+        }
+        LegacyTileRenderPlans.PivotedModelPartPlan blade = arm.blade();
+        if (blade != null) {
+            applyPivot(poseStack, blade);
+            MODEL.renderPart(blade.partName(), poseStack, buffer, light, overlay);
+        }
         poseStack.popPose();
     }
 
-    private static void renderSlider2(PoseStack poseStack, MultiBufferSource buffer, int light, int overlay,
-            double slide, double[] arm) {
-        poseStack.pushPose();
-        poseStack.translate(-0.5D + slide, 0.0D, 0.0D);
-        MODEL.renderPart("Slider2", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 1.625D, 0.9375D, arm[0]);
-        MODEL.renderPart("ArmLower2", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 2.375D, 0.9375D, arm[1]);
-        MODEL.renderPart("ArmUpper2", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 2.375D, 0.4375D, arm[2]);
-        MODEL.renderPart("Head2", poseStack, buffer, light, overlay);
-        poseStack.translate(0.0D, arm[3], 0.0D);
-        MODEL.renderPart("Striker2", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 1.625D, 0.3125D, -arm[4]);
-        MODEL.renderPart("Blade2", poseStack, buffer, light, overlay);
-        poseStack.popPose();
-    }
-
-    private static void renderSlider3(PoseStack poseStack, MultiBufferSource buffer, int light, int overlay,
-            double slide, double[] arm) {
-        poseStack.pushPose();
-        poseStack.translate(-0.5D + slide, 0.0D, 0.0D);
-        MODEL.renderPart("Slider3", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 1.625D, 0.9375D, arm[0]);
-        MODEL.renderPart("ArmLower3", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 2.375D, 0.9375D, arm[1]);
-        MODEL.renderPart("ArmUpper3", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 2.375D, 0.4375D, arm[2]);
-        MODEL.renderPart("Head3", poseStack, buffer, light, overlay);
-        poseStack.translate(0.0D, arm[3], 0.0D);
-        MODEL.renderPart("Striker3", poseStack, buffer, light, overlay);
-        poseStack.popPose();
-    }
-
-    private static void renderSlider4(PoseStack poseStack, MultiBufferSource buffer, int light, int overlay,
-            double slide, double[] arm) {
-        poseStack.pushPose();
-        poseStack.translate(0.5D - slide, 0.0D, 0.0D);
-        MODEL.renderPart("Slider4", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 1.625D, -0.9375D, -arm[0]);
-        MODEL.renderPart("ArmLower4", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 2.375D, -0.9375D, -arm[1]);
-        MODEL.renderPart("ArmUpper4", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 2.375D, -0.4375D, -arm[2]);
-        MODEL.renderPart("Head4", poseStack, buffer, light, overlay);
-        poseStack.translate(0.0D, arm[3], 0.0D);
-        MODEL.renderPart("Striker4", poseStack, buffer, light, overlay);
-        rotateXAround(poseStack, 0.0D, 1.625D, -0.3125D, arm[4]);
-        MODEL.renderPart("Blade4", poseStack, buffer, light, overlay);
-        poseStack.popPose();
-    }
-
-    private static void rotateXAround(PoseStack poseStack, double x, double y, double z, double degrees) {
-        poseStack.translate(x, y, z);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) degrees));
-        poseStack.translate(-x, -y, -z);
+    private static void applyPivot(PoseStack poseStack, LegacyTileRenderPlans.PivotedModelPartPlan part) {
+        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) part.angleDegrees()));
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
     }
 
     private static void renderSparks(AssemblyFactoryBlockEntity blockEntity, float partialTick, PoseStack poseStack,

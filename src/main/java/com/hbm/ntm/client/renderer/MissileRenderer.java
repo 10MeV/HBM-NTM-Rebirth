@@ -22,8 +22,11 @@ public class MissileRenderer extends EntityRenderer<MissileEntity> {
     public void render(MissileEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick, entity.yRotO, entity.getYRot())));
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F - Mth.lerp(partialTick, entity.xRotO, entity.getXRot())));
+        float renderYaw = Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F;
+        float pitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+        poseStack.mulPose(Axis.YP.rotationDegrees(renderYaw));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(pitch));
+        poseStack.mulPose(Axis.YN.rotationDegrees(renderYaw));
         model(entity).renderAll(texture(entity), poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
@@ -73,6 +76,7 @@ public class MissileRenderer extends EntityRenderer<MissileEntity> {
             case MIRV -> ObjMissilePartModels.MISSILE_ATLAS_THERMO_TEXTURE;
             case VOLCANO -> ObjMissilePartModels.MISSILE_ATLAS_VOLCANO_TEXTURE;
             case DOOMSDAY -> ObjMissilePartModels.MISSILE_ATLAS_DOOMSDAY_TEXTURE;
+            case DOOMSDAY_RUSTED -> ObjMissilePartModels.MISSILE_ATLAS_DOOMSDAY_RUSTED_TEXTURE;
             case GENERIC -> ObjMissilePartModels.MISSILE_V2_HE_TEXTURE;
         };
     }

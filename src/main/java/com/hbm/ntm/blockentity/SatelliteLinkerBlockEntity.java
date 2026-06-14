@@ -6,6 +6,7 @@ import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.SatelliteSavedData;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
+import java.util.OptionalInt;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -80,9 +81,10 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
 
         ItemStack randomize = linker.items.getStackInSlot(SLOT_RANDOMIZE);
         if (randomize.getItem() instanceof ISatelliteChip) {
-            int frequency = level.random.nextInt(100000);
-            if (!SatelliteSavedData.get(serverLevel).isFrequencyTaken(frequency)
-                    && ISatelliteChip.getFrequencyFromStack(randomize) != frequency) {
+            OptionalInt availableFrequency = SatelliteSavedData.get(serverLevel).randomAvailableFrequency(level.random);
+            if (availableFrequency.isPresent()
+                    && ISatelliteChip.getFrequencyFromStack(randomize) != availableFrequency.getAsInt()) {
+                int frequency = availableFrequency.getAsInt();
                 ISatelliteChip.setFrequencyOnStack(randomize, frequency);
                 changed = true;
             }

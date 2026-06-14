@@ -5,11 +5,10 @@ import com.google.common.collect.Multimap;
 import com.hbm.ntm.ability.AvailableAbilities;
 import com.hbm.ntm.ability.IWeaponAbility;
 import com.hbm.ntm.ability.WeaponHitContext;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -75,8 +74,8 @@ public class HbmAbilitySwordItem extends SwordItem {
     public boolean hurtEnemy(ItemStack stack, LivingEntity victim, LivingEntity attacker) {
         if (!attacker.level().isClientSide && attacker instanceof ServerPlayer player && canOperate(stack)) {
             if (playGavelHitSound) {
-                attacker.level().playSound(null, victim.getX(), victim.getY(), victim.getZ(),
-                        ModSounds.WEAPON_WHACK.get(), SoundSource.PLAYERS, 3.0F, 1.0F);
+                LegacySoundPlayer.playLegacyGavelWhack(attacker.level(),
+                        victim.getX(), victim.getY(), victim.getZ(), 3.0F, 1.0F);
             }
             WeaponHitContext context = new WeaponHitContext(attacker.level(), player, victim, stack);
             availableAbilities.getWeaponAbilities().forEach((ability, level) -> ability.onHit(level, context));

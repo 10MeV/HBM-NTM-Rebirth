@@ -53,8 +53,9 @@ public class RadioTorchMenu extends AbstractContainerMenu {
     @Override
     public void clicked(int slotId, int button, ClickType clickType, Player player) {
         if (blockEntity instanceof RadioTorchCounterBlockEntity counter
-                && HbmInventoryMenuHelper.handleLegacyPatternModeClick(slots, slotId, button, clickType,
-                        0, COUNTER_FILTER_SLOT_COUNT, counter::nextFilterMode, this::broadcastChanges)) {
+                && HbmInventoryMenuHelper.handleLegacyPatternSlotClick(slots, slotId, button, clickType,
+                        getCarried(), 0, COUNTER_FILTER_SLOT_COUNT, counter::nextFilterMode, null,
+                        this::broadcastChanges)) {
             return;
         }
         super.clicked(slotId, button, clickType, player);

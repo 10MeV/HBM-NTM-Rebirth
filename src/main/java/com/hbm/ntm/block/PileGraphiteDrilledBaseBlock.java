@@ -14,13 +14,12 @@ import com.hbm.ntm.neutron.PileNeutronBlockBehavior;
 import com.hbm.ntm.neutron.PileNeutronBlockResult;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -356,13 +355,13 @@ public class PileGraphiteDrilledBaseBlock extends BaseEntityBlock
             BlockPos pos,
             float volume,
             float pitch) {
-        SoundEvent sound = switch (legacySoundId) {
-            case PileGraphiteInteractionPlanner.LEGACY_SOUND_UPGRADE_PLUG -> ModSounds.ITEM_UPGRADE_PLUG.get();
-            case PileGraphiteInteractionPlanner.LEGACY_SOUND_TECH_BLEEP -> ModSounds.ITEM_TECH_BLEEP.get();
-            default -> null;
-        };
-        if (sound != null) {
-            level.playSound(null, pos, sound, SoundSource.BLOCKS, volume, pitch);
+        switch (legacySoundId) {
+            case PileGraphiteInteractionPlanner.LEGACY_SOUND_UPGRADE_PLUG ->
+                    LegacySoundPlayer.playLegacyUpgradePlug(level, pos, SoundSource.BLOCKS, volume, pitch);
+            case PileGraphiteInteractionPlanner.LEGACY_SOUND_TECH_BLEEP ->
+                    LegacySoundPlayer.playLegacyTechBleep(level, pos, SoundSource.BLOCKS, volume, pitch);
+            default -> {
+            }
         }
     }
 

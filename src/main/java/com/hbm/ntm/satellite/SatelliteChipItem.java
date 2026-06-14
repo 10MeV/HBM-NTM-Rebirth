@@ -25,6 +25,7 @@ public class SatelliteChipItem extends Item implements ISatelliteChip {
         this.descriptionKeys = descriptionKeys == null
                 ? List.of()
                 : Arrays.stream(descriptionKeys).filter(key -> key != null && !key.isBlank()).toList();
+        Satellite.registerSatelliteItem(this, satelliteType);
     }
 
     public LegacySatelliteType satelliteType() {

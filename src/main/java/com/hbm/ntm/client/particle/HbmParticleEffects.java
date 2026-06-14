@@ -894,12 +894,11 @@ public final class HbmParticleEffects {
 
     private static void spawnChaosCloud(ClientLevel level, CompoundTag data, double x, double y, double z) {
         ParticleOptions particle = switch (data.getString("mode")) {
-            case "green" -> new DustParticleOptions(new Vector3f(0.35F, 0.9F, 0.15F), 1.3F);
-            case "pink" -> new DustParticleOptions(new Vector3f(0.95F, 0.25F, 0.85F), 1.3F);
-            default -> new DustParticleOptions(new Vector3f(1.0F, 0.45F, 0.05F), 1.3F);
+            case ParticleUtil.CHAOS_CLOUD_GREEN -> ModParticleTypes.CHAOS_CLOUD_GREEN.get();
+            case ParticleUtil.CHAOS_CLOUD_PINK -> ModParticleTypes.CHAOS_CLOUD_PINK.get();
+            default -> ModParticleTypes.CHAOS_CLOUD_ORANGE.get();
         };
         level.addParticle(particle, x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"));
-        level.addParticle(ParticleTypes.CLOUD, x, y, z, data.getDouble("mX") * 0.35D, data.getDouble("mY") * 0.35D, data.getDouble("mZ") * 0.35D);
     }
 
     private static void spawnExplosionLarge(ClientLevel level, CompoundTag data, double x, double y, double z) {

@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:cobblestone",
+    "hbm_ntm_rebirth:concrete_smooth"
+  ]
+}

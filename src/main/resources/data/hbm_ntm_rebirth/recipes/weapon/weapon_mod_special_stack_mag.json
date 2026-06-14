@@ -1,0 +1,19 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "P P",
+                    "P P",
+                    "PMP"
+                ],
+    "key":  {
+                "P":  {
+                          "tag":  "forge:plates/weapon_steel"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/saturnite"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_stack_mag"
+               }
+}

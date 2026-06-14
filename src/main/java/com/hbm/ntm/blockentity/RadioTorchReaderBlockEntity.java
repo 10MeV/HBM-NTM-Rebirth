@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.redstoneoverradio.ROR;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.api.redstoneoverradio.RTTYReaderState;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -33,7 +34,9 @@ public class RadioTorchReaderBlockEntity extends RadioTorchBlockEntity {
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RadioTorchReaderBlockEntity torch) {
         BlockEntity attached = level.getBlockEntity(torch.attachedPos());
-        if (attached instanceof RORValueProvider provider && torch.radio.broadcastChangedValues(level, provider) > 0) {
+        if (attached instanceof RORValueProvider provider
+                && ROR.hasValueInfo(provider)
+                && torch.radio.broadcastChangedValues(level, provider) > 0) {
             torch.setChangedAndSync(false);
         }
         torch.networkPackLegacyRadioTorch();

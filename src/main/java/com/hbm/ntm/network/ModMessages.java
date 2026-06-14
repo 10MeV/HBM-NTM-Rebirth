@@ -242,6 +242,14 @@ public final class ModMessages {
         return LegacyNetworkDispatcher.WRAPPER;
     }
 
+    public static Object unwrapLegacyPacket(Object message) {
+        if (message instanceof LegacyPacketAdapter adapter) {
+            Object modernPacket = adapter.toModernPacket();
+            return modernPacket == null ? message : modernPacket;
+        }
+        return message;
+    }
+
     public static String legacyWrapperSummary() {
         return "legacyWrapper=PacketDispatcher.wrapper facade"
                 + " directHelpers=" + LegacyNetworkDispatcher.directSendHelperCount()
@@ -1025,60 +1033,66 @@ public final class ModMessages {
     }
 
     public static void sendToServer(Object message) {
-        if (!validateMessageForSend(message, "server", "C2S")) {
+        Object payload = unwrapLegacyPacket(message);
+        if (!validateMessageForSend(payload, "server", "C2S")) {
             return;
         }
-        CHANNEL.sendToServer(message);
+        CHANNEL.sendToServer(payload);
     }
 
     public static void sendToPlayer(Object message, ServerPlayer player) {
-        if (!validateTarget(player != null, message, "player:null")) {
+        Object payload = unwrapLegacyPacket(message);
+        if (!validateTarget(player != null, payload, "player:null")) {
             return;
         }
-        if (!validateMessageForSend(message, player == null ? "player:null" : "player:" + player.getGameProfile().getName(), "S2C")) {
+        if (!validateMessageForSend(payload, player == null ? "player:null" : "player:" + player.getGameProfile().getName(), "S2C")) {
             return;
         }
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), payload);
     }
 
     public static void sendToEntityTrackers(Object message, Entity entity) {
-        if (!validateTarget(entity != null, message, "entityTrackers:null")) {
+        Object payload = unwrapLegacyPacket(message);
+        if (!validateTarget(entity != null, payload, "entityTrackers:null")) {
             return;
         }
-        if (!validateMessageForSend(message, entity == null ? "entityTrackers:null" : "entityTrackers:" + entity.getId(), "S2C")) {
+        if (!validateMessageForSend(payload, entity == null ? "entityTrackers:null" : "entityTrackers:" + entity.getId(), "S2C")) {
             return;
         }
-        CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), message);
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), payload);
     }
 
     public static void sendToEntityAndSelf(Object message, Entity entity) {
-        if (!validateTarget(entity != null, message, "entityAndSelf:null")) {
+        Object payload = unwrapLegacyPacket(message);
+        if (!validateTarget(entity != null, payload, "entityAndSelf:null")) {
             return;
         }
-        if (!validateMessageForSend(message, entity == null ? "entityAndSelf:null" : "entityAndSelf:" + entity.getId(), "S2C")) {
+        if (!validateMessageForSend(payload, entity == null ? "entityAndSelf:null" : "entityAndSelf:" + entity.getId(), "S2C")) {
             return;
         }
-        CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), message);
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), payload);
     }
 
     public static void sendToDimension(Object message, ServerLevel level) {
-        if (!validateTarget(level != null, message, "dimension:null")) {
+        Object payload = unwrapLegacyPacket(message);
+        if (!validateTarget(level != null, payload, "dimension:null")) {
             return;
         }
-        if (!validateMessageForSend(message, level == null ? "dimension:null" : "dimension:" + level.dimension().location(), "S2C")) {
+        if (!validateMessageForSend(payload, level == null ? "dimension:null" : "dimension:" + level.dimension().location(), "S2C")) {
             return;
         }
-        CHANNEL.send(PacketDistributor.DIMENSION.with(level::dimension), message);
+        CHANNEL.send(PacketDistributor.DIMENSION.with(level::dimension), payload);
     }
 
     public static void sendToDimension(Object message, ResourceKey<Level> dimension) {
-        if (!validateTarget(dimension != null, message, "dimensionKey:null")) {
+        Object payload = unwrapLegacyPacket(message);
+        if (!validateTarget(dimension != null, payload, "dimensionKey:null")) {
             return;
         }
-        if (!validateMessageForSend(message, dimension == null ? "dimensionKey:null" : "dimensionKey:" + dimension.location(), "S2C")) {
+        if (!validateMessageForSend(payload, dimension == null ? "dimensionKey:null" : "dimensionKey:" + dimension.location(), "S2C")) {
             return;
         }
-        CHANNEL.send(PacketDistributor.DIMENSION.with(() -> dimension), message);
+        CHANNEL.send(PacketDistributor.DIMENSION.with(() -> dimension), payload);
     }
 
     public static void sendToTracking(Object message, ServerLevel level, double x, double y, double z, double range) {
@@ -1121,13 +1135,14 @@ public final class ModMessages {
     }
 
     public static void sendToAllAround(Object message, PacketDistributor.TargetPoint point) {
-        if (!validateTarget(point != null, message, "near-point:null")) {
+        Object payload = unwrapLegacyPacket(message);
+        if (!validateTarget(point != null, payload, "near-point:null")) {
             return;
         }
-        if (!validateMessageForSend(message, "near", "S2C")) {
+        if (!validateMessageForSend(payload, "near", "S2C")) {
             return;
         }
-        CHANNEL.send(PacketDistributor.NEAR.with(() -> point), message);
+        CHANNEL.send(PacketDistributor.NEAR.with(() -> point), payload);
     }
 
     public static void sendToAllAround(Object message, LegacyTargetPoint point) {
@@ -1142,10 +1157,11 @@ public final class ModMessages {
     }
 
     public static void sendToAll(Object message) {
-        if (!validateMessageForSend(message, "all", "S2C")) {
+        Object payload = unwrapLegacyPacket(message);
+        if (!validateMessageForSend(payload, "all", "S2C")) {
             return;
         }
-        CHANNEL.send(PacketDistributor.ALL.noArg(), message);
+        CHANNEL.send(PacketDistributor.ALL.noArg(), payload);
     }
 
     public static void sendToTrackingChunk(Object message, BlockEntity blockEntity) {

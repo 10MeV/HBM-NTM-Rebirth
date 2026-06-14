@@ -12,7 +12,6 @@ public class XanaxItem extends LegacyPillItem {
 
     @Override
     protected void applyPillEffects(ItemStack stack, Level level, Player player) {
-        float digamma = HbmLivingProperties.getDigamma(player);
-        HbmLivingProperties.setDigamma(player, Math.max(digamma - 0.5F, 0.0F));
+        HbmLivingProperties.reduceDigamma(player, 0.5F);
     }
 }

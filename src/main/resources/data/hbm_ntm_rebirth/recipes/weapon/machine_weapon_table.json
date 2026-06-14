@@ -1,0 +1,25 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "PPP",
+                    "TCT",
+                    "TST"
+                ],
+    "key":  {
+                "P":  {
+                          "tag":  "forge:plates/gun_metal"
+                      },
+                "T":  {
+                          "tag":  "forge:ingots/steel"
+                      },
+                "C":  {
+                          "item":  "minecraft:crafting_table"
+                      },
+                "S":  {
+                          "item":  "hbm_ntm_rebirth:block_steel"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:machine_weapon_table"
+               }
+}

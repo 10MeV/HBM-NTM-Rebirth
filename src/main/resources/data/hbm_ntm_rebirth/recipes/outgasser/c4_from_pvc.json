@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:outgasser",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/pvc"
+    },
+    "count": 1,
+    "legacy_ore": "ingotPvc"
+  },
+  "solid_output": {
+    "item": "hbm_ntm_rebirth:ingot_c4"
+  },
+  "fluid_output": {
+    "fluid": "COLLOID",
+    "amount": 250
+  }
+}

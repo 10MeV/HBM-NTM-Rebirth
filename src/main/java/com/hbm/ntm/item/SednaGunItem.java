@@ -1,6 +1,7 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.bullet.BulletConfig;
+import com.hbm.ntm.bullet.BulletAmmo;
 import com.hbm.ntm.bullet.BulletCasingEjectUtil;
 import com.hbm.ntm.bullet.BulletConfigSyncRegistry;
 import com.hbm.ntm.bullet.BulletKinematicsUtil;
@@ -21,11 +22,13 @@ import com.hbm.ntm.network.HbmKeybindReceiver;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.sound.LegacySoundIds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import com.hbm.ntm.util.RayTraceUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -35,6 +38,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -50,8 +54,11 @@ import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -82,6 +89,8 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
     private static final double BAYONET_REACH = 3.0D;
     private static final float BAYONET_DAMAGE = 15.0F;
     private static final int BAYONET_DAMAGE_TIMER = 15;
+    private static final ThreadLocal<DecimalFormat> LEGACY_DAMAGE_FORMAT = ThreadLocal.withInitial(
+            () -> new DecimalFormat("#.##", new DecimalFormatSymbols(Locale.US)));
 
     private final SednaGunConfig gunConfig;
 
@@ -118,14 +127,11 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         for (GunParts gun : allModeParts(stack)) {
             clearReleasedKeyStates(player, stack, gun.mode().configIndex());
             tickBayonetStrike(player, stack, gun);
-            playLegacyReloadOrchestra(player.level(), player, stack, gun);
-            playLegacyCycleOrchestra(player, stack, gun);
-            playLegacyDryfireOrchestra(player.level(), player, stack, gun);
-            playLegacyJammedOrchestra(player.level(), player, stack, gun);
-            playLegacyInspectOrchestra(player.level(), player, stack, gun);
-            playLegacyEquipOrchestra(player.level(), player, stack, gun);
-            incrementLegacyAnimationTimer(stack, gun.mode().configIndex());
-            tickStandardStateMachine(player, stack, gun);
+            tickLegacyGunRuntime(player, stack, gun);
+            if (TrenchmasterArmorItem.hasTrenchmasterFullSet(player)
+                    && gunState(stack, gun.mode().configIndex()) == SednaGunConfig.GunState.RELOADING) {
+                tickLegacyGunRuntime(player, stack, gun);
+            }
         }
     }
 
@@ -148,6 +154,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
                     "tooltip.hbm_ntm_rebirth.sedna_gun.default_ammo", defaultAmmo.ammoName(),
                     defaultAmmo.amount()).withStyle(ChatFormatting.DARK_GRAY)));
         });
+        appendLegacyWeaponInfo(stack, tooltip);
     }
 
     public SednaGunConfig gunConfig() {
@@ -240,6 +247,104 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         } catch (IllegalArgumentException ignored) {
             return com.hbm.ntm.api.item.Crosshair.NONE;
         }
+    }
+
+    private void appendLegacyWeaponInfo(ItemStack stack, List<Component> tooltip) {
+        for (SednaGunConfig.GunModeConfig mode : gunConfig.configs()) {
+            SednaGunConfig.GunModeConfig effectiveMode =
+                    SednaWeaponModEvaluator.effectiveMode(stack, gunConfig.legacyName(), mode);
+            for (SednaReceiverConfig receiver : mode.receivers()) {
+                partsForReceiver(stack, mode.configIndex(), receiver.receiverIndex())
+                        .ifPresent(parts -> appendLegacyReceiverInfo(stack, tooltip, parts));
+            }
+            if (effectiveMode.durability() > 0.0F) {
+                int condition = Mth.clamp(
+                        (int) ((effectiveMode.durability() - wear(stack, mode.configIndex()))
+                                * 100.0F / effectiveMode.durability()),
+                        0, 100);
+                tooltip.add(Component.translatable("gui.weapon.condition")
+                        .append(": " + condition + "%")
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            appendLegacyInstalledMods(stack, tooltip, mode.configIndex());
+        }
+        tooltip.add(Component.translatable(legacyQualityTranslationKey())
+                .withStyle(legacyQualityStyle()));
+    }
+
+    private void appendLegacyReceiverInfo(ItemStack stack, List<Component> tooltip, GunParts gun) {
+        float baseDamage = gun.receiver().baseDamage();
+        tooltip.add(Component.translatable("gui.weapon.baseDamage")
+                .append(": " + formatLegacyDamage(baseDamage))
+                .withStyle(ChatFormatting.GRAY));
+        tooltipBulletConfig(stack, gun.magazine()).ifPresent(config -> {
+            String projectileSuffix = legacyProjectileTooltipSuffix(config, gun);
+            tooltip.add(Component.translatable("gui.weapon.damageWithAmmo")
+                    .append(": " + formatLegacyDamage(baseDamage * config.damageMin()) + projectileSuffix)
+                    .withStyle(ChatFormatting.GRAY));
+        });
+    }
+
+    private void appendLegacyInstalledMods(ItemStack stack, List<Component> tooltip, int configIndex) {
+        for (int id : SednaWeaponModEvaluator.installedModIds(stack, configIndex)) {
+            SednaWeaponModEvaluator.legacyDisplayTranslationKey(id)
+                    .ifPresent(key -> tooltip.add(Component.translatable(key).withStyle(ChatFormatting.YELLOW)));
+        }
+    }
+
+    private String legacyQualityTranslationKey() {
+        return switch (gunConfig.quality()) {
+            case A_SIDE -> "gui.weapon.quality.aside";
+            case B_SIDE -> "gui.weapon.quality.bside";
+            case LEGENDARY -> "gui.weapon.quality.legendary";
+            case SPECIAL -> "gui.weapon.quality.special";
+            case UTILITY -> "gui.weapon.quality.utility";
+            case SECRET -> "gui.weapon.quality.secret";
+            case DEBUG -> "gui.weapon.quality.debug";
+        };
+    }
+
+    private ChatFormatting legacyQualityStyle() {
+        return switch (gunConfig.quality()) {
+            case A_SIDE -> ChatFormatting.YELLOW;
+            case B_SIDE -> ChatFormatting.GOLD;
+            case LEGENDARY -> ChatFormatting.RED;
+            case SPECIAL -> ChatFormatting.AQUA;
+            case UTILITY -> ChatFormatting.GREEN;
+            case SECRET -> legacyBlink() ? ChatFormatting.DARK_RED : ChatFormatting.RED;
+            case DEBUG -> legacyBlink() ? ChatFormatting.YELLOW : ChatFormatting.GOLD;
+        };
+    }
+
+    private static boolean legacyBlink() {
+        return System.currentTimeMillis() % 1000L < 500L;
+    }
+
+    private Optional<BulletConfig> tooltipBulletConfig(ItemStack stack, SednaMagazineConfig magazine) {
+        List<BulletConfig> accepted = acceptedRuntimeConfigs(magazine);
+        if (accepted.isEmpty()) {
+            return Optional.empty();
+        }
+        CompoundTag tag = stack.getTag();
+        String legacyName = tag == null ? "" : tag.getString(magazine.nbtTypeKey());
+        Optional<BulletConfig> stored = LegacySednaRuntimeBulletConfigs.byName(legacyName);
+        if (stored.isPresent() && accepted.contains(stored.get())) {
+            return stored;
+        }
+        return Optional.of(accepted.get(0));
+    }
+
+    private String legacyProjectileTooltipSuffix(BulletConfig config, GunParts gun) {
+        int min = (int) (config.bulletsMin() * gun.receiver().splitProjectiles());
+        int max = (int) (config.bulletsMax() * gun.receiver().splitProjectiles());
+        if (min <= 1) {
+            return "";
+        }
+        return " x" + (min != max ? min + "-" + max : min);
+    }
+
+    private static String formatLegacyDamage(float damage) {
+        return LEGACY_DAMAGE_FORMAT.get().format(damage);
     }
 
     private void handlePrimaryKey(ServerPlayer player, ItemStack stack, GunParts gun, int configIndex, boolean pressed) {
@@ -384,9 +489,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         }
         int mode = gunMode(stack, 0);
         setGunMode(stack, configIndex, 1 - mode);
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                mode == 0 ? ModSounds.WEAPON_SWITCHMODE1.get() : ModSounds.WEAPON_SWITCHMODE2.get(),
-                SoundSource.PLAYERS, 1.0F, 1.0F);
+        LegacySoundPlayer.playLegacyWeaponSwitchMode(player, mode);
     }
 
     private void beginReloadOrInspect(ServerPlayer player, ItemStack stack, GunParts gun) {
@@ -448,9 +551,8 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
             target.hurt(player.damageSources().playerAttack(player), BAYONET_DAMAGE);
             Vec3 motion = target.getDeltaMovement();
             target.setDeltaMovement(motion.x * 2.0D, motion.y, motion.z * 2.0D);
-            player.level().playSound(null, target.getX(), target.getY(), target.getZ(),
-                    ModSounds.WEAPON_FIRE_STAB.get(), SoundSource.PLAYERS, 1.0F,
-                    0.9F + player.getRandom().nextFloat() * 0.2F);
+            LegacySoundPlayer.playLegacyFireStab(player.level(), target.getX(), target.getY(), target.getZ(),
+                    1.0F, 0.9F, 0.2F);
             return;
         }
         if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
@@ -483,15 +585,11 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
 
         int shotsFired = 0;
         for (int shot = 0; shot < shots; shot++) {
-            int projectiles = BulletLaunchUtil.rollProjectileCount(round.config(), player.getRandom());
+            int projectiles = legacyProjectileCount(round.config(), gun, player.getRandom());
             boolean firedShot = false;
             for (int i = 0; i < projectiles; i++) {
-                BulletLaunchUtil.LaunchPlan plan = launchPlan(player, stack, round.config(), receiver);
-                if (!plan.valid()) {
-                    continue;
-                }
                 BulletProjectileEntity bullet = createBullet(level, player, stack, gun, round.config(), receiver,
-                        receiver.baseDamage() * round.config().damageMin());
+                        standardFireDamage(stack, gun, round.config()));
                 if (bullet == null) {
                     continue;
                 }
@@ -539,6 +637,17 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         if (timer <= 1) {
             decideStandardState(player, stack, gun, gunState(stack, configIndex));
         }
+    }
+
+    private void tickLegacyGunRuntime(ServerPlayer player, ItemStack stack, GunParts gun) {
+        playLegacyReloadOrchestra(player.level(), player, stack, gun);
+        playLegacyCycleOrchestra(player, stack, gun);
+        playLegacyDryfireOrchestra(player.level(), player, stack, gun);
+        playLegacyJammedOrchestra(player.level(), player, stack, gun);
+        playLegacyInspectOrchestra(player.level(), player, stack, gun);
+        playLegacyEquipOrchestra(player.level(), player, stack, gun);
+        incrementLegacyAnimationTimer(stack, gun.mode().configIndex());
+        tickStandardStateMachine(player, stack, gun);
     }
 
     private void playLegacyReloadOrchestra(Level level, Entity entity, ItemStack stack, GunParts gun) {
@@ -1902,7 +2011,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
     @Nullable
     protected BulletProjectileEntity createBullet(Level level, Player player, ItemStack stack, GunParts gun,
             BulletConfig config, SednaReceiverConfig receiver, float overrideDamage) {
-        BulletLaunchUtil.LaunchPlan plan = launchPlan(player, stack, config, receiver);
+        BulletLaunchUtil.LaunchPlan plan = launchPlan(player, stack, config, gun);
         if (!plan.valid()) {
             return null;
         }
@@ -1912,7 +2021,8 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
     }
 
     protected BulletLaunchUtil.LaunchPlan launchPlan(Player player, ItemStack stack, BulletConfig config,
-            SednaReceiverConfig receiver) {
+            GunParts gun) {
+        SednaReceiverConfig receiver = gun.receiver();
         SednaReceiverConfig.Offset offset = isAiming(stack)
                 ? receiver.projectileOffsetScoped()
                 : receiver.projectileOffset();
@@ -1923,19 +2033,58 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
                 .add(localOffset);
         Vec3 direction = BulletKinematicsUtil.directionFromRotation(player.getYRot(), player.getXRot());
         Vec3 motion = BulletKinematicsUtil.shootWithSpread(direction, BulletKinematicsUtil.DEFAULT_THROW_FORCE,
-                spread(player, config, receiver), player.getRandom());
+                spread(player, stack, config, gun), player.getRandom());
+        BulletLaunchUtil.Rotation rotation = BulletLaunchUtil.rotationFromMotion(motion);
         return new BulletLaunchUtil.LaunchPlan(config, BulletConfigSyncRegistry.syncedState(config), position, motion,
-                player.getYRot(), player.getXRot(), BulletKinematicsUtil.ENTITY_SIZE,
+                rotation.yaw(), rotation.pitch(), BulletKinematicsUtil.ENTITY_SIZE,
                 BulletKinematicsUtil.RENDER_DISTANCE_WEIGHT, true);
     }
 
-    protected float spread(Player player, BulletConfig config, SednaReceiverConfig receiver) {
+    protected float spread(Player player, ItemStack stack, BulletConfig config, GunParts gun) {
+        SednaReceiverConfig receiver = gun.receiver();
         float spread = config.spread() * receiver.spreadAmmoMultiplier() + receiver.spreadInnate();
-        ItemStack stack = player.getMainHandItem();
         if (!(stack.getItem() instanceof SednaGunItem) || !isAiming(stack)) {
             spread += receiver.spreadHipfire();
         }
+        if (shouldApplyWear(gun)) {
+            spread += legacyStandardWearSpread(stack, gun.mode().durability(), gun.mode().configIndex())
+                    * receiver.spreadDurability();
+        }
         return Math.max(0.0F, spread);
+    }
+
+    protected float standardFireDamage(ItemStack stack, GunParts gun, BulletConfig config) {
+        float wearDamage = shouldApplyWear(gun)
+                ? legacyStandardWearDamage(stack, gun.mode().durability(), gun.mode().configIndex())
+                : 1.0F;
+        return gun.receiver().baseDamage() * wearDamage * config.damageMin();
+    }
+
+    protected int legacyProjectileCount(BulletConfig config, GunParts gun, net.minecraft.util.RandomSource random) {
+        int projectiles = BulletLaunchUtil.rollProjectileCount(config, random);
+        return Math.max(0, (int) (projectiles * gun.receiver().splitProjectiles()));
+    }
+
+    protected float legacyStandardWearDamage(ItemStack stack, float durability, int configIndex) {
+        if (durability <= 0.0F) {
+            return 1.0F;
+        }
+        float percent = wear(stack, configIndex) / durability;
+        if (percent < 0.75F) {
+            return 1.0F;
+        }
+        return 1.0F - (percent - 0.75F) * 2.0F;
+    }
+
+    protected float legacyStandardWearSpread(ItemStack stack, float durability, int configIndex) {
+        if (durability <= 0.0F) {
+            return 0.0F;
+        }
+        float percent = wear(stack, configIndex) / durability;
+        if (percent < 0.5F) {
+            return 0.0F;
+        }
+        return (percent - 0.5F) * 2.0F;
     }
 
     protected void playFireSound(Level level, Player player, SednaReceiverConfig receiver) {
@@ -1950,14 +2099,16 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
             sound = LegacySoundIds.resolveEvent(receiver.fireSoundName());
         }
         if (sound == null) {
-            sound = ModSounds.WEAPON_SHOTGUN_SHOOT.get();
+            LegacySoundPlayer.playLegacyShotgunShoot(player,
+                    receiver.fireVolume(), receiver.firePitch() * pitchMultiplier);
+            return;
         }
         level.playSound(null, player.getX(), player.getY(), player.getZ(), sound, SoundSource.PLAYERS,
                 receiver.fireVolume(), receiver.firePitch() * pitchMultiplier);
     }
 
     private boolean tryReload(ItemStack gunStack, Player player, SednaMagazineConfig magazine) {
-        Optional<RuntimeAmmo> ammo = findReloadAmmo(player, magazine);
+        Optional<RuntimeAmmo> ammo = findReloadAmmo(player, gunStack, magazine);
         if (ammo.isEmpty()) {
             return false;
         }
@@ -1972,45 +2123,53 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
             case FULL_RELOAD -> capacity;
             default -> 1;
         };
-        int loaded = Math.min(capacity - before, loadLimit);
+        BulletConfig config = ammo.get().config();
+        int ammoReloadCount = Math.max(1, config.ammoCount());
+        int wantedItems = Mth.ceil((double) (capacity - before) / (double) ammoReloadCount);
+        int itemsToLoad = Math.min(wantedItems, loadLimit);
         if (!player.getAbilities().instabuild) {
-            loaded = Math.min(loaded, ammo.get().stack().getCount());
-            ammo.get().stack().shrink(loaded);
+            itemsToLoad = consumeReloadAmmoItems(player, magazine, config, itemsToLoad);
         }
-        if (loaded <= 0) {
+        if (itemsToLoad <= 0) {
             return false;
         }
 
+        int loaded = Math.min(capacity - before, itemsToLoad * ammoReloadCount);
         int after = before + loaded;
         CompoundTag tag = gunStack.getOrCreateTag();
-        tag.putString(magazine.nbtTypeKey(), ammo.get().config().legacyName());
+        tag.putString(magazine.nbtTypeKey(), config.legacyName());
         tag.putInt(magazine.nbtCountKey(), after);
         tag.putInt(magazine.nbtBeforeReloadKey(), before);
         tag.putInt(magazine.nbtAfterReloadKey(), after);
         return true;
     }
 
-    private Optional<RuntimeAmmo> findReloadAmmo(Player player, SednaMagazineConfig magazine) {
-        List<BulletConfig> accepted = acceptedRuntimeConfigs(magazine);
+    private int consumeReloadAmmoItems(Player player, SednaMagazineConfig magazine, BulletConfig config, int amount) {
+        int consumed = 0;
+        while (consumed < amount) {
+            Optional<RuntimeAmmo> source = findAmmoSource(player, List.of(config), magazine);
+            if (source.isEmpty()) {
+                break;
+            }
+            int toConsume = Math.min(amount - consumed, source.get().availableItemCount());
+            if (toConsume <= 0) {
+                break;
+            }
+            source.get().consumeItems(toConsume);
+            consumed += toConsume;
+        }
+        return consumed;
+    }
+
+    private Optional<RuntimeAmmo> findReloadAmmo(Player player, ItemStack gunStack, SednaMagazineConfig magazine) {
+        List<BulletConfig> accepted = reloadRuntimeConfigs(gunStack, magazine);
         if (accepted.isEmpty()) {
             return Optional.empty();
         }
         if (player.getAbilities().instabuild) {
-            return Optional.of(new RuntimeAmmo(accepted.get(0), ItemStack.EMPTY));
+            return Optional.of(RuntimeAmmo.creative(accepted.get(0)));
         }
-        Inventory inventory = player.getInventory();
-        for (BulletConfig config : accepted) {
-            Item item = ForgeRegistries.ITEMS.getValue(config.ammo().itemId());
-            if (item == null) {
-                continue;
-            }
-            for (ItemStack stack : inventory.items) {
-                if (!stack.isEmpty() && stack.is(item)) {
-                    return Optional.of(new RuntimeAmmo(config, stack));
-                }
-            }
-        }
-        return Optional.empty();
+        return findAmmoSource(player, accepted, magazine);
     }
 
     protected Optional<LoadedRound> getLoadedRound(Player player, ItemStack stack, SednaMagazineConfig magazine) {
@@ -2057,10 +2216,16 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         if (magazine.kind() == SednaMagazineConfig.Kind.INFINITE) {
             return;
         }
+        if (magazine.affectedByTrenchmaster() && !TrenchmasterArmorItem.shouldUseUpTrenchmasterAmmo(player)) {
+            return;
+        }
         if (magazine.kind() == SednaMagazineConfig.Kind.BELT) {
-            consumeBeltAmmo(player, config);
+            if (consumeBeltAmmo(player, magazine, config)) {
+                handleCasingBag(player, config, 1);
+            }
         } else {
             setMagazineCount(gunStack, magazine, Math.max(0, magazineCount(gunStack, magazine) - 1));
+            handleCasingBag(player, config, 1);
         }
     }
 
@@ -2070,21 +2235,9 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
             return Optional.empty();
         }
         if (player.getAbilities().instabuild) {
-            return Optional.of(new RuntimeAmmo(accepted.get(0), ItemStack.EMPTY));
+            return Optional.of(RuntimeAmmo.creative(accepted.get(0)));
         }
-        Inventory inventory = player.getInventory();
-        for (BulletConfig config : accepted) {
-            Item item = ForgeRegistries.ITEMS.getValue(config.ammo().itemId());
-            if (item == null) {
-                continue;
-            }
-            for (ItemStack stack : inventory.items) {
-                if (!stack.isEmpty() && stack.is(item)) {
-                    return Optional.of(new RuntimeAmmo(config, stack));
-                }
-            }
-        }
-        return Optional.empty();
+        return findAmmoSource(player, accepted, magazine);
     }
 
     private ItemStack hudIconStack(ItemStack stack, Player player, SednaMagazineConfig magazine) {
@@ -2191,27 +2344,46 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         if (player.getAbilities().instabuild) {
             return Integer.MAX_VALUE;
         }
-        Item item = ForgeRegistries.ITEMS.getValue(config.ammo().itemId());
-        if (item == null) {
-            return 0;
-        }
         int count = 0;
         for (ItemStack stack : player.getInventory().items) {
-            if (!stack.isEmpty() && stack.is(item)) {
+            if (matchesAmmo(stack, config)) {
                 count += stack.getCount();
+            } else if (stack.is(ModItems.AMMO_BAG.get()) || stack.is(ModItems.AMMO_BAG_INFINITE.get())) {
+                NonNullList<ItemStack> slots = HbmItemStackUtil.readStacksFromNbt(stack, AmmoBagItem.SLOT_COUNT);
+                for (ItemStack slot : slots) {
+                    if (matchesAmmo(slot, config)) {
+                        if (stack.is(ModItems.AMMO_BAG_INFINITE.get())) {
+                            return 9_999;
+                        }
+                        count += slot.getCount();
+                    }
+                }
             }
         }
         return count;
     }
 
-    private void consumeBeltAmmo(Player player, BulletConfig config) {
-        Item item = ForgeRegistries.ITEMS.getValue(config.ammo().itemId());
+    private boolean consumeBeltAmmo(Player player, SednaMagazineConfig magazine, BulletConfig config) {
+        Optional<RuntimeAmmo> source = findAmmoSource(player, List.of(config), magazine);
+        if (source.isEmpty()) {
+            return false;
+        }
+        source.get().consumeItems(1);
+        return true;
+    }
+
+    private void handleCasingBag(Player player, BulletConfig config, int shotsFired) {
+        if (config.casingItemName().isBlank() || config.casingItemAmount() <= 0 || shotsFired <= 0) {
+            return;
+        }
+        Item item = ForgeRegistries.ITEMS.getValue(BulletAmmo.legacyItem(config.casingItemName()).itemId());
         if (item == null) {
             return;
         }
+        ItemStack casing = new ItemStack(item, Math.max(1, config.casingItemStackSize()));
+        float amount = 1.0F / config.casingItemAmount() * 0.5F * shotsFired;
         for (ItemStack stack : player.getInventory().items) {
-            if (!stack.isEmpty() && stack.is(item)) {
-                stack.shrink(1);
+            if (stack.is(ModItems.CASING_BAG.get()) && CasingBagItem.pushCasing(stack, casing, amount)) {
                 return;
             }
         }
@@ -2241,6 +2413,26 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         return tag == null ? 0.0F : tag.getFloat(KEY_WEAR + configIndex);
     }
 
+    public boolean repairLegacyWearQuarter(ItemStack stack) {
+        boolean repaired = false;
+        for (SednaGunConfig.GunModeConfig mode : gunConfig.configs()) {
+            SednaGunConfig.GunModeConfig effectiveMode = SednaWeaponModEvaluator.effectiveMode(stack,
+                    gunConfig.legacyName(), mode);
+            float maxDurability = effectiveMode.durability();
+            if (maxDurability <= 0.0F) {
+                continue;
+            }
+            int configIndex = mode.configIndex();
+            float currentWear = Math.min(wear(stack, configIndex), maxDurability);
+            if (currentWear > 0.0F) {
+                stack.getOrCreateTag().putFloat(KEY_WEAR + configIndex,
+                        Math.max(0.0F, wear(stack, configIndex) - maxDurability * 0.25F));
+                repaired = true;
+            }
+        }
+        return repaired;
+    }
+
     private int gunMode(ItemStack stack, int configIndex) {
         CompoundTag tag = stack.getTag();
         return tag == null ? 0 : tag.getInt(KEY_MODE + configIndex);
@@ -2267,7 +2459,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
             return false;
         }
         return magazineCount(stack, magazine) < Math.max(1, magazine.capacity())
-                && findReloadAmmo(player, magazine).isPresent();
+                && findReloadAmmo(player, stack, magazine).isPresent();
     }
 
     private int amountBeforeReload(ItemStack stack, SednaMagazineConfig magazine) {
@@ -2419,6 +2611,74 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
                 .toList();
     }
 
+    private List<BulletConfig> reloadRuntimeConfigs(ItemStack gunStack, SednaMagazineConfig magazine) {
+        List<BulletConfig> accepted = acceptedRuntimeConfigs(magazine);
+        if (accepted.isEmpty() || magazineCount(gunStack, magazine) <= 0) {
+            return accepted;
+        }
+        CompoundTag tag = gunStack.getTag();
+        String legacyName = tag == null ? "" : tag.getString(magazine.nbtTypeKey());
+        Optional<BulletConfig> stored = LegacySednaRuntimeBulletConfigs.byName(legacyName);
+        if (stored.isPresent() && accepted.contains(stored.get())) {
+            return List.of(stored.get());
+        }
+        return List.of(accepted.get(0));
+    }
+
+    private Optional<RuntimeAmmo> findAmmoSource(Player player, List<BulletConfig> accepted,
+            SednaMagazineConfig magazine) {
+        Inventory inventory = player.getInventory();
+        for (ItemStack stack : inventory.items) {
+            if (stack.isEmpty()) {
+                continue;
+            }
+            Optional<BulletConfig> direct = firstMatchingAmmo(stack, accepted);
+            if (direct.isPresent()) {
+                return Optional.of(RuntimeAmmo.direct(direct.get(), stack));
+            }
+            Optional<RuntimeAmmo> bag = findAmmoBagSource(stack, accepted, magazine);
+            if (bag.isPresent()) {
+                return bag;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<RuntimeAmmo> findAmmoBagSource(ItemStack bagStack, List<BulletConfig> accepted,
+            SednaMagazineConfig magazine) {
+        boolean infinite = bagStack.is(ModItems.AMMO_BAG_INFINITE.get());
+        boolean regular = bagStack.is(ModItems.AMMO_BAG.get());
+        if ((!regular || !magazine.acceptsAmmoBag()) && (!infinite || !magazine.acceptsInfiniteAmmoBag())) {
+            return Optional.empty();
+        }
+        NonNullList<ItemStack> slots = HbmItemStackUtil.readStacksFromNbt(bagStack, AmmoBagItem.SLOT_COUNT);
+        for (int slot = 0; slot < slots.size(); slot++) {
+            ItemStack ammoStack = slots.get(slot);
+            Optional<BulletConfig> config = firstMatchingAmmo(ammoStack, accepted);
+            if (config.isPresent()) {
+                return Optional.of(RuntimeAmmo.bag(config.get(), ammoStack, bagStack, slots, slot, infinite));
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<BulletConfig> firstMatchingAmmo(ItemStack stack, List<BulletConfig> accepted) {
+        if (stack.isEmpty()) {
+            return Optional.empty();
+        }
+        for (BulletConfig config : accepted) {
+            if (matchesAmmo(stack, config)) {
+                return Optional.of(config);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private boolean matchesAmmo(ItemStack stack, BulletConfig config) {
+        Item item = ForgeRegistries.ITEMS.getValue(config.ammo().itemId());
+        return item != null && !stack.isEmpty() && stack.is(item);
+    }
+
     protected Optional<GunParts> primaryParts() {
         return partsForMode(ItemStack.EMPTY, 0);
     }
@@ -2488,7 +2748,44 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
             String ammoText) {
     }
 
-    protected record RuntimeAmmo(BulletConfig config, ItemStack stack) {
+    protected record RuntimeAmmo(
+            BulletConfig config,
+            ItemStack stack,
+            ItemStack bagStack,
+            NonNullList<ItemStack> bagSlots,
+            int bagSlot,
+            boolean infiniteBag,
+            boolean creative) {
+        static RuntimeAmmo creative(BulletConfig config) {
+            return new RuntimeAmmo(config, ItemStack.EMPTY, ItemStack.EMPTY, NonNullList.create(), -1, false, true);
+        }
+
+        static RuntimeAmmo direct(BulletConfig config, ItemStack stack) {
+            return new RuntimeAmmo(config, stack, ItemStack.EMPTY, NonNullList.create(), -1, false, false);
+        }
+
+        static RuntimeAmmo bag(BulletConfig config, ItemStack stack, ItemStack bagStack, NonNullList<ItemStack> bagSlots,
+                int bagSlot, boolean infiniteBag) {
+            return new RuntimeAmmo(config, stack, bagStack, bagSlots, bagSlot, infiniteBag, false);
+        }
+
+        int availableItemCount() {
+            if (creative || infiniteBag) {
+                return 9_999;
+            }
+            return stack.isEmpty() ? 0 : stack.getCount();
+        }
+
+        void consumeItems(int amount) {
+            if (creative || infiniteBag || amount <= 0) {
+                return;
+            }
+            stack.shrink(amount);
+            if (!bagStack.isEmpty() && bagSlot >= 0 && bagSlot < bagSlots.size()) {
+                bagSlots.set(bagSlot, stack.isEmpty() ? ItemStack.EMPTY : stack);
+                HbmItemStackUtil.setStacksToNbt(bagStack, bagSlots, false);
+            }
+        }
     }
 
     protected record LoadedRound(BulletConfig config, int count) {

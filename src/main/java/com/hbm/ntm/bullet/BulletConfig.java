@@ -64,6 +64,9 @@ public record BulletConfig(
         BulletPlink plink,
         String vanillaParticle,
         String spentCasingName,
+        String casingItemName,
+        int casingItemStackSize,
+        int casingItemAmount,
         int dischargePerShot,
         String modeName,
         String chatColorName,
@@ -81,6 +84,9 @@ public record BulletConfig(
         plink = plink == null ? BulletPlink.NONE : plink;
         vanillaParticle = vanillaParticle == null ? "" : vanillaParticle;
         spentCasingName = spentCasingName == null ? "" : spentCasingName;
+        casingItemName = casingItemName == null ? "" : casingItemName;
+        casingItemStackSize = Math.max(1, casingItemStackSize);
+        casingItemAmount = Math.max(0, casingItemAmount);
         modeName = modeName == null ? "" : modeName;
         chatColorName = chatColorName == null ? "white" : chatColorName;
         damageType = damageType == null ? ModDamageSources.REVOLVER_BULLET : damageType;
@@ -172,6 +178,9 @@ public record BulletConfig(
         private BulletPlink plink = BulletPlink.NONE;
         private String vanillaParticle = "";
         private String spentCasingName = "";
+        private String casingItemName = "";
+        private int casingItemStackSize = 1;
+        private int casingItemAmount;
         private int dischargePerShot;
         private String modeName = "";
         private String chatColorName = "white";
@@ -236,6 +245,9 @@ public record BulletConfig(
             this.plink = config.plink;
             this.vanillaParticle = config.vanillaParticle;
             this.spentCasingName = config.spentCasingName;
+            this.casingItemName = config.casingItemName;
+            this.casingItemStackSize = config.casingItemStackSize;
+            this.casingItemAmount = config.casingItemAmount;
             this.dischargePerShot = config.dischargePerShot;
             this.modeName = config.modeName;
             this.chatColorName = config.chatColorName;
@@ -441,6 +453,13 @@ public record BulletConfig(
             return this;
         }
 
+        public Builder casingItem(String casingItemName, int stackSize, int amount) {
+            this.casingItemName = casingItemName;
+            this.casingItemStackSize = stackSize;
+            this.casingItemAmount = amount;
+            return this;
+        }
+
         public Builder energy(int dischargePerShot, String modeName, String chatColorName, int firingRate) {
             this.dischargePerShot = dischargePerShot;
             this.modeName = modeName;
@@ -476,6 +495,7 @@ public record BulletConfig(
                     blockDamage, explosive, jolt, rainbow, nuke, shrapnel, chlorine, leadChance, caustic,
                     copyEffects(effects),
                     destroysBlocks, instakill, style, trail, plink, vanillaParticle, spentCasingName,
+                    casingItemName, casingItemStackSize, casingItemAmount,
                     dischargePerShot, modeName, chatColorName, firingRate, damageType, damageProjectile,
                     damageFire, damageExplosion, damageBypass, behaviors);
         }

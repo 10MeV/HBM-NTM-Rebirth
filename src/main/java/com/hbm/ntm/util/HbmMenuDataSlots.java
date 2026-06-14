@@ -55,15 +55,29 @@ public final class HbmMenuDataSlots {
     }
 
     public static void addInt(DataSlotSink sink, IntGetter serverGetter, IntSetter setter) {
+        int[] syncedValue = new int[1];
         sink.add(new DataSlot() {
             @Override
             public int get() {
-                return serverGetter.get();
+                return serverGetter.get() & 0xFFFF;
             }
 
             @Override
             public void set(int value) {
-                setter.set(value);
+                syncedValue[0] = (syncedValue[0] & ~0xFFFF) | (value & 0xFFFF);
+                setter.set(syncedValue[0]);
+            }
+        });
+        sink.add(new DataSlot() {
+            @Override
+            public int get() {
+                return (serverGetter.get() >>> 16) & 0xFFFF;
+            }
+
+            @Override
+            public void set(int value) {
+                syncedValue[0] = (syncedValue[0] & 0xFFFF) | ((value & 0xFFFF) << 16);
+                setter.set(syncedValue[0]);
             }
         });
     }

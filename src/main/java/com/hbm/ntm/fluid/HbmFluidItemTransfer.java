@@ -38,31 +38,87 @@ public final class HbmFluidItemTransfer {
         return setTankTypeFromIdentifierSlot(items, inputSlot, inputSlot, tank, level, pos, pressure, forcePressure);
     }
 
+    public static FluidIdentifierStackReport identifyFluidFromStackReport(ItemStack stack, Level level, BlockPos pos) {
+        ItemStack before = stack == null ? ItemStack.EMPTY : stack.copy();
+        if (before.isEmpty() || !(before.getItem() instanceof IFluidIdentifierItem identifier)) {
+            return new FluidIdentifierStackReport(before, HbmFluids.NONE, before.isEmpty(), false, true);
+        }
+        FluidType selected = identifier.getIdentifiedFluid(level, pos == null ? BlockPos.ZERO : pos, before);
+        return new FluidIdentifierStackReport(before, selected, false, true, selected == null);
+    }
+
+    public static boolean setTankTypeFromIdentifierStack(ItemStack stack, HbmFluidTank tank, Level level, BlockPos pos) {
+        return setTankTypeFromIdentifierStackReport(stack, tank, level, pos).changed();
+    }
+
+    public static FluidIdentifierTankReport setTankTypeFromIdentifierStackReport(ItemStack stack, HbmFluidTank tank,
+            Level level, BlockPos pos) {
+        FluidIdentifierStackReport identifier = identifyFluidFromStackReport(stack, level, pos);
+        HbmFluidTank.TankState before = tank == null ? emptyTankState() : tank.snapshot();
+        if (!identifier.identifierItem() || identifier.selectedNone() || tank == null) {
+            return FluidIdentifierTankReport.of(identifier, tank == null, before, before, false);
+        }
+        tank.setTankType(identifier.selectedType());
+        return FluidIdentifierTankReport.of(identifier, false, before, tank.snapshot(), true);
+    }
+
     public static boolean setTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot,
             HbmFluidTank tank, Level level, BlockPos pos, int pressure, boolean forcePressure) {
+        return setTankTypeFromIdentifierSlotReport(items, inputSlot, outputSlot, tank, level, pos, pressure,
+                forcePressure).changed();
+    }
+
+    public static FluidIdentifierSlotReport setTankTypeFromIdentifierSlotReport(IItemHandlerModifiable items,
+            int inputSlot, int outputSlot, HbmFluidTank tank, Level level, BlockPos pos, int pressure,
+            boolean forcePressure) {
+        boolean inputSlotValid = isValidSlot(items, inputSlot);
+        boolean outputSlotValid = isValidSlot(items, outputSlot);
+        HbmFluidTank.TankState before = tank == null ? emptyTankState() : tank.snapshot();
+        ItemStack inputBefore = inputSlotValid ? items.getStackInSlot(inputSlot).copy() : ItemStack.EMPTY;
+        ItemStack outputBefore = outputSlotValid ? items.getStackInSlot(outputSlot).copy() : ItemStack.EMPTY;
+        int targetPressure = HbmFluidTank.clampPressure(pressure);
         if (!isValidSlot(items, inputSlot) || !isValidSlot(items, outputSlot) || tank == null) {
-            return false;
+            return FluidIdentifierSlotReport.of(inputSlot, outputSlot, inputSlotValid, outputSlotValid, tank == null,
+                    inputBefore, inputBefore, outputBefore, outputBefore, before, before, HbmFluids.NONE,
+                    targetPressure, forcePressure, false, false, false, false, false, false, false);
         }
         ItemStack input = items.getStackInSlot(inputSlot);
         if (input.isEmpty() || !(input.getItem() instanceof IFluidIdentifierItem identifier)) {
-            return false;
+            return FluidIdentifierSlotReport.of(inputSlot, outputSlot, true, true, false,
+                    inputBefore, inputBefore, outputBefore, outputBefore, before, before, HbmFluids.NONE,
+                    targetPressure, forcePressure, input.isEmpty(), false, false, false, false, false, false);
         }
         if (inputSlot != outputSlot && !items.getStackInSlot(outputSlot).isEmpty()) {
-            return false;
+            return FluidIdentifierSlotReport.of(inputSlot, outputSlot, true, true, false,
+                    inputBefore, inputBefore, outputBefore, outputBefore, before, before, HbmFluids.NONE,
+                    targetPressure, forcePressure, false, true, false, false, false, false, false);
         }
         FluidType selected = identifier.getIdentifiedFluid(level, pos == null ? BlockPos.ZERO : pos, input);
-        if (selected == null || tank.getTankType() == selected) {
-            return false;
+        boolean sameType = selected != null && tank.getTankType() == selected;
+        boolean pressureChanged = forcePressure && tank.getPressure() != targetPressure;
+        if (selected == null || (sameType && !pressureChanged)) {
+            return FluidIdentifierSlotReport.of(inputSlot, outputSlot, true, true, false,
+                    inputBefore, inputBefore, outputBefore, outputBefore, before, before,
+                    selected == null ? HbmFluids.NONE : selected, targetPressure, forcePressure, false, false,
+                    selected == null, sameType, false, false, false);
         }
-        tank.setTankType(selected);
+        if (!sameType) {
+            tank.setTankType(selected);
+        }
         if (forcePressure) {
             tank.withPressure(pressure);
         }
+        boolean movedStack = false;
         if (inputSlot != outputSlot) {
             items.setStackInSlot(outputSlot, input.copy());
             items.setStackInSlot(inputSlot, ItemStack.EMPTY);
+            movedStack = true;
         }
-        return true;
+        ItemStack inputAfter = items.getStackInSlot(inputSlot).copy();
+        ItemStack outputAfter = items.getStackInSlot(outputSlot).copy();
+        return FluidIdentifierSlotReport.of(inputSlot, outputSlot, true, true, false,
+                inputBefore, inputAfter, outputBefore, outputAfter, before, tank.snapshot(), selected,
+                targetPressure, forcePressure, false, false, false, sameType, pressureChanged, movedStack, true);
     }
 
     public static boolean loadTankFromSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank) {
@@ -188,10 +244,10 @@ public final class HbmFluidItemTransfer {
             }
         }
         int totalFilled = 0;
-        TransferResult armorResult = fillArmorModsFromTank(working, tank, amount);
-        if (armorResult.moved()) {
-            working = armorResult.stack();
-            totalFilled += armorResult.amount();
+        ArmorModFluidTransferReport armorReport = fillArmorModsFromTankReport(working, tank, amount, false);
+        if (armorReport.moved()) {
+            working = armorReport.armorAfter();
+            totalFilled += armorReport.movedAmount();
         }
         int remaining = Math.min(amount - totalFilled, tank.getFill());
         if (remaining > 0) {
@@ -237,10 +293,10 @@ public final class HbmFluidItemTransfer {
             }
         }
         int totalDrained = 0;
-        TransferResult armorResult = drainArmorModsToTank(working, tank, maxAmount);
-        if (armorResult.moved()) {
-            working = armorResult.stack();
-            totalDrained += armorResult.amount();
+        ArmorModFluidTransferReport armorReport = drainArmorModsToTankReport(working, tank, maxAmount, false);
+        if (armorReport.moved()) {
+            working = armorReport.armorAfter();
+            totalDrained += armorReport.movedAmount();
         }
         HbmFluidStack available = getHbmItemFluid(working);
         int drained = 0;
@@ -342,51 +398,100 @@ public final class HbmFluidItemTransfer {
         return fillable.tryEmpty(type, amount, target);
     }
 
-    private static TransferResult fillArmorModsFromTank(ItemStack armor, HbmFluidTank tank, int maxAmount) {
-        if (!hasFillableArmorMods(armor) || tank == null || tank.isEmpty() || maxAmount <= 0) {
-            return TransferResult.empty(armor);
-        }
-        int moved = 0;
-        for (ItemStack mod : ArmorModHandler.pryMods(armor)) {
-            if (!isFillableArmorMod(mod) || moved >= maxAmount || tank.isEmpty()) {
-                continue;
-            }
-            int request = Math.min(maxAmount - moved, tank.getFill());
-            int filled = fillHbmItem(mod, tank.getTankType(), request, false);
-            if (filled > 0) {
-                tank.drain(filled, false);
-                ArmorModHandler.applyMod(armor, mod);
-                moved += filled;
-            }
-        }
-        return moved > 0 ? new TransferResult(armor, moved) : TransferResult.empty(armor);
+    public static TransferResult fillArmorModsFromTank(ItemStack armor, HbmFluidTank tank, int maxAmount,
+            boolean simulate) {
+        ArmorModFluidTransferReport report = fillArmorModsFromTankReport(armor, tank, maxAmount, simulate);
+        return report.moved()
+                ? new TransferResult(simulate ? safeStackCopy(armor) : report.armorAfter(), report.movedAmount())
+                : TransferResult.empty(safeStackCopy(armor));
     }
 
-    private static TransferResult drainArmorModsToTank(ItemStack armor, HbmFluidTank tank, int maxAmount) {
-        if (!hasFillableArmorMods(armor) || tank == null || maxAmount <= 0) {
-            return TransferResult.empty(armor);
-        }
-        int moved = 0;
-        for (ItemStack mod : ArmorModHandler.pryMods(armor)) {
-            if (!isFillableArmorMod(mod) || moved >= maxAmount || tank.getSpace() <= 0) {
-                continue;
-            }
-            HbmFluidStack available = getHbmItemFluid(mod);
-            if (available.isEmpty() || !tank.canAccept(available.type(), available.pressure())) {
-                continue;
-            }
-            int request = Math.min(maxAmount - moved, Math.min(available.amount(), tank.getSpace()));
-            int drained = drainHbmItem(mod, available.type(), request, false);
-            if (drained > 0) {
-                tank.fill(available.type(), drained, available.pressure(), false);
-                ArmorModHandler.applyMod(armor, mod);
-                moved += drained;
-            }
-        }
-        return moved > 0 ? new TransferResult(armor, moved) : TransferResult.empty(armor);
+    public static ArmorModFluidTransferReport fillArmorModsFromTankReport(ItemStack armor, HbmFluidTank tank,
+            int maxAmount, boolean simulate) {
+        return transferArmorMods(armor, tank, maxAmount, simulate, TankSlotTransfer.Direction.TANK_TO_ITEM);
     }
 
-    private static HbmFluidStack getArmorModFluid(ItemStack armor) {
+    public static TransferResult drainArmorModsToTank(ItemStack armor, HbmFluidTank tank, int maxAmount,
+            boolean simulate) {
+        ArmorModFluidTransferReport report = drainArmorModsToTankReport(armor, tank, maxAmount, simulate);
+        return report.moved()
+                ? new TransferResult(simulate ? safeStackCopy(armor) : report.armorAfter(), report.movedAmount())
+                : TransferResult.empty(safeStackCopy(armor));
+    }
+
+    public static ArmorModFluidTransferReport drainArmorModsToTankReport(ItemStack armor, HbmFluidTank tank,
+            int maxAmount, boolean simulate) {
+        return transferArmorMods(armor, tank, maxAmount, simulate, TankSlotTransfer.Direction.ITEM_TO_TANK);
+    }
+
+    private static ArmorModFluidTransferReport transferArmorMods(ItemStack armor, HbmFluidTank tank, int maxAmount,
+            boolean simulate, TankSlotTransfer.Direction direction) {
+        ItemStack armorBefore = safeStackCopy(armor);
+        HbmFluidTank.TankState tankBefore = tank == null ? emptyTankState() : tank.snapshot();
+        boolean validArmor = hasFillableArmorMods(armorBefore);
+        if (!validArmor || tank == null || maxAmount <= 0
+                || (direction == TankSlotTransfer.Direction.TANK_TO_ITEM && tank.isEmpty())) {
+            return ArmorModFluidTransferReport.empty(direction, simulate, validArmor, tank == null, maxAmount,
+                    armorBefore, tankBefore);
+        }
+
+        ItemStack workingArmor = simulate ? armorBefore.copy() : armor;
+        HbmFluidTank workingTank = simulate ? copyTank(tank) : tank;
+        List<ArmorModFluidTransferEntry> entries = new ArrayList<>();
+        int moved = 0;
+        int movedModules = 0;
+        ItemStack[] mods = ArmorModHandler.pryMods(workingArmor);
+        for (int slot = 0; slot < mods.length; slot++) {
+            ItemStack mod = mods[slot];
+            if (mod.isEmpty()) {
+                continue;
+            }
+            ItemStack modBefore = mod.copy();
+            boolean fillable = isFillableArmorMod(mod);
+            boolean compatible = false;
+            FluidType type = HbmFluids.NONE;
+            int request = 0;
+            int movedThisMod = 0;
+            if (fillable && moved < maxAmount) {
+                if (direction == TankSlotTransfer.Direction.TANK_TO_ITEM) {
+                    type = workingTank.getTankType();
+                    compatible = !workingTank.isEmpty()
+                            && ((IFillableItem) mod.getItem()).acceptsFluid(type, mod);
+                    if (compatible) {
+                        request = Math.min(maxAmount - moved, workingTank.getFill());
+                        movedThisMod = fillHbmItem(mod, type, request, false);
+                        if (movedThisMod > 0) {
+                            workingTank.drain(movedThisMod, false);
+                        }
+                    }
+                } else {
+                    HbmFluidStack available = getHbmItemFluid(mod);
+                    type = available.type();
+                    compatible = !available.isEmpty()
+                            && workingTank.canAccept(available.type(), available.pressure())
+                            && workingTank.getSpace() > 0;
+                    if (compatible) {
+                        request = Math.min(maxAmount - moved, Math.min(available.amount(), workingTank.getSpace()));
+                        movedThisMod = drainHbmItem(mod, available.type(), request, false);
+                        if (movedThisMod > 0) {
+                            workingTank.fill(available.type(), movedThisMod, available.pressure(), false);
+                        }
+                    }
+                }
+                if (movedThisMod > 0) {
+                    ArmorModHandler.applyMod(workingArmor, mod);
+                    moved += movedThisMod;
+                    movedModules++;
+                }
+            }
+            entries.add(new ArmorModFluidTransferEntry(slot, fillable, compatible, type, request, movedThisMod,
+                    modBefore, mod.copy()));
+        }
+        return new ArmorModFluidTransferReport(direction, simulate, validArmor, false, maxAmount, moved, movedModules,
+                armorBefore, workingArmor, tankBefore, workingTank.snapshot(), List.copyOf(entries));
+    }
+
+    public static HbmFluidStack getArmorModFluid(ItemStack armor) {
         if (!hasFillableArmorMods(armor)) {
             return new HbmFluidStack(HbmFluids.NONE, 0);
         }
@@ -408,6 +513,10 @@ public final class HbmFluidItemTransfer {
 
     private static boolean isFillableArmorMod(ItemStack stack) {
         return !stack.isEmpty() && stack.getItem() instanceof ArmorModItem && stack.getItem() instanceof IFillableItem;
+    }
+
+    private static ItemStack safeStackCopy(ItemStack stack) {
+        return stack == null ? ItemStack.EMPTY : stack.copy();
     }
 
     private static boolean drainInfiniteItemToTank(HbmInfiniteFluidItem item, HbmFluidTank tank, boolean simulate) {
@@ -620,6 +729,10 @@ public final class HbmFluidItemTransfer {
         return items != null && slot >= 0 && slot < items.getSlots();
     }
 
+    private static HbmFluidTank.TankState emptyTankState() {
+        return new HbmFluidTank.TankState(HbmFluids.NONE, 0, 0, 0);
+    }
+
     public static boolean processTransfers(IItemHandlerModifiable items, Iterable<TankSlotTransfer> transfers) {
         return processTransfers(items, transfers, false);
     }
@@ -767,6 +880,69 @@ public final class HbmFluidItemTransfer {
         }
     }
 
+    public record ArmorModFluidTransferReport(
+            TankSlotTransfer.Direction direction,
+            boolean simulate,
+            boolean validArmor,
+            boolean missingTank,
+            int maxAmount,
+            int movedAmount,
+            int movedModules,
+            ItemStack armorBefore,
+            ItemStack armorAfter,
+            HbmFluidTank.TankState tankBefore,
+            HbmFluidTank.TankState tankAfter,
+            List<ArmorModFluidTransferEntry> entries) {
+        public ArmorModFluidTransferReport {
+            direction = direction == null ? TankSlotTransfer.Direction.TANK_TO_ITEM : direction;
+            maxAmount = Math.max(0, maxAmount);
+            movedAmount = Math.max(0, movedAmount);
+            movedModules = Math.max(0, movedModules);
+            armorBefore = safeStackCopy(armorBefore);
+            armorAfter = safeStackCopy(armorAfter);
+            tankBefore = tankBefore == null ? emptyTankState() : tankBefore;
+            tankAfter = tankAfter == null ? tankBefore : tankAfter;
+            entries = entries == null ? List.of() : List.copyOf(entries);
+        }
+
+        public boolean moved() {
+            return movedAmount > 0;
+        }
+
+        public TransferResult toTransferResult() {
+            return moved() ? new TransferResult(armorAfter, movedAmount) : TransferResult.empty(armorBefore);
+        }
+
+        private static ArmorModFluidTransferReport empty(TankSlotTransfer.Direction direction, boolean simulate,
+                boolean validArmor, boolean missingTank, int maxAmount, ItemStack armorBefore,
+                HbmFluidTank.TankState tankBefore) {
+            return new ArmorModFluidTransferReport(direction, simulate, validArmor, missingTank, maxAmount, 0, 0,
+                    armorBefore, armorBefore, tankBefore, tankBefore, List.of());
+        }
+    }
+
+    public record ArmorModFluidTransferEntry(
+            int slot,
+            boolean fillable,
+            boolean tankCompatible,
+            FluidType fluidType,
+            int requestedAmount,
+            int movedAmount,
+            ItemStack modBefore,
+            ItemStack modAfter) {
+        public ArmorModFluidTransferEntry {
+            fluidType = fluidType == null ? HbmFluids.NONE : fluidType;
+            requestedAmount = Math.max(0, requestedAmount);
+            movedAmount = Math.max(0, movedAmount);
+            modBefore = safeStackCopy(modBefore);
+            modAfter = safeStackCopy(modAfter);
+        }
+
+        public boolean moved() {
+            return movedAmount > 0;
+        }
+    }
+
     public record TransferBatchReport(boolean simulate, int attemptedTransfers, int movedTransfers, int movedAmount,
                                       java.util.List<TankSlotTransferResult> results) {
         public boolean moved() {
@@ -863,6 +1039,110 @@ public final class HbmFluidItemTransfer {
 
         private static HbmFluidStack safeItemFluid(ItemStack stack) {
             return stack == null || stack.isEmpty() ? new HbmFluidStack(HbmFluids.NONE, 0) : getItemFluid(stack);
+        }
+    }
+
+    public record FluidIdentifierSlotReport(
+            int inputSlot,
+            int outputSlot,
+            boolean inputSlotValid,
+            boolean outputSlotValid,
+            boolean missingTank,
+            ItemStack inputBefore,
+            ItemStack inputAfter,
+            ItemStack outputBefore,
+            ItemStack outputAfter,
+            HbmFluidTank.TankState tankBefore,
+            HbmFluidTank.TankState tankAfter,
+            FluidType selectedType,
+            int targetPressure,
+            boolean forcePressure,
+            boolean inputEmpty,
+            boolean outputBlocked,
+            boolean selectedNone,
+            boolean sameType,
+            boolean pressureChanged,
+            boolean movedIdentifierStack,
+            boolean changed) {
+        public FluidIdentifierSlotReport {
+            inputBefore = safeStackCopy(inputBefore);
+            inputAfter = safeStackCopy(inputAfter);
+            outputBefore = safeStackCopy(outputBefore);
+            outputAfter = safeStackCopy(outputAfter);
+            tankBefore = tankBefore == null ? emptyTankState() : tankBefore;
+            tankAfter = tankAfter == null ? tankBefore : tankAfter;
+            selectedType = selectedType == null ? HbmFluids.NONE : selectedType;
+            targetPressure = HbmFluidTank.clampPressure(targetPressure);
+        }
+
+        private static ItemStack safeStackCopy(ItemStack stack) {
+            return stack == null ? ItemStack.EMPTY : stack.copy();
+        }
+
+        private static FluidIdentifierSlotReport of(int inputSlot, int outputSlot, boolean inputSlotValid,
+                boolean outputSlotValid, boolean missingTank, ItemStack inputBefore, ItemStack inputAfter,
+                ItemStack outputBefore, ItemStack outputAfter, HbmFluidTank.TankState tankBefore,
+                HbmFluidTank.TankState tankAfter, FluidType selectedType, int targetPressure, boolean forcePressure,
+                boolean inputEmpty, boolean outputBlocked, boolean selectedNone, boolean sameType,
+                boolean pressureChanged, boolean movedIdentifierStack, boolean changed) {
+            boolean tankChanged = tankBefore != null && tankAfter != null
+                    && (tankBefore.type() != tankAfter.type()
+                            || tankBefore.fillMb() != tankAfter.fillMb()
+                            || tankBefore.capacityMb() != tankAfter.capacityMb()
+                            || tankBefore.pressure() != tankAfter.pressure());
+            return new FluidIdentifierSlotReport(inputSlot, outputSlot, inputSlotValid, outputSlotValid, missingTank,
+                    inputBefore, inputAfter, outputBefore, outputAfter, tankBefore, tankAfter, selectedType,
+                    targetPressure, forcePressure, inputEmpty, outputBlocked, selectedNone, sameType,
+                    pressureChanged, movedIdentifierStack, changed || tankChanged || movedIdentifierStack);
+        }
+    }
+
+    public record FluidIdentifierStackReport(
+            ItemStack stack,
+            FluidType selectedType,
+            boolean inputEmpty,
+            boolean identifierItem,
+            boolean selectedNone) {
+        public FluidIdentifierStackReport {
+            stack = safeStackCopy(stack);
+            selectedType = selectedType == null ? HbmFluids.NONE : selectedType;
+        }
+
+        private static ItemStack safeStackCopy(ItemStack stack) {
+            return stack == null ? ItemStack.EMPTY : stack.copy();
+        }
+    }
+
+    public record FluidIdentifierTankReport(
+            FluidIdentifierStackReport identifier,
+            boolean missingTank,
+            HbmFluidTank.TankState tankBefore,
+            HbmFluidTank.TankState tankAfter,
+            boolean sameType,
+            boolean changed) {
+        public FluidIdentifierTankReport {
+            identifier = identifier == null
+                    ? new FluidIdentifierStackReport(ItemStack.EMPTY, HbmFluids.NONE, true, false, true)
+                    : identifier;
+            tankBefore = tankBefore == null ? emptyTankState() : tankBefore;
+            tankAfter = tankAfter == null ? tankBefore : tankAfter;
+        }
+
+        private static FluidIdentifierTankReport of(FluidIdentifierStackReport identifier, boolean missingTank,
+                HbmFluidTank.TankState tankBefore, HbmFluidTank.TankState tankAfter, boolean attemptedChange) {
+            boolean sameType = !missingTank
+                    && identifier != null
+                    && tankBefore != null
+                    && identifier.identifierItem()
+                    && !identifier.selectedNone()
+                    && tankBefore.type() == identifier.selectedType();
+            boolean tankChanged = tankBefore != null && tankAfter != null
+                    && (tankBefore.type() != tankAfter.type()
+                            || tankBefore.fillMb() != tankAfter.fillMb()
+                            || tankBefore.capacityMb() != tankAfter.capacityMb()
+                            || tankBefore.pressure() != tankAfter.pressure());
+            return new FluidIdentifierTankReport(identifier, missingTank, tankBefore, tankAfter, sameType,
+                    attemptedChange && tankChanged);
         }
     }
 

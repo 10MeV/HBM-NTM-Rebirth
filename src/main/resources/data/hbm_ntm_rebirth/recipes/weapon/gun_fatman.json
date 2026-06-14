@@ -1,0 +1,32 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    "PPP",
+                    "BSR",
+                    "G M"
+                ],
+    "key":  {
+                "R":  {
+                          "tag":  "forge:heavy_receivers/saturnite"
+                      },
+                "G":  {
+                          "tag":  "forge:grips/any_hardplastic"
+                      },
+                "S":  {
+                          "tag":  "forge:shells/saturnite"
+                      },
+                "B":  {
+                          "tag":  "forge:heavy_barrels/saturnite"
+                      },
+                "P":  {
+                          "tag":  "forge:plates/saturnite"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/saturnite"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_fatman"
+               }
+}

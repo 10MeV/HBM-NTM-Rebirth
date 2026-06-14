@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.lander",
+  "duration": 2400,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:shells/aluminium" }, "count": 4, "legacy_ore": "shellAluminum" },
+    { "ingredient": { "tag": "forge:ingots/rubber" }, "count": 16, "legacy_ore": "ingotRubber" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:rocket_fuel" }, "count": 16 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:thruster_small" }, "count": 3 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_controller_advanced" }, "count": 3, "legacy_id": "hbm:circuit", "legacy_meta": 14 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:part_generic_lde" }, "count": 12, "legacy_id": "hbm:part_generic", "legacy_meta": 3 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:missile_soyuz_lander" }
+  ],
+  "output_fluids": [],
+  "pools": [
+    "discover.soyuz"
+  ]
+}

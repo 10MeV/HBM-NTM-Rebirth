@@ -1,13 +1,12 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.damage.EntityDamageUtil;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationUtil;
-import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -88,17 +87,9 @@ public class LegacyToxicGasBlock extends LegacyGasBlock {
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         super.animateTick(state, level, pos, random);
         if (kind == Kind.ASBESTOS && random.nextInt(5) == 0) {
-            level.addParticle(ModParticleTypes.TOWN_AURA.get(),
-                    pos.getX() + random.nextFloat(),
-                    pos.getY() + random.nextFloat(),
-                    pos.getZ() + random.nextFloat(),
-                    0.0D, 0.0D, 0.0D);
+            ParticleUtil.spawnRandomTownAuraInBlock(level, pos, random);
         } else if (kind == Kind.COAL) {
-            level.addParticle(ParticleTypes.SMOKE,
-                    pos.getX() + random.nextFloat(),
-                    pos.getY() + random.nextFloat(),
-                    pos.getZ() + random.nextFloat(),
-                    0.0D, 0.0D, 0.0D);
+            ParticleUtil.spawnRandomSmokeInBlock(level, pos, random);
         }
     }
 

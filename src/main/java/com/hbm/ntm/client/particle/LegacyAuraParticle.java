@@ -1,14 +1,17 @@
 package com.hbm.ntm.client.particle;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public class LegacyAuraParticle extends TextureSheetParticle {
+public class LegacyAuraParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
     private final SpriteSet sprites;
 
     private LegacyAuraParticle(ClientLevel level, double x, double y, double z,
@@ -42,8 +45,18 @@ public class LegacyAuraParticle extends TextureSheetParticle {
     }
 
     @Override
+    public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.enqueue(this, camera, this.x, this.y, this.z);
+    }
+
+    @Override
+    public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
+        super.render(buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite()), camera, partialTick);
+    }
+
+    @Override
     public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+        return HbmDeferredParticleRenderer.DEFERRED_RENDER_TYPE;
     }
 
     public static LegacyAuraParticle create(ClientLevel level, double x, double y, double z,

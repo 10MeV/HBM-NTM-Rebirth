@@ -20,6 +20,11 @@ public class ForgeRecipeFluidHandlerAdapter extends ForgeFluidHandlerAdapter {
         } : onChanged;
     }
 
+    public static ForgeRecipeFluidHandlerAdapter create(List<HbmFluidTank> inputTanks,
+            List<HbmFluidTank> outputTanks, int inputPressure, Runnable onChanged) {
+        return new ForgeRecipeFluidHandlerAdapter(inputTanks, outputTanks, inputPressure, onChanged);
+    }
+
     @Override
     public boolean isFluidValid(int tank, FluidStack stack) {
         if (tank < 0 || tank >= recipeInputTanks.size() || stack == null || stack.isEmpty()) {

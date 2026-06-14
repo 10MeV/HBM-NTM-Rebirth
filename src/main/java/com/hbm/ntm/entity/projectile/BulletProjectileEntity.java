@@ -7,11 +7,13 @@ import com.hbm.ntm.bullet.BulletCollisionUtil;
 import com.hbm.ntm.bullet.BulletConfig;
 import com.hbm.ntm.bullet.BulletConfigSyncRegistry;
 import com.hbm.ntm.bullet.BulletDamageUtil;
+import com.hbm.ntm.bullet.BulletFlightVisualUtil;
 import com.hbm.ntm.bullet.BulletHomingStateUtil;
 import com.hbm.ntm.bullet.BulletKinematicsUtil;
 import com.hbm.ntm.bullet.BulletLaunchUtil;
 import com.hbm.ntm.bullet.BulletNpcLaunchUtil;
 import com.hbm.ntm.bullet.BulletPersistenceUtil;
+import com.hbm.ntm.bullet.BulletPlink;
 import com.hbm.ntm.bullet.BulletProjectileHitUtil;
 import com.hbm.ntm.bullet.BulletProjectileTickUtil;
 import com.hbm.ntm.bullet.BulletSpecialSpawnUtil;
@@ -31,6 +33,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -58,6 +61,10 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
             SynchedEntityData.defineId(BulletProjectileEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Boolean> IN_GROUND =
             SynchedEntityData.defineId(BulletProjectileEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> BEAM_LENGTH =
+            SynchedEntityData.defineId(BulletProjectileEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Integer> OWNER_ID =
+            SynchedEntityData.defineId(BulletProjectileEntity.class, EntityDataSerializers.INT);
 
     private BulletConfig config;
     private UUID ownerUuid;
@@ -75,6 +82,16 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
     private double prevTauRenderY;
     private double prevTauRenderZ;
     private boolean hasTauRenderPosition;
+    private double renderDistanceWeight = BulletKinematicsUtil.RENDER_DISTANCE_WEIGHT;
+    private int turnProgress;
+    private double syncPosX;
+    private double syncPosY;
+    private double syncPosZ;
+    private double syncYaw;
+    private double syncPitch;
+    private double velocityX;
+    private double velocityY;
+    private double velocityZ;
     public float overrideDamage;
 
     public BulletProjectileEntity(EntityType<? extends BulletProjectileEntity> type, Level level) {
@@ -154,6 +171,10 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         setConfig(plan.config());
         setPos(plan.position().x, plan.position().y, plan.position().z);
         setDeltaMovement(plan.motion());
+        renderDistanceWeight = plan.renderDistanceWeight();
+        if (plan.config() != null && plan.config().plink() == BulletPlink.ENERGY) {
+            entityData.set(BEAM_LENGTH, (float) BulletProjectileTickUtil.LEGACY_BEAM_RANGE);
+        }
         setYRot(plan.yaw());
         setXRot(plan.pitch());
         yRotO = plan.yaw();
@@ -174,6 +195,10 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         if (throwableShake > 0) {
             throwableShake--;
         }
+        if (level().isClientSide()) {
+            tickClientServerInterpolationOnly(currentConfig, previousPosition);
+            return;
+        }
         if (inGround()) {
             if (BulletStuckStateUtil.sameLegacyStuckBlock(level(), stuckBlockPos, stuckBlockState)) {
                 ticksInGround++;
@@ -191,11 +216,15 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
                 random, overrideDamage, inGround(), acceleration);
         ticksInAir = activeTicksInAir;
         acceleration = result.acceleration();
+        if (currentConfig.plink() == BulletPlink.ENERGY && result.beamLength() > 0.0D) {
+            entityData.set(BEAM_LENGTH, (float) result.beamLength());
+        }
 
         boolean stuckByHook = applyChargeHookStick(currentConfig, result);
         if (!stuckByHook) {
             setPos(result.nextPosition().x, result.nextPosition().y, result.nextPosition().z);
             setDeltaMovement(result.nextMotion());
+            updateRotationFromMovement(position().subtract(previousPosition));
         }
         setHomingTarget(result.homingTarget());
         hasTauTrailNodes = hasTauTrailNodes || result.tauTrail().appended();
@@ -210,6 +239,35 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         if (result.discardProjectile() || exceededRicochetLimit || redirectedByNi4NiCoin) {
             discard();
         }
+    }
+
+    private void tickClientServerInterpolationOnly(BulletConfig currentConfig, Vec3 previousPosition) {
+        Vec3 motion = getDeltaMovement();
+        BulletTauTrailUtil.TauTrailAppend tauTrail =
+                BulletTauTrailUtil.appendClientNode(currentConfig, true, hasTauTrailNodes, motion);
+        hasTauTrailNodes = hasTauTrailNodes || tauTrail.appended();
+        appendTauTrailNode(tauTrail);
+        BulletFlightVisualUtil.spawnBlackPowderBurst(currentConfig, level(), previousPosition, motion, tickCount,
+                random);
+
+        if (turnProgress > 0) {
+            double interpX = getX() + (syncPosX - getX()) / (double) turnProgress;
+            double interpY = getY() + (syncPosY - getY()) / (double) turnProgress;
+            double interpZ = getZ() + (syncPosZ - getZ()) / (double) turnProgress;
+            double deltaYaw = Mth.wrapDegrees(syncYaw - (double) getYRot());
+            setYRot((float) ((double) getYRot() + deltaYaw / (double) turnProgress));
+            setXRot((float) ((double) getXRot() + (syncPitch - (double) getXRot()) / (double) turnProgress));
+            turnProgress--;
+            setPos(interpX, interpY, interpZ);
+        } else {
+            setPos(getX(), getY(), getZ());
+        }
+
+        Vec3 currentPosition = position();
+        BulletFlightVisualUtil.spawnMeteorFlameParticles(currentConfig, level(), currentPosition, random);
+        BulletFlightVisualUtil.spawnFlamethrowerTrail(currentConfig, level(), currentPosition);
+        BulletFlightVisualUtil.spawnFireExtinguisherTrail(currentConfig, level(), currentPosition, motion, random);
+        BulletFlightVisualUtil.spawnVanillaTrail(currentConfig, level(), previousPosition, currentPosition);
     }
 
     private boolean applyChargeHookStick(BulletConfig currentConfig, BulletProjectileTickUtil.TickResult result) {
@@ -261,6 +319,10 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
 
     public int getStuckIn() {
         return entityData.get(STUCK_IN);
+    }
+
+    public float beamLength() {
+        return entityData.get(BEAM_LENGTH);
     }
 
     public void setStuckIn(int side) {
@@ -315,18 +377,24 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         entityData.set(CONFIG_ID, state.configId());
         entityData.set(STYLE, state.styleByte());
         entityData.set(TRAIL, state.trailByte());
+        if (config != null && (config.plink() == BulletPlink.ENERGY
+                || config.hasBehavior(BulletBehaviorTag.CHARGE_HOOK_STICK))) {
+            noCulling = true;
+        }
     }
 
     @Nullable
     public Entity getOwner() {
-        if (ownerUuid == null || !(level() instanceof ServerLevel serverLevel)) {
-            return null;
+        if (level() instanceof ServerLevel serverLevel) {
+            return ownerUuid == null ? null : serverLevel.getEntity(ownerUuid);
         }
-        return serverLevel.getEntity(ownerUuid);
+        int ownerId = entityData.get(OWNER_ID);
+        return ownerId < 0 ? null : level().getEntity(ownerId);
     }
 
     public void setOwner(@Nullable Entity owner) {
         ownerUuid = owner == null ? null : owner.getUUID();
+        entityData.set(OWNER_ID, owner == null ? -1 : owner.getId());
     }
 
     @Override
@@ -417,6 +485,27 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         ticksInAir = 0;
     }
 
+    private void updateRotationFromMovement(Vec3 movement) {
+        if (movement == null || movement.lengthSqr() <= 1.0E-7D || inGround() || onGround()) {
+            return;
+        }
+        double horizontal = Math.sqrt(movement.x * movement.x + movement.z * movement.z);
+        setYRot((float) (Mth.atan2(movement.x, movement.z) * Mth.RAD_TO_DEG));
+        setXRot((float) (Mth.atan2(movement.y, horizontal) * Mth.RAD_TO_DEG));
+        while (getXRot() - xRotO < -180.0F) {
+            xRotO -= 360.0F;
+        }
+        while (getXRot() - xRotO >= 180.0F) {
+            xRotO += 360.0F;
+        }
+        while (getYRot() - yRotO < -180.0F) {
+            yRotO -= 360.0F;
+        }
+        while (getYRot() - yRotO >= 180.0F) {
+            yRotO += 360.0F;
+        }
+    }
+
     private void appendTauTrailNode(BulletTauTrailUtil.TauTrailAppend tauTrail) {
         if (tauTrail == null || tauTrail.node() == null) {
             return;
@@ -435,6 +524,8 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         entityData.define(HOMING_TARGET, BulletHomingStateUtil.NO_TARGET_ID);
         entityData.define(STUCK_IN, (byte) BulletStuckStateUtil.LEGACY_DEFAULT_STUCK_SIDE);
         entityData.define(IN_GROUND, false);
+        entityData.define(BEAM_LENGTH, 0.0F);
+        entityData.define(OWNER_ID, -1);
     }
 
     @Override
@@ -449,6 +540,32 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
     @Override
     public boolean shouldBeSaved() {
         return BulletPersistenceUtil.shouldSaveProjectile(config());
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        double edge = Math.max(BulletKinematicsUtil.ENTITY_SIZE, getBoundingBox().getSize());
+        double range = edge * 64.0D * Math.max(1.0D, renderDistanceWeight);
+        return distance < range * range;
+    }
+
+    @Override
+    public void lerpMotion(double x, double y, double z) {
+        velocityX = x;
+        velocityY = y;
+        velocityZ = z;
+        setDeltaMovement(x, y, z);
+    }
+
+    @Override
+    public void lerpTo(double x, double y, double z, float yaw, float pitch, int steps, boolean teleport) {
+        syncPosX = x;
+        syncPosY = y;
+        syncPosZ = z;
+        syncYaw = yaw;
+        syncPitch = pitch;
+        turnProgress = steps;
+        setDeltaMovement(velocityX, velocityY, velocityZ);
     }
 
     @Override

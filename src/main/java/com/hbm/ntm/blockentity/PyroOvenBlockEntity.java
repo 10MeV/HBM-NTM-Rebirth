@@ -24,7 +24,6 @@ import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.PyroOvenRecipe;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -423,11 +422,11 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
         Direction rot = dir.getClockWise();
         if (progressing) {
             anim++;
-            audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_PYRO_OPERATE.getId(),
+            audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.pyroOperate",
                     true, 50.0D, 15.0F, 1.0F, 1.0F);
             spawnOperatingClouds(level, pos, dir, rot);
         } else {
-            audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_PYRO_OPERATE.getId(),
+            audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.pyroOperate",
                     false, 50.0D, 15.0F, 1.0F, 1.0F);
         }
         if (venting && level.getGameTime() % 2L == 0L) {

@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:debris_shrapnel" } },
+  "output": { "item": "hbm_ntm_rebirth:powder_steel_tiny", "count": 5 }
+}

@@ -4,7 +4,7 @@ import com.hbm.ntm.bullet.SednaGunConfig;
 import com.hbm.ntm.bullet.SednaWeaponModEvaluator;
 import com.hbm.ntm.entity.projectile.CoinEntity;
 import com.hbm.ntm.network.HbmKeybind;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -50,8 +50,7 @@ public class Ni4NiGunItem extends SednaGunItem {
             int newCount = Math.min(maxCoins, getCoinCount(stack) + 1);
             setCoinCount(stack, newCount);
             if (selected) {
-                level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), ModSounds.ITEM_TECH_BOOP.get(),
-                        SoundSource.PLAYERS, 1.0F, 1.0F + newCount / (float) maxCoins);
+                LegacySoundPlayer.playLegacyTechBoop(entity, 1.0F, 1.0F + newCount / (float) maxCoins);
             }
         } else {
             setCoinCharge(stack, charge);

@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.redstoneoverradio.ROR;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RTTYControllerState;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
@@ -34,7 +35,7 @@ public class RadioTorchControllerBlockEntity extends RadioTorchBlockEntity {
     public static void serverTick(Level level, BlockPos pos, BlockState state, RadioTorchControllerBlockEntity torch) {
         if (!torch.radio.channel().isEmpty()) {
             BlockEntity attached = level.getBlockEntity(torch.attachedPos());
-            if (attached instanceof RORInteractive interactive) {
+            if (attached instanceof RORInteractive interactive && ROR.hasFunctionInfo(interactive)) {
                 RTTYSystem.RTTYChannel channel = RTTYSystem.listen(level, torch.radio.channel());
                 RTTYControllerState.ControllerRunResult result =
                         torch.radio.runFromChannel(interactive, channel, level.getGameTime());

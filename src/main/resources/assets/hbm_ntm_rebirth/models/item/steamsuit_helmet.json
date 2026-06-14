@@ -1,6 +1,3 @@
 {
-    "parent":  "minecraft:item/generated",
-    "textures":  {
-                     "layer0":  "hbm_ntm_rebirth:item/steamsuit_helmet"
-                 }
+  "parent": "minecraft:builtin/entity"
 }

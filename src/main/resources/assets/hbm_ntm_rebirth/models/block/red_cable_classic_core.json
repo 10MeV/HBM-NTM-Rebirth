@@ -1,0 +1,20 @@
+{
+  "textures": {
+    "texture": "hbm_ntm_rebirth:block/legacy_blocks/red_cable_classic",
+    "particle": "hbm_ntm_rebirth:block/legacy_blocks/red_cable_classic"
+  },
+  "elements": [
+    {
+      "from": [5.5, 5.5, 5.5],
+      "to": [10.5, 10.5, 10.5],
+      "faces": {
+        "down": { "texture": "#texture" },
+        "up": { "texture": "#texture" },
+        "north": { "texture": "#texture" },
+        "south": { "texture": "#texture" },
+        "west": { "texture": "#texture" },
+        "east": { "texture": "#texture" }
+      }
+    }
+  ]
+}

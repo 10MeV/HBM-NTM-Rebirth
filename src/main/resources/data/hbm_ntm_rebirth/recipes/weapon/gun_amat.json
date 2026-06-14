@@ -1,0 +1,32 @@
+﻿{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "combat",
+    "pattern":  [
+                    " C ",
+                    "BRS",
+                    " MG"
+                ],
+    "key":  {
+                "R":  {
+                          "tag":  "forge:heavy_receivers/ferrouranium"
+                      },
+                "G":  {
+                          "tag":  "forge:grips/wood"
+                      },
+                "S":  {
+                          "tag":  "forge:stocks/wood"
+                      },
+                "B":  {
+                          "tag":  "forge:heavy_barrels/ferrouranium"
+                      },
+                "C":  {
+                          "item":  "hbm_ntm_rebirth:weapon_mod_special_scope"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/weapon_steel"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:gun_amat"
+               }
+}

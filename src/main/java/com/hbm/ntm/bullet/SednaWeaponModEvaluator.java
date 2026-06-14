@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
+import java.util.Optional;
 
 public final class SednaWeaponModEvaluator {
     public static final String KEY_MOD_LIST = "KEY_MOD_LIST_";
@@ -85,6 +86,77 @@ public final class SednaWeaponModEvaluator {
             }
         }
         return false;
+    }
+
+    public static Optional<String> legacyDisplayTranslationKey(int id) {
+        return Optional.ofNullable(switch (id) {
+            case ID_TEST_FIRERATE -> "item.weapon_mod_test.firerate.name";
+            case ID_TEST_DAMAGE -> "item.weapon_mod_test.damage.name";
+            case ID_TEST_MULTI -> "item.weapon_mod_test.multi.name";
+            case ID_TEST_OVERRIDE_2_5 -> "item.weapon_mod_test.override_2_5.name";
+            case ID_TEST_OVERRIDE_5 -> "item.weapon_mod_test.override_5.name";
+            case ID_TEST_OVERRIDE_7_5 -> "item.weapon_mod_test.override_7_5.name";
+            case ID_TEST_OVERRIDE_10 -> "item.weapon_mod_test.override_10.name";
+            case ID_TEST_OVERRIDE_12_5 -> "item.weapon_mod_test.override_12_5.name";
+            case ID_TEST_OVERRIDE_15 -> "item.weapon_mod_test.override_15.name";
+            case ID_TEST_OVERRIDE_20 -> "item.weapon_mod_test.override_20.name";
+            case ID_IRON_DAMAGE -> "item.weapon_mod_generic.iron_damage.name";
+            case ID_IRON_DURABILITY -> "item.weapon_mod_generic.iron_dura.name";
+            case ID_STEEL_DAMAGE -> "item.weapon_mod_generic.steel_damage.name";
+            case ID_STEEL_DURABILITY -> "item.weapon_mod_generic.steel_dura.name";
+            case ID_DURA_DAMAGE -> "item.weapon_mod_generic.dura_damage.name";
+            case ID_DURA_DURABILITY -> "item.weapon_mod_generic.dura_dura.name";
+            case ID_DESH_DAMAGE -> "item.weapon_mod_generic.desh_damage.name";
+            case ID_DESH_DURABILITY -> "item.weapon_mod_generic.desh_dura.name";
+            case ID_WSTEEL_DAMAGE -> "item.weapon_mod_generic.wsteel_damage.name";
+            case ID_WSTEEL_DURABILITY -> "item.weapon_mod_generic.wsteel_dura.name";
+            case ID_FERRO_DAMAGE -> "item.weapon_mod_generic.ferro_damage.name";
+            case ID_FERRO_DURABILITY -> "item.weapon_mod_generic.ferro_dura.name";
+            case ID_TCALLOY_DAMAGE -> "item.weapon_mod_generic.tcalloy_damage.name";
+            case ID_TCALLOY_DURABILITY -> "item.weapon_mod_generic.tcalloy_dura.name";
+            case ID_BIGMT_DAMAGE -> "item.weapon_mod_generic.bigmt_damage.name";
+            case ID_BIGMT_DURABILITY -> "item.weapon_mod_generic.bigmt_dura.name";
+            case ID_BRONZE_DAMAGE -> "item.weapon_mod_generic.bronze_damage.name";
+            case ID_BRONZE_DURABILITY -> "item.weapon_mod_generic.bronze_dura.name";
+            case ID_LIBERATOR_SPEEDLOADER -> "item.weapon_mod_special.speedloader.name";
+            case ID_SILENCER -> "item.weapon_mod_special.silencer.name";
+            case ID_SCOPE -> "item.weapon_mod_special.scope.name";
+            case ID_SAWED_OFF, ID_NO_SHIELD, ID_NO_STOCK -> "item.weapon_mod_special.saw.name";
+            case ID_GREASEGUN_CLEAN -> "item.weapon_mod_special.greasegun.name";
+            case ID_MINIGUN_SLOWDOWN -> "item.weapon_mod_special.slowdown.name";
+            case ID_MINIGUN_SPEED, ID_SHREDDER_SPEED -> "item.weapon_mod_special.speedup.name";
+            case ID_CHOKE -> "item.weapon_mod_special.choke.name";
+            case ID_FURNITURE_GREEN -> "item.weapon_mod_special.furniture_green.name";
+            case ID_FURNITURE_BLACK -> "item.weapon_mod_special.furniture_black.name";
+            case ID_MAS_BAYONET, ID_CARBINE_BAYONET -> "item.weapon_mod_special.bayonet.name";
+            case ID_STACK_MAG -> "item.weapon_mod_special.stack_mag.name";
+            case ID_UZI_SATURN -> "item.weapon_mod_special.skin_saturnite.name";
+            case ID_LAS_SHOTGUN -> "item.weapon_mod_special.las_shotgun.name";
+            case ID_LAS_CAPACITOR -> "item.weapon_mod_special.las_capacitor.name";
+            case ID_LAS_AUTO -> "item.weapon_mod_special.las_auto.name";
+            case ID_NI4NI_NICKEL -> "item.weapon_mod_special.nickel.name";
+            case ID_NI4NI_DOUBLOONS -> "item.weapon_mod_special.doubloons.name";
+            case ID_DRILL_HSS -> "item.weapon_mod_special.drill_hss.name";
+            case ID_DRILL_WSTEEL -> "item.weapon_mod_special.drill_weaponsteel.name";
+            case ID_DRILL_TCALLOY -> "item.weapon_mod_special.drill_tcalloy.name";
+            case ID_DRILL_SATURN -> "item.weapon_mod_special.drill_saturnite.name";
+            case ID_ENGINE_DIESEL -> "item.weapon_mod_special.engine_diesel.name";
+            case ID_ENGINE_AVIATION -> "item.weapon_mod_special.engine_aviation.name";
+            case ID_ENGINE_ELECTRIC -> "item.weapon_mod_special.engine_electric.name";
+            case ID_ENGINE_TURBO -> "item.weapon_mod_special.engine_turbo.name";
+            case ID_DRILL_MAGNET -> "item.weapon_mod_special.magnet.name";
+            case ID_DRILL_SIFTER -> "item.weapon_mod_special.sifter.name";
+            case ID_CANISTERS -> "item.weapon_mod_special.canisters.name";
+            case 300, 301, 302 -> "item.weapon_mod_caliber.p9.name";
+            case 310, 311, 312, 313, 314 -> "item.weapon_mod_caliber.p45.name";
+            case 320, 321, 322 -> "item.weapon_mod_caliber.p22.name";
+            case 330, 331 -> "item.weapon_mod_caliber.m357.name";
+            case 340 -> "item.weapon_mod_caliber.m44.name";
+            case 350, 351, 352 -> "item.weapon_mod_caliber.r556.name";
+            case 360, 361 -> "item.weapon_mod_caliber.r762.name";
+            case 370, 371 -> "item.weapon_mod_caliber.bmg50.name";
+            default -> null;
+        });
     }
 
     public static SednaMagazineConfig effectiveMagazine(ItemStack stack, String ownerName, int configIndex,
@@ -458,7 +530,7 @@ public final class SednaWeaponModEvaluator {
         };
     }
 
-    private static void sortByLegacyPriority(int[] ids) {
+    public static void sortByLegacyPriority(int[] ids) {
         for (int i = 1; i < ids.length; i++) {
             int id = ids[i];
             int j = i - 1;

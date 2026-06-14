@@ -28,6 +28,15 @@ public final class LegacyTileRenderPlans {
     public static final double ASSEMBLY_SPARK_EPSILON = 0.01D;
     public static final double ASSEMBLY_SPARK_MIRROR_U_OFFSET = 0.5D;
     public static final double ASSEMBLY_STRIKER_SPARK_THRESHOLD = -0.375D;
+    public static final double ASSEMBLY_SLIDER_OFFSET = 0.5D;
+    public static final double ASSEMBLY_ARM_LOWER_PIVOT_Y = 1.625D;
+    public static final double ASSEMBLY_ARM_UPPER_PIVOT_Y = 2.375D;
+    public static final double ASSEMBLY_ARM_HEAD_PIVOT_Y = 2.375D;
+    public static final double ASSEMBLY_ARM_LOWER_PIVOT_Z = 0.9375D;
+    public static final double ASSEMBLY_ARM_UPPER_PIVOT_Z = 0.9375D;
+    public static final double ASSEMBLY_ARM_HEAD_PIVOT_Z = 0.4375D;
+    public static final double ASSEMBLY_FACTORY_BLADE_PIVOT_Y = 1.625D;
+    public static final double ASSEMBLY_FACTORY_BLADE_PIVOT_Z = 0.3125D;
     public static final double BIG_ASS_TANK_FLUID_SIDE_OFFSET = 5.9375D;
     public static final double BIG_ASS_TANK_FLUID_BASE_Y = 1.75D;
     public static final double BIG_ASS_TANK_FLUID_HALF_WIDTH = 0.25D;
@@ -44,12 +53,75 @@ public final class LegacyTileRenderPlans {
     public static final double BASIC_PRESS_ITEM_ROTATION_Y = 180.0D;
     public static final double BASIC_PRESS_ITEM_ROTATION_X = 90.0D;
     public static final double BASIC_PRESS_ITEM_SCALE = 0.45D;
+    public static final double ELECTRIC_PRESS_HEAD_BASE_Y = 1.0D;
+    public static final double ELECTRIC_PRESS_HEAD_TRAVEL = 0.875D;
     public static final double PYRO_OVEN_SLIDER_ANIM_SCALE = 0.125D;
     public static final double PYRO_OVEN_SLIDER_TRAVEL_SCALE = 0.5D;
     public static final double PYRO_OVEN_SLIDER_BASE_X = -0.5D;
     public static final double PYRO_OVEN_FAN_PIVOT_X = 1.5D;
     public static final double PYRO_OVEN_FAN_PIVOT_Z = 1.5D;
     public static final double PYRO_OVEN_FAN_ROTATION_SCALE = 45.0D;
+    public static final double CHEMICAL_PLANT_SLIDER_ANIM_SCALE = 0.125D;
+    public static final double CHEMICAL_PLANT_SLIDER_TRAVEL_SCALE = 0.375D;
+    public static final double CHEMICAL_PLANT_SPINNER_PIVOT_X = 0.5D;
+    public static final double CHEMICAL_PLANT_SPINNER_PIVOT_Z = 0.5D;
+    public static final double CHEMICAL_PLANT_SPINNER_ROTATION_SCALE = 15.0D;
+    public static final double LANTERN_LIGHT_PERIOD_DIVISOR = 200.0D;
+    public static final float LANTERN_LIGHT_BASE = 0.9F;
+    public static final float LANTERN_LIGHT_RANGE = 0.1F;
+    public static final int LANTERN_LIGHT_RED = 255;
+    public static final int LANTERN_LIGHT_GREEN = 255;
+    public static final int LANTERN_LIGHT_BLUE = 179;
+    public static final double CARGO_ELEVATOR_PISTON_STEP_Y = -1.0D;
+    public static final double CARGO_ELEVATOR_GUIDE_STEP_Y = 1.0D;
+    public static final double COMPRESSOR_PUMP_TRAVEL = 3.0D;
+    public static final double COMPRESSOR_PUMP_BASE_Y = -3.0D;
+    public static final double COMPRESSOR_FAN_PIVOT_Y = 1.5D;
+    public static final double COMPRESSOR_ITEM_PUMP_TIME_SCALE = 0.005D;
+    public static final double COMPRESSOR_ITEM_PUMP_PERIOD = 9.0D;
+    public static final double COMPRESSOR_ITEM_PUMP_RETURN_START = 3.0D;
+    public static final double COMPRESSOR_ITEM_PUMP_RETURN_DIVISOR = 2.0D;
+    public static final double COMPRESSOR_ITEM_FAN_TIME_SCALE = 0.25D;
+    public static final double PUMP_ROTOR_PIVOT_Y = 2.25D;
+    public static final double PUMP_ARM_PIVOT_Y = 4.75D;
+    public static final double PUMP_CRANK_RADIUS = 0.5D;
+    public static final double PUMP_CRANK_SIN_OFFSET = -0.5D;
+    public static final double PUMP_ARM_ROD_LENGTH = 2.0D;
+    public static final double PUMP_ITEM_TIME_SCALE = 0.1D;
+    public static final long PUMP_ITEM_TIME_MODULO = 3600L;
+    public static final double LPW2_SWAY_TIME_DIVISOR = 3.0D;
+    public static final double LPW2_BELL_TIME_DIVISOR = 5.0D;
+    public static final double LPW2_PISTON_TIME_DIVISOR = 5.0D;
+    public static final double LPW2_ROTOR_TIME_DIVISOR = 5.0D;
+    public static final double LPW2_SERVER_TIME_DIVISOR = 2.0D;
+    public static final double LPW2_ERROR_TIME_DIVISOR = 3.0D;
+    public static final double LPW2_TIMER_MODULO_4PI = Math.PI * 4.0D;
+    public static final double LPW2_TIMER_MODULO_2PI = Math.PI * 2.0D;
+    public static final double LPW2_TIMER_MODULO_16PI = Math.PI * 16.0D;
+    public static final double LPW2_SWAY_OFFSET = 2.23255D;
+    public static final double LPW2_SWAY_SCALE = 0.5D;
+    public static final double LPW2_BELL_DIVISOR = 1.90596D;
+    public static final double LPW2_ROTOR_DENOMINATOR = 25.1327412287D;
+    public static final double LPW2_TURBINE_PERIOD = 100.0D;
+    public static final double LPW2_WIRE_LEFT_PIVOT_X = -2.9375D;
+    public static final double LPW2_WIRE_RIGHT_PIVOT_X = 2.9375D;
+    public static final double LPW2_WIRE_PIVOT_Z = 2.375D;
+    public static final double LPW2_WIRE_ROTATION_SCALE = 10.0D;
+    public static final double LPW2_COVER_TRAVEL = 0.125D;
+    public static final double LPW2_SERVER_SWAY = 0.0625D * 0.25D;
+    public static final double LPW2_CENTER_SWAY_TRAVEL = 0.125D;
+    public static final double LPW2_PISTON_TRAVEL = 0.375D;
+    public static final double LPW2_PISTON_BASE_Z = 0.375D;
+    public static final double LPW2_ROTATING_ASSEMBLY_PIVOT_Y = 3.5D;
+    public static final double LPW2_ENGINE_PIVOT_Y = 3.5D;
+    public static final double LPW2_ENGINE_PIVOT_Z = 2.75D;
+    public static final double LPW2_ENGINE_ROTATION_MAGNITUDE = 2.0D;
+    public static final double LPW2_SHROUD_MAGNITUDE = 0.125D;
+    public static final double LPW2_FLAP_ROTATION_SCALE = 5.0D;
+    public static final double LPW2_FLAP_ROTATION_OFFSET = 10.0D;
+    public static final double LPW2_FLAP_PIVOT_Y = 6.96875D;
+    public static final double LPW2_FLAP_PIVOT_Z = 8.5D;
+    public static final double LPW2_SUSPENSION_LENGTH = 0.6875D;
     public static final double SMALL_REACTOR_CHERENKOV_START = 0.285D;
     public static final double SMALL_REACTOR_CHERENKOV_END = 0.7D;
     public static final double SMALL_REACTOR_CHERENKOV_STEP = 0.025D;
@@ -282,7 +354,7 @@ public final class LegacyTileRenderPlans {
     public static final double CRANE_LIFT_TRAVEL = 3.25D;
     public static final int CRANE_LAMP_LOADING_COLOR = 0xCCCC00;
     public static final int CRANE_LAMP_LOADED_COLOR = 0x00FF00;
-    public static final int CRANE_LAMP_UNLOADED_COLOR = 0x001900;
+    public static final int CRANE_LAMP_UNLOADED_COLOR = 0x001A00;
     public static final int CRANE_LAMP_TARGET_VALID_COLOR = 0x00FF00;
     public static final int CRANE_LAMP_TARGET_INVALID_COLOR = 0xFF0000;
 
@@ -322,6 +394,39 @@ public final class LegacyTileRenderPlans {
                 : LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
     }
 
+    public static AssemblyMachinePlan assemblyMachinePlan(double ringDegrees, double[] arm1, double[] arm2) {
+        return new AssemblyMachinePlan(ringDegrees, List.of(
+                assemblyArmPlan("assembly_machine_arm_1", null, 1, 1.0D, 1.0D,
+                        arm1, "Spike", false, 0.0D, 0.0D),
+                assemblyArmPlan("assembly_machine_arm_2", null, 2, -1.0D, -1.0D,
+                        arm2, "Spike", false, 0.0D, 0.0D)));
+    }
+
+    public static AssemblyFactoryPlan assemblyFactoryPlan(double slide1, double slide2,
+            double[] arm1, double[] arm2, double[] arm3, double[] arm4) {
+        return new AssemblyFactoryPlan(List.of(
+                assemblyArmPlan("assembly_factory_slider_1",
+                        new TranslatedModelPartPlan("assembly_factory_slider_1", "Slider1", true,
+                                ASSEMBLY_SLIDER_OFFSET - slide1, 0.0D, 0.0D),
+                        1, -1.0D, -1.0D,
+                        arm1, "Striker", false, 0.0D, 0.0D),
+                assemblyArmPlan("assembly_factory_slider_2",
+                        new TranslatedModelPartPlan("assembly_factory_slider_2", "Slider2", true,
+                                -ASSEMBLY_SLIDER_OFFSET + slide1, 0.0D, 0.0D),
+                        2, 1.0D, 1.0D,
+                        arm2, "Striker", true, ASSEMBLY_FACTORY_BLADE_PIVOT_Z, -1.0D),
+                assemblyArmPlan("assembly_factory_slider_3",
+                        new TranslatedModelPartPlan("assembly_factory_slider_3", "Slider3", true,
+                                -ASSEMBLY_SLIDER_OFFSET + slide2, 0.0D, 0.0D),
+                        3, 1.0D, 1.0D,
+                        arm3, "Striker", false, 0.0D, 0.0D),
+                assemblyArmPlan("assembly_factory_slider_4",
+                        new TranslatedModelPartPlan("assembly_factory_slider_4", "Slider4", true,
+                                ASSEMBLY_SLIDER_OFFSET - slide2, 0.0D, 0.0D),
+                        4, -1.0D, -1.0D,
+                        arm4, "Striker", true, -ASSEMBLY_FACTORY_BLADE_PIVOT_Z, 1.0D)));
+    }
+
     public static AssemblySparkRenderPlan assemblySparkPlan(long worldTime, float partialTicks,
             double slide1, double slide2, double arm2BladeAngle, double arm2StrikerOffset,
             double arm4BladeAngle, double arm4StrikerOffset) {
@@ -338,6 +443,38 @@ public final class LegacyTileRenderPlans {
         return new AssemblySparkRenderPlan(!blades.isEmpty(), u.min(), u.max(),
                 ASSEMBLY_SPARK_MIRROR_U_OFFSET, ASSEMBLY_SPARK_EPSILON,
                 normalAlphaBlendPlan(true, 0.0F), fullbrightStatePlan(), List.copyOf(blades));
+    }
+
+    private static AssemblyArmPlan assemblyArmPlan(String role, TranslatedModelPartPlan slider,
+            int suffix, double zSign, double rotationSign,
+            double[] arm, String toolPrefix, boolean hasBlade, double bladePivotZ, double bladeRotationSign) {
+        double[] safeArm = arm == null ? new double[0] : arm;
+        List<PivotedModelPartPlan> parts = List.of(
+                new PivotedModelPartPlan(role + "_lower", "ArmLower" + suffix,
+                        0.0D, ASSEMBLY_ARM_LOWER_PIVOT_Y, ASSEMBLY_ARM_LOWER_PIVOT_Z * zSign,
+                        1.0F, 0.0F, 0.0F, rotationSign * armValue(safeArm, 0),
+                        0.0D, 0.0D, 0.0D),
+                new PivotedModelPartPlan(role + "_upper", "ArmUpper" + suffix,
+                        0.0D, ASSEMBLY_ARM_UPPER_PIVOT_Y, ASSEMBLY_ARM_UPPER_PIVOT_Z * zSign,
+                        1.0F, 0.0F, 0.0F, rotationSign * armValue(safeArm, 1),
+                        0.0D, 0.0D, 0.0D),
+                new PivotedModelPartPlan(role + "_head", "Head" + suffix,
+                        0.0D, ASSEMBLY_ARM_HEAD_PIVOT_Y, ASSEMBLY_ARM_HEAD_PIVOT_Z * zSign,
+                        1.0F, 0.0F, 0.0F, rotationSign * armValue(safeArm, 2),
+                        0.0D, 0.0D, 0.0D));
+        TranslatedModelPartPlan tool = new TranslatedModelPartPlan(role + "_tool",
+                toolPrefix + suffix, true, 0.0D, armValue(safeArm, 3), 0.0D);
+        PivotedModelPartPlan blade = hasBlade
+                ? new PivotedModelPartPlan(role + "_blade", "Blade" + suffix,
+                        0.0D, ASSEMBLY_FACTORY_BLADE_PIVOT_Y, bladePivotZ,
+                        1.0F, 0.0F, 0.0F, bladeRotationSign * armValue(safeArm, 4),
+                        0.0D, 0.0D, 0.0D)
+                : null;
+        return new AssemblyArmPlan(role, slider, parts, tool, blade);
+    }
+
+    private static double armValue(double[] arm, int index) {
+        return arm.length > index ? arm[index] : 0.0D;
     }
 
     public static BigAssTankFluidPlan bigAssTankFluidPlan(long worldTime, float partialTicks,
@@ -409,6 +546,11 @@ public final class LegacyTileRenderPlans {
                         BASIC_PRESS_ITEM_SCALE));
     }
 
+    public static ElectricPressPlan electricPressStaticPlan() {
+        return new ElectricPressPlan(new TranslatedModelPartPlan("electric_press_head", "Head", true,
+                0.0D, ELECTRIC_PRESS_HEAD_BASE_Y + ELECTRIC_PRESS_HEAD_TRAVEL, 0.0D));
+    }
+
     public static PyroOvenPlan pyroOvenPlan(double animation) {
         return new PyroOvenPlan(
                 new TranslatedModelPartPlan("pyro_oven_slider", "Slider", true,
@@ -419,6 +561,168 @@ public final class LegacyTileRenderPlans {
                         PYRO_OVEN_FAN_PIVOT_X, 0.0D, PYRO_OVEN_FAN_PIVOT_Z,
                         0.0F, 1.0F, 0.0F,
                         animation * PYRO_OVEN_FAN_ROTATION_SCALE % 360.0D));
+    }
+
+    public static ChemicalPlantMachinePlan chemicalPlantMachinePlan(double animation) {
+        return new ChemicalPlantMachinePlan(
+                new TranslatedModelPartPlan("chemical_plant_slider", "Slider", true,
+                        LegacyObjTransforms.softPeakSine(animation * CHEMICAL_PLANT_SLIDER_ANIM_SCALE)
+                                * CHEMICAL_PLANT_SLIDER_TRAVEL_SCALE,
+                        0.0D, 0.0D),
+                new RotatingModelPartPlan("chemical_plant_spinner", "Spinner",
+                        CHEMICAL_PLANT_SPINNER_PIVOT_X, 0.0D, CHEMICAL_PLANT_SPINNER_PIVOT_Z,
+                        0.0F, 1.0F, 0.0F,
+                        animation * CHEMICAL_PLANT_SPINNER_ROTATION_SCALE % 360.0D));
+    }
+
+    public static LanternLightPlan lanternLightPlan(long currentMillis) {
+        float multiplier = ((float) (Math.sin(currentMillis / LANTERN_LIGHT_PERIOD_DIVISOR) / 2.0D + 0.5D))
+                * LANTERN_LIGHT_RANGE + LANTERN_LIGHT_BASE;
+        return new LanternLightPlan(multiplier,
+                Math.round(LANTERN_LIGHT_RED * multiplier),
+                Math.round(LANTERN_LIGHT_GREEN * multiplier),
+                Math.round(LANTERN_LIGHT_BLUE * multiplier),
+                255);
+    }
+
+    public static CargoElevatorPlan cargoElevatorPlan(boolean renderPlatform, double previousExtension,
+            double extension, float partialTicks, int height) {
+        double interpolatedExtension = previousExtension + (extension - previousExtension) * partialTicks;
+        List<TranslatedModelPartPlan> platformParts = new ArrayList<>();
+        if (renderPlatform) {
+            platformParts.add(new TranslatedModelPartPlan("cargo_elevator_platform", "Platform", true,
+                    0.0D, interpolatedExtension, 0.0D));
+            for (int i = 0; i < interpolatedExtension + 1.0D; i++) {
+                platformParts.add(new TranslatedModelPartPlan("cargo_elevator_piston_" + i, "Piston", true,
+                        0.0D, interpolatedExtension + CARGO_ELEVATOR_PISTON_STEP_Y * i, 0.0D));
+            }
+        }
+        List<TranslatedModelPartPlan> guides = new ArrayList<>();
+        for (int i = 0; i <= Math.max(0, height); i++) {
+            guides.add(new TranslatedModelPartPlan("cargo_elevator_guides_" + i, "Guides", true,
+                    0.0D, CARGO_ELEVATOR_GUIDE_STEP_Y * i, 0.0D));
+        }
+        return new CargoElevatorPlan(renderPlatform, interpolatedExtension,
+                List.copyOf(platformParts), List.copyOf(guides));
+    }
+
+    public static CompressorPlan compressorPlan(double piston, double fanDegrees) {
+        return new CompressorPlan("Compressor",
+                new TranslatedModelPartPlan("compressor_pump", "Pump", true,
+                        0.0D, piston * COMPRESSOR_PUMP_TRAVEL + COMPRESSOR_PUMP_BASE_Y, 0.0D),
+                List.of(new RotatingModelPartPlan("compressor_fan", "Fan",
+                        0.0D, COMPRESSOR_FAN_PIVOT_Y, 0.0D,
+                        1.0F, 0.0F, 0.0F, fanDegrees)));
+    }
+
+    public static CompressorPlan compressorItemPlan(long currentMillis) {
+        double pump = (currentMillis * COMPRESSOR_ITEM_PUMP_TIME_SCALE) % COMPRESSOR_ITEM_PUMP_PERIOD;
+        if (pump > COMPRESSOR_ITEM_PUMP_RETURN_START) {
+            pump = COMPRESSOR_ITEM_PUMP_RETURN_START
+                    - (pump - COMPRESSOR_ITEM_PUMP_RETURN_START) / COMPRESSOR_ITEM_PUMP_RETURN_DIVISOR;
+        }
+        return new CompressorPlan("Compressor",
+                new TranslatedModelPartPlan("compressor_item_pump", "Pump", true,
+                        0.0D, -pump, 0.0D),
+                List.of(new RotatingModelPartPlan("compressor_item_fan", "Fan",
+                        0.0D, COMPRESSOR_FAN_PIVOT_Y, 0.0D,
+                        1.0F, 0.0F, 0.0F,
+                        currentMillis * COMPRESSOR_ITEM_FAN_TIME_SCALE % 360.0D)));
+    }
+
+    public static CompressorPlan compressorCompactPlan(double fanDegrees) {
+        return new CompressorPlan("Condenser", null, List.of(
+                new RotatingModelPartPlan("compressor_compact_fan_1", "Fan1",
+                        0.0D, COMPRESSOR_FAN_PIVOT_Y, 0.0D,
+                        1.0F, 0.0F, 0.0F, fanDegrees),
+                new RotatingModelPartPlan("compressor_compact_fan_2", "Fan2",
+                        0.0D, COMPRESSOR_FAN_PIVOT_Y, 0.0D,
+                        -1.0F, 0.0F, 0.0F, fanDegrees)));
+    }
+
+    public static PumpPlan pumpItemPlan(long currentMillis) {
+        return pumpPlan(currentMillis % PUMP_ITEM_TIME_MODULO * PUMP_ITEM_TIME_SCALE);
+    }
+
+    public static PumpPlan pumpPlan(double rotorDegrees) {
+        double radians = Math.toRadians(rotorDegrees);
+        double sin = Math.sin(radians) * PUMP_CRANK_RADIUS + PUMP_CRANK_SIN_OFFSET;
+        double cos = Math.cos(radians) * PUMP_CRANK_RADIUS;
+        double armAngle = Math.toDegrees(Math.acos(cos / PUMP_ARM_ROD_LENGTH)) - 90.0D;
+        double cath = Math.sqrt(1.0D + (cos * cos) / 2.0D);
+        double vertical = 1.0D - cath + sin;
+        return new PumpPlan("Base",
+                new RotatingModelPartPlan("pump_rotor", "Rotor",
+                        0.0D, PUMP_ROTOR_PIVOT_Y, 0.0D,
+                        0.0F, 0.0F, 1.0F, rotorDegrees - 90.0D),
+                new PivotedModelPartPlan("pump_arms", "Arms",
+                        0.0D, PUMP_ARM_PIVOT_Y, 0.0D,
+                        0.0F, 0.0F, -1.0F, armAngle,
+                        0.0D, vertical, 0.0D),
+                new TranslatedModelPartPlan("pump_piston", "Piston", true,
+                        0.0D, vertical, 0.0D));
+    }
+
+    public static Lpw2Plan lpw2Plan(double time) {
+        double swayTimer = (time / LPW2_SWAY_TIME_DIVISOR) % LPW2_TIMER_MODULO_4PI;
+        double sway = (Math.sin(swayTimer) + Math.sin(swayTimer * 2.0D)
+                + Math.sin(swayTimer * 4.0D) + LPW2_SWAY_OFFSET) * LPW2_SWAY_SCALE;
+
+        double bellTimer = (time / LPW2_BELL_TIME_DIVISOR) % LPW2_TIMER_MODULO_4PI;
+        double horizontal = (Math.sin(bellTimer + Math.PI) + Math.sin(bellTimer * 1.5D)) / LPW2_BELL_DIVISOR;
+        double vertical = (Math.sin(bellTimer) + Math.sin(bellTimer * 1.5D)) / LPW2_BELL_DIVISOR;
+
+        double pistonTimer = (time / LPW2_PISTON_TIME_DIVISOR) % LPW2_TIMER_MODULO_2PI;
+        double piston = LegacyObjTransforms.softPeakSine(pistonTimer);
+        double rotorTimer = (time / LPW2_ROTOR_TIME_DIVISOR) % LPW2_TIMER_MODULO_16PI;
+        double rotor = (LegacyObjTransforms.softPeakSine(rotorTimer) + rotorTimer / 2.0D - 1.0D)
+                / LPW2_ROTOR_DENOMINATOR;
+        double turbine = (time % LPW2_TURBINE_PERIOD) / LPW2_TURBINE_PERIOD;
+
+        double coverTimer = (time / LPW2_BELL_TIME_DIVISOR) % LPW2_TIMER_MODULO_4PI;
+        double cover = (Math.sin(coverTimer) + Math.sin(coverTimer * 2.0D)
+                + Math.sin(coverTimer * 4.0D)) * LPW2_SWAY_SCALE;
+
+        double serverTimer = (time / LPW2_SERVER_TIME_DIVISOR) % LPW2_TIMER_MODULO_4PI;
+        double serverX = (Math.sin(serverTimer + Math.PI) + Math.sin(serverTimer * 1.5D)) / LPW2_BELL_DIVISOR;
+        double serverY = (Math.sin(serverTimer) + Math.sin(serverTimer * 1.5D)) / LPW2_BELL_DIVISOR;
+
+        double errorTimer = time / LPW2_ERROR_TIME_DIVISOR;
+        double errorV = (LegacyObjTransforms.softPeakSine(errorTimer) + errorTimer / 2.0D) % 1.0D;
+        Lpw2ServerPlan servers = new Lpw2ServerPlan(serverX, serverY, LPW2_SERVER_SWAY, List.of(
+                new TranslatedModelPartPlan("lpw2_server_1", "Server1", true,
+                        serverX * LPW2_SERVER_SWAY, 0.0D, serverY * LPW2_SERVER_SWAY),
+                new TranslatedModelPartPlan("lpw2_server_2", "Server2", true,
+                        -serverY * LPW2_SERVER_SWAY, 0.0D, serverX * LPW2_SERVER_SWAY),
+                new TranslatedModelPartPlan("lpw2_server_3", "Server3", true,
+                        serverY * LPW2_SERVER_SWAY, 0.0D, -serverX * LPW2_SERVER_SWAY),
+                new TranslatedModelPartPlan("lpw2_server_4", "Server4", true,
+                        -serverX * LPW2_SERVER_SWAY, 0.0D, -serverY * LPW2_SERVER_SWAY)),
+                new TranslatedModelPartPlan("lpw2_monitor", "Monitor", true,
+                        serverY * LPW2_SERVER_SWAY, 0.0D, serverX * LPW2_SERVER_SWAY),
+                new TextureMatrixPartPlan("lpw2_error_screen", "Screen", rgba(0xFFFFFF, 1.0F),
+                        new LegacyUvAnimation.TextureMatrixPlan(
+                                LegacyUvAnimation.TextureMatrixOrder.SCALE_ROTATE_TRANSLATE,
+                                1.0D, 1.0D, 0.0D, 0.0D, errorV)));
+
+        return new Lpw2Plan(time, sway, horizontal, vertical, piston, rotor, turbine, cover,
+                new TranslatedModelPartPlan("lpw2_center", "Center", true,
+                        0.0D, 0.0D, -sway * LPW2_CENTER_SWAY_TRAVEL),
+                new TranslatedModelPartPlan("lpw2_piston", "Piston", true,
+                        0.0D, 0.0D, piston * LPW2_PISTON_TRAVEL + LPW2_PISTON_BASE_Z),
+                new TranslatedModelPartPlan("lpw2_cover", "Cover", true,
+                        0.0D, 0.0D, -cover * LPW2_COVER_TRAVEL),
+                new RotatingModelPartPlan("lpw2_wire_left", "WireLeft",
+                        LPW2_WIRE_LEFT_PIVOT_X, 0.0D, LPW2_WIRE_PIVOT_Z,
+                        0.0F, 1.0F, 0.0F, sway * LPW2_WIRE_ROTATION_SCALE),
+                new RotatingModelPartPlan("lpw2_wire_right", "WireRight",
+                        LPW2_WIRE_RIGHT_PIVOT_X, 0.0D, LPW2_WIRE_PIVOT_Z,
+                        0.0F, 1.0F, 0.0F, sway * -LPW2_WIRE_ROTATION_SCALE),
+                new Lpw2BellPlan(horizontal, vertical, LPW2_ENGINE_ROTATION_MAGNITUDE),
+                new Lpw2ShroudPlan(horizontal, vertical, LPW2_SHROUD_MAGNITUDE,
+                        LPW2_FLAP_ROTATION_SCALE, LPW2_FLAP_ROTATION_OFFSET,
+                        LPW2_SUSPENSION_LENGTH),
+                servers);
     }
 
     public static PumpjackPlan pumpjackPlan(double rotationDegrees) {
@@ -593,6 +897,15 @@ public final class LegacyTileRenderPlans {
                 rgba(fluidColor, 0.75F), additiveBlendPlan(true, 0.0F));
     }
 
+    public static VisibleMachineStaticPlan radgenStaticPlan(boolean on) {
+        return new VisibleMachineStaticPlan(List.of(
+                texturedModelPart("radgen_base", "Base"),
+                texturedModelPart("radgen_rotor", "Rotor"),
+                radgenLightPlan(on),
+                radgenGlassPlan(),
+                texturedModelPart("radgen_glass_textured", "Glass")));
+    }
+
     public static ModelPartTintPlan radgenLightPlan(boolean on) {
         return new ModelPartTintPlan("radgen_light", "Light", true,
                 on ? rgba(0.0F, 1.0F, 0.0F, 1.0F) : rgba(0.0F, 0.1F, 0.0F, 1.0F),
@@ -603,6 +916,21 @@ public final class LegacyTileRenderPlans {
         return new ModelPartTintPlan("radgen_glass", "Glass", true,
                 rgba(0.5F, 0.75F, 1.0F, 0.3F), null,
                 normalAlphaBlendPlan(false, 0.0F), false);
+    }
+
+    public static VisibleMachineStaticPlan batteryReddStaticPlan() {
+        return new VisibleMachineStaticPlan(List.of(
+                texturedModelPart("battery_redd_base", "Base"),
+                texturedModelPart("battery_redd_wheel", "Wheel"),
+                new ModelPartTintPlan("battery_redd_lights", "Lights", true,
+                        null, batteryReddManualFullbrightPlan(), null, true)));
+    }
+
+    public static VisibleMachineStaticPlan crystallizerStaticPlan(boolean spinning) {
+        return new VisibleMachineStaticPlan(List.of(
+                texturedModelPart("crystallizer_body", "Body"),
+                texturedModelPart("crystallizer_spinner", "Spinner"),
+                crystallizerFluidPlan(spinning)));
     }
 
     public static ScaledModelPartPlan liquefactorFluidPlan(int fill, int maxFill, int fluidColor) {
@@ -635,6 +963,10 @@ public final class LegacyTileRenderPlans {
         return new ModelPartTintPlan("crystallizer_fluid", "Fluid", spinning,
                 rgba(1.0F, 1.0F, 1.0F, 1.0F), null,
                 normalAlphaBlendPlan(false, 0.1F), true);
+    }
+
+    private static ModelPartTintPlan texturedModelPart(String role, String partName) {
+        return new ModelPartTintPlan(role, partName, true, null, null, null, true);
     }
 
     public static BatteryReddTrailPlan batteryReddWheelTrailPlan(double speed) {
@@ -2048,6 +2380,18 @@ public final class LegacyTileRenderPlans {
                                  boolean depthWrite, LegacyTexturedRenderMode modernRenderMode) {
     }
 
+    public record AssemblyMachinePlan(double ringDegrees, List<AssemblyArmPlan> arms) {
+    }
+
+    public record AssemblyFactoryPlan(List<AssemblyArmPlan> sliders) {
+    }
+
+    public record AssemblyArmPlan(String role, TranslatedModelPartPlan slider,
+                                  List<PivotedModelPartPlan> rotations,
+                                  TranslatedModelPartPlan tool,
+                                  PivotedModelPartPlan blade) {
+    }
+
     public record AssemblySparkRenderPlan(boolean active, double uMin, double uMax,
                                           double mirroredUOffset, double epsilon,
                                           BlendStatePlan blend, FullbrightStatePlan fullbright,
@@ -2076,6 +2420,9 @@ public final class LegacyTileRenderPlans {
     public record BasicPressPlan(TranslatedModelPartPlan head, ItemTransformPlan item) {
     }
 
+    public record ElectricPressPlan(TranslatedModelPartPlan head) {
+    }
+
     public record ItemTransformPlan(String role, boolean active,
                                     double translateX, double translateY, double translateZ,
                                     double rotateYDegrees, double rotateXDegrees, double rotateZDegrees,
@@ -2083,6 +2430,47 @@ public final class LegacyTileRenderPlans {
     }
 
     public record PyroOvenPlan(TranslatedModelPartPlan slider, RotatingModelPartPlan fan) {
+    }
+
+    public record ChemicalPlantMachinePlan(TranslatedModelPartPlan slider, RotatingModelPartPlan spinner) {
+    }
+
+    public record LanternLightPlan(float multiplier, int red, int green, int blue, int alpha) {
+    }
+
+    public record CargoElevatorPlan(boolean renderPlatform, double extension,
+                                    List<TranslatedModelPartPlan> platformParts,
+                                    List<TranslatedModelPartPlan> guides) {
+    }
+
+    public record CompressorPlan(String bodyPartName, TranslatedModelPartPlan pump,
+                                 List<RotatingModelPartPlan> fans) {
+    }
+
+    public record PumpPlan(String basePartName, RotatingModelPartPlan rotor,
+                           PivotedModelPartPlan arms, TranslatedModelPartPlan piston) {
+    }
+
+    public record Lpw2Plan(double time, double sway, double horizontal, double vertical,
+                           double piston, double rotor, double turbine, double cover,
+                           TranslatedModelPartPlan center, TranslatedModelPartPlan pistonPart,
+                           TranslatedModelPartPlan coverPart,
+                           RotatingModelPartPlan wireLeft, RotatingModelPartPlan wireRight,
+                           Lpw2BellPlan bell, Lpw2ShroudPlan shroud, Lpw2ServerPlan servers) {
+    }
+
+    public record Lpw2BellPlan(double horizontal, double vertical, double rotationMagnitude) {
+    }
+
+    public record Lpw2ShroudPlan(double horizontal, double vertical, double magnitude,
+                                 double flapRotationScale, double flapRotationOffset,
+                                 double suspensionLength) {
+    }
+
+    public record Lpw2ServerPlan(double x, double y, double sway,
+                                 List<TranslatedModelPartPlan> servers,
+                                 TranslatedModelPartPlan monitor,
+                                 TextureMatrixPartPlan errorScreen) {
     }
 
     public record PumpjackPlan(double rotationDegrees, RotatingModelPartPlan rotor,
@@ -2118,6 +2506,9 @@ public final class LegacyTileRenderPlans {
     }
 
     public record ClipPlanePlan(double x, double y, double z, double d) {
+    }
+
+    public record VisibleMachineStaticPlan(List<ModelPartTintPlan> parts) {
     }
 
     public record ModelPartTintPlan(String role, String partName, boolean active,

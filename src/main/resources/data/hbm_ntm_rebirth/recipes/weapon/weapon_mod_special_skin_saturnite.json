@@ -1,0 +1,24 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "BRM",
+                    " P "
+                ],
+    "key":  {
+                "B":  {
+                          "tag":  "forge:light_barrels/saturnite"
+                      },
+                "R":  {
+                          "tag":  "forge:light_receivers/saturnite"
+                      },
+                "M":  {
+                          "tag":  "forge:gun_mechanisms/saturnite"
+                      },
+                "P":  {
+                          "tag":  "forge:plates/saturnite"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:weapon_mod_special_skin_saturnite"
+               }
+}

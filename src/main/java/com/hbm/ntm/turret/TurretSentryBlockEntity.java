@@ -25,6 +25,8 @@ public class TurretSentryBlockEntity extends TurretBlockEntityBase {
 
     private int timer;
     private boolean shotSide;
+    private boolean didJustShootLeft;
+    private boolean didJustShootRight;
     private boolean retractingLeft;
     private boolean retractingRight;
 
@@ -132,13 +134,13 @@ public class TurretSentryBlockEntity extends TurretBlockEntityBase {
 
     @Override
     protected void triggerLeftBarrelRecoil() {
-        retractingLeft = true;
+        didJustShootLeft = true;
         syncSentryRecoil();
     }
 
     @Override
     protected void triggerRightBarrelRecoil() {
-        retractingRight = true;
+        didJustShootRight = true;
         syncSentryRecoil();
     }
 
@@ -149,7 +151,6 @@ public class TurretSentryBlockEntity extends TurretBlockEntityBase {
 
     @Override
     protected void decayServerAnimations() {
-        tickSentryRecoil();
     }
 
     private void tickSentryRecoil() {
@@ -175,7 +176,11 @@ public class TurretSentryBlockEntity extends TurretBlockEntityBase {
     }
 
     private void syncSentryRecoil() {
-        syncRuntimeToTracking();
+    }
+
+    @Override
+    protected boolean shouldSyncBarrelRecoilPositions() {
+        return false;
     }
 
     @Override
@@ -187,21 +192,23 @@ public class TurretSentryBlockEntity extends TurretBlockEntityBase {
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
-        writeSentryAnimationSync(tag);
-        return tag;
+        return getClientSyncTag();
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
-        retractingLeft = tag.getBoolean(TAG_RETRACTING_LEFT);
-        retractingRight = tag.getBoolean(TAG_RETRACTING_RIGHT);
+        if (tag.contains(TAG_RETRACTING_LEFT) && tag.contains(TAG_RETRACTING_RIGHT)) {
+            retractingLeft = tag.getBoolean(TAG_RETRACTING_LEFT);
+            retractingRight = tag.getBoolean(TAG_RETRACTING_RIGHT);
+        }
     }
 
     private void writeSentryAnimationSync(CompoundTag tag) {
-        tag.putBoolean(TAG_RETRACTING_LEFT, retractingLeft);
-        tag.putBoolean(TAG_RETRACTING_RIGHT, retractingRight);
+        tag.putBoolean(TAG_RETRACTING_LEFT, didJustShootLeft);
+        tag.putBoolean(TAG_RETRACTING_RIGHT, didJustShootRight);
+        didJustShootLeft = false;
+        didJustShootRight = false;
     }
 
     @Override

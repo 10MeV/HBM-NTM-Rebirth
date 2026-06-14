@@ -1,9 +1,9 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -66,13 +66,7 @@ public class LegacyOutgasBlock extends RadiatingHazardBlock {
             level.setBlock(above, gas.get().defaultBlockState(), Block.UPDATE_ALL);
         }
         if (level.isClientSide && walkingRelease && gas.get() == ModBlocks.GAS_ASBESTOS.get()) {
-            for (int i = 0; i < 5; i++) {
-                level.addParticle(ParticleTypes.MYCELIUM,
-                        pos.getX() + level.random.nextFloat(),
-                        pos.getY() + 1.1D,
-                        pos.getZ() + level.random.nextFloat(),
-                        0.0D, 0.0D, 0.0D);
-            }
+            ParticleUtil.spawnOutgasTownAuraBurst(level, pos, level.random, 5);
         }
     }
 

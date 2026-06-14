@@ -1,0 +1,15 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "pattern":  [
+                    "WWW",
+                    "  W"
+                ],
+    "key":  {
+                "W":  {
+                          "tag":  "forge:ingots/bakelite"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:stock_bakelite"
+               }
+}

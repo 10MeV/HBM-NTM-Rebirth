@@ -18,11 +18,16 @@ import com.hbm.ntm.blockentity.ChemicalFactoryBlockEntity;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
 import com.hbm.ntm.blockentity.ChimneyBlockEntity;
 import com.hbm.ntm.blockentity.CompressorBlockEntity;
+import com.hbm.ntm.blockentity.CombustionEngineBlockEntity;
+import com.hbm.ntm.blockentity.CompactLauncherBlockEntity;
 import com.hbm.ntm.blockentity.ConnectorBlockEntity;
 import com.hbm.ntm.blockentity.CokerBlockEntity;
+import com.hbm.ntm.blockentity.CraneSplitterBlockEntity;
 import com.hbm.ntm.blockentity.CustomNukeBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
+import com.hbm.ntm.blockentity.ElectricHeaterBlockEntity;
 import com.hbm.ntm.blockentity.ElectricPressBlockEntity;
+import com.hbm.ntm.blockentity.FireboxHeaterBlockEntity;
 import com.hbm.ntm.blockentity.FluidDuctBoxBlockEntity;
 import com.hbm.ntm.blockentity.FluidDuctExhaustBlockEntity;
 import com.hbm.ntm.blockentity.FluidDuctGaugeBlockEntity;
@@ -38,6 +43,7 @@ import com.hbm.ntm.blockentity.FluidValveBlockEntity;
 import com.hbm.ntm.blockentity.FensuBlockEntity;
 import com.hbm.ntm.blockentity.FractionTowerBlockEntity;
 import com.hbm.ntm.blockentity.GasFlareBlockEntity;
+import com.hbm.ntm.blockentity.HeaterHeatexBlockEntity;
 import com.hbm.ntm.blockentity.HydrotreaterBlockEntity;
 import com.hbm.ntm.blockentity.IndustrialSteamTurbineBlockEntity;
 import com.hbm.ntm.blockentity.LargePylonBlockEntity;
@@ -49,19 +55,23 @@ import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
 import com.hbm.ntm.blockentity.LegacyVolcanoCoreBlockEntity;
 import com.hbm.ntm.blockentity.LegacyVisibleMachineBlockEntity;
 import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
+import com.hbm.ntm.blockentity.LaunchTableBlockEntity;
 import com.hbm.ntm.blockentity.LiquefactorBlockEntity;
 import com.hbm.ntm.blockentity.MachineBatteryBlockEntity;
 import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
 import com.hbm.ntm.blockentity.MachineLpw2BlockEntity;
 import com.hbm.ntm.blockentity.MediumPylonBlockEntity;
+import com.hbm.ntm.blockentity.MissileAssemblyBlockEntity;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
+import com.hbm.ntm.blockentity.OilburnerBlockEntity;
 import com.hbm.ntm.blockentity.OilDrillBlockEntity;
 import com.hbm.ntm.blockentity.PileBreedingFuelBlockEntity;
 import com.hbm.ntm.blockentity.PileFuelBlockEntity;
 import com.hbm.ntm.blockentity.PileNeutronDetectorBlockEntity;
 import com.hbm.ntm.blockentity.PileSourceBlockEntity;
 import com.hbm.ntm.blockentity.PneumaticTubeBlockEntity;
+import com.hbm.ntm.blockentity.PoweredCondenserBlockEntity;
 import com.hbm.ntm.blockentity.PoweredRedCableBlockEntity;
 import com.hbm.ntm.blockentity.PyroOvenBlockEntity;
 import com.hbm.ntm.blockentity.RadarBlockEntity;
@@ -75,11 +85,16 @@ import com.hbm.ntm.blockentity.RadioTorchLogicBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchReaderBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchReceiverBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchSenderBlockEntity;
+import com.hbm.ntm.blockentity.RBMKAutoloaderBlockEntity;
 import com.hbm.ntm.blockentity.RBMKColumnBlockEntity;
+import com.hbm.ntm.blockentity.RBMKCraneConsoleBlockEntity;
 import com.hbm.ntm.blockentity.RBMKPanelBlockEntity;
+import com.hbm.ntm.blockentity.RBMKSteamInletBlockEntity;
+import com.hbm.ntm.blockentity.RBMKSteamOutletBlockEntity;
 import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.blockentity.RedCableGaugeBlockEntity;
 import com.hbm.ntm.blockentity.RefineryBlockEntity;
+import com.hbm.ntm.blockentity.RustedLaunchPadBlockEntity;
 import com.hbm.ntm.blockentity.SatelliteDockBlockEntity;
 import com.hbm.ntm.blockentity.SatelliteLinkerBlockEntity;
 import com.hbm.ntm.blockentity.SolarBoilerBlockEntity;
@@ -95,6 +110,7 @@ import com.hbm.ntm.blockentity.SubstationBlockEntity;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
 import com.hbm.ntm.blockentity.VacuumDistillBlockEntity;
 import com.hbm.ntm.blockentity.VendingMachineBlockEntity;
+import com.hbm.ntm.blockentity.WaterPumpBlockEntity;
 import com.hbm.ntm.turret.TurretArtyBlockEntity;
 import com.hbm.ntm.turret.TurretChekhovBlockEntity;
 import com.hbm.ntm.turret.TurretFriendlyBlockEntity;
@@ -128,7 +144,10 @@ public final class ModBlockEntities {
 
     public static final RegistryObject<BlockEntityType<BoilerBlockEntity>> BOILER =
             BLOCK_ENTITIES.register("boiler", () ->
-                    BlockEntityType.Builder.of(BoilerBlockEntity::new, ModBlocks.MACHINE_BOILER_OFF.get()).build(null));
+                    BlockEntityType.Builder.of(BoilerBlockEntity::new,
+                            ModBlocks.MACHINE_BOILER_OFF.get(),
+                            ModBlocks.MACHINE_BOILER.get(),
+                            ModBlocks.MACHINE_INDUSTRIAL_BOILER.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<SteamTurbineBlockEntity>> STEAM_TURBINE =
             BLOCK_ENTITIES.register("steam_turbine", () ->
@@ -145,7 +164,11 @@ public final class ModBlockEntities {
 
     public static final RegistryObject<BlockEntityType<RedCableBlockEntity>> RED_CABLE =
             BLOCK_ENTITIES.register("red_cable", () ->
-                    BlockEntityType.Builder.of(RedCableBlockEntity::new, ModBlocks.RED_CABLE.get()).build(null));
+                    BlockEntityType.Builder.of(RedCableBlockEntity::new,
+                            ModBlocks.RED_CABLE.get(),
+                            ModBlocks.RED_CABLE_CLASSIC.get(),
+                            ModBlocks.RED_WIRE_COATED.get(),
+                            ModBlocks.RED_CABLE_BOX.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<RedCableGaugeBlockEntity>> RED_CABLE_GAUGE =
             BLOCK_ENTITIES.register("red_cable_gauge", () ->
@@ -238,12 +261,14 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<RBMKPanelBlockEntity>> RBMK_PANEL =
             BLOCK_ENTITIES.register("rbmk_panel", () ->
                     BlockEntityType.Builder.of(RBMKPanelBlockEntity::new,
+                            ModBlocks.RBMK_DISPLAY.get(),
                             ModBlocks.RBMK_GAUGE.get(),
                             ModBlocks.RBMK_GRAPH.get(),
                             ModBlocks.RBMK_INDICATOR.get(),
                             ModBlocks.RBMK_KEY_PAD.get(),
                             ModBlocks.RBMK_LEVER.get(),
-                            ModBlocks.RBMK_NUMITRON.get()).build(null));
+                            ModBlocks.RBMK_NUMITRON.get(),
+                            ModBlocks.RBMK_TERMINAL.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<RBMKColumnBlockEntity>> RBMK_COLUMN =
             BLOCK_ENTITIES.register("rbmk_column", () ->
@@ -266,6 +291,26 @@ public final class ModBlockEntities {
                             ModBlocks.RBMK_CONTROL_AUTO.get(),
                             ModBlocks.RBMK_CONTROL_REASIM.get(),
                             ModBlocks.RBMK_CONTROL_REASIM_AUTO.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RBMKAutoloaderBlockEntity>> RBMK_AUTOLOADER =
+            BLOCK_ENTITIES.register("rbmk_autoloader", () ->
+                    BlockEntityType.Builder.of(RBMKAutoloaderBlockEntity::new,
+                            ModBlocks.RBMK_AUTOLOADER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RBMKCraneConsoleBlockEntity>> RBMK_CRANE_CONSOLE =
+            BLOCK_ENTITIES.register("rbmk_crane_console", () ->
+                    BlockEntityType.Builder.of(RBMKCraneConsoleBlockEntity::new,
+                            ModBlocks.RBMK_CRANE_CONSOLE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RBMKSteamInletBlockEntity>> RBMK_STEAM_INLET =
+            BLOCK_ENTITIES.register("rbmk_steam_inlet", () ->
+                    BlockEntityType.Builder.of(RBMKSteamInletBlockEntity::new,
+                            ModBlocks.RBMK_STEAM_INLET.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RBMKSteamOutletBlockEntity>> RBMK_STEAM_OUTLET =
+            BLOCK_ENTITIES.register("rbmk_steam_outlet", () ->
+                    BlockEntityType.Builder.of(RBMKSteamOutletBlockEntity::new,
+                            ModBlocks.RBMK_STEAM_OUTLET.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<PileFuelBlockEntity>> PILE_FUEL =
             BLOCK_ENTITIES.register("pile_fuel", () ->
@@ -464,9 +509,34 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(LaunchPadBlockEntity::new,
                             ModBlocks.LAUNCH_PAD.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<RustedLaunchPadBlockEntity>> LAUNCH_PAD_RUSTED =
+            BLOCK_ENTITIES.register("launch_pad_rusted", () ->
+                    BlockEntityType.Builder.of(RustedLaunchPadBlockEntity::new,
+                            ModBlocks.LAUNCH_PAD_RUSTED.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<LaunchTableBlockEntity>> LAUNCH_TABLE =
+            BLOCK_ENTITIES.register("launch_table", () ->
+                    BlockEntityType.Builder.of(LaunchTableBlockEntity::new,
+                            ModBlocks.LAUNCH_TABLE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<CompactLauncherBlockEntity>> COMPACT_LAUNCHER =
+            BLOCK_ENTITIES.register("compact_launcher", () ->
+                    BlockEntityType.Builder.of(CompactLauncherBlockEntity::new,
+                            ModBlocks.COMPACT_LAUNCHER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<MissileAssemblyBlockEntity>> MISSILE_ASSEMBLY =
+            BLOCK_ENTITIES.register("missile_assembly", () ->
+                    BlockEntityType.Builder.of(MissileAssemblyBlockEntity::new,
+                            ModBlocks.MACHINE_MISSILE_ASSEMBLY.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<MultiblockDummyBlockEntity>> MULTIBLOCK_DUMMY =
             BLOCK_ENTITIES.register("multiblock_dummy", () ->
                     BlockEntityType.Builder.of(MultiblockDummyBlockEntity::new, ModBlocks.DUMMY_BLOCK.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<CraneSplitterBlockEntity>> CRANE_SPLITTER =
+            BLOCK_ENTITIES.register("crane_splitter", () ->
+                    BlockEntityType.Builder.of(CraneSplitterBlockEntity::new,
+                            ModBlocks.CRANE_SPLITTER.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<AssemblyMachineBlockEntity>> ASSEMBLY_MACHINE =
             BLOCK_ENTITIES.register("assembly_machine", () ->
@@ -570,7 +640,13 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<CompressorBlockEntity>> COMPRESSOR =
             BLOCK_ENTITIES.register("compressor", () ->
                     BlockEntityType.Builder.of(CompressorBlockEntity::new,
-                            ModBlocks.MACHINE_COMPRESSOR.get()).build(null));
+                            ModBlocks.MACHINE_COMPRESSOR.get(),
+                            ModBlocks.MACHINE_COMPRESSOR_COMPACT.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<CombustionEngineBlockEntity>> COMBUSTION_ENGINE =
+            BLOCK_ENTITIES.register("combustion_engine", () ->
+                    BlockEntityType.Builder.of(CombustionEngineBlockEntity::new,
+                            ModBlocks.MACHINE_COMBUSTION_ENGINE.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<ArcWelderBlockEntity>> ARC_WELDER =
             BLOCK_ENTITIES.register("arc_welder", () ->
@@ -597,6 +673,38 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(SolarBoilerBlockEntity::new,
                             ModBlocks.MACHINE_SOLAR_BOILER.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<ElectricHeaterBlockEntity>> ELECTRIC_HEATER =
+            BLOCK_ENTITIES.register("electric_heater", () ->
+                    BlockEntityType.Builder.of(ElectricHeaterBlockEntity::new,
+                            ModBlocks.HEATER_ELECTRIC.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FireboxHeaterBlockEntity>> FIREBOX_HEATER =
+            BLOCK_ENTITIES.register("firebox_heater", () ->
+                    BlockEntityType.Builder.of(FireboxHeaterBlockEntity::new,
+                            ModBlocks.HEATER_FIREBOX.get(),
+                            ModBlocks.HEATER_OVEN.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<OilburnerBlockEntity>> OILBURNER =
+            BLOCK_ENTITIES.register("oilburner", () ->
+                    BlockEntityType.Builder.of(OilburnerBlockEntity::new,
+                            ModBlocks.HEATER_OILBURNER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<HeaterHeatexBlockEntity>> HEATER_HEATEX =
+            BLOCK_ENTITIES.register("heater_heatex", () ->
+                    BlockEntityType.Builder.of(HeaterHeatexBlockEntity::new,
+                            ModBlocks.HEATER_HEATEX.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<WaterPumpBlockEntity>> WATER_PUMP =
+            BLOCK_ENTITIES.register("water_pump", () ->
+                    BlockEntityType.Builder.of(WaterPumpBlockEntity::new,
+                            ModBlocks.PUMP_STEAM.get(),
+                            ModBlocks.PUMP_ELECTRIC.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<PoweredCondenserBlockEntity>> POWERED_CONDENSER =
+            BLOCK_ENTITIES.register("powered_condenser", () ->
+                    BlockEntityType.Builder.of(PoweredCondenserBlockEntity::new,
+                            ModBlocks.MACHINE_CONDENSER_POWERED.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<SmallCoolingTowerBlockEntity>> SMALL_COOLING_TOWER =
             BLOCK_ENTITIES.register("small_cooling_tower", () ->
                     BlockEntityType.Builder.of(SmallCoolingTowerBlockEntity::new,
@@ -621,18 +729,6 @@ public final class ModBlockEntities {
                             ModBlocks.MACHINE_DRAIN.get(),
                             ModBlocks.MACHINE_CHUNGUS.get(),
                             ModBlocks.MACHINE_HEPHAESTUS.get(),
-                            ModBlocks.MACHINE_BOILER.get(),
-                            ModBlocks.MACHINE_INDUSTRIAL_BOILER.get(),
-                            ModBlocks.MACHINE_COMBUSTION_ENGINE.get(),
-                            ModBlocks.PUMP_STEAM.get(),
-                            ModBlocks.PUMP_ELECTRIC.get(),
-                            ModBlocks.HEATER_HEATEX.get(),
-                            ModBlocks.HEATER_FIREBOX.get(),
-                            ModBlocks.HEATER_OVEN.get(),
-                            ModBlocks.HEATER_OILBURNER.get(),
-                            ModBlocks.HEATER_ELECTRIC.get(),
-                            ModBlocks.MACHINE_CONDENSER_POWERED.get(),
-                            ModBlocks.MACHINE_COMPRESSOR_COMPACT.get(),
                             ModBlocks.MACHINE_PRECASS.get(),
                             ModBlocks.MACHINE_PUREX.get(),
                             ModBlocks.MACHINE_SILEX.get(),

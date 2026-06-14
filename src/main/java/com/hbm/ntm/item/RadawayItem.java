@@ -2,8 +2,7 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.config.PotionConfig;
 import com.hbm.ntm.registry.ModEffects;
-import com.hbm.ntm.registry.ModSounds;
-import net.minecraft.sounds.SoundSource;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -35,7 +34,7 @@ public class RadawayItem extends Item {
             MobEffectInstance active = player.getEffect(effect);
             int appliedDuration = active == null ? duration : active.getDuration() + duration;
             player.addEffect(new MobEffectInstance(effect, appliedDuration, amplifier));
-            level.playSound(null, player.blockPosition(), ModSounds.TOOL_RADAWAY.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+            LegacySoundPlayer.playLegacyRadaway(player);
             if (!player.getAbilities().instabuild) {
                 stack.shrink(1);
             }

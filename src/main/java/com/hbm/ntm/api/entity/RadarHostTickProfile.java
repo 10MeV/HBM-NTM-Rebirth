@@ -33,9 +33,22 @@ public final class RadarHostTickProfile {
         return new Rotation(previousRotation, rotation);
     }
 
+    public static ScanPowerPlan scanPowerPlan(int radarY, int minimumAltitude, long power, long consumption) {
+        if (radarY < minimumAltitude) {
+            return new ScanPowerPlan(false, Math.max(0L, power));
+        }
+        if (power < consumption) {
+            return new ScanPowerPlan(false, 0L);
+        }
+        return new ScanPowerPlan(true, power - consumption);
+    }
+
     public record SonarPing(int timer, boolean playSound) {
     }
 
     public record Rotation(float previous, float current) {
+    }
+
+    public record ScanPowerPlan(boolean scan, long powerAfter) {
     }
 }

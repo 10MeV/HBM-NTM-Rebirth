@@ -1,23 +1,14 @@
 package com.hbm.ntm.client.particle;
 
-import com.hbm.ntm.client.renderer.HbmClientRenderUtil;
-
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -27,34 +18,8 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
-public class PlasmaBlastParticle extends TextureSheetParticle {
+public class PlasmaBlastParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
     private static SpriteSet sharedSprites;
-    private static final ParticleRenderType RENDER_TYPE = new ParticleRenderType() {
-        @Override
-        public void begin(BufferBuilder builder, TextureManager textureManager) {
-            RenderSystem.depthMask(false);
-            RenderSystem.disableCull();
-            RenderSystem.enableBlend();
-            RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
-            RenderSystem.setShader(GameRenderer::getParticleShader);
-            HbmClientRenderUtil.bindParticleAtlas();
-            builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
-        }
-
-        @Override
-        public void end(Tesselator tesselator) {
-            tesselator.end();
-            RenderSystem.enableCull();
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.depthMask(true);
-        }
-
-        @Override
-        public String toString() {
-            return "HBM_PLASMA_BLAST";
-        }
-    };
-
     private final SpriteSet sprites;
     private final float pitch;
     private final float yaw;
@@ -93,11 +58,17 @@ public class PlasmaBlastParticle extends TextureSheetParticle {
 
     @Override
     public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.enqueue(this, camera, this.x, this.y, this.z);
+    }
+
+    @Override
+    public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
         float renderAge = this.age + partialTick;
         float alpha = 1.0F - renderAge / (float) this.lifetime;
         if (alpha <= 0.0F) {
             return;
         }
+        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetAdditiveNoDepthWrite());
         float scale = (1.0F - (float) Math.exp(renderAge * -0.125D)) * this.blastScale;
         Vec3 cameraPos = camera.getPosition();
         float x = (float) (Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x());
@@ -123,7 +94,7 @@ public class PlasmaBlastParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return RENDER_TYPE;
+        return HbmDeferredParticleRenderer.DEFERRED_RENDER_TYPE;
     }
 
     @Override

@@ -122,13 +122,7 @@ public class FireLingeringEntity extends Entity {
         switch (getFireType()) {
             case TYPE_BALEFIRE -> HbmLivingProperties.ensureBalefire(living, 100);
             case TYPE_PHOSPHORUS -> HbmLivingProperties.ensureFire(living, 300);
-            case TYPE_BLACK -> {
-                if (HbmLivingProperties.getBlackFire(living) < 200) {
-                    HbmLivingProperties.setBlackFire(living, 200);
-                } else {
-                    HbmLivingProperties.addBlackFire(living, 5);
-                }
-            }
+            case TYPE_BLACK -> HbmLivingProperties.ensureBlackFireOrAdd(living, 200, 5);
             default -> HbmLivingProperties.ensureFire(living, 60);
         }
     }

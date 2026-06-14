@@ -2,10 +2,9 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.api.block.Bomb;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -69,7 +68,7 @@ public class BalefireBombBlock extends HorizontalMachineBlock implements Bomb {
             return BombReturnCode.ERROR_INCOMPATIBLE;
         }
 
-        level.playSound(null, pos, ModSounds.WEAPON_FSTBMB_START.get(), SoundSource.BLOCKS, 5.0F, 1.0F);
+        LegacySoundPlayer.playLegacyFstbmbStart(level, pos, 5.0F, 1.0F);
         level.removeBlock(pos, false);
         level.gameEvent(null, GameEvent.EXPLODE, pos);
         WeaponExplosionUtil.spawnBalefire(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, DEFAULT_RANGE);

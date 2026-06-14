@@ -1,5 +1,6 @@
 package com.hbm.ntm.menu;
 
+import com.mojang.datafixers.util.Pair;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.armor.ArmorModItem;
 import com.hbm.ntm.registry.ModBlocks;
@@ -7,11 +8,14 @@ import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
@@ -128,14 +132,14 @@ public class ArmorTableMenu extends AbstractContainerMenu {
     }
 
     private void addPlayerArmorSlots(Inventory inventory) {
-        ArmorItem.Type[] armorTypes = {
-                ArmorItem.Type.HELMET,
-                ArmorItem.Type.CHESTPLATE,
-                ArmorItem.Type.LEGGINGS,
-                ArmorItem.Type.BOOTS
+        EquipmentSlot[] equipmentSlots = {
+                EquipmentSlot.HEAD,
+                EquipmentSlot.CHEST,
+                EquipmentSlot.LEGS,
+                EquipmentSlot.FEET
         };
         for (int i = 0; i < 4; i++) {
-            ArmorItem.Type armorType = armorTypes[i];
+            EquipmentSlot equipmentSlot = equipmentSlots[i];
             int inventorySlot = 39 - i;
             addSlot(new Slot(inventory, inventorySlot, 5, 36 + i * 18) {
                 @Override
@@ -145,11 +149,25 @@ public class ArmorTableMenu extends AbstractContainerMenu {
 
                 @Override
                 public boolean mayPlace(ItemStack stack) {
-                    return stack.getItem() instanceof ArmorItem armorItem
-                            && armorItem.getType() == armorType;
+                    return stack.canEquip(equipmentSlot, inventory.player);
+                }
+
+                @Override
+                public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+                    return Pair.of(InventoryMenu.BLOCK_ATLAS, emptyArmorSlotIcon(equipmentSlot));
                 }
             });
         }
+    }
+
+    private static ResourceLocation emptyArmorSlotIcon(EquipmentSlot equipmentSlot) {
+        return switch (equipmentSlot) {
+            case HEAD -> InventoryMenu.EMPTY_ARMOR_SLOT_HELMET;
+            case CHEST -> InventoryMenu.EMPTY_ARMOR_SLOT_CHESTPLATE;
+            case LEGS -> InventoryMenu.EMPTY_ARMOR_SLOT_LEGGINGS;
+            case FEET -> InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS;
+            default -> InventoryMenu.EMPTY_ARMOR_SLOT_HELMET;
+        };
     }
 
     private void addPlayerInventory(Inventory inventory) {

@@ -1,10 +1,9 @@
 package com.hbm.ntm.item;
 
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -39,7 +38,7 @@ public class TurretBiometryItem extends Item {
         if (!level.isClientSide) {
             player.displayClientMessage(Component.translatable("item.hbm_ntm_rebirth.turret_biometry.added"), true);
         }
-        level.playSound(player, player.blockPosition(), ModSounds.ITEM_TECH_BLEEP.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+        LegacySoundPlayer.playLegacyTechBleep(player, 1.0F, 1.0F);
         player.swing(hand);
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }

@@ -112,6 +112,9 @@ public final class BulletDamageUtil {
             return false;
         }
         String legacyName = config.legacyName();
+        if ("folly_nuke".equals(legacyName) && ticksInAir < 2) {
+            return true;
+        }
         if (legacyName.startsWith("rocket_")) {
             return true;
         }

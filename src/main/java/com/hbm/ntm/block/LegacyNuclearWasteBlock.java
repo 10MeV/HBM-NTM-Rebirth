@@ -1,7 +1,7 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlocks;
-import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -28,27 +28,6 @@ public class LegacyNuclearWasteBlock extends RadiatingHazardBlock {
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         super.animateTick(state, level, pos, random);
-        for (Direction direction : Direction.values()) {
-            BlockPos target = pos.relative(direction);
-            if (!level.isEmptyBlock(target)) {
-                continue;
-            }
-
-            double x = pos.getX() + 0.5D + direction.getStepX() + random.nextDouble() * 3.0D - 1.5D;
-            double y = pos.getY() + 0.5D + direction.getStepY() + random.nextDouble() * 3.0D - 1.5D;
-            double z = pos.getZ() + 0.5D + direction.getStepZ() + random.nextDouble() * 3.0D - 1.5D;
-
-            if (direction.getStepX() != 0) {
-                x = pos.getX() + 0.5D + direction.getStepX() * 0.5D + random.nextDouble() * direction.getStepX();
-            }
-            if (direction.getStepY() != 0) {
-                y = pos.getY() + 0.5D + direction.getStepY() * 0.5D + random.nextDouble() * direction.getStepY();
-            }
-            if (direction.getStepZ() != 0) {
-                z = pos.getZ() + 0.5D + direction.getStepZ() * 0.5D + random.nextDouble() * direction.getStepZ();
-            }
-
-            level.addParticle(ModParticleTypes.TOWN_AURA.get(), x, y, z, 0.0D, 0.0D, 0.0D);
-        }
+        ParticleUtil.spawnTownAuraOnOpenFaces(level, pos, random);
     }
 }
