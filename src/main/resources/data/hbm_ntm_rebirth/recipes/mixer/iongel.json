@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:iongel", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:water", "amount": 1000 },
+  "input2": { "fluid": "hbm_ntm_rebirth:hydrogen", "amount": 200 },
+  "solid_input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:pellet_charged" }
+  },
+  "duration": 50
+}

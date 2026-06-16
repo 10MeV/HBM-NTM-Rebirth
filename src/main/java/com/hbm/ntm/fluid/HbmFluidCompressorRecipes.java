@@ -1,6 +1,7 @@
 package com.hbm.ntm.fluid;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,9 +18,27 @@ public final class HbmFluidCompressorRecipes {
 
     public static void register(FluidType inputType, int inputPressure, int inputAmount,
             FluidType outputType, int outputAmount, int outputPressure, int duration) {
+        if (inputType == null || inputType == HbmFluids.NONE) {
+            throw new IllegalArgumentException("Compressor input fluid cannot be empty");
+        }
+        if (outputType == null || outputType == HbmFluids.NONE) {
+            throw new IllegalArgumentException("Compressor output fluid cannot be empty");
+        }
         RECIPES.put(new Key(inputType, HbmFluidTank.clampPressure(inputPressure)),
                 new Recipe(inputAmount, new HbmFluidStack(outputType, outputAmount, outputPressure),
                         Math.max(1, duration)));
+    }
+
+    public static Recipe register(HbmFluidStack input, HbmFluidStack output, int duration) {
+        if (input == null || input.isEmpty()) {
+            throw new IllegalArgumentException("Compressor input fluid stack cannot be empty");
+        }
+        if (output == null || output.isEmpty()) {
+            throw new IllegalArgumentException("Compressor output fluid stack cannot be empty");
+        }
+        Recipe recipe = new Recipe(input.amount(), output, duration);
+        RECIPES.put(new Key(input.type(), input.pressure()), recipe);
+        return recipe;
     }
 
     public static @Nullable Recipe find(FluidType inputType, int inputPressure) {
@@ -45,11 +64,20 @@ public final class HbmFluidCompressorRecipes {
         return recipe == null ? 1_000 : recipe.inputAmount();
     }
 
+    public static List<RecipeEntry> recipes() {
+        return RECIPES.entrySet().stream()
+                .map(entry -> new RecipeEntry(entry.getKey().type(), entry.getKey().pressure(), entry.getValue()))
+                .toList();
+    }
+
     public record Recipe(int inputAmount, HbmFluidStack output, int duration) {
         public Recipe {
             inputAmount = Math.max(1, inputAmount);
             duration = Math.max(1, duration);
         }
+    }
+
+    public record RecipeEntry(FluidType inputType, int inputPressure, Recipe recipe) {
     }
 
     private record Key(FluidType type, int pressure) {

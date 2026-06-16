@@ -99,12 +99,13 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
     public void shoot(Vec3 heading, float velocity, float inaccuracy) {
         Vec3 motion = heading == null || heading.lengthSqr() <= 1.0E-7D ? Vec3.ZERO : heading.normalize();
         if (inaccuracy > 0.0F) {
-            motion = motion.add(random.triangle(0.0D, 0.0075D * inaccuracy),
-                    random.triangle(0.0D, 0.0075D * inaccuracy),
-                    random.triangle(0.0D, 0.0075D * inaccuracy)).normalize();
+            motion = motion.add(random.nextGaussian() * 0.0075D * inaccuracy,
+                    random.nextGaussian() * 0.0075D * inaccuracy,
+                    random.nextGaussian() * 0.0075D * inaccuracy);
         }
-        setDeltaMovement(motion.scale(velocity));
-        setInitialRotationFromMotion(motion);
+        Vec3 launchMotion = motion.scale(velocity);
+        setDeltaMovement(launchMotion);
+        setInitialRotationFromMotion(launchMotion);
     }
 
     public void setTarget(double x, double y, double z) {
@@ -302,9 +303,14 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
         if (!inGround || stuckBlockPos == null || level().getBlockState(stuckBlockPos).is(stuckBlock)) {
             return;
         }
+        Vec3 motion = getDeltaMovement();
         inGround = false;
         stuckBlockPos = null;
         stuckBlock = Blocks.AIR;
+        setDeltaMovement(
+                motion.x * random.nextFloat() * 0.2F,
+                motion.y * random.nextFloat() * 0.2F,
+                motion.z * random.nextFloat() * 0.2F);
         ticksInGround = 0;
         ticksInAir = 0;
     }

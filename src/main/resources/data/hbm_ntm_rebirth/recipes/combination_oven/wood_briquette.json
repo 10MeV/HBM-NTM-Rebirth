@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:combination_oven",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:briquette_wood" } },
+  "output_item": { "item": "minecraft:charcoal" },
+  "output_fluid": { "fluid": "WOODOIL", "amount": 500 }
+}

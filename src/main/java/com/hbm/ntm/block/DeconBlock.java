@@ -41,10 +41,7 @@ public class DeconBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide) {
-            return null;
-        }
-        return createTickerHelper(type, ModBlockEntities.DECON.get(), DeconBlockEntity::serverTick);
+        return createTickerHelper(type, ModBlockEntities.DECON.get(), DeconBlockEntity::tick);
     }
 }
 

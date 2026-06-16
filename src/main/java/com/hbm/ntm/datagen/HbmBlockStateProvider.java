@@ -157,6 +157,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "machine_satlinker_side",
                 "machine_satlinker_side",
                 "machine_satlinker_side");
+        simpleSidedCubeWithItem(ModBlocks.MACHINE_TRANSFORMER,
+                "machine_transformer_top_iron",
+                "machine_transformer_top_iron",
+                "machine_transformer_iron",
+                "machine_transformer_iron",
+                "machine_transformer_iron",
+                "machine_transformer_iron");
         visibleMachineWithItemRenderer(ModBlocks.SAT_DOCK, "utility/sat_dock");
         soyuzCapsuleWithItem();
         visibleMachineWithItemRenderer(ModBlocks.SOYUZ_LAUNCHER, "launch_table/soyuz_launcher_table");
@@ -191,6 +198,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         rbmkColumnWithItem(ModBlocks.RBMK_OUTGASSER, "rbmk_outgasser");
         rbmkColumnWithItem(ModBlocks.RBMK_STORAGE, "rbmk_storage");
         simpleCubeWithItem(ModBlocks.RBMK_AUTOLOADER, "rbmk_autoloader");
+        existingModelWithItem(ModBlocks.RBMK_CONSOLE, "rbmk_console");
         existingModelWithItem(ModBlocks.RBMK_CRANE_CONSOLE, "rbmk_crane_console");
         rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL, "rbmk_control");
         rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL_MOD, "rbmk_control_mod");

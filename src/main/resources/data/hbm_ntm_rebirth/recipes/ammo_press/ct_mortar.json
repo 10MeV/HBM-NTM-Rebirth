@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 88,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_ct_mortar",
+    "count": 4
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_high_explosive"
+      },
+      "count": 4,
+      "legacy_ore": "ingotAnyHighExplosive"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:pipes/steel"
+      },
+      "count": 1,
+      "legacy_ore": "ntmpipeSteel"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:dusts/any_smokeless"
+      },
+      "count": 1,
+      "legacy_ore": "dustAnySmokeless"
+    },
+    null
+  ]
+}

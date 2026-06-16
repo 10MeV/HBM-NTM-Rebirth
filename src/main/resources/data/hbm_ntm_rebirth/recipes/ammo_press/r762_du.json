@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 33,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_r762_du",
+    "count": 12
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/u238"
+      },
+      "count": 2,
+      "legacy_ore": "ingotU238"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:dusts/any_smokeless"
+      },
+      "count": 4,
+      "legacy_ore": "dustAnySmokeless"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_small_steel"
+      },
+      "count": 2,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 2
+    },
+    null
+  ]
+}

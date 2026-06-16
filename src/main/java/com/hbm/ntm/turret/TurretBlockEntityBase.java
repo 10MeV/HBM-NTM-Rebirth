@@ -37,6 +37,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.boss.EnderDragonPart;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.player.Player;
@@ -110,7 +111,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             if (slot == SLOT_CHIP) {
-                return stack.is(ModItems.TURRET_CHIP.get()) || stack.is(ModItems.TURRET_BIOMETRY.get());
+                return stack.is(ModItems.TURRET_CHIP.get());
             }
             if (slot == SLOT_BATTERY) {
                 return HbmInventoryMenuHelper.isBatteryLike(stack);
@@ -588,9 +589,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
     }
 
     protected Vec3 getEntityPos(Entity entity) {
-        return new Vec3(entity.getX(),
-                entity.getY() + entity.getBbHeight() * 0.5D - entity.getMyRidingOffset(),
-                entity.getZ());
+        return new Vec3(entity.getX(), entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ());
     }
 
     protected void seekNewTarget() {
@@ -765,7 +764,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
             if (entity instanceof Player player && whitelist.contains(player.getDisplayName().getString())) {
                 return false;
             }
-            Component customName = entity.getCustomName();
+            Component customName = entity instanceof Mob ? entity.getCustomName() : null;
             if (customName != null && whitelist.contains(customName.getString())) {
                 return false;
             }
@@ -874,16 +873,16 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         return spawnBullet(config, baseDamage, null);
     }
 
-    protected boolean spawnBullet(BulletConfig config, float baseDamage, @Nullable LivingEntity homingTarget) {
+    protected boolean spawnBullet(BulletConfig config, float baseDamage, @Nullable Entity homingTarget) {
         return spawnBullet(config, baseDamage, config == null ? 0.0F : config.spread(), homingTarget);
     }
 
     protected boolean spawnBullet(BulletConfig config, float baseDamage, float gunSpread,
-            @Nullable LivingEntity homingTarget) {
+            @Nullable Entity homingTarget) {
         if (level == null || level.isClientSide || config == null) {
             return false;
         }
-        BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedLaunchPlan(config, getMuzzlePos(),
+        BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedMk4LaunchPlan(config, getMuzzlePos(),
                 getBarrelHeading(), 1.0F, gunSpread, level.random);
         if (!plan.valid()) {
             return false;
@@ -1231,7 +1230,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
     }
 
     private static boolean isWhitelistChip(ItemStack stack) {
-        return !stack.isEmpty() && (stack.is(ModItems.TURRET_CHIP.get()) || stack.is(ModItems.TURRET_BIOMETRY.get()));
+        return !stack.isEmpty() && stack.is(ModItems.TURRET_CHIP.get());
     }
 
     @Override
@@ -1250,8 +1249,6 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         tag.putBoolean(TAG_TARGET_HOSTILE, targetHostile);
         tag.putBoolean(TAG_TARGET_MACHINES, targetMachines);
         tag.putInt(TAG_STATTRAK, stattrak);
-        tag.putDouble(TAG_ROTATION_YAW, rotationYaw);
-        tag.putDouble(TAG_ROTATION_PITCH, rotationPitch);
     }
 
     @Override
@@ -1267,8 +1264,6 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         targetHostile = !tag.contains(TAG_TARGET_HOSTILE) || tag.getBoolean(TAG_TARGET_HOSTILE);
         targetMachines = !tag.contains(TAG_TARGET_MACHINES) || tag.getBoolean(TAG_TARGET_MACHINES);
         stattrak = tag.getInt(TAG_STATTRAK);
-        rotationYaw = tag.getDouble(TAG_ROTATION_YAW);
-        rotationPitch = tag.getDouble(TAG_ROTATION_PITCH);
     }
 
     @Override

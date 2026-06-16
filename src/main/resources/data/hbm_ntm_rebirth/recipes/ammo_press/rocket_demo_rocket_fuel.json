@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 66,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_rocket_demo",
+    "count": 2
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_high_explosive"
+      },
+      "count": 2,
+      "legacy_ore": "ingotAnyHighExplosive"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_large"
+      },
+      "count": 1,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 1
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rocket_fuel"
+      },
+      "count": 1
+    },
+    null
+  ]
+}

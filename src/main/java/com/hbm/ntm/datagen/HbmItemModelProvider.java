@@ -365,6 +365,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "ammo_standard." + path.substring("ammo_standard_".length()));
             return;
         }
+        if (path.startsWith("ammo_secret_")) {
+            generatedItem(path, "ammo_secret." + path.substring("ammo_secret_".length()));
+            return;
+        }
         if (item instanceof WeaponModItem mod) {
             generatedItem(path, mod.texturePath());
             return;
@@ -428,6 +432,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.equals("igniter")) {
             generatedItem(path, "trigger");
+            return;
+        }
+        if (path.equals("gear_large_steel")) {
+            generatedItem(path, "gear_large");
             return;
         }
         if (path.equals("reacher")) {

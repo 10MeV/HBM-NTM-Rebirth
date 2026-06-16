@@ -1,6 +1,7 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.ChemicalFactoryBlockEntity;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -34,8 +35,8 @@ public class ChemicalFactoryBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof ChemicalFactoryBlockEntity factory) {
-            NetworkHooks.openScreen(serverPlayer, factory, pos);
+                && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof ChemicalFactoryBlockEntity factory) {
+            NetworkHooks.openScreen(serverPlayer, factory, factory.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

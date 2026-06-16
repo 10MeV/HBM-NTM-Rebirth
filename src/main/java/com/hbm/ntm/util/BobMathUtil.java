@@ -118,6 +118,10 @@ public final class BobMathUtil {
         return HbmMathUtil.squirt(value);
     }
 
+    public static void setPi(double pi) {
+        HbmMathUtil.setPi(pi);
+    }
+
     public static double angularDifference(double alpha, double beta) {
         return HbmMathUtil.angularDifference(alpha, beta);
     }

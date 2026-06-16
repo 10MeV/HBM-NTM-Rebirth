@@ -34,8 +34,8 @@ public class CompressorBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof CompressorBlockEntity compressor) {
-            NetworkHooks.openScreen(serverPlayer, compressor, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof CompressorBlockEntity compressor) {
+            NetworkHooks.openScreen(serverPlayer, compressor, compressor.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

@@ -49,12 +49,12 @@ public class RefineryBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (level.getBlockEntity(pos) instanceof RefineryBlockEntity refinery) {
+        if (resolveCoreBlockEntity(level, pos) instanceof RefineryBlockEntity refinery) {
             if (refinery.isExploded()) {
                 return InteractionResult.PASS;
             }
             if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-                NetworkHooks.openScreen(serverPlayer, refinery, pos);
+                NetworkHooks.openScreen(serverPlayer, refinery, refinery.getBlockPos());
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
@@ -90,7 +90,7 @@ public class RefineryBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public void onBlockExploded(BlockState state, Level level, BlockPos pos, Explosion explosion) {
-        if (!(level.getBlockEntity(pos) instanceof RefineryBlockEntity refinery)) {
+        if (!(resolveCoreBlockEntity(level, pos) instanceof RefineryBlockEntity refinery)) {
             return;
         }
         if (!refinery.markExplosionHandled(explosion)) {
@@ -99,7 +99,7 @@ public class RefineryBlock extends LegacyVisibleMultiblockMachineBlock {
         if (!refinery.isExploded()) {
             refinery.explode();
         } else {
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            level.setBlock(refinery.getBlockPos(), Blocks.AIR.defaultBlockState(), 3);
         }
     }
 

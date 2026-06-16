@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "combat",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:ammo_standard_ct_mortar"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ammo_standard_ct_mortar"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ammo_standard_ct_mortar"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ammo_standard_ct_mortar"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ammo_standard_ct_mortar"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ammo_standard_ct_mortar"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ammo_standard_ct_mortar"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ducttape"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ammo_standard_ct_mortar_charge"
+  }
+}

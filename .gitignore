@@ -1,5 +1,6 @@
 /.gradle/
 /.gradle-codex-build*/
+/.gradle-codex-project-cache*/
 /.gradle-codex-verify*/
 /.gradle-codex-verify-project/
 /build/

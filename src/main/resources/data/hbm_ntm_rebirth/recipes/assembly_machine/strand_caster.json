@@ -1,0 +1,51 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ingot_firebrick"
+      }
+    },
+    {
+      "count": 6,
+      "ingredient": {
+        "tag": "forge:cast_plates/steel"
+      },
+      "legacy_ore": "plateCastSteel"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:welded_plates/copper"
+      },
+      "legacy_ore": "plateSextupleCopper"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:shells/steel"
+      },
+      "legacy_ore": "shellSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:storage_blocks/any_concrete"
+      },
+      "legacy_ore": "blockAnyConcrete"
+    }
+  ],
+  "internal_name": "ass.strandcaster",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_strand_caster"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 123
+}

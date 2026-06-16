@@ -491,10 +491,18 @@ public final class BulletImpactUtil {
             HbmLivingProperties.ensureBalefire(target, 200);
             return;
         }
+        if (isLegacyG26Flare(config)) {
+            HbmLivingProperties.addFire(target, 200);
+            return;
+        }
         HbmLivingProperties.ensureFire(target, hasAnyBehavior(config,
                 BulletBehaviorTag.FLAME_LINGER_DIESEL,
                 BulletBehaviorTag.FLAME_LINGER_GAS,
                 BulletBehaviorTag.FLAME_LINGER_NAPALM) ? 100 : 200);
+    }
+
+    private static boolean isLegacyG26Flare(BulletConfig config) {
+        return config.legacyName().startsWith("g26_flare");
     }
 
     private static boolean applyFireExtinguishBlocks(BulletConfig config, Level level, @Nullable BlockPos hitBlock,
@@ -805,7 +813,7 @@ public final class BulletImpactUtil {
         if (spawned) {
             ParticleUtil.spawnMuke(level, position.x, position.y + 0.5D, position.z,
                     level.random.nextInt(100) == 0);
-            LegacySoundPlayer.playLegacyMukeExplosion(level, position.x, position.y, position.z);
+            LegacySoundPlayer.playLegacyMukeExplosion(level, position.x, position.y + 0.5D, position.z);
         }
         return spawned;
     }

@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:exposure_chamber",
+  "particle": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:particle_dark"
+    }
+  },
+  "ingredient": {
+    "ingredient": {
+      "tag": "forge:ingots/plutonium"
+    },
+    "legacy_ore": "ingotPlutonium"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_euphemium"
+  },
+  "source_order": 2
+}

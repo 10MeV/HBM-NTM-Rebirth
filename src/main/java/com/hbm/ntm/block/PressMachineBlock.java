@@ -55,8 +55,8 @@ public class PressMachineBlock extends LegacyXrMultiblockBlock implements Entity
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof BasicMachineBlockEntity machine) {
-            NetworkHooks.openScreen(serverPlayer, machine, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof BasicMachineBlockEntity machine) {
+            NetworkHooks.openScreen(serverPlayer, machine, machine.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -79,11 +79,11 @@ public class PressMachineBlock extends LegacyXrMultiblockBlock implements Entity
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && !level.isClientSide
-                && level.getBlockEntity(pos) instanceof BasicMachineBlockEntity machine) {
+                && resolveCoreBlockEntity(level, pos) instanceof BasicMachineBlockEntity machine) {
             for (ItemStack stack : machine.getDrops()) {
-                Block.popResource(level, pos, stack);
+                Block.popResource(level, machine.getBlockPos(), stack);
             }
-            level.updateNeighbourForOutputSignal(pos, this);
+            level.updateNeighbourForOutputSignal(machine.getBlockPos(), this);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

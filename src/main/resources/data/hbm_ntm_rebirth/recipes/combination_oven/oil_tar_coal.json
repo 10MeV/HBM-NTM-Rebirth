@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:combination_oven",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:oil_tar_coal" } },
+  "output_item": { "item": "hbm_ntm_rebirth:coke_coal" }
+}

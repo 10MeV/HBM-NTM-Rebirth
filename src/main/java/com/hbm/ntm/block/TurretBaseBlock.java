@@ -91,8 +91,8 @@ public class TurretBaseBlock extends LegacyXrMultiblockBlock implements EntityBl
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof TurretBlockEntityBase turret) {
-            NetworkHooks.openScreen(serverPlayer, turret, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof TurretBlockEntityBase turret) {
+            NetworkHooks.openScreen(serverPlayer, turret, turret.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -189,9 +189,10 @@ public class TurretBaseBlock extends LegacyXrMultiblockBlock implements EntityBl
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock())) {
-            if (dropsInventory && !level.isClientSide && level.getBlockEntity(pos) instanceof TurretBlockEntityBase turret) {
+            if (dropsInventory && !level.isClientSide
+                    && resolveCoreBlockEntity(level, pos) instanceof TurretBlockEntityBase turret) {
                 for (ItemStack stack : turret.getDrops()) {
-                    Block.popResource(level, pos, stack);
+                    Block.popResource(level, turret.getBlockPos(), stack);
                 }
             }
             level.updateNeighbourForOutputSignal(pos, this);

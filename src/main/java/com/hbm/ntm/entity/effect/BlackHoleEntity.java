@@ -181,7 +181,7 @@ public class BlackHoleEntity extends Entity {
     }
 
     private boolean annihilatesBlackHole(ItemStack stack) {
-        return isLegacyItem(stack, "pellet_antimatter") || isLegacyItem(stack, "flame_pony");
+        return isLegacyItem(stack, "pellet_antimatter");
     }
 
     private static boolean isLegacyItem(ItemStack stack, String name) {

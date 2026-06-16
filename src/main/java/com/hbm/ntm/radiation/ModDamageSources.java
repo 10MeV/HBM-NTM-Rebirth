@@ -79,6 +79,11 @@ public final class ModDamageSources {
     public static final ResourceKey<DamageType> LASER = key("laser");
     public static final ResourceKey<DamageType> PLASMA = key("plasma");
     public static final ResourceKey<DamageType> SUBATOMIC = key("subatomic");
+    public static final ResourceKey<DamageType> SUBATOMIC_1 = key("subatomic_1");
+    public static final ResourceKey<DamageType> SUBATOMIC_2 = key("subatomic_2");
+    public static final ResourceKey<DamageType> SUBATOMIC_3 = key("subatomic_3");
+    public static final ResourceKey<DamageType> SUBATOMIC_4 = key("subatomic_4");
+    public static final ResourceKey<DamageType> SUBATOMIC_5 = key("subatomic_5");
     public static final ResourceKey<DamageType> REVOLVER_BULLET = key("revolver_bullet");
     public static final ResourceKey<DamageType> CHOPPER_BULLET = key("chopper_bullet");
     public static final ResourceKey<DamageType> TAU = key("tau");
@@ -133,6 +138,11 @@ public final class ModDamageSources {
             legacy(LASER, false, false, false, false, false, false),
             legacy(PLASMA, false, false, true, false, false, false),
             legacy(SUBATOMIC, true, false, false, true, false, false),
+            legacy(SUBATOMIC_1, true, false, false, true, false, false),
+            legacy(SUBATOMIC_2, true, false, false, true, false, false),
+            legacy(SUBATOMIC_3, true, false, false, true, false, false),
+            legacy(SUBATOMIC_4, true, false, false, true, false, false),
+            legacy(SUBATOMIC_5, true, false, false, true, false, false),
             legacy(REVOLVER_BULLET, true, false, false, false, false, false),
             legacy(CHOPPER_BULLET, true, false, false, false, false, false),
             legacy(TAU, true, false, false, true, false, false),
@@ -210,7 +220,7 @@ public final class ModDamageSources {
     }
 
     public static DamageSource subatomic(Level level, Entity direct, @Nullable Entity cause) {
-        return indirect(level, SUBATOMIC, direct, cause);
+        return indirect(level, randomSubatomic(level), direct, cause);
     }
 
     public static DamageSource euthanized(Level level, Entity direct, @Nullable Entity cause) {
@@ -400,11 +410,11 @@ public final class ModDamageSources {
     }
 
     public static boolean isSubatomic(DamageSource source) {
-        return source != null && (source.is(SUBATOMIC) || normalizeAlias(source.getMsgId()).startsWith("subatomic"));
+        return source != null && (isSubatomicSource(source) || normalizeAlias(source.getMsgId()).startsWith("subatomic"));
     }
 
     public static boolean isSubatomic(ResourceKey<DamageType> type) {
-        return matches(type, SUBATOMIC);
+        return isSubatomicKey(type);
     }
 
     public static boolean isSubatomic(String legacyTypeOrId) {
@@ -419,11 +429,12 @@ public final class ModDamageSources {
     }
 
     public static boolean is(DamageSource source, ResourceKey<DamageType> type) {
-        return source != null && source.is(type);
+        return source != null && type != null
+                && (source.is(type) || (isSubatomicSource(source) && isSubatomicKey(type)));
     }
 
     public static boolean is(DamageSource source, String legacyTypeOrId) {
-        return source != null && legacyKey(legacyTypeOrId).filter(source::is).isPresent();
+        return source != null && legacyKey(legacyTypeOrId).filter(type -> is(source, type)).isPresent();
     }
 
     public static boolean is(DamageSource source, DamageClass damageClass) {
@@ -439,15 +450,16 @@ public final class ModDamageSources {
     }
 
     public static boolean sourceMatches(DamageSource source, DamageClass expectedDamageClass) {
-        return source != null && source.is(damageClassKey(expectedDamageClass));
+        return is(source, damageClassKey(expectedDamageClass));
     }
 
     public static boolean matches(ResourceKey<DamageType> actual, ResourceKey<DamageType> expected) {
-        return actual != null && expected != null && actual.equals(expected);
+        return actual != null && expected != null
+                && (actual.equals(expected) || (isSubatomicKey(actual) && isSubatomicKey(expected)));
     }
 
     public static boolean matches(ResourceKey<DamageType> actual, String expectedLegacyTypeOrId) {
-        return actual != null && legacyKey(expectedLegacyTypeOrId).filter(actual::equals).isPresent();
+        return actual != null && legacyKey(expectedLegacyTypeOrId).filter(expected -> matches(actual, expected)).isPresent();
     }
 
     public static boolean matches(ResourceKey<DamageType> actual, DamageClass expectedDamageClass) {
@@ -455,13 +467,13 @@ public final class ModDamageSources {
     }
 
     public static boolean matches(String actualLegacyTypeOrId, ResourceKey<DamageType> expected) {
-        return expected != null && legacyKey(actualLegacyTypeOrId).filter(expected::equals).isPresent();
+        return expected != null && legacyKey(actualLegacyTypeOrId).filter(actual -> matches(actual, expected)).isPresent();
     }
 
     public static boolean matches(String actualLegacyTypeOrId, String expectedLegacyTypeOrId) {
         Optional<ResourceKey<DamageType>> actual = legacyKey(actualLegacyTypeOrId);
         Optional<ResourceKey<DamageType>> expected = legacyKey(expectedLegacyTypeOrId);
-        return actual.isPresent() && actual.equals(expected);
+        return actual.isPresent() && expected.isPresent() && matches(actual.get(), expected.get());
     }
 
     public static boolean matches(String actualLegacyTypeOrId, DamageClass expectedDamageClass) {
@@ -686,6 +698,11 @@ public final class ModDamageSources {
         expectResolve(problems, "LASER", LASER);
         expectResolve(problems, "MICROWAVE", MICROWAVE);
         expectResolve(problems, "SUBATOMIC", SUBATOMIC);
+        expectResolve(problems, "subAtomic1", SUBATOMIC_1);
+        expectResolve(problems, "subAtomic2", SUBATOMIC_2);
+        expectResolve(problems, "subAtomic3", SUBATOMIC_3);
+        expectResolve(problems, "subAtomic4", SUBATOMIC_4);
+        expectResolve(problems, "subAtomic5", SUBATOMIC_5);
         expectResolve(problems, "OTHER", minecraft("generic"));
         expectResolve(problems, "chopperBullet", CHOPPER_BULLET);
         expectResolve(problems, "s_emplacer", CHOPPER_BULLET);
@@ -715,6 +732,7 @@ public final class ModDamageSources {
         expectLegacy(problems, SHRAPNEL, true, false, false, false, false, false);
         expectLegacy(problems, TAU, true, false, false, true, false, false);
         expectLegacy(problems, SUBATOMIC, true, false, false, true, false, false);
+        expectLegacy(problems, SUBATOMIC_3, true, false, false, true, false, false);
         expectLegacy(problems, PLASMA, false, false, true, false, false, false);
         expectLegacy(problems, FLAMETHROWER, false, false, true, false, false, false);
         expect(problems, "tau expected tags", legacyDamageType(TAU)
@@ -777,11 +795,16 @@ public final class ModDamageSources {
                 damageClassKey(DamageClass.OTHER).equals(minecraft("generic"))
                         && expectedTagLabels(DamageClass.OTHER).isEmpty());
         expect(problems, "key damage type expected message id", damageType(COMBINE_BALL).equals("cmb"));
-        expect(problems, "string damage type expected message id", damageType("subAtomic4").equals("subAtomic"));
+        expect(problems, "string damage type expected message id", damageType("subAtomic4").equals("subAtomic4"));
         expect(problems, "unknown string metadata false", !isProjectile("not_a_real_damage_type")
                 && expectedTagLabels("not_a_real_damage_type").isEmpty());
         expectMessageId(problems, COMBINE_BALL, "cmb");
         expectMessageId(problems, SUBATOMIC, "subAtomic");
+        expectMessageId(problems, SUBATOMIC_1, "subAtomic1");
+        expectMessageId(problems, SUBATOMIC_2, "subAtomic2");
+        expectMessageId(problems, SUBATOMIC_3, "subAtomic3");
+        expectMessageId(problems, SUBATOMIC_4, "subAtomic4");
+        expectMessageId(problems, SUBATOMIC_5, "subAtomic5");
         expectMessageId(problems, NUCLEAR_BLAST, "nuclearBlast");
         expectMessageId(problems, MUD_POISONING, "mudPoisoning");
         expectMessageId(problems, TAU_BLAST, "tauBlast");
@@ -802,6 +825,34 @@ public final class ModDamageSources {
 
     private static ResourceKey<DamageType> key(String name) {
         return ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, name));
+    }
+
+    private static ResourceKey<DamageType> randomSubatomic(Level level) {
+        return switch (level.random.nextInt(5)) {
+            case 0 -> SUBATOMIC_1;
+            case 1 -> SUBATOMIC_2;
+            case 2 -> SUBATOMIC_3;
+            case 3 -> SUBATOMIC_4;
+            default -> SUBATOMIC_5;
+        };
+    }
+
+    private static boolean isSubatomicSource(DamageSource source) {
+        return source.is(SUBATOMIC)
+                || source.is(SUBATOMIC_1)
+                || source.is(SUBATOMIC_2)
+                || source.is(SUBATOMIC_3)
+                || source.is(SUBATOMIC_4)
+                || source.is(SUBATOMIC_5);
+    }
+
+    private static boolean isSubatomicKey(ResourceKey<DamageType> key) {
+        return SUBATOMIC.equals(key)
+                || SUBATOMIC_1.equals(key)
+                || SUBATOMIC_2.equals(key)
+                || SUBATOMIC_3.equals(key)
+                || SUBATOMIC_4.equals(key)
+                || SUBATOMIC_5.equals(key);
     }
 
     private static LegacyDamageType legacy(ResourceKey<DamageType> key, boolean projectile, boolean explosion, boolean fire,
@@ -833,7 +884,12 @@ public final class ModDamageSources {
         registerAlias(aliases, REVOLVER_BULLET, "revolverBullet", "bullet", "s_bullet");
         registerAlias(aliases, CHOPPER_BULLET, "chopperBullet", "emplacer", "displacement", "s_emplacer");
         registerAlias(aliases, COMBINE_BALL, "cmb", "combineBall", "combineball", "s_combineball");
-        registerAlias(aliases, SUBATOMIC, "subAtomic", "subAtomic1", "subAtomic2", "subAtomic3", "subAtomic4", "subAtomic5");
+        registerAlias(aliases, SUBATOMIC, "subAtomic");
+        registerAlias(aliases, SUBATOMIC_1, "subAtomic1");
+        registerAlias(aliases, SUBATOMIC_2, "subAtomic2");
+        registerAlias(aliases, SUBATOMIC_3, "subAtomic3");
+        registerAlias(aliases, SUBATOMIC_4, "subAtomic4");
+        registerAlias(aliases, SUBATOMIC_5, "subAtomic5");
         registerAlias(aliases, ACID_PLAYER, "acidPlayer");
         registerAlias(aliases, FLAMETHROWER, "s_flamethrower");
         registerAlias(aliases, PLASMA, "immolator", "s_immolator");
@@ -878,7 +934,12 @@ public final class ModDamageSources {
         aliases.put(REVOLVER_BULLET, List.of("revolverBullet", "bullet", "s_bullet"));
         aliases.put(CHOPPER_BULLET, List.of("chopperBullet", "emplacer", "displacement", "s_emplacer"));
         aliases.put(COMBINE_BALL, List.of("cmb", "combineBall", "s_combineball"));
-        aliases.put(SUBATOMIC, List.of("subAtomic", "subAtomic1..5"));
+        aliases.put(SUBATOMIC, List.of("subAtomic"));
+        aliases.put(SUBATOMIC_1, List.of("subAtomic1"));
+        aliases.put(SUBATOMIC_2, List.of("subAtomic2"));
+        aliases.put(SUBATOMIC_3, List.of("subAtomic3"));
+        aliases.put(SUBATOMIC_4, List.of("subAtomic4"));
+        aliases.put(SUBATOMIC_5, List.of("subAtomic5"));
         aliases.put(ACID_PLAYER, List.of("acidPlayer", "s_acid"));
         aliases.put(FLAMETHROWER, List.of("s_flamethrower"));
         aliases.put(PLASMA, List.of("immolator", "s_immolator"));
@@ -1014,6 +1075,11 @@ public final class ModDamageSources {
                 case "nuclear_blast" -> "nuclearBlast";
                 case "revolver_bullet" -> "revolverBullet";
                 case "subatomic" -> "subAtomic";
+                case "subatomic_1" -> "subAtomic1";
+                case "subatomic_2" -> "subAtomic2";
+                case "subatomic_3" -> "subAtomic3";
+                case "subatomic_4" -> "subAtomic4";
+                case "subatomic_5" -> "subAtomic5";
                 case "tau_blast" -> "tauBlast";
                 default -> location().getPath();
             };

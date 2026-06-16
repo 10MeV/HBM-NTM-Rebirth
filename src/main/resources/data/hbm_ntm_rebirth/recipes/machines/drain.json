@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "P": {
+      "tag": "forge:cast_plates/steel"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:tank_steel"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "T  ",
+    "PPP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_drain"
+  },
+  "show_notification": true
+}

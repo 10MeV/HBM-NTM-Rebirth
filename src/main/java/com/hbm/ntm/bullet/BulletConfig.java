@@ -33,6 +33,8 @@ public record BulletConfig(
         boolean damageFalloffByPenetration,
         double gravity,
         int maxAge,
+        boolean chunkloads,
+        boolean impactsEntities,
         boolean ricochets,
         double ricochetAngle,
         int maxRicochetCount,
@@ -147,6 +149,8 @@ public record BulletConfig(
         private boolean damageFalloffByPenetration = true;
         private double gravity;
         private int maxAge;
+        private boolean chunkloads;
+        private boolean impactsEntities = true;
         private boolean ricochets;
         private double ricochetAngle;
         private int maxRicochetCount;
@@ -214,6 +218,8 @@ public record BulletConfig(
             this.damageFalloffByPenetration = config.damageFalloffByPenetration;
             this.gravity = config.gravity;
             this.maxAge = config.maxAge;
+            this.chunkloads = config.chunkloads;
+            this.impactsEntities = config.impactsEntities;
             this.ricochets = config.ricochets;
             this.ricochetAngle = config.ricochetAngle;
             this.maxRicochetCount = config.maxRicochetCount;
@@ -309,6 +315,16 @@ public record BulletConfig(
         public Builder physics(double gravity, int maxAge) {
             this.gravity = gravity;
             this.maxAge = maxAge;
+            return this;
+        }
+
+        public Builder chunkloads(boolean chunkloads) {
+            this.chunkloads = chunkloads;
+            return this;
+        }
+
+        public Builder impactsEntities(boolean impactsEntities) {
+            this.impactsEntities = impactsEntities;
             return this;
         }
 
@@ -489,7 +505,8 @@ public record BulletConfig(
         public BulletConfig build() {
             return new BulletConfig(legacyName, ammo, ammoCount, velocity, spread, wear, bulletsMin, bulletsMax,
                     damageMin, damageMax, armorThresholdNegation, armorPiercingPercent, knockbackMultiplier,
-                    headshotMultiplier, damageFalloffByPenetration, gravity, maxAge, ricochets, ricochetAngle,
+                    headshotMultiplier, damageFalloffByPenetration, gravity, maxAge, chunkloads, impactsEntities,
+                    ricochets, ricochetAngle,
                     maxRicochetCount, lowerBoundRicochetChance, higherBoundRicochetChance, bounceModifier, selfDamageDelay,
                     penetrates, spectral, breaksGlass, liveAfterImpact, blackPowder, incendiaryTicks, emp,
                     blockDamage, explosive, jolt, rainbow, nuke, shrapnel, chlorine, leadChance, caustic,

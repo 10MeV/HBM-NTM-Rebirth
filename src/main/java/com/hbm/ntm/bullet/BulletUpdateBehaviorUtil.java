@@ -31,43 +31,33 @@ public final class BulletUpdateBehaviorUtil {
     private static final float FOLLY_SUPERMATTER_DR_PIERCING = 0.99F;
 
     public static KnownUpdateResult applyKnownPreMoveUpdate(BulletConfig config, Entity projectile,
-            @Nullable Entity shooter, Vec3 motion, @Nullable LivingEntity currentHomingTarget) {
+            @Nullable Entity shooter, Vec3 motion, @Nullable Entity currentHomingTarget) {
         return applyKnownPreMoveUpdate(config, projectile, shooter, motion, currentHomingTarget, null, 0.0F);
     }
 
     public static KnownUpdateResult applyKnownPreMoveUpdate(BulletConfig config, Entity projectile,
-            @Nullable Entity shooter, Vec3 motion, @Nullable LivingEntity currentHomingTarget,
+            @Nullable Entity shooter, Vec3 motion, @Nullable Entity currentHomingTarget,
             @Nullable Vec3 previousPosition) {
         return applyKnownPreMoveUpdate(config, projectile, shooter, motion, currentHomingTarget, previousPosition,
                 0.0F);
     }
 
     public static KnownUpdateResult applyKnownPreMoveUpdate(BulletConfig config, Entity projectile,
-            @Nullable Entity shooter, Vec3 motion, @Nullable LivingEntity currentHomingTarget,
+            @Nullable Entity shooter, Vec3 motion, @Nullable Entity currentHomingTarget,
             @Nullable Vec3 previousPosition, float currentAcceleration) {
         return applyKnownPreMoveUpdate(config, projectile, shooter, motion, currentHomingTarget, previousPosition,
                 currentAcceleration, 0.0F);
     }
 
     public static KnownUpdateResult applyKnownPreMoveUpdate(BulletConfig config, Entity projectile,
-            @Nullable Entity shooter, Vec3 motion, @Nullable LivingEntity currentHomingTarget,
+            @Nullable Entity shooter, Vec3 motion, @Nullable Entity currentHomingTarget,
             @Nullable Vec3 previousPosition, float currentAcceleration, float overrideDamage) {
         if (config == null || projectile == null || motion == null) {
             return new KnownUpdateResult(motion, currentHomingTarget, false, false, 0, currentAcceleration, false);
         }
 
-        if (config.hasBehavior(BulletBehaviorTag.FOLLY_SUPERMATTER_BEAM)) {
-            applyFollySupermatterBeam(config, projectile, shooter, motion, overrideDamage);
-            return new KnownUpdateResult(Vec3.ZERO, currentHomingTarget, false, false, 0, currentAcceleration,
-                    false, false);
-        }
-
-        float acceleration = applyRocketAcceleration(config, shooter, currentAcceleration);
-        Vec3 updatedMotion = applyRocketSteering(config, projectile, shooter, motion);
-        if (currentHomingTarget != null && currentHomingTarget.isAlive() && !hasAutonomousHoming(config)) {
-            updatedMotion = BulletHomingUtil.steerLegacyLockOn(currentHomingTarget, projectile.position(),
-                    updatedMotion, projectile.tickCount);
-        }
+        float acceleration = currentAcceleration;
+        Vec3 updatedMotion = motion;
         int brokenInPath = applyCoilBreakInPath(config, projectile.level(),
                 previousPosition == null ? projectile.position().subtract(
                         BulletKinematicsUtil.movementDelta(config, motion, currentAcceleration))
@@ -82,7 +72,8 @@ public final class BulletUpdateBehaviorUtil {
                     acceleration, acceleration != currentAcceleration, true);
         }
         if (config.hasBehavior(BulletBehaviorTag.UFO_HOMING)) {
-            HomingResult homing = updateHoming(projectile, shooter, updatedMotion, currentHomingTarget,
+            LivingEntity currentLivingTarget = currentHomingTarget instanceof LivingEntity living ? living : null;
+            HomingResult homing = updateHoming(projectile, shooter, updatedMotion, currentLivingTarget,
                     BulletHomingUtil.UFO_RANGE, BulletHomingUtil.UFO_ANGLE);
             boolean blast = false;
             if (config.hasBehavior(BulletBehaviorTag.UFO_BLAST) && homing.target() != null
@@ -95,7 +86,8 @@ public final class BulletUpdateBehaviorUtil {
         }
 
         if (config.hasBehavior(BulletBehaviorTag.CHLOROPHYTE_HOMING)) {
-            HomingResult homing = updateHoming(projectile, shooter, updatedMotion, currentHomingTarget,
+            LivingEntity currentLivingTarget = currentHomingTarget instanceof LivingEntity living ? living : null;
+            HomingResult homing = updateHoming(projectile, shooter, updatedMotion, currentLivingTarget,
                     BulletHomingUtil.CHLOROPHYTE_RANGE, BulletHomingUtil.CHLOROPHYTE_ANGLE);
             return new KnownUpdateResult(homing.motion(), homing.target(), homing.acquiredTarget(), false,
                     brokenInPath, acceleration, acceleration != currentAcceleration);
@@ -105,8 +97,34 @@ public final class BulletUpdateBehaviorUtil {
                 acceleration, acceleration != currentAcceleration);
     }
 
+    public static void applyKnownBeamUpdate(BulletConfig config, Entity projectile, @Nullable Entity shooter,
+            Vec3 motion, float overrideDamage, double beamLength) {
+        if (config == null || projectile == null || motion == null) {
+            return;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.FOLLY_SUPERMATTER_BEAM)) {
+            applyFollySupermatterBeam(config, projectile, shooter, motion, overrideDamage, beamLength);
+        }
+    }
+
+    public static KnownPostMoveResult applyKnownPostMoveUpdate(BulletConfig config, Entity projectile,
+            @Nullable Entity shooter, @Nullable Entity currentHomingTarget, Vec3 position, Vec3 motion,
+            float currentAcceleration) {
+        if (config == null || projectile == null || position == null || motion == null) {
+            return new KnownPostMoveResult(motion, currentHomingTarget, currentAcceleration, false);
+        }
+        float acceleration = applyRocketAcceleration(config, shooter, currentAcceleration);
+        Vec3 updatedMotion = applyRocketSteering(config, shooter, position, motion);
+        if (currentHomingTarget != null && currentHomingTarget.isAlive() && !hasAutonomousHoming(config)) {
+            updatedMotion = BulletHomingUtil.steerLegacyLockOn(currentHomingTarget, position,
+                    updatedMotion, projectile.tickCount);
+        }
+        return new KnownPostMoveResult(updatedMotion, currentHomingTarget, acceleration,
+                acceleration != currentAcceleration);
+    }
+
     private static void applyFollySupermatterBeam(BulletConfig config, Entity projectile, @Nullable Entity shooter,
-            Vec3 motion, float overrideDamage) {
+            Vec3 motion, float overrideDamage, double beamLength) {
         if (projectile.level().isClientSide()) {
             return;
         }
@@ -115,8 +133,9 @@ public final class BulletUpdateBehaviorUtil {
         if (direction.lengthSqr() <= 1.0E-7D) {
             return;
         }
+        double effectiveBeamLength = beamLength > 1.0E-7D ? beamLength : FOLLY_SUPERMATTER_RANGE;
         spawnFollySupermatterVisual(projectile.level(), projectile.position(), direction,
-                projectile.getXRot(), projectile.getYRot(), projectile.tickCount);
+                projectile.getXRot(), projectile.getYRot(), projectile.tickCount, effectiveBeamLength);
 
         if (projectile.tickCount != FOLLY_SUPERMATTER_EFFECT_TICK) {
             return;
@@ -128,14 +147,14 @@ public final class BulletUpdateBehaviorUtil {
 
         Vec3 origin = projectile.position();
         AABB beamArea = projectile.getBoundingBox()
-                .expandTowards(direction.scale(FOLLY_SUPERMATTER_RANGE))
+                .expandTowards(direction.scale(effectiveBeamLength))
                 .inflate(1.0D);
         java.util.List<Entity> entities = projectile.level().getEntities(projectile, beamArea,
                 entity -> entity.isAlive() && entity != shooter);
         float damage = overrideDamage > 0.0F ? overrideDamage : config.damageMax();
         int minY = projectile.level().getMinBuildHeight();
         int maxY = projectile.level().getMaxBuildHeight();
-        for (int distance = 1; distance < FOLLY_SUPERMATTER_RANGE; distance += 2) {
+        for (int distance = 1; distance < effectiveBeamLength; distance += 2) {
             int x = (int) Math.floor(origin.x + direction.x * distance);
             int y = (int) Math.floor(origin.y + direction.y * distance);
             int z = (int) Math.floor(origin.z + direction.z * distance);
@@ -170,13 +189,14 @@ public final class BulletUpdateBehaviorUtil {
     }
 
     private static void spawnFollySupermatterVisual(Level level, Vec3 origin, Vec3 direction,
-            float pitch, float yaw, int ticksExisted) {
+            float pitch, float yaw, int ticksExisted, double beamLength) {
         if (ticksExisted >= FOLLY_SUPERMATTER_VISUAL_TICKS) {
             return;
         }
         double distance = ticksExisted * FOLLY_SUPERMATTER_VISUAL_SPACING;
         Vec3 position = origin.add(direction.scale(distance));
-        float scale = 2.0F + ticksExisted / (float) (FOLLY_SUPERMATTER_RANGE / FOLLY_SUPERMATTER_VISUAL_SPACING)
+        double scaledBeamLength = Math.max(beamLength, 1.0E-7D);
+        float scale = 2.0F + ticksExisted / (float) (scaledBeamLength / FOLLY_SUPERMATTER_VISUAL_SPACING)
                 * 3.0F;
         ParticleUtil.spawnPlasmaBlast(level, position.x, position.y, position.z,
                 0.75F, 0.75F, 0.75F, pitch + 90.0F, -yaw, scale, 250.0D);
@@ -279,12 +299,12 @@ public final class BulletUpdateBehaviorUtil {
         return currentAcceleration;
     }
 
-    private static Vec3 applyRocketSteering(BulletConfig config, Entity projectile, @Nullable Entity shooter,
+    private static Vec3 applyRocketSteering(BulletConfig config, @Nullable Entity shooter, Vec3 position,
             Vec3 motion) {
         if (!config.hasBehavior(BulletBehaviorTag.ROCKET_STEER)
                 || !(shooter instanceof Player player)
                 || !canSteerRocket(config, player)
-                || projectile.position().distanceTo(player.position()) > 100.0D) {
+                || position.distanceTo(player.position()) > 100.0D) {
             return motion;
         }
 
@@ -292,7 +312,7 @@ public final class BulletUpdateBehaviorUtil {
         if (hit == null || hit.getType() == HitResult.Type.MISS) {
             return motion;
         }
-        Vec3 target = hit.getLocation().subtract(projectile.position());
+        Vec3 target = hit.getLocation().subtract(position);
         if (target.length() < 3.0D || motion.lengthSqr() <= 1.0E-7D) {
             return motion;
         }
@@ -311,25 +331,20 @@ public final class BulletUpdateBehaviorUtil {
         if (isAlwaysSteeringRocket(config)) {
             return true;
         }
-        return isQdSteeringRocket(config) && isHoldingAimedSednaGun(player);
-    }
-
-    private static boolean isHoldingAimedSednaGun(Player player) {
-        return isAimedSednaGun(player.getMainHandItem())
-                || isAimedSednaGun(player.getOffhandItem());
+        return isQdSteeringRocket(config) && isAimedSednaGun(player.getMainHandItem());
     }
 
     private static boolean isAimedSednaGun(net.minecraft.world.item.ItemStack stack) {
         return stack.getItem() instanceof SednaGunItem gun && gun.legacyIsAiming(stack);
     }
 
-    public record KnownUpdateResult(Vec3 motion, @Nullable LivingEntity homingTarget, boolean acquiredHomingTarget,
+    public record KnownUpdateResult(Vec3 motion, @Nullable Entity homingTarget, boolean acquiredHomingTarget,
             boolean triggeredUfoBlast, int coilBlocksBroken, float acceleration, boolean accelerated,
             boolean discardProjectile) {
         public static final KnownUpdateResult NONE = new KnownUpdateResult(Vec3.ZERO, null, false, false, 0,
                 0.0F, false);
 
-        public KnownUpdateResult(Vec3 motion, @Nullable LivingEntity homingTarget, boolean acquiredHomingTarget,
+        public KnownUpdateResult(Vec3 motion, @Nullable Entity homingTarget, boolean acquiredHomingTarget,
                 boolean triggeredUfoBlast, int coilBlocksBroken, float acceleration, boolean accelerated) {
             this(motion, homingTarget, acquiredHomingTarget, triggeredUfoBlast, coilBlocksBroken, acceleration,
                     accelerated, triggeredUfoBlast);
@@ -337,6 +352,10 @@ public final class BulletUpdateBehaviorUtil {
     }
 
     public record HomingResult(Vec3 motion, @Nullable LivingEntity target, boolean acquiredTarget) {
+    }
+
+    public record KnownPostMoveResult(Vec3 motion, @Nullable Entity homingTarget, float acceleration,
+            boolean accelerated) {
     }
 
     private BulletUpdateBehaviorUtil() {

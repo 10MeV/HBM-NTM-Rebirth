@@ -906,6 +906,7 @@ public final class HbmParticleEffects {
         int cloudCount = Math.max(1, getInt(data, "cloudCount", 15));
         int debrisCount = Math.max(0, getInt(data, "debrisCount", 10));
         int debrisSize = Math.max(0, getInt(data, "debrisSize", 16));
+        int debrisRetry = Mth.clamp(getInt(data, "debrisRetry", 50), 0, 512);
         float cloudScale = Math.max(0.25F, getFloat(data, "cloudScale", 5.0F));
         float cloudSpeedMult = Math.max(0.1F, getFloat(data, "cloudSpeedMult", 1.0F));
         float waveScale = Math.max(4.0F, getFloat(data, "waveScale", 45.0F));
@@ -941,7 +942,9 @@ public final class HbmParticleEffects {
             }
             double offsetX = random.nextGaussian() * debrisHorizontalDeviation;
             double offsetZ = random.nextGaussian() * debrisHorizontalDeviation;
-            BlockState debrisState = nearbyBlockState(level, x + offsetX, y + debrisVerticalOffset, z + offsetZ);
+            BlockState debrisState = sampleLegacyDebrisState(level,
+                    x + offsetX, y + debrisVerticalOffset, z + offsetZ,
+                    debrisSize, debrisRetry, random);
             Vec3 motion = legacyDebrisMotion(random, debrisVelocity);
             Particle particle = LegacyDebrisParticle.create(level, x, y, z, motion.x(), motion.y(), motion.z(), debrisState, debrisSize);
             if (particle != null) {
@@ -1484,6 +1487,79 @@ public final class HbmParticleEffects {
             }
         }
         return Blocks.STONE.defaultBlockState();
+    }
+
+    private static BlockState sampleLegacyDebrisState(ClientLevel level, double x, double y, double z,
+            int debrisSize, int debrisRetry, RandomSource random) {
+        int size = Mth.clamp(debrisSize, 1, 32);
+        if (size < 2) {
+            return nearbyBlockState(level, x, y, z);
+        }
+
+        int centerX = Mth.floor(x + 0.5D);
+        int centerY = Mth.floor(y + 0.5D);
+        int centerZ = Mth.floor(z + 0.5D);
+        int middle = size / 2 - 1;
+        boolean[] occupied = new boolean[size * size * size];
+        BlockState selected = null;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+
+        for (int ix = 0; ix < 2; ix++) {
+            for (int iy = 0; iy < 2; iy++) {
+                for (int iz = 0; iz < 2; iz++) {
+                    int localX = middle + ix;
+                    int localY = middle + iy;
+                    int localZ = middle + iz;
+                    BlockState state = level.getBlockState(pos.set(centerX + ix, centerY + iy, centerZ + iz));
+                    if (!state.isAir()) {
+                        occupied[debrisIndex(size, localX, localY, localZ)] = true;
+                        selected = state;
+                    }
+                }
+            }
+        }
+
+        for (int layer = 2; layer <= size / 2; layer++) {
+            for (int attempt = 0; attempt < debrisRetry; attempt++) {
+                int localOffsetX = -layer + random.nextInt(layer * 2 + 1);
+                int localOffsetY = -layer + random.nextInt(layer * 2 + 1);
+                int localOffsetZ = -layer + random.nextInt(layer * 2 + 1);
+                int localX = middle + localOffsetX;
+                int localY = middle + localOffsetY;
+                int localZ = middle + localOffsetZ;
+                if (!debrisInBounds(size, localX, localY, localZ) || !hasLegacyDebrisNeighbor(occupied, size, localX, localY, localZ)) {
+                    continue;
+                }
+                BlockState state = level.getBlockState(pos.set(centerX + localOffsetX, centerY + localOffsetY, centerZ + localOffsetZ));
+                if (!state.isAir()) {
+                    occupied[debrisIndex(size, localX, localY, localZ)] = true;
+                    selected = state;
+                }
+            }
+        }
+
+        return selected == null ? nearbyBlockState(level, x, y, z) : selected;
+    }
+
+    private static boolean hasLegacyDebrisNeighbor(boolean[] occupied, int size, int x, int y, int z) {
+        return isLegacyDebrisOccupied(occupied, size, x + 1, y, z)
+                || isLegacyDebrisOccupied(occupied, size, x - 1, y, z)
+                || isLegacyDebrisOccupied(occupied, size, x, y + 1, z)
+                || isLegacyDebrisOccupied(occupied, size, x, y - 1, z)
+                || isLegacyDebrisOccupied(occupied, size, x, y, z + 1)
+                || isLegacyDebrisOccupied(occupied, size, x, y, z - 1);
+    }
+
+    private static boolean isLegacyDebrisOccupied(boolean[] occupied, int size, int x, int y, int z) {
+        return debrisInBounds(size, x, y, z) && occupied[debrisIndex(size, x, y, z)];
+    }
+
+    private static boolean debrisInBounds(int size, int x, int y, int z) {
+        return x >= 0 && x < size && y >= 0 && y < size && z >= 0 && z < size;
+    }
+
+    private static int debrisIndex(int size, int x, int y, int z) {
+        return (x * size + y) * size + z;
     }
 
     private static int getInt(CompoundTag data, String key, int fallback) {

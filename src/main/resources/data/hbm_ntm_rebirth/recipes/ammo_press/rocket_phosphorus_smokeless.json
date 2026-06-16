@@ -1,0 +1,44 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 69,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_rocket_phosphorus",
+    "count": 2
+  },
+  "input": [
+    {
+      "ingredient": {
+        "tag": "forge:ingots/white_phosphorus"
+      },
+      "count": 1,
+      "legacy_ore": "ingotWhitePhosphorus"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_high_explosive"
+      },
+      "count": 1,
+      "legacy_ore": "ingotAnyHighExplosive"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_large"
+      },
+      "count": 1,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 1
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:dusts/any_smokeless"
+      },
+      "count": 3,
+      "legacy_ore": "dustAnySmokeless"
+    },
+    null
+  ]
+}

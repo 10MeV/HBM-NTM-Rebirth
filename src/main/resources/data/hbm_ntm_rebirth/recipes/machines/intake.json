@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "G": {
+      "item": "hbm_ntm_rebirth:steel_grate"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:tank_steel"
+    }
+  },
+  "pattern": [
+    "GGG",
+    "PMP",
+    "PTP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_intake"
+  },
+  "show_notification": true
+}

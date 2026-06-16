@@ -1,15 +1,20 @@
 package com.hbm.inventory.fluid.trait;
 
+import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonWriter;
 import com.hbm.handler.pollution.PollutionHandler;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.PollutingFluidTrait;
 import com.hbm.ntm.fluid.trait.PollutingFluidTrait.PollutionKind;
 import com.hbm.ntm.pollution.PollutionManager;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,6 +53,76 @@ public class FT_Polluting extends PollutingFluidTrait {
 
     public FT_Polluting burn(com.hbm.ntm.pollution.PollutionType type, float amount) {
         return burn(PollutionHandler.fromModern(type), amount);
+    }
+
+    public void addInfoHidden(List<String> info) {
+        if (info == null) {
+            return;
+        }
+        if (!releaseMap.isEmpty()) {
+            info.add(ChatFormatting.GREEN + "When spilled:");
+            for (Map.Entry<PollutionHandler.PollutionType, Float> entry : releaseMap.entrySet()) {
+                info.add(ChatFormatting.GREEN + " - " + entry.getValue() + " " + entry.getKey() + " per mB");
+            }
+        }
+        if (!burnMap.isEmpty()) {
+            info.add(ChatFormatting.RED + "When burned:");
+            for (Map.Entry<PollutionHandler.PollutionType, Float> entry : burnMap.entrySet()) {
+                info.add(ChatFormatting.RED + " - " + entry.getValue() + " " + entry.getKey() + " per mB");
+            }
+        }
+    }
+
+    public void onFluidRelease(Level level, int x, int y, int z, com.hbm.inventory.fluid.tank.FluidTank tank,
+            int overflowAmount, FluidTrait.FluidReleaseType release) {
+        onFluidRelease(level, new BlockPos(x, y, z), release);
+    }
+
+    public void onFluidRelease(Level level, BlockPos pos, FluidTrait.FluidReleaseType release) {
+        if (release == FluidTrait.FluidReleaseType.VOID) {
+            return;
+        }
+        Map<PollutionHandler.PollutionType, Float> source = release == FluidTrait.FluidReleaseType.BURN
+                ? burnMap
+                : releaseMap;
+        for (Map.Entry<PollutionHandler.PollutionType, Float> entry : source.entrySet()) {
+            PollutionHandler.incrementPollution(level, pos, entry.getKey(), entry.getValue());
+        }
+    }
+
+    public void serializeJSON(JsonWriter writer) throws IOException {
+        writer.name("release").beginObject();
+        for (Map.Entry<PollutionHandler.PollutionType, Float> entry : releaseMap.entrySet()) {
+            writer.name(entry.getKey().name()).value(entry.getValue());
+        }
+        writer.endObject();
+        writer.name("burn").beginObject();
+        for (Map.Entry<PollutionHandler.PollutionType, Float> entry : burnMap.entrySet()) {
+            writer.name(entry.getKey().name()).value(entry.getValue());
+        }
+        writer.endObject();
+    }
+
+    public void deserializeJSON(JsonObject object) {
+        if (object == null) {
+            return;
+        }
+        if (object.has("release")) {
+            JsonObject release = object.getAsJsonObject("release");
+            for (PollutionHandler.PollutionType type : PollutionHandler.PollutionType.values()) {
+                if (release.has(type.name())) {
+                    release(type, release.get(type.name()).getAsFloat());
+                }
+            }
+        }
+        if (object.has("burn")) {
+            JsonObject burn = object.getAsJsonObject("burn");
+            for (PollutionHandler.PollutionType type : PollutionHandler.PollutionType.values()) {
+                if (burn.has(type.name())) {
+                    burn(type, burn.get(type.name()).getAsFloat());
+                }
+            }
+        }
     }
 
     public static void pollute(Level level, int x, int y, int z, FluidType type,

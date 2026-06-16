@@ -6,6 +6,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -40,6 +41,13 @@ public abstract class DamagedTurretBlockEntityBase extends TurretBlockEntityBase
     @Override
     protected boolean usesEnergy() {
         return false;
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, net.minecraft.world.entity.player.Inventory inventory,
+            Player player) {
+        return null;
     }
 
     @Override

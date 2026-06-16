@@ -83,10 +83,13 @@ public class TurretChekhovBlockEntity extends TurretBlockEntityBase {
             return;
         }
         BulletConfig config = getFirstConfigLoaded();
-        if (config == null || !consumeAmmo(config)) {
+        if (config == null || !hasAmmo(config)) {
             return;
         }
-        spawnBullet(config, 10.0F);
+        if (!spawnBullet(config, 10.0F)) {
+            return;
+        }
+        consumeAmmo(config);
         spawnMuzzleLargeExplode(1.5F, 1);
         scheduleCasing(config);
         playTurretSound("hbm:turret.chekhov_fire", 2.0F, 1.0F);

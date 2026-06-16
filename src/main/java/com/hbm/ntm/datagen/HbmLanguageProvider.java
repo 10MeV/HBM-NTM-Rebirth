@@ -98,6 +98,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.coil_tungsten", "Heating Coil");
         add("item.hbm_ntm_rebirth.coil_gold", "Gold Coil");
         add("item.hbm_ntm_rebirth.motor", "Motor");
+        add("item.hbm_ntm_rebirth.gear_large", "Large Gear");
+        add("item.hbm_ntm_rebirth.gear_large_steel", "Large Steel Gear");
+        add("item.hbm_ntm_rebirth.sawblade", "Sawblade");
         add("item.hbm_ntm_rebirth.upgrade_template", "Machine Upgrade Template");
         add("item.hbm_ntm_rebirth.blueprints", "Blueprints");
         add("item.hbm_ntm_rebirth.upgrade_speed_1", "Speed Upgrade Mk.I");
@@ -479,6 +482,11 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.ammo_standard_p9_fmj", "9mm Round (Full Metal Jacket)");
         add("item.hbm_ntm_rebirth.ammo_standard_p9_jhp", "9mm Round (Jacketed Hollow Point)");
         add("item.hbm_ntm_rebirth.ammo_standard_p9_ap", "9mm Round (Armor Piercing)");
+        add("item.hbm_ntm_rebirth.ammo_standard_p45_sp", ".45 Round (Soft Point)");
+        add("item.hbm_ntm_rebirth.ammo_standard_p45_fmj", ".45 Round (Full Metal Jacket)");
+        add("item.hbm_ntm_rebirth.ammo_standard_p45_jhp", ".45 Round (Jacketed Hollow Point)");
+        add("item.hbm_ntm_rebirth.ammo_standard_p45_ap", ".45 Round (Armor Piercing)");
+        add("item.hbm_ntm_rebirth.ammo_standard_p45_du", ".45 Round (Depleted Uranium)");
         add("item.hbm_ntm_rebirth.ammo_standard_r556_sp", "5.56mm Round (Soft Point)");
         add("item.hbm_ntm_rebirth.ammo_standard_r556_fmj", "5.56mm Round (Full Metal Jacket)");
         add("item.hbm_ntm_rebirth.ammo_standard_r556_jhp", "5.56mm Round (Jacketed Hollow Point)");
@@ -542,7 +550,13 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.ammo_fireext_0", "Fire Extinguisher Water Tank");
         add("item.hbm_ntm_rebirth.ammo_fireext_1", "Fire Extinguisher Foam Tank");
         add("item.hbm_ntm_rebirth.ammo_fireext_2", "Fire Extinguisher Sand Tank");
+        add("item.hbm_ntm_rebirth.ammo_secret_folly_sm", "Silver Bullet");
+        add("item.hbm_ntm_rebirth.ammo_secret_folly_nuke", "Silver Bullet, Nuclear");
+        add("item.hbm_ntm_rebirth.ammo_secret_m44_equestrian", ".44 Magnum Head-Exploder");
+        add("item.hbm_ntm_rebirth.ammo_secret_g12_equestrian", "12 Gauge Railway Spike Shot");
+        add("item.hbm_ntm_rebirth.ammo_secret_bmg50_equestrian", ".50 BMG Demolisher");
         add("item.hbm_ntm_rebirth.ammo_secret_p35_800", ".35-800 V9");
+        add("item.hbm_ntm_rebirth.ammo_secret_bmg50_black", ".50 BMG Bypass Round");
         add("item.hbm_ntm_rebirth.ammo_secret_p35_800_bl", ".35-800 V9 (Black Lightning)");
         add("item.hbm_ntm_rebirth.gun_pepperbox", "Pepperbox");
         add("item.hbm_ntm_rebirth.gun_maresleg", "Lever Action Shotgun");
@@ -1177,7 +1191,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.hbm_ntm_rebirth.turret_sentry", "Brown");
         add("container.hbm_ntm_rebirth.turret_maxwell", "Maxwell");
         add("container.hbm_ntm_rebirth.turret_arty", "Greg");
-        add("container.hbm_ntm_rebirth.turret_himars", "Rocket Artillery Turret \"Henry\"");
+        add("container.hbm_ntm_rebirth.turret_himars", "Henry");
         add("container.hbm_ntm_rebirth.turret_fritz", "Fritz");
         add("container.hbm_ntm_rebirth.turret.players", "Players");
         add("container.hbm_ntm_rebirth.turret.friendly", "Friendly");
@@ -1315,6 +1329,10 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.singularity_super_heated", "Superheated Resonating Singularity");
         add("item.hbm_ntm_rebirth.singularity_spark", "Spark Singularity");
         add("item.hbm_ntm_rebirth.black_hole", "Miniature Black Hole");
+        add("item.hbm_ntm_rebirth.particle_empty", "Empty Particle Capsule");
+        add("item.hbm_ntm_rebirth.particle_higgs", "Higgs Boson Capsule");
+        add("item.hbm_ntm_rebirth.particle_dark", "Dark Matter Capsule");
+        add("item.hbm_ntm_rebirth.particle_sparkticle", "Sparkticle Capsule");
         add("item.hbm_ntm_rebirth.particle_digamma", "§cThe Digamma Particle§r");
         add("item.hbm_ntm_rebirth.pellet_antimatter", "Antimatter Cluster");
         add("item.hbm_ntm_rebirth.singularity.desc.1", "You may be asking:");
@@ -1411,6 +1429,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.rbmk_outgasser", "RBMK Irradiation Channel");
         add("block.hbm_ntm_rebirth.rbmk_storage", "RBMK Storage Column");
         add("block.hbm_ntm_rebirth.rbmk_autoloader", "RBMK Autoloader");
+        add("block.hbm_ntm_rebirth.rbmk_console", "RBMK Console");
         add("block.hbm_ntm_rebirth.rbmk_crane_console", "RBMK Crane Console");
         add("block.hbm_ntm_rebirth.rbmk_control", "RBMK Control Rods");
         add("block.hbm_ntm_rebirth.rbmk_control_auto", "RBMK Automatic Control Rods");
@@ -1435,6 +1454,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.rbmkLever", "Redstone-over-Radio Lever");
         add("container.rbmkNumitron", "Redstone-over-Radio Numeric Display");
         add("container.rbmkReaSim", "RBMK Fuel Rod (ReaSim)");
+        add("container.rbmkConsole", "RBMK Console");
         add("container.rbmkStorage", "RBMK Storage Column");
         add("container.rbmkAutoloader", "RBMK Autoloader");
         add("block.hbm_ntm_rebirth.cable_diode.desc1", "Limits throughput and restricts flow direction");
@@ -1534,6 +1554,17 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_fracking_tower", "Hydraulic Fracking Tower");
         add("block.hbm_ntm_rebirth.machine_centrifuge", "Centrifuge");
         add("block.hbm_ntm_rebirth.machine_gascent", "Gas Centrifuge");
+        add("container.gasCentrifuge", "Gas Centrifuge");
+        add("desc.gui.gasCent.enrichment", "\u00a72Enrichment\u00a7r$Uranium enrichment requires cascades.$Two-centrifuge cascades will give$uranium fuel, four-centrifuge cascades$will give total separation.");
+        add("desc.gui.gasCent.output", "\u00a76Fluid Transfer\u00a7r$Fluid can be transferred to another centrifuge$via the output port for further processing.");
+        add("hbmpseudofluid.none", "Empty");
+        add("hbmpseudofluid.heuf6", "Highly Enriched UF6");
+        add("hbmpseudofluid.meuf6", "Medium Enriched UF6");
+        add("hbmpseudofluid.leuf6", "Low Enriched UF6");
+        add("hbmpseudofluid.nuf6", "Natural UF6");
+        add("hbmpseudofluid.pf6", "Plutonium Hexafluoride");
+        add("hbmpseudofluid.mud_heavy", "Heavy Sludge Fraction");
+        add("hbmpseudofluid.mud", "Poisonous Sludge Gas");
         add("block.hbm_ntm_rebirth.machine_ore_slopper", "Bedrock Ore Processor");
         add("block.hbm_ntm_rebirth.machine_sawmill", "Stirling Sawmill");
         add("block.hbm_ntm_rebirth.machine_crucible", "Crucible");
@@ -1578,6 +1609,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_turbofan", "Turbofan");
         add("block.hbm_ntm_rebirth.machine_turbinegas", "Combined Cycle Gas Turbine");
         add("block.hbm_ntm_rebirth.machine_ammo_press", "Ammo Press");
+        add("block.hbm_ntm_rebirth.machine_transformer", "10k-20Hz Transformer");
         add("block.hbm_ntm_rebirth.furnace_iron", "Iron Furnace");
         add("block.hbm_ntm_rebirth.furnace_steel", "Steel Furnace");
         add("block.hbm_ntm_rebirth.furnace_combination", "Combination Oven");
@@ -1612,6 +1644,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.machineLiquefactor", "Liquefactor");
         add("container.hbm_ntm_rebirth.battery", "Energy Storage");
         add("container.hbm_ntm_rebirth.fensu", "FEnSU");
+        add("container.batteryREDD", "FEnSU");
         add("container.batterySocket", "Battery Socket");
         add("container.satLinker", "SatLink Device");
         add("container.hbm_ntm_rebirth.sat_linker", "SatLink Device");
@@ -1651,6 +1684,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.bat9000", "Big-Ass Tank 9000");
         add("container.barrel", "Barrel");
         add("container.bigAssTank", "Big-Ass Tank");
+        add("container.orbus", "Heavy Antimatter Storage");
         add("container.gasFlare", "Flare Stack");
         add("container.fluidtank.mode", "Mode");
         add("container.fluidtank.mode.input", "Input");
@@ -1727,6 +1761,11 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("death.attack.revolverBullet.item", "%1$s was shot in the head by %2$s using %3$s.");
         add("death.attack.shrapnel", "%1$s was ragged by a shrapnel.");
         add("death.attack.spikes", "%1$s got impaled.");
+        add("death.attack.subAtomic1", "%1$s's atoms have been destroyed by %2$s.");
+        add("death.attack.subAtomic2", "%1$s was QPU-misaligned because %2$s tampered with their de facto speed.");
+        add("death.attack.subAtomic3", "%1$s's divergence dropped below 1 percent because of %2$s.");
+        add("death.attack.subAtomic4", "%1$s was divided by zero by %2$s.");
+        add("death.attack.subAtomic5", "%1$s was nullified by %2$s.");
         add("death.attack.suicide", "%1$s blew their head off.");
         add("death.attack.tau", "%1$s was riddeled by %2$s using negatively charged tauons.");
         add("death.attack.tauBlast", "%1$s charged the XVL1456 for too long and was blown into pieces.");
@@ -1942,6 +1981,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.turbine_titanium", "Titanium Steam Turbine");
         add("item.hbm_ntm_rebirth.blade_tungsten", "Tungsten Reinforced Blade");
         add("item.hbm_ntm_rebirth.turbine_tungsten", "Reinforced Turbofan Blades");
+        add("item.hbm_ntm_rebirth.flywheel_beryllium", "Beryllium Flywheel");
         add("item.hbm_ntm_rebirth.crystal_coal", "Coal Crystals");
         add("item.hbm_ntm_rebirth.crystal_iron", "Iron Crystals");
         add("item.hbm_ntm_rebirth.crystal_gold", "Gold Crystals");
@@ -2689,6 +2729,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("armorMod.type.servo", "Servos");
         add("armorMod.type.special", "Special");
         // Additional legacy item names synchronized from 1.7.10 lang.
+        add("item.hbm_ntm_rebirth.assembly_nuke", "Mini Nuke Shell");
         add("item.hbm_ntm_rebirth.asbestos_cloth", "Fire Proximity Cloth");
         add("item.hbm_ntm_rebirth.billet_actinium", "Actinium-227 Billet");
         add("item.hbm_ntm_rebirth.billet_am241", "Americium-241 Billet");
@@ -2739,6 +2780,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.billet_zfb_bismuth", "Bismuth ZFB Billet");
         add("item.hbm_ntm_rebirth.billet_zfb_pu241", "Pu-241 ZFB Billet");
         add("item.hbm_ntm_rebirth.billet_zirconium", "Zirconium Billet");
+        add("item.hbm_ntm_rebirth.bolt_lead", "Lead Bolt");
         add("item.hbm_ntm_rebirth.bolt_dura_steel", "High-Speed Steel Bolt");
         add("item.hbm_ntm_rebirth.bolt_steel", "Steel Bolt");
         add("item.hbm_ntm_rebirth.bolt_tungsten", "Tungsten Bolt");

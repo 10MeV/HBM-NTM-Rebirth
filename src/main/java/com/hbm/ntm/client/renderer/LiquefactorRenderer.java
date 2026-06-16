@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlockEntity> {
     public LiquefactorRenderer(BlockEntityRendererProvider.Context context) {
@@ -30,18 +31,19 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
     public void render(LiquefactorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = blockEntity.getBlockState();
-        int modelLight = packedLight;
-        if (state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block) {
-            LegacyMachineDefinition definition = block.definition();
-            modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
+        if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
+            return;
         }
-        float rotation = state.hasProperty(com.hbm.ntm.block.HorizontalMachineBlock.FACING)
-                ? 270.0F - state.getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING).toYRot()
-                : 180.0F;
+
+        LegacyMachineDefinition definition = block.definition();
+        int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
+        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+        Vec3 translation = definition.modelTranslation(state);
+        poseStack.translate(translation.x, translation.y, translation.z);
+        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
         ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart("Main", context);

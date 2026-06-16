@@ -35,7 +35,7 @@ public abstract class LegacyThrowableEntity extends Entity {
         }
         if (inGround) {
             ticksInGround++;
-            if (groundDespawn() > 0 && ticksInGround >= groundDespawn()) {
+            if (groundDespawn() > 0 && ticksInGround == groundDespawn()) {
                 discard();
             }
             return;

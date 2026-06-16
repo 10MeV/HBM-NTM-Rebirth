@@ -1,5 +1,6 @@
 package com.hbm.ntm.entity.projectile;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.entity.RadarContext;
 import com.hbm.ntm.api.entity.RadarDetectable;
 import com.hbm.ntm.bullet.BulletBehaviorTag;
@@ -37,9 +38,11 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.world.ForgeChunkManager;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +95,7 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
     private double velocityX;
     private double velocityY;
     private double velocityZ;
+    private long forcedChunk = Long.MIN_VALUE;
     public float overrideDamage;
 
     public BulletProjectileEntity(EntityType<? extends BulletProjectileEntity> type, Level level) {
@@ -199,6 +203,9 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
             tickClientServerInterpolationOnly(currentConfig, previousPosition);
             return;
         }
+        if (currentConfig.chunkloads()) {
+            forceCurrentChunk();
+        }
         if (inGround()) {
             if (BulletStuckStateUtil.sameLegacyStuckBlock(level(), stuckBlockPos, stuckBlockState)) {
                 ticksInGround++;
@@ -213,7 +220,7 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         int activeTicksInAir = ticksInAir + 1;
         BulletProjectileTickUtil.TickResult result = BulletProjectileTickUtil.applyEntityTick(currentConfig, this,
                 getOwner(), homingTarget(), tickCount, activeTicksInAir, hasTauTrailNodes, previousPosition,
-                random, overrideDamage, inGround(), acceleration);
+                random, overrideDamage, inGround(), acceleration, beamLength());
         ticksInAir = activeTicksInAir;
         acceleration = result.acceleration();
         if (currentConfig.plink() == BulletPlink.ENERGY && result.beamLength() > 0.0D) {
@@ -234,9 +241,9 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         applyEntityHitState(result.hit());
         boolean exceededRicochetLimit = applyRicochetState(currentConfig, result.hit());
         spawnRequestedProjectiles(result);
-        boolean redirectedByNi4NiCoin = Ni4NiCoinRicochetUtil.apply(this, currentConfig, result, overrideDamage);
+        Ni4NiCoinRicochetUtil.apply(this, currentConfig, result, overrideDamage);
 
-        if (result.discardProjectile() || exceededRicochetLimit || redirectedByNi4NiCoin) {
+        if (result.discardProjectile() || exceededRicochetLimit) {
             discard();
         }
     }
@@ -424,20 +431,20 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
     }
 
     @Nullable
-    private LivingEntity homingTarget() {
+    private Entity homingTarget() {
         int targetId = entityData.get(HOMING_TARGET);
         if (targetId == BulletHomingStateUtil.NO_TARGET_ID || !(level() instanceof ServerLevel serverLevel)) {
             return null;
         }
         Entity target = serverLevel.getEntity(targetId);
-        return target instanceof LivingEntity living && living.isAlive() ? living : null;
+        return target != null && target.isAlive() ? target : null;
     }
 
-    private void setHomingTarget(@Nullable LivingEntity target) {
+    private void setHomingTarget(@Nullable Entity target) {
         entityData.set(HOMING_TARGET, BulletHomingStateUtil.targetId(target));
     }
 
-    public void setHomingTargetEntity(@Nullable LivingEntity target) {
+    public void setHomingTargetEntity(@Nullable Entity target) {
         setHomingTarget(target);
     }
 
@@ -538,6 +545,12 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
     }
 
     @Override
+    public void remove(RemovalReason reason) {
+        clearForcedChunk();
+        super.remove(reason);
+    }
+
+    @Override
     public boolean shouldBeSaved() {
         return BulletPersistenceUtil.shouldSaveProjectile(config());
     }
@@ -576,5 +589,29 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
     @Override
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    private void forceCurrentChunk() {
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        ChunkPos chunk = chunkPosition();
+        long packed = chunk.toLong();
+        if (forcedChunk == packed) {
+            return;
+        }
+        clearForcedChunk();
+        ForgeChunkManager.forceChunk(serverLevel, HbmNtm.MOD_ID, this, chunk.x, chunk.z, true, true);
+        forcedChunk = packed;
+    }
+
+    private void clearForcedChunk() {
+        if (forcedChunk == Long.MIN_VALUE || !(level() instanceof ServerLevel serverLevel)) {
+            forcedChunk = Long.MIN_VALUE;
+            return;
+        }
+        ChunkPos chunk = new ChunkPos(forcedChunk);
+        ForgeChunkManager.forceChunk(serverLevel, HbmNtm.MOD_ID, this, chunk.x, chunk.z, false, true);
+        forcedChunk = Long.MIN_VALUE;
     }
 }

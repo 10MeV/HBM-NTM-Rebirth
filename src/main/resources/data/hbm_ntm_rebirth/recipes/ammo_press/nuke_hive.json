@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 85,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_nuke_hive",
+    "count": 1
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_high_explosive"
+      },
+      "count": 8,
+      "legacy_ore": "ingotAnyHighExplosive"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_large_steel"
+      },
+      "count": 2,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 3
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "count": 4,
+      "legacy_ore": "plateSteel"
+    },
+    null
+  ]
+}

@@ -37,8 +37,8 @@ public class HeatBoilerBlock extends LegacyVisibleMultiblockMachineBlock {
         ItemStack held = player.getItemInHand(hand);
         if (!level.isClientSide && !player.isShiftKeyDown()
                 && held.getItem() instanceof IFluidIdentifierItem identifier
-                && level.getBlockEntity(pos) instanceof BoilerBlockEntity boiler) {
-            FluidType type = identifier.getIdentifiedFluid(level, pos, held);
+                && resolveCoreBlockEntity(level, pos) instanceof BoilerBlockEntity boiler) {
+            FluidType type = identifier.getIdentifiedFluid(level, boiler.getBlockPos(), held);
             if (isBoilerHeatable(type)) {
                 boiler.setFeedTankType(type);
                 return InteractionResult.CONSUME;

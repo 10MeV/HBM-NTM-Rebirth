@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 78,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_tau_uranium",
+    "count": 16
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:plates/lead"
+      },
+      "count": 1,
+      "legacy_ore": "plateLead"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/u238"
+      },
+      "count": 1,
+      "legacy_ore": "ingotU238"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:plates/lead"
+      },
+      "count": 1,
+      "legacy_ore": "plateLead"
+    },
+    null
+  ]
+}

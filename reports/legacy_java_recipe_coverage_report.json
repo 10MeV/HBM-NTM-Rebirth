@@ -528,32 +528,12 @@
           "source_order": 69
         },
         {
-          "internal_name": "ass.precass",
-          "source_order": 80
-        },
-        {
-          "internal_name": "ass.arcfurnace",
-          "source_order": 83
-        },
-        {
           "internal_name": "ass.rtg",
           "source_order": 86
         },
         {
-          "internal_name": "ass.epress",
-          "source_order": 103
-        },
-        {
-          "internal_name": "ass.fel",
-          "source_order": 104
-        },
-        {
           "internal_name": "ass.excavator",
           "source_order": 106
-        },
-        {
-          "internal_name": "ass.mininglaser",
-          "source_order": 118
         },
         {
           "internal_name": "ass.teleporter",
@@ -562,10 +542,6 @@
         {
           "internal_name": "ass.forcefield",
           "source_order": 122
-        },
-        {
-          "internal_name": "ass.strandcaster",
-          "source_order": 123
         },
         {
           "internal_name": "ass.dieselgen",
@@ -578,26 +554,6 @@
         {
           "internal_name": "ass.pistonsetstar",
           "source_order": 131
-        },
-        {
-          "internal_name": "ass.hephaestus",
-          "source_order": 134
-        },
-        {
-          "internal_name": "ass.leviturbine",
-          "source_order": 136
-        },
-        {
-          "internal_name": "ass.radgen",
-          "source_order": 137
-        },
-        {
-          "internal_name": "ass.hpcondenser",
-          "source_order": 138
-        },
-        {
-          "internal_name": "ass.orbus",
-          "source_order": 146
         },
         {
           "internal_name": "ass.beamline",
@@ -820,24 +776,8 @@
           "source_order": 269
         },
         {
-          "internal_name": "ass.50bmgsm",
-          "source_order": 315
-        },
-        {
           "internal_name": "ass.50bmgbypass",
           "source_order": 316
-        },
-        {
-          "internal_name": "ass.soyuzcore",
-          "source_order": 320
-        },
-        {
-          "internal_name": "ass.soyuz",
-          "source_order": 321
-        },
-        {
-          "internal_name": "ass.lander",
-          "source_order": 322
         },
         {
           "internal_name": "ass.nitra",
@@ -848,8 +788,8 @@
           "source_order": 334
         }
       ],
-      "missing_count": 96,
-      "modern_count": 512,
+      "missing_count": 81,
+      "modern_count": 527,
       "present": [
         {
           "internal_name": "ass.plateiron",
@@ -1236,6 +1176,12 @@
           "source_order": 79
         },
         {
+          "internal_name": "ass.precass",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/precass",
+          "modern_source_order": 80,
+          "source_order": 80
+        },
+        {
           "internal_name": "ass.centrifuge",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/centrifuge",
           "modern_source_order": 81,
@@ -1246,6 +1192,12 @@
           "modern_id": "hbm_ntm_rebirth:assembly_machine/gascent",
           "modern_source_order": 82,
           "source_order": 82
+        },
+        {
+          "internal_name": "ass.arcfurnace",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/arc_furnace",
+          "modern_source_order": 83,
+          "source_order": 83
         },
         {
           "internal_name": "ass.acidizer",
@@ -1356,6 +1308,18 @@
           "source_order": 102
         },
         {
+          "internal_name": "ass.epress",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/electric_press",
+          "modern_source_order": 103,
+          "source_order": 103
+        },
+        {
+          "internal_name": "ass.fel",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fel",
+          "modern_source_order": 104,
+          "source_order": 104
+        },
+        {
           "internal_name": "ass.silex",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/silex",
           "modern_source_order": 105,
@@ -1428,6 +1392,12 @@
           "source_order": 117
         },
         {
+          "internal_name": "ass.mininglaser",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mining_laser",
+          "modern_source_order": 118,
+          "source_order": 118
+        },
+        {
           "internal_name": "ass.radar",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/radar",
           "modern_source_order": 120,
@@ -1438,6 +1408,12 @@
           "modern_id": "hbm_ntm_rebirth:assembly_machine/radar_large",
           "modern_source_order": 121,
           "source_order": 121
+        },
+        {
+          "internal_name": "ass.strandcaster",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/strand_caster",
+          "modern_source_order": 123,
+          "source_order": 123
         },
         {
           "internal_name": "ass.assemfac",
@@ -1482,10 +1458,34 @@
           "source_order": 133
         },
         {
+          "internal_name": "ass.hephaestus",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/hephaestus",
+          "modern_source_order": 134,
+          "source_order": 134
+        },
+        {
           "internal_name": "ass.iturbine",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/industrial_turbine",
           "modern_source_order": 135,
           "source_order": 135
+        },
+        {
+          "internal_name": "ass.leviturbine",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/leviturbine",
+          "modern_source_order": 136,
+          "source_order": 136
+        },
+        {
+          "internal_name": "ass.radgen",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/radgen",
+          "modern_source_order": 137,
+          "source_order": 137
+        },
+        {
+          "internal_name": "ass.hpcondenser",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/powered_condenser",
+          "modern_source_order": 138,
+          "source_order": 138
         },
         {
           "internal_name": "ass.capacitorgold",
@@ -1528,6 +1528,12 @@
           "modern_id": "hbm_ntm_rebirth:assembly_machine/big_ass_tank",
           "modern_source_order": 145,
           "source_order": 145
+        },
+        {
+          "internal_name": "ass.orbus",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/orbus",
+          "modern_source_order": 146,
+          "source_order": 146
         },
         {
           "internal_name": "ass.cyclotron",
@@ -2208,6 +2214,12 @@
           "source_order": 314
         },
         {
+          "internal_name": "ass.50bmgsm",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/50bmgsm",
+          "modern_source_order": 315,
+          "source_order": 315
+        },
+        {
           "internal_name": "chem.shellchlorine",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/shell_chlorine",
           "modern_source_order": 2147483647,
@@ -2224,6 +2236,24 @@
           "modern_id": "hbm_ntm_rebirth:assembly_machine/shell_mustard",
           "modern_source_order": 2147483647,
           "source_order": 319
+        },
+        {
+          "internal_name": "ass.soyuzcore",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/soyuz_core",
+          "modern_source_order": 2147483647,
+          "source_order": 320
+        },
+        {
+          "internal_name": "ass.soyuz",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/soyuz",
+          "modern_source_order": 2147483647,
+          "source_order": 321
+        },
+        {
+          "internal_name": "ass.lander",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/soyuz_lander",
+          "modern_source_order": 2147483647,
+          "source_order": 322
         },
         {
           "internal_name": "ass.satellitebase",
@@ -2286,7 +2316,7 @@
           "source_order": 333
         }
       ],
-      "present_count": 239,
+      "present_count": 254,
       "status": "checked"
     }
   ],

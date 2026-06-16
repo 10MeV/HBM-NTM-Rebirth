@@ -11,6 +11,8 @@ import com.hbm.ntm.fluid.FluidSymbol;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmCompatFluidRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
+import com.hbm.ntm.fluid.HbmFluidCompressorRecipes;
+import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.multiblock.MultiblockHelper;
@@ -160,6 +162,15 @@ public final class CompatExternal {
 
     public static List<CompatRecipeRegistry.RecipeFacadeStatus> recipeFacadeStatuses() {
         return CompatRecipeRegistry.recipeFacadeStatuses();
+    }
+
+    public static HbmFluidCompressorRecipes.Recipe registerCompressorRecipe(HbmFluidStack input,
+            HbmFluidStack output, int duration) {
+        return CompatRecipeRegistry.registerCompressor(input, output, duration);
+    }
+
+    public static List<HbmFluidCompressorRecipes.RecipeEntry> compressorRecipes() {
+        return CompatRecipeRegistry.compressorRecipes();
     }
 
     public static void registerFluidRegisterListener(HbmFluidRegisterListener listener) {

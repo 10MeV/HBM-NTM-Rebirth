@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "BBB",
+    "DGD",
+    "DCD"
+  ],
+  "key": {
+    "B": { "tag": "forge:ingots/boron" },
+    "D": { "item": "hbm_ntm_rebirth:deco_rbmk" },
+    "G": { "tag": "forge:glass_panes" },
+    "C": { "tag": "forge:circuits/analog" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_console"
+  },
+  "show_notification": true
+}

@@ -46,7 +46,7 @@ public final class BulletCollisionUtil {
         Vec3 end = position.add(movement);
         BlockCollision blockHit = config.spectral() ? null : findBlockHit(level, projectile, position, end);
         Vec3 clippedEnd = blockHit == null ? end : blockHit.location();
-        List<EntityCollision> entityHits = level.isClientSide()
+        List<EntityCollision> entityHits = level.isClientSide() || !config.impactsEntities()
                 ? Collections.emptyList()
                 : findEntityHits(level, projectile, shooter, bounds, position, clippedEnd, movement, ticksInAir,
                         config.selfDamageDelay());

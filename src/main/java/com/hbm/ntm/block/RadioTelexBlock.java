@@ -54,8 +54,8 @@ public class RadioTelexBlock extends LegacyXrMultiblockBlock implements EntityBl
             return InteractionResult.PASS;
         }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof RadioTelexBlockEntity telex) {
-            NetworkHooks.openScreen(serverPlayer, telex, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof RadioTelexBlockEntity telex) {
+            NetworkHooks.openScreen(serverPlayer, telex, telex.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

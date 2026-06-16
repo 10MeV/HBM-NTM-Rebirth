@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_vacuum_tube"
+      },
+      "count": 4
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      }
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_template"
+      }
+    },
+    {
+      "ingredient": {
+        "tag": "forge:dusts/emerald"
+      },
+      "count": 4,
+      "legacy_ore": "dustEmerald"
+    }
+  ],
+  "solder": [],
+  "output": {
+    "item": "hbm_ntm_rebirth:upgrade_effect_1"
+  },
+  "duration": 200,
+  "consumption": 1000,
+  "source_order": 100
+}

@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:diesel_crack_reform", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:diesel_crack", "amount": 900 },
+  "input2": { "fluid": "hbm_ntm_rebirth:reformate", "amount": 100 },
+  "duration": 50
+}

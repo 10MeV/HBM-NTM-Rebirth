@@ -1,0 +1,9 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:cryogel", "amount": 2000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:coolant", "amount": 1800 },
+  "solid_input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:powder_ice" }
+  },
+  "duration": 50
+}

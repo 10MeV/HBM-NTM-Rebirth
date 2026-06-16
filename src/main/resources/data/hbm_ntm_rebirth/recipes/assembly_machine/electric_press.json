@@ -1,0 +1,47 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/any_rubber"
+      },
+      "legacy_ore": "ingotAnyRubber"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:part_generic_piston_hydraulic"
+      },
+      "legacy_id": "hbm:part_generic",
+      "legacy_meta": 1
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_basic"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 8
+    }
+  ],
+  "internal_name": "ass.epress",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_epress"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 103
+}

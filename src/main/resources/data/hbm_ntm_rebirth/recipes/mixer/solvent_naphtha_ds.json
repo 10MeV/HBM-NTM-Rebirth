@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:solvent", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:naphtha_ds", "amount": 500 },
+  "input2": { "fluid": "hbm_ntm_rebirth:aromatics", "amount": 500 },
+  "duration": 50
+}

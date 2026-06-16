@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:oxyhydrogen", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:hydrogen", "amount": 500 },
+  "input2": { "fluid": "hbm_ntm_rebirth:air", "amount": 2000 },
+  "duration": 50
+}

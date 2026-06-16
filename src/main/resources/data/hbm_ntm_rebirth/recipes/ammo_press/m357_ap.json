@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 4,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_m357_ap",
+    "count": 8
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/weapon_steel"
+      },
+      "count": 1,
+      "legacy_ore": "ingotWeaponSteel"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:dusts/any_smokeless"
+      },
+      "count": 2,
+      "legacy_ore": "dustAnySmokeless"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_small_steel"
+      },
+      "count": 1,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 2
+    },
+    null
+  ]
+}

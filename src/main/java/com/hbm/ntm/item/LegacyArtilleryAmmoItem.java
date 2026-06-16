@@ -24,6 +24,17 @@ public class LegacyArtilleryAmmoItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+        if (type == LegacyArtilleryAmmoCatalog.AMMO_ARTY_CARGO) {
+            if (stack.hasTag() && stack.getTag().contains("cargo")) {
+                ItemStack cargo = ItemStack.of(stack.getTag().getCompound("cargo"));
+                if (!cargo.isEmpty()) {
+                    tooltip.add(cargo.getHoverName().copy().withStyle(ChatFormatting.YELLOW));
+                    return;
+                }
+            }
+            tooltip.add(Component.translatable(type.tooltipKey()).withStyle(ChatFormatting.RED));
+            return;
+        }
         for (String key : type.tooltipKeys()) {
             tooltip.add(Component.translatable(key).withStyle(ChatFormatting.GRAY));
         }

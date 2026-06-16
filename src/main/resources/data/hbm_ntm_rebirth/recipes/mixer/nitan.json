@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:nitan", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:kerosene", "amount": 600 },
+  "input2": { "fluid": "hbm_ntm_rebirth:mercury", "amount": 200 },
+  "solid_input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:powder_nitan_mix" }
+  },
+  "duration": 50
+}

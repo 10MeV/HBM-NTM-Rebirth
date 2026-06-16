@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:combination_oven",
+  "input": { "ingredient": { "item": "minecraft:sugar_cane" } },
+  "output_item": { "item": "minecraft:sugar", "count": 2 },
+  "output_fluid": { "fluid": "ETHANOL", "amount": 50 }
+}

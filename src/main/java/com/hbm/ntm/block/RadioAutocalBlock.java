@@ -54,8 +54,8 @@ public class RadioAutocalBlock extends LegacyXrMultiblockBlock implements Entity
             return InteractionResult.PASS;
         }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof RadioAutocalBlockEntity autocal) {
-            NetworkHooks.openScreen(serverPlayer, autocal, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof RadioAutocalBlockEntity autocal) {
+            NetworkHooks.openScreen(serverPlayer, autocal, autocal.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

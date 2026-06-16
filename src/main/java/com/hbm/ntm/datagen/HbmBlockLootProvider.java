@@ -82,6 +82,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         dropSelf(ModBlocks.STRUCT_SCAFFOLD.get());
         dropSelf(ModBlocks.STRUCT_SOYUZ_CORE.get());
         dropSelf(ModBlocks.LAUNCH_PAD.get());
+        dropSelf(ModBlocks.LAUNCH_PAD_RUSTED.get());
         dropSelf(ModBlocks.LAUNCH_TABLE.get());
         dropSelf(ModBlocks.COMPACT_LAUNCHER.get());
         dropSelf(ModBlocks.MACHINE_MISSILE_ASSEMBLY.get());

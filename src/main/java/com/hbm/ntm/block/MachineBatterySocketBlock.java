@@ -53,8 +53,8 @@ public class MachineBatterySocketBlock extends LegacyOffsetMultiblockBlock imple
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof MachineBatterySocketBlockEntity socket) {
-            NetworkHooks.openScreen(serverPlayer, socket, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof MachineBatterySocketBlockEntity socket) {
+            NetworkHooks.openScreen(serverPlayer, socket, socket.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -105,7 +105,7 @@ public class MachineBatterySocketBlock extends LegacyOffsetMultiblockBlock imple
 
     @Override
     public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
-        BlockEntity blockEntity = level.getBlockEntity(pos);
+        BlockEntity blockEntity = resolveCoreBlockEntity(level, pos);
         return blockEntity instanceof MachineBatterySocketBlockEntity socket ? socket.getComparatorPower() : 0;
     }
 
@@ -120,10 +120,10 @@ public class MachineBatterySocketBlock extends LegacyOffsetMultiblockBlock imple
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
-            if (level.getBlockEntity(pos) instanceof MachineBatterySocketBlockEntity socket) {
+            if (resolveCoreBlockEntity(level, pos) instanceof MachineBatterySocketBlockEntity socket) {
                 ItemStack stack = socket.removeBatteryForDrop();
                 if (!stack.isEmpty()) {
-                    Block.popResource(level, pos, stack);
+                    Block.popResource(level, socket.getBlockPos(), stack);
                 }
             }
         }

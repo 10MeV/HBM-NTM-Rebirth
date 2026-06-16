@@ -35,18 +35,19 @@ public class GasFlareBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof GasFlareBlockEntity gasFlare) {
+                && resolveCoreBlockEntity(level, pos) instanceof GasFlareBlockEntity gasFlare) {
             ItemStack held = player.getItemInHand(hand);
             if (player.isShiftKeyDown()) {
                 var identifier = HbmFluidItemTransfer.setTankTypeFromIdentifierStackReport(
-                        held, gasFlare.getTank(), level, pos);
+                        held, gasFlare.getTank(), level, gasFlare.getBlockPos());
                 if (identifier.changed()) {
                     gasFlare.setChanged();
-                    level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+                    level.sendBlockUpdated(gasFlare.getBlockPos(), gasFlare.getBlockState(),
+                            gasFlare.getBlockState(), Block.UPDATE_CLIENTS);
                     return InteractionResult.CONSUME;
                 }
             }
-            NetworkHooks.openScreen(serverPlayer, gasFlare, pos);
+            NetworkHooks.openScreen(serverPlayer, gasFlare, gasFlare.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

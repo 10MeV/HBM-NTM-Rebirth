@@ -66,7 +66,7 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (level.getBlockEntity(pos) instanceof LegacyRemoteFluidMachineBlockEntity machine) {
+        if (resolveCoreBlockEntity(level, pos) instanceof LegacyRemoteFluidMachineBlockEntity machine) {
             ItemStack held = player.getItemInHand(hand);
             if (!player.isShiftKeyDown()
                     && machine.canSetInputTypeWithIdentifier()
@@ -78,13 +78,14 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
                                         .withStyle(ChatFormatting.RED), false);
                         return InteractionResult.CONSUME;
                     }
-                    FluidType type = identifier.getIdentifiedFluid(level, pos, held);
+                    FluidType type = identifier.getIdentifiedFluid(level, machine.getBlockPos(), held);
                     if (machine.setInputTypeFromIdentifier(type)) {
                         serverPlayer.displayClientMessage(Component.literal("Changed type to ")
                                 .withStyle(ChatFormatting.YELLOW)
                                 .append(type.getDisplayName())
                                 .append(Component.literal("!").withStyle(ChatFormatting.YELLOW)), true);
-                        level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+                        level.sendBlockUpdated(machine.getBlockPos(), machine.getBlockState(),
+                                machine.getBlockState(), Block.UPDATE_CLIENTS);
                         return InteractionResult.CONSUME;
                     }
                 }
@@ -92,7 +93,7 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
             }
             if (machine.hasLegacyGui()) {
                 if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-                    NetworkHooks.openScreen(serverPlayer, machine, pos);
+                    NetworkHooks.openScreen(serverPlayer, machine, machine.getBlockPos());
                 }
                 return InteractionResult.sidedSuccess(level.isClientSide);
             }

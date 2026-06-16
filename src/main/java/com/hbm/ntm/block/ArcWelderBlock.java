@@ -34,8 +34,8 @@ public class ArcWelderBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof ArcWelderBlockEntity arcWelder) {
-            NetworkHooks.openScreen(serverPlayer, arcWelder, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof ArcWelderBlockEntity arcWelder) {
+            NetworkHooks.openScreen(serverPlayer, arcWelder, arcWelder.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

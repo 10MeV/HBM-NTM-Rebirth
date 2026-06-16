@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:nitroglycerin", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:petroleum", "amount": 1000 },
+  "input2": { "fluid": "hbm_ntm_rebirth:nitric_acid", "amount": 1000 },
+  "duration": 20
+}

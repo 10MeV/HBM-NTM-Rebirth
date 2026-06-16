@@ -34,8 +34,8 @@ public class SatelliteDockBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
                                  BlockHitResult hit) {
         if (!level.isClientSide && !player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof SatelliteDockBlockEntity dock) {
-            NetworkHooks.openScreen(serverPlayer, dock, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof SatelliteDockBlockEntity dock) {
+            NetworkHooks.openScreen(serverPlayer, dock, dock.getBlockPos());
         }
         return player.isShiftKeyDown() ? InteractionResult.PASS : InteractionResult.sidedSuccess(level.isClientSide);
     }

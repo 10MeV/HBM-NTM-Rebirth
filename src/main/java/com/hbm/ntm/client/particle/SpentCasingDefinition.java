@@ -14,6 +14,7 @@ public final class SpentCasingDefinition {
     public static final int COLOR_CASE_16INCH_PHOS = 0xC8C8C8;
     public static final int COLOR_CASE_16INCH_NUKE = 0x495443;
     public static final int COLOR_CASE_40MM = 0x515151;
+    public static final int COLOR_CASE_CHLOROPHYTE = 0x659750;
     private static final String PLINK_SHELL = "hbm:weapon.casing.shell";
     private static final String PLINK_SMALL = "hbm:weapon.casing.small";
     private static final String PLINK_MEDIUM = "hbm:weapon.casing.medium";
@@ -76,7 +77,20 @@ public final class SpentCasingDefinition {
         straight().colors(COLOR_CASE_BRASS).smokeDefaults().names("m44bp", "m44", "m44fmj", "m44jhp", "m44express");
         straight().colors(COLOR_CASE_44).smokeDefaults().name("m44ap");
         straight().colors(COLOR_CASE_EQUESTRIAN).smokeDefaults().names("m44equestrianPip", "m44equestrianMn7");
+        straight().colors(COLOR_CASE_BRASS).scale(1.0F, 1.0F, 0.75F).names("p45", "p45fmj", "p45jhp");
+        straight().colors(COLOR_CASE_44).scale(1.0F, 1.0F, 0.75F).names("p45ap", "p45du");
+        bottleneck().colors(COLOR_CASE_BRASS).scale(1.5F).names("bmg50", "bmg50fmj", "bmg50jhp");
+        bottleneck().colors(COLOR_CASE_44).scale(1.5F).names("bmg50ap", "bmg50du", "bmg50he", "bmg50sm");
+        bottleneck().colors(COLOR_CASE_EQUESTRIAN).scale(1.5F).names("bmg50black", "bmg50equestrian");
         straight().colors(COLOR_CASE_BRASS).scale(2.0F, 2.0F, 1.5F).names("b75", "b75inc", "b75exp");
+        straight().colors(0x9E1616).scale(2.0F).name("g26Flare");
+        straight().colors(0x3C80F0).scale(2.0F).name("g26FlareSupply");
+        straight().colors(0x278400).scale(2.0F).name("g26FlareWeapon");
+        straight().colors(0x777777).scale(2.0F, 2.0F, 1.5F).name("g40");
+        straight().colors(0x5E6854).scale(2.0F, 2.0F, 1.5F).name("g40heat");
+        straight().colors(0xE30000).scale(2.0F, 2.0F, 1.5F).name("g40demo");
+        straight().colors(0xE86F20).scale(2.0F, 2.0F, 1.5F).name("g40inc");
+        straight().colors(0xC8C8C8).scale(2.0F, 2.0F, 1.5F).name("g40phos");
         straight().colors(0xCEB78E).name("35-800");
         straight().colors(COLOR_CASE_BRASS).scale(1.5F).bounceMotion(1.0F, 0.5F).age(60).name("DGK");
 
@@ -103,6 +117,16 @@ public final class SpentCasingDefinition {
         straight().scale(15.0F, 15.0F, 10.0F).age(300).bounceMotion(1.0F, 0.5F)
                 .colors(COLOR_CASE_16INCH_NUKE).names("ammo_arty_mini_nuke", "ammo_arty_nuke",
                         "ammo_arty_mini_nuke_multi", "ammo_arty_phosgene", "ammo_arty_mustard_gas");
+        registerChlorophyteVariants();
+    }
+
+    private static void registerChlorophyteVariants() {
+        Map<String, SpentCasingDefinition> baseDefinitions = new HashMap<>(DEFINITIONS);
+        for (Map.Entry<String, SpentCasingDefinition> entry : baseDefinitions.entrySet()) {
+            SpentCasingDefinition chlorophyte = entry.getValue().copy();
+            chlorophyte.replaceLastColor(COLOR_CASE_CHLOROPHYTE);
+            DEFINITIONS.put(entry.getKey() + "cl", chlorophyte);
+        }
     }
 
     private static SpentCasingDefinition straight() {
@@ -151,6 +175,16 @@ public final class SpentCasingDefinition {
 
     private SpentCasingDefinition colors(int... colors) {
         this.colors = colors;
+        return this;
+    }
+
+    private SpentCasingDefinition replaceLastColor(int color) {
+        if (colors == null || colors.length == 0) {
+            colors = new int[] { color };
+        } else {
+            colors = colors.clone();
+            colors[colors.length - 1] = color;
+        }
         return this;
     }
 

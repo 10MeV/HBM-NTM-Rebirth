@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.HbmFluidStack;
+import com.hbm.ntm.fluid.HbmFluidCompressorRecipes;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.HbmIngredient;
@@ -642,6 +643,88 @@ public final class CompatRecipeRegistry {
                 fluidInput);
     }
 
+    public static JsonObject createOutgasser(HbmIngredient input, ItemStack solidOutput, HbmFluidStack fluidOutput,
+            boolean fusionOnly) {
+        requireOutgasserEndpoints(input, solidOutput, fluidOutput);
+        JsonObject json = new JsonObject();
+        json.addProperty("type", ModRecipes.OUTGASSER.serializer().getId().toString());
+        json.add("input", input.toJson());
+        if (solidOutput != null && !solidOutput.isEmpty()) {
+            json.add("solid_output", HbmItemOutput.of(solidOutput).toJson());
+        }
+        if (fluidOutput != null && !fluidOutput.isEmpty()) {
+            json.add("fluid_output", fluid(fluidOutput));
+        }
+        if (fusionOnly) {
+            json.addProperty("fusion_only", true);
+        }
+        return json;
+    }
+
+    public static JsonObject createOutgasser(HbmIngredient input, ItemStack solidOutput, HbmFluidStack fluidOutput) {
+        return createOutgasser(input, solidOutput, fluidOutput, false);
+    }
+
+    public static JsonObject createOutgasser(ItemLike input, ItemStack solidOutput, HbmFluidStack fluidOutput,
+            boolean fusionOnly) {
+        return createOutgasser(HbmIngredient.of(input, 1), solidOutput, fluidOutput, fusionOnly);
+    }
+
+    public static JsonObject createOutgasser(TagKey<Item> input, ItemStack solidOutput, HbmFluidStack fluidOutput,
+            boolean fusionOnly) {
+        return createOutgasser(HbmIngredient.of(input, 1), solidOutput, fluidOutput, fusionOnly);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmIngredient input, ItemStack solidOutput, HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return emit(sink, id, createOutgasser(input, solidOutput, fluidOutput, fusionOnly));
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmIngredient input, ItemStack solidOutput, HbmFluidStack fluidOutput) {
+        return registerOutgasser(sink, id, input, solidOutput, fluidOutput, false);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient input, ItemStack solidOutput, HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return registerOutgasser(sink, compatRecipeId("outgasser", name), input, solidOutput, fluidOutput,
+                fusionOnly);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient input, ItemStack solidOutput, HbmFluidStack fluidOutput) {
+        return registerOutgasser(sink, name, input, solidOutput, fluidOutput, false);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemLike input, ItemStack solidOutput, HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return registerOutgasser(sink, id, HbmIngredient.of(input, 1), solidOutput, fluidOutput, fusionOnly);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            TagKey<Item> input, ItemStack solidOutput, HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return registerOutgasser(sink, id, HbmIngredient.of(input, 1), solidOutput, fluidOutput, fusionOnly);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemLike input, ItemStack solidOutput, HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return registerOutgasser(sink, name, HbmIngredient.of(input, 1), solidOutput, fluidOutput, fusionOnly);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            TagKey<Item> input, ItemStack solidOutput, HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return registerOutgasser(sink, name, HbmIngredient.of(input, 1), solidOutput, fluidOutput, fusionOnly);
+    }
+
+    public static HbmFluidCompressorRecipes.Recipe registerCompressor(HbmFluidStack input, HbmFluidStack output,
+            int duration) {
+        return HbmFluidCompressorRecipes.register(input, output, duration);
+    }
+
+    public static List<HbmFluidCompressorRecipes.RecipeEntry> compressorRecipes() {
+        return HbmFluidCompressorRecipes.recipes();
+    }
+
     public static JsonObject createArcWelder(String name, ItemStack output, int duration, long power,
             HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
         return createArcWelder(compatRecipeId("arc_welder", name), name, output, duration, power, inputFluid,
@@ -870,15 +953,15 @@ public final class CompatRecipeRegistry {
                 supported("registerCrystallizer", "crystallizer", "ModRecipes.CRYSTALLIZER"),
                 supported("registerItemProcessing", "item_processing_recipe_methods", "ItemProcessingRecipe JSON sink"),
                 supported("registerGeneric", "recipe_sink_register_methods", "generic datapack JSON sink"),
-                deferred("registerBlastFurnace", "blast_furnace", "modern serializer not yet migrated"),
-                deferred("registerSoldering", "soldering", "modern machine/serializer not yet migrated"),
+                supported("registerBlastFurnace", "blast_furnace", "ModRecipes.BLAST_FURNACE"),
+                supported("registerSoldering", "soldering_station", "ModRecipes.SOLDERING_STATION"),
                 deferred("registerCombination", "combination", "modern serializer not yet migrated"),
                 deferred("registerCrucible", "crucible", "material recipe serializer not yet migrated"),
                 deferred("registerBreeder", "breeder", "reactor recipe serializer not yet migrated"),
                 deferred("registerCyclotron", "cyclotron", "particle recipe serializer not yet migrated"),
                 deferred("registerFuelPool", "fuel_pool", "reactor recipe serializer not yet migrated"),
-                deferred("registerOutgasser", "outgasser", "modern serializer not yet migrated"),
-                deferred("registerCompressor", "compressor", "modern serializer not yet migrated"),
+                supported("registerOutgasser", "outgasser", "ModRecipes.OUTGASSER"),
+                supported("registerCompressor", "compressor", "HbmFluidCompressorRecipes runtime table"),
                 deferred("registerElectrolyzerFluid", "electrolyzer_fluid", "modern serializer not yet migrated"),
                 deferred("registerElectrolyzerMetal", "electrolyzer_metal", "material recipe serializer not yet migrated"),
                 supported("registerArcWelder", "arc_welder", "GenericMachineRecipe.Machine.ARC_WELDER"),
@@ -1017,6 +1100,16 @@ public final class CompatRecipeRegistry {
         if (outputs.size() > maxOutputs) {
             throw new IllegalArgumentException("HBM compat " + itemProcessingFolder(machine)
                     + " recipe has too many outputs: " + outputs.size() + " > " + maxOutputs);
+        }
+    }
+
+    private static void requireOutgasserEndpoints(HbmIngredient input, ItemStack solidOutput,
+            HbmFluidStack fluidOutput) {
+        Objects.requireNonNull(input, "input");
+        boolean hasSolidOutput = solidOutput != null && !solidOutput.isEmpty();
+        boolean hasFluidOutput = fluidOutput != null && !fluidOutput.isEmpty();
+        if (!hasSolidOutput && !hasFluidOutput) {
+            throw new IllegalArgumentException("HBM compat outgasser recipe must have a solid or fluid output");
         }
     }
 

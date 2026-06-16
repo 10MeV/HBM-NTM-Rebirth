@@ -64,6 +64,14 @@ public final class DamageResistanceConfig {
         return report;
     }
 
+    public static LoadReport loadDefaults() {
+        DamageResistanceHandler.clear();
+        ConfigStats defaultStats = registerDefaults(false);
+        return remember(new LoadReport(false, defaultStats.itemStats, defaultStats.setStats, defaultStats.entityStats,
+                defaultStats.skippedItems, defaultStats.skippedSets, defaultStats.skippedEntities,
+                defaultStats.warningCount, defaultStats.warnings));
+    }
+
     private static LoadReport remember(LoadReport current) {
         report = current;
         return current;

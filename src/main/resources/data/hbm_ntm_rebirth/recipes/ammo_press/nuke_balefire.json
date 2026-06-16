@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 86,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_nuke_balefire",
+    "count": 1
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:egg_balefire_shard"
+      },
+      "count": 1
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:assembly_nuke"
+      },
+      "count": 1
+    },
+    null,
+    null,
+    null,
+    null
+  ]
+}

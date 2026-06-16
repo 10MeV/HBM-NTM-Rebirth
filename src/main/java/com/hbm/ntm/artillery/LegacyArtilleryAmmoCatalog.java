@@ -123,6 +123,20 @@ public final class LegacyArtilleryAmmoCatalog {
             AMMO_ARTY,
             AMMO_ARTY_CLASSIC,
             AMMO_ARTY_HE,
+            AMMO_ARTY_MINI_NUKE,
+            AMMO_ARTY_NUKE,
+            AMMO_ARTY_PHOSPHORUS,
+            AMMO_ARTY_MINI_NUKE_MULTI,
+            AMMO_ARTY_PHOSPHORUS_MULTI,
+            AMMO_ARTY_CARGO,
+            AMMO_ARTY_CHLORINE,
+            AMMO_ARTY_PHOSGENE,
+            AMMO_ARTY_MUSTARD_GAS);
+
+    private static final List<ArtyShell> ARTY_DISPLAY_SHELLS = List.of(
+            AMMO_ARTY,
+            AMMO_ARTY_CLASSIC,
+            AMMO_ARTY_HE,
             AMMO_ARTY_PHOSPHORUS,
             AMMO_ARTY_PHOSPHORUS_MULTI,
             AMMO_ARTY_MINI_NUKE,
@@ -134,6 +148,16 @@ public final class LegacyArtilleryAmmoCatalog {
             AMMO_ARTY_MUSTARD_GAS);
 
     private static final List<HimarsRocket> HIMARS_ROCKETS = List.of(
+            AMMO_HIMARS_STANDARD,
+            AMMO_HIMARS_SINGLE,
+            AMMO_HIMARS_STANDARD_HE,
+            AMMO_HIMARS_STANDARD_WP,
+            AMMO_HIMARS_STANDARD_TB,
+            AMMO_HIMARS_SINGLE_TB,
+            AMMO_HIMARS_STANDARD_MINI_NUKE,
+            AMMO_HIMARS_STANDARD_LAVA);
+
+    private static final List<HimarsRocket> HIMARS_DISPLAY_ROCKETS = List.of(
             AMMO_HIMARS_STANDARD,
             AMMO_HIMARS_STANDARD_HE,
             AMMO_HIMARS_STANDARD_WP,
@@ -152,11 +176,11 @@ public final class LegacyArtilleryAmmoCatalog {
     }
 
     public static List<ItemStack> artyDisplayStacks() {
-        return displayStacks(ARTY_SHELLS);
+        return displayStacks(ARTY_DISPLAY_SHELLS);
     }
 
     public static List<ItemStack> himarsDisplayStacks() {
-        return displayStacks(HIMARS_ROCKETS);
+        return displayStacks(HIMARS_DISPLAY_ROCKETS);
     }
 
     private static List<ItemStack> displayStacks(List<? extends AmmoType> types) {

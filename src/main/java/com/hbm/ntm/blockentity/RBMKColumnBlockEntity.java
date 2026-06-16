@@ -47,6 +47,8 @@ import com.hbm.ntm.recipe.OutgasserRecipe;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.util.HbmItemStackUtil;
+import com.hbm.tileentity.machine.rbmk.IRBMKFluxReceiver;
+import com.hbm.tileentity.machine.rbmk.IRBMKLoadable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -69,7 +71,8 @@ import java.util.List;
 
 public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         implements RBMKNeutronColumn, RBMKAbsorberColumn, RBMKControlColumn, RBMKRodColumn,
-        RBMKOutgasserColumn, HbmStandardFluidReceiver, HbmStandardFluidSender, RORValueProvider, RORInteractive {
+        RBMKOutgasserColumn, IRBMKFluxReceiver, IRBMKLoadable, HbmStandardFluidReceiver,
+        HbmStandardFluidSender, RORValueProvider, RORInteractive {
     public static final String TAG_HEAT = "heat";
     public static final String TAG_REASIM_WATER = "reasimWater";
     public static final String TAG_REASIM_STEAM = "reasimSteam";
@@ -257,6 +260,15 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public double lastFluxQuantity() {
         return rodFluxState.lastFluxQuantity();
+    }
+
+    public int fuelRodRenderColor() {
+        if (rodFluxState.rodColor() != 0) {
+            return rodFluxState.rodColor();
+        }
+        return fuelRod.getItem() instanceof RBMKFuelRodItem item
+                ? item.getSpec().colorTint()
+                : 0x304825;
     }
 
     @Override
@@ -487,6 +499,42 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         return stack;
     }
 
+    @Override
+    public boolean canLoad(ItemStack toLoad) {
+        return canCraneLoad(toLoad);
+    }
+
+    @Override
+    public void load(ItemStack toLoad) {
+        craneLoad(toLoad);
+    }
+
+    @Override
+    public boolean canUnload() {
+        return canCraneUnload();
+    }
+
+    @Override
+    public ItemStack provideNext() {
+        if (kind().rod()) {
+            return fuelRod.copy();
+        }
+        return provideNextStorageRod().copy();
+    }
+
+    @Override
+    public void unload() {
+        if (kind().rod()) {
+            if (canManualUnloadFuelRod()) {
+                fuelRod = ItemStack.EMPTY;
+                rodFluxState.clearRodTick();
+                setChanged();
+            }
+            return;
+        }
+        unloadStorageRod();
+    }
+
     private boolean canManualUnloadFuelRod() {
         if (!hasFuelRod() || !(fuelRod.getItem() instanceof RBMKFuelRodItem item)) {
             return false;
@@ -669,6 +717,31 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
     public void setControlTarget(double targetLevel) {
         startingLevel = controlState.level();
         controlState.setTargetLevel(targetLevel);
+        setChanged();
+    }
+
+    public void setManualControlColor(@Nullable RBMKControlRodPlanner.RBMKColor color) {
+        if (!kind().control() || kind().automatic()) {
+            return;
+        }
+        this.color = color;
+        setChanged();
+    }
+
+    public void cycleBoilerCompressor() {
+        if (kind() != RBMKColumnBlock.Kind.BOILER) {
+            return;
+        }
+        RBMKBoilerState state = new RBMKBoilerState();
+        state.setFeedMax(boilerFeedTank.getMaxFill());
+        state.setFeedFill(boilerFeedTank.getFill());
+        state.setSteamMax(boilerSteamTank.getMaxFill());
+        state.setSteamFill(boilerSteamTank.getFill());
+        state.setSteamGrade(steamGradeFor(boilerSteamTank.getTankType()));
+        RBMKBoilerRuntime.cycleCompressor(state);
+        boilerSteamTank.setTankType(fluidForSteamGrade(state.steamGrade()));
+        boilerSteamTank.setFill(state.steamFill());
+        onFluidContentsChanged();
         setChanged();
     }
 

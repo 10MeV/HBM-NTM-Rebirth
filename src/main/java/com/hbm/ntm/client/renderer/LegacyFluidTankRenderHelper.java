@@ -105,6 +105,14 @@ public final class LegacyFluidTankRenderHelper {
                 poseStack, buffer, packedLight, packedOverlay);
     }
 
+    public static void renderDangerDiamonds(LegacyTileRenderPlans.TankDangerDiamondPlan plan, FluidType type,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (type == null || type == HbmFluids.NONE) {
+            return;
+        }
+        renderDangerDiamondPlan(plan, type, poseStack, buffer, packedLight, packedOverlay);
+    }
+
     private static void renderTankPart(LegacyWavefrontModel model, String part, FluidType type,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         int color = tankModelTint(type);

@@ -1,0 +1,9 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:egg", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:radiosolvent", "amount": 500 },
+  "solid_input": {
+    "ingredient": { "item": "minecraft:egg" }
+  },
+  "duration": 50
+}

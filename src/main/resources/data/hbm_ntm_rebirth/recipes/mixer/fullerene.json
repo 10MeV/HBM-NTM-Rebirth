@@ -1,0 +1,9 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:fullerene", "amount": 250 },
+  "input1": { "fluid": "hbm_ntm_rebirth:radiosolvent", "amount": 500 },
+  "solid_input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:powder_ash_soot" }
+  },
+  "duration": 50
+}

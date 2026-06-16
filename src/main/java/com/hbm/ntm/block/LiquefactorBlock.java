@@ -45,8 +45,8 @@ public class LiquefactorBlock extends LegacyVisibleMultiblockMachineBlock implem
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof LiquefactorBlockEntity liquefactor) {
-            NetworkHooks.openScreen(serverPlayer, liquefactor, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof LiquefactorBlockEntity liquefactor) {
+            NetworkHooks.openScreen(serverPlayer, liquefactor, liquefactor.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

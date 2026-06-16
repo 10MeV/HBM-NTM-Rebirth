@@ -2,6 +2,7 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.block.RBMKPanelBlock;
 import com.hbm.ntm.blockentity.RBMKColumnBlockEntity;
+import com.hbm.ntm.blockentity.RBMKConsoleBlockEntity;
 import com.hbm.ntm.blockentity.RBMKCraneConsoleBlockEntity;
 import com.hbm.ntm.blockentity.RBMKPanelBlockEntity;
 import com.hbm.ntm.multiblock.MultiblockHelper;
@@ -53,6 +54,13 @@ public class RBMKToolItem extends Item {
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         if (blockEntity instanceof RBMKCraneConsoleBlockEntity console && hasStoredTarget(stack)) {
+            if (!level.isClientSide) {
+                console.setTarget(storedTarget(stack));
+                sendStatus(context.getPlayer(), "item.rbmk_tool.set");
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (blockEntity instanceof RBMKConsoleBlockEntity console && hasStoredTarget(stack)) {
             if (!level.isClientSide) {
                 console.setTarget(storedTarget(stack));
                 sendStatus(context.getPlayer(), "item.rbmk_tool.set");

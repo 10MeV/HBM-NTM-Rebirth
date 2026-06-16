@@ -1,13 +1,17 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.blockentity.AnnihilatorBlockEntity;
 import com.hbm.ntm.blockentity.ArcWelderBlockEntity;
+import com.hbm.ntm.blockentity.AmmoPressBlockEntity;
 import com.hbm.ntm.blockentity.AshpitBlockEntity;
 import com.hbm.ntm.blockentity.AssemblyFactoryBlockEntity;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.blockentity.Bat9000BlockEntity;
+import com.hbm.ntm.blockentity.BatteryReddBlockEntity;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.blockentity.BigAssTankBlockEntity;
+import com.hbm.ntm.blockentity.BlastFurnaceBlockEntity;
 import com.hbm.ntm.blockentity.BoilerBlockEntity;
 import com.hbm.ntm.blockentity.BombMultiBlockEntity;
 import com.hbm.ntm.blockentity.CableDiodeBlockEntity;
@@ -17,16 +21,21 @@ import com.hbm.ntm.blockentity.CatalyticReformerBlockEntity;
 import com.hbm.ntm.blockentity.ChemicalFactoryBlockEntity;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
 import com.hbm.ntm.blockentity.ChimneyBlockEntity;
+import com.hbm.ntm.blockentity.ChungusBlockEntity;
 import com.hbm.ntm.blockentity.CompressorBlockEntity;
 import com.hbm.ntm.blockentity.CombustionEngineBlockEntity;
+import com.hbm.ntm.blockentity.CombinationOvenBlockEntity;
 import com.hbm.ntm.blockentity.CompactLauncherBlockEntity;
 import com.hbm.ntm.blockentity.ConnectorBlockEntity;
 import com.hbm.ntm.blockentity.CokerBlockEntity;
 import com.hbm.ntm.blockentity.CraneSplitterBlockEntity;
 import com.hbm.ntm.blockentity.CustomNukeBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
+import com.hbm.ntm.blockentity.DeuteriumTowerBlockEntity;
+import com.hbm.ntm.blockentity.DrainBlockEntity;
 import com.hbm.ntm.blockentity.ElectricHeaterBlockEntity;
 import com.hbm.ntm.blockentity.ElectricPressBlockEntity;
+import com.hbm.ntm.blockentity.ExposureChamberBlockEntity;
 import com.hbm.ntm.blockentity.FireboxHeaterBlockEntity;
 import com.hbm.ntm.blockentity.FluidDuctBoxBlockEntity;
 import com.hbm.ntm.blockentity.FluidDuctExhaustBlockEntity;
@@ -42,14 +51,18 @@ import com.hbm.ntm.blockentity.FluidTankBlockEntity;
 import com.hbm.ntm.blockentity.FluidValveBlockEntity;
 import com.hbm.ntm.blockentity.FensuBlockEntity;
 import com.hbm.ntm.blockentity.FractionTowerBlockEntity;
+import com.hbm.ntm.blockentity.GasCentBlockEntity;
 import com.hbm.ntm.blockentity.GasFlareBlockEntity;
 import com.hbm.ntm.blockentity.HeaterHeatexBlockEntity;
 import com.hbm.ntm.blockentity.HydrotreaterBlockEntity;
 import com.hbm.ntm.blockentity.IndustrialSteamTurbineBlockEntity;
+import com.hbm.ntm.blockentity.IntakeBlockEntity;
 import com.hbm.ntm.blockentity.LargePylonBlockEntity;
 import com.hbm.ntm.blockentity.LargeCoolingTowerBlockEntity;
 import com.hbm.ntm.blockentity.LegacyChargeBlockEntity;
 import com.hbm.ntm.blockentity.LegacyDemonLampBlockEntity;
+import com.hbm.ntm.blockentity.LegacyFurnaceBlockEntity;
+import com.hbm.ntm.blockentity.LegacyGenericSelectorMachineBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLanternBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
 import com.hbm.ntm.blockentity.LegacyVolcanoCoreBlockEntity;
@@ -62,10 +75,12 @@ import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
 import com.hbm.ntm.blockentity.MachineLpw2BlockEntity;
 import com.hbm.ntm.blockentity.MediumPylonBlockEntity;
 import com.hbm.ntm.blockentity.MissileAssemblyBlockEntity;
+import com.hbm.ntm.blockentity.MixerBlockEntity;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
 import com.hbm.ntm.blockentity.OilburnerBlockEntity;
 import com.hbm.ntm.blockentity.OilDrillBlockEntity;
+import com.hbm.ntm.blockentity.OrbusBlockEntity;
 import com.hbm.ntm.blockentity.PileBreedingFuelBlockEntity;
 import com.hbm.ntm.blockentity.PileFuelBlockEntity;
 import com.hbm.ntm.blockentity.PileNeutronDetectorBlockEntity;
@@ -73,8 +88,11 @@ import com.hbm.ntm.blockentity.PileSourceBlockEntity;
 import com.hbm.ntm.blockentity.PneumaticTubeBlockEntity;
 import com.hbm.ntm.blockentity.PoweredCondenserBlockEntity;
 import com.hbm.ntm.blockentity.PoweredRedCableBlockEntity;
+import com.hbm.ntm.blockentity.ProcessingMachineBlockEntity;
 import com.hbm.ntm.blockentity.PyroOvenBlockEntity;
 import com.hbm.ntm.blockentity.RadarBlockEntity;
+import com.hbm.ntm.blockentity.RadGenBlockEntity;
+import com.hbm.ntm.blockentity.RadiolysisBlockEntity;
 import com.hbm.ntm.blockentity.RadarLargeBlockEntity;
 import com.hbm.ntm.blockentity.RadarScreenBlockEntity;
 import com.hbm.ntm.blockentity.RadioAutocalBlockEntity;
@@ -87,6 +105,7 @@ import com.hbm.ntm.blockentity.RadioTorchReceiverBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchSenderBlockEntity;
 import com.hbm.ntm.blockentity.RBMKAutoloaderBlockEntity;
 import com.hbm.ntm.blockentity.RBMKColumnBlockEntity;
+import com.hbm.ntm.blockentity.RBMKConsoleBlockEntity;
 import com.hbm.ntm.blockentity.RBMKCraneConsoleBlockEntity;
 import com.hbm.ntm.blockentity.RBMKPanelBlockEntity;
 import com.hbm.ntm.blockentity.RBMKSteamInletBlockEntity;
@@ -95,22 +114,28 @@ import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.blockentity.RedCableGaugeBlockEntity;
 import com.hbm.ntm.blockentity.RefineryBlockEntity;
 import com.hbm.ntm.blockentity.RustedLaunchPadBlockEntity;
+import com.hbm.ntm.blockentity.SawmillBlockEntity;
 import com.hbm.ntm.blockentity.SatelliteDockBlockEntity;
 import com.hbm.ntm.blockentity.SatelliteLinkerBlockEntity;
 import com.hbm.ntm.blockentity.SolarBoilerBlockEntity;
 import com.hbm.ntm.blockentity.SolidifierBlockEntity;
+import com.hbm.ntm.blockentity.SolderingStationBlockEntity;
 import com.hbm.ntm.blockentity.SmallCoolingTowerBlockEntity;
 import com.hbm.ntm.blockentity.SmallPylonBlockEntity;
 import com.hbm.ntm.blockentity.SoyuzCapsuleBlockEntity;
 import com.hbm.ntm.blockentity.SoyuzLauncherBlockEntity;
 import com.hbm.ntm.blockentity.SteamTurbineBlockEntity;
 import com.hbm.ntm.blockentity.SteamEngineBlockEntity;
+import com.hbm.ntm.blockentity.StirlingBlockEntity;
 import com.hbm.ntm.blockentity.StorageCrateBlockEntity;
 import com.hbm.ntm.blockentity.SubstationBlockEntity;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
+import com.hbm.ntm.blockentity.TurbofanBlockEntity;
+import com.hbm.ntm.blockentity.TurbineGasBlockEntity;
 import com.hbm.ntm.blockentity.VacuumDistillBlockEntity;
 import com.hbm.ntm.blockentity.VendingMachineBlockEntity;
 import com.hbm.ntm.blockentity.WaterPumpBlockEntity;
+import com.hbm.ntm.blockentity.WoodBurnerBlockEntity;
 import com.hbm.ntm.turret.TurretArtyBlockEntity;
 import com.hbm.ntm.turret.TurretChekhovBlockEntity;
 import com.hbm.ntm.turret.TurretFriendlyBlockEntity;
@@ -301,6 +326,11 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("rbmk_crane_console", () ->
                     BlockEntityType.Builder.of(RBMKCraneConsoleBlockEntity::new,
                             ModBlocks.RBMK_CRANE_CONSOLE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RBMKConsoleBlockEntity>> RBMK_CONSOLE =
+            BLOCK_ENTITIES.register("rbmk_console", () ->
+                    BlockEntityType.Builder.of(RBMKConsoleBlockEntity::new,
+                            ModBlocks.RBMK_CONSOLE.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<RBMKSteamInletBlockEntity>> RBMK_STEAM_INLET =
             BLOCK_ENTITIES.register("rbmk_steam_inlet", () ->
@@ -575,6 +605,10 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("big_ass_tank", () ->
                     BlockEntityType.Builder.of(BigAssTankBlockEntity::new, ModBlocks.MACHINE_BIGASSTANK.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<OrbusBlockEntity>> ORBUS =
+            BLOCK_ENTITIES.register("orbus", () ->
+                    BlockEntityType.Builder.of(OrbusBlockEntity::new, ModBlocks.MACHINE_ORBUS.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<GasFlareBlockEntity>> GAS_FLARE =
             BLOCK_ENTITIES.register("gas_flare", () ->
                     BlockEntityType.Builder.of(GasFlareBlockEntity::new, ModBlocks.MACHINE_GASFLARE.get()).build(null));
@@ -715,50 +749,141 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(LargeCoolingTowerBlockEntity::new,
                             ModBlocks.MACHINE_TOWER_LARGE.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<IntakeBlockEntity>> INTAKE =
+            BLOCK_ENTITIES.register("intake", () ->
+                    BlockEntityType.Builder.of(IntakeBlockEntity::new,
+                            ModBlocks.MACHINE_INTAKE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<DrainBlockEntity>> DRAIN =
+            BLOCK_ENTITIES.register("drain", () ->
+                    BlockEntityType.Builder.of(DrainBlockEntity::new,
+                            ModBlocks.MACHINE_DRAIN.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<StirlingBlockEntity>> STIRLING =
+            BLOCK_ENTITIES.register("stirling", () ->
+                    BlockEntityType.Builder.of(StirlingBlockEntity::new,
+                            ModBlocks.MACHINE_STIRLING.get(),
+                            ModBlocks.MACHINE_STIRLING_STEEL.get(),
+                            ModBlocks.MACHINE_STIRLING_CREATIVE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<ProcessingMachineBlockEntity>> PROCESSING_MACHINE =
+            BLOCK_ENTITIES.register("processing_machine", () ->
+                    BlockEntityType.Builder.of(ProcessingMachineBlockEntity::new,
+                            ModBlocks.MACHINE_CENTRIFUGE.get(),
+                            ModBlocks.MACHINE_CRYSTALLIZER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<LegacyFurnaceBlockEntity>> LEGACY_FURNACE =
+            BLOCK_ENTITIES.register("legacy_furnace", () ->
+                    BlockEntityType.Builder.of(LegacyFurnaceBlockEntity::new,
+                            ModBlocks.FURNACE_IRON.get(),
+                            ModBlocks.FURNACE_STEEL.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<AmmoPressBlockEntity>> AMMO_PRESS =
+            BLOCK_ENTITIES.register("ammo_press", () ->
+                    BlockEntityType.Builder.of(AmmoPressBlockEntity::new,
+                            ModBlocks.MACHINE_AMMO_PRESS.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadGenBlockEntity>> RADGEN =
+            BLOCK_ENTITIES.register("radgen", () ->
+                    BlockEntityType.Builder.of(RadGenBlockEntity::new,
+                            ModBlocks.MACHINE_RADGEN.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<WoodBurnerBlockEntity>> WOOD_BURNER =
+            BLOCK_ENTITIES.register("wood_burner", () ->
+                    BlockEntityType.Builder.of(WoodBurnerBlockEntity::new,
+                            ModBlocks.MACHINE_WOOD_BURNER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<CombinationOvenBlockEntity>> COMBINATION_OVEN =
+            BLOCK_ENTITIES.register("combination_oven", () ->
+                    BlockEntityType.Builder.of(CombinationOvenBlockEntity::new,
+                            ModBlocks.FURNACE_COMBINATION.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<BlastFurnaceBlockEntity>> BLAST_FURNACE =
+            BLOCK_ENTITIES.register("blast_furnace", () ->
+                    BlockEntityType.Builder.of(BlastFurnaceBlockEntity::new,
+                            ModBlocks.MACHINE_BLAST_FURNACE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadiolysisBlockEntity>> RADIOLYSIS =
+            BLOCK_ENTITIES.register("radiolysis", () ->
+                    BlockEntityType.Builder.of(RadiolysisBlockEntity::new,
+                            ModBlocks.MACHINE_RADIOLYSIS.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<ExposureChamberBlockEntity>> EXPOSURE_CHAMBER =
+            BLOCK_ENTITIES.register("exposure_chamber", () ->
+                    BlockEntityType.Builder.of(ExposureChamberBlockEntity::new,
+                            ModBlocks.MACHINE_EXPOSURE_CHAMBER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<SolderingStationBlockEntity>> SOLDERING_STATION =
+            BLOCK_ENTITIES.register("soldering_station", () ->
+                    BlockEntityType.Builder.of(SolderingStationBlockEntity::new,
+                            ModBlocks.MACHINE_SOLDERING_STATION.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<AnnihilatorBlockEntity>> ANNIHILATOR =
+            BLOCK_ENTITIES.register("annihilator", () ->
+                    BlockEntityType.Builder.of(AnnihilatorBlockEntity::new,
+                            ModBlocks.MACHINE_ANNIHILATOR.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<DeuteriumTowerBlockEntity>> DEUTERIUM_TOWER =
+            BLOCK_ENTITIES.register("deuterium_tower", () ->
+                    BlockEntityType.Builder.of(DeuteriumTowerBlockEntity::new,
+                            ModBlocks.MACHINE_DEUTERIUM_TOWER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<GasCentBlockEntity>> GAS_CENT =
+            BLOCK_ENTITIES.register("gas_cent", () ->
+                    BlockEntityType.Builder.of(GasCentBlockEntity::new,
+                            ModBlocks.MACHINE_GASCENT.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<BatteryReddBlockEntity>> BATTERY_REDD =
+            BLOCK_ENTITIES.register("battery_redd", () ->
+                    BlockEntityType.Builder.of(BatteryReddBlockEntity::new,
+                            ModBlocks.MACHINE_BATTERY_REDD.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<MixerBlockEntity>> MIXER =
+            BLOCK_ENTITIES.register("mixer", () ->
+                    BlockEntityType.Builder.of(MixerBlockEntity::new,
+                            ModBlocks.MACHINE_MIXER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<SawmillBlockEntity>> SAWMILL =
+            BLOCK_ENTITIES.register("sawmill", () ->
+                    BlockEntityType.Builder.of(SawmillBlockEntity::new,
+                            ModBlocks.MACHINE_SAWMILL.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<ChungusBlockEntity>> CHUNGUS =
+            BLOCK_ENTITIES.register("chungus", () ->
+                    BlockEntityType.Builder.of(ChungusBlockEntity::new,
+                            ModBlocks.MACHINE_CHUNGUS.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<TurbofanBlockEntity>> TURBOFAN =
+            BLOCK_ENTITIES.register("turbofan", () ->
+                    BlockEntityType.Builder.of(TurbofanBlockEntity::new,
+                            ModBlocks.MACHINE_TURBOFAN.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<TurbineGasBlockEntity>> TURBINE_GAS =
+            BLOCK_ENTITIES.register("turbine_gas", () ->
+                    BlockEntityType.Builder.of(TurbineGasBlockEntity::new,
+                            ModBlocks.MACHINE_TURBINEGAS.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<LegacyGenericSelectorMachineBlockEntity>> LEGACY_GENERIC_SELECTOR_MACHINE =
+            BLOCK_ENTITIES.register("legacy_generic_selector_machine", () ->
+                    BlockEntityType.Builder.of(LegacyGenericSelectorMachineBlockEntity::new,
+                            ModBlocks.MACHINE_PRECASS.get(),
+                            ModBlocks.MACHINE_PUREX.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<LegacyVisibleMachineBlockEntity>> LEGACY_VISIBLE_MACHINE =
             BLOCK_ENTITIES.register("legacy_visible_machine", () ->
                     BlockEntityType.Builder.of(
                             LegacyVisibleMachineBlockEntity::new,
-                            ModBlocks.MACHINE_BATTERY_REDD.get(),
-                            ModBlocks.MACHINE_CENTRIFUGE.get(),
-                            ModBlocks.MACHINE_GASCENT.get(),
                             ModBlocks.MACHINE_ORE_SLOPPER.get(),
-                            ModBlocks.MACHINE_SAWMILL.get(),
                             ModBlocks.MACHINE_CRUCIBLE.get(),
-                            ModBlocks.MACHINE_INTAKE.get(),
-                            ModBlocks.MACHINE_DRAIN.get(),
-                            ModBlocks.MACHINE_CHUNGUS.get(),
                             ModBlocks.MACHINE_HEPHAESTUS.get(),
-                            ModBlocks.MACHINE_PRECASS.get(),
-                            ModBlocks.MACHINE_PUREX.get(),
                             ModBlocks.MACHINE_SILEX.get(),
-                            ModBlocks.MACHINE_EXPOSURE_CHAMBER.get(),
                             ModBlocks.MACHINE_CYCLOTRON.get(),
-                            ModBlocks.MACHINE_CRYSTALLIZER.get(),
                             ModBlocks.MACHINE_ELECTROLYSER.get(),
-                            ModBlocks.MACHINE_SOLDERING_STATION.get(),
-                            ModBlocks.MACHINE_MIXER.get(),
-                            ModBlocks.MACHINE_RADIOLYSIS.get(),
-                            ModBlocks.MACHINE_RADGEN.get(),
                             ModBlocks.MACHINE_ROTARY_FURNACE.get(),
-                            ModBlocks.MACHINE_TURBOFAN.get(),
-                            ModBlocks.MACHINE_TURBINEGAS.get(),
-                            ModBlocks.MACHINE_AMMO_PRESS.get(),
-                            ModBlocks.FURNACE_IRON.get(),
-                            ModBlocks.FURNACE_STEEL.get(),
-                            ModBlocks.FURNACE_COMBINATION.get(),
-                            ModBlocks.MACHINE_BLAST_FURNACE.get(),
                             ModBlocks.MACHINE_ARC_FURNACE.get(),
-                            ModBlocks.MACHINE_ANNIHILATOR.get(),
                             ModBlocks.MACHINE_FEL.get(),
-                            ModBlocks.MACHINE_ORBUS.get(),
                             ModBlocks.MACHINE_MINING_LASER.get(),
                             ModBlocks.MACHINE_STRAND_CASTER.get(),
-                            ModBlocks.MACHINE_WOOD_BURNER.get(),
-                            ModBlocks.MACHINE_STIRLING.get(),
-                            ModBlocks.MACHINE_STIRLING_STEEL.get(),
-                            ModBlocks.MACHINE_STIRLING_CREATIVE.get(),
-                            ModBlocks.MACHINE_DEUTERIUM_TOWER.get(),
                             ModBlocks.FRACTION_SPACER.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<VendingMachineBlockEntity>> VENDING_MACHINE =

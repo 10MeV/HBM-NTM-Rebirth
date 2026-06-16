@@ -34,8 +34,8 @@ public class FireboxHeaterBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof FireboxHeaterBlockEntity firebox) {
-            NetworkHooks.openScreen(serverPlayer, firebox, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof FireboxHeaterBlockEntity firebox) {
+            NetworkHooks.openScreen(serverPlayer, firebox, firebox.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

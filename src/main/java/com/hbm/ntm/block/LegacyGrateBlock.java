@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -82,6 +83,18 @@ public class LegacyGrateBlock extends Block {
             return Shapes.empty();
         }
         return shapeFor(state);
+    }
+
+    @Override
+    public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (wide && (entity instanceof ItemEntity || entity instanceof ExperienceOrb)) {
+            double threshold = pos.getY() + state.getValue(HEIGHT) * 0.125D + 0.375D;
+            if (entity.getY() < threshold) {
+                entity.setDeltaMovement(0.0D, -0.25D, 0.0D);
+                entity.setPos(entity.getX(), entity.getY() - 0.125D, entity.getZ());
+            }
+        }
+        super.entityInside(state, level, pos, entity);
     }
 
     public boolean isFaceSturdy(BlockState state, BlockGetter level, BlockPos pos, Direction direction,

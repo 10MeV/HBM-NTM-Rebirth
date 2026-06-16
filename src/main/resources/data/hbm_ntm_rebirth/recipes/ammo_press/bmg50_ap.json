@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 38,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_bmg50_ap",
+    "count": 12
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/weapon_steel"
+      },
+      "count": 2,
+      "legacy_ore": "ingotWeaponSteel"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:dusts/any_smokeless"
+      },
+      "count": 6,
+      "legacy_ore": "dustAnySmokeless"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_large_steel"
+      },
+      "count": 1,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 3
+    },
+    null
+  ]
+}

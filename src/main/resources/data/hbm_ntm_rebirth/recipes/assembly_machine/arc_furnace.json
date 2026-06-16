@@ -1,0 +1,58 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:storage_blocks/any_concrete"
+      },
+      "legacy_ore": "blockAnyConcrete"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ingot_firebrick"
+      }
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:cast_plates/steel"
+      },
+      "legacy_ore": "plateCastSteel"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:machine_transformer"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_analog"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 7
+    }
+  ],
+  "internal_name": "ass.arcfurnace",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_arc_furnace"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 83
+}

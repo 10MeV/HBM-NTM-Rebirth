@@ -1,0 +1,9 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:lye", "amount": 100 },
+  "input1": { "fluid": "hbm_ntm_rebirth:water", "amount": 100 },
+  "solid_input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:powder_ash_wood" }
+  },
+  "duration": 100
+}

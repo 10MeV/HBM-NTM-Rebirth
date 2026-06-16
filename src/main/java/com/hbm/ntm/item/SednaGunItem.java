@@ -2032,7 +2032,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         Vec3 position = new Vec3(player.getX(), player.getY() + player.getEyeHeight(), player.getZ())
                 .add(localOffset);
         Vec3 direction = BulletKinematicsUtil.directionFromRotation(player.getYRot(), player.getXRot());
-        Vec3 motion = BulletKinematicsUtil.shootWithSpread(direction, BulletKinematicsUtil.DEFAULT_THROW_FORCE,
+        Vec3 motion = BulletKinematicsUtil.shootWithMk4Spread(direction, BulletKinematicsUtil.DEFAULT_THROW_FORCE,
                 spread(player, stack, config, gun), player.getRandom());
         BulletLaunchUtil.Rotation rotation = BulletLaunchUtil.rotationFromMotion(motion);
         return new BulletLaunchUtil.LaunchPlan(config, BulletConfigSyncRegistry.syncedState(config), position, motion,

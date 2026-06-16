@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 55,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_g26_flare",
+    "count": 4
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:dusts/red_phosphorus"
+      },
+      "count": 1,
+      "legacy_ore": "dustRedPhosphorus"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:dusts/any_smokeless"
+      },
+      "count": 1,
+      "legacy_ore": "dustAnySmokeless"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_large"
+      },
+      "count": 1,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 1
+    },
+    null
+  ]
+}

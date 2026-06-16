@@ -1,0 +1,42 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 71,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_flame_diesel",
+    "count": 1
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "count": 1,
+      "legacy_ore": "plateSteel"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "type": "hbm_ntm_rebirth:fluid_container",
+        "fluid": "hbm_ntm_rebirth:diesel",
+        "amount": 1000
+      },
+      "count": 1,
+      "fluid_container": {
+        "fluid": "hbm_ntm_rebirth:diesel",
+        "amount": 1000
+      }
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "count": 1,
+      "legacy_ore": "plateSteel"
+    },
+    null
+  ]
+}

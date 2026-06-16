@@ -219,6 +219,14 @@ public class TurretHimarsBlockEntity extends TurretBlockEntityBase implements Ar
     }
 
     @Override
+    protected void updateServerTickAfterTargeting() {
+        if (!isOn() && !targetQueue.isEmpty()) {
+            targetQueue.clear();
+            setChanged();
+        }
+    }
+
+    @Override
     protected boolean shouldUpdateFiringTick() {
         return hasAmmo() && crane <= 0.0F;
     }

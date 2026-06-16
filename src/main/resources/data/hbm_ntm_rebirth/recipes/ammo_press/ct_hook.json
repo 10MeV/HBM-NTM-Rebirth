@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 87,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_ct_hook",
+    "count": 16
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/steel"
+      },
+      "count": 1,
+      "legacy_ore": "ingotSteel"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:pipes/steel"
+      },
+      "count": 1,
+      "legacy_ore": "ntmpipeSteel"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:dusts/any_smokeless"
+      },
+      "count": 1,
+      "legacy_ore": "dustAnySmokeless"
+    },
+    null
+  ]
+}

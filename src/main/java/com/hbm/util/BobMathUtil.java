@@ -117,6 +117,10 @@ public final class BobMathUtil {
         return com.hbm.ntm.util.BobMathUtil.squirt(value);
     }
 
+    public static void setPi(double pi) {
+        com.hbm.ntm.util.BobMathUtil.setPi(pi);
+    }
+
     public static double angularDifference(double alpha, double beta) {
         return com.hbm.ntm.util.BobMathUtil.angularDifference(alpha, beta);
     }

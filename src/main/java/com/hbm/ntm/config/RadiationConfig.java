@@ -308,9 +308,13 @@ public final class RadiationConfig {
         return rampantModeEnabled() || RAMPANT_GLYPHID_GUIDANCE.get();
     }
 
+    public static double rampantSmokeStackOverride() {
+        return RAMPANT_SMOKE_STACK_OVERRIDE.get();
+    }
+
     public static double chimneyPollutionMultiplier(boolean industrial) {
         if (rampantModeEnabled()) {
-            double override = RAMPANT_SMOKE_STACK_OVERRIDE.get();
+            double override = rampantSmokeStackOverride();
             return industrial ? override / 2.0D : override;
         }
         return industrial ? 0.1D : 0.25D;

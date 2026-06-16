@@ -3,6 +3,7 @@ package com.hbm.handler.pollution;
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionSavedData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -65,7 +66,8 @@ public final class PollutionHandler {
     }
 
     public static PollutionData getPollutionData(Level level, BlockPos pos) {
-        return PollutionData.fromModern(PollutionManager.getPollutionData(level, pos));
+        PollutionSavedData.PollutionSample sample = PollutionManager.getPollutionDataOrNull(level, pos);
+        return sample == null ? null : PollutionData.fromModern(sample);
     }
 
     public static void setRampantTarget(Level level, BlockPos pos) {
@@ -110,6 +112,25 @@ public final class PollutionHandler {
                 sample.set(type.modern(), pollution[type.ordinal()]);
             }
             return sample;
+        }
+
+        public static PollutionData fromNBT(CompoundTag tag) {
+            PollutionData data = new PollutionData();
+            if (tag != null) {
+                for (PollutionType type : PollutionType.values()) {
+                    data.pollution[type.ordinal()] = tag.getFloat(PollutionSavedData.tagName(type.modern()));
+                }
+            }
+            return data;
+        }
+
+        public void toNBT(CompoundTag tag) {
+            if (tag == null) {
+                return;
+            }
+            for (PollutionType type : PollutionType.values()) {
+                tag.putFloat(PollutionSavedData.tagName(type.modern()), pollution[type.ordinal()]);
+            }
         }
     }
 

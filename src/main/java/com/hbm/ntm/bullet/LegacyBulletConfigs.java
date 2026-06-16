@@ -63,9 +63,14 @@ public final class LegacyBulletConfigs {
                         base.higherBoundRicochetChance(), base.bounceModifier())
                 .penetration(true)
                 .appearance(base.style(), base.trail(), base.plink(), "greendust")
+                .spentCasingName(chlorophyteCasingName(base.spentCasingName()))
                 .behavior(BulletBehaviorTag.CHLOROPHYTE_HOMING)
                 .behavior(BulletBehaviorTag.PENETRATION_HOMING_RESET)
                 .build();
+    }
+
+    private static String chlorophyteCasingName(String baseName) {
+        return baseName == null || baseName.isBlank() ? "" : baseName + "Cl";
     }
 
     private static BulletConfig turbine() {

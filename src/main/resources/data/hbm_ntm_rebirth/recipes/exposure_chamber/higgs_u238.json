@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:exposure_chamber",
+  "particle": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:particle_higgs"
+    }
+  },
+  "ingredient": {
+    "ingredient": {
+      "tag": "forge:ingots/u238"
+    },
+    "legacy_ore": "ingotU238"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_schrabidium"
+  },
+  "source_order": 1
+}

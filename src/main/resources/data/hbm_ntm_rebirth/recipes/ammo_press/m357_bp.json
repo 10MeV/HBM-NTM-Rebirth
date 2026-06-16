@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 0,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_m357_bp",
+    "count": 16
+  },
+  "input": [
+    null,
+    {
+      "ingredient": { "tag": "forge:ingots/lead" },
+      "count": 2,
+      "legacy_ore": "ingotLead"
+    },
+    null,
+    null,
+    {
+      "ingredient": { "item": "minecraft:gunpowder" },
+      "count": 1
+    },
+    null,
+    null,
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:casing_small" },
+      "count": 1,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 0
+    },
+    null
+  ]
+}

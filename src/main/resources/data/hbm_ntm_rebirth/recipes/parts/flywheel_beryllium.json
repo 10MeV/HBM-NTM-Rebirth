@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "tag": "forge:storage_blocks/beryllium"
+    },
+    "I": {
+      "tag": "forge:cast_plates/iron"
+    },
+    "T": {
+      "tag": "forge:pipes/dura_steel"
+    }
+  },
+  "pattern": [
+    "IBI",
+    "BTB",
+    "IBI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:flywheel_beryllium"
+  },
+  "show_notification": true
+}

@@ -142,7 +142,7 @@ public class TurretMenu extends AbstractContainerMenu {
                 if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, true)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (stack.is(ModItems.TURRET_CHIP.get()) || stack.is(ModItems.TURRET_BIOMETRY.get())) {
+            } else if (stack.is(ModItems.TURRET_CHIP.get())) {
                 if (!moveItemStackTo(stack, TurretBlockEntityBase.SLOT_CHIP, TurretBlockEntityBase.SLOT_CHIP + 1, false)) {
                     return ItemStack.EMPTY;
                 }
@@ -214,7 +214,7 @@ public class TurretMenu extends AbstractContainerMenu {
 
         @Override
         public boolean mayPlace(ItemStack stack) {
-            return stack.is(ModItems.TURRET_CHIP.get()) || stack.is(ModItems.TURRET_BIOMETRY.get());
+            return stack.is(ModItems.TURRET_CHIP.get());
         }
 
         @Override

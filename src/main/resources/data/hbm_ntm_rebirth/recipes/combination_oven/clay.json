@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:combination_oven",
+  "input": { "ingredient": { "item": "minecraft:clay" } },
+  "output_item": { "item": "minecraft:bricks" }
+}

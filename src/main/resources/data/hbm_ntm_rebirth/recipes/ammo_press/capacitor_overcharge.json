@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 76,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_capacitor_overcharge",
+    "count": 4
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "count": 1,
+      "legacy_ore": "ingotAnyPlastic"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:billets/silicon"
+      },
+      "count": 6,
+      "legacy_ore": "billetSilicon"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "count": 1,
+      "legacy_ore": "ingotAnyPlastic"
+    },
+    null
+  ]
+}

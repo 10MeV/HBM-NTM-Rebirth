@@ -47,6 +47,10 @@ public class DamageResistanceHandler {
         return DamageResistanceConfig.initialize(FMLPaths.CONFIGDIR.get());
     }
 
+    public static DamageResistanceConfig.LoadReport initDefaults() {
+        return DamageResistanceConfig.loadDefaults();
+    }
+
     public static void clearSystem() {
         itemStats.clear();
         setStats.clear();

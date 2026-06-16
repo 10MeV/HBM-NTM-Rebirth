@@ -1,0 +1,70 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:battery_lithium"
+      },
+      "legacy_id": "hbm:battery_pack",
+      "legacy_meta": 2
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "tag": "forge:dense_wires/gold"
+      },
+      "legacy_ore": "wireDenseGold"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:cast_plates/steel"
+      },
+      "legacy_ore": "plateCastSteel"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:part_generic_glass_polarized"
+      },
+      "legacy_id": "hbm:part_generic",
+      "legacy_meta": 5
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 1
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_basic"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 8
+    }
+  ],
+  "internal_name": "ass.fel",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_fel"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 104
+}

@@ -12,6 +12,7 @@ public final class BulletKinematicsUtil {
     public static final double EYE_Y_OFFSET = 0.1D;
     public static final float DEFAULT_THROW_FORCE = 1.0F;
     public static final double HEADING_FORCE_MULTIPLIER = 0.0075D;
+    public static final double MK4_HEADING_FORCE_MULTIPLIER = 1.0D;
     public static final float AIR_DRAG = 1.0F;
     public static final float WATER_DRAG = 1.0F;
 
@@ -47,6 +48,15 @@ public final class BulletKinematicsUtil {
     }
 
     public static Vec3 shootWithSpread(Vec3 direction, float velocity, float inaccuracy, RandomSource random) {
+        return shootWithSpread(direction, velocity, inaccuracy, random, HEADING_FORCE_MULTIPLIER);
+    }
+
+    public static Vec3 shootWithMk4Spread(Vec3 direction, float velocity, float inaccuracy, RandomSource random) {
+        return shootWithSpread(direction, velocity, inaccuracy, random, MK4_HEADING_FORCE_MULTIPLIER);
+    }
+
+    public static Vec3 shootWithSpread(Vec3 direction, float velocity, float inaccuracy, RandomSource random,
+            double headingForceMultiplier) {
         if (direction == null || direction.lengthSqr() == 0.0D) {
             return Vec3.ZERO;
         }
@@ -54,9 +64,9 @@ public final class BulletKinematicsUtil {
         RandomSource roll = random == null ? RandomSource.create() : random;
         Vec3 normalized = direction.normalize();
         Vec3 spread = new Vec3(
-                normalized.x + roll.nextGaussian() * HEADING_FORCE_MULTIPLIER * inaccuracy,
-                normalized.y + roll.nextGaussian() * HEADING_FORCE_MULTIPLIER * inaccuracy,
-                normalized.z + roll.nextGaussian() * HEADING_FORCE_MULTIPLIER * inaccuracy);
+                normalized.x + roll.nextGaussian() * headingForceMultiplier * inaccuracy,
+                normalized.y + roll.nextGaussian() * headingForceMultiplier * inaccuracy,
+                normalized.z + roll.nextGaussian() * headingForceMultiplier * inaccuracy);
         return spread.scale(velocity);
     }
 

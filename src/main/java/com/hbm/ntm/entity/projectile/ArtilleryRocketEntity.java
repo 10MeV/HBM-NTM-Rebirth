@@ -27,14 +27,13 @@ import net.minecraftforge.common.world.ForgeChunkManager;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.UUID;
-
 public class ArtilleryRocketEntity extends LegacyThrowableEntity implements RadarDetectable {
     private static final EntityDataAccessor<Integer> TYPE =
             SynchedEntityData.defineId(ArtilleryRocketEntity.class, EntityDataSerializers.INT);
 
     private Vec3 lastTargetPos = Vec3.ZERO;
-    private UUID targetUuid;
+    @Nullable
+    private Entity targetEntity;
     private boolean targeting = true;
     private boolean steering = true;
     private final double[][] targetMotion = new double[20][3];
@@ -82,19 +81,20 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
     public void shoot(Vec3 heading, float velocity, float inaccuracy) {
         Vec3 motion = heading == null || heading.lengthSqr() <= 1.0E-7D ? Vec3.ZERO : heading.normalize();
         if (inaccuracy > 0.0F) {
-            motion = motion.add(random.triangle(0.0D, 0.0075D * inaccuracy),
-                    random.triangle(0.0D, 0.0075D * inaccuracy),
-                    random.triangle(0.0D, 0.0075D * inaccuracy)).normalize();
+            motion = motion.add(random.nextGaussian() * 0.0075D * inaccuracy,
+                    random.nextGaussian() * 0.0075D * inaccuracy,
+                    random.nextGaussian() * 0.0075D * inaccuracy);
         }
-        setDeltaMovement(motion.scale(velocity));
-        setInitialRotationFromMotion(motion);
+        Vec3 launchMotion = motion.scale(velocity);
+        setDeltaMovement(launchMotion);
+        setInitialRotationFromMotion(launchMotion);
     }
 
     public ArtilleryRocketEntity setTarget(Entity target) {
         if (target != null) {
-            targetUuid = target.getUUID();
-            setTarget(target.getX(), target.getY() - target.getMyRidingOffset() + target.getBbHeight() * 0.5D,
-                    target.getZ());
+            targetEntity = target;
+            Vec3 center = entityTargetCenter(target);
+            setTarget(center.x, center.y, center.z);
         }
         return this;
     }
@@ -196,10 +196,7 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
 
     @Nullable
     private Entity targetEntity() {
-        if (targetUuid == null || !(level() instanceof ServerLevel serverLevel)) {
-            return null;
-        }
-        return serverLevel.getEntity(targetUuid);
+        return targetEntity;
     }
 
     private void recalculatePredictiveTarget(Entity target) {
@@ -222,10 +219,14 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
             setTarget(target);
             return;
         }
-        setTarget(target.getX() + (motionX / 20.0D) * eta,
-                target.getY() - target.getMyRidingOffset() + target.getBbHeight() * 0.5D
-                        + (motionY / 20.0D) * eta,
-                target.getZ() + (motionZ / 20.0D) * eta);
+        Vec3 center = entityTargetCenter(target);
+        setTarget(center.x + (motionX / 20.0D) * eta,
+                center.y + (motionY / 20.0D) * eta,
+                center.z + (motionZ / 20.0D) * eta);
+    }
+
+    private static Vec3 entityTargetCenter(Entity entity) {
+        return new Vec3(entity.getX(), entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ());
     }
 
     private void adjustBallisticCourse(double speed, double maxTurn) {
@@ -320,7 +321,7 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
         super.readAdditionalSaveData(tag);
         lastTargetPos = new Vec3(tag.getDouble("targetX"), tag.getDouble("targetY"), tag.getDouble("targetZ"));
         setType(tag.getInt("type"));
-        targetUuid = tag.hasUUID("targetUUID") ? tag.getUUID("targetUUID") : null;
+        targetEntity = null;
         forcedChunk = Long.MIN_VALUE;
     }
 
@@ -332,9 +333,6 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
         tag.putDouble("targetY", target.y);
         tag.putDouble("targetZ", target.z);
         tag.putInt("type", typeIndex());
-        if (targetUuid != null) {
-            tag.putUUID("targetUUID", targetUuid);
-        }
     }
 
     @Override

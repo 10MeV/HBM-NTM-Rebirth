@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 61,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_rocket_he",
+    "count": 2
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ball_dynamite"
+      },
+      "count": 1
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_large"
+      },
+      "count": 1,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 1
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:dusts/any_smokeless"
+      },
+      "count": 3,
+      "legacy_ore": "dustAnySmokeless"
+    },
+    null
+  ]
+}

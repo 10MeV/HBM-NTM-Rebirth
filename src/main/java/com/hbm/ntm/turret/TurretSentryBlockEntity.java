@@ -116,10 +116,13 @@ public class TurretSentryBlockEntity extends TurretBlockEntityBase {
             return;
         }
         BulletConfig config = getFirstConfigLoaded();
-        if (config == null || !consumeAmmo(config)) {
+        if (config == null || !hasAmmo(config)) {
             return;
         }
-        spawnBullet(config, 5.0F);
+        if (!spawnBullet(config, 5.0F)) {
+            return;
+        }
+        consumeAmmo(config);
         playTurretSound("hbm:turret.sentry_fire", 2.0F, 1.0F);
         spawnMuzzleLargeExplodeAt(getMuzzlePos().add(rotateLegacyYawOnly(
                 new Vec3(0.125D * (shotSide ? 1.0D : -1.0D), 0.0D, 0.0D))), 1.0F, 1);

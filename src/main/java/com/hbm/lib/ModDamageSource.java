@@ -572,7 +572,7 @@ public final class ModDamageSource {
         expect(problems, "emplacer string resolves", ModDamageSources.legacyKey(s_emplacer)
                 .filter(ModDamageSources.CHOPPER_BULLET::equals).isPresent());
         expect(problems, "subatomic prefix resolves", ModDamageSources.legacyKey(s_zomg_prefix + "3")
-                .filter(ModDamageSources.SUBATOMIC::equals).isPresent());
+                .filter(ModDamageSources.SUBATOMIC_3::equals).isPresent());
         expect(problems, "emp string resolves", ModDamageSources.legacyKey(s_emp)
                 .filter(ModDamageSources.ELECTRICITY::equals).isPresent());
         expect(problems, "null key compare false", !is(null, radiation));
@@ -606,7 +606,7 @@ public final class ModDamageSource {
                         && !matches(com.hbm.util.DamageResistanceHandler.DamageClass.LASER, DamageClass.PLASMA));
         expect(problems, "digamma string absolute", isDamageAbsolute("digamma") && bypassesEffects("digamma"));
         expect(problems, "nitan string creative", isDamageAllowedInCreativeMode("nitan"));
-        expect(problems, "subatomic expected damage type", getDamageType(s_zomg_prefix + "4").equals("subAtomic"));
+        expect(problems, "subatomic expected damage type", getDamageType(s_zomg_prefix + "4").equals("subAtomic4"));
         expect(problems, "combine expected tags", expectedTagLabels(s_combineball)
                 .equals(List.of("projectile", "bypassesArmor")));
         expect(problems, "damage class physical projectile",

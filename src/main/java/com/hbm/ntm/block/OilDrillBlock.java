@@ -50,8 +50,8 @@ public class OilDrillBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof OilDrillBlockEntity drill) {
-            NetworkHooks.openScreen(serverPlayer, drill, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof OilDrillBlockEntity drill) {
+            NetworkHooks.openScreen(serverPlayer, drill, drill.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -95,9 +95,10 @@ public class OilDrillBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public void onBlockExploded(BlockState state, Level level, BlockPos pos, Explosion explosion) {
-        if (level.getBlockEntity(pos) instanceof OilDrillBlockEntity drill && drill.hasStoredFluid()) {
+        if (resolveCoreBlockEntity(level, pos) instanceof OilDrillBlockEntity drill && drill.hasStoredFluid()) {
             drill.clearStoredFluids();
-            level.explode(null, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 15.0F,
+            BlockPos corePos = drill.getBlockPos();
+            level.explode(null, corePos.getX() + 0.5D, corePos.getY() + 0.5D, corePos.getZ() + 0.5D, 15.0F,
                     Level.ExplosionInteraction.TNT);
         }
         super.onBlockExploded(state, level, pos, explosion);

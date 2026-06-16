@@ -1,0 +1,111 @@
+package com.hbm.ntm.client.screen;
+
+import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.menu.PrecassMenu;
+import com.hbm.ntm.recipe.GenericMachineRecipe;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+
+import java.util.List;
+
+public class PrecassScreen extends AbstractContainerScreen<PrecassMenu> {
+    private static final ResourceLocation TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/processing/gui_precass.png");
+    private static final int[] INPUT_MENU_SLOTS = new int[] { 4, 5, 6, 7, 8, 9, 10, 11, 12 };
+
+    public PrecassScreen(PrecassMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title);
+        imageWidth = 176;
+        imageHeight = 256;
+        titleLabelX = 70;
+        titleLabelY = 6;
+        inventoryLabelY = imageHeight - 96 + 2;
+    }
+
+    @Override
+    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
+        graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        int power = menu.getPowerBarHeight(61);
+        if (power > 0) {
+            graphics.blit(TEXTURE, leftPos + 152, topPos + 79 - power, 176, 61 - power, 16, power);
+        }
+        int progress = menu.getProgressWidth(70);
+        if (progress > 0) {
+            graphics.blit(TEXTURE, leftPos + 62, topPos + 126, 176, 61, progress, 16);
+        }
+        GenericMachineRecipe recipe = menu.getBlockEntity().getSelectedRecipeDefinition();
+        if (menu.getBlockEntity().isProcessing()) {
+            graphics.blit(TEXTURE, leftPos + 51, topPos + 121, 195, 0, 3, 6);
+            graphics.blit(TEXTURE, leftPos + 56, topPos + 121, 195, 0, 3, 6);
+        } else if (recipe != null) {
+            graphics.blit(TEXTURE, leftPos + 51, topPos + 121, 192, 0, 3, 6);
+            if (menu.getPower() >= recipe.getPower()) {
+                graphics.blit(TEXTURE, leftPos + 56, topPos + 121, 192, 0, 3, 6);
+            }
+        }
+        graphics.renderItem(recipeIcon(recipe), leftPos + 8, topPos + 126);
+        LegacyRecipeGhostRenderer.renderItemInputGhosts(graphics, minecraft, menu, TEXTURE, leftPos, topPos,
+                recipe, INPUT_MENU_SLOTS);
+        LegacyFluidGuiRenderer.renderHorizontalTank(graphics, leftPos + 8, topPos + 115,
+                52, 16, menu.getInputTankData());
+        LegacyFluidGuiRenderer.renderHorizontalTank(graphics, leftPos + 80, topPos + 115,
+                52, 16, menu.getOutputTankData());
+    }
+
+    @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        LegacyGuiText.drawCenteredLabel(graphics, font, title.getString(), titleLabelX, titleLabelY, 124, 0x404040);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
+    }
+
+    @Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        renderBackground(graphics);
+        super.render(graphics, mouseX, mouseY, partialTick);
+        if (isHovering(7, 125, 18, 18, mouseX, mouseY)) {
+            LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(), mouseX, mouseY);
+        } else if (isHovering(152, 18, 16, 61, mouseX, mouseY)) {
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 152, topPos + 18, 16, 61, menu.getPower(), menu.getMaxPower());
+        } else if (isHovering(8, 99, 52, 16, mouseX, mouseY)) {
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTankData(),
+                    menu.getInputTankTooltip(hasShiftDown()), mouseX, mouseY);
+        } else if (isHovering(80, 99, 52, 16, mouseX, mouseY)) {
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTankData(),
+                    menu.getOutputTankTooltip(hasShiftDown()), mouseX, mouseY);
+        }
+        renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (isHovering(7, 125, 18, 18, mouseX, mouseY)) {
+            minecraft.setScreen(new PrecassRecipeSelectorScreen(this));
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private List<Component> recipeTooltip() {
+        GenericMachineRecipe recipe = menu.getBlockEntity().getSelectedRecipeDefinition();
+        if (recipe == null) {
+            return List.of(Component.translatableWithFallback("gui.recipe.setRecipe", "Set recipe")
+                    .withStyle(ChatFormatting.YELLOW));
+        }
+        return recipe.getDisplayLines();
+    }
+
+    private static List<FormattedCharSequence> splitTooltip(List<Component> tooltip) {
+        return tooltip.stream().map(Component::getVisualOrderText).toList();
+    }
+
+    private static ItemStack recipeIcon(GenericMachineRecipe recipe) {
+        return recipe == null ? LegacyGuiElements.templateFolderStack() : recipe.getIcon();
+    }
+}

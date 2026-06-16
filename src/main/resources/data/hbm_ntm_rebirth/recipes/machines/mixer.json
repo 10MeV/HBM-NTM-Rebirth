@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_vacuum_tube"
+    },
+    "G": {
+      "tag": "forge:glass_panes"
+    },
+    "I": {
+      "tag": "forge:ingots/dura_steel"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    "PIP",
+    "GCG",
+    "PMP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_mixer"
+  },
+  "show_notification": true
+}

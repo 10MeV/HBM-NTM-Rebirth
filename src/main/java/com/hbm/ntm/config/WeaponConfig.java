@@ -30,8 +30,8 @@ public final class WeaponConfig {
 
         builder.push("turrets");
         CIWS_HITRATE = builder
-                .comment("Legacy ciwsHitrate: percent chance for each Howard CIWS damage pulse to hit.")
-                .defineInRange("ciwsHitrate", 50, 0, 100);
+                .comment("Legacy 7.03_ciwsAccuracy: modifier used directly in the Howard CIWS hit roll.")
+                .defineInRange("ciwsHitrate", 50, Integer.MIN_VALUE, Integer.MAX_VALUE);
         builder.pop();
     }
 

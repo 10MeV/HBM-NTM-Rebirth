@@ -76,6 +76,16 @@ public final class LegacyBurnTimeModule {
         return this;
     }
 
+    public LegacyBurnTimeModule setLogTimeMod(double mod) {
+        modTime[MOD_LOG] = mod;
+        return this;
+    }
+
+    public LegacyBurnTimeModule setWoodTimeMod(double mod) {
+        modTime[MOD_WOOD] = mod;
+        return this;
+    }
+
     public LegacyBurnTimeModule setCokeTimeMod(double mod) {
         modTime[MOD_COKE] = mod;
         return this;
@@ -103,6 +113,16 @@ public final class LegacyBurnTimeModule {
 
     public LegacyBurnTimeModule setCoalHeatMod(double mod) {
         modHeat[MOD_COAL] = mod;
+        return this;
+    }
+
+    public LegacyBurnTimeModule setLogHeatMod(double mod) {
+        modHeat[MOD_LOG] = mod;
+        return this;
+    }
+
+    public LegacyBurnTimeModule setWoodHeatMod(double mod) {
+        modHeat[MOD_WOOD] = mod;
         return this;
     }
 

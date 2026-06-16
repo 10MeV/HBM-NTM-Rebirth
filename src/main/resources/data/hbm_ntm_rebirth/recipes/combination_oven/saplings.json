@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:combination_oven",
+  "input": { "ingredient": { "tag": "minecraft:saplings" } },
+  "output_item": { "item": "hbm_ntm_rebirth:powder_ash_wood" },
+  "output_fluid": { "fluid": "WOODOIL", "amount": 50 }
+}

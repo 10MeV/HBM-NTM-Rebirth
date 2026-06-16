@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 79,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_coil_tungsten",
+    "count": 4
+  },
+  "input": [
+    null,
+    null,
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/tungsten"
+      },
+      "count": 1,
+      "legacy_ore": "ingotTungsten"
+    },
+    null,
+    null,
+    null,
+    null
+  ]
+}

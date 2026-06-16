@@ -13,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -117,6 +118,11 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
     }
 
     protected void onCoreRemoved(Level level, BlockPos pos, BlockState state) {
+    }
+
+    @Nullable
+    protected static BlockEntity resolveCoreBlockEntity(Level level, BlockPos pos) {
+        return MultiblockHelper.resolveCoreBlockEntity(level, pos);
     }
 
     @Override

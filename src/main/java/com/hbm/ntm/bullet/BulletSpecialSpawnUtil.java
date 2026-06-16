@@ -148,7 +148,7 @@ public final class BulletSpecialSpawnUtil {
             if (delta.length() > LEGACY_GRENADE_LASER_RANGE || delta.lengthSqr() <= 1.0E-7D) {
                 continue;
             }
-            BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedLaunchPlan(
+            BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedMk4LaunchPlan(
                     LegacySednaRuntimeBulletConfigs.GRENADE_LASER, origin, delta.normalize(), 1.0F, 0.0F, roll);
             requests.add(new SpawnRequest(SpawnType.GRENADE_LASER_BEAM,
                     LegacySednaRuntimeBulletConfigs.GRENADE_LASER, plan, thrower, target, position,
@@ -183,7 +183,7 @@ public final class BulletSpecialSpawnUtil {
             if (delta.length() > LIGHTNING_SPLIT_RANGE || delta.lengthSqr() <= 1.0E-7D) {
                 continue;
             }
-            BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedLaunchPlan(subBeam, impactPosition,
+            BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedMk4LaunchPlan(subBeam, impactPosition,
                     delta.normalize(), 1.0F, 0.0F, roll);
             requests.add(new SpawnRequest(SpawnType.LIGHTNING_SPLIT_SUB_BEAM, subBeam, plan, shooter, target,
                     impactPosition, damage));
@@ -242,7 +242,7 @@ public final class BulletSpecialSpawnUtil {
         for (int i = 0; i < projectiles; i++) {
             Vec3 heading = blockSide == null ? randomUnitVector(roll)
                     : new Vec3(blockSide.getStepX(), blockSide.getStepY(), blockSide.getStepZ());
-            BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedLaunchPlan(submunition, origin, heading,
+            BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedMk4LaunchPlan(submunition, origin, heading,
                     BulletKinematicsUtil.DEFAULT_THROW_FORCE, deviation, roll);
             requests.add(new SpawnRequest(SpawnType.SHREDDER_SUBMUNITION, submunition, plan, shooter, null,
                     impactPosition, damage));
@@ -268,7 +268,7 @@ public final class BulletSpecialSpawnUtil {
         Vec3 heading = new Vec3(-Mth.sin(yaw) * Mth.cos(pitch),
                 Mth.sin(pitch),
                 Mth.cos(yaw) * Mth.cos(pitch));
-        return BulletLaunchUtil.directedLaunchPlan(config, origin, heading, 1.0F, 0.0F, random);
+        return BulletLaunchUtil.directedMk4LaunchPlan(config, origin, heading, 1.0F, 0.0F, random);
     }
 
     private static Vec3 randomUnitVector(RandomSource random) {

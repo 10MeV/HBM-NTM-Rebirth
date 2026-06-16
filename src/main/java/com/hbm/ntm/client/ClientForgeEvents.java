@@ -25,6 +25,7 @@ import com.hbm.ntm.client.renderer.SednaGunHudRenderer;
 import com.hbm.ntm.client.renderer.SednaGunItemRenderer;
 import com.hbm.ntm.client.sound.LegacyMovingEntitySound;
 import com.hbm.ntm.client.sound.LegacyNullSoundRedirects;
+import com.hbm.ntm.client.sound.SoundLoopSiren;
 import com.hbm.ntm.blockentity.CustomNukeBlockEntity;
 import com.hbm.ntm.config.HbmClientConfig;
 import com.hbm.ntm.config.RadiationConfig;
@@ -580,6 +581,7 @@ public final class ClientForgeEvents {
         HbmOverheadMarkers.clearAll();
         HbmBlackHoleEffects.clearAll();
         LegacyMovingEntitySound.clearAll();
+        SoundLoopSiren.clearAll();
         NukeHudEffects.clearAll();
         TileSyncPacket.clearClientResyncRequests();
         ClientTileBinaryData.clearClientResyncRequests();

@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:sunfloweroil", "amount": 100 },
+  "solid_input": {
+    "ingredient": { "item": "minecraft:sunflower" }
+  },
+  "duration": 50
+}

@@ -34,8 +34,8 @@ public class AshpitBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && !player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof AshpitBlockEntity ashpit) {
-            NetworkHooks.openScreen(serverPlayer, ashpit, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof AshpitBlockEntity ashpit) {
+            NetworkHooks.openScreen(serverPlayer, ashpit, ashpit.getBlockPos());
         }
         return player.isShiftKeyDown() ? InteractionResult.PASS : InteractionResult.sidedSuccess(level.isClientSide);
     }

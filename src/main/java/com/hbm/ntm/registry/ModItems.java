@@ -190,6 +190,7 @@ public final class ModItems {
     public static final RegistryObject<Item> STEEL_POWDER = part("powder_steel");
     public static final RegistryObject<Item> BORON_POWDER = part("powder_boron");
     public static final RegistryObject<Item> LEAD_POWDER = part("powder_lead");
+    public static final RegistryObject<Item> POWDER_SAWDUST = part("powder_sawdust");
     public static final RegistryObject<Item> SCRAP_PLASTIC = registerLegacy("scrap_plastic",
             () -> new PlasticScrapItem(new Item.Properties()));
 
@@ -197,6 +198,9 @@ public final class ModItems {
     public static final RegistryObject<Item> TUNGSTEN_COIL = part("coil_tungsten");
     public static final RegistryObject<Item> GOLD_COIL = part("coil_gold");
     public static final RegistryObject<Item> MOTOR = part("motor");
+    public static final RegistryObject<Item> GEAR_LARGE = part("gear_large");
+    public static final RegistryObject<Item> GEAR_LARGE_STEEL = part("gear_large_steel");
+    public static final RegistryObject<Item> SAWBLADE = part("sawblade");
     public static final RegistryObject<Item> UPGRADE_TEMPLATE = part("upgrade_template");
     public static final RegistryObject<Item> BLUEPRINTS = registerLegacy("blueprints",
             () -> new ItemBlueprints(new Item.Properties()));
@@ -281,6 +285,11 @@ public final class ModItems {
     public static final RegistryObject<Item> AMMO_STANDARD_P9_FMJ = simpleItem("ammo_standard_p9_fmj");
     public static final RegistryObject<Item> AMMO_STANDARD_P9_JHP = simpleItem("ammo_standard_p9_jhp");
     public static final RegistryObject<Item> AMMO_STANDARD_P9_AP = simpleItem("ammo_standard_p9_ap");
+    public static final RegistryObject<Item> AMMO_STANDARD_P45_SP = simpleItem("ammo_standard_p45_sp");
+    public static final RegistryObject<Item> AMMO_STANDARD_P45_FMJ = simpleItem("ammo_standard_p45_fmj");
+    public static final RegistryObject<Item> AMMO_STANDARD_P45_JHP = simpleItem("ammo_standard_p45_jhp");
+    public static final RegistryObject<Item> AMMO_STANDARD_P45_AP = simpleItem("ammo_standard_p45_ap");
+    public static final RegistryObject<Item> AMMO_STANDARD_P45_DU = simpleItem("ammo_standard_p45_du");
     public static final RegistryObject<Item> AMMO_STANDARD_R556_SP = simpleItem("ammo_standard_r556_sp");
     public static final RegistryObject<Item> AMMO_STANDARD_R556_FMJ = simpleItem("ammo_standard_r556_fmj");
     public static final RegistryObject<Item> AMMO_STANDARD_R556_JHP = simpleItem("ammo_standard_r556_jhp");
@@ -350,7 +359,13 @@ public final class ModItems {
     public static final RegistryObject<Item> AMMO_FIREEXT_0 = simpleItem("ammo_fireext_0");
     public static final RegistryObject<Item> AMMO_FIREEXT_1 = simpleItem("ammo_fireext_1");
     public static final RegistryObject<Item> AMMO_FIREEXT_2 = simpleItem("ammo_fireext_2");
+    public static final RegistryObject<Item> AMMO_SECRET_FOLLY_SM = simpleItem("ammo_secret_folly_sm");
+    public static final RegistryObject<Item> AMMO_SECRET_FOLLY_NUKE = simpleItem("ammo_secret_folly_nuke");
+    public static final RegistryObject<Item> AMMO_SECRET_M44_EQUESTRIAN = simpleItem("ammo_secret_m44_equestrian");
+    public static final RegistryObject<Item> AMMO_SECRET_G12_EQUESTRIAN = simpleItem("ammo_secret_g12_equestrian");
+    public static final RegistryObject<Item> AMMO_SECRET_BMG50_EQUESTRIAN = simpleItem("ammo_secret_bmg50_equestrian");
     public static final RegistryObject<Item> AMMO_SECRET_P35_800 = simpleItem("ammo_secret_p35_800");
+    public static final RegistryObject<Item> AMMO_SECRET_BMG50_BLACK = simpleItem("ammo_secret_bmg50_black");
     public static final RegistryObject<Item> AMMO_SECRET_P35_800_BL = simpleItem("ammo_secret_p35_800_bl");
     public static final RegistryObject<Item> AMMO_STANDARD_TAU_URANIUM = simpleItem("ammo_standard_tau_uranium");
     public static final RegistryObject<Item> AMMO_STANDARD_CT_HOOK = simpleItem("ammo_standard_ct_hook");
@@ -1472,8 +1487,15 @@ public final class ModItems {
             () -> new SingularityItem(new Item.Properties().stacksTo(1), "singularity_spark", 3));
     public static final RegistryObject<Item> BLACK_HOLE = registerLegacy("black_hole",
             () -> new SingularityItem(new Item.Properties().stacksTo(1), "black_hole", 3));
+    public static final RegistryObject<Item> PARTICLE_EMPTY = simpleItem("particle_empty");
+    public static final RegistryObject<Item> PARTICLE_HIGGS = registerLegacy("particle_higgs",
+            () -> new Item(new Item.Properties().craftRemainder(PARTICLE_EMPTY.get())));
+    public static final RegistryObject<Item> PARTICLE_DARK = registerLegacy("particle_dark",
+            () -> new Item(new Item.Properties().craftRemainder(PARTICLE_EMPTY.get())));
+    public static final RegistryObject<Item> PARTICLE_SPARKTICLE = registerLegacy("particle_sparkticle",
+            () -> new Item(new Item.Properties().craftRemainder(PARTICLE_EMPTY.get())));
     public static final RegistryObject<Item> PARTICLE_DIGAMMA = registerLegacy("particle_digamma",
-            () -> new DigammaParticleItem(new Item.Properties(), 60));
+            () -> new DigammaParticleItem(new Item.Properties().craftRemainder(PARTICLE_EMPTY.get()), 60));
     public static final RegistryObject<Item> PELLET_ANTIMATTER = registerLegacy("pellet_antimatter",
             () -> new AntimatterClusterItem(new Item.Properties()));
     public static final RegistryObject<Item> CUSTOM_TNT = simpleItem("custom_tnt");
@@ -2010,7 +2032,6 @@ public final class ModItems {
             "powder_poison",
             "powder_red_copper",
             "powder_magnetized_tungsten",
-            "powder_sawdust",
             "powder_magic",
             "powder_polymer",
             "powder_bakelite",
@@ -2024,6 +2045,7 @@ public final class ModItems {
             "ingot_zirconium",
             "ingot_phosphorus",
             "ingot_magnetized_tungsten",
+            "assembly_nuke",
             "neutron_reflector",
             "plate_mixed",
             "plate_bismuth",
@@ -2061,6 +2083,7 @@ public final class ModItems {
             "fins_big_steel",
             "fins_tri_steel",
             "fins_quad_titanium",
+            "bolt_lead",
             "bolt_steel",
             "bolt_tungsten",
             "bolt_dura_steel",
@@ -2134,6 +2157,7 @@ public final class ModItems {
             "turbine_titanium",
             "blade_tungsten",
             "turbine_tungsten",
+            "flywheel_beryllium",
             "entanglement_kit",
             "dysfunctional_reactor",
             "coil_copper_torus",
@@ -2451,6 +2475,10 @@ public final class ModItems {
             SINGULARITY_SUPER_HEATED,
             SINGULARITY_SPARK,
             BLACK_HOLE,
+            PARTICLE_EMPTY,
+            PARTICLE_HIGGS,
+            PARTICLE_DARK,
+            PARTICLE_SPARKTICLE,
             PARTICLE_DIGAMMA,
             PELLET_ANTIMATTER
     );
@@ -2889,10 +2917,14 @@ public final class ModItems {
             IRON_POWDER,
             STEEL_POWDER,
             LEAD_POWDER,
+            POWDER_SAWDUST,
             COPPER_COIL,
             TUNGSTEN_COIL,
             GOLD_COIL,
             MOTOR,
+            GEAR_LARGE,
+            GEAR_LARGE_STEEL,
+            SAWBLADE,
             UPGRADE_TEMPLATE,
             IRON_PLATE_STAMP,
             IRON_FLAT_STAMP,
@@ -2934,6 +2966,11 @@ public final class ModItems {
             AMMO_STANDARD_P9_FMJ,
             AMMO_STANDARD_P9_JHP,
             AMMO_STANDARD_P9_AP,
+            AMMO_STANDARD_P45_SP,
+            AMMO_STANDARD_P45_FMJ,
+            AMMO_STANDARD_P45_JHP,
+            AMMO_STANDARD_P45_AP,
+            AMMO_STANDARD_P45_DU,
             AMMO_STANDARD_R556_SP,
             AMMO_STANDARD_R556_FMJ,
             AMMO_STANDARD_R556_JHP,

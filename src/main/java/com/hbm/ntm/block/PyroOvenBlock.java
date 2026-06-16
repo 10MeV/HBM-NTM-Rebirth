@@ -34,8 +34,8 @@ public class PyroOvenBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof PyroOvenBlockEntity pyroOven) {
-            NetworkHooks.openScreen(serverPlayer, pyroOven, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof PyroOvenBlockEntity pyroOven) {
+            NetworkHooks.openScreen(serverPlayer, pyroOven, pyroOven.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

@@ -107,8 +107,8 @@ public class RBMKAutoloaderBlock extends BaseEntityBlock implements MultiblockCo
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof RBMKAutoloaderBlockEntity autoloader) {
-            NetworkHooks.openScreen(serverPlayer, autoloader, pos);
+                && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof RBMKAutoloaderBlockEntity autoloader) {
+            NetworkHooks.openScreen(serverPlayer, autoloader, autoloader.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

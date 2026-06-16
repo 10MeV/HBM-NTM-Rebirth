@@ -1,0 +1,74 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/steel"
+      },
+      "legacy_ore": "ingotSteel"
+    },
+    {
+      "count": 32,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 6,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:coil_magnetized_tungsten"
+      }
+    },
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:wires/magnetized_tungsten"
+      },
+      "legacy_ore": "wireFineMagnetizedTungsten"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_basic"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 8
+    },
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:reactor_core"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/starmetal"
+      },
+      "legacy_ore": "ingotStarmetal"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dyes/red"
+      },
+      "legacy_ore": "dyeRed"
+    }
+  ],
+  "internal_name": "ass.radgen",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_radgen"
+    }
+  ],
+  "pools": [
+    "discover.radgen"
+  ],
+  "power": 100,
+  "source_order": 137
+}

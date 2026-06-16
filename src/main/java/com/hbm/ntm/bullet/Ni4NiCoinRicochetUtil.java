@@ -24,7 +24,7 @@ public final class Ni4NiCoinRicochetUtil {
     public static boolean apply(BulletProjectileEntity bullet, BulletConfig config,
             BulletProjectileTickUtil.TickResult tickResult, float overrideDamage) {
         if (bullet == null || config == null || tickResult == null || bullet.level().isClientSide()
-                || !config.hasBehavior(BulletBehaviorTag.NI4NI_COIN_RICOCHET)) {
+                || !isLegacyBeamCoinRedirect(config)) {
             return false;
         }
         BulletCollisionUtil.CollisionScan scan = tickResult.hit().scan();
@@ -60,6 +60,10 @@ public final class Ni4NiCoinRicochetUtil {
         return true;
     }
 
+    private static boolean isLegacyBeamCoinRedirect(BulletConfig config) {
+        return config != null && config.plink() == BulletPlink.ENERGY;
+    }
+
     private static float redirectedDamage(BulletConfig config, Level level, float overrideDamage) {
         return BulletRuntimeUtil.rollBaseDamage(config, level.random, overrideDamage) * DAMAGE_MULTIPLIER;
     }
@@ -89,12 +93,27 @@ public final class Ni4NiCoinRicochetUtil {
         return primary == null || coinHit.distanceSqr() < scan.start().distanceToSqr(primary);
     }
 
+    public static boolean interceptsBeam(Level level, Entity projectile, BulletCollisionUtil.CollisionScan scan) {
+        if (level == null || projectile == null || scan == null) {
+            return false;
+        }
+        return findCoinHit(level, projectile, scan.start(), scan.clippedEnd()) != null;
+    }
+
     @Nullable
-    private static CoinHit findCoinHit(Level level, Entity projectile, Vec3 start, Vec3 end) {
+    public static CoinHit findLegacyBeamCoinHit(Level level, @Nullable Entity projectile,
+            BulletCollisionUtil.CollisionScan scan) {
+        if (level == null || scan == null) {
+            return null;
+        }
+        return findCoinHit(level, projectile, scan.start(), scan.clippedEnd());
+    }
+
+    @Nullable
+    private static CoinHit findCoinHit(Level level, @Nullable Entity projectile, Vec3 start, Vec3 end) {
         if (level == null || start == null || end == null) {
             return null;
         }
-        Vec3 movement = end.subtract(start);
         AABB search = new AABB(start, end).inflate(1.0D);
         List<CoinEntity> coins = level.getEntitiesOfClass(CoinEntity.class, search,
                 coin -> coin != projectile && coin.isAlive());
@@ -157,7 +176,7 @@ public final class Ni4NiCoinRicochetUtil {
                 level.random.nextGaussian() * 0.5D);
     }
 
-    private record CoinHit(CoinEntity coin, Vec3 location, double distanceSqr) {
+    public record CoinHit(CoinEntity coin, Vec3 location, double distanceSqr) {
     }
 
     private Ni4NiCoinRicochetUtil() {

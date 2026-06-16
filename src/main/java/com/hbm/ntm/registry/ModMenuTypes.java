@@ -1,13 +1,17 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.menu.AnnihilatorMenu;
 import com.hbm.ntm.menu.ArcWelderMenu;
 import com.hbm.ntm.menu.ArmorTableMenu;
 import com.hbm.ntm.menu.AshpitMenu;
 import com.hbm.ntm.menu.AssemblyFactoryMenu;
 import com.hbm.ntm.menu.AssemblyMachineMenu;
 import com.hbm.ntm.menu.AmmoBagMenu;
+import com.hbm.ntm.menu.AmmoPressMenu;
+import com.hbm.ntm.menu.BatteryReddMenu;
 import com.hbm.ntm.menu.BasicMachineMenu;
+import com.hbm.ntm.menu.BlastFurnaceMenu;
 import com.hbm.ntm.menu.BombMultiMenu;
 import com.hbm.ntm.menu.CasingBagMenu;
 import com.hbm.ntm.menu.ChemicalFactoryMenu;
@@ -15,41 +19,56 @@ import com.hbm.ntm.menu.ChemicalPlantMenu;
 import com.hbm.ntm.menu.CompactLauncherMenu;
 import com.hbm.ntm.menu.CompressorMenu;
 import com.hbm.ntm.menu.CombustionEngineMenu;
+import com.hbm.ntm.menu.CombinationOvenMenu;
 import com.hbm.ntm.menu.CrateMenu;
 import com.hbm.ntm.menu.CustomNukeMenu;
+import com.hbm.ntm.menu.ExposureChamberMenu;
 import com.hbm.ntm.menu.FluidTankMenu;
 import com.hbm.ntm.menu.FireboxHeaterMenu;
+import com.hbm.ntm.menu.GasCentMenu;
 import com.hbm.ntm.menu.GasFlareMenu;
 import com.hbm.ntm.menu.HeaterHeatexMenu;
 import com.hbm.ntm.menu.LaunchPadMenu;
 import com.hbm.ntm.menu.LaunchTableMenu;
+import com.hbm.ntm.menu.LegacyFurnaceMenu;
 import com.hbm.ntm.menu.LiquefactorMenu;
 import com.hbm.ntm.menu.MachineBatteryMenu;
 import com.hbm.ntm.menu.MachineBatterySocketMenu;
 import com.hbm.ntm.menu.MissileAssemblyMenu;
+import com.hbm.ntm.menu.MixerMenu;
 import com.hbm.ntm.menu.NuclearDeviceMenu;
 import com.hbm.ntm.menu.OilDrillMenu;
 import com.hbm.ntm.menu.OilburnerMenu;
 import com.hbm.ntm.menu.PyroOvenMenu;
+import com.hbm.ntm.menu.PrecassMenu;
+import com.hbm.ntm.menu.ProcessingMachineMenu;
+import com.hbm.ntm.menu.PurexMenu;
 import com.hbm.ntm.menu.RadioAutocalMenu;
+import com.hbm.ntm.menu.RadGenMenu;
 import com.hbm.ntm.menu.RadioTelexMenu;
 import com.hbm.ntm.menu.RadioTorchMenu;
 import com.hbm.ntm.menu.RBMKAutoloaderMenu;
+import com.hbm.ntm.menu.RBMKConsoleMenu;
 import com.hbm.ntm.menu.RBMKOutgasserMenu;
 import com.hbm.ntm.menu.RBMKPanelMenu;
 import com.hbm.ntm.menu.RBMKStorageMenu;
 import com.hbm.ntm.menu.RadarMenu;
+import com.hbm.ntm.menu.RadiolysisMenu;
 import com.hbm.ntm.menu.RemoteFluidMachineMenu;
 import com.hbm.ntm.menu.RefineryMenu;
 import com.hbm.ntm.menu.RustedLaunchPadMenu;
 import com.hbm.ntm.menu.SatelliteDockMenu;
 import com.hbm.ntm.menu.SatelliteLinkerMenu;
 import com.hbm.ntm.menu.SolidifierMenu;
+import com.hbm.ntm.menu.SolderingStationMenu;
 import com.hbm.ntm.menu.SoyuzCapsuleMenu;
 import com.hbm.ntm.menu.SoyuzLauncherMenu;
 import com.hbm.ntm.menu.ToolAbilityMenu;
+import com.hbm.ntm.menu.TurbofanMenu;
+import com.hbm.ntm.menu.TurbineGasMenu;
 import com.hbm.ntm.menu.TurretMenu;
 import com.hbm.ntm.menu.WeaponTableMenu;
+import com.hbm.ntm.menu.WoodBurnerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -96,6 +115,60 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<ArcWelderMenu>> ARC_WELDER =
             MENUS.register("arc_welder", () -> IForgeMenuType.create(ArcWelderMenu::new));
+
+    public static final RegistryObject<MenuType<ProcessingMachineMenu>> PROCESSING_MACHINE =
+            MENUS.register("processing_machine", () -> IForgeMenuType.create(ProcessingMachineMenu::new));
+
+    public static final RegistryObject<MenuType<LegacyFurnaceMenu>> LEGACY_FURNACE =
+            MENUS.register("legacy_furnace", () -> IForgeMenuType.create(LegacyFurnaceMenu::new));
+
+    public static final RegistryObject<MenuType<AmmoPressMenu>> AMMO_PRESS =
+            MENUS.register("ammo_press", () -> IForgeMenuType.create(AmmoPressMenu::new));
+
+    public static final RegistryObject<MenuType<RadGenMenu>> RADGEN =
+            MENUS.register("radgen", () -> IForgeMenuType.create(RadGenMenu::new));
+
+    public static final RegistryObject<MenuType<WoodBurnerMenu>> WOOD_BURNER =
+            MENUS.register("wood_burner", () -> IForgeMenuType.create(WoodBurnerMenu::new));
+
+    public static final RegistryObject<MenuType<TurbofanMenu>> TURBOFAN =
+            MENUS.register("turbofan", () -> IForgeMenuType.create(TurbofanMenu::new));
+
+    public static final RegistryObject<MenuType<TurbineGasMenu>> TURBINE_GAS =
+            MENUS.register("turbine_gas", () -> IForgeMenuType.create(TurbineGasMenu::new));
+
+    public static final RegistryObject<MenuType<CombinationOvenMenu>> COMBINATION_OVEN =
+            MENUS.register("combination_oven", () -> IForgeMenuType.create(CombinationOvenMenu::new));
+
+    public static final RegistryObject<MenuType<BlastFurnaceMenu>> BLAST_FURNACE =
+            MENUS.register("blast_furnace", () -> IForgeMenuType.create(BlastFurnaceMenu::new));
+
+    public static final RegistryObject<MenuType<RadiolysisMenu>> RADIOLYSIS =
+            MENUS.register("radiolysis", () -> IForgeMenuType.create(RadiolysisMenu::new));
+
+    public static final RegistryObject<MenuType<ExposureChamberMenu>> EXPOSURE_CHAMBER =
+            MENUS.register("exposure_chamber", () -> IForgeMenuType.create(ExposureChamberMenu::new));
+
+    public static final RegistryObject<MenuType<SolderingStationMenu>> SOLDERING_STATION =
+            MENUS.register("soldering_station", () -> IForgeMenuType.create(SolderingStationMenu::new));
+
+    public static final RegistryObject<MenuType<GasCentMenu>> GAS_CENT =
+            MENUS.register("gas_cent", () -> IForgeMenuType.create(GasCentMenu::new));
+
+    public static final RegistryObject<MenuType<BatteryReddMenu>> BATTERY_REDD =
+            MENUS.register("battery_redd", () -> IForgeMenuType.create(BatteryReddMenu::new));
+
+    public static final RegistryObject<MenuType<AnnihilatorMenu>> ANNIHILATOR =
+            MENUS.register("annihilator", () -> IForgeMenuType.create(AnnihilatorMenu::new));
+
+    public static final RegistryObject<MenuType<MixerMenu>> MIXER =
+            MENUS.register("mixer", () -> IForgeMenuType.create(MixerMenu::new));
+
+    public static final RegistryObject<MenuType<PrecassMenu>> PRECASS =
+            MENUS.register("precass", () -> IForgeMenuType.create(PrecassMenu::new));
+
+    public static final RegistryObject<MenuType<PurexMenu>> PUREX =
+            MENUS.register("purex", () -> IForgeMenuType.create(PurexMenu::new));
 
     public static final RegistryObject<MenuType<LiquefactorMenu>> LIQUEFACTOR =
             MENUS.register("liquefactor", () -> IForgeMenuType.create(LiquefactorMenu::new));
@@ -198,6 +271,9 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<RBMKPanelMenu>> RBMK_PANEL =
             MENUS.register("rbmk_panel", () -> IForgeMenuType.create(RBMKPanelMenu::new));
+
+    public static final RegistryObject<MenuType<RBMKConsoleMenu>> RBMK_CONSOLE =
+            MENUS.register("rbmk_console", () -> IForgeMenuType.create(RBMKConsoleMenu::new));
 
     public static final RegistryObject<MenuType<RBMKStorageMenu>> RBMK_STORAGE =
             MENUS.register("rbmk_storage", () -> IForgeMenuType.create(RBMKStorageMenu::new));

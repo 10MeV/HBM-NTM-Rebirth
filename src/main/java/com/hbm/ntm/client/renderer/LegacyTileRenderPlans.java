@@ -74,6 +74,15 @@ public final class LegacyTileRenderPlans {
     public static final int LANTERN_LIGHT_BLUE = 179;
     public static final double CARGO_ELEVATOR_PISTON_STEP_Y = -1.0D;
     public static final double CARGO_ELEVATOR_GUIDE_STEP_Y = 1.0D;
+    public static final double REFINERY_TILTED_TRANSLATE_Y = -0.25D;
+    public static final double REFINERY_TILTED_ROTATION_Z = 10.0D;
+    public static final double REFINERY_TILTED_ROTATION_Y = 5.0D;
+    public static final double BLAST_FURNACE_TILTED_TRANSLATE_Y = -0.25D;
+    public static final double BLAST_FURNACE_TILTED_ROTATION_Z = 10.0D;
+    public static final double BLAST_FURNACE_TILTED_ROTATION_Y = 5.0D;
+    public static final double GAS_FLARE_TILTED_TRANSLATE_Y = -0.25D;
+    public static final double GAS_FLARE_TILTED_ROTATION_Z = 10.0D;
+    public static final double GAS_FLARE_TILTED_ROTATION_Y = 5.0D;
     public static final double COMPRESSOR_PUMP_TRAVEL = 3.0D;
     public static final double COMPRESSOR_PUMP_BASE_Y = -3.0D;
     public static final double COMPRESSOR_FAN_PIVOT_Y = 1.5D;
@@ -143,6 +152,16 @@ public final class LegacyTileRenderPlans {
     public static final int BATTERY_REDD_TRAIL_SPOKES = 8;
     public static final double BATTERY_REDD_PLASMA_PERIOD = 1000.0D;
     public static final double BATTERY_REDD_SPARKLE_SPIN_PERIOD = 250.0D;
+    public static final int BATTERY_REDD_ZAP_OUTER_COLOR = 0x404040;
+    public static final int BATTERY_REDD_ZAP_INNER_COLOR = 0x002040;
+    public static final int BATTERY_REDD_ZAP_PERIOD_MILLIS = 1000;
+    public static final int BATTERY_REDD_ZAP_START_DIVISOR = 50;
+    public static final int BATTERY_REDD_ZAP_LONG_SEGMENTS = 15;
+    public static final int BATTERY_REDD_ZAP_SHORT_SEGMENTS = 1;
+    public static final float BATTERY_REDD_ZAP_LONG_SIZE = 0.25F;
+    public static final float BATTERY_REDD_ZAP_SHORT_SIZE = 0.0F;
+    public static final int BATTERY_REDD_ZAP_LAYERS = 3;
+    public static final float BATTERY_REDD_ZAP_THICKNESS = 0.0625F;
     public static final double CORE_STANDBY_BASE_SCALE = 0.25D;
     public static final double CORE_STANDBY_GLOW_SCALE = 0.3125D;
     public static final double CORE_ORB_BASE_SCALE = 0.25D;
@@ -511,6 +530,17 @@ public final class LegacyTileRenderPlans {
                 normalAlphaBlendPlan(true, 0.0F), quads);
     }
 
+    public static FluidTankModelPlan fluidTankModelPlan(boolean bat9000, boolean bigAssTank,
+            boolean exploded) {
+        if (bat9000) {
+            return new FluidTankModelPlan(FluidTankModelKind.BAT9000, false, true, true, false);
+        }
+        if (bigAssTank) {
+            return new FluidTankModelPlan(FluidTankModelKind.BIG_ASS_TANK, false, true, true, true);
+        }
+        return new FluidTankModelPlan(FluidTankModelKind.SMALL_TANK, exploded, true, true, false);
+    }
+
     public static ChemicalPlantFluidPlan chemicalPlantFluidPlan(double animation, List<Integer> outputFluidColors,
             List<Integer> inputFluidColors) {
         ColorAveragePlan color = averageColor(!outputFluidColors.isEmpty() ? outputFluidColors : inputFluidColors);
@@ -604,6 +634,27 @@ public final class LegacyTileRenderPlans {
         }
         return new CargoElevatorPlan(renderPlatform, interpolatedExtension,
                 List.copyOf(platformParts), List.copyOf(guides));
+    }
+
+    public static RefineryDamagePlan refineryDamagePlan(boolean exploded, boolean tilted) {
+        return new RefineryDamagePlan(exploded, tilted,
+                tilted ? REFINERY_TILTED_TRANSLATE_Y : 0.0D,
+                tilted ? REFINERY_TILTED_ROTATION_Z : 0.0D,
+                tilted ? REFINERY_TILTED_ROTATION_Y : 0.0D);
+    }
+
+    public static GasFlareTiltPlan gasFlareTiltPlan(boolean tilted) {
+        return new GasFlareTiltPlan(tilted,
+                tilted ? GAS_FLARE_TILTED_TRANSLATE_Y : 0.0D,
+                tilted ? GAS_FLARE_TILTED_ROTATION_Z : 0.0D,
+                tilted ? GAS_FLARE_TILTED_ROTATION_Y : 0.0D);
+    }
+
+    public static BlastFurnaceTiltPlan blastFurnaceTiltPlan(boolean tilted) {
+        return new BlastFurnaceTiltPlan(tilted,
+                tilted ? BLAST_FURNACE_TILTED_TRANSLATE_Y : 0.0D,
+                tilted ? BLAST_FURNACE_TILTED_ROTATION_Z : 0.0D,
+                tilted ? BLAST_FURNACE_TILTED_ROTATION_Y : 0.0D);
     }
 
     public static CompressorPlan compressorPlan(double piston, double fanDegrees) {
@@ -815,6 +866,11 @@ public final class LegacyTileRenderPlans {
                         -90.0F, 1.0F, 0.375F, 0.375F)));
     }
 
+    public static TankDangerDiamondPlan fluidBarrelDangerDiamondPlan(boolean hasFluid) {
+        return radialDangerDiamondPlan(hasFluid, 4, 0.0F, 90.0F, 0.4D, 0.3D, -0.24D,
+                1.0F, 0.25F, 0.25F);
+    }
+
     public static TankDangerDiamondPlan bigAssTankDangerDiamondPlan(boolean hasFluid) {
         return radialDangerDiamondPlan(hasFluid, 2, 22.5F, 180.0F, 5.5D, 2.0D,
                 0.0D, 1.0F, 1.0F, 1.0F);
@@ -1013,6 +1069,25 @@ public final class LegacyTileRenderPlans {
         }
         return new BatteryReddPlasmaPlan(speed > 0.0D, alpha, alphaMultiplier,
                 additiveBlendPlan(false, 0.0F), batteryReddManualFullbrightPlan(), List.copyOf(layers));
+    }
+
+    public static BatteryReddZapPlan batteryReddZapPlan(boolean active, long worldTime, long currentMillis) {
+        if (!active) {
+            return new BatteryReddZapPlan(false, List.of());
+        }
+        Random random = new Random(worldTime / 5L);
+        random.nextBoolean();
+        int start = (int) (currentMillis % BATTERY_REDD_ZAP_PERIOD_MILLIS) / BATTERY_REDD_ZAP_START_DIVISOR;
+        List<TranslatedBeamPlan> beams = new ArrayList<>();
+        addBatteryReddZap(beams, random.nextBoolean(), 3.125D, 5.5D, 0.0D,
+                -1.375D, -2.625D, 3.75D, start, "front_right");
+        addBatteryReddZap(beams, random.nextBoolean(), -3.125D, 5.5D, 0.0D,
+                1.375D, -2.625D, 3.75D, start, "front_left");
+        addBatteryReddZap(beams, random.nextBoolean(), 3.125D, 5.5D, 0.0D,
+                -1.375D, -2.625D, -3.75D, start, "back_right");
+        addBatteryReddZap(beams, random.nextBoolean(), -3.125D, 5.5D, 0.0D,
+                1.375D, -2.625D, -3.75D, start, "back_left");
+        return new BatteryReddZapPlan(!beams.isEmpty(), List.copyOf(beams));
     }
 
     public static CoreStandbyPlan coreStandbyPlan(long currentMillis) {
@@ -2289,6 +2364,28 @@ public final class LegacyTileRenderPlans {
                         start, segments, size, layers, thickness));
     }
 
+    private static void addBatteryReddZap(List<TranslatedBeamPlan> beams, boolean active,
+            double translateX, double translateY, double translateZ, double x, double y, double z,
+            int start, String role) {
+        if (!active) {
+            return;
+        }
+        beams.add(new TranslatedBeamPlan("battery_redd_zap_" + role + "_long", translateX, translateY, translateZ,
+                batteryReddZapBeam(x, y, z, start, BATTERY_REDD_ZAP_LONG_SEGMENTS,
+                        BATTERY_REDD_ZAP_LONG_SIZE)));
+        beams.add(new TranslatedBeamPlan("battery_redd_zap_" + role + "_short", translateX, translateY, translateZ,
+                batteryReddZapBeam(x, y, z, start, BATTERY_REDD_ZAP_SHORT_SEGMENTS,
+                        BATTERY_REDD_ZAP_SHORT_SIZE)));
+    }
+
+    private static LegacyBeamRenderer.BeamPlan batteryReddZapBeam(double x, double y, double z,
+            int start, int segments, float size) {
+        return LegacyBeamRenderer.beamPlan(x, y, z, LegacyBeamRenderer.WaveType.RANDOM,
+                LegacyBeamRenderer.BeamType.SOLID, BATTERY_REDD_ZAP_OUTER_COLOR,
+                BATTERY_REDD_ZAP_INNER_COLOR, start, segments, size,
+                BATTERY_REDD_ZAP_LAYERS, BATTERY_REDD_ZAP_THICKNESS);
+    }
+
     private static LegacyBeamRenderer.BeamPlan creativeBatterySocketBeam(double x, double z, int start,
             int segments, float size) {
         return LegacyBeamRenderer.beamPlan(x, CREATIVE_BATTERY_BEAM_Y, z,
@@ -2408,6 +2505,17 @@ public final class LegacyTileRenderPlans {
                                       List<TexturedQuadPlan> quads) {
     }
 
+    public enum FluidTankModelKind {
+        SMALL_TANK,
+        BAT9000,
+        BIG_ASS_TANK
+    }
+
+    public record FluidTankModelPlan(FluidTankModelKind kind, boolean exploded,
+                                     boolean renderDangerDiamonds, boolean renderFluidBody,
+                                     boolean animatedFluidSurface) {
+    }
+
     public record ChemicalPlantFluidPlan(boolean active, ColorAveragePlan color,
                                          double textureTranslateU, double textureTranslateV,
                                          double alpha, BlendStatePlan blend,
@@ -2441,6 +2549,19 @@ public final class LegacyTileRenderPlans {
     public record CargoElevatorPlan(boolean renderPlatform, double extension,
                                     List<TranslatedModelPartPlan> platformParts,
                                     List<TranslatedModelPartPlan> guides) {
+    }
+
+    public record RefineryDamagePlan(boolean exploded, boolean tilted,
+                                     double translateY, double rotationZDegrees,
+                                     double rotationYDegrees) {
+    }
+
+    public record GasFlareTiltPlan(boolean tilted, double translateY,
+                                   double rotationZDegrees, double rotationYDegrees) {
+    }
+
+    public record BlastFurnaceTiltPlan(boolean tilted, double translateY,
+                                       double rotationZDegrees, double rotationYDegrees) {
     }
 
     public record CompressorPlan(String bodyPartName, TranslatedModelPartPlan pump,
@@ -2530,6 +2651,9 @@ public final class LegacyTileRenderPlans {
     public record BatteryReddPlasmaPlan(boolean active, float baseAlpha, float alphaMultiplier,
                                         BlendStatePlan blend, FullbrightStatePlan fullbright,
                                         List<TextureMatrixPartPlan> layers) {
+    }
+
+    public record BatteryReddZapPlan(boolean active, List<TranslatedBeamPlan> beams) {
     }
 
     public record TextureMatrixPartPlan(String role, String partName, RgbaPlan color,

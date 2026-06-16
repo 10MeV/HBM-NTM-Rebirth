@@ -1,0 +1,45 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 1200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:cast_plates/steel"
+      },
+      "legacy_ore": "plateCastSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/zirconium"
+      },
+      "legacy_ore": "ingotZirconium"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor_board"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 10
+    }
+  ],
+  "internal_name": "ass.precass",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_precass"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 80
+}

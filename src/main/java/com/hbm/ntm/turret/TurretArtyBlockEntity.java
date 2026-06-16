@@ -19,7 +19,6 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
     public static final int MODE_MANUAL = 2;
 
     private static final String TAG_MODE = "mode";
-    private static final String TAG_BARREL_POS = "BarrelPos";
     private static final String TAG_BARREL_RETRACTING = "BarrelRetracting";
     private static final double GRAVITY = 9.81D * 0.05D;
 
@@ -205,10 +204,6 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
         double velocitySquared = velocity * velocity;
         double discriminant = velocitySquared * velocitySquared
                 - GRAVITY * (GRAVITY * horizontal * horizontal + 2.0D * delta.y * velocitySquared);
-        if (discriminant < 0.0D) {
-            super.turnTowards(entityPos);
-            return;
-        }
         double targetYaw = -Math.atan2(delta.x, delta.z);
         double upperLower = mode == MODE_CANNON ? -1.0D : 1.0D;
         double targetPitch = Math.atan((velocitySquared + Math.sqrt(discriminant) * upperLower)
@@ -256,7 +251,7 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
         Vec3 muzzle = getMuzzlePos();
         shell.setPos(muzzle.x, muzzle.y, muzzle.z);
         shell.shoot(getBarrelHeading(), (float) getLaunchVelocity(), 0.0F);
-        shell.setTarget(target.x, target.y, target.z);
+        shell.setTarget((int) target.x, (int) target.y, (int) target.z);
         shell.setType(shellIndex);
         if (!cargo.isEmpty()) {
             shell.setCargo(cargo);
@@ -309,12 +304,11 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
     }
 
     @Override
-    protected void tickServerSpecificAnimations() {
-        tickBarrelAnimation();
-    }
-
-    @Override
     protected void updateServerTickAfterTargeting() {
+        if (!isOn() && !targetQueue.isEmpty()) {
+            targetQueue.clear();
+            setChanged();
+        }
         tickArtyCasingDelay();
     }
 
@@ -394,27 +388,20 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
-        tag.putShort(TAG_MODE, (short) mode);
-        writeArtyAnimationSync(tag);
-        return tag;
+        return getClientSyncTag();
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
         mode = tag.getShort(TAG_MODE);
-        if (tag.contains(TAG_BARREL_POS)) {
-            lastBarrelPos = barrelPos;
-            barrelPos = tag.getFloat(TAG_BARREL_POS);
-        }
         if (tag.getBoolean(TAG_BARREL_RETRACTING)) {
             startBarrelRetract();
         }
     }
 
     private void writeArtyAnimationSync(CompoundTag tag) {
-        tag.putFloat(TAG_BARREL_POS, barrelPos);
         tag.putBoolean(TAG_BARREL_RETRACTING, barrelRetracting);
+        barrelRetracting = false;
     }
 }

@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:exposure_chamber",
+  "particle": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:particle_sparkticle"
+    }
+  },
+  "ingredient": {
+    "ingredient": {
+      "tag": "forge:ingots/schrabidium"
+    },
+    "legacy_ore": "ingotSchrabidium"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_dineutronium"
+  },
+  "source_order": 3
+}

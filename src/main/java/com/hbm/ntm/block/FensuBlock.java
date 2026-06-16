@@ -13,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -51,11 +52,16 @@ public class FensuBlock extends LegacyXrMultiblockBlock implements EntityBlock {
     }
 
     @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
+    }
+
+    @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof FensuBlockEntity fensu) {
-            NetworkHooks.openScreen(serverPlayer, fensu, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof FensuBlockEntity fensu) {
+            NetworkHooks.openScreen(serverPlayer, fensu, fensu.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -80,18 +86,18 @@ public class FensuBlock extends LegacyXrMultiblockBlock implements EntityBlock {
 
     @Override
     public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
-        BlockEntity blockEntity = level.getBlockEntity(pos);
+        BlockEntity blockEntity = resolveCoreBlockEntity(level, pos);
         return blockEntity instanceof FensuBlockEntity fensu ? fensu.getComparatorPower() : 0;
     }
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && !level.isClientSide
-                && level.getBlockEntity(pos) instanceof FensuBlockEntity fensu) {
+                && resolveCoreBlockEntity(level, pos) instanceof FensuBlockEntity fensu) {
             for (ItemStack stack : fensu.getDrops()) {
-                Block.popResource(level, pos, stack);
+                Block.popResource(level, fensu.getBlockPos(), stack);
             }
-            level.updateNeighbourForOutputSignal(pos, this);
+            level.updateNeighbourForOutputSignal(fensu.getBlockPos(), this);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

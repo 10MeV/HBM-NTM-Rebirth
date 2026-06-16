@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 42,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_g12_bp_magnum",
+    "count": 6
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:nuggets/lead"
+      },
+      "count": 8,
+      "legacy_ore": "nuggetLead"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "minecraft:gunpowder"
+      },
+      "count": 1
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_shotshell"
+      },
+      "count": 1,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 4
+    },
+    null
+  ]
+}

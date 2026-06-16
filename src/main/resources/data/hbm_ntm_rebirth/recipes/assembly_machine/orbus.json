@@ -1,0 +1,46 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 300,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:welded_plates/any_resistant_alloy"
+      },
+      "legacy_ore": "plateSextupleAnyResistantAlloy"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:cast_plates/saturnite"
+      },
+      "legacy_ore": "plateCastSaturnite"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:dense_wires/bscco"
+      },
+      "legacy_ore": "wireDenseBscco"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:battery_sc.po210"
+      },
+      "legacy_id": "hbm:battery_sc",
+      "legacy_meta": 6
+    }
+  ],
+  "internal_name": "ass.orbus",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_orbus"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 146
+}

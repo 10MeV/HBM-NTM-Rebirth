@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_vacuum_tube"
+      },
+      "count": 4
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      }
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_template"
+      }
+    },
+    {
+      "ingredient": {
+        "tag": "forge:dusts/tungsten"
+      },
+      "count": 4,
+      "legacy_ore": "dustTungsten"
+    }
+  ],
+  "solder": [],
+  "output": {
+    "item": "hbm_ntm_rebirth:upgrade_afterburn_1"
+  },
+  "duration": 200,
+  "consumption": 1000,
+  "source_order": 102
+}

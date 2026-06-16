@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 13,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_p22_fmj",
+    "count": 24
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/steel"
+      },
+      "count": 1,
+      "legacy_ore": "ingotSteel"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:dusts/any_smokeless"
+      },
+      "count": 1,
+      "legacy_ore": "dustAnySmokeless"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_small"
+      },
+      "count": 1,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 0
+    },
+    null
+  ]
+}

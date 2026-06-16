@@ -197,15 +197,20 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
         if (tool != ToolType.SCREWDRIVER) {
             return false;
         }
-        BlockState state = level.getBlockState(pos);
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core == null) {
+            return false;
+        }
+        BlockPos corePos = core.pos();
+        BlockState state = core.state();
         if (!(state.getBlock() instanceof RBMKColumnBlock) || !state.getValue(LID).hasLid()) {
             return false;
         }
         if (!level.isClientSide) {
             LidType lid = state.getValue(LID);
-            setLid(level, pos, state, LidType.NONE);
+            setLid(level, corePos, state, LidType.NONE);
             ItemStack drop = new ItemStack(lid == LidType.GLASS ? ModItems.RBMK_LID_GLASS.get() : ModItems.RBMK_LID.get());
-            BlockPos dropPos = pos.above(columnHeightAbove());
+            BlockPos dropPos = corePos.above(columnHeightAbove());
             HbmItemStackUtil.dropStack(level, dropPos, drop);
         }
         return true;

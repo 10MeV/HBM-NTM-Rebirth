@@ -1,0 +1,36 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 72,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_flame_napalm",
+    "count": 1
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "count": 1,
+      "legacy_ore": "plateSteel"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:canister_napalm"
+      },
+      "count": 1
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "count": 1,
+      "legacy_ore": "plateSteel"
+    },
+    null
+  ]
+}

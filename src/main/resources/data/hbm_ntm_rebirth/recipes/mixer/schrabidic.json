@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:schrabidic", "amount": 16000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:sas3", "amount": 8000 },
+  "input2": { "fluid": "hbm_ntm_rebirth:peroxide", "amount": 6000 },
+  "solid_input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:pellet_charged" }
+  },
+  "duration": 100
+}

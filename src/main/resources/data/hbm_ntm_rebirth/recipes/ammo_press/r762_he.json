@@ -1,0 +1,44 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 34,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_r762_he",
+    "count": 12
+  },
+  "input": [
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_high_explosive"
+      },
+      "count": 1,
+      "legacy_ore": "ingotAnyHighExplosive"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/ferrouranium"
+      },
+      "count": 1,
+      "legacy_ore": "ingotFerrouranium"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:dusts/any_smokeless"
+      },
+      "count": 4,
+      "legacy_ore": "dustAnySmokeless"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_small_steel"
+      },
+      "count": 2,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 2
+    },
+    null
+  ]
+}

@@ -96,8 +96,8 @@ public class RbmkAnimatedParticle extends TextureSheetParticle implements HbmDef
         float width = mode == Mode.STEAM ? this.baseScale * 0.25F : this.baseScale;
         float height = mode == Mode.FLAME ? this.baseScale * 2.0F : mode == Mode.STEAM ? this.baseScale : this.baseScale;
         float offsetX = mode == Mode.STEAM ? -0.9375F : mode == Mode.FLAME ? -1.0F : 0.0F;
-        float offsetY = mode == Mode.FLAME ? 0.0F : mode == Mode.STEAM ? -0.25F : this.baseScale;
-        Quaternionf rotation = camera.rotation();
+        float offsetY = mode == Mode.STEAM ? -0.25F : mode == Mode.MUSH ? this.baseScale : 0.0F;
+        Quaternionf rotation = new Quaternionf().rotateY((float) Math.toRadians(-camera.getYRot()));
         Vector3f[] corners = new Vector3f[] {
                 new Vector3f(-width + offsetX, -height + offsetY, 0.0F),
                 new Vector3f(-width + offsetX, height + offsetY, 0.0F),

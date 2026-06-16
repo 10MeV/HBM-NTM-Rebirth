@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:radiosolvent", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:reformgas", "amount": 750 },
+  "input2": { "fluid": "hbm_ntm_rebirth:chlorine", "amount": 250 },
+  "duration": 50
+}

@@ -10,6 +10,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
@@ -23,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements LegacyUpgradeInfoProvider {
-    private static final String TAG_BEAM_SHOT = "BeamShot";
     private static final Map<UpgradeType, Integer> VALID_UPGRADES = createValidUpgrades();
 
     private int speedLevel;
@@ -33,7 +33,7 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
     private int overdriveLevel;
     private int checkDelay;
     private boolean screm;
-    private boolean didJustShootBeam;
+    private boolean beamShotPacket;
 
     public TurretMaxwellBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.TURRET_MAXWELL.get(), pos, state, 10_000_000L, 10_000_000L);
@@ -166,7 +166,6 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
         if (afterburnLevel > 0) {
             target.setSecondsOnFire(afterburnLevel * 3);
         }
-        didJustShootBeam = true;
         if (!target.isAlive() && target instanceof LivingEntity) {
             ParticleUtil.spawnGiblets(target, ParticleUtil.GIBLET_MEAT);
             if (screm) {
@@ -179,6 +178,7 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
             }
         }
         setPower(getPower() - demand);
+        sendBeamShotPacket();
     }
 
     @Override
@@ -187,28 +187,27 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
     }
 
     @Override
-    public net.minecraft.nbt.CompoundTag getClientSyncTag() {
-        net.minecraft.nbt.CompoundTag tag = super.getClientSyncTag();
-        writeMaxwellBeamSync(tag);
-        return tag;
-    }
-
-    @Override
-    public net.minecraft.nbt.CompoundTag getUpdateTag() {
-        return getClientSyncTag();
-    }
-
-    @Override
-    public void handleClientSyncTag(net.minecraft.nbt.CompoundTag tag) {
-        super.handleClientSyncTag(tag);
-        if (tag.getBoolean(TAG_BEAM_SHOT)) {
-            triggerClientBeamFromTarget(5);
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeBoolean(beamShotPacket);
+        if (!beamShotPacket) {
+            super.serializeLegacyBufPacket(data);
         }
     }
 
-    private void writeMaxwellBeamSync(net.minecraft.nbt.CompoundTag tag) {
-        tag.putBoolean(TAG_BEAM_SHOT, didJustShootBeam);
-        didJustShootBeam = false;
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        boolean shot = data.readBoolean();
+        if (shot) {
+            triggerClientBeamFromTarget(5);
+        } else {
+            super.deserializeLegacyBufPacket(data);
+        }
+    }
+
+    private void sendBeamShotPacket() {
+        beamShotPacket = true;
+        sendBufPacketThreaded(250);
+        beamShotPacket = false;
     }
 
     @Override

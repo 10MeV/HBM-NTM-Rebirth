@@ -57,9 +57,9 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof FluidTankBlockEntity tank && !tank.isExploded()) {
+                && resolveCoreBlockEntity(level, pos) instanceof FluidTankBlockEntity tank && !tank.isExploded()) {
             ItemStack held = player.getItemInHand(hand);
-            var identifier = HbmFluidItemTransfer.identifyFluidFromStackReport(held, level, pos);
+            var identifier = HbmFluidItemTransfer.identifyFluidFromStackReport(held, level, tank.getBlockPos());
             if (player.isShiftKeyDown() && identifier.identifierItem()) {
                 if (!identifier.selectedNone() && tank.setIdentifiedType(identifier.selectedType())) {
                     serverPlayer.displayClientMessage(Component.literal("Changed type to ")
@@ -70,7 +70,7 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
                 }
                 return InteractionResult.PASS;
             }
-            NetworkHooks.openScreen(serverPlayer, tank, pos);
+            NetworkHooks.openScreen(serverPlayer, tank, tank.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -100,7 +100,7 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
 
     @Override
     public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
-        return level.getBlockEntity(pos) instanceof FluidTankBlockEntity tank ? tank.getComparatorPower() : 0;
+        return resolveCoreBlockEntity(level, pos) instanceof FluidTankBlockEntity tank ? tank.getComparatorPower() : 0;
     }
 
     @Override
@@ -154,7 +154,7 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
 
     @Override
     public void onBlockExploded(BlockState state, Level level, BlockPos pos, Explosion explosion) {
-        if (!(level.getBlockEntity(pos) instanceof FluidTankBlockEntity tank)) {
+        if (!(resolveCoreBlockEntity(level, pos) instanceof FluidTankBlockEntity tank)) {
             super.onBlockExploded(state, level, pos, explosion);
             return;
         }
@@ -168,7 +168,7 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
         if (!tank.isExploded()) {
             tank.explodeTank();
         } else {
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            level.setBlock(tank.getBlockPos(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         }
     }
 

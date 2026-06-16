@@ -130,6 +130,13 @@ public class SoundLoopSiren extends SoundLoopMachine {
         }
     }
 
+    public static void clearAll() {
+        for (SoundLoopSiren sound : ACTIVE_BY_POS.values()) {
+            sound.requestStop();
+        }
+        ACTIVE_BY_POS.clear();
+    }
+
     private void setTrack(LegacySirenTrack track) {
         this.track = track;
         this.intendedVolume = Math.max(0.0F, track.volume());

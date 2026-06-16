@@ -75,8 +75,8 @@ public class LaunchPadBlock extends LegacyXrMultiblockBlock implements EntityBlo
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof LaunchPadBlockEntity launchPad) {
-            NetworkHooks.openScreen(serverPlayer, launchPad, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof LaunchPadBlockEntity launchPad) {
+            NetworkHooks.openScreen(serverPlayer, launchPad, launchPad.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

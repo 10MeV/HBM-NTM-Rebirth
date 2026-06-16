@@ -35,18 +35,19 @@ public class CombustionEngineBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof CombustionEngineBlockEntity engine) {
+                && resolveCoreBlockEntity(level, pos) instanceof CombustionEngineBlockEntity engine) {
             ItemStack held = player.getItemInHand(hand);
             if (player.isShiftKeyDown()) {
                 var identifier = HbmFluidItemTransfer.setTankTypeFromIdentifierStackReport(
-                        held, engine.getTank(), level, pos);
+                        held, engine.getTank(), level, engine.getBlockPos());
                 if (identifier.changed()) {
                     engine.setChanged();
-                    level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+                    level.sendBlockUpdated(engine.getBlockPos(), engine.getBlockState(), engine.getBlockState(),
+                            Block.UPDATE_CLIENTS);
                     return InteractionResult.CONSUME;
                 }
             }
-            NetworkHooks.openScreen(serverPlayer, engine, pos);
+            NetworkHooks.openScreen(serverPlayer, engine, engine.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:lubricant", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:sunfloweroil", "amount": 800 },
+  "input2": { "fluid": "hbm_ntm_rebirth:ethanol", "amount": 200 },
+  "duration": 20
+}

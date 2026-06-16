@@ -1,0 +1,48 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 59,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_g40_inc",
+    "count": 4
+  },
+  "input": [
+    {
+      "ingredient": {
+        "type": "hbm_ntm_rebirth:fluid_container",
+        "fluid": "hbm_ntm_rebirth:diesel",
+        "amount": 1000
+      },
+      "count": 1,
+      "fluid_container": {
+        "fluid": "hbm_ntm_rebirth:diesel",
+        "amount": 1000
+      }
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ball_dynamite"
+      },
+      "count": 1
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:dusts/any_smokeless"
+      },
+      "count": 1,
+      "legacy_ore": "dustAnySmokeless"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_large"
+      },
+      "count": 1,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 1
+    },
+    null
+  ]
+}

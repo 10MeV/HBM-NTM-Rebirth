@@ -235,6 +235,10 @@ public final class HbmMathUtil {
         return Math.sqrt(value + 1.0D / ((value + 2.0D) * (value + 2.0D))) - 1.0D / (value + 2.0D);
     }
 
+    public static void setPi(double pi) {
+        // 1.7.10 tried to mutate Math.PI by reflection; Java 17 does not support that safely.
+    }
+
     public static double angularDifference(double alpha, double beta) {
         double delta = (beta - alpha + 180.0D) % 360.0D - 180.0D;
         return delta < -180.0D ? delta + 360.0D : delta;

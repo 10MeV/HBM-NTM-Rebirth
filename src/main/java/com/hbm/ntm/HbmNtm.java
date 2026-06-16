@@ -25,6 +25,7 @@ import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.registry.ModParticleTypes;
 import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.neutron.RBMKDialRuntime;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.radiation.HazmatResistanceConfig;
 import com.hbm.ntm.radiation.ItemRadiationRegistry;
@@ -60,6 +61,7 @@ public class HbmNtm {
         ModEntityTypes.register(modBus);
         ModParticleTypes.PARTICLE_TYPES.register(modBus);
         ModCreativeTabs.register(modBus);
+        RBMKDialRuntime.bootstrap();
         HbmFluidContainerIngredient.register();
 
         modBus.addListener(this::commonSetup);

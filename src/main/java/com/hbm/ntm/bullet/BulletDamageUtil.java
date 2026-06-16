@@ -33,21 +33,12 @@ public final class BulletDamageUtil {
 
         Level level = target.level();
         RandomSource rollRandom = random == null ? level.random : random;
-        BulletImpactUtil.EntityHurtResult hurt;
-        BulletImpactUtil.BlockImpactResult blockImpact;
-        boolean discardProjectile;
-        if (config.penetrates() && !appliesPenetratingEntityImpact(config)) {
-            hurt = BulletImpactUtil.applyEntityHurtEffects(config, target, rollRandom);
-            blockImpact = BulletImpactUtil.BlockImpactResult.NONE;
-            discardProjectile = false;
-        } else {
-            BulletImpactUtil.EntityImpactResult impact =
-                    BulletImpactUtil.applyEntityImpactEffects(config, target, shooter, hitLocation, rollRandom,
-                            overrideDamage);
-            hurt = impact.hurt();
-            blockImpact = impact.blockImpact();
-            discardProjectile = impact.discardProjectile();
-        }
+        BulletImpactUtil.EntityImpactResult impact =
+                BulletImpactUtil.applyEntityImpactEffects(config, target, shooter, hitLocation, rollRandom,
+                        overrideDamage);
+        BulletImpactUtil.EntityHurtResult hurt = impact.hurt();
+        BulletImpactUtil.BlockImpactResult blockImpact = impact.blockImpact();
+        boolean discardProjectile = impact.discardProjectile();
         if (skipsDirectEntityDamage(config)) {
             HeatBonus heatBonus = applyHeatDirectHitBonus(config, level, projectile, shooter, target, rollRandom,
                     overrideDamage);
@@ -87,14 +78,6 @@ public final class BulletDamageUtil {
         return new EntityHitResult(discardProjectile || falloff.depleted(), hurt, blockImpact, roll, applied,
                 retriedIgnoringIFrames, headshotEffect, resetHomingTarget, falloff.nextOverrideDamage(),
                 falloff.changed());
-    }
-
-    private static boolean appliesPenetratingEntityImpact(BulletConfig config) {
-        return config.hasBehavior(BulletBehaviorTag.LIGHTNING_BEAM_HIT)
-                || config.hasBehavior(BulletBehaviorTag.LIGHTNING_BEAM_SPLIT)
-                || config.hasBehavior(BulletBehaviorTag.INFRARED_BEAM_HIT)
-                || config.hasBehavior(BulletBehaviorTag.BLACK_FIRE_BEAM_HIT)
-                || config.hasBehavior(BulletBehaviorTag.BATTERY_SOCKET_DISCHARGE_BEAM);
     }
 
     private static boolean skipsDirectEntityDamage(BulletConfig config) {
@@ -194,7 +177,8 @@ public final class BulletDamageUtil {
 
     private static DamageFalloff applyDamageFalloff(BulletConfig config, Entity target, float previousHealth,
             float overrideDamage, float baseDamage) {
-        if (!config.penetrates() || !config.damageFalloffByPenetration() || !(target instanceof LivingEntity living)) {
+        if (!config.penetrates() || config.plink() == BulletPlink.ENERGY
+                || !config.damageFalloffByPenetration() || !(target instanceof LivingEntity living)) {
             return DamageFalloff.unchanged(overrideDamage);
         }
         float healthLost = Math.max(previousHealth - living.getHealth(), 0.0F);

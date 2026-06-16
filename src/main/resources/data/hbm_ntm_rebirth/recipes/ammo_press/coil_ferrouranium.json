@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 80,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_coil_ferrouranium",
+    "count": 4
+  },
+  "input": [
+    null,
+    null,
+    null,
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:ingots/ferrouranium"
+      },
+      "count": 1,
+      "legacy_ore": "ingotFerrouranium"
+    },
+    null,
+    null,
+    null,
+    null
+  ]
+}

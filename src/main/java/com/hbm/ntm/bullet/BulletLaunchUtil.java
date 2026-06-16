@@ -90,10 +90,23 @@ public final class BulletLaunchUtil {
 
     public static LaunchPlan directedLaunchPlan(BulletConfig config, Vec3 position, Vec3 heading, float throwForce,
             float deviation, RandomSource random) {
+        return directedLaunchPlan(config, position, heading, throwForce, deviation, random,
+                BulletKinematicsUtil.HEADING_FORCE_MULTIPLIER);
+    }
+
+    public static LaunchPlan directedMk4LaunchPlan(BulletConfig config, Vec3 position, Vec3 heading, float throwForce,
+            float deviation, RandomSource random) {
+        return directedLaunchPlan(config, position, heading, throwForce, deviation, random,
+                BulletKinematicsUtil.MK4_HEADING_FORCE_MULTIPLIER);
+    }
+
+    private static LaunchPlan directedLaunchPlan(BulletConfig config, Vec3 position, Vec3 heading, float throwForce,
+            float deviation, RandomSource random, double headingForceMultiplier) {
         if (config == null || position == null || heading == null || heading.lengthSqr() <= 1.0E-7D) {
             return LaunchPlan.INVALID;
         }
-        Vec3 motion = BulletKinematicsUtil.shootWithSpread(heading, throwForce, deviation, random);
+        Vec3 motion = BulletKinematicsUtil.shootWithSpread(heading, throwForce, deviation, random,
+                headingForceMultiplier);
         Rotation rotation = rotationFromMotion(motion);
         return launchPlan(config, position, motion, rotation.yaw(), rotation.pitch(), true);
     }

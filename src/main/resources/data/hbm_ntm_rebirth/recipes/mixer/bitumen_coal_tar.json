@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:bitumen", "amount": 50 },
+  "solid_input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:oil_tar_coal" }
+  },
+  "duration": 20
+}

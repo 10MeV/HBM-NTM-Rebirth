@@ -81,8 +81,8 @@ public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implemen
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof CustomMissileLauncherBlockEntity launcher) {
-            NetworkHooks.openScreen(serverPlayer, launcher, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof CustomMissileLauncherBlockEntity launcher) {
+            NetworkHooks.openScreen(serverPlayer, launcher, launcher.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

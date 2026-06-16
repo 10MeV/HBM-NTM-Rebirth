@@ -1,0 +1,47 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 68,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_rocket_inc",
+    "count": 2
+  },
+  "input": [
+    {
+      "ingredient": {
+        "type": "hbm_ntm_rebirth:fluid_container",
+        "fluid": "hbm_ntm_rebirth:diesel",
+        "amount": 1000
+      },
+      "count": 1,
+      "fluid_container": {
+        "fluid": "hbm_ntm_rebirth:diesel",
+        "amount": 1000
+      }
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ball_dynamite"
+      },
+      "count": 1
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_large"
+      },
+      "count": 1,
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 1
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rocket_fuel"
+      },
+      "count": 1
+    },
+    null
+  ]
+}

@@ -34,8 +34,8 @@ public class SolidifierBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof SolidifierBlockEntity solidifier) {
-            NetworkHooks.openScreen(serverPlayer, solidifier, pos);
+                && resolveCoreBlockEntity(level, pos) instanceof SolidifierBlockEntity solidifier) {
+            NetworkHooks.openScreen(serverPlayer, solidifier, solidifier.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

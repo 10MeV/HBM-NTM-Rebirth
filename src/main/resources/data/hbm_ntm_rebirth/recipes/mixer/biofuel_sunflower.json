@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:biofuel", "amount": 200 },
+  "input1": { "fluid": "hbm_ntm_rebirth:sunfloweroil", "amount": 500 },
+  "input2": { "fluid": "hbm_ntm_rebirth:woodoil", "amount": 500 },
+  "duration": 20
+}

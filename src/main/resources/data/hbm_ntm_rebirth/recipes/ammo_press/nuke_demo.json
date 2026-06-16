@@ -1,0 +1,30 @@
+{
+  "type": "hbm_ntm_rebirth:ammo_press",
+  "source_order": 82,
+  "output": {
+    "item": "hbm_ntm_rebirth:ammo_standard_nuke_demo",
+    "count": 1
+  },
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:nuggets/pu239"
+      },
+      "count": 2,
+      "legacy_ore": "nuggetPu239"
+    },
+    null,
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:assembly_nuke"
+      },
+      "count": 1
+    },
+    null,
+    null,
+    null,
+    null
+  ]
+}

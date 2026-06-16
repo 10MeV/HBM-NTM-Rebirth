@@ -1,0 +1,63 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 600,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:welded_plates/steel"
+      },
+      "legacy_ore": "plateSextupleSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:welded_plates/any_resistant_alloy"
+      },
+      "legacy_ore": "plateSextupleAnyResistantAlloy"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:plates/copper"
+      },
+      "legacy_ore": "plateCopper"
+    },
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor_desh"
+      }
+    },
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:pipes/steel"
+      },
+      "legacy_ore": "ntmpipeSteel"
+    },
+    {
+      "count": 4,
+      "fluid_container": {
+        "amount": 1000,
+        "fluid": "hbm_ntm_rebirth:lubricant"
+      },
+      "ingredient": {
+        "type": "hbm_ntm_rebirth:fluid_container",
+        "amount": 1000,
+        "fluid": "hbm_ntm_rebirth:lubricant"
+      }
+    }
+  ],
+  "internal_name": "ass.hpcondenser",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_condenser_powered"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 138
+}

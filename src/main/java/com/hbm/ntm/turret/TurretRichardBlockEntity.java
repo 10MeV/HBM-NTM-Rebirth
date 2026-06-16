@@ -5,7 +5,6 @@ import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
@@ -96,12 +95,14 @@ public class TurretRichardBlockEntity extends TurretBlockEntityBase {
             return;
         }
         BulletConfig config = getFirstConfigLoaded();
-        if (config == null || !consumeAmmo(config)) {
+        if (config == null || !hasAmmo(config)) {
             loaded = 0;
             return;
         }
-        LivingEntity homingTarget = getTarget() instanceof LivingEntity living ? living : null;
-        spawnBullet(config, 30.0F, homingTarget);
+        if (!spawnBullet(config, 30.0F, getTarget())) {
+            return;
+        }
+        consumeAmmo(config);
         playTurretSound("hbm:turret.richard_fire", 2.0F, 1.0F);
         loaded--;
     }

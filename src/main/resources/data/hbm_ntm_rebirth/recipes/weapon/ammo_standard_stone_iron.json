@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [
+    "C",
+    "P",
+    "G"
+  ],
+  "key": {
+    "C": {
+      "tag": "forge:ingots/iron"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "G": {
+      "item": "minecraft:gunpowder"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:ammo_standard_stone_iron",
+    "count": 6
+  }
+}

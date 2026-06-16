@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "hbm_ntm_rebirth:block/machine_transformer_top_iron",
+    "east": "hbm_ntm_rebirth:block/machine_transformer_iron",
+    "north": "hbm_ntm_rebirth:block/machine_transformer_iron",
+    "particle": "hbm_ntm_rebirth:block/machine_transformer_iron",
+    "south": "hbm_ntm_rebirth:block/machine_transformer_iron",
+    "up": "hbm_ntm_rebirth:block/machine_transformer_top_iron",
+    "west": "hbm_ntm_rebirth:block/machine_transformer_iron"
+  }
+}
