@@ -23,7 +23,7 @@ public class RBMKConsoleRenderer implements BlockEntityRenderer<RBMKConsoleBlock
         Direction facing = state.hasProperty(RBMKConsoleBlock.FACING)
                 ? state.getValue(RBMKConsoleBlock.FACING)
                 : Direction.SOUTH;
-        int light = LegacyRenderLighting.resolveBlockEntityLight(console, packedLight);
+        int light = LegacyRenderLighting.resolveMultiblockLight(console, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -40,7 +40,7 @@ public class RBMKConsoleRenderer implements BlockEntityRenderer<RBMKConsoleBlock
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     private static float legacyYaw(Direction facing) {

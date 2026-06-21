@@ -3,6 +3,7 @@ package com.hbm.ntm.menu;
 import com.hbm.ntm.blockentity.RadioAutocalBlockEntity;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -38,7 +39,7 @@ public class RadioAutocalMenu extends AbstractContainerMenu {
     }
 
     private static RadioAutocalBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof RadioAutocalBlockEntity autocal) {
             return autocal;
         }

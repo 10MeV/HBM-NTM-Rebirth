@@ -123,16 +123,32 @@ public class ShrapnelEntity extends LegacyThrowableEntity {
         setMode(MODE_TRAIL);
     }
 
+    public void setTrail(boolean enabled) {
+        setMode(enabled ? MODE_TRAIL : MODE_NORMAL);
+    }
+
     public void setVolcano() {
         setMode(MODE_VOLCANO);
+    }
+
+    public void setVolcano(boolean enabled) {
+        setMode(enabled ? MODE_VOLCANO : MODE_NORMAL);
     }
 
     public void setWatz() {
         setMode(MODE_WATZ);
     }
 
+    public void setWatz(boolean enabled) {
+        setMode(enabled ? MODE_WATZ : MODE_NORMAL);
+    }
+
     public void setRadVolcano() {
         setMode(MODE_RAD_VOLCANO);
+    }
+
+    public void setRadVolcano(boolean enabled) {
+        setMode(enabled ? MODE_RAD_VOLCANO : MODE_NORMAL);
     }
 
     public boolean isLargeRenderMode() {
@@ -156,6 +172,7 @@ public class ShrapnelEntity extends LegacyThrowableEntity {
     protected void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         setMode(tag.getByte("mode"));
+        discard();
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.hbm.ntm.artillery.LegacyArtilleryAmmoCatalog.HimarsRocket;
 import com.hbm.ntm.artillery.LegacyArtilleryImpactExecutor;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -27,6 +28,8 @@ import net.minecraftforge.common.world.ForgeChunkManager;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.UUID;
+
 public class ArtilleryRocketEntity extends LegacyThrowableEntity implements RadarDetectable {
     private static final EntityDataAccessor<Integer> TYPE =
             SynchedEntityData.defineId(ArtilleryRocketEntity.class, EntityDataSerializers.INT);
@@ -34,6 +37,8 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
     private Vec3 lastTargetPos = Vec3.ZERO;
     @Nullable
     private Entity targetEntity;
+    @Nullable
+    private UUID targetUuid;
     private boolean targeting = true;
     private boolean steering = true;
     private final double[][] targetMotion = new double[20][3];
@@ -63,7 +68,7 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
     }
 
     public ArtilleryRocketEntity setType(int type) {
-        entityData.set(TYPE, Mth.clamp(type, 0, LegacyArtilleryAmmoCatalog.himarsRockets().size() - 1));
+        entityData.set(TYPE, type);
         return this;
     }
 
@@ -93,6 +98,7 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
     public ArtilleryRocketEntity setTarget(Entity target) {
         if (target != null) {
             targetEntity = target;
+            targetUuid = target.getUUID();
             Vec3 center = entityTargetCenter(target);
             setTarget(center.x, center.y, center.z);
         }
@@ -196,7 +202,19 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
 
     @Nullable
     private Entity targetEntity() {
-        return targetEntity;
+        if (targetEntity != null && targetEntity.isAlive()) {
+            return targetEntity;
+        }
+        targetEntity = null;
+        if (targetUuid == null || !(level() instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        Entity loadedTarget = serverLevel.getEntity(targetUuid);
+        if (loadedTarget != null && loadedTarget.isAlive()) {
+            targetEntity = loadedTarget;
+            return loadedTarget;
+        }
+        return null;
     }
 
     private void recalculatePredictiveTarget(Entity target) {
@@ -293,11 +311,14 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
         if (level().isClientSide() || isRemoved()) {
             return;
         }
-        Vec3 explosionCreatorHit = hit instanceof BlockHitResult blockHit
-                ? Vec3.atCenterOf(blockHit.getBlockPos())
+        BlockPos impactBlockPos = hit instanceof BlockHitResult blockHit
+                ? blockHit.getBlockPos()
+                : BlockPos.containing(hit.getLocation());
+        Vec3 explosionCreatorHit = hit instanceof BlockHitResult
+                ? Vec3.atCenterOf(impactBlockPos)
                 : hit.getLocation();
         LegacyArtilleryImpactExecutor.applyImpact(level(), hit.getLocation(), getDeltaMovement(), this, ammoType(),
-                explosionCreatorHit);
+                explosionCreatorHit, impactBlockPos);
         discard();
     }
 
@@ -322,6 +343,7 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
         lastTargetPos = new Vec3(tag.getDouble("targetX"), tag.getDouble("targetY"), tag.getDouble("targetZ"));
         setType(tag.getInt("type"));
         targetEntity = null;
+        targetUuid = tag.hasUUID("targetUUID") ? tag.getUUID("targetUUID") : null;
         forcedChunk = Long.MIN_VALUE;
     }
 
@@ -333,6 +355,9 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
         tag.putDouble("targetY", target.y);
         tag.putDouble("targetZ", target.z);
         tag.putInt("type", typeIndex());
+        if (targetUuid != null) {
+            tag.putUUID("targetUUID", targetUuid);
+        }
     }
 
     @Override
@@ -371,6 +396,19 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
         super.remove(reason);
     }
 
+    public void killAndClear() {
+        discard();
+        clearChunkLoader();
+    }
+
+    public void clearChunkLoader() {
+        clearForcedChunk();
+    }
+
+    public void loadNeighboringChunks(int newChunkX, int newChunkZ) {
+        forceChunk(newChunkX, newChunkZ);
+    }
+
     private void setInitialRotationFromMotion(Vec3 motion) {
         if (motion == null || motion.lengthSqr() <= 1.0E-7D) {
             return;
@@ -394,10 +432,15 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
     }
 
     private void forceCurrentChunk() {
+        ChunkPos chunk = chunkPosition();
+        forceChunk(chunk.x, chunk.z);
+    }
+
+    private void forceChunk(int chunkX, int chunkZ) {
         if (!(level() instanceof ServerLevel serverLevel)) {
             return;
         }
-        ChunkPos chunk = chunkPosition();
+        ChunkPos chunk = new ChunkPos(chunkX, chunkZ);
         long packed = chunk.toLong();
         if (forcedChunk == packed) {
             return;

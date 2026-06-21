@@ -5,6 +5,8 @@ import com.hbm.ntm.bullet.BulletConfig;
 import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.bullet.SednaWeaponModEvaluator;
 import com.hbm.ntm.bullet.SednaMagazineConfig;
+import com.hbm.ntm.client.anim.LegacyHbmAnimations;
+import com.hbm.ntm.client.obj.ObjTrinketModels;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.sound.LegacyClientSoundPlayer;
 import com.hbm.ntm.item.Ni4NiGunItem;
@@ -44,6 +46,12 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final double LEGACY_GUI_SLOT_PIXELS = 16.0D;
     private static final double LEGACY_GUI_UNIT = 1.0D / LEGACY_GUI_SLOT_PIXELS;
     private static final double FIRST_PERSON_SCREEN_UNIT = 0.25D;
+    private static final int LEGACY_ANIM_CYCLE = 3;
+    private static final int LEGACY_ANIM_CYCLE_DRY = 5;
+    private static final int LEGACY_ANIM_EQUIP = 9;
+    private static final int LEGACY_ANIM_INSPECT = 10;
+    private static final String LEGACY_LAST_ANIM_KEY = "lastanim_0";
+    private static final String LEGACY_ANIM_TIMER_KEY = "animtimer_0";
     private static final ResourceLocation FATMAN_MININUKE_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID,
             "textures/models/weapons/fatman_mininuke.png");
     private static final ResourceLocation FATMAN_BALEFIRE_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID,
@@ -417,12 +425,28 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static void renderTeslaCannon(ItemStack stack, ItemDisplayContext displayContext,
             LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
+        boolean firstPerson = displayContext.firstPerson();
+        double cogAngle = firstPerson ? teslaCogAngle(stack) : 0.0D;
+
+        if (firstPerson) {
+            applyTeslaFirstPersonBodyAnimation(stack, poseStack);
+        }
+
         model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
         model.renderPart("Extension", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Cog", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
 
         poseStack.pushPose();
-        int capacitors = displayContext.firstPerson() ? Math.min(teslaFirstPersonCapacitorCount(stack), 8) : 10;
+        if (firstPerson) {
+            rotateTeslaCog(poseStack, cogAngle);
+        }
+        model.renderPart("Cog", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        if (firstPerson) {
+            rotateTeslaCog(poseStack, cogAngle);
+        }
+        int capacitors = firstPerson ? teslaFirstPersonVisibleCapacitors(stack) : 10;
         for (int i = 0; i < capacitors; i++) {
             model.renderPart("Capacitor", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
             if (i < 4) {
@@ -430,10 +454,169 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 poseStack.mulPose(Axis.ZP.rotationDegrees(-22.5F));
                 poseStack.translate(0.0D, 1.625D, 0.0D);
             } else {
+                if (firstPerson && i == 4) {
+                    rotateTeslaCog(poseStack, -cogAngle);
+                    poseStack.translate(-cogAngle * 0.5D / 22.5D, 0.0D, 0.0D);
+                }
                 poseStack.translate(0.5D, 0.0D, 0.0D);
             }
         }
         poseStack.popPose();
+
+        if (firstPerson) {
+            renderTeslaYomi(stack, poseStack, buffer, packedLight, packedOverlay);
+        }
+    }
+
+    private static void applyTeslaFirstPersonBodyAnimation(ItemStack stack, PoseStack poseStack) {
+        double equipX = legacyBusActive() ? LegacyHbmAnimations.getRelevantTransformation("EQUIP")[0]
+                : teslaFallbackEquipX(stack);
+        double recoilZ = legacyBusActive() ? LegacyHbmAnimations.getRelevantTransformation("RECOIL")[2]
+                : teslaFallbackRecoilZ(stack);
+        poseStack.translate(0.0D, -2.0D, -2.0D);
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) equipX));
+        poseStack.translate(0.0D, 2.0D, 2.0D);
+        poseStack.translate(0.0D, 0.0D, recoilZ);
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) (recoilZ * 2.0D)));
+    }
+
+    private static void rotateTeslaCog(PoseStack poseStack, double angle) {
+        poseStack.translate(0.0D, -1.625D, 0.0D);
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) angle));
+        poseStack.translate(0.0D, 1.625D, 0.0D);
+    }
+
+    private static double teslaCogAngle(ItemStack stack) {
+        return legacyBusActive() ? LegacyHbmAnimations.getRelevantTransformation("CYCLE")[2]
+                : teslaFallbackCogAngle(stack);
+    }
+
+    private static int teslaFirstPersonVisibleCapacitors(ItemStack stack) {
+        int animatedCount = legacyBusActive() ? (int) LegacyHbmAnimations.getRelevantTransformation("COUNT")[0] : 0;
+        return Math.min(Math.max(animatedCount, teslaFirstPersonCapacitorCount(stack)), 8);
+    }
+
+    private static boolean legacyBusActive() {
+        return LegacyHbmAnimations.getRelevantAnim() != null;
+    }
+
+    private static double teslaFallbackEquipX(ItemStack stack) {
+        if (teslaLegacyAnimation(stack) != LEGACY_ANIM_EQUIP) {
+            return 0.0D;
+        }
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (millis > 1000.0D) {
+            return 0.0D;
+        }
+        return lerp(60.0D, 0.0D, sinDown(millis / 1000.0D));
+    }
+
+    private static double teslaFallbackRecoilZ(ItemStack stack) {
+        if (teslaLegacyAnimation(stack) != LEGACY_ANIM_CYCLE) {
+            return 0.0D;
+        }
+        double millis = teslaLegacyAnimationMillis(stack);
+        double recoil = isTeslaAiming(stack) ? -0.5D : -1.0D;
+        if (millis <= 100.0D) {
+            return lerp(0.0D, recoil, sinDown(millis / 100.0D));
+        }
+        if (millis <= 350.0D) {
+            return lerp(recoil, 0.0D, sinFull((millis - 100.0D) / 250.0D));
+        }
+        return 0.0D;
+    }
+
+    private static double teslaFallbackCogAngle(ItemStack stack) {
+        int animation = teslaLegacyAnimation(stack);
+        if (animation != LEGACY_ANIM_CYCLE && animation != LEGACY_ANIM_CYCLE_DRY) {
+            return 0.0D;
+        }
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (millis <= 150.0D) {
+            return 0.0D;
+        }
+        if (millis <= 500.0D) {
+            return lerp(0.0D, 22.5D, (millis - 150.0D) / 350.0D);
+        }
+        return 0.0D;
+    }
+
+    private static void renderTeslaYomi(ItemStack stack, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        if (teslaLegacyAnimation(stack) != LEGACY_ANIM_INSPECT) {
+            return;
+        }
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (millis > 2000.0D) {
+            return;
+        }
+
+        double[] position = teslaYomiPosition(millis);
+        double squeezeZ = teslaYomiSqueezeZ(millis);
+        poseStack.pushPose();
+        poseStack.translate(position[0], position[1], position[2]);
+        poseStack.mulPose(Axis.YP.rotationDegrees(135.0F));
+        poseStack.scale(1.0F, 1.0F, (float) squeezeZ);
+        ObjTrinketModels.YOMI_LEGACY.renderAll(ObjTrinketModels.YOMI_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static double[] teslaYomiPosition(double millis) {
+        if (millis <= 500.0D) {
+            double progress = sinDown(millis / 500.0D);
+            return new double[] { lerp(8.0D, 4.0D, progress), lerp(-4.0D, -1.0D, progress), 0.0D };
+        }
+        if (millis <= 1500.0D) {
+            return new double[] { 4.0D, -1.0D, 0.0D };
+        }
+        double progress = sinUp((millis - 1500.0D) / 500.0D);
+        return new double[] { lerp(4.0D, 6.0D, progress), lerp(-1.0D, -6.0D, progress), 0.0D };
+    }
+
+    private static double teslaYomiSqueezeZ(double millis) {
+        if (millis <= 750.0D) {
+            return 1.0D;
+        }
+        if (millis <= 875.0D) {
+            return lerp(1.0D, 0.5D, (millis - 750.0D) / 125.0D);
+        }
+        if (millis <= 1000.0D) {
+            return lerp(0.5D, 1.0D, (millis - 875.0D) / 125.0D);
+        }
+        return 1.0D;
+    }
+
+    private static int teslaLegacyAnimation(ItemStack stack) {
+        var tag = stack.getTag();
+        return tag == null ? -1 : tag.getInt(LEGACY_LAST_ANIM_KEY);
+    }
+
+    private static double teslaLegacyAnimationMillis(ItemStack stack) {
+        var tag = stack.getTag();
+        return tag == null ? 0.0D : tag.getInt(LEGACY_ANIM_TIMER_KEY) * 50.0D;
+    }
+
+    private static boolean isTeslaAiming(ItemStack stack) {
+        return stack.getItem() instanceof SednaGunItem gunItem && gunItem.legacyIsAiming(stack);
+    }
+
+    private static double lerp(double start, double end, double progress) {
+        double clamped = Math.max(0.0D, Math.min(1.0D, progress));
+        return start + (end - start) * clamped;
+    }
+
+    private static double sinDown(double progress) {
+        return Math.sin(Math.max(0.0D, Math.min(1.0D, progress)) * Math.PI / 2.0D);
+    }
+
+    private static double sinUp(double progress) {
+        double clamped = Math.max(0.0D, Math.min(1.0D, progress));
+        return -Math.sin((clamped * Math.PI + Math.PI) / 2.0D) + 1.0D;
+    }
+
+    private static double sinFull(double progress) {
+        return (-Math.cos(Math.max(0.0D, Math.min(1.0D, progress)) * Math.PI) + 1.0D) / 2.0D;
     }
 
     private static void renderFatman(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,

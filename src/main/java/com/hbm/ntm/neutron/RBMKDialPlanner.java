@@ -28,7 +28,7 @@ public final class RBMKDialPlanner {
                 readDoubleClamped(rules, DialKey.COLUMN_HEAT_FLOW, 0.0D, 1.0D),
                 readDoubleMin(rules, DialKey.FUEL_DIFFUSION_MOD, 0.0D),
                 readDoubleClamped(rules, DialKey.HEAT_PROVISION, 0.0D, 1.0D),
-                readIntClamped(rules, DialKey.COLUMN_HEIGHT, 2, 16) - 1,
+                readLegacyColumnHeightAbove(rules),
                 readBoolean(rules, DialKey.PERMANENT_SCRAP),
                 readDoubleMin(rules, DialKey.BOILER_HEAT_CONSUMPTION, 0.0D),
                 readDoubleMin(rules, DialKey.CONTROL_SPEED_MOD, 0.0D),
@@ -57,7 +57,7 @@ public final class RBMKDialPlanner {
             case SAVE_DIALS, PERMANENT_SCRAP, REASIM_BOILERS, DISABLE_MELTDOWNS,
                     ENABLE_MELTDOWN_OVERPRESSURE, DISABLE_DEPLETION, DISABLE_XENON ->
                     Boolean.parseBoolean(valueOrDefault(rawValue, key));
-            case COLUMN_HEIGHT -> readIntClamped(Map.of(key, valueOrDefault(rawValue, key)), key, 2, 16) - 1;
+            case COLUMN_HEIGHT -> readLegacyColumnHeightAbove(Map.of(key, valueOrDefault(rawValue, key)));
             case FLUX_RANGE, REASIM_RANGE -> readIntClamped(Map.of(key, valueOrDefault(rawValue, key)), key, 1, 100);
             case COLUMN_HEAT_FLOW, HEAT_PROVISION, REASIM_BOILER_SPEED, MODERATOR_EFFICIENCY,
                     ABSORBER_EFFICIENCY, REFLECTOR_EFFICIENCY, ABSORBER_HEAT_CONVERSION ->
@@ -88,6 +88,10 @@ public final class RBMKDialPlanner {
     private static int readIntClamped(Map<DialKey, String> rules, DialKey key, int min, int max) {
         return clamp(parseInt(valueOrDefault(rules == null ? null : rules.get(key), key), key.intDefault()),
                 min, max);
+    }
+
+    private static int readLegacyColumnHeightAbove(Map<DialKey, String> rules) {
+        return readIntClamped(rules, DialKey.COLUMN_HEIGHT, 2, 16) - 1;
     }
 
     private static String valueOrDefault(String value, DialKey key) {

@@ -1,0 +1,23 @@
+{
+  "parent": "hbm_ntm_rebirth:digamma_feel",
+  "display": {
+    "icon": {
+      "item": "hbm_ntm_rebirth:particle_digamma"
+    },
+    "title": {
+      "translate": "advancements.hbm_ntm_rebirth.digamma_know.title"
+    },
+    "description": {
+      "translate": "advancements.hbm_ntm_rebirth.digamma_know.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

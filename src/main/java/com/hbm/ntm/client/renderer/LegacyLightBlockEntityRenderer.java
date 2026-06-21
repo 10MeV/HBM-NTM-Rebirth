@@ -65,7 +65,7 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         }
 
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        ObjLightModels.FLOODLIGHT_BASE.render(context);
+        ObjLightModels.FLOODLIGHT_LEGACY.renderPart("Base", context);
 
         float rotation = blockEntity.rotation();
         if (face == Direction.DOWN) {
@@ -80,8 +80,8 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
         poseStack.translate(0.0D, -0.5D, 0.0D);
         ObjRenderContext angledContext = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        ObjLightModels.FLOODLIGHT_LIGHTS.render(angledContext);
-        ObjLightModels.FLOODLIGHT_LAMPS.render(blockEntity.isOn()
+        ObjLightModels.FLOODLIGHT_LEGACY.renderPart("Lights", angledContext);
+        ObjLightModels.FLOODLIGHT_LEGACY.renderPart("Lamps", blockEntity.isOn()
                 ? angledContext.fullBright()
                 : angledContext.withColor(0x404040));
         poseStack.popPose();

@@ -60,7 +60,8 @@ public class LegacyRadiationBarrelBlock extends Block implements ChainExplodable
         level.removeBlock(pos, false);
         if (!level.isClientSide && this == ModBlocks.YELLOW_BARREL.get()) {
             level.addFreshEntity(LegacyPrimedExplosiveEntity.create(level,
-                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, 100, true));
+                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, 100, true,
+                    explosion.getIndirectSourceEntity()));
         }
     }
 
@@ -73,7 +74,7 @@ public class LegacyRadiationBarrelBlock extends Block implements ChainExplodable
         if (level.random.nextInt(3) == 0) {
             level.setBlock(pos, ModBlocks.TOXIC_BLOCK.get().defaultBlockState(), Block.UPDATE_ALL);
         } else {
-            level.explode(source, position.x, position.y, position.z, 12.0F, false, Level.ExplosionInteraction.BLOCK);
+            level.explode(source, position.x, position.y, position.z, 12.0F, true, Level.ExplosionInteraction.BLOCK);
         }
         ExplosionNukeGeneric.waste(level, pos.getX(), pos.getY(), pos.getZ(), 35);
         spawnDenseRadon(level, pos);

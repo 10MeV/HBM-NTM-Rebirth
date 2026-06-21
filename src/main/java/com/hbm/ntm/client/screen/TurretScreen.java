@@ -268,9 +268,6 @@ public class TurretScreen extends AbstractContainerScreen<TurretMenu> {
         if (ammo.size() > 1) {
             selectedIndex = (int) ((System.currentTimeMillis() % (1000L * ammo.size())) / 1000L);
             selectedName = ammo.get(selectedIndex).getHoverName();
-            ItemStack selectedMarker = ammo.get(selectedIndex).copy();
-            selectedMarker.setCount(0);
-            ammo.set(selectedIndex, selectedMarker);
         }
 
         List<List<LegacyGuiElements.StackTextPart>> lines = new ArrayList<>();

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "W": {
+      "tag": "forge:dense_wires/magnetized_tungsten"
+    },
+    "D": {
+      "tag": "forge:cast_plates/saturnite"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:powder_power"
+    },
+    "T": {
+      "tag": "forge:crystals/trixite"
+    }
+  },
+  "pattern": [
+    " W ",
+    "DSD",
+    "DTD"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:battery_trixite"
+  },
+  "show_notification": true
+}

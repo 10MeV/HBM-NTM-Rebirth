@@ -6,6 +6,7 @@ import com.hbm.ntm.config.BombConfig;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoadingEntity;
 import com.hbm.ntm.multiblock.DummyBlock;
+import com.hbm.ntm.multiblock.MultiblockCoreBlock;
 import com.hbm.ntm.radiation.CraterBiomeUtil;
 import com.hbm.ntm.radiation.CraterRadiationData;
 import com.hbm.ntm.radiation.LegacyFalloutConversions;
@@ -26,7 +27,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
@@ -173,7 +173,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
 
     private void stomp(int x, int z, double percent) {
         int depth = 0;
-        int yStart = Math.min(255, level().getMaxBuildHeight() - 1);
+        int yStart = legacyFalloutTopY();
         int yEnd = level().getMinBuildHeight();
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
@@ -194,19 +194,22 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
             }
 
             BlockPos above = pos.above();
-            BlockState aboveState = level().getBlockState(above);
-            if (depth == 0 && canReplaceWithFallout(aboveState, above)) {
-                double distance = percent / 100.0D;
-                double chance = 0.1D - Math.pow(distance - 0.7D, 2.0D);
-                BlockState fallout = ModBlocks.FALLOUT.get().defaultBlockState();
-                if (chance >= level().random.nextDouble() && fallout.canSurvive(level(), above)) {
-                    level().setBlock(above, fallout, 3);
+            boolean aboveWritable = isLegacyFalloutWritableY(above);
+            if (aboveWritable) {
+                BlockState aboveState = level().getBlockState(above);
+                if (depth == 0 && canReplaceWithFallout(aboveState, above)) {
+                    double distance = percent / 100.0D;
+                    double chance = 0.1D - Math.pow(distance - 0.7D, 2.0D);
+                    BlockState fallout = ModBlocks.FALLOUT.get().defaultBlockState();
+                    if (chance >= level().random.nextDouble() && fallout.canSurvive(level(), above)) {
+                        level().setBlock(above, fallout, 3);
+                    }
                 }
-            }
 
-            if (percent < 65.0D && state.isFlammable(level(), pos, Direction.UP)
-                    && level().random.nextInt(5) == 0 && level().getBlockState(above).isAir()) {
-                level().setBlock(above, BaseFireBlock.getState(level(), above), 3);
+                if (percent < 65.0D && state.isFlammable(level(), pos, Direction.UP)
+                        && level().random.nextInt(5) == 0 && level().getBlockState(above).isAir()) {
+                    level().setBlock(above, Blocks.FIRE.defaultBlockState(), 3);
+                }
             }
 
             LegacyFalloutConversions.Result falloutEval = LegacyFalloutConversions.apply(level(), pos, state, percent);
@@ -217,8 +220,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
             triggerLegacyCollapse(pos, state, percent, depth);
 
             if (!falloutEval.matched()
-                    && state.isCollisionShapeFullBlock(level(), pos)
-                    && !(state.getBlock() instanceof FalloutLayerBlock)) {
+                    && falloutEvalCountsAsSurfaceDepth(state, pos)) {
                 depth++;
             }
         }
@@ -228,6 +230,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
         if (percent >= 65.0D
                 || pos.getY() <= level().getMinBuildHeight()
                 || originalState.getBlock() instanceof DummyBlock
+                || originalState.getBlock() instanceof MultiblockCoreBlock
                 || !level().getBlockState(pos.below()).isAir()) {
             return;
         }
@@ -239,7 +242,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
 
         for (int i = 0; i <= depth; i++) {
             BlockPos fallingPos = pos.above(i);
-            if (fallingPos.getY() >= level().getMaxBuildHeight()) {
+            if (!isLegacyFalloutWritableY(fallingPos)) {
                 break;
             }
 
@@ -291,7 +294,19 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     }
 
     private boolean canReplaceWithFallout(BlockState state, BlockPos pos) {
-        return state.isAir() || (state.canBeReplaced() && state.getFluidState().isEmpty() && !state.is(Blocks.FIRE));
+        return state.isAir() || (state.canBeReplaced() && state.getFluidState().isEmpty());
+    }
+
+    private int legacyFalloutTopY() {
+        return Math.min(255, level().getMaxBuildHeight() - 1);
+    }
+
+    private boolean isLegacyFalloutWritableY(BlockPos pos) {
+        return pos.getY() <= legacyFalloutTopY() && !level().isOutsideBuildHeight(pos);
+    }
+
+    private boolean falloutEvalCountsAsSurfaceDepth(BlockState state, BlockPos pos) {
+        return state.isSolidRender(level(), pos) && !(state.getBlock() instanceof FalloutLayerBlock);
     }
 
     private long chunkAtPolar(int distance, int angle, int adjustedMaxAngle) {

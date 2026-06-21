@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": { "tag": "forge:plates/aluminium" },
+    "count": 1,
+    "legacy_ore": "plateAluminum"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:fluid_duct_box",
+    "nbt": "{hbmLegacyVariant:5}"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

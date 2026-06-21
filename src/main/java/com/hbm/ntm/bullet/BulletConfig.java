@@ -21,7 +21,7 @@ public record BulletConfig(
         int ammoCount,
         float velocity,
         float spread,
-        int wear,
+        float wear,
         int bulletsMin,
         int bulletsMax,
         float damageMin,
@@ -137,7 +137,7 @@ public record BulletConfig(
         private int ammoCount = 1;
         private float velocity;
         private float spread;
-        private int wear;
+        private float wear;
         private int bulletsMin;
         private int bulletsMax;
         private float damageMin;
@@ -276,7 +276,7 @@ public record BulletConfig(
             return this;
         }
 
-        public Builder ballistics(float velocity, float spread, int wear, int bulletsMin, int bulletsMax) {
+        public Builder ballistics(float velocity, float spread, float wear, int bulletsMin, int bulletsMax) {
             this.velocity = velocity;
             this.spread = spread;
             this.wear = wear;

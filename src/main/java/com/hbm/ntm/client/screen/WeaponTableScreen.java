@@ -2,15 +2,19 @@ package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.WeaponTableMenu;
+import com.mojang.math.Axis;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 
 public class WeaponTableScreen extends AbstractContainerScreen<WeaponTableMenu> {
     private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID,
             "textures/gui/machine/gui_weapon_modifier.png");
+    private double yaw = 20.0D;
+    private double pitch = -10.0D;
 
     public WeaponTableScreen(WeaponTableMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -24,6 +28,7 @@ public class WeaponTableScreen extends AbstractContainerScreen<WeaponTableMenu> 
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
         if (!menu.getGunStack().isEmpty()) {
             graphics.blit(TEXTURE, leftPos + 35, topPos + 112, 176 + 6 * menu.getConfigIndex(), 0, 6, 8);
+            renderGunPreview(graphics);
         }
     }
 
@@ -45,9 +50,35 @@ public class WeaponTableScreen extends AbstractContainerScreen<WeaponTableMenu> 
     }
 
     @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (button == 0 && isHovering(8, 18, 160, 79, mouseX, mouseY)) {
+            double distX = leftPos + 88.0D - mouseX;
+            double distY = topPos + 57.5D - mouseY;
+            yaw = distX / 80.0D * -180.0D;
+            pitch = distY / 39.5D * 90.0D;
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private void renderGunPreview(GuiGraphics graphics) {
+        ItemStack gun = menu.getGunStack();
+        if (gun.isEmpty()) {
+            return;
+        }
+        graphics.pose().pushPose();
+        graphics.pose().translate(leftPos + 88.0D, topPos + 57.0D, 120.0D);
+        graphics.pose().mulPose(Axis.YP.rotationDegrees((float) yaw));
+        graphics.pose().mulPose(Axis.XP.rotationDegrees((float) pitch));
+        graphics.pose().scale(4.5F, 4.5F, 1.0F);
+        graphics.renderItem(gun, -8, -8);
+        graphics.pose().popPose();
     }
 }

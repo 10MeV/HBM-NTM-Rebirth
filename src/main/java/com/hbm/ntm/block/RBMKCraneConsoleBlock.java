@@ -20,6 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 public class RBMKCraneConsoleBlock extends LegacyXrMultiblockBlock implements EntityBlock, Toolable {
     private static final int[] LEGACY_DIMENSIONS = new int[] { 1, 0, 0, 0, 1, 1 };
     private static final int[] LEGACY_EXTRA_DIMENSIONS = new int[] { 0, 0, 0, 1, 1, 1 };
-    private static final VoxelShape HALF_HEIGHT_SHAPE = Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, 0.5D, 1.0D);
 
     public RBMKCraneConsoleBlock(Properties properties) {
         super(properties);
@@ -63,6 +63,68 @@ public class RBMKCraneConsoleBlock extends LegacyXrMultiblockBlock implements En
     }
 
     @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return localShape(BlockPos.ZERO);
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
+            CollisionContext context) {
+        return localShape(BlockPos.ZERO);
+    }
+
+    @Override
+    public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+        return Shapes.empty();
+    }
+
+    @Override
+    public VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return Shapes.empty();
+    }
+
+    @Override
+    public boolean useShapeForLightOcclusion(BlockState state) {
+        return false;
+    }
+
+    @Override
+    public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
+        return false;
+    }
+
+    @Override
+    public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos,
+            CollisionContext context) {
+        VoxelShape shape = Shapes.empty();
+        for (BlockPos offset : getLayout(state).offsets()) {
+            double height = isTopOffset(offset) ? 0.5D : 1.0D;
+            shape = Shapes.or(shape, Shapes.box(
+                    offset.getX(),
+                    offset.getY(),
+                    offset.getZ(),
+                    offset.getX() + 1.0D,
+                    offset.getY() + height,
+                    offset.getZ() + 1.0D));
+        }
+        return shape.optimize();
+    }
+
+    @Override
+    public VoxelShape getMultiblockCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
+            CollisionContext context) {
+        return getMultiblockShape(state, level, corePos, context);
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (!level.isClientSide && !oldState.is(state.getBlock())) {
+            fillConsoleLayout(level, pos, state);
+        }
+    }
+
+    @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         ToolType tool = ToolType.getType(player.getItemInHand(hand));
@@ -71,7 +133,19 @@ public class RBMKCraneConsoleBlock extends LegacyXrMultiblockBlock implements En
                     ? InteractionResult.sidedSuccess(level.isClientSide)
                     : InteractionResult.PASS;
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        if (level.isClientSide) {
+            return MultiblockHelper.isOperationalCoreLayoutComplete(level, pos)
+                    ? InteractionResult.SUCCESS
+                    : InteractionResult.PASS;
+        }
+        if (!level.isClientSide) {
+            if (MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos)
+                    instanceof RBMKCraneConsoleBlockEntity) {
+                return InteractionResult.SUCCESS;
+            }
+            return InteractionResult.PASS;
+        }
+        return InteractionResult.PASS;
     }
 
     @Override
@@ -79,9 +153,12 @@ public class RBMKCraneConsoleBlock extends LegacyXrMultiblockBlock implements En
         if (tool != ToolType.SCREWDRIVER) {
             return false;
         }
+        if (level.isClientSide) {
+            return MultiblockHelper.isOperationalCoreLayoutComplete(level, pos);
+        }
         if (!level.isClientSide) {
-            MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
-            if (core == null || !(level.getBlockEntity(core.pos()) instanceof RBMKCraneConsoleBlockEntity console)) {
+            BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
+            if (!(blockEntity instanceof RBMKCraneConsoleBlockEntity console)) {
                 return false;
             }
             console.cycleCraneRotation();
@@ -89,26 +166,61 @@ public class RBMKCraneConsoleBlock extends LegacyXrMultiblockBlock implements En
         return true;
     }
 
+    private boolean fillConsoleLayout(Level level, BlockPos corePos, BlockState state) {
+        LegacyMultiblockLayout layout = getLayout(state);
+        boolean filled = MultiblockHelper.fillLayout(level, corePos, layout);
+        boolean complete = filled && MultiblockHelper.isLayoutComplete(level, corePos, layout);
+        if (!complete) {
+            onIncompleteLegacyLayout(level, corePos, state);
+        }
+        return complete;
+    }
+
     @Override
-    public boolean usesForwardedDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+    protected boolean requiresCompleteLegacyLayout(BlockState state) {
         return true;
     }
 
     @Override
+    public boolean usesForwardedDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    @Override
     public boolean usesForwardedDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    @Override
+    public boolean usesLocalDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return true;
+    }
+
+    @Override
+    public boolean usesLocalDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return true;
+    }
+
+    @Override
+    public boolean usesMultiblockHighlightShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    @Override
+    public boolean requiresCompleteOperationalLayout(BlockState state, BlockGetter level, BlockPos corePos) {
         return true;
     }
 
     @Override
     public VoxelShape getMultiblockDummyShape(BlockState state, BlockGetter level, BlockPos corePos,
             BlockPos dummyPos, CollisionContext context) {
-        return isTopDummy(corePos, dummyPos) ? HALF_HEIGHT_SHAPE : Shapes.block();
+        return localShape(dummyPos.subtract(corePos));
     }
 
     @Override
     public VoxelShape getMultiblockDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
             BlockPos dummyPos, CollisionContext context) {
-        return getMultiblockDummyShape(state, level, corePos, dummyPos, context);
+        return localShape(dummyPos.subtract(corePos));
     }
 
     @Nullable
@@ -133,7 +245,11 @@ public class RBMKCraneConsoleBlock extends LegacyXrMultiblockBlock implements En
                                 (RBMKCraneConsoleBlockEntity) blockEntity);
     }
 
-    private static boolean isTopDummy(BlockPos corePos, BlockPos dummyPos) {
-        return dummyPos.getY() > corePos.getY();
+    private static boolean isTopOffset(BlockPos offset) {
+        return offset.getY() > 0;
+    }
+
+    private static VoxelShape localShape(BlockPos offset) {
+        return Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, isTopOffset(offset) ? 0.5D : 1.0D, 1.0D);
     }
 }

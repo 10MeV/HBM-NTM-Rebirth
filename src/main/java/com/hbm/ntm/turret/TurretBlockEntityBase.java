@@ -65,11 +65,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity implements MenuProvider, HbmEnergyReceiver, RORInteractive {
-    private static final AABB DEFAULT_STATIC_RENDER_BOUNDS = new AABB(-3.5D, 0.0D, -3.5D, 3.5D, 5.5D, 3.5D);
-    private static final AABB ARTY_STATIC_RENDER_BOUNDS = new AABB(-4.5D, 0.0D, -5.5D, 4.5D, 5.5D, 5.5D);
-    private static final AABB HIMARS_STATIC_RENDER_BOUNDS = new AABB(-4.5D, 0.0D, -5.5D, 4.5D, 6.5D, 5.5D);
-    private static final AABB SENTRY_STATIC_RENDER_BOUNDS = new AABB(-2.0D, 0.0D, -2.0D, 2.0D, 3.5D, 2.0D);
-
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_LEGACY_POWER = "power";
     private static final String TAG_IS_ON = "isOn";
@@ -110,13 +105,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            if (slot == SLOT_CHIP) {
-                return stack.is(ModItems.TURRET_CHIP.get());
-            }
-            if (slot == SLOT_BATTERY) {
-                return HbmInventoryMenuHelper.isBatteryLike(stack);
-            }
-            return slot >= SLOT_AMMO_START && slot <= SLOT_AMMO_END;
+            return slot >= 0 && slot < SLOT_COUNT;
         }
 
         @Override
@@ -177,29 +166,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
 
     @Override
     public AABB getRenderBoundingBox() {
-        AABB localBounds = staticRenderBounds();
-        Vec3 offset = getRenderHorizontalOffset();
-        BlockPos pos = getBlockPos();
-        return new AABB(
-                pos.getX() + offset.x + localBounds.minX,
-                pos.getY() + offset.y + localBounds.minY,
-                pos.getZ() + offset.z + localBounds.minZ,
-                pos.getX() + offset.x + localBounds.maxX,
-                pos.getY() + offset.y + localBounds.maxY,
-                pos.getZ() + offset.z + localBounds.maxZ);
-    }
-
-    private AABB staticRenderBounds() {
-        if (this instanceof TurretArtyBlockEntity) {
-            return ARTY_STATIC_RENDER_BOUNDS;
-        }
-        if (this instanceof TurretHimarsBlockEntity) {
-            return HIMARS_STATIC_RENDER_BOUNDS;
-        }
-        if (this instanceof TurretSentryBlockEntity || this instanceof TurretSentryDamagedBlockEntity) {
-            return SENTRY_STATIC_RENDER_BOUNDS;
-        }
-        return DEFAULT_STATIC_RENDER_BOUNDS;
+        return INFINITE_EXTENT_AABB;
     }
 
     @Override
@@ -229,7 +196,6 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
             HbmEnergyUtil.chargeStorageFromItem(turret.items.getStackInSlot(SLOT_BATTERY), turret, turret.getReceiverSpeed());
         }
         turret.updateServerTickAfterTargeting();
-        turret.tickCasingDelay();
 
         boolean changed = oldPower != turret.getPower()
                 || oldOn != turret.isActive()
@@ -244,6 +210,8 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
             turret.setChanged();
         }
         turret.networkPackTurretLikeLegacy();
+        turret.updateServerTickAfterLegacyNetworkPack();
+        turret.tickCasingDelay();
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, TurretBlockEntityBase turret) {
@@ -256,10 +224,16 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         turret.tickClientSpecificAnimations();
         turret.rotationPitch = turret.syncRotationPitch;
         turret.rotationYaw = turret.syncRotationYaw;
-        if (Math.abs(turret.lastRotationYaw - turret.rotationYaw) > Math.PI) {
-            turret.lastRotationYaw += turret.lastRotationYaw < turret.rotationYaw ? Math.PI * 2.0D : -Math.PI * 2.0D;
-        }
+        turret.lastRotationYaw = legacyYawInterpolationStart(turret.lastRotationYaw, turret.rotationYaw);
         turret.decayClientAnimations();
+    }
+
+    private static double legacyYawInterpolationStart(double previousYaw, double currentYaw) {
+        // 1.7.10 fixed turret interpolation at the 360 degree seam by moving the previous yaw.
+        if (Math.abs(previousYaw - currentYaw) > Math.PI) {
+            return previousYaw + (previousYaw < currentYaw ? Math.PI * 2.0D : -Math.PI * 2.0D);
+        }
+        return previousYaw;
     }
 
     public ItemStackHandler getItems() {
@@ -382,7 +356,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
             targetPos = null;
             stattrak++;
         }
-        if (target != null && !canAcquireTarget(target)) {
+        if (target != null && !canKeepCurrentTarget(target)) {
             target = null;
             targetPos = null;
         }
@@ -428,6 +402,9 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
     }
 
     protected void updateServerTickAfterTargeting() {
+    }
+
+    protected void updateServerTickAfterLegacyNetworkPack() {
     }
 
     protected boolean hasPower() {
@@ -705,6 +682,10 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
 
     protected boolean canAcquireTarget(Entity entity) {
         return doesLineOfSightCheck() ? entityInLineOfSight(entity) : true;
+    }
+
+    protected boolean canKeepCurrentTarget(Entity entity) {
+        return canAcquireTarget(entity);
     }
 
     protected boolean doesLineOfSightCheck() {

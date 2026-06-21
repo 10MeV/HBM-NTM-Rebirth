@@ -44,11 +44,14 @@ public class AshpitBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
-        if (level.isClientSide || type != ModBlockEntities.ASHPIT.get()) {
+        if (type != ModBlockEntities.ASHPIT.get()) {
             return null;
         }
-        return (tickLevel, tickPos, tickState, blockEntity) ->
-                AshpitBlockEntity.serverTick(tickLevel, tickPos, tickState, (AshpitBlockEntity) blockEntity);
+        return level.isClientSide
+                ? (tickLevel, tickPos, tickState, blockEntity) ->
+                        AshpitBlockEntity.clientTick(tickLevel, tickPos, tickState, (AshpitBlockEntity) blockEntity)
+                : (tickLevel, tickPos, tickState, blockEntity) ->
+                        AshpitBlockEntity.serverTick(tickLevel, tickPos, tickState, (AshpitBlockEntity) blockEntity);
     }
 
     @Override

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "Z Z",
+    "ZBZ",
+    "Z Z"
+  ],
+  "key": {
+    "B": {
+      "tag": "forge:ingots/beryllium"
+    },
+    "Z": {
+      "item": "hbm_ntm_rebirth:nugget_zirconium"
+    }
+  },
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:rod_zirnox_empty"
+  },
+  "show_notification": true
+}

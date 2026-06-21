@@ -31,7 +31,38 @@ public final class LegacyTomRenderer {
     }
 
     public static void renderMain(ObjRenderContext context) {
-        ObjWeaponModels.TOM_MAIN.renderAll(ObjWeaponModels.TOM_MAIN_TEXTURE, context);
+        ObjWeaponModels.TOM_MAIN.renderAll(ObjWeaponModels.TOM_MAIN_TEXTURE, context.fullBright());
+    }
+
+    public static void renderTom(ObjRenderContext context, long currentMillis) {
+        PoseStack poseStack = context.poseStack();
+        poseStack.pushPose();
+        try {
+            applyModelScale(poseStack);
+            renderMain(context);
+            renderFlames(context, currentMillis);
+        } finally {
+            poseStack.popPose();
+        }
+    }
+
+    public static void renderFlames(ObjRenderContext context, long currentMillis) {
+        PoseStack poseStack = context.poseStack();
+        ObjRenderContext flameContext = context.fullBright()
+                .withAdditiveTranslucency()
+                .withLegacyHmfAnimation((float) currentMillis, HMF_MODULO, HMF_QUOTIENT);
+        poseStack.pushPose();
+        try {
+            applyInitialFlameScale(poseStack);
+            TomRenderPlan plan = plan(currentMillis);
+            for (FlameLayer layer : plan.flameLayers()) {
+                applyBeforeFlameLayer(poseStack, layer);
+                ObjWeaponModels.TOM_FLAME.renderAll(ObjWeaponModels.TOM_FLAME_TEXTURE, flameContext);
+                applyAfterFlameLayer(poseStack, layer);
+            }
+        } finally {
+            poseStack.popPose();
+        }
     }
 
     public static void applyModelScale(PoseStack poseStack) {

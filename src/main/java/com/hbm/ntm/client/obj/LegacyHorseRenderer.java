@@ -19,17 +19,17 @@ public final class LegacyHorseRenderer {
     public static final int ID_POSITION = 7;
 
     public static final ResourceLocation HORSE_DEMO_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/horse/horse_demo.png");
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/horse/horse_demo.png");
     public static final ResourceLocation SUNBURST_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/horse/sunburst.png");
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/horse/sunburst.png");
     public static final ResourceLocation DYX_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/horse/dyx.png");
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/horse/dyx.png");
     public static final ResourceLocation NUMBER_NINE_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/horse/numbernine.png");
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/horse/numbernine.png");
 
     private static final ResourceLocation HORSE_MODEL =
-            new ResourceLocation(HbmNtm.MOD_ID, "models/block/mobs/horse.obj");
-    private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(HORSE_MODEL, HORSE_DEMO_TEXTURE);
+            new ResourceLocation(HbmNtm.MOD_ID, "models/mobs/horse.obj");
+    private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(HORSE_MODEL, HORSE_DEMO_TEXTURE).asVBO();
     private static final double[][] OFFSETS = new double[][] {
             { 0.0D, 1.125D, 0.375D },
             { 0.125D, 0.75D, 0.3125D },

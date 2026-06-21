@@ -1,0 +1,28 @@
+{
+  "type": "hbm_ntm_rebirth:blast_furnace",
+  "duration": 1200,
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "forge:ores/iron"
+      },
+      "count": 1,
+      "legacy_ore": "oreIron"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_flux"
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:ingot_steel",
+      "count": 3
+    },
+    {
+      "item": "hbm_ntm_rebirth:scraps",
+      "nbt": "{mat:41,amount:144}"
+    }
+  ]
+}

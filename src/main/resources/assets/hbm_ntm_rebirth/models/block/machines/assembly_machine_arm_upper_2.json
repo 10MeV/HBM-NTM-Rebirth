@@ -2,6 +2,7 @@
   "loader": "forge:obj",
   "model": "hbm_ntm_rebirth:models/block/machines/assembly_machine.obj",
   "flip_v": true,
+  "automatic_culling": false,
   "render_type": "minecraft:cutout",
   "parts": { "visibility": { "Ring2": false, "Base": false, "Frame": false, "Spike1": false, "Spike2": false, "Head1": false, "ArmUpper1": false, "ArmUpper2": true, "ArmLower2": false, "ArmLower1": false, "Ring": false, "Head2": false } },
   "textures": { "particle": "hbm_ntm_rebirth:block/machines/assembly_machine", "default": "hbm_ntm_rebirth:block/machines/assembly_machine" }

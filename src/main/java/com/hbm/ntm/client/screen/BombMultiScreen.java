@@ -25,7 +25,8 @@ public class BombMultiScreen extends AbstractContainerScreen<BombMultiMenu> {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight, 256, 256);
         int type = menu.modifierOverlayType();
         if (type > 0) {
-            graphics.blit(TEXTURE, leftPos + 124, topPos + 34, 176, type * 18, 18, 18, 256, 256);
+            int v = type == 7 ? 7 * 18 : (type - 1) * 18;
+            graphics.blit(TEXTURE, leftPos + 124, topPos + 34, 176, v, 18, 18, 256, 256);
         }
     }
 

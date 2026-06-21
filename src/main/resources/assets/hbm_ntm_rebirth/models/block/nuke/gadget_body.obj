@@ -1,6 +1,7 @@
-# Derived from legacy gadget.obj for 1.7.10 default RenderNukeGadget behavior.
+﻿# Derived from legacy gadget.obj for 1.7.10 default RenderNukeGadget behavior.
 # Keeps only the Body object faces; Wires are fancy-graphics-only in the old TESR and need a future BER.
 mtllib gadget.mtl
+usemtl default
 v -1.174005 1.942922 -0.549430
 v -1.183310 1.913090 -0.549430
 v -1.182231 1.912753 -0.518200

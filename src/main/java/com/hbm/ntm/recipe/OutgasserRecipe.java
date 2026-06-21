@@ -63,6 +63,10 @@ public class OutgasserRecipe implements Recipe<Container> {
         return !fusionOnly && input.test(stack);
     }
 
+    public boolean matchesFusion(ItemStack stack) {
+        return fusionOnly && input.test(stack);
+    }
+
     public boolean matchesIgnoringCount(ItemStack stack) {
         return !fusionOnly && input.test(stack, true);
     }

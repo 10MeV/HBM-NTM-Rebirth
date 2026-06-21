@@ -16,6 +16,8 @@ public record RBMKNeutronSettings(
     private static final double DEFAULT_ABSORBER_EFFICIENCY = 1.0D;
     private static final double DEFAULT_ABSORBER_HEAT_CONVERSION = 0.05D;
     private static final int DEFAULT_COLUMN_HEIGHT_ABOVE = 3;
+    private static final int MIN_COLUMN_HEIGHT = 2;
+    private static final int MAX_COLUMN_HEIGHT = 16;
     private static final int DEFAULT_FLUX_RANGE = 5;
     private static final int DEFAULT_REASIM_RANGE = 10;
 
@@ -32,7 +34,7 @@ public record RBMKNeutronSettings(
     }
 
     public RBMKNeutronSettings {
-        columnHeight = Math.max(1, columnHeight);
+        columnHeight = clampInt(columnHeight, MIN_COLUMN_HEIGHT, MAX_COLUMN_HEIGHT);
         fluxRange = Math.max(1, fluxRange);
         reasimRange = Math.max(1, reasimRange);
         moderatorEfficiency = clamp01(moderatorEfficiency);
@@ -48,6 +50,16 @@ public record RBMKNeutronSettings(
         }
         if (value > 1.0D) {
             return 1.0D;
+        }
+        return value;
+    }
+
+    private static int clampInt(int value, int min, int max) {
+        if (value < min) {
+            return min;
+        }
+        if (value > max) {
+            return max;
         }
         return value;
     }

@@ -106,10 +106,13 @@ public class TurretHowardBlockEntity extends TurretBlockEntityBase {
 
     @Override
     protected void updateFiringTick() {
-        if (loaded <= 0 || level == null || getTargetPos() == null) {
+        if (level == null) {
             return;
         }
         timer++;
+        if (loaded <= 0 || getTargetPos() == null) {
+            return;
+        }
         playTurretSound("hbm:turret.howard_fire", 4.0F, 0.9F + level.random.nextFloat() * 0.3F);
         playTurretSound("hbm:turret.howard_fire", 4.0F, 1.0F + level.random.nextFloat() * 0.3F);
         spawnHowardCasing();
@@ -118,15 +121,15 @@ public class TurretHowardBlockEntity extends TurretBlockEntityBase {
             return;
         }
         loaded--;
-        Vec3 muzzle = getMuzzlePos();
-        Vec3 offset = rotateLegacyLocal(new Vec3(0.0D, 0.25D, 0.0D));
-        spawnMuzzleLargeExplodeAt(muzzle.add(offset), 1.5F, 1);
-        spawnMuzzleLargeExplodeAt(muzzle.subtract(offset), 1.5F, 1);
         Entity target = getTarget();
         if (target != null && level.random.nextInt(100) + 1 <= WeaponConfig.ciwsHitrate()) {
             EntityDamageUtil.attackEntityFromIgnoreIFrame(target, ModDamageSources.shrapnel(level),
                     2.0F + level.random.nextInt(2));
         }
+        Vec3 muzzle = getMuzzlePos();
+        Vec3 offset = rotateLegacyLocal(new Vec3(0.0D, 0.25D, 0.0D));
+        spawnMuzzleLargeExplodeAt(muzzle.add(offset), 1.5F, 1);
+        spawnMuzzleLargeExplodeAt(muzzle.subtract(offset), 1.5F, 1);
     }
 
     protected void spawnHowardCasing() {

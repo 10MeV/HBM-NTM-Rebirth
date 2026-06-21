@@ -456,6 +456,12 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        if (!tag.contains("Energy") && tag.contains("powerTime")) {
+            energy.setPower(tag.getLong("powerTime"));
+        }
+        if (!tag.contains("hbm_fluids") && (tag.contains("gas") || tag.contains("gas_type"))) {
+            tank.readFromNbt(tag, "gas");
+        }
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "Inventory", items);
         on = tag.getBoolean("isOn");
         burn = tag.getBoolean("doesBurn");

@@ -21,7 +21,8 @@ public record LegacyMachinePartRenderProperties(
     }
 
     public boolean translucent() {
-        return mode != LegacyMachinePartRenderMode.CUTOUT_NO_CULL || alpha < 255;
+        return mode != LegacyMachinePartRenderMode.CUTOUT_NO_CULL
+                && mode != LegacyMachinePartRenderMode.CUTOUT_CULL;
     }
 
     private static int clamp(int value) {

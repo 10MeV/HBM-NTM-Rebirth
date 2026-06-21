@@ -2,12 +2,15 @@ package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.CableDiodeBlock;
+import com.hbm.ntm.block.FluidDuctBoxBlock;
 import com.hbm.ntm.block.FluidDuctGaugeBlock;
 import com.hbm.ntm.block.FluidDuctPaintableBlock;
+import com.hbm.ntm.block.FluidPipeBlock;
 import com.hbm.ntm.block.FluidPipeAnchorBlock;
 import com.hbm.ntm.block.FluidValveBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.HbmEnergyNodeBlock;
+import com.hbm.ntm.block.ICFAssembledBlock;
 import com.hbm.ntm.block.LegacyChargeBlock;
 import com.hbm.ntm.block.LegacyChainBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
@@ -15,6 +18,7 @@ import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.block.LegacyNtmGlassPaneBlock;
+import com.hbm.ntm.block.MassStorageBlock;
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
 import com.hbm.ntm.block.PoweredRedCableBlock;
 import com.hbm.ntm.block.RBMKColumnBlock;
@@ -22,6 +26,7 @@ import com.hbm.ntm.block.RedCableBoxBlock;
 import com.hbm.ntm.block.RedCableGaugeBlock;
 import com.hbm.ntm.block.SteelScaffoldBlock;
 import com.hbm.ntm.block.VendingMachineBlock;
+import com.hbm.ntm.block.WatzEndBlock;
 import com.hbm.ntm.block.conveyor.ConveyorBlock;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.Direction;
@@ -42,6 +47,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     @Override
     protected void registerStatesAndModels() {
         existingModelWithItemNoRotation(ModBlocks.MACHINE_PRESS, "machine_press");
+        cubeWithItem(ModBlocks.PRESS_PREHEATER, "press_preheater");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_EPRESS, "machines/epress");
         difurnaceWithItem(ModBlocks.MACHINE_DIFURNACE_OFF);
         sidedCubeWithItem(ModBlocks.MACHINE_ELECTRIC_FURNACE_OFF,
@@ -58,7 +64,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "machine_boiler_front",
                 "machine_boiler_side",
                 "machine_boiler_side");
-        sidedCubeWithItem(ModBlocks.MACHINE_SHREDDER,
+        horizontalBlockNoRotationWithItem(ModBlocks.MACHINE_SHREDDER,
                 "machine_shredder_bottom_alt",
                 "machine_shredder_top_alt",
                 "machine_shredder_front_alt",
@@ -112,9 +118,9 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         pylonWithItemRenderer(ModBlocks.RED_PYLON_LARGE, "network/pylon_large");
         pylonWithItemRenderer(ModBlocks.SUBSTATION, "network/substation");
         fluidPipeWithItem();
-        fluidDuctBoxWithItem(ModBlocks.FLUID_DUCT_BOX, "boxduct_silver");
+        fluidDuctBoxWithItem(ModBlocks.FLUID_DUCT_BOX);
         fluidDuctGaugeWithItem();
-        fluidDuctBoxWithItem(ModBlocks.FLUID_DUCT_EXHAUST, "boxduct_exhaust");
+        fluidDuctExhaustWithItem();
         fluidDuctPaintableWithItem(ModBlocks.FLUID_DUCT_PAINTABLE, "fluid_duct_paintable");
         fluidDuctPaintableWithItem(ModBlocks.FLUID_DUCT_PAINTABLE_BLOCK_EXHAUST,
                 "fluid_duct_paintable_block_exhaust");
@@ -141,15 +147,54 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "battery_front_alt",
                 "battery_side_alt",
                 "battery_side_alt");
+        sidedCubeWithItem(ModBlocks.MACHINE_BATTERY_POTATO,
+                "battery_potato_top",
+                "battery_potato_top",
+                "battery_potato_side",
+                "battery_potato_front",
+                "battery_potato_side",
+                "battery_potato_side");
+        sidedCubeWithItem(ModBlocks.MACHINE_LITHIUM_BATTERY,
+                "battery_lithium_top",
+                "battery_lithium_top",
+                "battery_lithium_side",
+                "battery_lithium_front",
+                "battery_lithium_side",
+                "battery_lithium_side");
+        sidedCubeWithItem(ModBlocks.MACHINE_SCHRABIDIUM_BATTERY,
+                "battery_schrabidium_top",
+                "battery_schrabidium_top",
+                "battery_schrabidium_side",
+                "battery_schrabidium_front",
+                "battery_schrabidium_side",
+                "battery_schrabidium_side");
+        sidedCubeWithItem(ModBlocks.MACHINE_DINEUTRONIUM_BATTERY,
+                "battery_dineutronium_top",
+                "battery_dineutronium_top",
+                "battery_dineutronium_side",
+                "battery_dineutronium_front",
+                "battery_dineutronium_side",
+                "battery_dineutronium_side");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_FENSU, "machines/fensu");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_BATTERY_REDD, "machines/fensu2");
         existingModelWithCustomItem(ModBlocks.MACHINE_BATTERY_SOCKET, "machines/battery_socket_socket");
         storageCrateWithItem(ModBlocks.CRATE_IRON, "crate_iron");
         storageCrateWithItem(ModBlocks.CRATE_STEEL, "crate_steel");
+        storageCrateWithItem(ModBlocks.CRATE_DESH, "crate_desh");
+        storageCrateWithItem(ModBlocks.CRATE_TUNGSTEN, "crate_tungsten");
+        safeWithItem();
+        massStorageWithItem();
         existingModelWithCustomItem(ModBlocks.MACHINE_RADAR, "machines/radar");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADAR_LARGE, "machines/radar_large");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADAR_SCREEN, "machines/radar_screen");
         vendingMachineWithItemRenderer();
+        simpleSidedCubeWithItem(ModBlocks.MACHINE_TELEPORTER,
+                "teleporter_bottom",
+                "teleporter_top",
+                "teleporter_side",
+                "teleporter_side",
+                "teleporter_side",
+                "teleporter_side");
         simpleSidedCubeWithItem(ModBlocks.MACHINE_SATLINKER,
                 "machine_satlinker_side",
                 "machine_satlinker_top",
@@ -197,9 +242,9 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         rbmkColumnWithItem(ModBlocks.RBMK_COOLER, "rbmk_cooler");
         rbmkColumnWithItem(ModBlocks.RBMK_OUTGASSER, "rbmk_outgasser");
         rbmkColumnWithItem(ModBlocks.RBMK_STORAGE, "rbmk_storage");
-        simpleCubeWithItem(ModBlocks.RBMK_AUTOLOADER, "rbmk_autoloader");
-        existingModelWithItem(ModBlocks.RBMK_CONSOLE, "rbmk_console");
-        existingModelWithItem(ModBlocks.RBMK_CRANE_CONSOLE, "rbmk_crane_console");
+        rbmkBerStructureNoRotationWithItem(ModBlocks.RBMK_AUTOLOADER, "rbmk_autoloader");
+        rbmkBerStructureWithItem(ModBlocks.RBMK_CONSOLE, "rbmk/rbmk_console");
+        rbmkBerStructureWithItem(ModBlocks.RBMK_CRANE_CONSOLE, "rbmk/rbmk_crane_console");
         rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL, "rbmk_control");
         rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL_MOD, "rbmk_control_mod");
         rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL_AUTO, "rbmk_control_auto");
@@ -210,6 +255,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         pileGraphiteBlocksWithItems();
         existingModelBlockOnly(ModBlocks.MACHINE_ASSEMBLY_MACHINE, "machine_assembly_machine");
         customBlockItem(ModBlocks.MACHINE_ASSEMBLY_MACHINE);
+        forceFieldWithItem();
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CHEMICAL_PLANT, "machines/chemical_plant");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_LIQUEFACTOR, "machines/liquefactor");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CHEMICAL_FACTORY, "machines/chemical_factory");
@@ -244,6 +290,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_BOILER, "machines/boiler");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_INDUSTRIAL_BOILER, "machines/industrial_boiler");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_COMBUSTION_ENGINE, "machines/combustion_engine");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_DIESEL, "machines/dieselgen");
         visibleMachineWithItemRenderer(ModBlocks.PUMP_STEAM, "machines/pump");
         visibleMachineWithItemRenderer(ModBlocks.PUMP_ELECTRIC, "machines/pump_electric");
         visibleMachineWithItemRenderer(ModBlocks.HEATER_HEATEX, "machines/heatex");
@@ -255,6 +302,26 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CONDENSER_POWERED, "machines/condenser");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_COMPRESSOR_COMPACT, "machines/compressor_compact");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_LPW2, "reactors/lpw2");
+        visibleMachineWithItemRenderer(ModBlocks.REACTOR_RESEARCH, "reactors/reactor_small_base");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_REACTOR_BREEDING, "reactors/breeder");
+        simpleCubeWithItem(ModBlocks.STRUCT_WATZ_CORE, "legacy_blocks/struct_watz_core");
+        watzPillarWithItem(ModBlocks.WATZ_ELEMENT, "watz_element");
+        watzPillarWithItem(ModBlocks.WATZ_COOLER, "watz_cooler");
+        watzEndWithItem();
+        simpleCubeWithItem(ModBlocks.STRUCT_TORUS_CORE, "legacy_blocks/struct_torus_core");
+        simpleCubeWithItem(ModBlocks.FUSION_COMPONENT_BSCCO, "legacy_blocks/fusion_component");
+        simpleCubeWithItem(ModBlocks.FUSION_COMPONENT_BSCCO_WELDED,
+                "legacy_blocks/fusion_component.bscco_welded");
+        simpleCubeWithItem(ModBlocks.FUSION_COMPONENT_BLANKET, "legacy_blocks/fusion_component.blanket");
+        simpleCubeWithItem(ModBlocks.FUSION_COMPONENT_MOTOR, "legacy_blocks/fusion_component.motor");
+        simpleCubeWithItem(ModBlocks.STRUCT_ICF_CORE, "legacy_blocks/struct_icf_core");
+        simpleCubeWithItem(ModBlocks.ICF_COMPONENT_SCAFFOLD, "legacy_blocks/icf_component");
+        simpleCubeWithItem(ModBlocks.ICF_COMPONENT_VESSEL, "legacy_blocks/icf_component.vessel");
+        simpleCubeWithItem(ModBlocks.ICF_COMPONENT_VESSEL_WELDED, "legacy_blocks/icf_component.vessel_welded");
+        simpleCubeWithItem(ModBlocks.ICF_COMPONENT_STRUCTURE, "legacy_blocks/icf_component.structure");
+        simpleCubeWithItem(ModBlocks.ICF_COMPONENT_STRUCTURE_BOLTED,
+                "legacy_blocks/icf_component.structure_bolted");
+        icfAssembledBlock();
         visibleMachineWithItemRenderer(ModBlocks.CARGO_ELEVATOR, "machines/elevator");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_ASSEMBLY_FACTORY, "machines/assembly_factory");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_PRECASS, "machines/precass");
@@ -268,10 +335,26 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SOLDERING_STATION, "machines/soldering_station");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_MIXER, "machines/mixer");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADIOLYSIS, "machines/radiolysis");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_RTG_GREY, "machines/rtg");
+        sidedCubeWithItem(ModBlocks.MACHINE_MINIRTG,
+                "rtg_cell",
+                "rtg_cell",
+                "rtg_cell",
+                "rtg_cell",
+                "rtg_cell",
+                "rtg_cell");
+        sidedCubeWithItem(ModBlocks.MACHINE_POWERRTG,
+                "rtg_polonium",
+                "rtg_polonium",
+                "rtg_polonium",
+                "rtg_polonium",
+                "rtg_polonium",
+                "rtg_polonium");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADGEN, "machines/radgen");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_ROTARY_FURNACE, "machines/rotary_furnace");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_STEAM_ENGINE, "machines/steam_engine");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SOLAR_BOILER, "machines/solar_boiler");
+        existingModelWithItemNoRotation(ModBlocks.SOLAR_MIRROR, "machines/solar_mirror");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TOWER_SMALL, "machines/tower_small");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TOWER_LARGE, "machines/tower_large");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBOFAN, "machines/turbofan");
@@ -333,6 +416,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         steelGrateWithItem(ModBlocks.STEEL_GRATE, "steel_grate");
         steelGrateWithItem(ModBlocks.STEEL_GRATE_WIDE, "steel_grate_wide");
         chainWithItem();
+        glowingMushWithItem();
         wasteLogWithItem();
         simpleCubeWithItem(ModBlocks.WASTE_PLANKS, "waste_planks");
         leavesLayerWithItem();
@@ -350,10 +434,10 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.ASH_DIGAMMA, "ash_digamma");
         crossBlockOnly(ModBlocks.FIRE_DIGAMMA, "fire_digamma");
         crossBlockOnly(ModBlocks.BALEFIRE, "balefire");
-        simpleCubeWithItem(ModBlocks.PRIBRIS, "rbmk/rbmk_debris");
-        simpleCubeWithItem(ModBlocks.PRIBRIS_BURNING, "rbmk/rbmk_debris_burning");
-        simpleCubeAllStatesWithItem(ModBlocks.PRIBRIS_RADIATING, "rbmk/rbmk_debris_radiating");
-        simpleCubeWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk_debris_digamma");
+        pribrisDebrisWithItem(ModBlocks.PRIBRIS, "rbmk/rbmk_debris");
+        pribrisDebrisWithItem(ModBlocks.PRIBRIS_BURNING, "rbmk/rbmk_debris_burning");
+        pribrisDebrisAllStatesWithItem(ModBlocks.PRIBRIS_RADIATING, "rbmk/rbmk_debris_radiating");
+        pribrisDebrisWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk/rbmk_debris_digamma");
         simpleCubeWithItem(ModBlocks.VOLCANIC_LAVA_BLOCK, "volcanic_lava_still");
         simpleCubeWithItem(ModBlocks.RAD_LAVA_BLOCK, "rad_lava_still");
         volcanoCoreWithItem(ModBlocks.VOLCANO_CORE, "volcano_core");
@@ -555,7 +639,27 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                             case NONE -> none;
                         })
                         .build());
-        simpleBlockItem(block.get(), none);
+        customBlockItem(block);
+    }
+
+    private void watzPillarWithItem(RegistryObject<Block> block, String textureBase) {
+        ResourceLocation side = modLoc("block/legacy_blocks/" + textureBase + "_side");
+        ResourceLocation end = modLoc("block/legacy_blocks/" + textureBase + "_top");
+        axisBlock((net.minecraft.world.level.block.RotatedPillarBlock) block.get(), side, end);
+        simpleBlockItem(block.get(), models().withExistingParent(block.getId().getPath(), mcLoc("block/cube_column"))
+                .texture("particle", side)
+                .texture("side", side)
+                .texture("end", end));
+    }
+
+    private void watzEndWithItem() {
+        ModelFile normal = models().cubeAll("watz_end", modLoc("block/legacy_blocks/watz_casing"));
+        ModelFile riveted = models().cubeAll("watz_end_riveted", modLoc("block/legacy_blocks/watz_casing_bolted"));
+        getVariantBuilder(ModBlocks.WATZ_END.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(state.getValue(WatzEndBlock.RIVETED) ? riveted : normal)
+                        .build());
+        simpleBlockItem(ModBlocks.WATZ_END.get(), normal);
     }
 
     private void rbmkOwnLidColumnWithItem(RegistryObject<Block> block, String textureBase) {
@@ -571,7 +675,21 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .forAllStates(state -> ConfiguredModel.builder()
                         .modelFile(model)
                         .build());
-        simpleBlockItem(block.get(), model);
+        customBlockItem(block);
+    }
+
+    private void rbmkBerStructureWithItem(RegistryObject<Block> block, String particleTexture) {
+        ModelFile marker = models().getBuilder(block.getId().getPath())
+                .texture("particle", modLoc("block/" + particleTexture));
+        horizontalBlock(block.get(), marker);
+        customBlockItem(block);
+    }
+
+    private void rbmkBerStructureNoRotationWithItem(RegistryObject<Block> block, String particleTexture) {
+        ModelFile marker = models().getBuilder(block.getId().getPath())
+                .texture("particle", modLoc("block/" + particleTexture));
+        simpleBlock(block.get(), marker);
+        customBlockItem(block);
     }
 
     private ModelFile rbmkColumnModel(String modelName, String sideTexture, String topTexture) {
@@ -660,6 +778,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
     }
 
+    private void forceFieldWithItem() {
+        ModelFile marker = models().getBuilder(ModBlocks.MACHINE_FORCEFIELD.getId().getPath())
+                .texture("particle", modLoc("block/machine_forcefield"));
+        simpleBlock(ModBlocks.MACHINE_FORCEFIELD.get(), marker);
+        generatedBlockItem(ModBlocks.MACHINE_FORCEFIELD, "block/machine_forcefield");
+    }
+
     private void generatedBlockItem(RegistryObject<Block> block, String texturePath) {
         itemModels().getBuilder(block.getId().getPath())
                 .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
@@ -715,6 +840,32 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(block.get(), model);
     }
 
+    private void pribrisDebrisWithItem(RegistryObject<Block> block, String textureName) {
+        ModelFile model = pribrisDebrisModel(block.getId().getPath(), textureName);
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .build());
+        simpleBlockItem(block.get(), model);
+    }
+
+    private void pribrisDebrisAllStatesWithItem(RegistryObject<Block> block, String textureName) {
+        ModelFile model = pribrisDebrisModel(block.getId().getPath(), textureName);
+        simpleBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
+    }
+
+    private ModelFile pribrisDebrisModel(String blockName, String textureName) {
+        ResourceLocation texture = new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName);
+        return models().getBuilder(blockName)
+                .customLoader(net.minecraftforge.client.model.generators.loaders.ObjModelBuilder::begin)
+                .modelLocation(new ResourceLocation(HbmNtm.MOD_ID, "models/block/rbmk/debris.obj"))
+                .flipV(true)
+                .end()
+                .texture("particle", texture)
+                .texture("default", texture);
+    }
+
     private ConfiguredModel[] scaffoldModel(Direction.Axis axis, ModelFile model) {
         ConfiguredModel.Builder<?> builder = ConfiguredModel.builder().modelFile(model);
         switch (axis) {
@@ -755,6 +906,18 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(block.get(), model);
     }
 
+    private void icfAssembledBlock() {
+        ModelFile normal = models().cubeAll("icf_block", new ResourceLocation(HbmNtm.MOD_ID,
+                "block/legacy_blocks/icf_block"));
+        ModelFile port = models().cubeAll("icf_block_port", new ResourceLocation(HbmNtm.MOD_ID,
+                "block/legacy_blocks/icf_block_port"));
+        getVariantBuilder(ModBlocks.ICF_BLOCK.get())
+                .partialState().with(ICFAssembledBlock.PORT, false)
+                .modelForState().modelFile(normal).addModel()
+                .partialState().with(ICFAssembledBlock.PORT, true)
+                .modelForState().modelFile(port).addModel();
+    }
+
     private void simpleCubeAllStatesWithItem(RegistryObject<Block> block, String textureName) {
         String blockName = block.getId().getPath();
         ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
@@ -785,6 +948,23 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         ModelFile model = models().cross(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
                 .renderType("minecraft:cutout");
         simpleBlock(block.get(), model);
+    }
+
+    private void glowingMushWithItem() {
+        crossBlockOnly(ModBlocks.MUSH, "mush");
+        hugeMushBlock(ModBlocks.MUSH_BLOCK, "mush_block_skin", "mush_block_skin");
+        hugeMushBlock(ModBlocks.MUSH_BLOCK_STEM, "mush_block_stem", "mush_block_inside");
+        itemModels().withExistingParent("mush", new ResourceLocation("minecraft", "item/generated"))
+                .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "block/mush"));
+    }
+
+    private void hugeMushBlock(RegistryObject<Block> block, String sideTexture, String endTexture) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cubeColumn(blockName,
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + sideTexture),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + endTexture));
+        simpleBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
     }
 
     private void translucentCubeWithItem(RegistryObject<Block> block, String textureName) {
@@ -880,6 +1060,30 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 new ResourceLocation(HbmNtm.MOD_ID, "block/" + west))
                 .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/" + north));
         horizontalBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
+    }
+
+    private void horizontalBlockNoRotationWithItem(
+            RegistryObject<Block> block,
+            String down,
+            String up,
+            String north,
+            String south,
+            String east,
+            String west) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cube(
+                blockName,
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + down),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + up),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + north),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + south),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + east),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + west))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/" + north));
+        getVariantBuilder(block.get()).forAllStates(state -> ConfiguredModel.builder()
+                .modelFile(model)
+                .build());
         simpleBlockItem(block.get(), model);
     }
 
@@ -1008,13 +1212,19 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     }
 
     private void fluidPipeWithItem() {
-        ModelFile marker = models().getBuilder(ModBlocks.FLUID_DUCT_NEO.getId().getPath())
-                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/pipe_neo"));
-        getMultipartBuilder(ModBlocks.FLUID_DUCT_NEO.get())
-                .part()
-                .modelFile(marker)
-                .addModel()
-                .end();
+        ModelFile[] models = new ModelFile[FluidPipeBlock.LEGACY_STYLE_COUNT];
+        String[] textures = {"pipe_neo", "pipe_silver", "pipe_colored"};
+        for (int style = 0; style < models.length; style++) {
+            models[style] = particleOnlyModel("fluid_duct_neo_" + style, textures[style]);
+        }
+        var builder = getMultipartBuilder(ModBlocks.FLUID_DUCT_NEO.get());
+        for (int style = 0; style < models.length; style++) {
+            builder.part()
+                    .modelFile(models[style])
+                    .addModel()
+                    .condition(FluidPipeBlock.LEGACY_STYLE, style)
+                    .end();
+        }
         customBlockItem(ModBlocks.FLUID_DUCT_NEO);
     }
 
@@ -1040,21 +1250,53 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .texture("layer1", new ResourceLocation(HbmNtm.MOD_ID, "item/duct_overlay"));
     }
 
-    private void fluidDuctBoxWithItem(RegistryObject<Block> block, String texturePrefix) {
+    private void fluidDuctBoxWithItem(RegistryObject<Block> block) {
         String blockName = block.getId().getPath();
-        ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + texturePrefix));
-        getMultipartBuilder(block.get())
-                .part()
-                .modelFile(model)
-                .addModel()
-                .end();
-        if (block == ModBlocks.FLUID_DUCT_PAINTABLE_BLOCK_EXHAUST) {
-            itemModels().getBuilder(blockName)
-                    .parent(new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID,
-                            "block/fluid_duct_paintable_block_exhaust_overlay")));
-        } else {
-            customBlockItem(block);
+        ModelFile[] models = new ModelFile[FluidDuctBoxBlock.LEGACY_METADATA_COUNT];
+        for (int metadata = 0; metadata < models.length; metadata++) {
+            models[metadata] = particleOnlyModel(blockName + "_" + metadata,
+                    boxDuctTexture(FluidDuctBoxBlock.rectifyLegacyMaterial(metadata),
+                            FluidDuctBoxBlock.legacySizeStep(metadata)));
         }
+        legacyDuctMetadataMultipart(block, models);
+        customBlockItem(block);
+    }
+
+    private void fluidDuctExhaustWithItem() {
+        String blockName = ModBlocks.FLUID_DUCT_EXHAUST.getId().getPath();
+        ModelFile[] models = new ModelFile[FluidDuctBoxBlock.LEGACY_METADATA_COUNT];
+        for (int metadata = 0; metadata < models.length; metadata++) {
+            models[metadata] = particleOnlyModel(blockName + "_" + metadata,
+                    "boxduct_exhaust_junction_" + FluidDuctBoxBlock.legacySizeStep(metadata));
+        }
+        legacyDuctMetadataMultipart(ModBlocks.FLUID_DUCT_EXHAUST, models);
+        customBlockItem(ModBlocks.FLUID_DUCT_EXHAUST);
+    }
+
+    private void legacyDuctMetadataMultipart(RegistryObject<Block> block, ModelFile[] models) {
+        var builder = getMultipartBuilder(block.get());
+        for (int metadata = 0; metadata < models.length; metadata++) {
+            builder.part()
+                    .modelFile(models[metadata])
+                    .addModel()
+                    .condition(FluidDuctBoxBlock.LEGACY_METADATA, metadata)
+                    .end();
+        }
+    }
+
+    private ModelFile particleOnlyModel(String name, String texture) {
+        return models().getBuilder(name)
+                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "block/block")))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/" + texture));
+    }
+
+    private static String boxDuctTexture(int material, int step) {
+        String materialName = switch (material) {
+            case 1 -> "copper";
+            case 2 -> "white";
+            default -> "silver";
+        };
+        return "boxduct_" + materialName + "_junction_" + step;
     }
 
     private void fluidDuctGaugeWithItem() {
@@ -1078,18 +1320,37 @@ public class HbmBlockStateProvider extends BlockStateProvider {
 
     private void fluidDuctPaintableWithItem(RegistryObject<Block> block, String baseTexture) {
         String blockName = block.getId().getPath();
+        boolean exhaust = block == ModBlocks.FLUID_DUCT_PAINTABLE_BLOCK_EXHAUST;
         ModelFile overlay = fluidDuctPaintableModel(blockName + "_overlay", baseTexture,
                 "fluid_duct_paintable_overlay", true);
-        ModelFile clean = fluidDuctPaintableModel(blockName, baseTexture, "fluid_duct_paintable_color", false);
+        ModelFile clean = exhaust
+                ? fluidDuctPaintableBaseModel(blockName, baseTexture)
+                : fluidDuctPaintableModel(blockName, baseTexture, "fluid_duct_paintable_color", false);
         getVariantBuilder(block.get())
                 .forAllStates(state -> ConfiguredModel.builder()
                         .modelFile(state.hasProperty(FluidDuctPaintableBlock.OVERLAY)
                                 && state.getValue(FluidDuctPaintableBlock.OVERLAY) ? overlay : clean)
                         .build());
-        itemModels().getBuilder(blockName)
-                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
-                .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "item/duct"))
-                .texture("layer1", new ResourceLocation(HbmNtm.MOD_ID, "item/duct_overlay"));
+        if (exhaust) {
+            itemModels().getBuilder(blockName)
+                    .parent(new ModelFile.UncheckedModelFile(modLoc("block/" + blockName)));
+        } else {
+            itemModels().getBuilder(blockName)
+                    .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
+                    .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "item/duct"))
+                    .texture("layer1", new ResourceLocation(HbmNtm.MOD_ID, "item/duct_overlay"));
+        }
+    }
+
+    private ModelFile fluidDuctPaintableBaseModel(String modelName, String baseTexture) {
+        return models().withExistingParent(modelName, new ResourceLocation("block/block"))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/" + baseTexture))
+                .texture("base", new ResourceLocation(HbmNtm.MOD_ID, "block/" + baseTexture))
+                .element()
+                    .from(0.0F, 0.0F, 0.0F)
+                    .to(16.0F, 16.0F, 16.0F)
+                    .allFaces((direction, face) -> face.texture("#base").cullface(direction))
+                    .end();
     }
 
     private ModelFile fluidDuctPaintableModel(String modelName, String baseTexture, String overlayTexture,
@@ -1190,10 +1451,19 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         getVariantBuilder(ModBlocks.FLUID_PUMP.get())
                 .forAllStates(state -> ConfiguredModel.builder()
                         .modelFile(model)
-                        .rotationY(((int) state.getValue(HorizontalMachineBlock.FACING).toYRot() + 180) % 360)
+                        .rotationY(fluidPumpRotation(state.getValue(HorizontalMachineBlock.FACING)))
                         .build());
         itemModels().getBuilder(ModBlocks.FLUID_PUMP.getId().getPath())
                 .parent(new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/network/fluid_diode")));
+    }
+
+    private static int fluidPumpRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 180;
+            case EAST -> 90;
+            case WEST -> 270;
+            default -> 0;
+        };
     }
 
     private void conveyorWithItem(RegistryObject<Block> block, String textureName) {
@@ -1263,6 +1533,46 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 new ResourceLocation(HbmNtm.MOD_ID, "block/" + texturePrefix + "_top"));
         simpleBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
+    }
+
+    private void safeWithItem() {
+        ModelFile model = models().orientable("safe",
+                new ResourceLocation(HbmNtm.MOD_ID, "block/safe_side"),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/safe_front"),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/safe_side"));
+        horizontalBlock(ModBlocks.SAFE.get(), model);
+        simpleBlockItem(ModBlocks.SAFE.get(), model);
+    }
+
+    private void massStorageWithItem() {
+        ModelFile iron = massStorageModel("mass_storage_iron", "mass_storage_top_iron",
+                "legacy_blocks/mass_storage_front_iron", "mass_storage_side_iron");
+        ModelFile desh = massStorageModel("mass_storage_desh", "mass_storage_top_desh",
+                "legacy_blocks/mass_storage_front_desh", "mass_storage_side_desh");
+        ModelFile tungsten = massStorageModel("mass_storage_tungsten", "mass_storage_top",
+                "legacy_blocks/mass_storage_front", "mass_storage_side");
+        ModelFile wood = massStorageModel("mass_storage_wood", "mass_storage_top_wood",
+                "legacy_blocks/mass_storage_front_wood", "mass_storage_side_wood");
+        getVariantBuilder(ModBlocks.MASS_STORAGE.get()).forAllStates(state -> {
+            ModelFile model = switch (state.getValue(MassStorageBlock.VARIANT)) {
+                case 1 -> desh;
+                case 2 -> tungsten;
+                case 3 -> wood;
+                default -> iron;
+            };
+            return ConfiguredModel.builder()
+                    .modelFile(model)
+                    .rotationY(((int) state.getValue(HorizontalMachineBlock.FACING).toYRot() + 180) % 360)
+                    .build();
+        });
+        simpleBlockItem(ModBlocks.MASS_STORAGE.get(), iron);
+    }
+
+    private ModelFile massStorageModel(String name, String top, String front, String side) {
+        return models().orientable(name,
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + side),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + front),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + top));
     }
 
     private void radAbsorberWithItem() {

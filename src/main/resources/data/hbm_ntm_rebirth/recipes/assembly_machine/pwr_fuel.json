@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:cast_plates/lead"
+      },
+      "legacy_ore": "plateCastLead"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:plates/welded_zirconium"
+      },
+      "legacy_ore": "plateWeldedZirconium"
+    }
+  ],
+  "internal_name": "ass.pwrfuel",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:pwr_fuel"
+    }
+  ],
+  "pools": [],
+  "power": 500,
+  "source_order": 164
+}

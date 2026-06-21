@@ -4,7 +4,6 @@ import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class ExplosionNukeRayBalefire extends ExplosionNukeRayBatched {
@@ -19,7 +18,7 @@ public class ExplosionNukeRayBalefire extends ExplosionNukeRayBatched {
         if (level.random.nextInt(5) == 0 && level.getBlockState(below).isFaceSturdy(level, below, Direction.UP)) {
             level.setBlock(pos, balefireState(), 3);
         } else {
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            LegacyExplosionFluidCleanup.clearBlockOrLegacyLiquidNeighborhood(level, pos, 3);
         }
     }
 

@@ -233,21 +233,24 @@ public final class ExplosionLarge {
             return;
         }
         for (int c = 0; c < count; c++) {
-            Vec3 direction = randomDirection(level);
+            Vec3 direction = randomLegacyJoltDirection(level);
             for (double i = 0.0D; i < strength; i++) {
                 double sampleX = x + direction.x * i;
                 double sampleY = y + direction.y * i;
                 double sampleZ = z + direction.z * i;
                 BlockPos pos = new BlockPos((int) sampleX, (int) sampleY, (int) sampleZ);
+                if (level.isOutsideBuildHeight(pos)) {
+                    continue;
+                }
                 BlockState state = level.getBlockState(pos);
-                if (!state.getFluidState().isEmpty()) {
-                    level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                if (LegacyExplosionFluidCleanup.isLegacyLiquidBlock(state)) {
+                    LegacyExplosionFluidCleanup.clearLegacyLiquidNeighborhood(level, pos, 3);
                     continue;
                 }
                 if (state.isAir()) {
                     continue;
                 }
-                if (hasHighExplosionResistance(state)) {
+                if (hasHighExplosionResistance(state, level, pos)) {
                     continue;
                 }
                 RubbleEntity rubble = new RubbleEntity(level);
@@ -255,9 +258,8 @@ public final class ExplosionLarge {
                 rubble.setPos(sampleX + 0.5D, sampleY + 0.5D, sampleZ + 0.5D);
                 Vec3 motion = new Vec3(x - rubble.getX(), y - rubble.getY(), z - rubble.getZ());
                 if (motion.lengthSqr() > 1.0E-7D) {
-                    motion = motion.normalize();
+                    rubble.setDeltaMovement(motion.normalize().scale(velocity));
                 }
-                rubble.setDeltaMovement(motion.scale(velocity));
                 serverLevel.addFreshEntity(rubble);
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 break;
@@ -265,8 +267,8 @@ public final class ExplosionLarge {
         }
     }
 
-    private static boolean hasHighExplosionResistance(BlockState state) {
-        return HbmBlockStateUtil.explosionResistance(state) > 70.0F;
+    private static boolean hasHighExplosionResistance(BlockState state, Level level, BlockPos pos) {
+        return HbmBlockStateUtil.explosionResistance(state, level, pos) > 70.0F;
     }
 
     public static int cloudFunction(int strength) {
@@ -371,6 +373,16 @@ public final class ExplosionLarge {
         double z = level.random.nextDouble() * 2.0D - 1.0D;
         double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - z * z));
         return new Vec3(Math.cos(yaw) * horizontal, z, Math.sin(yaw) * horizontal);
+    }
+
+    private static Vec3 randomLegacyJoltDirection(Level level) {
+        double phi = level.random.nextDouble() * Math.PI * 2.0D;
+        double cosTheta = level.random.nextDouble() * 2.0D - 1.0D;
+        double theta = Math.acos(cosTheta);
+        return new Vec3(
+                Math.sin(theta) * Math.cos(phi),
+                Math.sin(theta) * Math.sin(phi),
+                Math.cos(theta));
     }
 
     private ExplosionLarge() {

@@ -1,0 +1,52 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:pa_beamline"
+      }
+    },
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:cast_plates/steel"
+      },
+      "legacy_ore": "plateCastSteel"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:dense_wires/gold"
+      },
+      "legacy_ore": "wireDenseGold"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      },
+      "legacy_ore": "ingotAnyHardPlastic"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_quantum"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 15
+    }
+  ],
+  "internal_name": "ass.detector",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:pa_detector"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 153
+}

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "CBC",
+    "BHB",
+    "CBC"
+  ],
+  "key": {
+    "B": {
+      "tag": "forge:cast_plates/any_resistant_alloy"
+    },
+    "C": {
+      "tag": "forge:circuits/advanced"
+    },
+    "H": {
+      "item": "hbm_ntm_rebirth:watz_cooler"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:struct_watz_core"
+  },
+  "show_notification": true
+}

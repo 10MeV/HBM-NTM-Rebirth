@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "hbm_ntm_rebirth:block/icf_controller", "y": 90 },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/icf_controller" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/icf_controller", "y": 180 },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/icf_controller", "y": 270 }
+  }
+}

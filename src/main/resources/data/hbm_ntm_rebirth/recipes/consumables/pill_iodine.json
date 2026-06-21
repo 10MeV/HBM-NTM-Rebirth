@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": {
+      "tag": "forge:dusts/fluorite"
+    },
+    "I": {
+      "tag": "forge:dusts/iodine"
+    }
+  },
+  "pattern": [
+    "IF"
+  ],
+  "result": {
+    "count": 8,
+    "item": "hbm_ntm_rebirth:pill_iodine"
+  },
+  "show_notification": true
+}

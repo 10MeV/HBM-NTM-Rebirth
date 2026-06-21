@@ -1,5 +1,6 @@
 {
   "flip_v": true,
+  "automatic_culling": false,
   "loader": "forge:obj",
   "model": "hbm_ntm_rebirth:models/block/legacy_blocks/scaffold.obj",
   "textures": {

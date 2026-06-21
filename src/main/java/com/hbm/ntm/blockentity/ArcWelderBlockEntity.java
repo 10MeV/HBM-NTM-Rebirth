@@ -24,6 +24,7 @@ import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime.ProcessingFactors;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime.ProcessingResult;
+import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -211,11 +212,55 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     }
 
     public ItemStack getDisplayOutput() {
-        GenericMachineRecipe recipe = getSelectedRecipeDefinition();
+        GenericMachineRecipe recipe = getDisplayRecipeDefinition();
         if (recipe == null || recipe.getItemOutputs().isEmpty()) {
             return ItemStack.EMPTY;
         }
         return recipe.getItemOutputs().get(0);
+    }
+
+    @Nullable
+    private GenericMachineRecipe getDisplayRecipeDefinition() {
+        if (level == null) {
+            return null;
+        }
+        for (GenericMachineRecipe recipe : GenericMachineRecipeRuntime.recipes(level, GenericMachineRecipe.Machine.ARC_WELDER)) {
+            if (matchesDisplayInputs(recipe)) {
+                return recipe;
+            }
+        }
+        return null;
+    }
+
+    private boolean matchesDisplayInputs(GenericMachineRecipe recipe) {
+        List<HbmIngredient> inputs = recipe.getItemInputs();
+        if (inputs.size() > INPUT_SLOTS.length) {
+            return false;
+        }
+        boolean[] usedSlots = new boolean[INPUT_SLOTS.length];
+        return matchesDisplayInputsRecursive(inputs, usedSlots, 0);
+    }
+
+    private boolean matchesDisplayInputsRecursive(List<HbmIngredient> inputs, boolean[] usedSlots, int inputIndex) {
+        if (inputIndex >= inputs.size()) {
+            return true;
+        }
+        HbmIngredient input = inputs.get(inputIndex);
+        for (int slotIndex = 0; slotIndex < INPUT_SLOTS.length; slotIndex++) {
+            if (usedSlots[slotIndex]) {
+                continue;
+            }
+            ItemStack stack = items.getStackInSlot(INPUT_SLOTS[slotIndex]);
+            if (stack.isEmpty() || !input.test(stack)) {
+                continue;
+            }
+            usedSlots[slotIndex] = true;
+            if (matchesDisplayInputsRecursive(inputs, usedSlots, inputIndex + 1)) {
+                return true;
+            }
+            usedSlots[slotIndex] = false;
+        }
+        return false;
     }
 
     public List<ItemStack> getDrops() {

@@ -25,9 +25,10 @@ public final class LegacyGenericRecipeHandlers {
             GenericMachineRecipe.Machine.PRECASS,
             "precass");
 
-    public static final Handler PLASMA_FORGE = unsupported(
+    public static final Handler PLASMA_FORGE = supported(
             "hbmPlasmaForge.json",
-            "requires fusion_plasma_forge machine runtime and plasma ignition handling");
+            GenericMachineRecipe.Machine.PLASMA_FORGE,
+            "plasma_forge");
     public static final Handler FUSION = unsupported(
             "hbmFusion.json",
             "requires fusion_torus runtime, klystron energy, output flux, colors, and maxInput handling");

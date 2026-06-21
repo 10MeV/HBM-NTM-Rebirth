@@ -1,0 +1,9 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:alumina", "amount": 300 },
+  "input1": { "fluid": "hbm_ntm_rebirth:sodium_aluminate", "amount": 150 },
+  "solid_input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:chunk_ore_cryolite" }
+  },
+  "duration": 40
+}

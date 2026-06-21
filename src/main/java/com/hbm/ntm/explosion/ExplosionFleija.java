@@ -1,15 +1,16 @@
 package com.hbm.ntm.explosion;
 
-import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 public class ExplosionFleija {
+    private static final RegistryObject<? extends Block> STATUE_ELB_F = ModBlocks.legacyBlock("statue_elb_f");
+
     public int posX;
     public int posY;
     public int posZ;
@@ -104,20 +105,20 @@ public class ExplosionFleija {
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int y = maxY; y > minY; y--) {
             int worldY = posY + y;
-            if (level.isOutsideBuildHeight(worldY)) {
+            if (worldY <= level.getMinBuildHeight() || level.isOutsideBuildHeight(worldY)) {
                 continue;
             }
 
             cursor.set(posX + x, worldY, posZ + z);
-            BlockState state = level.getBlockState(cursor);
-            if (!isProtectedDecoration(state)) {
-                level.setBlock(cursor, Blocks.AIR.defaultBlockState(), 3);
+            if (isFleijaProtectedDeco(level.getBlockState(cursor))) {
+                continue;
             }
+
+            LegacyExplosionFluidCleanup.clearBlockOrLegacyLiquidNeighborhood(level, cursor, 3);
         }
     }
 
-    private boolean isProtectedDecoration(BlockState state) {
-        ResourceLocation key = ForgeRegistries.BLOCKS.getKey(state.getBlock());
-        return key != null && HbmNtm.MOD_ID.equals(key.getNamespace()) && key.getPath().startsWith("deco_");
+    private static boolean isFleijaProtectedDeco(BlockState state) {
+        return STATUE_ELB_F != null && state.is(STATUE_ELB_F.get());
     }
 }

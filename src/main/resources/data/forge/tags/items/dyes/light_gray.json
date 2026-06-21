@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:light_gray_dye",
+    "hbm_ntm_rebirth:powder_titanium",
+    "hbm_ntm_rebirth:powder_ash_wood"
+  ]
+}

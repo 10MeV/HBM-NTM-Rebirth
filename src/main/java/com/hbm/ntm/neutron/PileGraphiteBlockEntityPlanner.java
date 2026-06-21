@@ -81,7 +81,7 @@ public final class PileGraphiteBlockEntityPlanner {
         return new DetectorBlockEntityTickPlan(
                 tick,
                 lifecycle,
-                lifecycle.togglePlan().hasMutations()
+                lifecycle.togglePlan().oldMeta() != lifecycle.togglePlan().newMeta()
                         ? List.of(new SoundPlan(PileGraphiteInteractionPlanner.LEGACY_SOUND_TECH_BLEEP, pos, 0.02F, 1.0F))
                         : List.of(),
                 diagnosticSnapshot(PileGraphiteInsertionPlanner.GraphiteBlockKind.DETECTOR, null, state, meta));

@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 1, "ingredient": { "tag": "forge:welded_plates/tungsten" }, "legacy_ore": "plateWeldedTungsten" },
+    { "count": 2, "ingredient": { "tag": "forge:welded_plates/steel" }, "legacy_ore": "plateWeldedSteel" },
+    { "count": 4, "ingredient": { "tag": "forge:ingots/beryllium" }, "legacy_ore": "ingotBeryllium" }
+  ],
+  "internal_name": "ass.fusionblanket",
+  "output_fluids": [],
+  "output_items": [
+    { "count": 4, "item": "hbm_ntm_rebirth:fusion_component_blanket" }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 177
+}

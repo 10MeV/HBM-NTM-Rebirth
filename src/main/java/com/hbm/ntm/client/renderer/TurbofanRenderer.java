@@ -4,6 +4,7 @@ import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.TurbofanBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.ObjRenderContext;
@@ -50,7 +51,8 @@ public class TurbofanRenderer implements BlockEntityRenderer<TurbofanBlockEntity
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay)
+                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
         MODEL.renderPart("Body", definition.textureLocation(), context);
 
         poseStack.pushPose();

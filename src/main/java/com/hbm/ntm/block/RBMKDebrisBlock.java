@@ -14,6 +14,8 @@ import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.item.MarshmallowItem;
 import com.hbm.ntm.util.HbmBlockStateUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -51,10 +55,16 @@ public class RBMKDebrisBlock extends Block {
             return;
         }
         RandomSource random = level.getRandom();
-        if (kind == Kind.BURNING || kind == Kind.RADIATING) {
+        if (kind == Kind.BURNING) {
             AddBlockPlan plan = RBMKDebrisBlockPlanner.planBurningAdded(pos,
                     random.nextInt(3) == 0,
                     random.nextInt(RBMKDebrisBlockPlanner.BURNING_TICK_RATE_RANDOM));
+            executeActions((ServerLevel) level, state, pos, plan.actions(), random);
+            schedule(level, pos, plan.scheduledTickDelay());
+        } else if (kind == Kind.RADIATING) {
+            AddBlockPlan plan = RBMKDebrisBlockPlanner.planRadiatingAdded(pos,
+                    random.nextInt(3) == 0,
+                    random.nextInt(RBMKDebrisBlockPlanner.RADIATING_TICK_RATE_RANDOM));
             executeActions((ServerLevel) level, state, pos, plan.actions(), random);
             schedule(level, pos, plan.scheduledTickDelay());
         } else if (kind == Kind.DIGAMMA) {
@@ -151,6 +161,17 @@ public class RBMKDebrisBlock extends Block {
             if (length < RBMKDebrisBlockPlanner.RADIATING_FIRE_DAMAGE_RANGE) {
                 EntityDamageUtil.attackEntityFromNt(entity, level.damageSources().inFire(), 100.0F);
             }
+            if (entity instanceof Player player && length < 10.0D) {
+                roastHeldMarshmallow(player);
+            }
+        }
+    }
+
+    private static void roastHeldMarshmallow(Player player) {
+        ItemStack held = player.getMainHandItem();
+        if (held.is(ModItems.MARSHMALLOW.get()) && !MarshmallowItem.isRoasted(held)
+                && player.getRandom().nextInt(100) == 0) {
+            MarshmallowItem.setRoasted(held, true);
         }
     }
 
@@ -183,8 +204,11 @@ public class RBMKDebrisBlock extends Block {
             return DebrisNeighborKind.DEBRIS;
         }
         RegistryObject<? extends Block> corium = ModBlocks.legacyBlock("block_corium");
+        RegistryObject<? extends Block> coriumFluid = ModBlocks.legacyBlock("corium_block");
         RegistryObject<? extends Block> coriumCobble = ModBlocks.legacyBlock("block_corium_cobble");
-        if ((corium != null && state.is(corium.get())) || (coriumCobble != null && state.is(coriumCobble.get()))) {
+        if ((corium != null && state.is(corium.get()))
+                || (coriumFluid != null && state.is(coriumFluid.get()))
+                || (coriumCobble != null && state.is(coriumCobble.get()))) {
             return DebrisNeighborKind.CORIUM_BLOCK;
         }
         return OTHER_OR_DEBRIS(state);

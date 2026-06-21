@@ -14,10 +14,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public enum LegacyTexturedRenderMode {
     CUTOUT_NO_CULL,
+    CUTOUT_CULL,
     TRANSLUCENT,
     TRANSLUCENT_NO_DEPTH_WRITE,
     TRANSLUCENT_DEPTH_WRITE,
     ADDITIVE_NO_DEPTH_WRITE,
+    ADDITIVE_CULL_NO_DEPTH_WRITE,
     ADDITIVE_DEPTH_WRITE,
     GLINT_NO_DEPTH_WRITE,
     GLINT_EQUAL_DEPTH;
@@ -62,23 +64,30 @@ public enum LegacyTexturedRenderMode {
     private static final Map<Key, RenderType> CACHE = new ConcurrentHashMap<>();
 
     public RenderType renderType(ResourceLocation texture) {
-        return switch (this) {
-            case CUTOUT_NO_CULL -> RenderType.entityCutoutNoCull(texture);
-            case TRANSLUCENT -> RenderType.entityTranslucent(texture);
-            case TRANSLUCENT_NO_DEPTH_WRITE, TRANSLUCENT_DEPTH_WRITE, ADDITIVE_NO_DEPTH_WRITE, ADDITIVE_DEPTH_WRITE,
-                    GLINT_NO_DEPTH_WRITE, GLINT_EQUAL_DEPTH ->
-                    CACHE.computeIfAbsent(new Key(this, texture), Key::create);
-        };
+        return CACHE.computeIfAbsent(new Key(this, texture, VertexFormat.Mode.QUADS), Key::create);
+    }
+
+    public RenderType renderType(ResourceLocation texture, VertexFormat.Mode drawMode) {
+        if (drawMode == VertexFormat.Mode.QUADS) {
+            return renderType(texture);
+        }
+        return CACHE.computeIfAbsent(new Key(this, texture, drawMode), Key::create);
+    }
+
+    public static void clearCachedRenderTypes() {
+        CACHE.clear();
     }
 
     public boolean translucent() {
-        return this != CUTOUT_NO_CULL;
+        return this != CUTOUT_NO_CULL && this != CUTOUT_CULL;
     }
 
     public RenderModeStatePlan statePlan() {
         return switch (this) {
             case CUTOUT_NO_CULL -> new RenderModeStatePlan(false, BlendFunction.NONE, true, DepthTest.LEQUAL,
                     false, true, true, true);
+            case CUTOUT_CULL -> new RenderModeStatePlan(false, BlendFunction.NONE, true, DepthTest.LEQUAL,
+                    false, false, true, true);
             case TRANSLUCENT -> new RenderModeStatePlan(true, BlendFunction.NORMAL_ALPHA, true, DepthTest.LEQUAL,
                     true, true, true, true);
             case TRANSLUCENT_NO_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.NORMAL_ALPHA, false, DepthTest.LEQUAL,
@@ -87,6 +96,8 @@ public enum LegacyTexturedRenderMode {
                     false, true, true, true);
             case ADDITIVE_NO_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.ADDITIVE, false, DepthTest.LEQUAL,
                     false, true, true, true);
+            case ADDITIVE_CULL_NO_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.ADDITIVE, false, DepthTest.LEQUAL,
+                    false, false, true, true);
             case ADDITIVE_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.ADDITIVE, true, DepthTest.LEQUAL,
                     false, true, true, true);
             case GLINT_NO_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.GLINT, false, DepthTest.LEQUAL,
@@ -97,42 +108,64 @@ public enum LegacyTexturedRenderMode {
     }
 
     public LegacyTexturedRenderMode withAlpha(int alpha) {
-        return alpha < 255 && this == CUTOUT_NO_CULL ? TRANSLUCENT : this;
+        return this;
     }
 
     private static RenderType createCustom(String name, ResourceLocation texture,
             RenderStateShard.TransparencyStateShard transparency, boolean depthWrite) {
-        return createCustom(name, texture, transparency, depthWrite, LEQUAL_DEPTH_TEST);
+        return createCustom(name, texture, transparency, depthWrite, LEQUAL_DEPTH_TEST, false, VertexFormat.Mode.QUADS);
     }
 
     private static RenderType createCustom(String name, ResourceLocation texture,
             RenderStateShard.TransparencyStateShard transparency, boolean depthWrite,
             RenderStateShard.DepthTestStateShard depthTest) {
-        return RenderType.create(name, DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256,
+        return createCustom(name, texture, transparency, depthWrite, depthTest, false, VertexFormat.Mode.QUADS);
+    }
+
+    private static RenderType createCustom(String name, ResourceLocation texture,
+            RenderStateShard.TransparencyStateShard transparency, boolean depthWrite,
+            RenderStateShard.DepthTestStateShard depthTest, boolean cull, VertexFormat.Mode drawMode) {
+        return RenderType.create(name, DefaultVertexFormat.NEW_ENTITY, drawMode, 256,
                 false, true, RenderType.CompositeState.builder()
                         .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityTranslucentShader))
                         .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
                         .setTransparencyState(transparency)
                         .setDepthTestState(depthTest)
-                        .setCullState(new RenderStateShard.CullStateShard(false))
+                        .setCullState(new RenderStateShard.CullStateShard(cull))
                         .setLightmapState(new RenderStateShard.LightmapStateShard(true))
                         .setOverlayState(new RenderStateShard.OverlayStateShard(true))
                         .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, depthWrite))
                         .createCompositeState(false));
     }
 
-    private record Key(LegacyTexturedRenderMode mode, ResourceLocation texture) {
+    private static RenderType createCutout(String name, ResourceLocation texture, boolean cull, VertexFormat.Mode drawMode) {
+        return RenderType.create(name, DefaultVertexFormat.NEW_ENTITY, drawMode, 256,
+                true, false, RenderType.CompositeState.builder()
+                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityCutoutShader))
+                        .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                        .setDepthTestState(LEQUAL_DEPTH_TEST)
+                        .setCullState(new RenderStateShard.CullStateShard(cull))
+                        .setLightmapState(new RenderStateShard.LightmapStateShard(true))
+                        .setOverlayState(new RenderStateShard.OverlayStateShard(true))
+                        .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true))
+                        .createCompositeState(false));
+    }
+
+    private record Key(LegacyTexturedRenderMode mode, ResourceLocation texture, VertexFormat.Mode drawMode) {
         private RenderType create() {
             String name = "hbm_legacy_textured_" + mode.name().toLowerCase() + "_" + texture.toString()
-                    .replace(':', '_').replace('/', '_').replace('.', '_');
+                    .replace(':', '_').replace('/', '_').replace('.', '_') + "_" + drawMode.name().toLowerCase();
             return switch (mode) {
-                case TRANSLUCENT_NO_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, false);
-                case TRANSLUCENT_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, true);
-                case ADDITIVE_NO_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, false);
-                case ADDITIVE_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, true);
-                case GLINT_NO_DEPTH_WRITE -> createCustom(name, texture, GLINT_TRANSPARENCY, false);
-                case GLINT_EQUAL_DEPTH -> createCustom(name, texture, GLINT_TRANSPARENCY, false, EQUAL_DEPTH_TEST);
-                case CUTOUT_NO_CULL, TRANSLUCENT -> mode.renderType(texture);
+                case CUTOUT_NO_CULL -> createCutout(name, texture, false, drawMode);
+                case CUTOUT_CULL -> createCutout(name, texture, true, drawMode);
+                case TRANSLUCENT -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode);
+                case TRANSLUCENT_NO_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, false, drawMode);
+                case TRANSLUCENT_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode);
+                case ADDITIVE_NO_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, false, drawMode);
+                case ADDITIVE_CULL_NO_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, true, drawMode);
+                case ADDITIVE_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode);
+                case GLINT_NO_DEPTH_WRITE -> createCustom(name, texture, GLINT_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, false, drawMode);
+                case GLINT_EQUAL_DEPTH -> createCustom(name, texture, GLINT_TRANSPARENCY, false, EQUAL_DEPTH_TEST, false, drawMode);
             };
         }
     }

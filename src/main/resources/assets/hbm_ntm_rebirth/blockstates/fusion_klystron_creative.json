@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "hbm_ntm_rebirth:block/fusion/fusion_klystron_creative" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/fusion/fusion_klystron_creative", "y": 90 },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/fusion/fusion_klystron_creative", "y": 180 },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/fusion/fusion_klystron_creative", "y": 270 }
+  }
+}

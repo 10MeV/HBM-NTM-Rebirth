@@ -1,6 +1,7 @@
 package com.hbm.extprop;
 
 import com.hbm.ntm.player.HbmLivingProperties;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,9 +21,9 @@ public final class HbmLivingProps {
     public static final int maxAsbestos = HbmLivingProperties.maxAsbestos;
     public static final int maxBlacklung = HbmLivingProperties.maxBlacklung;
 
-    private final LivingEntity entity;
+    public final LivingEntity entity;
 
-    private HbmLivingProps(LivingEntity entity) {
+    public HbmLivingProps(LivingEntity entity) {
         this.entity = entity;
     }
 
@@ -452,8 +453,16 @@ public final class HbmLivingProps {
         HbmLivingProperties.serializeLegacySyncedData(entity, buffer);
     }
 
+    public static void serialize(LivingEntity entity, ByteBuf buffer) {
+        serialize(entity, new FriendlyByteBuf(buffer));
+    }
+
     public static void deserialize(LivingEntity entity, FriendlyByteBuf buffer) {
         HbmLivingProperties.deserializeLegacySyncedData(entity, buffer);
+    }
+
+    public static void deserialize(LivingEntity entity, ByteBuf buffer) {
+        deserialize(entity, new FriendlyByteBuf(buffer));
     }
 
     public static void saveNBTData(LivingEntity entity, CompoundTag nbt) {
@@ -864,8 +873,16 @@ public final class HbmLivingProps {
         HbmLivingProperties.serializeLegacySyncedData(entity, buffer);
     }
 
+    public void serialize(ByteBuf buffer) {
+        serialize(new FriendlyByteBuf(buffer));
+    }
+
     public void deserialize(FriendlyByteBuf buffer) {
         HbmLivingProperties.deserializeLegacySyncedData(entity, buffer);
+    }
+
+    public void deserialize(ByteBuf buffer) {
+        deserialize(new FriendlyByteBuf(buffer));
     }
 
     public void saveNBTData(CompoundTag nbt) {
@@ -889,7 +906,7 @@ public final class HbmLivingProps {
         public ContaminationEffect(float maxRad, int maxTime, int time, boolean ignoreArmor) {
             this.maxRad = maxRad;
             this.maxTime = Math.max(1, maxTime);
-            this.time = Math.max(0, time);
+            this.time = time;
             this.ignoreArmor = ignoreArmor;
         }
 
@@ -901,8 +918,16 @@ public final class HbmLivingProps {
             HbmLivingProperties.encodeLegacyContaminationEffect(toModern(), buffer);
         }
 
+        public void serialize(ByteBuf buffer) {
+            serialize(new FriendlyByteBuf(buffer));
+        }
+
         public static ContaminationEffect deserialize(FriendlyByteBuf buffer) {
             return fromModern(HbmLivingProperties.decodeLegacyContaminationEffect(buffer));
+        }
+
+        public static ContaminationEffect deserialize(ByteBuf buffer) {
+            return deserialize(new FriendlyByteBuf(buffer));
         }
 
         public void save(CompoundTag nbt, int index) {
@@ -915,7 +940,7 @@ public final class HbmLivingProps {
             CompoundTag tag = new CompoundTag();
             tag.putFloat("maxRad", maxRad);
             tag.putInt("maxTime", Math.max(1, maxTime));
-            tag.putInt("time", Math.max(0, time));
+            tag.putInt("time", time);
             tag.putBoolean("ignoreArmor", ignoreArmor);
             return tag;
         }
@@ -936,7 +961,7 @@ public final class HbmLivingProps {
             return new ContaminationEffect(
                     safeTag.getFloat("maxRad"),
                     Math.max(1, safeTag.getInt("maxTime")),
-                    Math.max(0, safeTag.getInt("time")),
+                    safeTag.getInt("time"),
                     safeTag.getBoolean("ignoreArmor"));
         }
 

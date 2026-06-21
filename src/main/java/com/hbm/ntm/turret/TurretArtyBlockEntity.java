@@ -178,6 +178,11 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
     }
 
     @Override
+    protected boolean canKeepCurrentTarget(Entity entity) {
+        return canAcquireTarget(entity);
+    }
+
+    @Override
     protected boolean canSeekNewTarget() {
         return mode != MODE_MANUAL;
     }
@@ -227,12 +232,14 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
         int shellIndex = getFirstArtyShellIndexLoaded();
         if (target != null && shellIndex >= 0) {
             ItemStack cargo = cargoForFirstShell(shellIndex);
-            if (spawnShell(shellIndex, target, cargo) && consumeArtyShell(shellIndex)) {
+            if (spawnShell(shellIndex, target, cargo)) {
                 scheduleArtyCasing(LegacyArtilleryAmmoCatalog.artyShells().get(shellIndex).legacyName());
-                playTurretSound("hbm:turret.jeremy_fire", 25.0F, 1.0F);
-                spawnMuzzleLargeExplode(0.0F, 5);
-                triggerBarrelRetract();
-                setChanged();
+                if (consumeArtyShell(shellIndex)) {
+                    playTurretSound("hbm:turret.jeremy_fire", 25.0F, 1.0F);
+                    spawnMuzzleLargeExplode(0.0F, 5);
+                    triggerBarrelRetract();
+                    setChanged();
+                }
             }
         }
 
@@ -309,6 +316,10 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
             targetQueue.clear();
             setChanged();
         }
+    }
+
+    @Override
+    protected void updateServerTickAfterLegacyNetworkPack() {
         tickArtyCasingDelay();
     }
 

@@ -16,7 +16,7 @@ import net.minecraft.world.phys.AABB;
 
 public final class LegacySmallPylonModel {
     public static final ResourceLocation TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/network/model_pylon.png");
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/model_pylon.png");
     public static final AABB LEGACY_RENDER_BOUNDS = new AABB(0.0D, 0.0D, 0.0D, 1.0D, 5.5625D, 1.0D);
 
     private static final ModelPart ROOT = createLayer().bakeRoot();

@@ -10,6 +10,15 @@ import net.minecraft.world.level.ItemLike;
  */
 @Deprecated(forRemoval = false)
 public final class AchievementHandler {
+    public static final ResourceLocation MANHATTAN = com.hbm.ntm.util.AchievementHandler.MANHATTAN;
+    public static final ResourceLocation RBMK_BOOM = com.hbm.ntm.util.AchievementHandler.RBMK_BOOM;
+    public static final ResourceLocation RAD_POISON = com.hbm.ntm.util.AchievementHandler.RAD_POISON;
+    public static final ResourceLocation RAD_DEATH = com.hbm.ntm.util.AchievementHandler.RAD_DEATH;
+    public static final ResourceLocation DIGAMMA_SEE = com.hbm.ntm.util.AchievementHandler.DIGAMMA_SEE;
+    public static final ResourceLocation DIGAMMA_FEEL = com.hbm.ntm.util.AchievementHandler.DIGAMMA_FEEL;
+    public static final ResourceLocation DIGAMMA_KNOW = com.hbm.ntm.util.AchievementHandler.DIGAMMA_KNOW;
+    public static final ResourceLocation DIGAMMA_KAUAI_MOHO = com.hbm.ntm.util.AchievementHandler.DIGAMMA_KAUAI_MOHO;
+
     private AchievementHandler() {
     }
 
@@ -23,5 +32,9 @@ public final class AchievementHandler {
 
     public static boolean fire(Player player, ItemStack stack) {
         return com.hbm.ntm.util.AchievementHandler.fire(player, stack);
+    }
+
+    public static boolean award(Player player, ResourceLocation advancementId) {
+        return com.hbm.ntm.util.AchievementHandler.award(player, advancementId);
     }
 }

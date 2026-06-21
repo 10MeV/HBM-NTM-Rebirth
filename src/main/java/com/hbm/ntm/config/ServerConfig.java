@@ -26,7 +26,7 @@ public final class ServerConfig {
     }
 
     public static int droppedItemHazardTickRate() {
-        return ITEM_HAZARD_DROP_TICKRATE == null ? 2 : Math.max(1, ITEM_HAZARD_DROP_TICKRATE.get());
+        return intValue(ITEM_HAZARD_DROP_TICKRATE, 2, 1);
     }
 
     public static boolean mkuEnabled() {

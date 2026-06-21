@@ -15,7 +15,7 @@ import java.util.HashSet;
 @Deprecated(forRemoval = false)
 public final class ContaminationUtil {
     @SuppressWarnings("rawtypes")
-    public static final HashSet<Class> immuneEntities = new HashSet<>();
+    public static final HashSet<Class> immuneEntities = RadiationUtil.legacyImmuneEntitiesView();
 
     private ContaminationUtil() {
     }
@@ -32,26 +32,16 @@ public final class ContaminationUtil {
         if (!(entity instanceof LivingEntity living)) {
             return false;
         }
-        return isRegisteredRadImmune(entity) || RadiationUtil.isRadImmune(living);
+        return RadiationUtil.isRadImmune(living);
     }
 
     @SuppressWarnings("rawtypes")
     public static void registerRadImmune(Class type) {
-        if (type != null) {
-            immuneEntities.add(type);
-        }
+        RadiationUtil.registerRadImmune(type);
     }
 
     public static boolean isRegisteredRadImmune(Entity entity) {
-        if (entity == null) {
-            return false;
-        }
-        for (Class<?> type : immuneEntities) {
-            if (type.isAssignableFrom(entity.getClass())) {
-                return true;
-            }
-        }
-        return false;
+        return RadiationUtil.isRegisteredRadImmune(entity);
     }
 
     public static boolean isRadiationImmuneMarker(Entity entity) {

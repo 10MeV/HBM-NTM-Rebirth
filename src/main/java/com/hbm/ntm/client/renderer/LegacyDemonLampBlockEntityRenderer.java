@@ -38,8 +38,8 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         LegacyObjTransforms.applySixFaceAttachmentRotation(poseStack, state.getValue(LegacyDemonLampBlock.FACE));
-        poseStack.translate(-0.5D, -0.5D, -0.5D);
-        ObjLightModels.DEMON_LAMP.render(new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay));
+        poseStack.translate(0.0D, -0.5D, 0.0D);
+        ObjLightModels.DEMON_LAMP_LEGACY.renderAll(new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay));
         renderAura(poseStack, buffer);
         poseStack.popPose();
     }
@@ -74,10 +74,10 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
             renderAuraQuad(
                     consumer,
                     pose,
-                    x0 * near + 0.5D, yNear, z0 * near + 0.5D,
-                    x0 * far + 0.5D, yFar, z0 * far + 0.5D,
-                    x1 * far + 0.5D, yFar, z1 * far + 0.5D,
-                    x1 * near + 0.5D, yNear, z1 * near + 0.5D,
+                    x0 * near, yNear, z0 * near,
+                    x0 * far, yFar, z0 * far,
+                    x1 * far, yFar, z1 * far,
+                    x1 * near, yNear, z1 * near,
                     nearAlpha);
         }
     }

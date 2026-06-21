@@ -11,6 +11,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  */
 @Deprecated(forRemoval = false)
 public interface IFluidUserMK2 extends IFluidConnectorMK2, HbmFluidUser, LoadedTile {
+    int HIGHEST_VALID_PRESSURE = HbmFluidUser.HIGHEST_VALID_PRESSURE;
+    int[] DEFAULT_PRESSURE_RANGE = HbmFluidUser.DEFAULT_PRESSURE_RANGE;
     boolean particleDebug = false;
 
     @Override

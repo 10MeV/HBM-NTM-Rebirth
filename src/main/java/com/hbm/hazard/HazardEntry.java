@@ -54,11 +54,11 @@ public class HazardEntry {
 
     public static HazardEntry fromModern(com.hbm.ntm.radiation.HazardEntry entry) {
         HazardEntry legacy = new HazardEntry(HazardTypeBase.fromModern(entry.type()), entry.level());
-        if (!entry.modifiers().isEmpty()) {
+        for (com.hbm.ntm.radiation.HazardModifier modifier : entry.modifiers()) {
             legacy.addMod(new HazardModifier() {
                 @Override
                 public float modify(ItemStack stack, LivingEntity holder, float level) {
-                    return entry.modifiedLevel(stack, holder);
+                    return modifier.modify(stack, holder, level);
                 }
             });
         }

@@ -1,5 +1,6 @@
 package com.hbm.ntm.network.packet;
 
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmClientMissileMultipartReceiver;
 import com.hbm.ntm.network.HbmPreparablePacket;
 import com.hbm.ntm.network.MissileMultipartSnapshot;
@@ -33,7 +34,7 @@ public record ClientMissileMultipartPacket(BlockPos pos, MissileMultipartSnapsho
             if (minecraft.level == null) {
                 return;
             }
-            BlockEntity blockEntity = minecraft.level.getBlockEntity(packet.pos);
+            BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(minecraft.level, packet.pos);
             if (blockEntity instanceof HbmClientMissileMultipartReceiver receiver) {
                 receiver.handleClientMissileMultipart(packet.multipart);
             }

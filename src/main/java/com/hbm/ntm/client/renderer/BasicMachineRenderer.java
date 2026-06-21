@@ -30,7 +30,7 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
     @Override
     public void render(BasicMachineBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
+        int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         ItemStack stack = blockEntity.getRenderStack();
         LegacyTileRenderPlans.BasicPressPlan plan = LegacyTileRenderPlans.basicPressPlan(!stack.isEmpty(),
                 blockEntity.getInterpolatedPress(partialTick), BasicMachineBlockEntity.MAX_PRESS);

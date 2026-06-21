@@ -78,9 +78,13 @@ public final class LegacyFalloutRainRenderer {
         return precipitationHeight < cameraY ? cameraY : precipitationHeight;
     }
 
+    public static int blendLegacyLight(int packedLight) {
+        return (packedLight * 3 + LightTexture.FULL_BRIGHT) / 4;
+    }
+
     public static void renderColumn(VertexConsumer consumer, Matrix4f pose, Matrix3f normal,
             int layerX, int layerZ, HeightSpan height, float rainX, float rainZ,
-            ColumnStyle style, double originX, double originY, double originZ) {
+            ColumnStyle style, int packedLight, double originX, double originY, double originZ) {
         if (consumer == null || height == null || style == null || height.minY() == height.maxY()) {
             return;
         }
@@ -91,25 +95,25 @@ public final class LegacyFalloutRainRenderer {
 
         putVertex(consumer, pose, normal,
                 layerX - rainX + 0.5D - originX, height.minY() - originY, layerZ - rainZ + 0.5D - originZ,
-                u0, minV, style.alpha());
+                u0, minV, style.alpha(), packedLight);
         putVertex(consumer, pose, normal,
                 layerX + rainX + 0.5D - originX, height.minY() - originY, layerZ + rainZ + 0.5D - originZ,
-                u1, minV, style.alpha());
+                u1, minV, style.alpha(), packedLight);
         putVertex(consumer, pose, normal,
                 layerX + rainX + 0.5D - originX, height.maxY() - originY, layerZ + rainZ + 0.5D - originZ,
-                u1, maxV, style.alpha());
+                u1, maxV, style.alpha(), packedLight);
         putVertex(consumer, pose, normal,
                 layerX - rainX + 0.5D - originX, height.maxY() - originY, layerZ - rainZ + 0.5D - originZ,
-                u0, maxV, style.alpha());
+                u0, maxV, style.alpha(), packedLight);
     }
 
     public static void putVertex(VertexConsumer consumer, Matrix4f pose, Matrix3f normal,
-            double x, double y, double z, double u, double v, float alpha) {
+            double x, double y, double z, double u, double v, float alpha, int packedLight) {
         consumer.vertex(pose, (float) x, (float) y, (float) z)
                 .color(1.0F, 1.0F, 1.0F, alpha)
                 .uv((float) u, (float) v)
                 .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(LightTexture.FULL_BRIGHT)
+                .uv2(packedLight)
                 .normal(normal, 0.0F, 1.0F, 0.0F)
                 .endVertex();
     }

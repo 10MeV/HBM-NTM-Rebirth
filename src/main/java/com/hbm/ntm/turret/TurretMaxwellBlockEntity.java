@@ -9,6 +9,8 @@ import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.HbmMathUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -212,12 +214,21 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
 
     @Override
     public void provideInfo(UpgradeType type, int level, List<Component> info, boolean extendedInfo) {
+        info.add(Component.literal(">>> ")
+                .append(Component.translatableWithFallback("block.hbm_ntm_rebirth.turret_maxwell",
+                        "High-Energy MASER Turret \"Maxwell\""))
+                .append(" <<<")
+                .withStyle(ChatFormatting.YELLOW));
         switch (type) {
-            case SPEED -> info.add(Component.literal("Damage +0." + (level * 25) + "/t"));
-            case POWER -> info.add(Component.translatable(KEY_CONSUMPTION, "-" + (level * 3) + "%"));
-            case EFFECT -> info.add(Component.translatable(KEY_RANGE, "+" + (level * 3) + "m"));
-            case AFTERBURN -> info.add(Component.literal("Afterburn +3s"));
-            case OVERDRIVE -> info.add(Component.literal("YES"));
+            case SPEED -> info.add(Component.literal("Damage +0." + (level * 25) + "/t")
+                    .withStyle(ChatFormatting.GREEN));
+            case POWER -> info.add(Component.translatableWithFallback(KEY_CONSUMPTION, "Consumption %s",
+                    "-" + (level * 3) + "%").withStyle(ChatFormatting.GREEN));
+            case EFFECT -> info.add(Component.translatableWithFallback(KEY_RANGE, "Range %s",
+                    "+" + (level * 3) + "m").withStyle(ChatFormatting.GREEN));
+            case AFTERBURN -> info.add(Component.literal("Afterburn +3s").withStyle(ChatFormatting.GREEN));
+            case OVERDRIVE -> info.add(Component.literal("YES")
+                    .withStyle(HbmMathUtil.getBlink() ? ChatFormatting.RED : ChatFormatting.DARK_GRAY));
         }
     }
 

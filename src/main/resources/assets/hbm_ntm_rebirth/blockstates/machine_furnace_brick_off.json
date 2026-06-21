@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,lit=false": { "model": "hbm_ntm_rebirth:block/machine_furnace_brick_off", "y": 180 },
+    "facing=east,lit=false": { "model": "hbm_ntm_rebirth:block/machine_furnace_brick_off", "y": 270 },
+    "facing=south,lit=false": { "model": "hbm_ntm_rebirth:block/machine_furnace_brick_off" },
+    "facing=west,lit=false": { "model": "hbm_ntm_rebirth:block/machine_furnace_brick_off", "y": 90 },
+    "facing=north,lit=true": { "model": "hbm_ntm_rebirth:block/machine_furnace_brick_on", "y": 180 },
+    "facing=east,lit=true": { "model": "hbm_ntm_rebirth:block/machine_furnace_brick_on", "y": 270 },
+    "facing=south,lit=true": { "model": "hbm_ntm_rebirth:block/machine_furnace_brick_on" },
+    "facing=west,lit=true": { "model": "hbm_ntm_rebirth:block/machine_furnace_brick_on", "y": 90 }
+  }
+}

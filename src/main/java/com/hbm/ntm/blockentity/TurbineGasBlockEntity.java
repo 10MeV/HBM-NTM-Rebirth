@@ -12,8 +12,10 @@ import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
+import com.hbm.ntm.fluid.HbmFluidPortSubscriptionTracker;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
@@ -82,6 +84,10 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     private final HbmFluidTank lubricantTank;
     private final HbmFluidTank waterTank;
     private final HbmFluidTank steamTank;
+    private final HbmFluidPortSubscriptionTracker fuelLubePortSubscriptions =
+            new HbmFluidPortSubscriptionTracker();
+    private final HbmFluidPortSubscriptionTracker waterPortSubscriptions =
+            new HbmFluidPortSubscriptionTracker();
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -177,9 +183,8 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
         HbmEnergyUtil.chargeItemFromStorage(turbine.items.getStackInSlot(SLOT_BATTERY),
                 turbine.energy, turbine.energy.getProviderSpeed());
         turbine.tryProvideEnergyToPorts();
-        turbine.refreshTrackedReceiverFluidPortsReport(List.of(turbine.fuelTank, turbine.lubricantTank,
-                turbine.waterTank), turbine);
-        turbine.tryProvideFluidToPorts(turbine.steamTank.getTankType(), turbine.steamTank.getPressure(), turbine);
+        turbine.refreshLegacyPortSubscriptions(level, pos);
+        turbine.tryProvideSteamToLegacyPorts(level, pos);
         turbine.energy.setPower(Math.min(MAX_POWER, turbine.energy.getPower()));
 
         boolean changed = oldPower != turbine.energy.getPower()
@@ -393,16 +398,61 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     private List<FluidPort> fluidPorts() {
         Direction facing = facing();
         Direction side = LegacyMultiblockOffsets.legacyUpSide(facing);
+        List<FluidPort> fuelLubePorts = fuelLubeFluidPorts(facing);
+        List<FluidPort> waterPorts = waterFluidPorts(facing);
+        List<FluidPort> steamPorts = steamFluidPorts(side);
+        return List.of(
+                fuelLubePorts.get(0),
+                fuelLubePorts.get(1),
+                waterPorts.get(0),
+                waterPorts.get(1),
+                steamPorts.get(0));
+    }
+
+    private List<FluidPort> fuelLubeFluidPorts(Direction facing) {
         return List.of(
                 fluidPort(relative(-1, 1, 0), facing.getOpposite()),
-                fluidPort(relative(1, 1, 0), facing),
+                fluidPort(relative(1, 1, 0), facing));
+    }
+
+    private List<FluidPort> waterFluidPorts(Direction facing) {
+        return List.of(
                 fluidPort(relative(-1, -4, 0), facing.getOpposite()),
-                fluidPort(relative(1, -4, 0), facing),
-                fluidPort(relative(0, 4, 1), side.getOpposite()));
+                fluidPort(relative(1, -4, 0), facing));
+    }
+
+    private List<FluidPort> steamFluidPorts(Direction side) {
+        return List.of(fluidPort(relative(0, 4, 1), side.getOpposite()));
     }
 
     private static FluidPort fluidPort(BlockPos offset, Direction side) {
         return FluidPort.of(offset.getX(), offset.getY(), offset.getZ(), side);
+    }
+
+    private void refreshLegacyPortSubscriptions(Level level, BlockPos pos) {
+        Direction facing = facing();
+        fuelLubePortSubscriptions.refreshReceiverDetailed(level, pos, fuelLubeFluidPorts(facing),
+                List.of(fuelTank, lubricantTank), this);
+        waterPortSubscriptions.refreshReceiverDetailed(level, pos, waterFluidPorts(facing),
+                List.of(waterTank), this);
+    }
+
+    private void tryProvideSteamToLegacyPorts(Level level, BlockPos pos) {
+        if (steamTank.getTankType() == HbmFluids.NONE || steamTank.getFill() <= 0) {
+            return;
+        }
+        Direction side = LegacyMultiblockOffsets.legacyUpSide(facing());
+        HbmFluidUtil.tryProvideToPortsDetailedReport(level, pos, steamFluidPorts(side),
+                steamTank.getTankType(), steamTank.getPressure(), this);
+    }
+
+    private void detachLegacyPortSubscriptions() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        Direction facing = facing();
+        fuelLubePortSubscriptions.detachAllDetailed(level, worldPosition, fuelLubeFluidPorts(facing), this, null);
+        waterPortSubscriptions.detachAllDetailed(level, worldPosition, waterFluidPorts(facing), this, null);
     }
 
     public ItemStackHandler getItems() {
@@ -478,6 +528,18 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    public void setRemoved() {
+        detachLegacyPortSubscriptions();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        detachLegacyPortSubscriptions();
+        super.onChunkUnloaded();
+    }
+
+    @Override
     protected Iterable<EnergyPort> getEnergyPorts() {
         return energyPorts();
     }
@@ -490,6 +552,21 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return fluidPorts();
+    }
+
+    @Override
+    protected Iterable<FluidPort> getNetworkFluidPorts(FluidType type) {
+        Direction facing = facing();
+        if (isGasFuel(type) || type == lubricantTank.getTankType()) {
+            return fuelLubeFluidPorts(facing);
+        }
+        if (type == waterTank.getTankType()) {
+            return waterFluidPorts(facing);
+        }
+        if (type == steamTank.getTankType()) {
+            return steamFluidPorts(LegacyMultiblockOffsets.legacyUpSide(facing));
+        }
+        return List.of();
     }
 
     @Override

@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 600,
+  "fluid": { "fluid": "SULFURIC_ACID", "amount": 500 },
+  "input": { "ingredient": { "tag": "forge:ores/rare_earth" }, "legacy_ore": "oreRareEarth" },
+  "output": { "item": "hbm_ntm_rebirth:crystal_rare" },
+  "productivity": 0.05
+}

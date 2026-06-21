@@ -178,17 +178,18 @@ public final class MultiblockHelper {
         if (level.isClientSide) {
             return false;
         }
+        boolean complete = true;
         for (BlockPos offset : offsets) {
             if (offset.equals(BlockPos.ZERO)) {
                 continue;
             }
             BlockPos pos = corePos.offset(offset);
-            level.setBlock(pos, dummyState, Block.UPDATE_ALL);
-            if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
-                configureDummy(dummy, corePos, proxyModes.apply(offset), legacyExtraOffsets.test(offset));
+            if (!placeOrConfigureDummy(level, corePos, pos, dummyState, proxyModes.apply(offset),
+                    legacyExtraOffsets.test(offset))) {
+                complete = false;
             }
         }
-        return true;
+        return complete;
     }
 
     public static boolean fillLayout(Level level, BlockPos corePos, LegacyMultiblockLayout layout) {
@@ -234,6 +235,27 @@ public final class MultiblockHelper {
         return core != null && layout != null && isLayoutComplete(level, core.pos(), layout);
     }
 
+    public static boolean isOperationalCoreLayoutComplete(BlockGetter level, @Nullable BlockPos pos) {
+        CoreLookup core = findCore(level, pos);
+        if (core == null || !(core.state().getBlock() instanceof MultiblockCoreBlock coreBlock)) {
+            return false;
+        }
+        if (!coreBlock.requiresCompleteOperationalLayout(core.state(), level, core.pos())) {
+            return true;
+        }
+        LegacyMultiblockLayout layout = layoutFor(level, core);
+        return layout != null && isLayoutComplete(level, core.pos(), layout);
+    }
+
+    public static boolean ensureOperationalCoreLayoutComplete(Level level, @Nullable BlockPos pos) {
+        CoreLookup core = findCore(level, pos);
+        if (core == null || !(core.state().getBlock() instanceof MultiblockCoreBlock coreBlock)) {
+            return false;
+        }
+        return !coreBlock.requiresCompleteOperationalLayout(core.state(), level, core.pos())
+                || ensureCoreLayoutComplete(level, core.pos());
+    }
+
     @Nullable
     public static CoreLayoutLookup findCoreLayout(BlockGetter level, @Nullable BlockPos pos) {
         CoreLookup core = findCore(level, pos);
@@ -251,6 +273,29 @@ public final class MultiblockHelper {
     public static BlockState resolveCoreState(BlockGetter level, BlockPos pos) {
         CoreLookup core = findCore(level, pos);
         return core == null ? level.getBlockState(pos) : core.state();
+    }
+
+    @Nullable
+    public static CoreLookup findOperationalCore(Level level, @Nullable BlockPos pos) {
+        CoreLookup core = findCore(level, pos);
+        if (core == null) {
+            return null;
+        }
+        return ensureOperationalCoreLayoutComplete(level, core.pos()) ? findCoreAt(level, core.pos()) : null;
+    }
+
+    public static BlockPos resolveOperationalCorePos(Level level, BlockPos pos) {
+        CoreLookup core = findOperationalCore(level, pos);
+        return core == null ? pos : core.pos();
+    }
+
+    @Nullable
+    public static BlockState resolveOperationalCoreState(Level level, BlockPos pos) {
+        CoreLookup core = findCore(level, pos);
+        if (core == null) {
+            return level.getBlockState(pos);
+        }
+        return ensureOperationalCoreLayoutComplete(level, core.pos()) ? level.getBlockState(core.pos()) : null;
     }
 
     public static boolean canRepairLayout(Level level, BlockPos corePos, LegacyMultiblockLayout layout) {
@@ -280,27 +325,38 @@ public final class MultiblockHelper {
         if (level.isClientSide || !canRepairLayout(level, corePos, layout)) {
             return false;
         }
+        boolean repaired = false;
         for (BlockPos offset : layout.offsets()) {
             if (offset.equals(BlockPos.ZERO) || isExpectedLayoutBlock(level, corePos, layout, offset)) {
                 continue;
             }
             BlockPos pos = corePos.offset(offset);
-            if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
-                configureDummy(dummy, corePos, layout.proxyMode(offset), layout.isLegacyExtraOffset(offset));
-                continue;
-            }
-            level.setBlock(pos, ModBlocks.DUMMY_BLOCK.get().defaultBlockState(), Block.UPDATE_ALL);
-            if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
-                configureDummy(dummy, corePos, layout.proxyMode(offset), layout.isLegacyExtraOffset(offset));
-            }
+            repaired |= placeOrConfigureDummy(level, corePos, pos, ModBlocks.DUMMY_BLOCK.get().defaultBlockState(),
+                    layout.proxyMode(offset), layout.isLegacyExtraOffset(offset));
         }
-        return true;
+        if (repaired) {
+            BlockState state = level.getBlockState(corePos);
+            level.sendBlockUpdated(corePos, state, state, Block.UPDATE_CLIENTS);
+        }
+        return repaired;
     }
 
     public static boolean repairCoreLayout(Level level, BlockPos corePos) {
-        CoreLookup core = findCoreAt(level, corePos);
+        CoreLookup core = findCore(level, corePos);
         LegacyMultiblockLayout layout = layoutFor(level, core);
         return core != null && layout != null && repairLayout(level, core.pos(), layout);
+    }
+
+    public static boolean ensureCoreLayoutComplete(Level level, BlockPos corePos) {
+        CoreLookup core = findCoreAt(level, corePos);
+        LegacyMultiblockLayout layout = layoutFor(level, core);
+        if (core == null || layout == null) {
+            return false;
+        }
+        if (isLayoutComplete(level, core.pos(), layout)) {
+            return true;
+        }
+        return repairLayout(level, core.pos(), layout) && isLayoutComplete(level, core.pos(), layout);
     }
 
     public static boolean removeAll(Level level, BlockPos corePos, MultiblockExtents extents) {
@@ -429,6 +485,48 @@ public final class MultiblockHelper {
     }
 
     @Nullable
+    public static BlockEntity resolveCompleteCoreBlockEntity(Level level, @Nullable BlockPos pos) {
+        if (pos == null) {
+            return null;
+        }
+        CoreLookup core = findCore(level, pos);
+        if (core == null || !ensureCoreLayoutComplete(level, core.pos())) {
+            return null;
+        }
+        return level.getBlockEntity(core.pos());
+    }
+
+    @Nullable
+    public static BlockEntity resolveOperationalCoreBlockEntity(Level level, @Nullable BlockPos pos) {
+        if (pos == null) {
+            return null;
+        }
+        CoreLookup core = findCore(level, pos);
+        if (core == null) {
+            return level.getBlockEntity(pos);
+        }
+        if (!ensureOperationalCoreLayoutComplete(level, core.pos())) {
+            return null;
+        }
+        return level.getBlockEntity(core.pos());
+    }
+
+    @Nullable
+    public static BlockEntity resolveOperationalCoreBlockEntity(BlockGetter level, @Nullable BlockPos pos) {
+        if (pos == null) {
+            return null;
+        }
+        CoreLookup core = findCore(level, pos);
+        if (core == null) {
+            return level.getBlockEntity(pos);
+        }
+        if (!isOperationalCoreLayoutComplete(level, core.pos())) {
+            return null;
+        }
+        return level.getBlockEntity(core.pos());
+    }
+
+    @Nullable
     private static BlockEntity resolveCoreBlockEntity(BlockGetter level, @Nullable BlockPos pos,
             @Nullable BlockEntity fallback) {
         if (pos == null) {
@@ -518,9 +616,11 @@ public final class MultiblockHelper {
         if (state.canBeReplaced()) {
             return true;
         }
-        if (!(state.getBlock() instanceof DummyBlock)
-                || !(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy)) {
+        if (!(state.getBlock() instanceof DummyBlock)) {
             return false;
+        }
+        if (!(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy)) {
+            return true;
         }
         return corePos.equals(dummy.getCorePos());
     }
@@ -545,6 +645,33 @@ public final class MultiblockHelper {
     private static void configureDummy(MultiblockDummyBlockEntity dummy, BlockPos corePos, LegacyProxyMode proxyMode,
             boolean legacyExtra) {
         dummy.configure(corePos, proxyMode, legacyExtra);
+    }
+
+    private static boolean placeOrConfigureDummy(Level level, BlockPos corePos, BlockPos pos, BlockState dummyState,
+            LegacyProxyMode proxyMode, boolean legacyExtra) {
+        BlockState existingState = level.getBlockState(pos);
+        if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
+            BlockPos owner = dummy.getCorePos();
+            if (owner != null && !corePos.equals(owner)) {
+                return false;
+            }
+            configureDummy(dummy, corePos, proxyMode, legacyExtra);
+            return true;
+        }
+        if (!existingState.canBeReplaced() && !(existingState.getBlock() instanceof DummyBlock)) {
+            return false;
+        }
+        if (existingState.getBlock() instanceof DummyBlock) {
+            level.removeBlock(pos, false);
+        }
+        if (!level.setBlock(pos, dummyState, Block.UPDATE_ALL)) {
+            return false;
+        }
+        if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
+            configureDummy(dummy, corePos, proxyMode, legacyExtra);
+            return true;
+        }
+        return false;
     }
 
     public static boolean withClearing(Level level, BlockPos corePos, Runnable action) {

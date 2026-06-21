@@ -62,24 +62,6 @@ public final class BulletFlightVisualUtil {
         return 16;
     }
 
-    public static int spawnMeteorFlameParticles(BulletConfig config, Level level, Vec3 position,
-            RandomSource random) {
-        if (config == null || level == null || !level.isClientSide()
-                || !config.hasBehavior(BulletBehaviorTag.MASKMAN_METEOR_FLAME_PARTICLES) || position == null) {
-            return 0;
-        }
-
-        RandomSource roll = random == null ? level.random : random;
-        for (int i = 0; i < 5; i++) {
-            ParticleUtil.spawnVanillaExt(level,
-                    position.x + roll.nextDouble() * 0.5D - 0.25D,
-                    position.y + roll.nextDouble() * 0.5D - 0.25D,
-                    position.z + roll.nextDouble() * 0.5D - 0.25D,
-                    ParticleUtil.VANILLA_FLAME, 0.0D, 0.0D, 0.0D);
-        }
-        return 5;
-    }
-
     public static int spawnFlamethrowerTrail(BulletConfig config, Level level, Vec3 position) {
         if (config == null || level == null || !level.isClientSide() || position == null
                 || !ClientParticleBridge.isLocalPlayerWithin(position.x, position.y, position.z,

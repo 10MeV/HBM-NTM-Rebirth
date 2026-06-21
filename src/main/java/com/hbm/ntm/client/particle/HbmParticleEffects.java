@@ -24,12 +24,15 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.AbstractSkeleton;
 import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.monster.ZombifiedPiglin;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ClipContext;
@@ -177,6 +180,15 @@ public final class HbmParticleEffects {
             return false;
         }
         return player.distanceToSqr(x, y, z) < range * range;
+    }
+
+    public static boolean isLocalPlayerWearing(Item item, EquipmentSlot slot) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || item == null || slot == null) {
+            return false;
+        }
+        ItemStack stack = player.getItemBySlot(slot);
+        return stack.is(item);
     }
 
     public static void burst(BlockPos pos, BlockState state) {
@@ -339,6 +351,9 @@ public final class HbmParticleEffects {
     }
 
     private static void spawnRadiationAura(ClientLevel level, CompoundTag data) {
+        if (!legacyVisibleParticleSetting(level)) {
+            return;
+        }
         Entity player = Minecraft.getInstance().player;
         if (player == null) {
             return;
@@ -357,6 +372,9 @@ public final class HbmParticleEffects {
 
     private static void addLegacyAura(ClientLevel level, double x, double y, double z,
             double motionX, double motionY, double motionZ, float red, float green, float blue) {
+        if (!legacyVisibleParticleSetting(level)) {
+            return;
+        }
         Particle particle = LegacyAuraParticle.create(level, x, y, z, motionX, motionY, motionZ, red, green, blue);
         if (particle != null) {
             Minecraft.getInstance().particleEngine.add(particle);
@@ -595,12 +613,6 @@ public final class HbmParticleEffects {
                 level.addParticle(ModParticleTypes.ROCKET_FLAME.get(),
                         x + random.nextGaussian() * width, y, z + random.nextGaussian() * width,
                         0.0D, -0.75D + random.nextDouble() * 0.5D, 0.0D);
-            } else if (ParticleUtil.EXHAUST_METEOR.equals(mode)) {
-                level.addParticle(ModParticleTypes.ROCKET_FLAME.get(),
-                        x + random.nextGaussian() * width,
-                        y + random.nextGaussian() * width,
-                        z + random.nextGaussian() * width,
-                        0.0D, 0.0D, 0.0D);
             }
         }
     }
@@ -916,11 +928,9 @@ public final class HbmParticleEffects {
         float soundRange = Math.max(1.0F, getFloat(data, "soundRange", 200.0F));
 
         HbmDelayedSounds.playExplosionLarge(x, y, z, soundRange);
-        level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 0.0D, 0.0D, 0.0D);
         Particle wave = MukeWaveParticle.create(level, x, y + 2.0D, z, waveScale, Math.max(1, (int) (25.0F * waveScale / 45.0F)));
         if (wave != null) {
             Minecraft.getInstance().particleEngine.add(wave);
-            HbmRenderEffects.spawnNuclearWarpShockwave(x, y + 2.0D, z, waveScale, Math.max(1, (int) (25.0F * waveScale / 45.0F)));
         }
 
         for (int i = 0; i < cloudCount; i++) {
@@ -942,11 +952,11 @@ public final class HbmParticleEffects {
             }
             double offsetX = random.nextGaussian() * debrisHorizontalDeviation;
             double offsetZ = random.nextGaussian() * debrisHorizontalDeviation;
-            BlockState debrisState = sampleLegacyDebrisState(level,
+            BlockState[] debrisStates = sampleLegacyDebrisStates(level,
                     x + offsetX, y + debrisVerticalOffset, z + offsetZ,
                     debrisSize, debrisRetry, random);
             Vec3 motion = legacyDebrisMotion(random, debrisVelocity);
-            Particle particle = LegacyDebrisParticle.create(level, x, y, z, motion.x(), motion.y(), motion.z(), debrisState, debrisSize);
+            Particle particle = LegacyDebrisParticle.create(level, x, y, z, motion.x(), motion.y(), motion.z(), debrisStates, debrisSize);
             if (particle != null) {
                 Minecraft.getInstance().particleEngine.add(particle);
             }
@@ -1321,8 +1331,11 @@ public final class HbmParticleEffects {
             case ParticleUtil.VANILLA_FIREWORKS -> ParticleTypes.FIREWORK;
             case ParticleUtil.VANILLA_BLOCK_DUST -> new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState());
             case ParticleUtil.VANILLA_COLOR_DUST -> DustParticleOptions.REDSTONE;
-            default -> ParticleTypes.POOF;
+            default -> null;
         };
+        if (particle == null) {
+            return null;
+        }
         return Minecraft.getInstance().particleEngine.createParticle(particle, x, y, z, motionX, motionY, motionZ);
     }
 
@@ -1489,19 +1502,16 @@ public final class HbmParticleEffects {
         return Blocks.STONE.defaultBlockState();
     }
 
-    private static BlockState sampleLegacyDebrisState(ClientLevel level, double x, double y, double z,
+    private static BlockState[] sampleLegacyDebrisStates(ClientLevel level, double x, double y, double z,
             int debrisSize, int debrisRetry, RandomSource random) {
         int size = Mth.clamp(debrisSize, 1, 32);
-        if (size < 2) {
-            return nearbyBlockState(level, x, y, z);
-        }
+        BlockState[] states = new BlockState[size * size * size];
 
         int centerX = Mth.floor(x + 0.5D);
         int centerY = Mth.floor(y + 0.5D);
         int centerZ = Mth.floor(z + 0.5D);
         int middle = size / 2 - 1;
         boolean[] occupied = new boolean[size * size * size];
-        BlockState selected = null;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
         for (int ix = 0; ix < 2; ix++) {
@@ -1512,8 +1522,9 @@ public final class HbmParticleEffects {
                     int localZ = middle + iz;
                     BlockState state = level.getBlockState(pos.set(centerX + ix, centerY + iy, centerZ + iz));
                     if (!state.isAir()) {
-                        occupied[debrisIndex(size, localX, localY, localZ)] = true;
-                        selected = state;
+                        int index = debrisIndex(size, localX, localY, localZ);
+                        occupied[index] = true;
+                        states[index] = state;
                     }
                 }
             }
@@ -1532,13 +1543,14 @@ public final class HbmParticleEffects {
                 }
                 BlockState state = level.getBlockState(pos.set(centerX + localOffsetX, centerY + localOffsetY, centerZ + localOffsetZ));
                 if (!state.isAir()) {
-                    occupied[debrisIndex(size, localX, localY, localZ)] = true;
-                    selected = state;
+                    int index = debrisIndex(size, localX, localY, localZ);
+                    occupied[index] = true;
+                    states[index] = state;
                 }
             }
         }
 
-        return selected == null ? nearbyBlockState(level, x, y, z) : selected;
+        return states;
     }
 
     private static boolean hasLegacyDebrisNeighbor(boolean[] occupied, int size, int x, int y, int z) {

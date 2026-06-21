@@ -6,6 +6,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidCompressorRecipes;
 import com.hbm.ntm.item.ItemPressStamp;
+import com.hbm.ntm.recipe.AnvilConstructionRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.recipe.HbmItemOutput;
@@ -643,6 +644,138 @@ public final class CompatRecipeRegistry {
                 fluidInput);
     }
 
+    public static JsonObject createCombination(HbmIngredient input, HbmItemOutput outputItem,
+            HbmFluidStack outputFluid) {
+        Objects.requireNonNull(input, "input");
+        requireCombinationOutput(outputItem, outputFluid);
+        JsonObject json = new JsonObject();
+        json.addProperty("type", ModRecipes.COMBINATION_OVEN.serializer().getId().toString());
+        json.add("input", input.toJson());
+        if (outputItem != null) {
+            json.add("output_item", outputItem.toJson());
+        }
+        if (outputFluid != null && !outputFluid.isEmpty()) {
+            json.add("output_fluid", fluid(outputFluid));
+        }
+        return json;
+    }
+
+    public static JsonObject createCombination(HbmIngredient input, ItemStack outputItem,
+            HbmFluidStack outputFluid) {
+        return createCombination(input, itemOutputOrNull(outputItem), outputFluid);
+    }
+
+    public static ResourceLocation registerCombination(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmIngredient input, HbmItemOutput outputItem, HbmFluidStack outputFluid) {
+        return emit(sink, id, createCombination(input, outputItem, outputFluid));
+    }
+
+    public static ResourceLocation registerCombination(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmIngredient input, ItemStack outputItem, HbmFluidStack outputFluid) {
+        return registerCombination(sink, id, input, itemOutputOrNull(outputItem), outputFluid);
+    }
+
+    public static ResourceLocation registerCombination(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient input, HbmItemOutput outputItem, HbmFluidStack outputFluid) {
+        return registerCombination(sink, compatRecipeId("combination_oven", name), input, outputItem, outputFluid);
+    }
+
+    public static ResourceLocation registerCombination(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient input, ItemStack outputItem, HbmFluidStack outputFluid) {
+        return registerCombination(sink, compatRecipeId("combination_oven", name), input, outputItem, outputFluid);
+    }
+
+    public static JsonObject createMixer(HbmFluidStack output, HbmFluidStack input1, HbmFluidStack input2,
+            HbmIngredient solidInput, int duration) {
+        requireFluidOutput(output, "mixer output");
+        JsonObject json = new JsonObject();
+        json.addProperty("type", ModRecipes.MIXER.serializer().getId().toString());
+        json.add("output", fluid(output));
+        if (input1 != null && !input1.isEmpty()) {
+            json.add("input1", fluid(input1));
+        }
+        if (input2 != null && !input2.isEmpty()) {
+            json.add("input2", fluid(input2));
+        }
+        if (solidInput != null) {
+            json.add("solid_input", solidInput.toJson());
+        }
+        if (duration > 0) {
+            json.addProperty("duration", duration);
+        }
+        return json;
+    }
+
+    public static ResourceLocation registerMixer(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmFluidStack output, HbmFluidStack input1, HbmFluidStack input2, HbmIngredient solidInput,
+            int duration) {
+        return emit(sink, id, createMixer(output, input1, input2, solidInput, duration));
+    }
+
+    public static ResourceLocation registerMixer(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmFluidStack output, HbmFluidStack input1, HbmFluidStack input2, HbmIngredient solidInput,
+            int duration) {
+        return registerMixer(sink, compatRecipeId("mixer", name), output, input1, input2, solidInput, duration);
+    }
+
+    public static JsonObject createExposureChamber(HbmIngredient particle, HbmIngredient ingredient,
+            ItemStack output, int sourceOrder) {
+        Objects.requireNonNull(particle, "particle");
+        Objects.requireNonNull(ingredient, "ingredient");
+        requireItemOutput(output, "exposure chamber output");
+        JsonObject json = new JsonObject();
+        json.addProperty("type", ModRecipes.EXPOSURE_CHAMBER.serializer().getId().toString());
+        json.add("particle", particle.toJson());
+        json.add("ingredient", ingredient.toJson());
+        json.add("output", HbmItemOutput.of(output).toJson());
+        if (sourceOrder >= 0) {
+            json.addProperty("source_order", sourceOrder);
+        }
+        return json;
+    }
+
+    public static ResourceLocation registerExposureChamber(com.hbm.ntm.api.recipe.RecipeSink sink,
+            ResourceLocation id, HbmIngredient particle, HbmIngredient ingredient, ItemStack output,
+            int sourceOrder) {
+        return emit(sink, id, createExposureChamber(particle, ingredient, output, sourceOrder));
+    }
+
+    public static ResourceLocation registerExposureChamber(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient particle, HbmIngredient ingredient, ItemStack output, int sourceOrder) {
+        return registerExposureChamber(sink, compatRecipeId("exposure_chamber", name), particle, ingredient, output,
+                sourceOrder);
+    }
+
+    public static JsonObject createAmmoPress(HbmIngredient[] inputItems, ItemStack output, int sourceOrder) {
+        HbmIngredient[] inputs = inputItems == null ? new HbmIngredient[0] : Arrays.copyOf(inputItems, inputItems.length);
+        if (inputs.length != 9) {
+            throw new IllegalArgumentException("HBM compat ammo press recipe must have exactly 9 input slots");
+        }
+        requireItemOutput(output, "ammo press output");
+        JsonObject json = new JsonObject();
+        json.addProperty("type", ModRecipes.AMMO_PRESS.serializer().getId().toString());
+        JsonArray inputArray = new JsonArray();
+        for (HbmIngredient input : inputs) {
+            inputArray.add(input == null ? null : input.toJson());
+        }
+        json.add("input", inputArray);
+        json.add("output", HbmItemOutput.of(output).toJson());
+        if (sourceOrder >= 0) {
+            json.addProperty("source_order", sourceOrder);
+        }
+        return json;
+    }
+
+    public static ResourceLocation registerAmmoPress(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmIngredient[] inputItems, ItemStack output, int sourceOrder) {
+        return emit(sink, id, createAmmoPress(inputItems, output, sourceOrder));
+    }
+
+    public static ResourceLocation registerAmmoPress(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient[] inputItems, ItemStack output, int sourceOrder) {
+        return registerAmmoPress(sink, compatRecipeId("ammo_press", name), inputItems, output, sourceOrder);
+    }
+
     public static JsonObject createOutgasser(HbmIngredient input, ItemStack solidOutput, HbmFluidStack fluidOutput,
             boolean fusionOnly) {
         requireOutgasserEndpoints(input, solidOutput, fluidOutput);
@@ -807,6 +940,55 @@ public final class CompatRecipeRegistry {
         return registerArcWelder(sink, id, name, output, duration, power, inputFluid, ingredients(inputItems));
     }
 
+    public static JsonObject createArcFurnace(String name, ItemStack output, int duration, long power,
+            HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
+        return createArcFurnace(compatRecipeId("arc_furnace", name), name, output, duration, power, inputFluid,
+                inputItems);
+    }
+
+    public static JsonObject createArcFurnace(ResourceLocation id, String name, ItemStack output, int duration,
+            long power, HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
+        return createGeneric(GenericMachineRecipe.Machine.ARC_FURNACE, id, name, false, output, duration, power,
+                list(inputItems), singleFluid(inputFluid), itemOutputList(output), List.of());
+    }
+
+    public static JsonObject createArcFurnace(String name, HbmItemOutput output, int duration, long power,
+            HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
+        return createArcFurnace(compatRecipeId("arc_furnace", name), name, output, duration, power, inputFluid,
+                inputItems);
+    }
+
+    public static JsonObject createArcFurnace(ResourceLocation id, String name, HbmItemOutput output, int duration,
+            long power, HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
+        requireItemOutput(output, "arc furnace output");
+        return createGeneric(GenericMachineRecipe.Machine.ARC_FURNACE, id, name, false, output.representativeStack(),
+                duration, power, list(inputItems), singleFluid(inputFluid), outputList(output), List.of());
+    }
+
+    public static ResourceLocation registerArcFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            String name, ItemStack output, int duration, long power, HbmFluidStack inputFluid,
+            HbmIngredient[] inputItems) {
+        return emit(sink, id, createArcFurnace(id, name, output, duration, power, inputFluid, inputItems));
+    }
+
+    public static ResourceLocation registerArcFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            String name, HbmItemOutput output, int duration, long power, HbmFluidStack inputFluid,
+            HbmIngredient[] inputItems) {
+        return emit(sink, id, createArcFurnace(id, name, output, duration, power, inputFluid, inputItems));
+    }
+
+    public static ResourceLocation registerArcFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemStack output, int duration, long power, HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
+        return registerArcFurnace(sink, compatRecipeId("arc_furnace", name), name, output, duration, power,
+                inputFluid, inputItems);
+    }
+
+    public static ResourceLocation registerArcFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmItemOutput output, int duration, long power, HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
+        return registerArcFurnace(sink, compatRecipeId("arc_furnace", name), name, output, duration, power,
+                inputFluid, inputItems);
+    }
+
     public static JsonObject createGeneric(GenericMachineRecipe.Machine machine, ResourceLocation id, String name,
             boolean named, ItemStack icon, int duration, long power, List<HbmIngredient> inputItems,
             List<HbmFluidStack> inputFluids, List<HbmItemOutput> outputItems, List<HbmFluidStack> outputFluids) {
@@ -876,6 +1058,60 @@ public final class CompatRecipeRegistry {
             HbmFluidStack[] outputFluids) {
         return registerGeneric(sink, compatRecipeId(genericMachineFolder(machine), name), machine, name, named, icon,
                 duration, power, inputItems, inputFluids, outputItems, outputFluids);
+    }
+
+    public static JsonObject createAnvilConstruction(List<HbmIngredient> inputs, List<HbmItemOutput> outputs,
+            int tierLower, int tierUpper, AnvilConstructionRecipe.OverlayType overlay) {
+        List<HbmIngredient> safeInputs = list(inputs);
+        List<HbmItemOutput> safeOutputs = outputList(outputs);
+        if (safeInputs.isEmpty()) {
+            throw new IllegalArgumentException("HBM compat anvil construction recipe must have at least one input");
+        }
+        if (safeOutputs.isEmpty()) {
+            throw new IllegalArgumentException("HBM compat anvil construction recipe must have at least one output");
+        }
+        JsonObject json = new JsonObject();
+        json.addProperty("type", ModRecipes.ANVIL_CONSTRUCTION.serializer().getId().toString());
+        json.add("inputs", itemInputs(safeInputs));
+        json.add("outputs", itemOutputs(safeOutputs));
+        json.addProperty("tier_lower", Math.max(0, tierLower));
+        if (tierUpper >= 0) {
+            json.addProperty("tier_upper", Math.max(Math.max(0, tierLower), tierUpper));
+        }
+        json.addProperty("overlay", (overlay == null ? AnvilConstructionRecipe.OverlayType.NONE : overlay)
+                .name().toLowerCase(Locale.ROOT));
+        return json;
+    }
+
+    public static JsonObject createAnvilConstruction(HbmIngredient[] inputs, HbmItemOutput[] outputs,
+            int tierLower, int tierUpper, AnvilConstructionRecipe.OverlayType overlay) {
+        return createAnvilConstruction(list(inputs), outputList(outputs), tierLower, tierUpper, overlay);
+    }
+
+    public static ResourceLocation registerAnvilConstruction(com.hbm.ntm.api.recipe.RecipeSink sink,
+            ResourceLocation id, List<HbmIngredient> inputs, List<HbmItemOutput> outputs, int tierLower,
+            int tierUpper, AnvilConstructionRecipe.OverlayType overlay) {
+        return emit(sink, id, createAnvilConstruction(inputs, outputs, tierLower, tierUpper, overlay));
+    }
+
+    public static ResourceLocation registerAnvilConstruction(com.hbm.ntm.api.recipe.RecipeSink sink,
+            ResourceLocation id, HbmIngredient[] inputs, HbmItemOutput[] outputs, int tierLower, int tierUpper,
+            AnvilConstructionRecipe.OverlayType overlay) {
+        return registerAnvilConstruction(sink, id, list(inputs), outputList(outputs), tierLower, tierUpper, overlay);
+    }
+
+    public static ResourceLocation registerAnvilConstruction(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            List<HbmIngredient> inputs, List<HbmItemOutput> outputs, int tierLower, int tierUpper,
+            AnvilConstructionRecipe.OverlayType overlay) {
+        return registerAnvilConstruction(sink, compatRecipeId("anvil_construction", name), inputs, outputs, tierLower,
+                tierUpper, overlay);
+    }
+
+    public static ResourceLocation registerAnvilConstruction(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient[] inputs, HbmItemOutput[] outputs, int tierLower, int tierUpper,
+            AnvilConstructionRecipe.OverlayType overlay) {
+        return registerAnvilConstruction(sink, compatRecipeId("anvil_construction", name), inputs, outputs, tierLower,
+                tierUpper, overlay);
     }
 
     public static Diagnostics diagnostics() {
@@ -955,7 +1191,7 @@ public final class CompatRecipeRegistry {
                 supported("registerGeneric", "recipe_sink_register_methods", "generic datapack JSON sink"),
                 supported("registerBlastFurnace", "blast_furnace", "ModRecipes.BLAST_FURNACE"),
                 supported("registerSoldering", "soldering_station", "ModRecipes.SOLDERING_STATION"),
-                deferred("registerCombination", "combination", "modern serializer not yet migrated"),
+                supported("registerCombination", "combination_oven", "ModRecipes.COMBINATION_OVEN"),
                 deferred("registerCrucible", "crucible", "material recipe serializer not yet migrated"),
                 deferred("registerBreeder", "breeder", "reactor recipe serializer not yet migrated"),
                 deferred("registerCyclotron", "cyclotron", "particle recipe serializer not yet migrated"),
@@ -966,13 +1202,16 @@ public final class CompatRecipeRegistry {
                 deferred("registerElectrolyzerMetal", "electrolyzer_metal", "material recipe serializer not yet migrated"),
                 supported("registerArcWelder", "arc_welder", "GenericMachineRecipe.Machine.ARC_WELDER"),
                 deferred("registerRotaryFurnace", "rotary_furnace", "material recipe serializer not yet migrated"),
-                deferred("registerExposureChamber", "exposure_chamber", "modern serializer not yet migrated"),
+                supported("registerExposureChamber", "exposure_chamber", "ModRecipes.EXPOSURE_CHAMBER"),
+                supported("registerMixer", "mixer", "ModRecipes.MIXER"),
                 deferred("registerFusionReactor", "fusion_reactor", "fusion recipe model not yet migrated"),
                 deferred("registerParticleAccelerator", "particle_accelerator", "particle recipe model not yet migrated"),
-                deferred("registerAmmoPress", "ammo_press", "modern serializer not yet migrated"),
-                deferred("registerAnvilConstruction", "anvil_construction", "modern anvil recipe model not yet migrated"),
+                supported("registerAmmoPress", "ammo_press", "ModRecipes.AMMO_PRESS"),
+                supported("registerAnvilConstruction", "anvil_construction",
+                        "ModRecipes.ANVIL_CONSTRUCTION JSON sink plus runtime helper; visible menu still separate"),
                 deferred("registerPedestal", "pedestal", "modern pedestal recipe model not yet migrated"),
-                deferred("registerArcFurnace", "arc_furnace", "modern serializer not yet migrated"));
+                supported("registerArcFurnace", "arc_furnace",
+                        "ModRecipes.ARC_FURNACE solid datapack recipes; legacy liquid/material outputs still deferred"));
     }
 
     private static RecipeFacadeStatus supported(String legacyMethod, String modernFacade, String note) {
@@ -1078,6 +1317,12 @@ public final class CompatRecipeRegistry {
         }
     }
 
+    private static void requireCombinationOutput(HbmItemOutput outputItem, HbmFluidStack outputFluid) {
+        if (outputItem == null && (outputFluid == null || outputFluid.isEmpty())) {
+            throw new IllegalArgumentException("HBM compat combination oven recipe must have an item or fluid output");
+        }
+    }
+
     private static void requirePyroEndpoints(HbmIngredient inputItem, HbmFluidStack inputFluid,
             HbmItemOutput outputItem, HbmFluidStack outputFluid) {
         if (inputItem == null && (inputFluid == null || inputFluid.isEmpty())) {
@@ -1137,6 +1382,9 @@ public final class CompatRecipeRegistry {
             case PUREX -> "purex";
             case PRECASS -> "precass";
             case ARC_WELDER -> "arc_welder";
+            case ARC_FURNACE -> "arc_furnace";
+            case FUSION_REACTOR -> "fusion_reactor";
+            case PLASMA_FORGE -> "plasma_forge";
         };
     }
 
@@ -1168,6 +1416,15 @@ public final class CompatRecipeRegistry {
                 .toList();
     }
 
+    private static List<HbmItemOutput> outputList(List<HbmItemOutput> outputs) {
+        if (outputs == null || outputs.isEmpty()) {
+            return List.of();
+        }
+        return outputs.stream()
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
     private static HbmIngredient[] ingredients(ItemLike[] inputs) {
         if (inputs == null || inputs.length == 0) {
             return new HbmIngredient[0];
@@ -1184,6 +1441,15 @@ public final class CompatRecipeRegistry {
         }
         return Arrays.stream(array)
                 .filter(entry -> entry != null)
+                .toList();
+    }
+
+    private static <T> List<T> list(List<T> entries) {
+        if (entries == null || entries.isEmpty()) {
+            return List.of();
+        }
+        return entries.stream()
+                .filter(Objects::nonNull)
                 .toList();
     }
 

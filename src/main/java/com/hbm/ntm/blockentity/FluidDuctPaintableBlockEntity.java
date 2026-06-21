@@ -1,10 +1,14 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.registry.ModBlockEntities;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -51,6 +55,25 @@ public class FluidDuctPaintableBlockEntity extends FluidPipeBlockEntity implemen
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
+    }
+
+    @Override
+    public CompoundTag getFluidSettings() {
+        return addPaintSettings(super.getFluidSettings());
+    }
+
+    @Override
+    public boolean pasteFluidSettings(CompoundTag tag, int index, @Nullable Player player, boolean recursive) {
+        boolean fluidChanged = super.pasteFluidSettings(tag, index, player, recursive);
+        boolean paintChanged = pastePaintSettings(tag);
+        return fluidChanged || paintChanged;
+    }
+
+    @Override
+    public List<Component> fluidSettingsDisplayInfo() {
+        List<Component> lines = new ArrayList<>(super.fluidSettingsDisplayInfo());
+        lines.addAll(paintSettingsDisplayInfo());
+        return lines;
     }
 
     @Override

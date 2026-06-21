@@ -1,5 +1,6 @@
 package com.hbm.ntm.entity.missile;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.entity.LegacyMissileRadarDetectable;
 import com.hbm.ntm.api.entity.LegacyMissileRadarProfile;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
@@ -29,17 +30,20 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.world.ForgeChunkManager;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.registries.RegistryObject;
@@ -70,6 +74,7 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
     private double velocityX;
     private double velocityY;
     private double velocityZ;
+    private long forcedChunk = Long.MIN_VALUE;
 
     public MissileEntity(EntityType<? extends MissileEntity> type, Level level) {
         super(type, level);
@@ -97,6 +102,12 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         setYRot((float) (Mth.atan2(targetX - startX, targetZ - startZ) * Mth.RAD_TO_DEG));
         yRotO = getYRot();
         xRotO = getXRot();
+        forceCurrentChunk();
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return true;
     }
 
     @Override
@@ -111,6 +122,7 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         }
 
         Vec3 motion = getDeltaMovement();
+        forceCurrentChunk();
         HitResult hit = traceNextBlockHit();
         if (hit.getType() != HitResult.Type.MISS) {
             setPos(hit.getLocation().x, hit.getLocation().y, hit.getLocation().z);
@@ -319,7 +331,7 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
 
     private void spawnClusterSubmunitions(int count) {
         ExplosionChaos.cluster(level(), getX(), getY(), getZ(), count,
-                getYRot() * Mth.DEG_TO_RAD, getXRot() * Mth.DEG_TO_RAD,
+                getYRot(), getXRot(),
                 (float) Math.PI * 0.25F, (float) Math.PI * 0.25F, 1.0F, this);
     }
 
@@ -344,6 +356,20 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
                     variant().debris(), variant().rareDebrisDrop());
             discard();
         }
+    }
+
+    public void loadNeighboringChunks(int newChunkX, int newChunkZ) {
+        forceChunk(newChunkX, newChunkZ);
+    }
+
+    public void clearChunkLoader() {
+        clearForcedChunk();
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        clearForcedChunk();
+        super.remove(reason);
     }
 
     protected void spawnContrail() {
@@ -371,7 +397,7 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
     }
 
     protected float contrailScale() {
-        return 1.0F;
+        return variant().formFactor() == MissileItem.FormFactor.MICRO ? 0.5F : 1.0F;
     }
 
     private Vec3 legacyThrustVector() {
@@ -540,6 +566,35 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         } else {
             setPos(getX(), getY(), getZ());
         }
+    }
+
+    private void forceCurrentChunk() {
+        ChunkPos chunk = chunkPosition();
+        forceChunk(chunk.x, chunk.z);
+    }
+
+    private void forceChunk(int chunkX, int chunkZ) {
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        ChunkPos chunk = new ChunkPos(chunkX, chunkZ);
+        long packed = chunk.toLong();
+        if (forcedChunk == packed) {
+            return;
+        }
+        clearForcedChunk();
+        ForgeChunkManager.forceChunk(serverLevel, HbmNtm.MOD_ID, this, chunk.x, chunk.z, true, true);
+        forcedChunk = packed;
+    }
+
+    private void clearForcedChunk() {
+        if (forcedChunk == Long.MIN_VALUE || !(level() instanceof ServerLevel serverLevel)) {
+            forcedChunk = Long.MIN_VALUE;
+            return;
+        }
+        ChunkPos chunk = new ChunkPos(forcedChunk);
+        ForgeChunkManager.forceChunk(serverLevel, HbmNtm.MOD_ID, this, chunk.x, chunk.z, false, true);
+        forcedChunk = Long.MIN_VALUE;
     }
 
     public enum Variant {

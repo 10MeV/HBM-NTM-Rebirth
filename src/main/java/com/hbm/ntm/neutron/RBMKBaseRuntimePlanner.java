@@ -82,6 +82,10 @@ public final class RBMKBaseRuntimePlanner {
         return List.copyOf(positions);
     }
 
+    public static List<Direction> neighborDirections() {
+        return List.of(LEGACY_NEIGHBOR_DIRECTIONS);
+    }
+
     public static NeighborCachePlan planNeighborCacheRefresh(
             BlockPos origin,
             List<Boolean> cachedPresent,

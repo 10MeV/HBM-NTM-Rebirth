@@ -12,6 +12,7 @@ import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.util.HbmBlockStateUtil;
+import com.hbm.ntm.util.AchievementHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
@@ -52,13 +53,13 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         }
 
         if (radius == 0) {
-            radius = BombConfig.nukaRadius();
+            radius = BombConfig.NUKA_RADIUS_DEFAULT;
         }
 
         int strength = radius * 2;
-        NukeExplosionMk5Entity entity = new NukeExplosionMk5Entity(level, strength, Math.max(1, 100000 / strength),
-                strength / 2);
+        NukeExplosionMk5Entity entity = new NukeExplosionMk5Entity(level, strength, 100000 / strength, strength / 2);
         entity.setPos(x, y, z);
+        entity.loadChunk((int) Math.floor(x / 16.0D), (int) Math.floor(z / 16.0D));
         return entity;
     }
 
@@ -92,6 +93,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         }
 
         forceCenterChunk();
+        AchievementHandler.fireManhattan(level());
 
         if (fallout && explosion != null && tickCount < 10 && strength >= 75) {
             radiate(2_500_000.0F / (tickCount * 5 + 1), length * 2.0D);
@@ -137,7 +139,10 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
             float resistance = 0.0F;
             for (int i = 1; i < distance; i++) {
                 BlockPos sample = BlockPos.containing(origin.add(direction.scale(i)));
-                resistance += HbmBlockStateUtil.explosionResistance(level().getBlockState(sample), level(), sample);
+                if (level().isOutsideBuildHeight(sample)) {
+                    continue;
+                }
+                resistance += HbmBlockStateUtil.explosionResistance(level().getBlockState(sample));
             }
             if (resistance < 1.0F) {
                 resistance = 1.0F;

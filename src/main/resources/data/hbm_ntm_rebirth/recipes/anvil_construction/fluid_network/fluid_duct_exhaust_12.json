@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "tag": "forge:plates/iron" },
+      "count": 1,
+      "legacy_ore": "plateIron"
+    },
+    { "ingredient": { "item": "hbm_ntm_rebirth:plate_polymer" }, "count": 1 }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:fluid_duct_exhaust",
+    "count": 8,
+    "nbt": "{hbmLegacyVariant:12}"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

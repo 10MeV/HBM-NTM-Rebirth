@@ -2,6 +2,7 @@
   "loader": "forge:obj",
   "model": "hbm_ntm_rebirth:models/block/fusion/fusion_plasma_forge.obj",
   "flip_v": true,
+  "automatic_culling": false,
   "render_type": "minecraft:translucent",
   "parts": { "visibility": {
       "Plasma": true,

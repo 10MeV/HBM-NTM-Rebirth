@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "key": {
+    "#": { "tag": "forge:ingots/any_plastic" },
+    "A": { "tag": "forge:plates/lead" },
+    "B": { "tag": "forge:circuits/advanced" },
+    "C": { "item": "hbm_ntm_rebirth:designator" }
+  },
+  "pattern": [
+    "  A",
+    "#C#",
+    "#B#"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:designator_manual"
+  },
+  "show_notification": true
+}

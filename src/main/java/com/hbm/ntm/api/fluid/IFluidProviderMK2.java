@@ -21,6 +21,6 @@ public interface IFluidProviderMK2 extends IFluidUserMK2, HbmFluidProvider {
 
     @Override
     default int[] getProvidingPressureRange(FluidType type) {
-        return DEFAULT_PRESSURE_RANGE;
+        return IFluidUserMK2.DEFAULT_PRESSURE_RANGE;
     }
 }

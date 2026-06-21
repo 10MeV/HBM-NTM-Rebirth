@@ -46,13 +46,9 @@ public class LargeExplodeParticle extends TextureSheetParticle {
             this.quadSize = LEGACY_MUZZLE_PRIMARY_SCALE * scale;
             this.setPrimarySprite(0.0F);
         } else {
-            this.gravity = -0.1F;
-            this.friction = 0.9F;
-            this.xd += (this.random.nextDouble() * 2.0D - 1.0D) * 0.05D;
-            this.yd += (this.random.nextDouble() * 2.0D - 1.0D) * 0.05D;
-            this.zd += (this.random.nextDouble() * 2.0D - 1.0D) * 0.05D;
-            this.quadSize = 0.1F * scale * (this.random.nextFloat() * this.random.nextFloat() * 6.0F + 1.0F);
-            this.lifetime = (int) (16.0D / (this.random.nextDouble() * 0.8D + 0.2D)) + 2;
+            this.hasPhysics = false;
+            this.lifetime = 6 + this.random.nextInt(4);
+            this.quadSize = 0.75F * scale;
             this.setSecondarySprite();
         }
     }

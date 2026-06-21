@@ -1,5 +1,6 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.HazardType;
@@ -24,7 +25,7 @@ public class LegacyGasRadonBlock extends LegacyGasBlock {
     private final Kind kind;
 
     public LegacyGasRadonBlock(Properties properties, Kind kind) {
-        super(properties);
+        super(properties, kind.red, kind.green, kind.blue);
         this.kind = kind;
     }
 
@@ -41,16 +42,16 @@ public class LegacyGasRadonBlock extends LegacyGasBlock {
             HbmLivingProperties.incrementAsbestos(living, 10);
             return;
         }
-        if (ArmorUtil.hasFineParticleProtectionAndDamageFilter(living, 1)) {
+        if (ArmorUtil.hasAllProtectionAndDamageFilter(living, 3, 1, HazardClass.PARTICLE_FINE)) {
             return;
         }
         if (kind == Kind.DENSE) {
             RadiationUtil.contaminate(living, HazardType.RADIATION, ContaminationType.CREATIVE, 0.5F);
             RadiationUtil.addRadiationPoisoning(living, 15 * 20, 0);
-            RadiationUtil.applyAsbestos(living, 5, 1);
+            RadiationUtil.applyAsbestosGasExposure(living, 5);
         } else {
             RadiationUtil.contaminate(living, HazardType.RADIATION, ContaminationType.RAD_BYPASS, 0.05F);
-            RadiationUtil.applyAsbestos(living, 1, 1);
+            RadiationUtil.applyAsbestosGasExposure(living, 1);
         }
     }
 
@@ -113,9 +114,19 @@ public class LegacyGasRadonBlock extends LegacyGasBlock {
     }
 
     public enum Kind {
-        NORMAL,
-        DENSE,
-        TOMB
+        NORMAL(0.1F, 0.8F, 0.1F),
+        DENSE(0.1F, 0.5F, 0.1F),
+        TOMB(0.1F, 0.3F, 0.1F);
+
+        private final float red;
+        private final float green;
+        private final float blue;
+
+        Kind(float red, float green, float blue) {
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+        }
     }
 }
 

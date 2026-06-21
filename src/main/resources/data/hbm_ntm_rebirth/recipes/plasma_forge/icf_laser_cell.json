@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 800,
+  "ignitionTemp": 1000000,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 2, "ingredient": { "item": "hbm_ntm_rebirth:ingot_cft" } },
+    { "count": 4, "ingredient": { "tag": "forge:cast_plates/any_bismoid_bronze" }, "legacy_ore": "plateCastAnyBismoidBronze" },
+    { "count": 16, "ingredient": { "item": "hbm_ntm_rebirth:glass_quartz" } }
+  ],
+  "internal_name": "plsm.icfcell",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:icf_laser_cell" }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 119
+}

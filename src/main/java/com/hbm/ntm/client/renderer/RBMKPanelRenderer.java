@@ -24,7 +24,7 @@ public class RBMKPanelRenderer implements BlockEntityRenderer<RBMKPanelBlockEnti
         BlockState state = panel.getBlockState();
         Direction facing = state.hasProperty(RBMKPanelBlock.FACING)
                 ? state.getValue(RBMKPanelBlock.FACING) : Direction.NORTH;
-        int light = LegacyRenderLighting.resolveBlockEntityLight(panel, packedLight);
+        int light = LegacyRenderLighting.resolveMultiblockLight(panel, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);

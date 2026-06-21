@@ -2,6 +2,8 @@ package com.hbm.ntm.particle;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -20,6 +22,12 @@ public final class ClientParticleBridge {
     public static boolean isLocalPlayerWithin(double x, double y, double z, double range) {
         return DistExecutor.unsafeRunForDist(
                 () -> () -> com.hbm.ntm.client.particle.HbmParticleEffects.isLocalPlayerWithin(x, y, z, range),
+                () -> () -> false);
+    }
+
+    public static boolean isLocalPlayerWearing(Item item, EquipmentSlot slot) {
+        return DistExecutor.unsafeRunForDist(
+                () -> () -> com.hbm.ntm.client.particle.HbmParticleEffects.isLocalPlayerWearing(item, slot),
                 () -> () -> false);
     }
 

@@ -65,6 +65,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyForgeTag("foods/glyphid_meat", "glyphid_meat", "glyphid_meat_grilled");
         addLegacyForgeTag("tools/screwdrivers", "screwdriver");
         addLegacyForgeTag("tools/hand_drills", "hand_drill");
+        addLegacyForgeTag("rods/wooden", Items.STICK);
         addLegacyForgeTag("sand", net.minecraft.world.level.block.Blocks.SAND.asItem(), net.minecraft.world.level.block.Blocks.RED_SAND.asItem());
         addLegacyGlassPaneTags();
         addLegacyMaterialTags();
@@ -122,12 +123,19 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
     private void addLegacyDyeTags() {
         addLegacyForgeTag("dyes", "cinnebar", "sulfur", "powder_coal", "powder_lignite", "powder_titanium",
                 "fluorite", "powder_cadmium");
+        addLegacyForgeTag("dyes/black", Items.BLACK_DYE);
+        addLegacyForgeTag("dyes/blue", Items.BLUE_DYE);
         addLegacyForgeTag("dyes/red", "cinnebar");
+        addLegacyForgeTag("dyes/green", Items.GREEN_DYE);
+        addLegacyForgeTag("dyes/gray", Items.GRAY_DYE);
         addLegacyForgeTag("dyes/yellow", "sulfur");
+        addLegacyForgeTag("dyes/yellow", Items.YELLOW_DYE);
         addLegacyForgeTag("dyes/black", "powder_coal");
         addLegacyForgeTag("dyes/brown", "powder_lignite");
         addLegacyForgeTag("dyes/light_gray", "powder_titanium");
+        addLegacyForgeTag("dyes/light_gray", Items.LIGHT_GRAY_DYE);
         addLegacyForgeTag("dyes/white", "fluorite");
+        addLegacyForgeTag("dyes/white", Items.WHITE_DYE);
         addLegacyForgeTag("dyes/orange", "powder_cadmium");
     }
 
@@ -285,6 +293,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("dust", "dusts", "powder_niobium", "Niobium");
         addLegacyMaterialAliases("dust", "dusts", "powder_asbestos", "Asbestos");
         addLegacyMaterialAliases("dust", "dusts", "powder_ferrouranium", "Ferrouranium");
+        addLegacyMaterialAliases("dust", "dusts", "powder_iodine", "Iodine");
         addLegacyMaterialAliases("dust", "dusts", "powder_strontium", "Strontium");
         addLegacyMaterialAliases("dust", "dusts", "powder_polonium", "Polonium210", "Po210", "Polonium");
         addLegacyMaterialAliases("dust", "dusts", "powder_co60", "Cobalt60", "Co60");
@@ -468,6 +477,9 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("wireFine", "wires", "wire_fine_mingrade", "Mingrade");
         addLegacyMaterialAliases("wireFine", "wires", "wire_fine_tungsten", "Tungsten");
         addLegacyMaterialAliases("wireFine", "wires", "wire_fine_schrabidium", "Schrabidium");
+        addLegacyMaterialAliases("wireFine", "wires", "wire_fine_magnetized_tungsten", "MagnetizedTungsten");
+        addLegacyMaterialAliases("wireFine", "wires", "wire_fine_lead", "Lead");
+        addLegacyMaterialAliases("wireFine", "wires", "wire_fine_zirconium", "Zirconium");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_gold", "Gold");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_copper", "Copper");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_titanium", "Titanium");
@@ -480,6 +492,8 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_rubber", "Rubber");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_dura_steel", "DuraSteel");
 
+        addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_iron", "Iron");
+        addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_iron", "Iron");
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_steel", "Steel");
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_steel", "Steel");
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_lead", "Lead");

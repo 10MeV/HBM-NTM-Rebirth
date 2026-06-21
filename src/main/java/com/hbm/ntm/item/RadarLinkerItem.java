@@ -17,13 +17,18 @@ public class RadarLinkerItem extends ItemCoordinateBase {
 
     @Override
     public boolean canGrabCoordinateHere(Level level, BlockPos pos) {
-        BlockEntity target = MultiblockHelper.resolveCoreBlockEntity(level, pos);
+        BlockEntity target = level.isClientSide
+                ? MultiblockHelper.resolveCoreBlockEntity(level, pos)
+                : MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
         return target instanceof RadarCommandReceiver || target instanceof RadarScreenBlockEntity;
     }
 
     @Override
     public BlockPos getCoordinates(Level level, BlockPos pos) {
-        return MultiblockHelper.resolveCorePos(level, pos);
+        BlockEntity target = level.isClientSide
+                ? MultiblockHelper.resolveCoreBlockEntity(level, pos)
+                : MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
+        return target == null ? pos : target.getBlockPos();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.hbm.ntm.config;
 
 import com.hbm.ntm.registry.ModEffects;
+import java.util.ArrayList;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.ForgeConfigSpec;
@@ -34,11 +35,17 @@ public final class PotionConfig {
             return;
         }
         int multiplier = mode == PotionSicknessMode.TERRARIA ? 12 : 1;
-        entity.addEffect(new MobEffectInstance(ModEffects.POTION_SICKNESS.get(), durationSeconds * multiplier * 20, 0, false, true));
+        entity.addEffect(createPotionSicknessEffect(durationSeconds * multiplier * 20));
     }
 
     public static boolean hasPotionSickness(LivingEntity entity) {
         return entity != null && entity.hasEffect(ModEffects.POTION_SICKNESS.get());
+    }
+
+    public static MobEffectInstance createPotionSicknessEffect(int durationTicks) {
+        MobEffectInstance effect = new MobEffectInstance(ModEffects.POTION_SICKNESS.get(), durationTicks, 0, false, true);
+        effect.setCurativeItems(new ArrayList<>());
+        return effect;
     }
 
     public enum PotionSicknessMode {

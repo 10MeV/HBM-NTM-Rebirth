@@ -58,7 +58,7 @@ public class LegacyDetCordBlock extends Block implements ChainExplodable, DetCon
     @Override
     public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
             LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
-        return state.setValue(propertyFor(direction), canConnect(level, neighborPos, neighborState, direction.getOpposite()));
+        return updateConnections(level, pos, state);
     }
 
     @Override
@@ -75,7 +75,8 @@ public class LegacyDetCordBlock extends Block implements ChainExplodable, DetCon
         level.removeBlock(pos, false);
         if (!level.isClientSide) {
             level.addFreshEntity(LegacyPrimedExplosiveEntity.create(level,
-                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, 0, false));
+                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, 0, false,
+                    explosion.getIndirectSourceEntity()));
         }
     }
 
@@ -119,10 +120,26 @@ public class LegacyDetCordBlock extends Block implements ChainExplodable, DetCon
     }
 
     private BlockState updateConnections(BlockGetter level, BlockPos pos, BlockState state) {
+        BlockState updated = state;
         for (Direction direction : Direction.values()) {
             BlockPos neighborPos = pos.relative(direction);
-            state = state.setValue(propertyFor(direction),
+            updated = updated.setValue(propertyFor(direction),
                     canConnect(level, neighborPos, level.getBlockState(neighborPos), direction.getOpposite()));
+        }
+        return normalizeLegacyStraightVisual(updated);
+    }
+
+    private static BlockState normalizeLegacyStraightVisual(BlockState state) {
+        Direction single = null;
+        int connections = 0;
+        for (Direction direction : Direction.values()) {
+            if (state.getValue(propertyFor(direction))) {
+                single = direction;
+                connections++;
+            }
+        }
+        if (connections == 1) {
+            return state.setValue(propertyFor(single.getOpposite()), true);
         }
         return state;
     }

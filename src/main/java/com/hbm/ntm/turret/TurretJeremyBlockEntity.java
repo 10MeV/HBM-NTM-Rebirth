@@ -82,11 +82,11 @@ public class TurretJeremyBlockEntity extends TurretBlockEntityBase {
         if (!spawnBullet(config, 50.0F)) {
             return;
         }
-        consumeAmmo(config);
-        spawnMuzzleLargeExplode(0.0F, 5);
         scheduleCasing(config);
+        consumeAmmo(config);
         playTurretSound("hbm:turret.jeremy_fire", 4.0F, 1.0F);
         reload = 20;
+        spawnMuzzleLargeExplode(0.0F, 5);
     }
 
     @Override

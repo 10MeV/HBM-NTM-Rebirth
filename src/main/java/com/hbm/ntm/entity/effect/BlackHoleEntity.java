@@ -2,6 +2,7 @@ package com.hbm.ntm.entity.effect;
 
 import com.hbm.ntm.entity.projectile.RubbleEntity;
 import com.hbm.ntm.damage.EntityDamageUtil;
+import com.hbm.ntm.explosion.LegacyExplosionFluidCleanup;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModItems;
@@ -22,7 +23,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -89,9 +89,12 @@ public class BlackHoleEntity extends Entity {
                 cursor.set(Mth.floor(getX() + direction.x * i),
                         Mth.floor(getY() + direction.y * i),
                         Mth.floor(getZ() + direction.z * i));
+                if (serverLevel.isOutsideBuildHeight(cursor)) {
+                    continue;
+                }
                 BlockState state = serverLevel.getBlockState(cursor);
-                if (state.getFluidState().getType() != Fluids.EMPTY) {
-                    serverLevel.setBlock(cursor, Blocks.AIR.defaultBlockState(), 3);
+                if (LegacyExplosionFluidCleanup.isLegacyLiquidBlock(state)) {
+                    LegacyExplosionFluidCleanup.clearLegacyLiquidNeighborhood(serverLevel, cursor, 3);
                     continue;
                 }
                 if (state.isAir() || state.getDestroySpeed(serverLevel, cursor) < 0.0F) {

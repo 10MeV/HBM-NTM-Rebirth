@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/boxduct_copper_junction_1"
+  }
+}

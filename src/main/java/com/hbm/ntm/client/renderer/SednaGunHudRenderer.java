@@ -49,7 +49,7 @@ public final class SednaGunHudRenderer {
                 + (noCounter ? 14 : 0);
         int y = screenHeight - component.bottomOffset() - 18;
         if (!noCounter) {
-            graphics.drawString(Minecraft.getInstance().font, component.ammoText(), x + 17, y + 6, 0xFFFFFF, false);
+            graphics.drawString(Minecraft.getInstance().font, component.ammoText(), x + 16, y + 6, 0xFFFFFF, false);
         }
         if (!component.ammoIcon().isEmpty()) {
             graphics.renderItem(component.ammoIcon(), x, y);

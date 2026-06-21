@@ -19,6 +19,7 @@ import java.util.HashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -85,6 +86,16 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
     }
 
     @Override
+    public CompoundTag getFluidSettings() {
+        return HbmFluidCopiable.super.getFluidSettings();
+    }
+
+    @Override
+    public List<Component> fluidSettingsDisplayInfo() {
+        return HbmFluidCopiable.super.fluidSettingsDisplayInfo();
+    }
+
+    @Override
     public boolean pasteFluidSettings(CompoundTag tag, int index, @Nullable Player player, boolean recursive) {
         if (tag == null || !tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
             return false;
@@ -143,7 +154,7 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
 
     @Override
     public boolean canConnectFluid(FluidType type, Direction side) {
-        return side != null && type != null && type != HbmFluids.NONE && type == this.type;
+        return side != null && type != null && type == this.type;
     }
 
     @Override

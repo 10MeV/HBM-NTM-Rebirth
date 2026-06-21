@@ -1,7 +1,19 @@
 {
   "multipart": [
-    {
-      "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box" }
-    }
+    { "when": { "legacy_metadata": "0" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_0" } },
+    { "when": { "legacy_metadata": "1" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_1" } },
+    { "when": { "legacy_metadata": "2" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_2" } },
+    { "when": { "legacy_metadata": "3" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_3" } },
+    { "when": { "legacy_metadata": "4" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_4" } },
+    { "when": { "legacy_metadata": "5" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_5" } },
+    { "when": { "legacy_metadata": "6" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_6" } },
+    { "when": { "legacy_metadata": "7" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_7" } },
+    { "when": { "legacy_metadata": "8" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_8" } },
+    { "when": { "legacy_metadata": "9" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_9" } },
+    { "when": { "legacy_metadata": "10" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_10" } },
+    { "when": { "legacy_metadata": "11" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_11" } },
+    { "when": { "legacy_metadata": "12" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_12" } },
+    { "when": { "legacy_metadata": "13" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_13" } },
+    { "when": { "legacy_metadata": "14" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_box_14" } }
   ]
 }

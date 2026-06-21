@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "W": {
+      "tag": "forge:dense_wires/magnetized_tungsten"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:plate_dineutronium"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:powder_spark_mix"
+    }
+  },
+  "pattern": [
+    " W ",
+    "DSD",
+    "DSD"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:battery_spark"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:combination_oven",
+  "input": { "ingredient": { "item": "minecraft:glowstone_dust" } },
+  "output_item": { "item": "hbm_ntm_rebirth:sulfur" },
+  "output_fluid": { "fluid": "CHLORINE", "amount": 100 }
+}

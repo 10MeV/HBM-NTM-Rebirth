@@ -14,6 +14,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
 public class MukeCloudParticle extends Particle implements HbmDeferredParticleRenderer.DeferredParticle {
@@ -85,7 +87,7 @@ public class MukeCloudParticle extends Particle implements HbmDeferredParticleRe
 
     @Override
     public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
-        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.texturedDepthWrite(
+        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.texturedNoDepthWrite(
                 this.balefire ? BALEFIRE_TEXTURE : TEXTURE));
         int frame = Mth.clamp((int) ((this.age + partialTick) * 25.0F / Math.max(1, this.lifetime)), 0, 24);
         float uMin = (frame % 5) * FRAME_SIZE;
@@ -97,20 +99,30 @@ public class MukeCloudParticle extends Particle implements HbmDeferredParticleRe
         double y = Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y();
         double z = Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z();
         float scale = this.quadSize;
-        org.joml.Quaternionf rotation = camera.rotation();
-        org.joml.Vector3f[] corners = new org.joml.Vector3f[] {
-                new org.joml.Vector3f(-scale, -scale, 0.0F),
-                new org.joml.Vector3f(-scale, scale, 0.0F),
-                new org.joml.Vector3f(scale, scale, 0.0F),
-                new org.joml.Vector3f(scale, -scale, 0.0F)
-        };
-        for (org.joml.Vector3f corner : corners) {
-            corner.rotate(rotation).add((float) x, (float) y, (float) z);
-        }
-        consumer.vertex(corners[0].x(), corners[0].y(), corners[0].z()).uv(uMax, vMax).color(1.0F, 1.0F, 1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        consumer.vertex(corners[1].x(), corners[1].y(), corners[1].z()).uv(uMax, vMin).color(1.0F, 1.0F, 1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        consumer.vertex(corners[2].x(), corners[2].y(), corners[2].z()).uv(uMin, vMin).color(1.0F, 1.0F, 1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        consumer.vertex(corners[3].x(), corners[3].y(), corners[3].z()).uv(uMin, vMax).color(1.0F, 1.0F, 1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        Quaternionf rotation = camera.rotation();
+        Vector3f right = new Vector3f(1.0F, 0.0F, 0.0F).rotate(rotation).mul(scale);
+        Vector3f up = new Vector3f(0.0F, 1.0F, 0.0F).rotate(rotation).mul(scale);
+        float centerX = (float) x;
+        float centerY = (float) y;
+        float centerZ = (float) z;
+
+        // Legacy ParticleMukeCloud fixes vertical height to +/-scale; only X/Z follow the camera-facing basis.
+        putVertex(consumer, centerX - right.x() - up.x(), centerY - scale,
+                centerZ - right.z() - up.z(), uMax, vMax);
+        putVertex(consumer, centerX - right.x() + up.x(), centerY + scale,
+                centerZ - right.z() + up.z(), uMax, vMin);
+        putVertex(consumer, centerX + right.x() + up.x(), centerY + scale,
+                centerZ + right.z() + up.z(), uMin, vMin);
+        putVertex(consumer, centerX + right.x() - up.x(), centerY - scale,
+                centerZ + right.z() - up.z(), uMin, vMax);
+    }
+
+    private static void putVertex(VertexConsumer consumer, float x, float y, float z, float u, float v) {
+        consumer.vertex(x, y, z)
+                .uv(u, v)
+                .color(1.0F, 1.0F, 1.0F, 1.0F)
+                .uv2(LightTexture.FULL_BRIGHT)
+                .endVertex();
     }
 
     @Override

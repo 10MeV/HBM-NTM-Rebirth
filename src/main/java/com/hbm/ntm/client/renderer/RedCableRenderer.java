@@ -32,7 +32,7 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
     public void render(RedCableBlockEntity cable, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = cable.getBlockState();
-        int light = LegacyRenderLighting.resolveBlockEntityLight(cable, packedLight);
+        int light = LegacyRenderLighting.resolveMultiblockLight(cable, packedLight);
         if (state.getBlock() instanceof RedCableBoxBlock) {
             renderBoxCable(state, poseStack, buffer, light, packedOverlay);
             return;

@@ -87,10 +87,10 @@ public class ToxinFluidTrait extends FluidTrait {
             return label;
         }
 
-        abstract void addInfo(List<Component> info);
+        public abstract void addInfo(List<Component> info);
     }
 
-    public static final class DirectDamage extends ToxinEntry {
+    public static class DirectDamage extends ToxinEntry {
         private final ResourceLocation damageType;
         private final float amount;
         private final int delayTicks;
@@ -115,7 +115,7 @@ public class ToxinFluidTrait extends FluidTrait {
         }
 
         @Override
-        void addInfo(List<Component> info) {
+        public void addInfo(List<Component> info) {
             float dps = delayTicks <= 0 ? amount * 20.0F : amount * 20.0F / delayTicks;
             info.add(Component.literal("- ").withStyle(ChatFormatting.YELLOW)
                     .append(protectionLabel())
@@ -124,7 +124,7 @@ public class ToxinFluidTrait extends FluidTrait {
         }
     }
 
-    public static final class EffectApplication extends ToxinEntry {
+    public static class EffectApplication extends ToxinEntry {
         private final List<EffectSpec> effects = new ArrayList<>();
 
         public EffectApplication(HazardClass hazardClass, boolean fullBodyProtection) {
@@ -141,7 +141,7 @@ public class ToxinFluidTrait extends FluidTrait {
         }
 
         @Override
-        void addInfo(List<Component> info) {
+        public void addInfo(List<Component> info) {
             info.add(Component.literal("- ").withStyle(ChatFormatting.YELLOW)
                     .append(protectionLabel())
                     .append(Component.literal(":").withStyle(ChatFormatting.YELLOW)));

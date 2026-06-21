@@ -25,8 +25,13 @@ public class SolarBoilerBlock extends LegacyVisibleMultiblockMachineBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide || type != ModBlockEntities.SOLAR_BOILER.get()) {
+        if (type != ModBlockEntities.SOLAR_BOILER.get()) {
             return null;
+        }
+        if (level.isClientSide) {
+            return (tickLevel, tickPos, tickState, blockEntity) ->
+                    SolarBoilerBlockEntity.clientTick(tickLevel, tickPos, tickState,
+                            (SolarBoilerBlockEntity) blockEntity);
         }
         return (tickLevel, tickPos, tickState, blockEntity) ->
                 SolarBoilerBlockEntity.serverTick(tickLevel, tickPos, tickState,

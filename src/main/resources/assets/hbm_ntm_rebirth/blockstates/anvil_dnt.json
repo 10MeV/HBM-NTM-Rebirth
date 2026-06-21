@@ -1,0 +1,1 @@
+{"variants":{"facing=north":{"model":"hbm_ntm_rebirth:block/anvil_dnt"},"facing=east":{"model":"hbm_ntm_rebirth:block/anvil_dnt","y":90},"facing=south":{"model":"hbm_ntm_rebirth:block/anvil_dnt","y":180},"facing=west":{"model":"hbm_ntm_rebirth:block/anvil_dnt","y":270}}}

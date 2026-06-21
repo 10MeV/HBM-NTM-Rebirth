@@ -34,6 +34,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -57,13 +58,13 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return 256;
     }
 
     @Override
     public void render(T turret, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        int light = LegacyRenderLighting.resolveBlockEntityLight(turret, packedLight);
+        int light = LegacyRenderLighting.resolveMultiblockLight(turret, packedLight);
 
         poseStack.pushPose();
         Vec3 offset = turret.getRenderHorizontalOffset();
@@ -82,6 +83,9 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
                     barrelRightPos(turret, partialTick), poseStack, buffer, light, packedOverlay);
         } else if (turret instanceof TurretHowardBlockEntity
                 || turret instanceof TurretHowardDamagedBlockEntity) {
+            if (turret instanceof TurretHowardBlockEntity) {
+                renderConnectors(turret, true, false, HbmFluids.NONE, poseStack, buffer, light, packedOverlay);
+            }
             renderHowardPose(turret instanceof TurretHowardDamagedBlockEntity, yawDegrees(turret, partialTick),
                     pitchDegrees(turret, partialTick), spinDegrees(turret, partialTick),
                     poseStack, buffer, light, packedOverlay);
@@ -295,17 +299,17 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
         poseStack.translate(-0.75D, 0.0D, 0.0D);
         renderChekhovPart("Base", damaged ? ObjTurretModels.BASE_RUSTED_TEXTURE : ObjTurretModels.BASE_TEXTURE,
                 poseStack, buffer, light, overlay);
-        LegacyWavefrontModel model = damaged ? ObjTurretModels.HOWARD_DAMAGED : ObjTurretModels.HOWARD;
-        model.renderPart("Carriage", damaged
+        LegacyWavefrontModel bodyModel = damaged ? ObjTurretModels.HOWARD_DAMAGED : ObjTurretModels.HOWARD;
+        ObjTurretModels.HOWARD.renderPart("Carriage", damaged
                 ? ObjTurretModels.CARRIAGE_CIWS_RUSTED_TEXTURE
                 : ObjTurretModels.CARRIAGE_CIWS_TEXTURE, poseStack, buffer, light, overlay);
-        model.renderPart("Body", damaged ? ObjTurretModels.HOWARD_RUSTED_TEXTURE : ObjTurretModels.HOWARD_TEXTURE,
+        bodyModel.renderPart("Body", damaged ? ObjTurretModels.HOWARD_RUSTED_TEXTURE : ObjTurretModels.HOWARD_TEXTURE,
                 poseStack, buffer, light, overlay);
         ResourceLocation barrelsTexture = damaged
                 ? ObjTurretModels.HOWARD_BARRELS_RUSTED_TEXTURE
                 : ObjTurretModels.HOWARD_BARRELS_TEXTURE;
-        model.renderPart("BarrelsTop", barrelsTexture, poseStack, buffer, light, overlay);
-        model.renderPart("BarrelsBottom", barrelsTexture, poseStack, buffer, light, overlay);
+        bodyModel.renderPart("BarrelsTop", barrelsTexture, poseStack, buffer, light, overlay);
+        bodyModel.renderPart("BarrelsBottom", barrelsTexture, poseStack, buffer, light, overlay);
     }
 
     private static void renderSentryItemPose(boolean damaged, PoseStack poseStack,
@@ -465,9 +469,10 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
             poseStack.translate(0.0D, -2.25D, -2.0D);
             ObjTurretModels.HIMARS.renderPart("Launcher", ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, light, overlay);
             ObjTurretModels.HIMARS.renderPart("Crane", ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, light, overlay);
-            ObjTurretModels.HIMARS.renderPart("TubeStandard", ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, light, overlay);
+            ObjTurretModels.HIMARS.renderPart("TubeStandard", ObjProjectileModels.HIMARS_STANDARD_TEXTURE,
+                    poseStack, buffer, light, overlay);
             for (int cap = 1; cap <= 6; cap++) {
-                ObjTurretModels.HIMARS.renderPart("CapStandard" + cap, ObjTurretModels.HIMARS_TEXTURE,
+                ObjTurretModels.HIMARS.renderPart("CapStandard" + cap, ObjProjectileModels.HIMARS_STANDARD_TEXTURE,
                         poseStack, buffer, light, overlay);
             }
         }
@@ -530,31 +535,35 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
 
     private static void renderConnectors(TurretBlockEntityBase turret, boolean power, boolean fluid, FluidType type,
             PoseStack poseStack, MultiBufferSource buffer, int light, int overlay) {
-        renderConnectorIfConnected(turret, power, fluid, type, -2, 0, 0, 0, 0.0F, Direction.WEST,
+        ConnectorProbe probe = connectorProbe(turret, power, fluid, type);
+        if (probe == null) {
+            return;
+        }
+        renderConnectorIfConnected(probe, -2, 0, 0, 0, 0.0F, Direction.WEST,
                 poseStack, buffer, light, overlay);
-        renderConnectorIfConnected(turret, power, fluid, type, -2, -1, 0, -1, 0.0F, Direction.WEST,
-                poseStack, buffer, light, overlay);
-
-        renderConnectorIfConnected(turret, power, fluid, type, -1, 1, 0, -1, 90.0F, Direction.SOUTH,
-                poseStack, buffer, light, overlay);
-        renderConnectorIfConnected(turret, power, fluid, type, 0, 1, 0, 0, 90.0F, Direction.SOUTH,
-                poseStack, buffer, light, overlay);
-
-        renderConnectorIfConnected(turret, power, fluid, type, 1, 0, 0, -1, 180.0F, Direction.EAST,
-                poseStack, buffer, light, overlay);
-        renderConnectorIfConnected(turret, power, fluid, type, 1, -1, 0, 0, 180.0F, Direction.EAST,
+        renderConnectorIfConnected(probe, -2, -1, 0, -1, 0.0F, Direction.WEST,
                 poseStack, buffer, light, overlay);
 
-        renderConnectorIfConnected(turret, power, fluid, type, 0, -2, 0, -1, 270.0F, Direction.NORTH,
+        renderConnectorIfConnected(probe, -1, 1, 0, -1, 90.0F, Direction.SOUTH,
                 poseStack, buffer, light, overlay);
-        renderConnectorIfConnected(turret, power, fluid, type, -1, -2, 0, 0, 270.0F, Direction.NORTH,
+        renderConnectorIfConnected(probe, 0, 1, 0, 0, 90.0F, Direction.SOUTH,
+                poseStack, buffer, light, overlay);
+
+        renderConnectorIfConnected(probe, 1, 0, 0, -1, 180.0F, Direction.EAST,
+                poseStack, buffer, light, overlay);
+        renderConnectorIfConnected(probe, 1, -1, 0, 0, 180.0F, Direction.EAST,
+                poseStack, buffer, light, overlay);
+
+        renderConnectorIfConnected(probe, 0, -2, 0, -1, 270.0F, Direction.NORTH,
+                poseStack, buffer, light, overlay);
+        renderConnectorIfConnected(probe, -1, -2, 0, 0, 270.0F, Direction.NORTH,
                 poseStack, buffer, light, overlay);
     }
 
-    private static void renderConnectorIfConnected(TurretBlockEntityBase turret, boolean power, boolean fluid,
-            FluidType type, int checkX, int checkZ, int localX, int localZ, float yaw, Direction cableSide,
+    private static void renderConnectorIfConnected(ConnectorProbe probe, int checkX, int checkZ,
+            int localX, int localZ, float yaw, Direction cableSide,
             PoseStack poseStack, MultiBufferSource buffer, int light, int overlay) {
-        if (!hasConnector(turret, power, fluid, type, checkX, checkZ, cableSide)) {
+        if (!hasConnector(probe, checkX, checkZ, cableSide)) {
             return;
         }
         poseStack.pushPose();
@@ -565,38 +574,46 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
         poseStack.popPose();
     }
 
-    private static boolean hasConnector(TurretBlockEntityBase turret, boolean power, boolean fluid, FluidType type,
-            int checkX, int checkZ, Direction cableSide) {
-        if (turret.getLevel() == null) {
-            return false;
+    private static ConnectorProbe connectorProbe(TurretBlockEntityBase turret, boolean power,
+            boolean fluid, FluidType type) {
+        Level level = turret.getLevel();
+        if (level == null) {
+            return null;
         }
         Vec3 offset = turret.getRenderHorizontalOffset();
         BlockPos pivot = turret.getBlockPos().offset((int) offset.x, 0, (int) offset.z);
-        BlockPos checkPos = pivot.offset(checkX, 0, checkZ);
-        if (power && HbmEnergyConnectionUtil.canConnectLegacy(turret.getLevel(), checkPos, cableSide)) {
-            return true;
-        }
-        if (!fluid || type == null || type == HbmFluids.NONE) {
-            return false;
-        }
-        return canConnectFluidLegacy(turret, checkPos, type, cableSide);
+        boolean fluidActive = fluid && type != null && type != HbmFluids.NONE;
+        return new ConnectorProbe(level, pivot, power, fluidActive, type);
     }
 
-    private static boolean canConnectFluidLegacy(TurretBlockEntityBase turret, BlockPos targetPos, FluidType type,
+    private static boolean hasConnector(ConnectorProbe probe, int checkX, int checkZ, Direction cableSide) {
+        BlockPos checkPos = probe.pivot().offset(checkX, 0, checkZ);
+        if (probe.power() && HbmEnergyConnectionUtil.canConnectLegacy(probe.level(), checkPos, cableSide)) {
+            return true;
+        }
+        if (!probe.fluid()) {
+            return false;
+        }
+        return canConnectFluidLegacy(probe.level(), checkPos, probe.type(), cableSide);
+    }
+
+    private static boolean canConnectFluidLegacy(Level level, BlockPos targetPos, FluidType type,
             Direction ductSide) {
-        if (turret.getLevel() == null || targetPos.getY() < turret.getLevel().getMinBuildHeight()
-                || targetPos.getY() >= turret.getLevel().getMaxBuildHeight()) {
+        if (targetPos.getY() < level.getMinBuildHeight() || targetPos.getY() >= level.getMaxBuildHeight()) {
             return false;
         }
         Direction targetSide = ductSide.getOpposite();
-        Block block = turret.getLevel().getBlockState(targetPos).getBlock();
+        Block block = level.getBlockState(targetPos).getBlock();
         if (block instanceof HbmFluidConnectorBlock connectorBlock
-                && connectorBlock.canConnectFluid(turret.getLevel(), targetPos, type, targetSide)) {
+                && connectorBlock.canConnectFluid(level, targetPos, type, targetSide)) {
             return true;
         }
-        BlockEntity blockEntity = turret.getLevel().getBlockEntity(targetPos);
+        BlockEntity blockEntity = level.getBlockEntity(targetPos);
         return blockEntity instanceof HbmFluidConnector connector
                 && connector.canConnectFluid(type, targetSide);
+    }
+
+    private record ConnectorProbe(Level level, BlockPos pivot, boolean power, boolean fluid, FluidType type) {
     }
 
     private static void renderChekhovPart(String part, ResourceLocation texture, PoseStack poseStack,
@@ -605,23 +622,17 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
     }
 
     private static float yawDegrees(TurretBlockEntityBase turret, float partialTick) {
-        return -Mth.RAD_TO_DEG * (float) shortAngleLerpRadians(partialTick,
+        return -Mth.RAD_TO_DEG * (float) legacyYawLerpRadians(partialTick,
                 turret.getLastRotationYaw(), turret.getRotationYaw()) - 90.0F;
     }
 
     private static float sentryYawDegrees(TurretBlockEntityBase turret, float partialTick) {
-        return -Mth.RAD_TO_DEG * (float) shortAngleLerpRadians(partialTick,
+        return -Mth.RAD_TO_DEG * (float) legacyYawLerpRadians(partialTick,
                 turret.getLastRotationYaw(), turret.getRotationYaw());
     }
 
-    private static double shortAngleLerpRadians(float partialTick, double previous, double current) {
-        double delta = (current - previous) % (Math.PI * 2.0D);
-        if (delta < -Math.PI) {
-            delta += Math.PI * 2.0D;
-        } else if (delta > Math.PI) {
-            delta -= Math.PI * 2.0D;
-        }
-        return previous + delta * partialTick;
+    private static double legacyYawLerpRadians(float partialTick, double previous, double current) {
+        return previous + (current - previous) * partialTick;
     }
 
     private static float pitchDegrees(TurretBlockEntityBase turret, float partialTick) {

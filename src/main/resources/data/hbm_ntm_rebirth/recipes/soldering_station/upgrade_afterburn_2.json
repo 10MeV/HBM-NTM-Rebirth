@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip"
+      },
+      "count": 8
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      },
+      "count": 4
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_afterburn_1"
+      }
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "count": 4,
+      "legacy_ore": "ingotAnyPlastic"
+    }
+  ],
+  "solder": [],
+  "output": {
+    "item": "hbm_ntm_rebirth:upgrade_afterburn_2"
+  },
+  "duration": 300,
+  "consumption": 10000,
+  "source_order": 115
+}

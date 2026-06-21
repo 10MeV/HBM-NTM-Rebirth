@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    "CM ",
+    " B "
+  ],
+  "key": {
+    "B": {
+      "tag": "forge:ingots/boron"
+    },
+    "C": {
+      "tag": "forge:circuits/vacuum_tube"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:pile_rod_detector"
+  }
+}

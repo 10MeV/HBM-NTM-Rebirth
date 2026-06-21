@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [ " I ", "IGI", " I " ],
+  "key": {
+    "G": { "tag": "forge:ingots/graphite" },
+    "I": { "tag": "forge:ingots/boron" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:watz_pellet_boron" },
+  "show_notification": true
+}

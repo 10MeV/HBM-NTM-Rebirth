@@ -1,19 +1,16 @@
 {
   "variants": {
     "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machine_shredder",
-      "y": 180
+      "model": "hbm_ntm_rebirth:block/machine_shredder"
     },
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machine_shredder",
-      "y": 270
+      "model": "hbm_ntm_rebirth:block/machine_shredder"
     },
     "facing=south": {
       "model": "hbm_ntm_rebirth:block/machine_shredder"
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machine_shredder",
-      "y": 90
+      "model": "hbm_ntm_rebirth:block/machine_shredder"
     }
   }
 }

@@ -3,6 +3,7 @@ package com.hbm.ntm.client;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.renderer.LegacyScreenQuadRenderer;
 import com.hbm.ntm.config.HbmClientConfig;
+import com.hbm.ntm.item.FsbArmorItem;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -18,6 +19,9 @@ public final class RadiationHud {
 
     public static boolean hasGeigerCounter(Player player) {
         if (player == null) {
+            return false;
+        }
+        if (FsbArmorItem.hasCustomGeigerHud(player)) {
             return false;
         }
         for (ItemStack stack : player.getInventory().items) {

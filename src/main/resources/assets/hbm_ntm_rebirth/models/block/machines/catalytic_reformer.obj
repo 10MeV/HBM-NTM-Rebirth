@@ -1,3 +1,5 @@
+mtllib hbm_default.mtl
+usemtl default
 # Blender v2.79 (sub 0) OBJ File: 'catalytic_reformer.blend'
 # www.blender.org
 o Plane

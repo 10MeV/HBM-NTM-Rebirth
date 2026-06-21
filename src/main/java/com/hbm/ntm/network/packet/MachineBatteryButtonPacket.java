@@ -1,6 +1,7 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.blockentity.MachineBatteryBlockEntity;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,14 +29,19 @@ public record MachineBatteryButtonPacket(BlockPos pos, int button) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
-            if (player == null || player.distanceToSqr(packet.pos.getX() + 0.5D, packet.pos.getY() + 0.5D, packet.pos.getZ() + 0.5D) > 64.0D) {
+            if (player == null) {
                 return;
             }
             Level level = player.level();
-            BlockEntity blockEntity = level.getBlockEntity(packet.pos);
+            BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level, packet.pos);
+            BlockPos receiverPos = blockEntity == null ? packet.pos : blockEntity.getBlockPos();
+            if (player.distanceToSqr(receiverPos.getX() + 0.5D, receiverPos.getY() + 0.5D,
+                    receiverPos.getZ() + 0.5D) > 64.0D) {
+                return;
+            }
             if (blockEntity instanceof MachineBatteryBlockEntity battery) {
                 battery.handleClientControl(player, MachineBatteryBlockEntity.controlTag(packet.button));
-                level.sendBlockUpdated(packet.pos, battery.getBlockState(), battery.getBlockState(), 3);
+                level.sendBlockUpdated(battery.getBlockPos(), battery.getBlockState(), battery.getBlockState(), 3);
             }
         });
         context.setPacketHandled(true);

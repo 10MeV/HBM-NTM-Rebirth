@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "tools",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:rangefinder" },
+    { "item": "hbm_ntm_rebirth:designator" },
+    { "tag": "forge:ingots/any_plastic" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:designator_range"
+  }
+}

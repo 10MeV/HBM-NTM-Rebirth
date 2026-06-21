@@ -3,6 +3,7 @@ package com.hbm.ntm.multiblock;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -63,7 +64,27 @@ public interface MultiblockCoreBlock {
         return false;
     }
 
+    default boolean usesLocalDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return usesForwardedDummyShape(state, level, corePos);
+    }
+
+    default boolean usesLocalDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return usesForwardedDummyCollisionShape(state, level, corePos);
+    }
+
+    default boolean usesMultiblockHighlightShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    default boolean requiresCompleteOperationalLayout(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
     default BlockState multiblockParticleState(BlockState state, BlockGetter level, BlockPos corePos) {
         return MultiblockHelper.steelParticleState();
+    }
+
+    default void beforeMultiblockDummyDestroysCore(Level level, BlockPos corePos, BlockState coreState,
+            BlockPos dummyPos, boolean drop) {
     }
 }

@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:nitric_acid", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:sulfuric_acid", "amount": 500 },
+  "solid_input": {
+    "ingredient": { "tag": "forge:dusts/niter" },
+    "legacy_ore": "dustNiter"
+  },
+  "duration": 50
+}

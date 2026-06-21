@@ -8,6 +8,8 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.Objects;
 
 public class BlockAllocatorGlyphidDig extends BlockAllocatorBulkie {
+    private static final RegistryObject<? extends Block> GLYPHID_SPAWNER = requireLegacyBlock("glyphid_spawner");
+
     public BlockAllocatorGlyphidDig(double maximumResistance) {
         this(maximumResistance, 16);
     }
@@ -17,7 +19,11 @@ public class BlockAllocatorGlyphidDig extends BlockAllocatorBulkie {
     }
 
     private static boolean isDigImmune(BlockState state) {
-        RegistryObject<? extends Block> glyphidSpawner = ModBlocks.legacyBlock("glyphid_spawner");
-        return state.is(Objects.requireNonNull(glyphidSpawner, "Missing legacy block hbm_ntm_rebirth:glyphid_spawner").get());
+        return state.is(GLYPHID_SPAWNER.get());
+    }
+
+    private static RegistryObject<? extends Block> requireLegacyBlock(String name) {
+        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
+        return Objects.requireNonNull(block, "Missing legacy block hbm_ntm_rebirth:" + name);
     }
 }

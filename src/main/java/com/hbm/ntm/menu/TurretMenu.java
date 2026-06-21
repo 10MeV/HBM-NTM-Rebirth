@@ -11,6 +11,7 @@ import com.hbm.ntm.turret.TurretHowardBlockEntity;
 import com.hbm.ntm.turret.TurretRichardBlockEntity;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -50,14 +51,18 @@ public class TurretMenu extends AbstractContainerMenu {
         this.blockEntity = blockEntity;
         IItemHandler items = blockEntity.getItems();
 
-        addSlot(new ChipSlot(items, TurretBlockEntityBase.SLOT_CHIP, 98, 27));
+        addSlot(new SlotItemHandler(items, TurretBlockEntityBase.SLOT_CHIP, 98, 27));
         HbmInventoryMenuHelper.addSlots(this::addSlot, items, TurretBlockEntityBase.SLOT_AMMO_START, 80, 63, 3, 3);
-        addSlot(new BatterySlot(items, TurretBlockEntityBase.SLOT_BATTERY, 152, 99));
+        addSlot(new SlotItemHandler(items, TurretBlockEntityBase.SLOT_BATTERY, 152, 99));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 140, 198);
         addDataSlots();
     }
 
     public TurretBlockEntityBase getBlockEntity() {
+        return blockEntity;
+    }
+
+    public Object getUpgradeInfoProvider() {
         return blockEntity;
     }
 
@@ -146,12 +151,8 @@ public class TurretMenu extends AbstractContainerMenu {
                 if (!moveItemStackTo(stack, TurretBlockEntityBase.SLOT_CHIP, TurretBlockEntityBase.SLOT_CHIP + 1, false)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
-                if (!moveItemStackTo(stack, TurretBlockEntityBase.SLOT_BATTERY, TurretBlockEntityBase.SLOT_BATTERY + 1, false)) {
-                    return ItemStack.EMPTY;
-                }
             } else if (!moveItemStackTo(stack, TurretBlockEntityBase.SLOT_AMMO_START,
-                    TurretBlockEntityBase.SLOT_AMMO_END + 1, false)) {
+                    TurretBlockEntityBase.SLOT_BATTERY + 1, false)) {
                 return ItemStack.EMPTY;
             }
             HbmInventoryMenuHelper.finishQuickMove(slot, stack);
@@ -200,37 +201,10 @@ public class TurretMenu extends AbstractContainerMenu {
     }
 
     private static TurretBlockEntityBase getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof TurretBlockEntityBase turret) {
             return turret;
         }
         throw new IllegalStateException("Expected turret block entity at " + pos);
-    }
-
-    private static class ChipSlot extends SlotItemHandler {
-        private ChipSlot(IItemHandler itemHandler, int index, int xPosition, int yPosition) {
-            super(itemHandler, index, xPosition, yPosition);
-        }
-
-        @Override
-        public boolean mayPlace(ItemStack stack) {
-            return stack.is(ModItems.TURRET_CHIP.get());
-        }
-
-        @Override
-        public int getMaxStackSize() {
-            return 1;
-        }
-    }
-
-    private static class BatterySlot extends SlotItemHandler {
-        private BatterySlot(IItemHandler itemHandler, int index, int xPosition, int yPosition) {
-            super(itemHandler, index, xPosition, yPosition);
-        }
-
-        @Override
-        public boolean mayPlace(ItemStack stack) {
-            return HbmInventoryMenuHelper.isBatteryLike(stack);
-        }
     }
 }

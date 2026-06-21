@@ -4,9 +4,11 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
+import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
@@ -40,7 +42,7 @@ public class FluidDuctIdentifierRecipe extends CustomRecipe {
             if (stack.getItem() instanceof FluidIdentifierItem) {
                 identifierCount++;
                 selected = FluidIdentifierItem.getType(stack, true);
-            } else if (stack.is(ModBlocks.FLUID_DUCT_NEO.get().asItem())) {
+            } else if (isPlainUntypedDuct(stack)) {
                 normalDucts++;
             } else if (stack.is(ModItems.FLUID_DUCT.get())) {
                 typedDucts++;
@@ -69,6 +71,14 @@ public class FluidDuctIdentifierRecipe extends CustomRecipe {
     @Override
     public boolean canCraftInDimensions(int width, int height) {
         return width * height >= 2;
+    }
+
+    private static boolean isPlainUntypedDuct(ItemStack stack) {
+        if (!stack.is(ModBlocks.FLUID_DUCT_NEO.get().asItem())) {
+            return false;
+        }
+        CompoundTag tag = stack.getTag();
+        return tag == null || tag.getInt(LegacyStateBlockItem.TAG_VARIANT) == 0;
     }
 
     @Override

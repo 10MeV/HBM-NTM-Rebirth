@@ -6,9 +6,9 @@ import net.minecraft.resources.ResourceLocation;
 public final class ObjBombModels {
     public static final LegacyWavefrontModel MINE_AP = model("ap_mine", "mine_ap_grass").asVBO();
     public static final LegacyWavefrontModel MINE_MARELET = model("marelet", "mine_marelet").asVBO();
-    public static final LegacyWavefrontModel MINE_FAT = model("mine_fat", "mine_fat");
-    public static final LegacyWavefrontModel MINE_NAVAL = model("naval_mine", "naval_mine").asVBO();
-    public static final LegacyWavefrontModel FAT_MAN = model("fat_man", "fat_man").asVBO();
+    public static final LegacyWavefrontModel MINE_FAT = rootModel("mine_fat", rootTexture("mine_fat"));
+    public static final LegacyWavefrontModel MINE_NAVAL = model("naval_mine", rootTexture("nmine")).asVBO();
+    public static final LegacyWavefrontModel FAT_MAN = model("fat_man", rootTexture("fat_man")).asVBO();
     public static final LegacyWavefrontModel FLEIJA = model("fleija", "fleija").asVBO();
     public static final LegacyWavefrontModel GADGET = model("gadget", "gadget").asVBO();
     public static final LegacyWavefrontModel IVYMIKE = model("ivymike", "ivymike");
@@ -28,13 +28,27 @@ public final class ObjBombModels {
     public static final ResourceLocation MINE_SHRAP_TEXTURE = texture("mine_shrapnel");
 
     public static LegacyWavefrontModel model(String modelName, String textureName) {
+        return model(modelName, texture(textureName));
+    }
+
+    public static LegacyWavefrontModel model(String modelName, ResourceLocation texture) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/bombs/" + modelName + ".obj"),
-                texture(textureName));
+                new ResourceLocation(HbmNtm.MOD_ID, "models/bombs/" + modelName + ".obj"),
+                texture);
+    }
+
+    public static LegacyWavefrontModel rootModel(String modelName, ResourceLocation texture) {
+        return new LegacyWavefrontModel(
+                new ResourceLocation(HbmNtm.MOD_ID, "models/" + modelName + ".obj"),
+                texture);
     }
 
     public static ResourceLocation texture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/bombs/" + name + ".png");
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/bombs/" + name + ".png");
+    }
+
+    public static ResourceLocation rootTexture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + name + ".png");
     }
 
     private ObjBombModels() {

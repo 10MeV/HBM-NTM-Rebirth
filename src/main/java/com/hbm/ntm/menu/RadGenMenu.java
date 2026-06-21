@@ -4,6 +4,7 @@ import com.hbm.ntm.blockentity.RadGenBlockEntity;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -145,7 +146,7 @@ public class RadGenMenu extends AbstractContainerMenu {
     }
 
     private static RadGenBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof RadGenBlockEntity radGen) {
             return radGen;
         }

@@ -1,12 +1,16 @@
 package com.hbm.ntm.menu;
 
+import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.CompressorBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
 import java.util.List;
+import java.util.Map;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -18,7 +22,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class CompressorMenu extends AbstractContainerMenu {
+public class CompressorMenu extends AbstractContainerMenu implements LegacyUpgradeInfoProvider {
     private static final int MACHINE_SLOT_COUNT = CompressorBlockEntity.ITEM_COUNT;
     private static final int PLAYER_INVENTORY_START = MACHINE_SLOT_COUNT;
     private static final int PLAYER_INVENTORY_END = PLAYER_INVENTORY_START + 27;
@@ -126,6 +130,16 @@ public class CompressorMenu extends AbstractContainerMenu {
                 CompressorBlockEntity.SLOT_UPGRADE_SPEED, CompressorBlockEntity.SLOT_UPGRADE_POWER + 1);
     }
 
+    @Override
+    public Map<UpgradeType, Integer> getValidUpgrades() {
+        return blockEntity.getValidUpgrades();
+    }
+
+    @Override
+    public void provideInfo(UpgradeType type, int level, List<Component> info, boolean extendedInfo) {
+        blockEntity.provideInfo(type, level, info, extendedInfo);
+    }
+
     private void addDataSlots() {
         HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getPower(), () -> power, value -> power = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getMaxPower(), () -> maxPower, value -> maxPower = value);
@@ -141,7 +155,7 @@ public class CompressorMenu extends AbstractContainerMenu {
     }
 
     private static CompressorBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof CompressorBlockEntity compressor) {
             return compressor;
         }

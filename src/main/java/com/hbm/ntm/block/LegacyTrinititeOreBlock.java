@@ -1,8 +1,10 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
@@ -25,5 +27,11 @@ public class LegacyTrinititeOreBlock extends Block {
 
     public Item droppedItem() {
         return ModItems.legacyItem("trinitite").get();
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        super.animateTick(state, level, pos, random);
+        ParticleUtil.spawnTownAuraOnOpenFaces(level, pos, random);
     }
 }

@@ -45,7 +45,7 @@ public final class ObjFusionModels {
             .part("Bolts1", TORUS_BOLTS_1)
             .part("Magnet", TORUS_MAGNET)
             .part("Torus", TORUS_BODY)
-            .legacyOrder("Plasma", "Bolts4", "Bolts3", "Bolts2", "Bolts1", "Magnet", "Torus");
+            .legacyOrder("Torus", "Magnet", "Bolts1", "Bolts2", "Bolts3", "Bolts4", "Plasma");
 
     public static final ObjModelPart KLYSTRON = part("fusion_klystron");
     public static final ObjModelPart KLYSTRON_PIPES = part("fusion_klystron_pipes");
@@ -116,26 +116,26 @@ public final class ObjFusionModels {
             .part("ArmUpperJet", PLASMA_FORGE_ARM_UPPER_JET)
             .part("Jet", PLASMA_FORGE_JET)
             .part("Body", PLASMA_FORGE_BODY)
-            .legacyOrder("Plasma", "SliderStriker", "ArmLowerStriker", "ArmUpperStriker", "StrikerMount",
+            .legacyOrder("Body", "SliderStriker", "ArmLowerStriker", "ArmUpperStriker", "StrikerMount",
                     "StrikerLeft", "StrikerRight", "PistonLeft", "PistonRight", "SliderJet", "ArmLowerJet",
-                    "ArmUpperJet", "Jet", "Body");
+                    "ArmUpperJet", "Jet", "Plasma");
 
     public static ObjModelPart part(String name) {
         return ObjModelLibrary.blockPart("fusion/" + name, RenderType.cutout());
     }
 
     public static ObjModelPart translucentPart(String name) {
-        return ObjModelLibrary.blockPart("fusion/" + name, RenderType.translucent());
+        return ObjModelLibrary.blockTranslucentPart("fusion/" + name);
     }
 
     public static LegacyWavefrontModel legacyModel(String name) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/fusion/fusion_" + name + ".obj"),
+                new ResourceLocation(HbmNtm.MOD_ID, "models/fusion/" + name + ".obj"),
                 texture(name));
     }
 
     public static ResourceLocation texture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/fusion/" + name + ".png");
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/fusion/" + name + ".png");
     }
 
     private ObjFusionModels() {

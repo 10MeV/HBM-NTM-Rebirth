@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.combustiongen",
+  "duration": 300,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/steel" }, "count": 16, "legacy_ore": "plateSteel" },
+    { "ingredient": { "tag": "forge:ingots/copper" }, "count": 12, "legacy_ore": "ingotCopper" },
+    { "ingredient": { "tag": "forge:dense_wires/gold" }, "count": 8, "legacy_ore": "wireDenseGold" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:canister_empty" }, "count": 4 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_basic" }, "count": 1, "legacy_id": "hbm:circuit", "legacy_meta": 8 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:machine_combustion_engine" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 127
+}

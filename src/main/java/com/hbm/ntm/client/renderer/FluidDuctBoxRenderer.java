@@ -47,7 +47,7 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
                 : "boxduct_" + MATERIALS[FluidDuctBoxBlock.rectifyLegacyMaterial(metadata)];
         TextureSet textures = TextureSet.create(prefix, metadata);
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state,
-                LegacyRenderLighting.resolveBlockEntityLight(duct, packedLight), packedOverlay);
+                LegacyRenderLighting.resolveMultiblockLight(duct, packedLight), packedOverlay);
         if (!(state.getBlock() instanceof FluidDuctExhaustBlock)
                 && FluidDuctBoxBlock.rectifyLegacyMaterial(metadata) == 2
                 && duct instanceof FluidPipeBlockEntity pipe
@@ -89,36 +89,38 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
             double coreMax = simpleCurve ? bounds.upper() : bounds.junctionUpper();
             renderConnectedBox(textures, context, simpleCurve, north, east, south, west, up, down,
                     coreMin, coreMin, coreMin, coreMax, coreMax, coreMax);
-            renderArms(textures, context, bounds, coreMin, coreMax, simpleCurve, north, east, south, west, up, down);
+            renderArms(textures, context, bounds, simpleCurve, north, east, south, west, up, down);
         }
     }
 
     private static void renderArms(TextureSet textures, ObjRenderContext context, FluidDuctBoxBlock.DuctBounds bounds,
-            double coreMin, double coreMax, boolean curve, boolean north, boolean east, boolean south, boolean west,
+            boolean curve, boolean north, boolean east, boolean south, boolean west,
             boolean up, boolean down) {
+        double armLower = curve ? bounds.lower() : bounds.junctionLower();
+        double armUpper = curve ? bounds.upper() : bounds.junctionUpper();
         if (north) {
             renderConnectedBox(textures, context, curve, north, east, south, west, up, down,
-                    bounds.lower(), bounds.lower(), 0.0D, bounds.upper(), bounds.upper(), coreMin);
+                    bounds.lower(), bounds.lower(), 0.0D, bounds.upper(), bounds.upper(), armLower);
         }
         if (east) {
             renderConnectedBox(textures, context, curve, north, east, south, west, up, down,
-                    coreMax, bounds.lower(), bounds.lower(), 1.0D, bounds.upper(), bounds.upper());
+                    armUpper, bounds.lower(), bounds.lower(), 1.0D, bounds.upper(), bounds.upper());
         }
         if (south) {
             renderConnectedBox(textures, context, curve, north, east, south, west, up, down,
-                    bounds.lower(), bounds.lower(), coreMax, bounds.upper(), bounds.upper(), 1.0D);
+                    bounds.lower(), bounds.lower(), armUpper, bounds.upper(), bounds.upper(), 1.0D);
         }
         if (west) {
             renderConnectedBox(textures, context, curve, north, east, south, west, up, down,
-                    0.0D, bounds.lower(), bounds.lower(), coreMin, bounds.upper(), bounds.upper());
+                    0.0D, bounds.lower(), bounds.lower(), armLower, bounds.upper(), bounds.upper());
         }
         if (up) {
             renderConnectedBox(textures, context, curve, north, east, south, west, up, down,
-                    bounds.lower(), coreMax, bounds.lower(), bounds.upper(), 1.0D, bounds.upper());
+                    bounds.lower(), armUpper, bounds.lower(), bounds.upper(), 1.0D, bounds.upper());
         }
         if (down) {
             renderConnectedBox(textures, context, curve, north, east, south, west, up, down,
-                    bounds.lower(), 0.0D, bounds.lower(), bounds.upper(), coreMin, bounds.upper());
+                    bounds.lower(), 0.0D, bounds.lower(), bounds.upper(), armLower, bounds.upper());
         }
     }
 

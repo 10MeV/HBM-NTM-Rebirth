@@ -12,6 +12,7 @@ import com.hbm.ntm.explosion.ExplosionSolinium;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.AchievementHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvents;
@@ -83,6 +84,8 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
         NukeExplosionMk3Entity entity = createFleija(level, x, y, z, range);
         if (isFleijaInterrupted(level, x, y, z)) {
             entity.discard();
+        } else {
+            entity.loadChunk((int) Math.floor(x / 16.0D), (int) Math.floor(z / 16.0D));
         }
         return entity;
     }
@@ -123,6 +126,7 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
                 HbmNtm.LOGGER.info("[NUKE] Initialized mk3 explosion at {} / {} / {} with strength {}!",
                         getX(), getY(), getZ(), destructionRange);
             }
+            AchievementHandler.fireManhattan(level());
             initProcessors();
             initialized = true;
         }
@@ -190,15 +194,9 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
     protected void readAdditionalSaveData(CompoundTag tag) {
         age = tag.getInt("age");
         destructionRange = tag.getInt("destructionRange");
-        speed = Math.max(1, tag.getInt("speed"));
-        coefficient = tag.getFloat("coefficient");
-        if (coefficient == 0.0F) {
-            coefficient = 1.0F;
-        }
-        coefficient2 = tag.getFloat("coefficient2");
-        if (coefficient2 == 0.0F) {
-            coefficient2 = 1.0F;
-        }
+        speed = tag.getInt("speed");
+        coefficient = tag.contains("coefficient") ? tag.getFloat("coefficient") : 1.0F;
+        coefficient2 = tag.contains("coefficient2") ? tag.getFloat("coefficient2") : 1.0F;
         initialized = tag.getBoolean("did");
         spawnedFallout = tag.getBoolean("did2");
         waste = !tag.contains("waste") || tag.getBoolean("waste");

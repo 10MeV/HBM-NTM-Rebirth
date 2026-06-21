@@ -33,20 +33,20 @@ public final class ObjLaunchModels {
     public static final LegacyWavefrontModel SOYUZ_LAUNCHER_TOWER_LEGACY = legacyModel("soyuz_launcher_tower").noSmooth().asVBO();
     public static final LegacyWavefrontModel SOYUZ_LAUNCHER_SUPPORT_BASE_LEGACY = legacyModel("soyuz_launcher_support_base").noSmooth().asVBO();
     public static final LegacyWavefrontModel SOYUZ_LAUNCHER_SUPPORT_LEGACY = legacyModel("soyuz_launcher_support").noSmooth().asVBO();
-    public static final LegacyWavefrontModel MISSILE_PAD = legacyModel("launch_pad_silo", "silo");
+    public static final LegacyWavefrontModel MISSILE_PAD = legacyModel("launch_pad_silo", "silo").asVBO();
     public static final LegacyWavefrontModel MISSILE_ERECTOR = legacyModel("launch_pad_erector", "pad").asVBO();
-    public static final LegacyWavefrontModel MISSILE_ASSEMBLY = legacyModel("missile_assembly");
-    public static final LegacyWavefrontModel STRUT = legacyModel("strut");
-    public static final LegacyWavefrontModel COMPACT_LAUNCHER = legacyModel("compact_launcher");
-    public static final LegacyWavefrontModel LAUNCH_TABLE_BASE_LEGACY = legacyModel("launch_table_base", "launch_table");
-    public static final LegacyWavefrontModel LAUNCH_TABLE_LARGE_PAD_LEGACY = legacyModel("launch_table_large_pad");
-    public static final LegacyWavefrontModel LAUNCH_TABLE_SMALL_PAD_LEGACY = legacyModel("launch_table_small_pad");
-    public static final LegacyWavefrontModel LAUNCH_TABLE_LARGE_SCAFFOLD_BASE_LEGACY = legacyModel("launch_table_large_scaffold_base");
-    public static final LegacyWavefrontModel LAUNCH_TABLE_LARGE_SCAFFOLD_CONNECTOR_LEGACY = legacyModel("launch_table_large_scaffold_connector");
-    public static final LegacyWavefrontModel LAUNCH_TABLE_LARGE_SCAFFOLD_EMPTY_LEGACY = legacyModel("launch_table_large_scaffold_empty", "launch_table_large_scaffold_base");
-    public static final LegacyWavefrontModel LAUNCH_TABLE_SMALL_SCAFFOLD_BASE_LEGACY = legacyModel("launch_table_small_scaffold_base");
-    public static final LegacyWavefrontModel LAUNCH_TABLE_SMALL_SCAFFOLD_CONNECTOR_LEGACY = legacyModel("launch_table_small_scaffold_connector");
-    public static final LegacyWavefrontModel LAUNCH_TABLE_SMALL_SCAFFOLD_EMPTY_LEGACY = legacyModel("launch_table_small_scaffold_empty", "launch_table_small_scaffold_base");
+    public static final LegacyWavefrontModel MISSILE_ASSEMBLY = legacyModel("missile_assembly").asVBO();
+    public static final LegacyWavefrontModel STRUT = legacyModel("strut").asVBO();
+    public static final LegacyWavefrontModel COMPACT_LAUNCHER = legacyModel("compact_launcher").asVBO();
+    public static final LegacyWavefrontModel LAUNCH_TABLE_BASE_LEGACY = legacyModel("launch_table_base", "launch_table").asVBO();
+    public static final LegacyWavefrontModel LAUNCH_TABLE_LARGE_PAD_LEGACY = legacyModel("launch_table_large_pad").asVBO();
+    public static final LegacyWavefrontModel LAUNCH_TABLE_SMALL_PAD_LEGACY = legacyModel("launch_table_small_pad").asVBO();
+    public static final LegacyWavefrontModel LAUNCH_TABLE_LARGE_SCAFFOLD_BASE_LEGACY = legacyModel("launch_table_large_scaffold_base").asVBO();
+    public static final LegacyWavefrontModel LAUNCH_TABLE_LARGE_SCAFFOLD_CONNECTOR_LEGACY = legacyModel("launch_table_large_scaffold_connector").asVBO();
+    public static final LegacyWavefrontModel LAUNCH_TABLE_LARGE_SCAFFOLD_EMPTY_LEGACY = legacyModel("launch_table_large_scaffold_empty", "launch_table_large_scaffold_base").asVBO();
+    public static final LegacyWavefrontModel LAUNCH_TABLE_SMALL_SCAFFOLD_BASE_LEGACY = legacyModel("launch_table_small_scaffold_base").asVBO();
+    public static final LegacyWavefrontModel LAUNCH_TABLE_SMALL_SCAFFOLD_CONNECTOR_LEGACY = legacyModel("launch_table_small_scaffold_connector").asVBO();
+    public static final LegacyWavefrontModel LAUNCH_TABLE_SMALL_SCAFFOLD_EMPTY_LEGACY = legacyModel("launch_table_small_scaffold_empty", "launch_table_small_scaffold_base").asVBO();
 
     public static final ResourceLocation MISSILE_PAD_TEXTURE = texture("silo");
     public static final ResourceLocation MISSILE_PAD_RUSTED_TEXTURE = texture("silo_rusted");
@@ -86,12 +86,40 @@ public final class ObjLaunchModels {
 
     public static LegacyWavefrontModel legacyModel(String modelName, String textureName) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/launch_table/" + modelName + ".obj"),
+                legacyModelLocation(modelName),
                 texture(textureName));
     }
 
+    private static ResourceLocation legacyModelLocation(String modelName) {
+        String path = switch (modelName) {
+            case "launch_pad_silo", "launch_pad_erector" -> "models/weapons/" + modelName + ".obj";
+            case "missile_assembly", "strut", "compact_launcher" -> "models/" + modelName + ".obj";
+            default -> "models/launch_table/" + modelName + ".obj";
+        };
+        return new ResourceLocation(HbmNtm.MOD_ID, path);
+    }
+
     public static ResourceLocation texture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/launch_table/" + name + ".png");
+        return switch (name) {
+            case "silo", "silo_rusted", "pad", "erector_micro", "erector_v2", "erector_strong",
+                    "erector_huge", "erector_atlas", "erector_abm" -> modelTexture("launchpad/" + name);
+            case "missile_assembly", "strut", "compact_launcher" -> modelTexture(name);
+            case "launch_table", "launch_table_large_pad", "launch_table_small_pad",
+                    "launch_table_large_scaffold_base", "launch_table_large_scaffold_connector",
+                    "launch_table_small_scaffold_base", "launch_table_small_scaffold_connector" ->
+                    modelTexture("missile_parts/" + name);
+            case "soyuz_launcher_legs" -> modelTexture("soyuz_launcher/launcher_leg");
+            case "soyuz_launcher_table" -> modelTexture("soyuz_launcher/launcher_table");
+            case "soyuz_launcher_tower_base" -> modelTexture("soyuz_launcher/launcher_tower_base");
+            case "soyuz_launcher_tower" -> modelTexture("soyuz_launcher/launcher_tower");
+            case "soyuz_launcher_support_base" -> modelTexture("soyuz_launcher/launcher_support_base");
+            case "soyuz_launcher_support" -> modelTexture("soyuz_launcher/launcher_support");
+            default -> new ResourceLocation(HbmNtm.MOD_ID, "textures/block/launch_table/" + name + ".png");
+        };
+    }
+
+    private static ResourceLocation modelTexture(String path) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + path + ".png");
     }
 
     public static List<SoyuzLauncherPartPlan> soyuzLauncherPlan(float rotation) {

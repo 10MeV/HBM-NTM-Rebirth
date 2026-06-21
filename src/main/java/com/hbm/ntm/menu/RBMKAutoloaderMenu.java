@@ -1,6 +1,7 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.RBMKAutoloaderBlockEntity;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.neutron.RBMKAutoloaderPlanner;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -43,11 +44,15 @@ public class RBMKAutoloaderMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D)
+                && MultiblockHelper.isOperationalCoreLayoutComplete(player.level(), blockEntity.getBlockPos());
     }
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
+        if (!blockEntity.hasCompleteLayout()) {
+            return ItemStack.EMPTY;
+        }
         ItemStack result = ItemStack.EMPTY;
         Slot slot = slots.get(index);
         if (slot != null && slot.hasItem()) {
@@ -67,7 +72,9 @@ public class RBMKAutoloaderMenu extends AbstractContainerMenu {
     }
 
     private static RBMKAutoloaderBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = inventory.player.level().isClientSide
+                ? MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos)
+                : MultiblockHelper.resolveOperationalCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof RBMKAutoloaderBlockEntity autoloader) {
             return autoloader;
         }

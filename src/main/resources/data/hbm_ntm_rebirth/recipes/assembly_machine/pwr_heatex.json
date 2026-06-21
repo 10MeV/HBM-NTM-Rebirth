@@ -1,0 +1,36 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [
+    {
+      "amount": 4000,
+      "fluid": "hbm_ntm_rebirth:perfluoromethyl"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:cast_plates/copper"
+      },
+      "legacy_ore": "plateCastCopper"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor"
+      }
+    }
+  ],
+  "internal_name": "ass.pwrheatex",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:pwr_heatex"
+    }
+  ],
+  "pools": [],
+  "power": 500,
+  "source_order": 167
+}

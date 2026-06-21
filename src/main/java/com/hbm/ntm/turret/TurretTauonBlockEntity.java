@@ -93,9 +93,9 @@ public class TurretTauonBlockEntity extends TurretBlockEntityBase {
         EntityDamageUtil.attackEntityFromNt(target, ModDamageSources.source(level, ModDamageSources.ELECTRICITY),
                 30.0F + level.random.nextInt(11));
         consumeAmmo(config);
-        spawnTauMuzzleParticles(5);
         playTurretSound("hbm:weapon.tauShoot", 4.0F, 0.9F + level.random.nextFloat() * 0.3F);
         sendBeamShotPacket();
+        spawnTauMuzzleParticles(5);
     }
 
     @Override

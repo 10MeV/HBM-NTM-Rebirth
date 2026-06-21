@@ -56,7 +56,7 @@ public class ExplosionTom {
         lastposZ = tag.getInt(name + "lastposZ");
         radius = tag.getInt(name + "radius");
         radius2 = tag.getInt(name + "radius2");
-        n = Math.max(tag.getInt(name + "n"), 1);
+        n = tag.getInt(name + "n");
         nlimit = tag.getInt(name + "nlimit");
         shell = tag.getInt(name + "shell");
         leg = tag.getInt(name + "leg");
@@ -98,10 +98,11 @@ public class ExplosionTom {
         double craterRing = craterBase + Math.pow(Math.E, -Math.pow(radialDistance - 200.0D, 2.0D) / 400.0D) * 13.0D;
         int craterFloor = (int) (craterRing + Math.pow(Math.E, -Math.pow(radialDistance - 500.0D, 2.0D) / 2000.0D) * 37.0D);
 
+        int minBuildHeight = level.getMinBuildHeight();
         int sampleTop = Math.min(256, level.getMaxBuildHeight() - 1);
         int y = sampleTop;
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        for (int sampleY = sampleTop; sampleY > 0; sampleY--) {
+        for (int sampleY = sampleTop; sampleY >= minBuildHeight; sampleY--) {
             cursor.set(worldX, sampleY, worldZ);
             if (sampleY == craterFloor || !level.getBlockState(cursor).isAir()) {
                 y = sampleY;
@@ -112,14 +113,14 @@ public class ExplosionTom {
         int height = terrain - 14;
         int offset = 20;
         int threshold = (int) (radialDistance * (height + offset) / Math.max(1.0D, radius) + level.random.nextInt(2) - offset);
-        while (y > threshold && y > 0) {
+        while (y > threshold && y >= minBuildHeight) {
             cursor.set(worldX, y, worldZ);
             if (y <= craterFloor) {
                 level.setBlock(cursor, level.random.nextInt(200) == 0 ? tektiteOreState() : tektiteState(), 3);
             } else if (y > terrain + 1) {
                 if (distance < 500.0D) {
                     clearVolatileNeighborhood(cursor, true);
-                    level.setBlock(cursor, Blocks.AIR.defaultBlockState(), 2);
+                    clearBlock(cursor, 2);
                 }
             } else {
                 floodLavaNeighborhood(cursor);
@@ -135,10 +136,13 @@ public class ExplosionTom {
             for (int dy = -2; dy < 3; dy++) {
                 for (int dz = -2; dz < 3; dz++) {
                     cursor.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
+                    if (level.isOutsideBuildHeight(cursor)) {
+                        continue;
+                    }
                     if (isTomVolatile(level.getBlockState(cursor))) {
-                        level.setBlock(cursor, Blocks.AIR.defaultBlockState(), 2);
+                        clearBlock(cursor, 2);
                         if (clearCenter) {
-                            level.setBlock(center, Blocks.AIR.defaultBlockState(), 2);
+                            clearBlock(center, 2);
                         }
                     }
                 }
@@ -148,13 +152,19 @@ public class ExplosionTom {
 
     private void floodLavaNeighborhood(BlockPos center) {
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos baseCursor = new BlockPos.MutableBlockPos();
         for (int dx = -2; dx < 3; dx++) {
             for (int dy = -2; dy < 3; dy++) {
                 for (int dz = -2; dz < 3; dz++) {
                     cursor.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
-                    BlockState state = level.getBlockState(cursor);
-                    if (!state.getFluidState().isEmpty() || state.is(Blocks.ICE) || state.isAir()) {
-                        level.setBlock(cursor, Blocks.LAVA.defaultBlockState(), 2);
+                    baseCursor.set(center.getX() + dx, center.getY(), center.getZ() + dz);
+                    if (level.isOutsideBuildHeight(cursor) || level.isOutsideBuildHeight(baseCursor)) {
+                        continue;
+                    }
+                    BlockState scannedState = level.getBlockState(cursor);
+                    BlockState baseState = level.getBlockState(baseCursor);
+                    if (isLegacyWaterBlock(scannedState) || scannedState.is(Blocks.ICE) || baseState.isAir()) {
+                        level.setBlock(baseCursor, Blocks.LAVA.defaultBlockState(), 2);
                     }
                 }
             }
@@ -162,13 +172,21 @@ public class ExplosionTom {
     }
 
     private boolean isTomVolatile(BlockState state) {
-        return !state.getFluidState().isEmpty()
+        return isLegacyWaterBlock(state)
                 || state.is(Blocks.ICE)
                 || state.is(BlockTags.SNOW)
                 || state.is(BlockTags.LEAVES)
                 || state.is(BlockTags.LOGS)
                 || state.is(BlockTags.PLANKS)
                 || state.ignitedByLava();
+    }
+
+    private static boolean isLegacyWaterBlock(BlockState state) {
+        return state.is(Blocks.WATER);
+    }
+
+    private void clearBlock(BlockPos pos, int flags) {
+        LegacyExplosionFluidCleanup.clearBlockOrLegacyLiquidNeighborhood(level, pos, flags);
     }
 
     private static BlockState tektiteState() {

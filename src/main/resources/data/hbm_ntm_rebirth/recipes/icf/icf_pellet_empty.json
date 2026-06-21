@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ZLZ",
+    "L L",
+    "ZLZ"
+  ],
+  "key": {
+    "L": {
+      "tag": "forge:wires/lead"
+    },
+    "Z": {
+      "tag": "forge:wires/zirconium"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:icf_pellet_empty"
+  },
+  "show_notification": true
+}

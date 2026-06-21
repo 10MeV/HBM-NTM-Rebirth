@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:cell_empty"
+    },
+    {
+      "tag": "forge:ingots/lithium"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:pile_rod_lithium"
+  }
+}

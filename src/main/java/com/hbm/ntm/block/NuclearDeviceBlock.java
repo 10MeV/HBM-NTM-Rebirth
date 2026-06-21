@@ -4,16 +4,14 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
 import com.hbm.ntm.explosion.NuclearExplosionUtil;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -120,9 +118,7 @@ public class NuclearDeviceBlock extends HorizontalMachineBlock implements Entity
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && !level.isClientSide()
                 && level.getBlockEntity(pos) instanceof NuclearDeviceBlockEntity device) {
-            for (ItemStack stack : device.getDrops()) {
-                Block.popResource(level, pos, stack);
-            }
+            device.spillDrops(level, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
@@ -142,10 +138,13 @@ public class NuclearDeviceBlock extends HorizontalMachineBlock implements Entity
         Kind detonationKind = device.detonationKind();
         device.clearSlots();
         level.removeBlock(pos, false);
-        level.playSound(null, pos, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS,
-                1.0F, 0.9F + level.random.nextFloat() * 0.1F);
-        level.gameEvent(null, GameEvent.EXPLODE, pos);
-        return detonationKind.detonate(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        boolean spawned = detonationKind.detonate(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        if (spawned) {
+            LegacySoundPlayer.playSoundEffect(level, pos.getX(), pos.getY(), pos.getZ(), "random.explode",
+                    1.0F, 0.9F + level.random.nextFloat() * 0.1F);
+            level.gameEvent(null, GameEvent.EXPLODE, pos);
+        }
+        return true;
     }
 
     @Override

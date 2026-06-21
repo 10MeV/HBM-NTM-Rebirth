@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "hbm_ntm_rebirth:block/mass_storage_top_desh",
+    "front": "hbm_ntm_rebirth:block/legacy_blocks/mass_storage_front_desh",
+    "side": "hbm_ntm_rebirth:block/mass_storage_side_desh"
+  }
+}

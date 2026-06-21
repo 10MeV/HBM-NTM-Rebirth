@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "O": {
+      "item": "minecraft:potato"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    "O",
+    "P"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:canteen_vodka"
+  },
+  "show_notification": true
+}

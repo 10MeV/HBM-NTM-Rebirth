@@ -92,7 +92,14 @@ public class ExplosionSolinium {
         int maxY = (int) (distance / Math.max(0.001F, explosionCoefficient2));
         int minY = (int) (-distance / Math.max(0.001F, explosionCoefficient));
         for (int y = maxY; y > minY; y--) {
-            ExplosionNukeGeneric.solinium(level, posX + x, posY + y, posZ + z);
+            int worldY = posY + y;
+            if (level.isOutsideBuildHeight(worldY)) {
+                if (worldY < level.getMinBuildHeight()) {
+                    break;
+                }
+                continue;
+            }
+            ExplosionNukeGeneric.solinium(level, posX + x, worldY, posZ + z);
         }
     }
 }

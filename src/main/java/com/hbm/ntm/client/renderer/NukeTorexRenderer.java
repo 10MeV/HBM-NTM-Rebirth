@@ -11,6 +11,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -18,10 +19,13 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Random;
 
 public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
@@ -33,8 +37,8 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
             LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE.renderType(CLOUDLET_TEXTURE);
     private static final RenderType FLARE_RENDER_TYPE =
             LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE.renderType(FLARE_TEXTURE);
-    private static final Comparator<Cloudlet> FAR_TO_NEAR =
-            (first, second) -> Double.compare(second.renderSortDistanceSq, first.renderSortDistanceSq);
+    private static final Comparator<RenderCloudlet> GLOBAL_FAR_TO_NEAR =
+            Comparator.comparingDouble((RenderCloudlet entry) -> entry.distanceToCameraSqr).reversed();
 
     public NukeTorexRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -57,41 +61,41 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
     }
 
-    public void renderCloudletsAfterLevel(NukeTorexEntity entity, Camera camera, float partialTick,
+    public static void renderCloudletsAfterLevel(ClientLevel level, Camera camera, float partialTick,
             PoseStack poseStack, MultiBufferSource.BufferSource buffer) {
-        if (entity.cloudlets.isEmpty()) {
+        List<RenderCloudlet> cloudlets = collectCloudlets(level, camera.getPosition());
+        if (cloudlets.isEmpty()) {
             return;
         }
 
+        cloudlets.sort(GLOBAL_FAR_TO_NEAR);
+        PoseStack.Pose pose = poseStack.last();
+        Vec3 cameraPos = camera.getPosition();
         CameraBasis cameraBasis = LegacyBillboardRenderer.cameraBasis(camera);
 
-        Vec3 cameraPos = camera.getPosition();
-        double originX = Mth.lerp(partialTick, entity.xOld, entity.getX());
-        double originY = Mth.lerp(partialTick, entity.yOld, entity.getY());
-        double originZ = Mth.lerp(partialTick, entity.zOld, entity.getZ());
-
-        poseStack.pushPose();
-        poseStack.translate(originX - cameraPos.x, originY - cameraPos.y, originZ - cameraPos.z);
-        renderCloudlets(entity, cameraPos, partialTick, poseStack, buffer, cameraBasis);
-        poseStack.popPose();
+        VertexConsumer consumer = buffer.getBuffer(CLOUDLET_RENDER_TYPE);
+        for (RenderCloudlet entry : cloudlets) {
+            renderBillboard(consumer, pose, cameraBasis, entry.cloudlet(), partialTick,
+                    cameraPos.x, cameraPos.y, cameraPos.z);
+        }
         buffer.endBatch(CLOUDLET_RENDER_TYPE);
     }
 
-    private void renderCloudlets(NukeTorexEntity entity, Vec3 cameraPos, float partialTick, PoseStack poseStack,
-            MultiBufferSource buffer, CameraBasis cameraBasis) {
-        sortCloudlets(entity, cameraPos);
-        PoseStack.Pose pose = poseStack.last();
-        double originX = Mth.lerp(partialTick, entity.xOld, entity.getX());
-        double originY = Mth.lerp(partialTick, entity.yOld, entity.getY());
-        double originZ = Mth.lerp(partialTick, entity.zOld, entity.getZ());
-
-        VertexConsumer consumer = buffer.getBuffer(CLOUDLET_RENDER_TYPE);
-        for (Cloudlet cloudlet : entity.cloudlets) {
-            renderBillboard(consumer, pose, cameraBasis, cloudlet, partialTick, originX, originY, originZ);
+    private static List<RenderCloudlet> collectCloudlets(ClientLevel level, Vec3 cameraPos) {
+        List<RenderCloudlet> entries = new ArrayList<>();
+        for (Entity entity : level.entitiesForRendering()) {
+            if (!(entity instanceof NukeTorexEntity torex) || torex.cloudlets.isEmpty()) {
+                continue;
+            }
+            for (Cloudlet cloudlet : torex.cloudlets) {
+                entries.add(new RenderCloudlet(cloudlet,
+                        cameraPos.distanceToSqr(cloudlet.posX, cloudlet.posY, cloudlet.posZ)));
+            }
         }
+        return entries;
     }
 
-    private void renderBillboard(VertexConsumer consumer, PoseStack.Pose pose, CameraBasis cameraBasis, Cloudlet cloudlet,
+    private static void renderBillboard(VertexConsumer consumer, PoseStack.Pose pose, CameraBasis cameraBasis, Cloudlet cloudlet,
             float partialTick, double originX, double originY, double originZ) {
         float alpha = cloudlet.getAlpha();
         if (alpha <= 0.001F) {
@@ -134,19 +138,6 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         }
     }
 
-    private void sortCloudlets(NukeTorexEntity entity, Vec3 cameraPos) {
-        int clientTick = Minecraft.getInstance().gui.getGuiTicks();
-        if (entity.lastRenderSortTick == clientTick) {
-            return;
-        }
-
-        for (Cloudlet cloudlet : entity.cloudlets) {
-            cloudlet.renderSortDistanceSq = cameraPos.distanceToSqr(cloudlet.posX, cloudlet.posY, cloudlet.posZ);
-        }
-        entity.cloudlets.sort(FAR_TO_NEAR);
-        entity.lastRenderSortTick = clientTick;
-    }
-
     private void applyPlayerShake(NukeTorexEntity entity) {
         if (!entity.didPlaySound || entity.didShake) {
             return;
@@ -158,6 +149,9 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         }
 
         entity.applyClientShockwaveShake(player);
+    }
+
+    private record RenderCloudlet(Cloudlet cloudlet, double distanceToCameraSqr) {
     }
 
     @Override

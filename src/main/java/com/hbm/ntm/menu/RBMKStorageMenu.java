@@ -1,6 +1,7 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.RBMKColumnBlockEntity;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
@@ -26,7 +27,7 @@ public class RBMKStorageMenu extends AbstractContainerMenu {
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 4; column++) {
                 int slot = row + column * 3;
-                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.storageItems(), slot,
+                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.storageMenuItems(), slot,
                         32 + 32 * column, 29 + 16 * row));
             }
         }
@@ -39,11 +40,15 @@ public class RBMKStorageMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D)
+                && MultiblockHelper.isOperationalCoreLayoutComplete(player.level(), blockEntity.getBlockPos());
     }
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
+        if (!blockEntity.hasOperationalLayout()) {
+            return ItemStack.EMPTY;
+        }
         ItemStack result = ItemStack.EMPTY;
         Slot slot = slots.get(index);
         if (slot != null && slot.hasItem()) {
@@ -62,7 +67,9 @@ public class RBMKStorageMenu extends AbstractContainerMenu {
     }
 
     private static RBMKColumnBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = inventory.player.level().isClientSide
+                ? MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos)
+                : MultiblockHelper.resolveOperationalCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof RBMKColumnBlockEntity column && column.kind().storage()) {
             return column;
         }

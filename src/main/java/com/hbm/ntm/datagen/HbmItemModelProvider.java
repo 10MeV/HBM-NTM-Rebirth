@@ -9,6 +9,7 @@ import com.hbm.ntm.item.HbmAbilityToolItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import com.hbm.ntm.item.LegacyArtilleryAmmoItem;
+import com.hbm.ntm.item.RBMKPelletItem;
 import com.hbm.ntm.item.SednaGunItem;
 import com.hbm.ntm.item.WeaponModItem;
 import com.hbm.ntm.item.missile.MissileItem;
@@ -229,6 +230,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "wire_tungsten");
             return;
         }
+        if (path.equals("wire_fine_lead") || path.equals("wire_fine_zirconium")) {
+            generatedItem(path, "wire_fine");
+            return;
+        }
         if (path.startsWith("plate_cast_")) {
             generatedItem(path, "plate_cast");
             return;
@@ -294,7 +299,7 @@ public class HbmItemModelProvider extends ItemModelProvider {
             return;
         }
         if (path.startsWith("rbmk_pellet_")) {
-            layeredItem(path, path, "rbmk_pellet_overlay_e0");
+            rbmkPelletItem(path, item instanceof RBMKPelletItem pellet && pellet.isXenonEnabled());
             return;
         }
         if (path.startsWith("ncrpa_")) {
@@ -367,6 +372,14 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.startsWith("ammo_secret_")) {
             generatedItem(path, "ammo_secret." + path.substring("ammo_secret_".length()));
+            return;
+        }
+        if (path.startsWith("item_secret_")) {
+            generatedItem(path, "item_secret." + path.substring("item_secret_".length()));
+            return;
+        }
+        if (path.equals("powder_power")) {
+            generatedItem(path, "powder_energy_alt");
             return;
         }
         if (item instanceof WeaponModItem mod) {
@@ -442,8 +455,13 @@ public class HbmItemModelProvider extends ItemModelProvider {
             handheldItem(path, path);
             return;
         }
-        if (path.equals("fluid_duct") || path.equals("fluid_duct_neo") || path.equals("fluid_valve") || path.equals("fluid_switch")
-                || path.equals("fluid_counter_valve") || path.equals("fluid_duct_box")
+        if (path.equals("fluid_duct_neo") || path.equals("fluid_duct_box") || path.equals("fluid_duct_exhaust")) {
+            getBuilder(path)
+                    .parent(new ModelFile.UncheckedModelFile("minecraft:builtin/entity"));
+            return;
+        }
+        if (path.equals("fluid_duct") || path.equals("fluid_valve") || path.equals("fluid_switch")
+                || path.equals("fluid_counter_valve")
                 || path.equals("fluid_duct_gauge") || path.equals("fluid_duct_paintable")) {
             getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
@@ -453,7 +471,7 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.equals("fluid_duct_paintable_block_exhaust")) {
             getBuilder(path)
-                    .parent(new ModelFile.UncheckedModelFile(modLoc("block/fluid_duct_paintable_block_exhaust_overlay")));
+                    .parent(new ModelFile.UncheckedModelFile(modLoc("block/fluid_duct_paintable_block_exhaust")));
             return;
         }
         if (path.equals("pipe_anchor")) {
@@ -521,6 +539,32 @@ public class HbmItemModelProvider extends ItemModelProvider {
                 .texture("layer0", modLoc("item/" + layer0))
                 .texture("layer1", modLoc("item/" + layer1))
                 .texture("layer2", modLoc("item/" + layer2));
+    }
+
+    private void rbmkPelletItem(String itemPath, boolean xenonEnabled) {
+        var builder = getBuilder(itemPath)
+                .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
+                .texture("layer0", modLoc("item/" + itemPath))
+                .texture("layer1", modLoc("item/rbmk_pellet_overlay_e0"));
+        int variants = xenonEnabled ? 10 : 5;
+        for (int meta = 1; meta < variants; meta++) {
+            builder.override()
+                    .predicate(RBMKPelletItem.META_PROPERTY, meta)
+                    .model(rbmkPelletVariantModel(itemPath, meta))
+                    .end();
+        }
+    }
+
+    private ModelFile rbmkPelletVariantModel(String itemPath, int meta) {
+        int depletionMeta = meta % 5;
+        var builder = getBuilder(itemPath + "_meta_" + meta)
+                .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
+                .texture("layer0", modLoc("item/" + itemPath))
+                .texture("layer1", modLoc("item/rbmk_pellet_overlay_e" + depletionMeta));
+        if (meta >= 5) {
+            builder.texture("layer2", modLoc("item/rbmk_pellet_overlay_xenon"));
+        }
+        return builder;
     }
 
     private void generatedItem(String itemPath, String texturePath) {

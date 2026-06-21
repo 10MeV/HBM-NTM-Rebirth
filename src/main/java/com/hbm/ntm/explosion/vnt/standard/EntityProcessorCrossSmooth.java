@@ -3,9 +3,11 @@ package com.hbm.ntm.explosion.vnt.standard;
 import com.hbm.ntm.damage.DamageClass;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
+import com.hbm.ntm.particle.LegacyConfettiUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 
 public class EntityProcessorCrossSmooth extends EntityProcessorCross {
@@ -39,8 +41,12 @@ public class EntityProcessorCrossSmooth extends EntityProcessorCross {
         if (explosion.exploder() == entity) {
             amount *= 0.5F;
         }
-        EntityDamageUtil.attackEntityFromNt(entity, damageSource(explosion), amount, true, false, 0.0D,
+        DamageSource source = damageSource(explosion);
+        EntityDamageUtil.attackEntityFromNt(entity, source, amount, true, false, 0.0D,
                 pierceDamageThreshold, pierceDamageResistance);
+        if (entity instanceof LivingEntity living && !living.isAlive()) {
+            LegacyConfettiUtil.decideConfetti(living, damageClass);
+        }
     }
 
     @Override

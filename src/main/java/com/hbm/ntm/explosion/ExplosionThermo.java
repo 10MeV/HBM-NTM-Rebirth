@@ -3,7 +3,6 @@ package com.hbm.ntm.explosion;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.radiation.ArmorUtil;
 import net.minecraft.core.BlockPos;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -60,6 +59,9 @@ public final class ExplosionThermo {
                 for (int zz = -bound; zz < bound; zz++) {
                     if (yy2 + zz * zz < halfRadiusSquared) {
                         BlockPos pos = cursor.set(worldX, worldY + 1, zz + z);
+                        if (level.isOutsideBuildHeight(pos)) {
+                            continue;
+                        }
                         BlockState snow = Blocks.SNOW.defaultBlockState();
                         if ((level.getBlockState(pos).isAir() || level.getBlockState(pos).is(Blocks.FIRE))
                                 && snow.canSurvive(level, pos)) {
@@ -84,27 +86,27 @@ public final class ExplosionThermo {
     }
 
     public static void freezeDest(Level level, BlockPos pos) {
-        if (level == null || level.isClientSide()) {
+        if (level == null || level.isClientSide() || level.isOutsideBuildHeight(pos)) {
             return;
         }
 
         BlockState state = level.getBlockState(pos);
         BlockState replacement = null;
-        if (isLegacy(state, "volcanic_lava_block")) {
+        if (state.is(ModBlocks.VOLCANIC_LAVA_BLOCK.get())) {
             replacement = Blocks.COBBLESTONE.defaultBlockState();
         } else if (state.is(Blocks.GRASS_BLOCK)) {
             replacement = ModBlocks.FROZEN_GRASS.get().defaultBlockState();
-        } else if (state.is(Blocks.DIRT)) {
+        } else if (LegacyExplosionBlockChecks.isLegacyDirtBlock(state)) {
             replacement = ModBlocks.FROZEN_DIRT.get().defaultBlockState();
-        } else if (state.is(BlockTags.LOGS) || state.is(BlockTags.LOGS_THAT_BURN) || isLegacy(state, "waste_log")) {
+        } else if (LegacyExplosionBlockChecks.isLegacyVanillaLog(state) || state.is(ModBlocks.WASTE_LOG.get())) {
             replacement = ModBlocks.FROZEN_LOG.get().defaultBlockState();
-        } else if (state.is(BlockTags.PLANKS) || isLegacy(state, "waste_planks")) {
+        } else if (LegacyExplosionBlockChecks.isLegacyVanillaPlanks(state) || state.is(ModBlocks.WASTE_PLANKS.get())) {
             replacement = ModBlocks.FROZEN_PLANKS.get().defaultBlockState();
         } else if (state.is(Blocks.STONE) || state.is(Blocks.COBBLESTONE) || state.is(Blocks.STONE_BRICKS)) {
             replacement = Blocks.PACKED_ICE.defaultBlockState();
-        } else if (state.is(BlockTags.LEAVES)) {
+        } else if (LegacyExplosionBlockChecks.isLegacyVanillaLeaves(state)) {
             replacement = Blocks.SNOW_BLOCK.defaultBlockState();
-        } else if (state.is(Blocks.LAVA) || state.is(Blocks.OBSIDIAN)) {
+        } else if (state.is(Blocks.LAVA)) {
             replacement = Blocks.OBSIDIAN.defaultBlockState();
         } else if (state.is(Blocks.WATER)) {
             replacement = Blocks.ICE.defaultBlockState();
@@ -120,7 +122,7 @@ public final class ExplosionThermo {
     }
 
     public static void scorchDest(Level level, BlockPos pos) {
-        if (level == null || level.isClientSide()) {
+        if (level == null || level.isClientSide() || level.isOutsideBuildHeight(pos)) {
             return;
         }
 
@@ -136,14 +138,14 @@ public final class ExplosionThermo {
     }
 
     public static void scorchDestLight(Level level, BlockPos pos) {
-        if (level == null || level.isClientSide()) {
+        if (level == null || level.isClientSide() || level.isOutsideBuildHeight(pos)) {
             return;
         }
 
         BlockState state = level.getBlockState(pos);
         BlockState replacement = scorchCommon(level, pos, state, false);
         if (replacement == null) {
-            if (isLegacy(state, "waste_earth")) {
+            if (state.is(ModBlocks.WASTE_EARTH.get())) {
                 replacement = Blocks.NETHERRACK.defaultBlockState();
             } else if (state.is(Blocks.OBSIDIAN)) {
                 replacement = requireLegacyState("gravel_obsidian");
@@ -189,6 +191,9 @@ public final class ExplosionThermo {
                 for (int b = 0; b < 3; b++) {
                     for (int c = -1; c <= 1; c++) {
                         cursor.set(baseX + a, baseY + b, baseZ + c);
+                        if (level.isOutsideBuildHeight(cursor)) {
+                            continue;
+                        }
                         level.setBlock(cursor, Blocks.ICE.defaultBlockState(), 3);
                     }
                 }
@@ -218,28 +223,28 @@ public final class ExplosionThermo {
     }
 
     private static BlockState scorchCommon(Level level, BlockPos pos, BlockState state, boolean intense) {
-        if (state.is(Blocks.GRASS_BLOCK) || isLegacy(state, "frozen_grass")) {
+        if (state.is(Blocks.GRASS_BLOCK) || state.is(ModBlocks.FROZEN_GRASS.get())) {
             return Blocks.DIRT.defaultBlockState();
         }
-        if (state.is(Blocks.DIRT)) {
+        if (LegacyExplosionBlockChecks.isLegacyDirtBlock(state)) {
             return Blocks.NETHERRACK.defaultBlockState();
         }
-        if (isLegacy(state, "frozen_dirt")) {
+        if (state.is(ModBlocks.FROZEN_DIRT.get())) {
             return Blocks.DIRT.defaultBlockState();
         }
         if (intense && state.is(Blocks.NETHERRACK)) {
             return Blocks.LAVA.defaultBlockState();
         }
-        if (state.is(BlockTags.LOGS) || state.is(BlockTags.LOGS_THAT_BURN) || isLegacy(state, "frozen_log")) {
+        if (LegacyExplosionBlockChecks.isLegacyVanillaLog(state) || state.is(ModBlocks.FROZEN_LOG.get())) {
             return ModBlocks.WASTE_LOG.get().defaultBlockState();
         }
-        if (state.is(BlockTags.PLANKS) || isLegacy(state, "frozen_planks")) {
+        if (LegacyExplosionBlockChecks.isLegacyVanillaPlanks(state) || state.is(ModBlocks.FROZEN_PLANKS.get())) {
             return ModBlocks.WASTE_PLANKS.get().defaultBlockState();
         }
         if (intense && (state.is(Blocks.STONE) || state.is(Blocks.COBBLESTONE) || state.is(Blocks.STONE_BRICKS) || state.is(Blocks.OBSIDIAN))) {
             return Blocks.LAVA.defaultBlockState();
         }
-        if (state.is(BlockTags.LEAVES) || state.is(Blocks.WATER) || state.is(Blocks.ICE)) {
+        if (LegacyExplosionBlockChecks.isLegacyVanillaLeaves(state) || state.is(Blocks.WATER) || state.is(Blocks.ICE)) {
             return Blocks.AIR.defaultBlockState();
         }
         if (state.is(Blocks.PACKED_ICE)) {
@@ -266,6 +271,9 @@ public final class ExplosionThermo {
             int xx2 = xx * xx;
             for (int yy = -radius; yy < radius; yy++) {
                 int worldY = yy + y;
+                if (level.isOutsideBuildHeight(worldY)) {
+                    continue;
+                }
                 int yy2 = xx2 + yy * yy;
                 for (int zz = -radius; zz < radius; zz++) {
                     if (yy2 + zz * zz < halfRadiusSquared + level.random.nextInt(jaggedBound)) {
@@ -278,11 +286,6 @@ public final class ExplosionThermo {
 
     private static boolean hasAsbestosProtection(Entity entity) {
         return entity instanceof Player player && ArmorUtil.checkForAsbestos(player);
-    }
-
-    private static boolean isLegacy(BlockState state, String name) {
-        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        return block != null && state.is(block.get());
     }
 
     private static BlockState requireLegacyState(String name) {

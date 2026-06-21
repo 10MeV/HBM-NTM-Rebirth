@@ -3,17 +3,20 @@ package com.hbm.ntm.util;
 import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.recipe.HbmItemOutput;
 import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
+import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
+import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
@@ -24,6 +27,20 @@ import java.util.List;
 
 public final class HbmInventoryUtil {
     private HbmInventoryUtil() {
+    }
+
+    public static int[] masquerade(WorldlyContainer sided, int side) {
+        return masquerade(sided, Direction.from3DDataValue(side));
+    }
+
+    public static int[] masquerade(WorldlyContainer sided, Direction side) {
+        if (sided == null) {
+            return new int[0];
+        }
+        if (sided instanceof FurnaceBlockEntity) {
+            return new int[] {1, 0};
+        }
+        return sided.getSlotsForFace(side == null ? Direction.DOWN : side);
     }
 
     public static boolean doesStackDataMatch(ItemStack first, ItemStack second) {

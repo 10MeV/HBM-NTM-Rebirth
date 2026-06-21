@@ -1,5 +1,6 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.HazardType;
@@ -20,7 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 @SuppressWarnings("deprecation")
 public class LegacyGasMeltdownBlock extends LegacyGasBlock {
     public LegacyGasMeltdownBlock(Properties properties) {
-        super(properties);
+        super(properties, 0.1F, 0.4F, 0.1F);
     }
 
     @Override
@@ -49,8 +50,8 @@ public class LegacyGasMeltdownBlock extends LegacyGasBlock {
 
         RadiationUtil.contaminate(living, HazardType.RADIATION, ContaminationType.CREATIVE, 0.5F);
         RadiationUtil.addRadiationPoisoning(living, 60 * 20, 2);
-        if (!ArmorUtil.hasFineParticleProtectionAndDamageFilter(living, 1)) {
-            RadiationUtil.applyAsbestos(living, 5, 1);
+        if (!ArmorUtil.hasAllProtectionAndDamageFilter(living, 3, 1, HazardClass.PARTICLE_FINE)) {
+            RadiationUtil.applyAsbestosGasExposure(living, 5);
         }
     }
 

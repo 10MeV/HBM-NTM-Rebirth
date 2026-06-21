@@ -347,6 +347,9 @@ public class GenericMachineRecipe implements Recipe<Container> {
             case PUREX -> new ItemStack(ModBlocks.MACHINE_PUREX.get());
             case PRECASS -> new ItemStack(ModBlocks.MACHINE_PRECASS.get());
             case ARC_WELDER -> new ItemStack(ModBlocks.MACHINE_ARC_WELDER.get());
+            case ARC_FURNACE -> new ItemStack(ModBlocks.MACHINE_ARC_FURNACE.get());
+            case FUSION_REACTOR -> new ItemStack(ModBlocks.FUSION_TORUS.get());
+            case PLASMA_FORGE -> new ItemStack(ModBlocks.FUSION_PLASMA_FORGE.get());
         };
     }
 
@@ -375,7 +378,10 @@ public class GenericMachineRecipe implements Recipe<Container> {
         ASSEMBLY_MACHINE(12, 1, 1, 1),
         PUREX(3, 3, 6, 1),
         PRECASS(9, 1, 9, 1),
-        ARC_WELDER(3, 1, 1, 0);
+        ARC_WELDER(3, 1, 1, 0),
+        ARC_FURNACE(1, 0, 1, 0),
+        FUSION_REACTOR(0, 3, 1, 11),
+        PLASMA_FORGE(12, 1, 1, 0);
 
         private final int inputItemLimit;
         private final int inputFluidLimit;
@@ -412,6 +418,9 @@ public class GenericMachineRecipe implements Recipe<Container> {
                 case PUREX -> ModRecipes.PUREX.serializer().getId();
                 case PRECASS -> ModRecipes.PRECASS.serializer().getId();
                 case ARC_WELDER -> ModRecipes.ARC_WELDER.serializer().getId();
+                case ARC_FURNACE -> ModRecipes.ARC_FURNACE.serializer().getId();
+                case FUSION_REACTOR -> ModRecipes.FUSION_REACTOR.serializer().getId();
+                case PLASMA_FORGE -> ModRecipes.PLASMA_FORGE.serializer().getId();
             };
         }
 
@@ -429,6 +438,9 @@ public class GenericMachineRecipe implements Recipe<Container> {
                 case PUREX -> ModRecipes.PUREX.type().get();
                 case PRECASS -> ModRecipes.PRECASS.type().get();
                 case ARC_WELDER -> ModRecipes.ARC_WELDER.type().get();
+                case ARC_FURNACE -> ModRecipes.ARC_FURNACE.type().get();
+                case FUSION_REACTOR -> ModRecipes.FUSION_REACTOR.type().get();
+                case PLASMA_FORGE -> ModRecipes.PLASMA_FORGE.type().get();
             };
         }
 
@@ -439,6 +451,9 @@ public class GenericMachineRecipe implements Recipe<Container> {
                 case PUREX -> ModRecipes.PUREX.serializer().get();
                 case PRECASS -> ModRecipes.PRECASS.serializer().get();
                 case ARC_WELDER -> ModRecipes.ARC_WELDER.serializer().get();
+                case ARC_FURNACE -> ModRecipes.ARC_FURNACE.serializer().get();
+                case FUSION_REACTOR -> ModRecipes.FUSION_REACTOR.serializer().get();
+                case PLASMA_FORGE -> ModRecipes.PLASMA_FORGE.serializer().get();
             };
         }
 

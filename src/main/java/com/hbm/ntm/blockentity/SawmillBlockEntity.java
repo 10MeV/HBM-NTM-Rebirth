@@ -5,6 +5,9 @@ import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.tile.HeatSource;
+import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
+import com.hbm.ntm.entity.projectile.MachinePartProjectileEntity;
+import com.hbm.ntm.entity.projectile.SawbladeEntity;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -192,8 +195,20 @@ public class SawmillBlockEntity extends BlockEntity
             hasBlade = false;
             level.explode(null, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D,
                     5.0F, false, Level.ExplosionInteraction.NONE);
+            spawnSawblade(level, pos, getFacing());
             setChangedAndUpdate();
         }
+    }
+
+    private void spawnSawblade(Level level, BlockPos pos, Direction facing) {
+        SawbladeEntity blade = new SawbladeEntity(level,
+                pos.getX() + 0.5D + facing.getStepX(),
+                pos.getY() + 1.0D,
+                pos.getZ() + 0.5D + facing.getStepZ());
+        blade.setOrientation(MachinePartProjectileEntity.legacyOrientation(facing));
+        Direction side = MachinePartProjectileEntity.legacyDownRotation(facing);
+        blade.setDeltaMovement(side.getStepX(), 1.0D + (heat - MIN_HEAT) * 0.0001D, side.getStepZ());
+        level.addFreshEntity(blade);
     }
 
     public boolean installBlade() {
@@ -307,6 +322,13 @@ public class SawmillBlockEntity extends BlockEntity
 
     public float getSpin(float partialTick) {
         return lastSpin + (spin - lastSpin) * partialTick;
+    }
+
+    private Direction getFacing() {
+        BlockState state = getBlockState();
+        return state.hasProperty(LegacyVisibleMultiblockMachineBlock.FACING)
+                ? state.getValue(LegacyVisibleMultiblockMachineBlock.FACING)
+                : Direction.SOUTH;
     }
 
     @Override

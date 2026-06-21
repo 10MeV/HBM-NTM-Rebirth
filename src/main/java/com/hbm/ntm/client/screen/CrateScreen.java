@@ -13,16 +13,15 @@ public class CrateScreen extends AbstractContainerScreen<CrateMenu> {
 
     public CrateScreen(CrateMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        this.imageWidth = 176;
-        this.imageHeight = menu.rows() == 6 ? 222 : 186;
+        this.imageWidth = menu.getBlockEntity().kind().imageWidth();
+        this.imageHeight = menu.getBlockEntity().kind().imageHeight();
         this.inventoryLabelY = imageHeight - 94;
-        this.texture = new ResourceLocation(HbmNtm.MOD_ID,
-                "textures/gui/storage/" + menu.getBlockEntity().kind().textureName() + ".png");
+        this.texture = texture(menu);
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
-        graphics.blit(texture, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        graphics.blit(texture(menu), leftPos, topPos, 0, 0, imageWidth, imageHeight);
     }
 
     @Override
@@ -36,5 +35,11 @@ public class CrateScreen extends AbstractContainerScreen<CrateMenu> {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private ResourceLocation texture(CrateMenu menu) {
+        return new ResourceLocation(HbmNtm.MOD_ID,
+                "textures/gui/storage/"
+                        + menu.getBlockEntity().kind().textureName(menu.getBlockEntity().isHot()) + ".png");
     }
 }

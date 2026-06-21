@@ -4,10 +4,12 @@ import com.hbm.ntm.neutron.RBMKFuelRodRegistry;
 import com.hbm.ntm.neutron.RBMKFuelRodSpec;
 import com.hbm.ntm.neutron.RBMKFuelRodState;
 import com.hbm.ntm.neutron.RBMKItemPlanner;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -46,6 +48,16 @@ public class RBMKFuelRodItem extends Item {
         (state == null ? RBMKFuelRodState.fresh(entry.spec()) : state).save(tag);
     }
 
+    public void setLegacyDefaultState(ItemStack stack) {
+        RBMKFuelRodState.fresh(entry.spec()).saveLegacyDefaults(stack.getOrCreateTag());
+    }
+
+    public void ensureLegacyDefaultState(ItemStack stack) {
+        if (!stack.hasTag()) {
+            setLegacyDefaultState(stack);
+        }
+    }
+
     @Override
     public boolean isBarVisible(ItemStack stack) {
         return RBMKItemPlanner.fuelRodDurability(entry.spec(), getState(stack)).showBar();
@@ -54,12 +66,28 @@ public class RBMKFuelRodItem extends Item {
     @Override
     public int getBarWidth(ItemStack stack) {
         double value = RBMKItemPlanner.fuelRodDurability(entry.spec(), getState(stack)).displayValue();
-        return Math.round((float) (13.0D * value));
+        return Math.round((float) (13.0D * Math.max(0.0D, Math.min(1.0D, value))));
     }
 
     @Override
     public int getBarColor(ItemStack stack) {
         return 0x55FF55;
+    }
+
+    @Override
+    public boolean hasCraftingRemainingItem(ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public ItemStack getCraftingRemainingItem(ItemStack stack) {
+        return new ItemStack(ModItems.RBMK_FUEL_EMPTY.get());
+    }
+
+    @Override
+    public void onCraftedBy(ItemStack stack, Level level, Player player) {
+        super.onCraftedBy(stack, level, player);
+        ensureLegacyDefaultState(stack);
     }
 
     @Override

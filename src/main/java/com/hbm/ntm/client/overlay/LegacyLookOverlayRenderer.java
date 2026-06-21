@@ -92,7 +92,8 @@ public final class LegacyLookOverlayRenderer {
     }
 
     private static LegacyLookOverlay resolveBlockEntityOverlay(Minecraft minecraft, BlockHitResult hit) {
-        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(minecraft.level, hit.getBlockPos());
+        BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(minecraft.level,
+                hit.getBlockPos());
         if (!(blockEntity instanceof LegacyLookOverlayProvider provider)) {
             return null;
         }

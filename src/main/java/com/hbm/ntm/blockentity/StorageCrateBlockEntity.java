@@ -1,24 +1,30 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.CrateBlock;
+import api.hbm.block.ILaserable;
 import com.hbm.ntm.menu.CrateMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.Container;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,16 +32,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider {
+public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider, ILaserable {
     public static final String LEGACY_NAME_TAG = "name";
     public static final String LEGACY_SPIDERS_TAG = "spiders";
+    public static final String LEGACY_HEAT_TIMER_TAG = "heatTimer";
     private static final int LEGACY_MAX_TOOLTIP_SCAN = 104;
 
     private final Kind kind;
     private final ItemStackHandler items;
-    private final LazyOptional<ItemStackHandler> itemCapability;
+    private final LazyOptional<IItemHandler> itemCapability;
     private String customName;
     private boolean hasSpiders;
+    private int heatTimer;
 
     public StorageCrateBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.STORAGE_CRATE.get(), pos, state);
@@ -46,7 +54,41 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
                 setChanged();
             }
         };
-        this.itemCapability = LazyOptional.of(() -> items);
+        this.itemCapability = LazyOptional.of(() -> new IItemHandler() {
+            @Override
+            public int getSlots() {
+                return items.getSlots();
+            }
+
+            @Override
+            public @NotNull ItemStack getStackInSlot(int slot) {
+                return items.getStackInSlot(slot);
+            }
+
+            @Override
+            public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+                return items.insertItem(slot, stack, simulate);
+            }
+
+            @Override
+            public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+                ItemStack stack = items.getStackInSlot(slot);
+                if (kind == Kind.TUNGSTEN && isProtectedTungstenExtraction(stack)) {
+                    return ItemStack.EMPTY;
+                }
+                return items.extractItem(slot, amount, simulate);
+            }
+
+            @Override
+            public int getSlotLimit(int slot) {
+                return items.getSlotLimit(slot);
+            }
+
+            @Override
+            public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+                return items.isItemValid(slot, stack);
+            }
+        });
     }
 
     public Kind kind() {
@@ -59,6 +101,32 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
 
     public ItemStackHandler getItems() {
         return items;
+    }
+
+    public boolean isHot() {
+        return kind == Kind.TUNGSTEN && heatTimer > 0;
+    }
+
+    public void tick() {
+        if (kind != Kind.TUNGSTEN || level == null) {
+            return;
+        }
+        if (level.isClientSide) {
+            if (heatTimer > 0) {
+                spawnHeatParticles();
+                heatTimer--;
+            }
+            return;
+        }
+
+        boolean wasHot = heatTimer > 0;
+        if (heatTimer > 0) {
+            heatTimer--;
+        }
+        boolean isHot = heatTimer > 0;
+        if (wasHot != isHot) {
+            setChangedAndUpdate();
+        }
     }
 
     public void playOpenSound() {
@@ -125,6 +193,7 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
                 }
             }
             hasSpiders = tag.getBoolean(LEGACY_SPIDERS_TAG);
+            heatTimer = tag.getInt(LEGACY_HEAT_TIMER_TAG);
         }
         if (stack.hasCustomHoverName()) {
             customName = stack.getHoverName().getString();
@@ -214,6 +283,9 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
         super.saveAdditional(tag);
         HbmItemStackUtil.saveLegacyItemsToTag(tag, items);
         tag.putBoolean(LEGACY_SPIDERS_TAG, hasSpiders);
+        if (heatTimer > 0) {
+            tag.putInt(LEGACY_HEAT_TIMER_TAG, heatTimer);
+        }
         if (customName != null && !customName.isBlank()) {
             tag.putString(LEGACY_NAME_TAG, customName);
         }
@@ -224,6 +296,7 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
         super.load(tag);
         HbmItemStackUtil.loadLegacyItems(tag, items);
         hasSpiders = tag.getBoolean(LEGACY_SPIDERS_TAG);
+        heatTimer = tag.getInt(LEGACY_HEAT_TIMER_TAG);
         customName = tag.contains(LEGACY_NAME_TAG) ? tag.getString(LEGACY_NAME_TAG) : null;
     }
 
@@ -252,6 +325,80 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
     public void invalidateCaps() {
         super.invalidateCaps();
         itemCapability.invalidate();
+    }
+
+    @Override
+    public void addEnergy(net.minecraft.world.level.Level level, BlockPos pos, long energy, @Nullable Direction side) {
+        if (kind != Kind.TUNGSTEN || level == null || level.isClientSide) {
+            return;
+        }
+        heatTimer = 5;
+        smeltContents();
+        setChangedAndUpdate();
+    }
+
+    private void smeltContents() {
+        if (level == null) {
+            return;
+        }
+        for (int slot = 0; slot < items.getSlots(); slot++) {
+            ItemStack stack = items.getStackInSlot(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            ItemStack result = getSmeltingResult(stack);
+            if (result.isEmpty()) {
+                continue;
+            }
+            int count = result.getCount() * stack.getCount();
+            if (count <= result.getMaxStackSize()) {
+                items.setStackInSlot(slot, result.copyWithCount(count));
+            }
+        }
+    }
+
+    private ItemStack getSmeltingResult(ItemStack stack) {
+        if (level == null || stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        return level.getRecipeManager()
+                .getRecipeFor(RecipeType.SMELTING, new SimpleContainer(stack), level)
+                .map(recipe -> recipe.getResultItem(level.registryAccess()).copy())
+                .orElse(ItemStack.EMPTY);
+    }
+
+    private boolean isProtectedTungstenExtraction(ItemStack stack) {
+        return !stack.isEmpty() && !getSmeltingResult(stack).isEmpty();
+    }
+
+    private void spawnHeatParticles() {
+        if (level == null) {
+            return;
+        }
+        double x = worldPosition.getX();
+        double y = worldPosition.getY();
+        double z = worldPosition.getZ();
+        spawnHeatParticle(x + level.random.nextDouble(), y + 1.1D, z + level.random.nextDouble());
+        spawnHeatParticle(x - 0.1D, y + level.random.nextDouble(), z + level.random.nextDouble());
+        spawnHeatParticle(x + 1.1D, y + level.random.nextDouble(), z + level.random.nextDouble());
+        spawnHeatParticle(x + level.random.nextDouble(), y + level.random.nextDouble(), z - 0.1D);
+        spawnHeatParticle(x + level.random.nextDouble(), y + level.random.nextDouble(), z + 1.1D);
+    }
+
+    private void spawnHeatParticle(double x, double y, double z) {
+        if (level == null) {
+            return;
+        }
+        level.addParticle(ParticleTypes.FLAME, x, y, z, 0.0D, 0.0D, 0.0D);
+        level.addParticle(ParticleTypes.SMOKE, x, y, z, 0.0D, 0.0D, 0.0D);
+    }
+
+    private void setChangedAndUpdate() {
+        setChanged();
+        if (level != null) {
+            BlockState state = getBlockState();
+            level.sendBlockUpdated(worldPosition, state, state, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+        }
     }
 
     public static Kind kindFromState(BlockState state) {
@@ -298,17 +445,40 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
     }
 
     public enum Kind {
-        IRON(36, "container.crateIron", "gui_crate_iron"),
-        STEEL(54, "container.crateSteel", "gui_crate_steel");
+        IRON(36, 9, "container.crateIron", "gui_crate_iron", null, 176, 186, 8, 18, 8, 104, 162),
+        STEEL(54, 9, "container.crateSteel", "gui_crate_steel", null, 176, 222, 8, 18, 8, 140, 198),
+        DESH(104, 13, "container.crateDesh", "gui_crate_desh", null, 248, 256, 8, 18, 44, 174, 232),
+        TUNGSTEN(27, 9, "container.crateTungsten", "gui_crate_tungsten", "gui_crate_tungsten_hot", 176, 168, 8, 18, 8, 86, 144),
+        SAFE(15, 5, "container.safe", "gui_safe", null, 176, 168, 44, 18, 8, 86, 144);
 
         private final int slotCount;
+        private final int columns;
         private final String titleKey;
         private final String textureName;
+        private final String hotTextureName;
+        private final int imageWidth;
+        private final int imageHeight;
+        private final int slotX;
+        private final int slotY;
+        private final int playerInventoryX;
+        private final int playerInventoryY;
+        private final int hotbarY;
 
-        Kind(int slotCount, String titleKey, String textureName) {
+        Kind(int slotCount, int columns, String titleKey, String textureName, @Nullable String hotTextureName,
+                int imageWidth, int imageHeight, int slotX, int slotY, int playerInventoryX, int playerInventoryY,
+                int hotbarY) {
             this.slotCount = slotCount;
+            this.columns = columns;
             this.titleKey = titleKey;
             this.textureName = textureName;
+            this.hotTextureName = hotTextureName;
+            this.imageWidth = imageWidth;
+            this.imageHeight = imageHeight;
+            this.slotX = slotX;
+            this.slotY = slotY;
+            this.playerInventoryX = playerInventoryX;
+            this.playerInventoryY = playerInventoryY;
+            this.hotbarY = hotbarY;
         }
 
         public int slotCount() {
@@ -316,7 +486,11 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
         }
 
         public int rows() {
-            return slotCount / 9;
+            return slotCount / columns;
+        }
+
+        public int columns() {
+            return columns;
         }
 
         public String titleKey() {
@@ -325,6 +499,38 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
 
         public String textureName() {
             return textureName;
+        }
+
+        public String textureName(boolean hot) {
+            return hot && hotTextureName != null ? hotTextureName : textureName;
+        }
+
+        public int imageWidth() {
+            return imageWidth;
+        }
+
+        public int imageHeight() {
+            return imageHeight;
+        }
+
+        public int slotX() {
+            return slotX;
+        }
+
+        public int slotY() {
+            return slotY;
+        }
+
+        public int playerInventoryX() {
+            return playerInventoryX;
+        }
+
+        public int playerInventoryY() {
+            return playerInventoryY;
+        }
+
+        public int hotbarY() {
+            return hotbarY;
         }
     }
 }

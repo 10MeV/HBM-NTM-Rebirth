@@ -30,7 +30,7 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
             return;
         }
 
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(pipe, packedLight);
+        int modelLight = LegacyRenderLighting.resolveMultiblockLight(pipe, packedLight);
         int color = pipe.getFluidType().getColor();
         int style = state.hasProperty(FluidPipeBlock.LEGACY_STYLE)
                 ? FluidPipeBlock.clampLegacyStyle(state.getValue(FluidPipeBlock.LEGACY_STYLE))

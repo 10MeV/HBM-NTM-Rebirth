@@ -12,6 +12,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
@@ -34,6 +36,7 @@ public final class LegacyOverheadRenderer {
     public static final int ACTION_PREVIEW_SUCCESS_COLOR = 0x00FFFF;
     public static final int ACTION_PREVIEW_FAILURE_COLOR = 0xFF0000;
     public static final int THERMAL_SKIP_COLOR = -1;
+    public static final int THERMAL_BOSS_COLOR = 0xFF8000;
     public static final int THERMAL_MONSTER_COLOR = 0xFF0000;
     public static final int THERMAL_PLAYER_COLOR = 0xFF00FF;
     public static final int THERMAL_LIVING_COLOR = 0x00FF00;
@@ -163,7 +166,9 @@ public final class LegacyOverheadRenderer {
 
     public static int thermalEntityColor(Entity entity, int observerTicks) {
         int color;
-        if (entity instanceof Monster) {
+        if (entity instanceof EnderDragon || entity instanceof WitherBoss) {
+            color = THERMAL_BOSS_COLOR;
+        } else if (entity instanceof Monster) {
             color = THERMAL_MONSTER_COLOR;
         } else if (entity instanceof Player) {
             color = THERMAL_PLAYER_COLOR;

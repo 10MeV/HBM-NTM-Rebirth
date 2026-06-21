@@ -1,6 +1,5 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.FensuBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -17,7 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
     private static final ResourceLocation TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/fensu.png");
+            ObjMachineModels.FENSU_TEXTURE;
     private static final LegacyWavefrontModel MODEL = ObjMachineModels.FENSU_LEGACY;
 
     public FensuRenderer(BlockEntityRendererProvider.Context context) {
@@ -36,7 +35,7 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
     @Override
     public void render(FensuBlockEntity fensu, float partialTick, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(fensu, packedLight);
+        int modelLight = LegacyRenderLighting.resolveMultiblockLight(fensu, packedLight);
         BlockState state = fensu.getBlockState();
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
 

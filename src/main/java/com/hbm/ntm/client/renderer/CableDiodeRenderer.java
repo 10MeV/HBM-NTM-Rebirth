@@ -35,7 +35,7 @@ public class CableDiodeRenderer implements BlockEntityRenderer<CableDiodeBlockEn
     public void render(CableDiodeBlockEntity diode, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = diode.getBlockState();
-        int light = LegacyRenderLighting.resolveBlockEntityLight(diode, packedLight);
+        int light = LegacyRenderLighting.resolveMultiblockLight(diode, packedLight);
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, light, packedOverlay);
 
         renderBody(state, context, outputDirection(state));

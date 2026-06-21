@@ -5,6 +5,7 @@ import com.hbm.ntm.blockentity.FluidPipeAnchorBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.item.FluidPipeBlockItem;
+import com.hbm.ntm.item.FluidPipeStyleBlockItem;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.registry.ModBlocks;
@@ -19,6 +20,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,9 +32,14 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 @SuppressWarnings("deprecation")
 public class FluidPipeBlock extends HbmFluidNodeBlock {
-    public static final IntegerProperty LEGACY_STYLE = IntegerProperty.create("legacy_style", 0, 2);
+    public static final int LEGACY_STYLE_COUNT = 3;
+    private static final int[] LEGACY_CREATIVE_STYLES = {0, 1, 2};
+    public static final IntegerProperty LEGACY_STYLE = IntegerProperty.create("legacy_style", 0,
+            LEGACY_STYLE_COUNT - 1);
     private static final VoxelShape CORE = box(5.0D, 5.0D, 5.0D, 11.0D, 11.0D, 11.0D);
     private static final VoxelShape NORTH_ARM = box(5.0D, 5.0D, 0.0D, 11.0D, 11.0D, 5.0D);
     private static final VoxelShape EAST_ARM = box(11.0D, 5.0D, 5.0D, 16.0D, 11.0D, 11.0D);
@@ -44,6 +51,8 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
     private static final VoxelShape X_STRAIGHT_SHAPE = Shapes.or(WEST_ARM, CORE, EAST_ARM);
     private static final VoxelShape Y_STRAIGHT_SHAPE = Shapes.or(DOWN_ARM, CORE, UP_ARM);
     private static final VoxelShape Z_STRAIGHT_SHAPE = Shapes.or(NORTH_ARM, CORE, SOUTH_ARM);
+    private static final VoxelShape ISOLATED_COLLISION_SHAPE = Shapes.or(WEST_ARM, EAST_ARM, DOWN_ARM, UP_ARM,
+            NORTH_ARM, SOUTH_ARM);
 
     public FluidPipeBlock(Properties properties) {
         super(properties);
@@ -105,16 +114,33 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
     }
 
     @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
+        if (asItem() instanceof FluidPipeStyleBlockItem item) {
+            return List.of(FluidPipeStyleBlockItem.createStack(item,
+                    clampLegacyStyle(state.getValue(LEGACY_STYLE))));
+        }
+        return super.getDrops(state, params);
+    }
+
+    @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return shapeForState(state);
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return shapeForState(state);
+        return collisionShapeForState(state);
     }
 
     private static VoxelShape shapeForState(BlockState state) {
+        return shapeForState(state, true);
+    }
+
+    private static VoxelShape collisionShapeForState(BlockState state) {
+        return shapeForState(state, false);
+    }
+
+    private static VoxelShape shapeForState(BlockState state, boolean selectionShape) {
         boolean north = state.getValue(NORTH);
         boolean east = state.getValue(EAST);
         boolean south = state.getValue(SOUTH);
@@ -124,7 +150,7 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
         int mask = connectionMask(north, east, south, west, up, down);
 
         if (mask == 0) {
-            return FULL_SHAPE;
+            return selectionShape ? FULL_SHAPE : ISOLATED_COLLISION_SHAPE;
         }
         if ((east || west) && !north && !south && !up && !down) {
             return X_STRAIGHT_SHAPE;
@@ -162,7 +188,11 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
     }
 
     public static int clampLegacyStyle(int style) {
-        return Math.max(0, Math.min(2, style));
+        return Math.max(0, Math.min(LEGACY_STYLE_COUNT - 1, style));
+    }
+
+    public static int[] legacyCreativeStyles() {
+        return LEGACY_CREATIVE_STYLES.clone();
     }
 
 }

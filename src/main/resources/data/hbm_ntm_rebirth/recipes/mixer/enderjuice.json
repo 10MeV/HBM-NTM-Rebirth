@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:enderjuice", "amount": 100 },
+  "input1": { "fluid": "hbm_ntm_rebirth:xpjuice", "amount": 500 },
+  "solid_input": {
+    "ingredient": { "tag": "forge:dusts/diamond" },
+    "legacy_ore": "dustDiamond"
+  },
+  "duration": 100
+}

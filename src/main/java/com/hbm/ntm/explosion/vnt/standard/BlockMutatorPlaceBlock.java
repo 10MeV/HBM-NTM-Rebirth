@@ -14,7 +14,10 @@ public class BlockMutatorPlaceBlock implements BlockMutator {
 
     @Override
     public void mutatePre(ExplosionVnt explosion, BlockState state, BlockPos pos) {
-        if (state.isCollisionShapeFullBlock(explosion.level(), pos)) {
+        if (explosion.level().isOutsideBuildHeight(pos)) {
+            return;
+        }
+        if (state.isSolidRender(explosion.level(), pos)) {
             explosion.level().setBlock(pos, replacement, 3);
         }
     }

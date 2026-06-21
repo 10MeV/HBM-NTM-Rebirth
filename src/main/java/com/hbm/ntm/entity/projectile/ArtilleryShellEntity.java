@@ -81,7 +81,7 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
     }
 
     public ArtilleryShellEntity setType(int type) {
-        entityData.set(TYPE, Mth.clamp(type, 0, LegacyArtilleryAmmoCatalog.artyShells().size() - 1));
+        entityData.set(TYPE, type);
         return this;
     }
 
@@ -114,12 +114,20 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
         targetZ = z;
     }
 
+    public double[] getTarget() {
+        return new double[] { targetX, targetY, targetZ };
+    }
+
     public double getTargetHeight() {
         return targetY;
     }
 
     public void setWhistle(boolean whistle) {
         shouldWhistle = whistle;
+    }
+
+    public boolean getWhistle() {
+        return shouldWhistle;
     }
 
     public boolean shouldWhistle() {
@@ -235,7 +243,11 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
                 && cargoImpact(hit)) {
             return;
         }
-        LegacyArtilleryImpactExecutor.applyImpact(level(), hit.getLocation(), getDeltaMovement(), this, shell);
+        BlockPos impactBlockPos = hit instanceof BlockHitResult blockHit
+                ? blockHit.getBlockPos()
+                : BlockPos.containing(hit.getLocation());
+        LegacyArtilleryImpactExecutor.applyImpact(level(), hit.getLocation(), getDeltaMovement(), this, shell, null,
+                impactBlockPos);
         discard();
     }
 
@@ -435,6 +447,19 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
         super.remove(reason);
     }
 
+    public void killAndClear() {
+        discard();
+        clearChunkLoader();
+    }
+
+    public void clearChunkLoader() {
+        clearForcedChunk();
+    }
+
+    public void loadNeighboringChunks(int newChunkX, int newChunkZ) {
+        forceChunk(newChunkX, newChunkZ);
+    }
+
     private void setInitialRotationFromMotion(Vec3 motion) {
         if (motion == null || motion.lengthSqr() <= 1.0E-7D) {
             return;
@@ -458,10 +483,15 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
     }
 
     private void forceCurrentChunk() {
+        ChunkPos chunk = chunkPosition();
+        forceChunk(chunk.x, chunk.z);
+    }
+
+    private void forceChunk(int chunkX, int chunkZ) {
         if (!(level() instanceof ServerLevel serverLevel)) {
             return;
         }
-        ChunkPos chunk = chunkPosition();
+        ChunkPos chunk = new ChunkPos(chunkX, chunkZ);
         long packed = chunk.toLong();
         if (forcedChunk == packed) {
             return;

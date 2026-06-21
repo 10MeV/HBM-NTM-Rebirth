@@ -1,5 +1,6 @@
 package com.hbm.ntm.explosion;
 
+import com.hbm.ntm.entity.item.LegacyPrimedExplosiveEntity;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorStandard;
 import com.hbm.ntm.explosion.vnt.standard.BlockMutatorBalefire;
@@ -15,13 +16,20 @@ import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectStandard;
 import com.hbm.ntm.explosion.vnt.standard.PlayerProcessorStandard;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.PrimedTnt;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ExplosionNT {
     public static final EnumSet<ExAttrib> NUKE_ATTRIBS = EnumSet.of(
@@ -30,6 +38,8 @@ public class ExplosionNT {
             ExAttrib.NOSOUND,
             ExAttrib.NODROP,
             ExAttrib.NOHURT);
+    @Deprecated
+    public static final List<ExAttrib> nukeAttribs = List.copyOf(NUKE_ATTRIBS);
 
     private final Level level;
     @Nullable
@@ -39,6 +49,7 @@ public class ExplosionNT {
     private final double z;
     private final float size;
     private final EnumSet<ExAttrib> attributes = EnumSet.noneOf(ExAttrib.class);
+    private Map<Player, Vec3> affectedEntities = new HashMap<>();
     private int resolution = 16;
 
     public ExplosionNT(Level level, double x, double y, double z, float size) {
@@ -85,6 +96,10 @@ public class ExplosionNT {
         return attributes.contains(attribute);
     }
 
+    public boolean has(ExAttrib attribute) {
+        return hasAttrib(attribute);
+    }
+
     public ExplosionNT overrideResolution(int resolution) {
         this.resolution = Math.max(1, resolution);
         return this;
@@ -105,6 +120,25 @@ public class ExplosionNT {
         }
 
         explosion.explode();
+        affectedEntities = new HashMap<>(explosion.compat().getHitPlayers());
+    }
+
+    public Map<Player, Vec3> func_77277_b() {
+        return affectedEntities;
+    }
+
+    @Nullable
+    public LivingEntity getExplosivePlacedBy() {
+        if (source instanceof LegacyPrimedExplosiveEntity legacyPrimed) {
+            return legacyPrimed.getTntPlacedBy();
+        }
+        if (source instanceof PrimedTnt primedTnt) {
+            return primedTnt.getOwner();
+        }
+        if (source instanceof LivingEntity livingEntity) {
+            return livingEntity;
+        }
+        return null;
     }
 
     private BlockProcessorStandard createBlockProcessor(@Nullable BlockMutatorErode erodeMutator) {

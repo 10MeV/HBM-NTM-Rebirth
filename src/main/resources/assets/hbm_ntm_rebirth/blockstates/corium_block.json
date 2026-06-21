@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "level=0": { "model": "hbm_ntm_rebirth:block/corium_block" },
+    "level=1": { "model": "hbm_ntm_rebirth:block/corium_block" },
+    "level=2": { "model": "hbm_ntm_rebirth:block/corium_block" },
+    "level=3": { "model": "hbm_ntm_rebirth:block/corium_block" },
+    "level=4": { "model": "hbm_ntm_rebirth:block/corium_block" },
+    "level=5": { "model": "hbm_ntm_rebirth:block/corium_block" }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:cast_plates/lead"
+      },
+      "legacy_ore": "plateCastLead"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "legacy_ore": "ingotRubber"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_basic"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 8
+    }
+  ],
+  "internal_name": "ass.pwrcontroller",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:pwr_controller"
+    }
+  ],
+  "pools": [],
+  "power": 500,
+  "source_order": 172
+}

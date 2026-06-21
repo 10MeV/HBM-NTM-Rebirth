@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:cast_plates/steel"
+      },
+      "legacy_ore": "plateCastSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/boron"
+      },
+      "legacy_ore": "ingotBoron"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor"
+      }
+    }
+  ],
+  "internal_name": "ass.pwrcontrol",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:pwr_control"
+    }
+  ],
+  "pools": [],
+  "power": 500,
+  "source_order": 165
+}

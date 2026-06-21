@@ -90,6 +90,7 @@ public final class HbmFluids {
     public static final FluidType OXYGEN = register("OXYGEN", 0x98BDF9, 3, 0, 0, FluidSymbol.CRYOGENIC, LIQUID, GASEOUS_AT_ROOM_TEMPERATURE).setTemperature(-100);
     public static final FluidType XENON = register("XENON", 0xBA45E8, 0, 0, 0, FluidSymbol.ASPHYXIANT, GASEOUS);
     public static final FluidType BALEFIRE = register("BALEFIRE", 0x28E02E, 4, 4, 3, FluidSymbol.RADIATION, LIQUID, VISCOUS).setTemperature(1500);
+    public static final FluidType CORIUM_FLUID = register("CORIUM_FLUID", 0x7D3F19, 4, 0, 0, FluidSymbol.RADIATION, NO_CONTAINER, LIQUID, VISCOUS).setTemperature(1500);
     public static final FluidType MERCURY = register("MERCURY", 0x808080, 2, 0, 0, FluidSymbol.NONE, LIQUID);
     public static final FluidType PAIN = register("PAIN", 0x938541, 2, 0, 1, FluidSymbol.ACID, LIQUID, VISCOUS).setTemperature(300);
     public static final FluidType WASTEFLUID = register("WASTEFLUID", 0x544400, 2, 0, 1, FluidSymbol.RADIATION, NO_CONTAINER, LIQUID, VISCOUS);
@@ -470,6 +471,7 @@ public final class HbmFluids {
         PEROXIDE.addTraits(new CorrosiveFluidTrait(40));
         WATZ.addTraits(new com.hbm.ntm.fluid.trait.VentRadiationFluidTrait(0.1F), new CorrosiveFluidTrait(60), new PollutingFluidTrait().release(PollutionKind.POISON, poisonExtreme()));
         BALEFIRE.addTraits(new CorrosiveFluidTrait(50));
+        CORIUM_FLUID.addTraits(new com.hbm.ntm.fluid.trait.VentRadiationFluidTrait(1.0F));
         MERCURY.addTraits(new PoisonFluidTrait(false, 2));
         PAIN.addTraits(new CorrosiveFluidTrait(30), new PoisonFluidTrait(true, 2));
         WASTEFLUID.addTraits(new com.hbm.ntm.fluid.trait.VentRadiationFluidTrait(0.5F));
@@ -801,7 +803,7 @@ public final class HbmFluids {
             "KEROSENE", "KEROSENE_REFORM", "PETROIL", "PETROIL_LEADED", "GASOLINE",
             "GASOLINE_LEADED", "COALGAS", "COALGAS_LEADED", "COALCREOSOTE", "WOODOIL",
             "BIOGAS", "BIOFUEL", "ETHANOL", "FISHOIL", "SUNFLOWEROIL", "NITAN", "DHC",
-            "BALEFIRE", "SALIENT", "SEEDSLURRY", "COLLOID", "VITRIOL", "SLOP", "IONGEL",
+            "BALEFIRE", "CORIUM_FLUID", "SALIENT", "SEEDSLURRY", "COLLOID", "VITRIOL", "SLOP", "IONGEL",
             "PEROXIDE", "SULFURIC_ACID", "NITRIC_ACID", "SOLVENT", "RADIOSOLVENT", "SCHRABIDIC",
             "UF6", "PUF6", "SAS3", "PAIN", "DEATH", "WATZ", "REDMUD", "FULLERENE", "EGG",
             "CHOLESTEROL", "CHLOROCALCITE_SOLUTION", "CHLOROCALCITE_MIX", "CHLOROCALCITE_CLEANED",

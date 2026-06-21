@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:fusion_fluid_breeder",
+  "input": { "fluid": "hbm_ntm_rebirth:gas", "amount": 1000 },
+  "output": { "fluid": "hbm_ntm_rebirth:syngas", "amount": 1000 }
+}

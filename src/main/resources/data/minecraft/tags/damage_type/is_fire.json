@@ -2,7 +2,6 @@
   "replace": false,
   "values": [
     "hbm_ntm_rebirth:flamethrower",
-    "hbm_ntm_rebirth:plasma",
-    "hbm_ntm_rebirth:boil"
+    "hbm_ntm_rebirth:plasma"
   ]
 }

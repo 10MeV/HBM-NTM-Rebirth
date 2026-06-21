@@ -98,6 +98,17 @@ public final class TrinketVariant {
         } + "." + name(kind, variant).toLowerCase(Locale.ROOT);
     }
 
+    public static String snowglobeLabel(int variant) {
+        return switch (name(Kind.SNOWGLOBE, variant)) {
+            case "RIVETCITY" -> "Rivet City";
+            case "TENPENNYTOWER" -> "Tenpenny Tower";
+            case "LUCKY38" -> "Lucky 38";
+            case "SIERRAMADRE" -> "Sierra Madre";
+            case "PRYDWEN" -> "The Prydwen";
+            default -> "NONE";
+        };
+    }
+
     public static String modelSuffix(Kind kind, int variant) {
         return name(kind, variant).toLowerCase(Locale.ROOT);
     }

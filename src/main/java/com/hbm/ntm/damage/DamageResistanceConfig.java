@@ -32,7 +32,7 @@ public final class DamageResistanceConfig {
     private static volatile LoadReport report = new LoadReport(false, 0, 0, 0, 0, 0, 0, 0, List.of());
 
     public static LoadReport initialize(Path configDir) {
-        DamageResistanceHandler.clear();
+        clearLiveRegistry();
         ConfigStats defaultStats = registerDefaults(false);
 
         Path hbmDir = configDir.resolve("hbm");
@@ -53,7 +53,7 @@ public final class DamageResistanceConfig {
             }
         } catch (IOException | RuntimeException ex) {
             HbmNtm.LOGGER.warn("Failed to load HBM damage resistance config, using defaults.", ex);
-            DamageResistanceHandler.clear();
+            clearLiveRegistry();
             ConfigStats fallbackStats = registerDefaults(false);
             return remember(new LoadReport(false, fallbackStats.itemStats, fallbackStats.setStats, fallbackStats.entityStats,
                     fallbackStats.skippedItems, fallbackStats.skippedSets, fallbackStats.skippedEntities, fallbackStats.warningCount, fallbackStats.warnings));
@@ -65,7 +65,7 @@ public final class DamageResistanceConfig {
     }
 
     public static LoadReport loadDefaults() {
-        DamageResistanceHandler.clear();
+        clearLiveRegistry();
         ConfigStats defaultStats = registerDefaults(false);
         return remember(new LoadReport(false, defaultStats.itemStats, defaultStats.setStats, defaultStats.entityStats,
                 defaultStats.skippedItems, defaultStats.skippedSets, defaultStats.skippedEntities,
@@ -83,7 +83,7 @@ public final class DamageResistanceConfig {
 
     private static ConfigStats readConfig(JsonObject json, boolean apply) {
         if (apply) {
-            DamageResistanceHandler.clear();
+            clearLiveRegistry();
         }
         ConfigStats stats = new ConfigStats();
 
@@ -115,7 +115,7 @@ public final class DamageResistanceConfig {
                 continue;
             }
             if (apply) {
-                DamageResistanceHandler.registerItem(item, resistance);
+                registerLiveItem(item, resistance);
             }
             stats.itemStats++;
         }
@@ -145,7 +145,7 @@ public final class DamageResistanceConfig {
                 continue;
             }
             if (apply) {
-                DamageResistanceHandler.registerSet(helmet.item(), chest.item(), legs.item(), boots.item(), resistance);
+                registerLiveSet(helmet.item(), chest.item(), legs.item(), boots.item(), resistance);
             }
             stats.setStats++;
         }
@@ -175,9 +175,9 @@ public final class DamageResistanceConfig {
             if (!apply) {
                 // Parse-only audits should not mutate the live entity resistance registry.
             } else if (className.endsWith(".EntityCreeper") || className.equals(Creeper.class.getName())) {
-                DamageResistanceHandler.registerEntity(Creeper.class, resistance);
+                registerLiveEntity(Creeper.class, resistance);
             } else if (entityClass != null) {
-                DamageResistanceHandler.registerEntity(entityClass, resistance);
+                registerLiveEntity(entityClass, resistance);
             } else {
                 DamageResistanceHandler.registerEntitySimpleName(simpleName(className), resistance);
             }
@@ -185,9 +185,28 @@ public final class DamageResistanceConfig {
         }
 
         if (apply && stats.entityStats == 0) {
-            DamageResistanceHandler.registerEntity(Creeper.class, new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_EXPLOSION, 2.0F, 0.25F));
+            registerLiveEntity(Creeper.class, new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_EXPLOSION, 2.0F, 0.25F));
         }
         return stats;
+    }
+
+    private static void clearLiveRegistry() {
+        com.hbm.util.DamageResistanceHandler.clearSystem();
+    }
+
+    private static void registerLiveItem(Item item, DamageResistanceStats resistance) {
+        com.hbm.util.DamageResistanceHandler.registerItem(item,
+                com.hbm.util.DamageResistanceHandler.ResistanceStats.fromModern(resistance));
+    }
+
+    private static void registerLiveSet(Item helmet, Item chest, Item legs, Item boots, DamageResistanceStats resistance) {
+        com.hbm.util.DamageResistanceHandler.registerSet(helmet, chest, legs, boots,
+                com.hbm.util.DamageResistanceHandler.ResistanceStats.fromModern(resistance));
+    }
+
+    private static void registerLiveEntity(Class<? extends Entity> entityClass, DamageResistanceStats resistance) {
+        com.hbm.util.DamageResistanceHandler.registerEntity(entityClass,
+                com.hbm.util.DamageResistanceHandler.ResistanceStats.fromModern(resistance));
     }
 
     public static ConfigAudit configAudit() {
@@ -294,17 +313,13 @@ public final class DamageResistanceConfig {
         JsonArray setStats = array(defaults, "setStats");
         JsonArray entityStats = array(defaults, "entityStats");
 
-        expect(problems, "legacy default item count", itemStats.size() == 4);
+        expect(problems, "legacy default item count", itemStats.size() == 2);
         expect(problems, "legacy default armor set count", setStats.size() == 34);
         expect(problems, "legacy default entity count", entityStats.size() == 2);
         expect(problems, "jackt physical stats",
                 hasCategory(statsForItem(itemStats, "jackt"), DamageResistanceHandler.CATEGORY_PHYSICAL, 1.0F, 0.20F));
         expect(problems, "jackt2 physical stats",
                 hasCategory(statsForItem(itemStats, "jackt2"), DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.25F));
-        expect(problems, "nossy hat DT",
-                hasOther(statsForItem(itemStats, "nossy_hat"), 2.0F, 0.0F));
-        expect(problems, "no9 DT",
-                hasOther(statsForItem(itemStats, "no9"), 0.5F, 0.0F));
         expect(problems, "steel set physical stats",
                 hasCategory(statsForSet(setStats, "steel_helmet", "steel_plate", "steel_legs", "steel_boots"),
                         DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.1F));
@@ -369,8 +384,6 @@ public final class DamageResistanceConfig {
 
         addItem(itemStats, "jackt", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 1.0F, 0.20F));
         addItem(itemStats, "jackt2", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.25F));
-        addItem(itemStats, "nossy_hat", new DamageResistanceStats().setOther(2.0F, 0.0F));
-        addItem(itemStats, "no9", new DamageResistanceStats().setOther(0.5F, 0.0F));
 
         addSet(setStats, "steel_helmet", "steel_plate", "steel_legs", "steel_boots", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.1F));
         addSet(setStats, "titanium_helmet", "titanium_plate", "titanium_legs", "titanium_boots", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 3.0F, 0.1F));

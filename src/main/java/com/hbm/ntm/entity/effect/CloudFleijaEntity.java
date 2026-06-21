@@ -2,12 +2,15 @@ package com.hbm.ntm.entity.effect;
 
 import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.network.NetworkHooks;
 
 public class CloudFleijaEntity extends Entity {
     private static final EntityDataAccessor<Integer> MAX_AGE =
@@ -18,6 +21,7 @@ public class CloudFleijaEntity extends Entity {
 
     public CloudFleijaEntity(EntityType<? extends CloudFleijaEntity> type, Level level) {
         super(type, level);
+        noCulling = true;
         noPhysics = true;
     }
 
@@ -86,5 +90,10 @@ public class CloudFleijaEntity extends Entity {
         tag.putShort("age", (short) age);
         tag.putShort("scale", (short) scale);
         tag.putInt("maxAge", getMaxAge());
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
     }
 }

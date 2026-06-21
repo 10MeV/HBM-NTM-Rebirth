@@ -18,8 +18,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class TurretItemRenderer extends BlockEntityWithoutLevelRenderer {
-    private static final float LEGACY_GUI_SLOT_PIXELS = 16.0F;
-    private static final float LEGACY_GUI_MAX_OCCUPANCY = 0.86F;
+    private static final float LEGACY_GUI_MODEL_SCALE = 1.0F / 16.0F;
+    private static final float WORLD_TARGET_SIZE = 0.86F;
 
     public static final TurretItemRenderer INSTANCE = new TurretItemRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(),
@@ -41,33 +41,33 @@ public class TurretItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
 
         TurretBlockEntityRenderer.StaticTurretModel model = TurretBlockEntityRenderer.staticModelForBlock(block);
-        AABB bounds = transformedBounds(model, displayContext == ItemDisplayContext.GUI);
-        Vec3 center = bounds.getCenter();
-        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
-
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, center, maxSize);
         if (displayContext == ItemDisplayContext.GUI) {
+            applyLegacyGuiDisplayTransform(poseStack);
             applyLegacyInventoryTransform(model, poseStack);
+        } else {
+            AABB bounds = legacyCommonBounds(model);
+            Vec3 center = bounds.getCenter();
+            double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
+            applyNonGuiDisplayTransform(displayContext, poseStack, center, maxSize);
         }
         TurretBlockEntityRenderer.renderLegacyItemModel(model, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
-    private static void applyDisplayTransform(ItemDisplayContext displayContext, PoseStack poseStack,
+    private static void applyLegacyGuiDisplayTransform(PoseStack poseStack) {
+        poseStack.translate(0.5D, 0.625D, 0.5D);
+        poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
+        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        poseStack.scale(LEGACY_GUI_MODEL_SCALE, LEGACY_GUI_MODEL_SCALE, LEGACY_GUI_MODEL_SCALE);
+    }
+
+    private static void applyNonGuiDisplayTransform(ItemDisplayContext displayContext, PoseStack poseStack,
             Vec3 center, double maxSize) {
         float fitScale = (float) Math.max(0.035D, Math.min(0.32D,
-                targetDisplaySize(displayContext == ItemDisplayContext.GUI, maxSize) / Math.max(1.0D, maxSize)));
+                WORLD_TARGET_SIZE / Math.max(1.0D, maxSize)));
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        if (displayContext == ItemDisplayContext.GUI) {
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
-            poseStack.scale(fitScale, fitScale, fitScale);
-            poseStack.translate(-center.x, -center.y, -center.z);
-            return;
-        }
-
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
         float worldScale = fitScale * 0.82F;
         poseStack.scale(worldScale, worldScale, worldScale);
@@ -80,23 +80,6 @@ public class TurretItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.translate(0.0D, 0.1D, 0.0D);
             poseStack.scale(0.85F, 0.85F, 0.85F);
         }
-    }
-
-    private static double targetDisplaySize(boolean gui, double maxSize) {
-        if (gui) {
-            return Math.min(LEGACY_GUI_MAX_OCCUPANCY, maxSize / LEGACY_GUI_SLOT_PIXELS);
-        }
-        return LEGACY_GUI_MAX_OCCUPANCY;
-    }
-
-    private static AABB transformedBounds(TurretBlockEntityRenderer.StaticTurretModel model, boolean inventory) {
-        AABB bounds = legacyCommonBounds(model);
-        if (!inventory) {
-            return bounds;
-        }
-        Vec3 translation = legacyInventoryTranslation(model);
-        float scale = legacyInventoryScale(model);
-        return transformBounds(bounds, point -> point.scale(scale).add(translation));
     }
 
     private static AABB legacyCommonBounds(TurretBlockEntityRenderer.StaticTurretModel model) {
@@ -114,11 +97,14 @@ public class TurretItemRenderer extends BlockEntityWithoutLevelRenderer {
             case TAUON -> union(
                     ObjTurretModels.CHEKHOV.boundsOnly("Base", "Carriage"),
                     ObjTurretModels.TAUON.boundsOnly("Cannon", "Rotor"));
-            case HOWARD, HOWARD_DAMAGED -> transformBounds(union(
+            case HOWARD -> transformBounds(union(
                     ObjTurretModels.CHEKHOV.boundsOnly("Base"),
-                    (model == TurretBlockEntityRenderer.StaticTurretModel.HOWARD
-                            ? ObjTurretModels.HOWARD
-                            : ObjTurretModels.HOWARD_DAMAGED).boundsOnly("Carriage", "Body", "BarrelsTop", "BarrelsBottom")),
+                    ObjTurretModels.HOWARD.boundsOnly("Carriage", "Body", "BarrelsTop", "BarrelsBottom")),
+                    point -> point.add(-0.75D, 0.0D, 0.0D));
+            case HOWARD_DAMAGED -> transformBounds(union(
+                    ObjTurretModels.CHEKHOV.boundsOnly("Base"),
+                    ObjTurretModels.HOWARD.boundsOnly("Carriage"),
+                    ObjTurretModels.HOWARD_DAMAGED.boundsOnly("Body", "BarrelsTop", "BarrelsBottom")),
                     point -> point.add(-0.75D, 0.0D, 0.0D));
             case SENTRY, SENTRY_DAMAGED -> transformBounds(
                     ObjTurretModels.SENTRY.boundsOnly("Base", "Pivot", "Body", "Drum", "BarrelL", "BarrelR"),

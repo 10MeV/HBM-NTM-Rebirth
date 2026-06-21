@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:combination_oven",
+  "input": {
+    "ingredient": {
+      "tag": "forge:dusts/sodium"
+    },
+    "legacy_ore": "dustSodium"
+  },
+  "output_fluid": {
+    "fluid": "SODIUM",
+    "amount": 100
+  }
+}

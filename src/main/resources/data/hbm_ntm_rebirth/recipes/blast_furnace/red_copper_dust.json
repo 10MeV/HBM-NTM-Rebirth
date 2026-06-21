@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:blast_furnace",
+  "duration": 400,
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "forge:dusts/copper"
+      },
+      "count": 1,
+      "legacy_ore": "dustCopper"
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:redstone"
+      },
+      "count": 1,
+      "legacy_ore": "dustRedstone"
+    }
+  ],
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:ingot_red_copper",
+      "count": 2
+    }
+  ]
+}

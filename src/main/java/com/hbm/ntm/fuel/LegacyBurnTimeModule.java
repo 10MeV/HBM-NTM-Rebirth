@@ -1,7 +1,9 @@
 package com.hbm.ntm.fuel;
 
 import com.hbm.ntm.util.HbmItemStackUtil;
+import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -59,11 +61,38 @@ public final class LegacyBurnTimeModule {
     }
 
     public List<String> getTimeDescription() {
-        return List.of();
+        List<String> list = new ArrayList<>();
+        list.add(ChatFormatting.GOLD + "Burn time bonuses:");
+        addDescription(list, "Logs", modTime[MOD_LOG]);
+        addDescription(list, "Wood", modTime[MOD_WOOD]);
+        addDescription(list, "Coal", modTime[MOD_COAL]);
+        addDescription(list, "Lignite", modTime[MOD_LIGNITE]);
+        addDescription(list, "Coke", modTime[MOD_COKE]);
+        addDescription(list, "Solid Fuel", modTime[MOD_SOLID]);
+        addDescription(list, "Rocket Fuel", modTime[MOD_ROCKET]);
+        addDescription(list, "Balefire", modTime[MOD_BALEFIRE]);
+        return list.size() == 1 ? List.of() : List.copyOf(list);
     }
 
     public List<String> getHeatDescription() {
-        return List.of();
+        List<String> list = new ArrayList<>();
+        list.add(ChatFormatting.RED + "Burn heat bonuses:");
+        addDescription(list, "Logs", modHeat[MOD_LOG]);
+        addDescription(list, "Wood", modHeat[MOD_WOOD]);
+        addDescription(list, "Coal", modHeat[MOD_COAL]);
+        addDescription(list, "Lignite", modHeat[MOD_LIGNITE]);
+        addDescription(list, "Coke", modHeat[MOD_COKE]);
+        addDescription(list, "Solid Fuel", modHeat[MOD_SOLID]);
+        addDescription(list, "Rocket Fuel", modHeat[MOD_ROCKET]);
+        addDescription(list, "Balefire", modHeat[MOD_BALEFIRE]);
+        return list.size() == 1 ? List.of() : List.copyOf(list);
+    }
+
+    public List<String> getDescription() {
+        List<String> list = new ArrayList<>();
+        list.addAll(getTimeDescription());
+        list.addAll(getHeatDescription());
+        return List.copyOf(list);
     }
 
     public LegacyBurnTimeModule setLigniteTimeMod(double mod) {
@@ -182,6 +211,20 @@ public final class LegacyBurnTimeModule {
             }
         }
         return def;
+    }
+
+    private static void addDescription(List<String> list, String name, double mod) {
+        if (mod != 1.0D) {
+            list.add(ChatFormatting.YELLOW + "- " + name + ": " + getPercent(mod));
+        }
+    }
+
+    private static String getPercent(double mod) {
+        double offset = mod - 1.0D;
+        int percent = (int) (offset * 100.0D);
+        return offset < 0.0D
+                ? ChatFormatting.RED + Integer.toString(percent) + "%"
+                : ChatFormatting.GREEN + "+" + percent + "%";
     }
 
     private static int getLegacyFuelTime(ItemStack stack) {

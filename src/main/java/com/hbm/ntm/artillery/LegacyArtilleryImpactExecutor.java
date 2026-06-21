@@ -53,32 +53,45 @@ public final class LegacyArtilleryImpactExecutor {
 
     public static void applyImpact(Level level, Vec3 hit, Vec3 motion, @Nullable Entity source, @Nullable AmmoType ammo) {
         if (ammo != null) {
-            applyImpact(level, hit, motion, source, ammo.impactProfile());
+            applyImpact(level, hit, motion, source, ammo.impactProfile(), null, null);
         }
     }
 
     public static void applyImpact(Level level, Vec3 hit, Vec3 motion, @Nullable Entity source,
             @Nullable AmmoType ammo, @Nullable Vec3 explosionCreatorHit) {
         if (ammo != null) {
-            applyImpact(level, hit, motion, source, ammo.impactProfile(), explosionCreatorHit);
+            applyImpact(level, hit, motion, source, ammo.impactProfile(), explosionCreatorHit, null);
+        }
+    }
+
+    public static void applyImpact(Level level, Vec3 hit, Vec3 motion, @Nullable Entity source,
+            @Nullable AmmoType ammo, @Nullable Vec3 explosionCreatorHit, @Nullable BlockPos impactBlockPos) {
+        if (ammo != null) {
+            applyImpact(level, hit, motion, source, ammo.impactProfile(), explosionCreatorHit, impactBlockPos);
         }
     }
 
     public static void applyImpact(Level level, Vec3 hit, Vec3 motion, @Nullable Entity source,
             @Nullable ImpactProfile profile) {
-        applyImpact(level, hit, motion, source, profile, null);
+        applyImpact(level, hit, motion, source, profile, null, null);
     }
 
     public static void applyImpact(Level level, Vec3 hit, Vec3 motion, @Nullable Entity source,
             @Nullable ImpactProfile profile, @Nullable Vec3 explosionCreatorHit) {
+        applyImpact(level, hit, motion, source, profile, explosionCreatorHit, null);
+    }
+
+    public static void applyImpact(Level level, Vec3 hit, Vec3 motion, @Nullable Entity source,
+            @Nullable ImpactProfile profile, @Nullable Vec3 explosionCreatorHit, @Nullable BlockPos impactBlockPos) {
         if (level == null || level.isClientSide() || hit == null || profile == null) {
             return;
         }
 
         Vec3 center = legacyImpactCenter(hit, motion);
         Vec3 visualHit = explosionCreatorHit == null ? hit : explosionCreatorHit;
+        BlockPos legacyBlockPos = impactBlockPos == null ? BlockPos.containing(hit) : impactBlockPos;
         for (ImpactEffect effect : profile.effects()) {
-            applyEffect(level, hit, center, visualHit, source, profile.kind(), effect);
+            applyEffect(level, hit, center, visualHit, legacyBlockPos, source, profile.kind(), effect);
         }
     }
 
@@ -89,8 +102,8 @@ public final class LegacyArtilleryImpactExecutor {
         return hit.subtract(motion.normalize());
     }
 
-    private static void applyEffect(Level level, Vec3 hit, Vec3 center, Vec3 visualHit, @Nullable Entity source,
-            ImpactKind kind, ImpactEffect effect) {
+    private static void applyEffect(Level level, Vec3 hit, Vec3 center, Vec3 visualHit, BlockPos impactBlockPos,
+            @Nullable Entity source, ImpactKind kind, ImpactEffect effect) {
         if (effect instanceof StandardExplosionEffect standard) {
             applyStandardExplosion(level, center, source, standard);
         } else if (effect instanceof VanillaExplosionEffect vanilla) {
@@ -102,7 +115,7 @@ public final class LegacyArtilleryImpactExecutor {
         } else if (effect instanceof PhosphorusAreaEffect phosphorus) {
             applyPhosphorus(level, hit, source, phosphorus);
         } else if (effect instanceof GasMistEffect gas) {
-            applyGasMist(level, center, hit, gas);
+            applyGasMist(level, center, impactBlockPos, gas);
         } else if (effect instanceof ShrapnelEffect shrapnel) {
             ExplosionLarge.spawnShrapnels(level, legacyInt(hit.x), legacyInt(hit.y), legacyInt(hit.z),
                     shrapnel.count(), 1.0F, source);
@@ -118,7 +131,7 @@ public final class LegacyArtilleryImpactExecutor {
         ExplosionVnt explosion = new ExplosionVnt(level, center.x, center.y, center.z, effect.size(), source);
         if (effect.breaksBlocks()) {
             BlockProcessorStandard processor = new BlockProcessorStandard().setNoDrop();
-            BlockState debris = debrisState(effect.debrisBlock());
+            BlockState debris = debrisState(effect.debrisBlock(), effect.debrisMeta());
             if (debris != null) {
                 processor.withBlockEffect(new BlockMutatorDebris(debris));
             }
@@ -183,7 +196,7 @@ public final class LegacyArtilleryImpactExecutor {
         return (int) value;
     }
 
-    private static void applyGasMist(Level level, Vec3 center, Vec3 hit, GasMistEffect effect) {
+    private static void applyGasMist(Level level, Vec3 center, BlockPos impactBlockPos, GasMistEffect effect) {
         FluidType fluid = HbmFluids.fromName(effect.fluidLegacyName());
         if (fluid != HbmFluids.NONE) {
             for (int i = 0; i < effect.count(); i++) {
@@ -206,7 +219,7 @@ public final class LegacyArtilleryImpactExecutor {
                 sample.add(entry.getKey(), amount);
             }
         }
-        PollutionManager.applyPollutionDelta(level, BlockPos.containing(hit), sample);
+        PollutionManager.applyPollutionDelta(level, impactBlockPos, sample);
     }
 
     private static void applyNuke(Level level, Vec3 hit, Vec3 center, ImpactKind kind, NukeEffect effect) {
@@ -218,11 +231,15 @@ public final class LegacyArtilleryImpactExecutor {
     }
 
     @Nullable
-    private static BlockState debrisState(String legacyName) {
+    private static BlockState debrisState(String legacyName, int legacyMeta) {
         if (legacyName == null || legacyName.isBlank()) {
             return null;
         }
-        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(legacyName);
+        String mappedName = legacyName;
+        if ("block_slag".equals(legacyName) && legacyMeta == 1) {
+            mappedName = "block_slag_broken";
+        }
+        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(mappedName);
         return block == null ? null : block.get().defaultBlockState();
     }
 

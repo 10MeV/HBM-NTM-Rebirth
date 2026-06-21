@@ -33,7 +33,11 @@ public final class ChunkRadiationManager {
 
     public static void setRadiation(Level level, BlockPos pos, float radiation) {
         if (RadiationConfig.chunkRadiationEnabled() && level instanceof ServerLevel serverLevel) {
-            getData(serverLevel).set(new ChunkPos(pos), radiation);
+            ChunkPos chunkPos = new ChunkPos(pos);
+            if (serverLevel.hasChunk(chunkPos.x, chunkPos.z)) {
+                getData(serverLevel).set(chunkPos, radiation);
+                serverLevel.getChunk(chunkPos.x, chunkPos.z).setUnsaved(true);
+            }
         }
     }
 

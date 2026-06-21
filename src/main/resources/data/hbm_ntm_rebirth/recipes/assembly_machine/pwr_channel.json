@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:pipe_steel"
+      },
+      "legacy_ore": "pipeSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:plates/copper"
+      },
+      "legacy_ore": "plateCopper"
+    }
+  ],
+  "internal_name": "ass.pwrchannel",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:pwr_channel"
+    }
+  ],
+  "pools": [],
+  "power": 500,
+  "source_order": 166
+}

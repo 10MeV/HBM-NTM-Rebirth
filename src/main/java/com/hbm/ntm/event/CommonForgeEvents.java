@@ -10,6 +10,7 @@ import com.hbm.ntm.config.ServerConfig;
 import com.hbm.ntm.config.WeaponConfig;
 import com.hbm.ntm.api.entity.RadarScanner;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
+import com.hbm.ntm.damage.DamageClass;
 import com.hbm.ntm.damage.DamageResistanceHandler;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
@@ -37,6 +38,7 @@ import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.neutron.NeutronHandler;
 import com.hbm.ntm.neutron.NeutronNodeWorld;
+import com.hbm.ntm.particle.LegacyConfettiUtil;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.radiation.ArmorUtil;
@@ -53,6 +55,7 @@ import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.uninos.HbmUninosNodespaces;
+import com.hbm.ntm.util.AchievementHandler;
 import com.hbm.ntm.util.HbmCraftingAdvancementUtil;
 import com.hbm.ntm.world.BlockMigrationHelper;
 import com.hbm.ntm.world.saveddata.TomImpactSavedData;
@@ -343,10 +346,13 @@ public final class CommonForgeEvents {
         }
 
         handleBombTimer(entity);
-        handleChunkRadiation(entity);
+        handleCraterRadiation(entity);
+        handleContaminationEffects(entity);
+        handleContagion(entity);
         handleLegacyRadiationEffects(entity);
+        handleLegacyRadiationFx(entity);
         handleDigammaEffects(entity);
-        handleLegacyLongTermEffects(entity);
+        handleLegacyPostRadiationLongTermEffects(entity);
         if (!(entity instanceof Player)) {
             HazardExposureUtil.updateLivingInventory(entity);
         }
@@ -675,16 +681,14 @@ public final class CommonForgeEvents {
         }
     }
 
-    private static void handleChunkRadiation(LivingEntity entity) {
+    private static void handleCraterRadiation(LivingEntity entity) {
         float craterRadiation = CraterRadiationData.getAmbientRadiation(entity);
         if (craterRadiation > 0.0F) {
             RadiationUtil.contaminate(entity, HazardType.RADIATION, ContaminationType.CREATIVE, craterRadiation / 20.0F);
         }
+    }
 
-        if (RadiationUtil.isRadImmune(entity)) {
-            return;
-        }
-
+    private static void handleChunkRadiationFx(LivingEntity entity) {
         float radiation = ChunkRadiationManager.getRadiation(entity.level(), entity.blockPosition());
         if (entity.level().dimension() == Level.NETHER) {
             float hellRadiation = RadiationConfig.hellRadiation();
@@ -702,7 +706,9 @@ public final class CommonForgeEvents {
             return;
         }
 
-        handleLegacyRadiationTransformations(entity);
+        if (handleLegacyRadiationTransformations(entity)) {
+            return;
+        }
 
         float radiation = HbmLivingProperties.getRadiation(entity);
         if (radiation < 200.0F) {
@@ -716,13 +722,18 @@ public final class CommonForgeEvents {
         }
 
         if (radiation >= 1000.0F) {
-            entity.hurt(ModDamageSources.radiation(entity.level()), 1000.0F);
+            var radiationSource = ModDamageSources.radiation(entity.level());
+            entity.hurt(radiationSource, 1000.0F);
             HbmLivingProperties.setRadiation(entity, 0.0F);
             if (entity.isAlive()) {
                 entity.setHealth(0.0F);
+                entity.die(radiationSource);
             }
             if (entity.isDeadOrDying()) {
                 ParticleUtil.spawnGiblets(entity, ParticleUtil.GIBLET_MEAT);
+            }
+            if (entity instanceof ServerPlayer player) {
+                AchievementHandler.award(player, AchievementHandler.RAD_DEATH);
             }
         } else if (radiation >= 800.0F) {
             addRandomEffect(entity, 300, MobEffects.CONFUSION, 5 * 30, 0);
@@ -742,21 +753,33 @@ public final class CommonForgeEvents {
         } else {
             addRandomEffect(entity, 300, MobEffects.CONFUSION, 5 * 20, 0);
             addRandomEffect(entity, 500, MobEffects.WEAKNESS, 5 * 20, 0);
+            if (entity instanceof ServerPlayer player) {
+                AchievementHandler.award(player, AchievementHandler.RAD_POISON);
+            }
         }
 
-        handleRadiationParticles(entity, radiation);
     }
 
-    private static void handleLegacyRadiationTransformations(LivingEntity entity) {
+    private static void handleLegacyRadiationFx(LivingEntity entity) {
+        if (RadiationUtil.isRadImmune(entity)) {
+            return;
+        }
+        handleChunkRadiationFx(entity);
+        handleRadiationParticles(entity, HbmLivingProperties.getRadiation(entity));
+    }
+
+    private static boolean handleLegacyRadiationTransformations(LivingEntity entity) {
         float radiation = HbmLivingProperties.getRadiation(entity);
         if (radiation >= 200.0F && entity.getClass().equals(Creeper.class)) {
             entity.hurt(ModDamageSources.radiation(entity.level()), 100.0F);
+            return true;
         } else if (radiation >= 50.0F && entity instanceof Cow cow && !(entity instanceof MushroomCow) && cow.level() instanceof ServerLevel level) {
             MushroomCow mushroomCow = EntityType.MOOSHROOM.create(level);
             if (mushroomCow != null) {
                 mushroomCow.moveTo(cow.getX(), cow.getY(), cow.getZ(), cow.getYRot(), cow.getXRot());
                 level.addFreshEntity(mushroomCow);
                 cow.discard();
+                return true;
             }
         } else if (radiation >= 500.0F && entity instanceof Villager villager && villager.level() instanceof ServerLevel level) {
             Zombie zombie = EntityType.ZOMBIE.create(level);
@@ -764,8 +787,10 @@ public final class CommonForgeEvents {
                 zombie.moveTo(villager.getX(), villager.getY(), villager.getZ(), villager.getYRot(), villager.getXRot());
                 level.addFreshEntity(zombie);
                 villager.discard();
+                return true;
             }
         }
+        return false;
     }
 
     private static void handleRadiationParticles(LivingEntity entity, float radiation) {
@@ -784,12 +809,12 @@ public final class CommonForgeEvents {
         if (radiation > 600.0F && (time + r600) % 600 < 20) {
             spawnVomit(entity, ParticleUtil.VOMIT_BLOOD, 25);
             if ((time + r600) % 600 == 1) {
-                playVomit(level, entity);
+                playRadiationVomit(level, entity);
             }
         } else if (radiation > 200.0F && (time + r1200) % 1200 < 20) {
             spawnVomit(entity, ParticleUtil.VOMIT_NORMAL, 15);
             if ((time + r1200) % 1200 == 1) {
-                playVomit(level, entity);
+                playRadiationVomit(level, entity);
             }
         }
 
@@ -853,9 +878,7 @@ public final class CommonForgeEvents {
         }
     }
 
-    private static void handleLegacyLongTermEffects(LivingEntity entity) {
-        handleContaminationEffects(entity);
-        handleContagion(entity);
+    private static void handleLegacyPostRadiationLongTermEffects(LivingEntity entity) {
         handleLungDisease(entity);
         handleOil(entity);
         handlePollution(entity);
@@ -917,7 +940,7 @@ public final class CommonForgeEvents {
         if (contagion < 30 * minute && (contagion + entity.getId()) % 200 < 20 && entity.level() instanceof ServerLevel level) {
             spawnVomit(entity, ParticleUtil.VOMIT_BLOOD, 25);
             if ((contagion + entity.getId()) % 200 == 19) {
-                playVomit(level, entity);
+                playContagionVomit(level, entity);
             }
         }
     }
@@ -936,10 +959,12 @@ public final class CommonForgeEvents {
     }
 
     private static ItemStack randomInventoryContagionStack(Player player) {
-        if (player.getRandom().nextInt(100) == 0) {
-            return player.getInventory().armor.get(player.getRandom().nextInt(player.getInventory().armor.size()));
+        var random = player.getRandom();
+        ItemStack stack = player.getInventory().items.get(random.nextInt(player.getInventory().items.size()));
+        if (random.nextInt(100) == 0) {
+            stack = player.getInventory().armor.get(random.nextInt(player.getInventory().armor.size()));
         }
-        return player.getInventory().items.get(player.getRandom().nextInt(player.getInventory().items.size()));
+        return stack;
     }
 
     private static void tagContagious(ItemStack stack) {
@@ -1013,10 +1038,10 @@ public final class CommonForgeEvents {
         }
         if (entity.isOnFire() && entity.level() instanceof ServerLevel level) {
             HbmLivingProperties.clearOil(entity);
-            WeaponExplosionUtil.explodeStandard(level, entity.getX(), entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ(), 3.0F, entity, true, true);
-            return;
+            WeaponExplosionUtil.explodeStandard(level, entity.getX(), entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ(), 3.0F, null, true, false);
+        } else {
+            HbmLivingProperties.decrementOil(entity);
         }
-        HbmLivingProperties.decrementOil(entity);
         if (entity.tickCount % 5 == 0 && entity.level() instanceof ServerLevel level) {
             ParticleUtil.spawnSweat(entity, Blocks.COAL_BLOCK, 1);
         }
@@ -1035,6 +1060,9 @@ public final class CommonForgeEvents {
         handleTemperatureEffect(entity, TemperatureEffect.PHOSPHORUS);
         handleTemperatureEffect(entity, TemperatureEffect.BALEFIRE);
         handleTemperatureEffect(entity, TemperatureEffect.BLACK_FIRE);
+        if (hasActiveTemperatureEffect(entity) && entity.isDeadOrDying()) {
+            LegacyConfettiUtil.decideConfetti(entity, DamageClass.FIRE);
+        }
     }
 
     private static void handleTemperatureEffect(LivingEntity entity, TemperatureEffect effect) {
@@ -1049,7 +1077,9 @@ public final class CommonForgeEvents {
         int soundInterval = effect == TemperatureEffect.BLACK_FIRE ? 10 : 15;
         int damageInterval = effect == TemperatureEffect.BLACK_FIRE ? 10 : effect.radiates ? 20 : 40;
         if ((entity.tickCount + entity.getId()) % soundInterval == 0 && entity.level() instanceof ServerLevel level) {
-            level.playSound(null, entity.blockPosition(), net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH, SoundSource.HOSTILE, 1.0F, 1.5F + entity.getRandom().nextFloat() * 0.5F);
+            level.playSound(null, entity.getX(), entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ(),
+                    net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH, SoundSource.HOSTILE, 1.0F,
+                    1.5F + entity.getRandom().nextFloat() * 0.5F);
         }
         if ((entity.tickCount + entity.getId()) % damageInterval == 0) {
             EntityDamageUtil.attackEntityFromNt(entity, entity.damageSources().onFire(), effect.damage);
@@ -1063,6 +1093,15 @@ public final class CommonForgeEvents {
         }
     }
 
+    private static boolean hasActiveTemperatureEffect(LivingEntity entity) {
+        for (TemperatureEffect effect : TemperatureEffect.values()) {
+            if (effect.get(entity) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void spawnVomit(LivingEntity entity, String mode, int count) {
         if (canVomit(entity)) {
             ParticleUtil.spawnVomit(entity, mode, count);
@@ -1073,13 +1112,25 @@ public final class CommonForgeEvents {
         return entity.getType().getCategory() != MobCategory.WATER_CREATURE;
     }
 
-    private static void playVomit(ServerLevel level, LivingEntity entity) {
-        LegacySoundPlayer.playLegacyPlayerVomit(entity);
+    private static void playRadiationVomit(ServerLevel level, LivingEntity entity) {
+        if (!canVomit(entity)) {
+            return;
+        }
+        LegacySoundPlayer.playSoundEffect(level, Mth.floor(entity.getX()), Mth.floor(entity.getY()), Mth.floor(entity.getZ()),
+                "hbm:player.vomit", SoundSource.HOSTILE, 1.0F, 1.0F);
         entity.addEffect(new MobEffectInstance(MobEffects.HUNGER, 60, 19));
     }
 
+    private static void playContagionVomit(ServerLevel level, LivingEntity entity) {
+        if (!canVomit(entity)) {
+            return;
+        }
+        LegacySoundPlayer.playSoundEffect(level, entity.getX(), entity.getY(), entity.getZ(),
+                "hbm:player.vomit", SoundSource.HOSTILE, 1.0F, 1.0F);
+    }
+
     private static void addRandomEffect(LivingEntity entity, int chance, net.minecraft.world.effect.MobEffect effect, int duration, int amplifier) {
-        if (entity.getRandom().nextInt(chance) == 0) {
+        if (entity.level().random.nextInt(chance) == 0) {
             entity.addEffect(new MobEffectInstance(effect, duration, amplifier));
         }
     }

@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:fusion_reactor",
+  "internal_name": "fus.th4",
+  "duration": 100,
+  "power": 25000,
+  "input_items": [],
+  "input_fluids": [
+    { "fluid": "hbm_ntm_rebirth:tritium", "amount": 10 },
+    { "fluid": "hbm_ntm_rebirth:helium4", "amount": 10 }
+  ],
+  "output_items": [{ "item": "hbm_ntm_rebirth:pellet_charged" }],
+  "output_fluids": [],
+  "pools": [],
+  "ignitionTemp": 875000,
+  "outputTemp": 4000000,
+  "outputFlux": 500.0,
+  "r": 0.2,
+  "g": 0.2,
+  "b": 1.0
+}

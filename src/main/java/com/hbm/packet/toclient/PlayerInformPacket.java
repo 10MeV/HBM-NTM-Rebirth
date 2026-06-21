@@ -2,6 +2,7 @@ package com.hbm.packet.toclient;
 
 import com.hbm.ntm.network.LegacyPacketAdapter;
 import com.hbm.ntm.network.ModMessages;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 
@@ -56,11 +57,19 @@ public class PlayerInformPacket implements LegacyPacketAdapter {
         }
     }
 
+    public void fromBytes(ByteBuf buffer) {
+        fromBytes(new FriendlyByteBuf(buffer));
+    }
+
     public void toBytes(FriendlyByteBuf buffer) {
         buffer.writeInt(id);
         buffer.writeInt(millis);
         buffer.writeBoolean(fancy);
         buffer.writeUtf(fancy ? Component.Serializer.toJson(component == null ? Component.empty() : component) : message);
+    }
+
+    public void toBytes(ByteBuf buffer) {
+        toBytes(new FriendlyByteBuf(buffer));
     }
 
     public Component message() {

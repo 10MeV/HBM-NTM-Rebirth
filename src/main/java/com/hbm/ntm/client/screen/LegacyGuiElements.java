@@ -684,6 +684,18 @@ public final class LegacyGuiElements {
                     " * Afterburner: Stacks to level %s", maxLevel);
             case OVERDRIVE -> Component.translatableWithFallback("upgrade.gui.overdrive",
                     " * Overdrive: Stacks to level %s", maxLevel);
+            case FORTUNE -> Component.translatableWithFallback("upgrade.gui.fortune",
+                    " * Fortune: Stacks to level %s", maxLevel);
+            case SMELTER -> Component.translatableWithFallback("upgrade.gui.smelter",
+                    " * Smelter");
+            case NULLIFIER -> Component.translatableWithFallback("upgrade.gui.nullifier",
+                    " * Scrap Destroyer");
+            case SHREDDER -> Component.translatableWithFallback("upgrade.gui.shredder",
+                    " * Shredder");
+            case CENTRIFUGE -> Component.translatableWithFallback("upgrade.gui.centrifuge",
+                    " * Centrifuge");
+            case CRYSTALLIZER -> Component.translatableWithFallback("upgrade.gui.crystallizer",
+                    " * Crystallizer");
         };
     }
 

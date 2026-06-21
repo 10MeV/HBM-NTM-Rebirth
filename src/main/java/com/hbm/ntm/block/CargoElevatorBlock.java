@@ -179,6 +179,11 @@ public class CargoElevatorBlock extends LegacyXrMultiblockBlock implements Entit
         return true;
     }
 
+    @Override
+    public boolean usesMultiblockHighlightShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return true;
+    }
+
     private static VoxelShape elevatorShape(BlockGetter level, BlockPos corePos) {
         int height = 1;
         double extension = 0.0D;

@@ -89,7 +89,7 @@ public class BalefireExplosionEntity extends ExplosionChunkLoadingEntity {
     protected void readAdditionalSaveData(CompoundTag tag) {
         age = tag.getInt("age");
         destructionRange = tag.getInt("destructionRange");
-        speed = Math.max(1, tag.getInt("speed"));
+        speed = tag.getInt("speed");
         initialized = tag.getBoolean("did");
         readChunkLoader(tag);
         expiredFromSave = shouldExpireFromSave(tag);

@@ -42,8 +42,21 @@ public final class CompatExternal {
     }
 
     @Nullable
+    public static BlockEntity getOperationalCoreFromPos(Level level, BlockPos pos) {
+        if (level == null || pos == null || !level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) {
+            return null;
+        }
+        return MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
+    }
+
+    @Nullable
     public static BlockEntity getCoreFromPos(Level level, int x, int y, int z) {
         return getCoreFromPos(level, new BlockPos(x, y, z));
+    }
+
+    @Nullable
+    public static BlockEntity getOperationalCoreFromPos(Level level, int x, int y, int z) {
+        return getOperationalCoreFromPos(level, new BlockPos(x, y, z));
     }
 
     @Nullable
@@ -51,13 +64,19 @@ public final class CompatExternal {
         return blockEntity == null ? null : MultiblockHelper.resolveCoreBlockEntity(blockEntity);
     }
 
+    @Nullable
+    public static BlockEntity getOperationalCoreFromTile(BlockEntity blockEntity) {
+        return blockEntity == null || blockEntity.getLevel() == null ? null
+                : MultiblockHelper.resolveOperationalCoreBlockEntity(blockEntity.getLevel(), blockEntity.getBlockPos());
+    }
+
     public static long getBufferedPowerFromTile(BlockEntity blockEntity) {
-        BlockEntity resolved = getCoreFromTile(blockEntity);
+        BlockEntity resolved = getOperationalCoreFromTile(blockEntity);
         return resolved instanceof HbmEnergyHandler handler ? handler.getPower() : 0L;
     }
 
     public static long getBufferedPowerFromPos(Level level, BlockPos pos) {
-        return getBufferedPowerFromTile(getCoreFromPos(level, pos));
+        return getBufferedPowerFromTile(getOperationalCoreFromPos(level, pos));
     }
 
     public static long getBufferedPowerFromPos(Level level, int x, int y, int z) {
@@ -65,12 +84,12 @@ public final class CompatExternal {
     }
 
     public static long getMaxPowerFromTile(BlockEntity blockEntity) {
-        BlockEntity resolved = getCoreFromTile(blockEntity);
+        BlockEntity resolved = getOperationalCoreFromTile(blockEntity);
         return resolved instanceof HbmEnergyHandler handler ? handler.getMaxPower() : 0L;
     }
 
     public static long getMaxPowerFromPos(Level level, BlockPos pos) {
-        return getMaxPowerFromTile(getCoreFromPos(level, pos));
+        return getMaxPowerFromTile(getOperationalCoreFromPos(level, pos));
     }
 
     public static long getMaxPowerFromPos(Level level, int x, int y, int z) {
@@ -81,7 +100,7 @@ public final class CompatExternal {
      * Legacy external ordinal: 0 = low, 1 = normal, 2 = high, -1 = not applicable.
      */
     public static int getEnergyPriorityFromTile(BlockEntity blockEntity) {
-        BlockEntity resolved = getCoreFromTile(blockEntity);
+        BlockEntity resolved = getOperationalCoreFromTile(blockEntity);
         if (!(resolved instanceof HbmEnergyReceiver receiver)) {
             return -1;
         }
@@ -93,7 +112,7 @@ public final class CompatExternal {
     }
 
     public static int getEnergyPriorityFromPos(Level level, BlockPos pos) {
-        return getEnergyPriorityFromTile(getCoreFromPos(level, pos));
+        return getEnergyPriorityFromTile(getOperationalCoreFromPos(level, pos));
     }
 
     public static int getEnergyPriorityFromPos(Level level, int x, int y, int z) {
@@ -119,7 +138,7 @@ public final class CompatExternal {
     }
 
     public static ArrayList<Object[]> getFluidInfoFromPos(Level level, BlockPos pos) {
-        return getFluidInfoFromTile(getCoreFromPos(level, pos));
+        return getFluidInfoFromTile(getOperationalCoreFromPos(level, pos));
     }
 
     public static ArrayList<Object[]> getFluidInfoFromPos(Level level, int x, int y, int z) {
@@ -127,7 +146,7 @@ public final class CompatExternal {
     }
 
     public static List<HbmFluidTank> getAllTanks(BlockEntity blockEntity) {
-        BlockEntity resolved = getCoreFromTile(blockEntity);
+        BlockEntity resolved = getOperationalCoreFromTile(blockEntity);
         if (!(resolved instanceof HbmFluidBlockEntity fluidBlockEntity)) {
             return List.of();
         }
@@ -137,7 +156,7 @@ public final class CompatExternal {
     }
 
     public static List<HbmFluidTank> getAllTanks(Level level, BlockPos pos) {
-        return getAllTanks(getCoreFromPos(level, pos));
+        return getAllTanks(getOperationalCoreFromPos(level, pos));
     }
 
     public static List<HbmFluidTank> getAllTanks(Level level, int x, int y, int z) {

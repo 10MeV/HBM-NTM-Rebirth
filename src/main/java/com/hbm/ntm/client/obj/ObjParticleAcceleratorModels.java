@@ -20,12 +20,12 @@ public final class ObjParticleAcceleratorModels {
 
     public static LegacyWavefrontModel model(String name) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/particleaccelerator/" + name + ".obj"),
+                new ResourceLocation(HbmNtm.MOD_ID, "models/particleaccelerator/" + name + ".obj"),
                 texture(name));
     }
 
     public static ResourceLocation texture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/particleaccelerator/" + name + ".png");
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/particleaccelerator/" + name + ".png");
     }
 
     private ObjParticleAcceleratorModels() {

@@ -5,6 +5,7 @@ import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -141,7 +142,7 @@ public class ExposureChamberMenu extends AbstractContainerMenu {
     }
 
     private static ExposureChamberBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof ExposureChamberBlockEntity chamber) {
             return chamber;
         }

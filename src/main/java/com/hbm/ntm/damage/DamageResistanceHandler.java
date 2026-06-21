@@ -84,6 +84,10 @@ public final class DamageResistanceHandler {
         ITEM_STATS.put(item, stats);
     }
 
+    public static DamageResistanceStats removeItem(Item item) {
+        return ITEM_STATS.remove(item);
+    }
+
     public static void registerSet(Item helmet, Item chest, Item legs, Item boots, DamageResistanceStats stats) {
         ArmorSet set = new ArmorSet(helmet, chest, legs, boots);
         SET_STATS.put(set, stats);
@@ -93,8 +97,24 @@ public final class DamageResistanceHandler {
         addSetInfo(boots, set);
     }
 
+    public static DamageResistanceStats removeSet(Item helmet, Item chest, Item legs, Item boots) {
+        ArmorSet set = new ArmorSet(helmet, chest, legs, boots);
+        DamageResistanceStats removed = SET_STATS.remove(set);
+        if (removed != null) {
+            removeSetInfo(helmet, set);
+            removeSetInfo(chest, set);
+            removeSetInfo(legs, set);
+            removeSetInfo(boots, set);
+        }
+        return removed;
+    }
+
     public static void registerEntity(Class<? extends Entity> entityClass, DamageResistanceStats stats) {
         ENTITY_STATS.put(entityClass, stats);
+    }
+
+    public static DamageResistanceStats removeEntity(Class<? extends Entity> entityClass) {
+        return ENTITY_STATS.remove(entityClass);
     }
 
     public static void registerEntitySimpleName(String simpleName, DamageResistanceStats stats) {
@@ -738,6 +758,31 @@ public final class DamageResistanceHandler {
                 new com.hbm.util.DamageResistanceHandler.ResistanceStats()
                         .addExact(com.hbm.util.DamageResistanceHandler.DamageClass.LASER, 3.0F, 0.3F)
                         .getResistance(com.hbm.util.DamageResistanceHandler.DamageClass.LASER), 3.0F, 0.3F);
+        Item facadeItem = net.minecraft.world.item.Items.LEATHER_HELMET;
+        com.hbm.util.DamageResistanceHandler.ResistanceStats facadeItemStats =
+                new com.hbm.util.DamageResistanceHandler.ResistanceStats().setOther(1.0F, 0.1F);
+        com.hbm.util.DamageResistanceHandler.itemStats.put(facadeItem, facadeItemStats);
+        expectResistance(problems, "legacy util handler item map put sync",
+                itemStats(facadeItem).otherResistance(), 1.0F, 0.1F);
+        com.hbm.util.DamageResistanceHandler.itemStats.remove(facadeItem);
+        expect(problems, "legacy util handler item map remove sync", itemStats(facadeItem) == null);
+        com.hbm.util.DamageResistanceHandler.itemStats.put(facadeItem, facadeItemStats);
+        com.hbm.util.DamageResistanceHandler.itemStats.clear();
+        expect(problems, "legacy util handler item map clear sync", itemStats(facadeItem) == null);
+        com.hbm.util.Tuple.Quartet<Item, Item, Item, Item> facadeSet = new com.hbm.util.Tuple.Quartet<>(
+                net.minecraft.world.item.Items.LEATHER_HELMET,
+                net.minecraft.world.item.Items.LEATHER_CHESTPLATE,
+                net.minecraft.world.item.Items.LEATHER_LEGGINGS,
+                net.minecraft.world.item.Items.LEATHER_BOOTS);
+        com.hbm.util.DamageResistanceHandler.ResistanceStats facadeSetStats =
+                new com.hbm.util.DamageResistanceHandler.ResistanceStats().setOther(2.0F, 0.2F);
+        com.hbm.util.DamageResistanceHandler.setStats.put(facadeSet, facadeSetStats);
+        expect(problems, "legacy util handler set map put sync",
+                setStatsForItem(facadeSet.getW()) != null
+                        && setStatsForItem(facadeSet.getW()).otherResistance() != null
+                        && nearly(setStatsForItem(facadeSet.getW()).otherResistance().threshold(), 2.0F));
+        com.hbm.util.DamageResistanceHandler.setStats.remove(facadeSet);
+        expect(problems, "legacy util handler set map remove sync", setStatsForItem(facadeSet.getW()) == null);
         JsonObject legacyConfigStatsJson = new JsonObject();
         JsonArray legacyConfigExact = new JsonArray();
         JsonArray legacyConfigExactEntry = new JsonArray();
@@ -1208,6 +1253,20 @@ public final class DamageResistanceHandler {
     private static void addSetInfo(Map<Item, List<ArmorSet>> itemInfoSets, @Nullable Item item, ArmorSet set) {
         if (item != null) {
             itemInfoSets.computeIfAbsent(item, ignored -> new ArrayList<>()).add(set);
+        }
+    }
+
+    private static void removeSetInfo(@Nullable Item item, ArmorSet set) {
+        if (item == null) {
+            return;
+        }
+        List<ArmorSet> sets = ITEM_INFO_SETS.get(item);
+        if (sets == null) {
+            return;
+        }
+        sets.remove(set);
+        if (sets.isEmpty()) {
+            ITEM_INFO_SETS.remove(item);
         }
     }
 

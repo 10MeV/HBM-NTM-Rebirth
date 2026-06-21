@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 1200,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 8, "ingredient": { "tag": "forge:welded_plates/any_resistant_alloy" }, "legacy_ore": "plateWeldedAnyResistantAlloy" },
+    { "count": 32, "ingredient": { "tag": "forge:dense_wires/bscco" }, "legacy_ore": "wireDenseBSCCO" },
+    { "count": 16, "ingredient": { "tag": "forge:cast_plates/any_bismoid_bronze" }, "legacy_ore": "plateCastAnyBismoidBronze" },
+    { "count": 4, "ingredient": { "item": "hbm_ntm_rebirth:circuit_bismoid" }, "legacy_id": "hbm:circuit", "legacy_meta": 12 }
+  ],
+  "internal_name": "ass.fusionplasmaforge",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:fusion_plasma_forge" }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 185
+}

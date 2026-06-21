@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " U ",
+    "PUP",
+    " U "
+  ],
+  "key": {
+    "P": {
+      "tag": "forge:plates/iron"
+    },
+    "U": {
+      "item": "hbm_ntm_rebirth:billet_uranium"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:pile_rod_uranium"
+  }
+}

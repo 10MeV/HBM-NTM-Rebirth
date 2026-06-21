@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.RadioAutocalBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -14,10 +14,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class RadioAutocalRenderer implements BlockEntityRenderer<RadioAutocalBlockEntity> {
-    static final ResourceLocation TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/autocal.png");
-    static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(
-            new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/autocal.obj"), TEXTURE).noSmooth().asVBO();
+    static final ResourceLocation TEXTURE = ObjMachineModels.AUTOCAL_TEXTURE;
+    static final LegacyWavefrontModel MODEL = ObjMachineModels.AUTOCAL_LEGACY;
 
     public RadioAutocalRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -39,7 +37,7 @@ public class RadioAutocalRenderer implements BlockEntityRenderer<RadioAutocalBlo
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
-        int light = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
+        int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);

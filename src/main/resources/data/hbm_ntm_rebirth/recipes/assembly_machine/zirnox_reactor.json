@@ -1,0 +1,67 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 600,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:shells/steel"
+      },
+      "legacy_ore": "shellSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:pipes/steel"
+      },
+      "legacy_ore": "pipeSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/boron"
+      },
+      "legacy_ore": "ingotBoron"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/graphite"
+      },
+      "legacy_ore": "ingotGraphite"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "legacy_ore": "ingotRubber"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:any/concrete"
+      },
+      "legacy_ore": "anyConcrete"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_basic"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 8
+    }
+  ],
+  "internal_name": "ass.cirnox",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:reactor_zirnox"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 156
+}

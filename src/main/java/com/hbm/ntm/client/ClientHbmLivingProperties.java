@@ -10,10 +10,11 @@ public final class ClientHbmLivingProperties {
     private static final Map<ClientHbmLivingPropertiesListener, ClientRadiationDataListener> LISTENERS = new IdentityHashMap<>();
 
     public static void update(ClientLivingSyncData data) {
-        ClientRadiationData.update(data.radiation(), data.digamma(), data.radBuf(), data.chunkRadiation(), data.resistance(),
-                data.asbestos(), data.blackLung(), data.bombTimer(), data.contagion(), data.oil(),
-                data.fire(), data.phosphorus(), data.balefire(), data.blackFire(),
-                data.contaminationEffects().stream()
+        ClientLivingSyncData safeData = data == null ? emptySyncData() : data;
+        ClientRadiationData.update(safeData.radiation(), safeData.digamma(), safeData.radBuf(), safeData.chunkRadiation(), safeData.resistance(),
+                safeData.asbestos(), safeData.blackLung(), safeData.bombTimer(), safeData.contagion(), safeData.oil(),
+                safeData.fire(), safeData.phosphorus(), safeData.balefire(), safeData.blackFire(),
+                safeData.contaminationEffects().stream()
                         .map(effect -> new ClientRadiationData.ContaminationEffectData(
                                 effect.maxRad(), effect.maxTime(), effect.time(), effect.ignoreArmor()))
                         .toList());
@@ -114,6 +115,11 @@ public final class ClientHbmLivingProperties {
                 data.fire(), data.phosphorus(), data.balefire(), data.blackFire(), getContaminationEffects());
     }
 
+    public static ClientLivingSyncData emptySyncData() {
+        return new ClientLivingSyncData(0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, List.of());
+    }
+
     public static void addListener(ClientHbmLivingPropertiesListener listener) {
         if (listener == null || LISTENERS.containsKey(listener)) {
             return;
@@ -144,7 +150,7 @@ public final class ClientHbmLivingProperties {
             int asbestos, int blackLung, int bombTimer, int contagion, int oil, int fire, int phosphorus, int balefire, int blackFire,
             List<ContaminationEffectData> contaminationEffects) {
         public ClientLivingSyncData {
-            contaminationEffects = List.copyOf(contaminationEffects);
+            contaminationEffects = contaminationEffects == null ? List.of() : List.copyOf(contaminationEffects);
         }
     }
 

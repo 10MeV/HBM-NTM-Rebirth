@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:combination_oven",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:powder_limestone" } },
+  "output_item": { "item": "hbm_ntm_rebirth:powder_calcium" },
+  "output_fluid": { "fluid": "CARBONDIOXIDE", "amount": 50 }
+}

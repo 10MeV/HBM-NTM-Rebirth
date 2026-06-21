@@ -2,7 +2,7 @@
   "type": "hbm_ntm_rebirth:crystallizer",
   "duration": 600,
   "fluid": { "fluid": "PEROXIDE", "amount": 500 },
-  "input": { "ingredient": { "tag": "forge:storage_blocks/redstone" } },
-  "output": { "item": "hbm_ntm_rebirth:nugget_mercury" },
+  "input": { "ingredient": { "tag": "forge:storage_blocks/redstone" }, "legacy_ore": "blockRedstone" },
+  "output": { "item": "hbm_ntm_rebirth:ingot_mercury" },
   "productivity": 0.25
 }

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=down": { "model": "hbm_ntm_rebirth:block/capacitor_bus_down" },
+    "facing=up": { "model": "hbm_ntm_rebirth:block/capacitor_bus_up" },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/capacitor_bus_north" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/capacitor_bus_south" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/capacitor_bus_west" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/capacitor_bus_east" }
+  }
+}

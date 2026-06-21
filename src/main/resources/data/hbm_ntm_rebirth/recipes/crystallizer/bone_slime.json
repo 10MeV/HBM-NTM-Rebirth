@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 20,
+  "fluid": { "fluid": "SULFURIC_ACID", "amount": 1000 },
+  "input": { "ingredient": { "item": "minecraft:bone" } },
+  "output": { "item": "minecraft:slime_ball", "count": 16 }
+}

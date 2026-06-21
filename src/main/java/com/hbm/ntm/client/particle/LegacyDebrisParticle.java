@@ -6,7 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleRenderType;
-import net.minecraft.client.particle.TerrainParticle;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,14 +19,12 @@ import org.joml.Vector3f;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @OnlyIn(Dist.CLIENT)
-public class LegacyDebrisParticle extends TerrainParticle {
+public class LegacyDebrisParticle extends Particle {
     private static final AtomicInteger NEXT_VISUAL_ID = new AtomicInteger();
 
     private final int visualId;
     private final int debrisSize;
-    private final float bodyScale;
-    private final float cubeScale;
-    private final float[] cubeOffsets;
+    private final DebrisCell[] cells;
     private final float pitchStep;
     private final float yawStep;
     private float rotationPitch;
@@ -35,14 +33,11 @@ public class LegacyDebrisParticle extends TerrainParticle {
     private float prevRotationYaw;
 
     private LegacyDebrisParticle(ClientLevel level, double x, double y, double z,
-            double motionX, double motionY, double motionZ, BlockState state, int debrisSize) {
-        super(level, x, y, z, 0.0D, 0.0D, 0.0D, state);
+            double motionX, double motionY, double motionZ, BlockState[] states, int debrisSize) {
+        super(level, x, y, z);
         this.visualId = NEXT_VISUAL_ID.incrementAndGet();
         this.debrisSize = Math.max(1, debrisSize);
-        this.bodyScale = Mth.clamp(this.debrisSize / 16.0F, 0.35F, 1.6F);
-        int cubeCount = Mth.clamp(this.debrisSize / 3, 1, 7);
-        this.cubeScale = this.bodyScale / (cubeCount <= 2 ? 1.8F : 2.6F);
-        this.cubeOffsets = makeCubeOffsets(cubeCount, this.bodyScale, level.random);
+        this.cells = makeCells(states, this.debrisSize);
         RandomSource turnRandom = RandomSource.create(this.visualId);
         this.pitchStep = turnRandom.nextFloat() * 10.0F;
         this.yawStep = turnRandom.nextFloat() * 10.0F;
@@ -52,15 +47,15 @@ public class LegacyDebrisParticle extends TerrainParticle {
         this.lifetime = 100;
         this.gravity = 0.15F;
         this.hasPhysics = false;
-        this.setSize(this.bodyScale * 0.75F, this.bodyScale * 0.75F);
+        this.setSize(0.2F, 0.2F);
     }
 
     public static LegacyDebrisParticle create(ClientLevel level, double x, double y, double z,
-            double motionX, double motionY, double motionZ, BlockState state, int debrisSize) {
-        if (debrisSize <= 0 || state == null || state.isAir()) {
+            double motionX, double motionY, double motionZ, BlockState[] states, int debrisSize) {
+        if (debrisSize <= 0 || states == null || states.length == 0) {
             return null;
         }
-        return new LegacyDebrisParticle(level, x, y, z, motionX, motionY, motionZ, state, debrisSize);
+        return new LegacyDebrisParticle(level, x, y, z, motionX, motionY, motionZ, states, debrisSize);
     }
 
     @Override
@@ -106,12 +101,8 @@ public class LegacyDebrisParticle extends TerrainParticle {
         Quaternionf rotation = new Quaternionf().rotateY(pitch).rotateZ(yaw);
         int light = this.getLightColor(partialTick);
 
-        for (int i = 0; i < this.cubeOffsets.length; i += 3) {
-            renderCube(consumer, rotation, light,
-                    x + this.cubeOffsets[i],
-                    y + this.cubeOffsets[i + 1],
-                    z + this.cubeOffsets[i + 2],
-                    this.cubeScale * (1.0F + (i % 2) * 0.1F));
+        for (DebrisCell cell : this.cells) {
+            renderBlockCube(consumer, rotation, light, x, y, z, cell);
         }
     }
 
@@ -125,54 +116,99 @@ public class LegacyDebrisParticle extends TerrainParticle {
         return false;
     }
 
-    private void renderCube(VertexConsumer consumer, Quaternionf rotation, int light, float x, float y, float z, float scale) {
-        float h = scale * 0.5F;
+    private void renderBlockCube(VertexConsumer consumer, Quaternionf rotation, int light,
+            float originX, float originY, float originZ, DebrisCell cell) {
+        float half = this.debrisSize * 0.5F;
+        float x0 = cell.x - half;
+        float y0 = cell.y - half;
+        float z0 = cell.z - half;
+        float x1 = x0 + 1.0F;
+        float y1 = y0 + 1.0F;
+        float z1 = z0 + 1.0F;
         Vector3f[] corners = new Vector3f[] {
-                rotate(-h, -h, -h, rotation, x, y, z),
-                rotate(-h, -h, h, rotation, x, y, z),
-                rotate(-h, h, -h, rotation, x, y, z),
-                rotate(-h, h, h, rotation, x, y, z),
-                rotate(h, -h, -h, rotation, x, y, z),
-                rotate(h, -h, h, rotation, x, y, z),
-                rotate(h, h, -h, rotation, x, y, z),
-                rotate(h, h, h, rotation, x, y, z)
+                rotate(x0, y0, z0, rotation, originX, originY, originZ),
+                rotate(x0, y0, z1, rotation, originX, originY, originZ),
+                rotate(x0, y1, z0, rotation, originX, originY, originZ),
+                rotate(x0, y1, z1, rotation, originX, originY, originZ),
+                rotate(x1, y0, z0, rotation, originX, originY, originZ),
+                rotate(x1, y0, z1, rotation, originX, originY, originZ),
+                rotate(x1, y1, z0, rotation, originX, originY, originZ),
+                rotate(x1, y1, z1, rotation, originX, originY, originZ)
         };
-        putFace(consumer, light, corners[0], corners[2], corners[3], corners[1]);
-        putFace(consumer, light, corners[4], corners[5], corners[7], corners[6]);
-        putFace(consumer, light, corners[0], corners[1], corners[5], corners[4]);
-        putFace(consumer, light, corners[2], corners[6], corners[7], corners[3]);
-        putFace(consumer, light, corners[0], corners[4], corners[6], corners[2]);
-        putFace(consumer, light, corners[1], corners[3], corners[7], corners[5]);
+        putFace(consumer, light, cell, corners[0], corners[2], corners[3], corners[1]);
+        putFace(consumer, light, cell, corners[4], corners[5], corners[7], corners[6]);
+        putFace(consumer, light, cell, corners[0], corners[1], corners[5], corners[4]);
+        putFace(consumer, light, cell, corners[2], corners[6], corners[7], corners[3]);
+        putFace(consumer, light, cell, corners[0], corners[4], corners[6], corners[2]);
+        putFace(consumer, light, cell, corners[1], corners[3], corners[7], corners[5]);
     }
 
     private Vector3f rotate(float x, float y, float z, Quaternionf rotation, float originX, float originY, float originZ) {
         return new Vector3f(x, y, z).rotate(rotation).add(originX, originY, originZ);
     }
 
-    private void putFace(VertexConsumer consumer, int light, Vector3f a, Vector3f b, Vector3f c, Vector3f d) {
-        putVertex(consumer, a, this.getU0(), this.getV1(), light);
-        putVertex(consumer, b, this.getU0(), this.getV0(), light);
-        putVertex(consumer, c, this.getU1(), this.getV0(), light);
-        putVertex(consumer, d, this.getU1(), this.getV1(), light);
+    private void putFace(VertexConsumer consumer, int light, DebrisCell cell, Vector3f a, Vector3f b, Vector3f c, Vector3f d) {
+        putVertex(consumer, cell, a, cell.u0, cell.v1, light);
+        putVertex(consumer, cell, b, cell.u0, cell.v0, light);
+        putVertex(consumer, cell, c, cell.u1, cell.v0, light);
+        putVertex(consumer, cell, d, cell.u1, cell.v1, light);
     }
 
-    private void putVertex(VertexConsumer consumer, Vector3f pos, float u, float v, int light) {
+    private void putVertex(VertexConsumer consumer, DebrisCell cell, Vector3f pos, float u, float v, int light) {
         consumer.vertex(pos.x(), pos.y(), pos.z())
                 .uv(u, v)
-                .color(this.rCol, this.gCol, this.bCol, this.alpha)
+                .color(cell.red, cell.green, cell.blue, this.alpha)
                 .uv2(light)
                 .endVertex();
     }
 
-    private static float[] makeCubeOffsets(int cubeCount, float bodyScale, RandomSource random) {
-        float[] offsets = new float[cubeCount * 3];
-        for (int i = 1; i < cubeCount; i++) {
-            int base = i * 3;
-            float spread = bodyScale * 0.35F;
-            offsets[base] = (random.nextFloat() - 0.5F) * spread;
-            offsets[base + 1] = (random.nextFloat() - 0.5F) * spread;
-            offsets[base + 2] = (random.nextFloat() - 0.5F) * spread;
+    private static DebrisCell[] makeCells(BlockState[] states, int debrisSize) {
+        java.util.ArrayList<DebrisCell> cells = new java.util.ArrayList<>();
+        int size = Math.max(1, debrisSize);
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                for (int z = 0; z < size; z++) {
+                    int index = (x * size + y) * size + z;
+                    if (index < 0 || index >= states.length) {
+                        continue;
+                    }
+                    BlockState state = states[index];
+                    if (state == null || state.isAir()) {
+                        continue;
+                    }
+                    TextureAtlasSprite sprite = Minecraft.getInstance().getBlockRenderer()
+                            .getBlockModelShaper()
+                            .getParticleIcon(state);
+                    cells.add(new DebrisCell(x, y, z, sprite));
+                }
+            }
         }
-        return offsets;
+        return cells.toArray(DebrisCell[]::new);
+    }
+
+    private static final class DebrisCell {
+        private final int x;
+        private final int y;
+        private final int z;
+        private final float u0;
+        private final float u1;
+        private final float v0;
+        private final float v1;
+        private final float red;
+        private final float green;
+        private final float blue;
+
+        private DebrisCell(int x, int y, int z, TextureAtlasSprite sprite) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.u0 = sprite.getU0();
+            this.u1 = sprite.getU1();
+            this.v0 = sprite.getV0();
+            this.v1 = sprite.getV1();
+            this.red = 1.0F;
+            this.green = 1.0F;
+            this.blue = 1.0F;
+        }
     }
 }

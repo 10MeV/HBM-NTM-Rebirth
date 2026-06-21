@@ -29,7 +29,7 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
-public class LaunchPadBlock extends LegacyXrMultiblockBlock implements EntityBlock {
+public class LaunchPadBlock extends LegacyXrMultiblockBlock implements EntityBlock, RemoteDetonatableBlock {
     private static final int[] LEGACY_XR_DIMENSIONS = new int[] { 0, 0, 1, 1, 1, 1 };
     private static final int LEGACY_OFFSET = 1;
     private static final VoxelShape SHAPE = Shapes.or(
@@ -107,6 +107,17 @@ public class LaunchPadBlock extends LegacyXrMultiblockBlock implements EntityBlo
     }
 
     @Override
+    public BombReturnCode detonateFromRemote(Level level, BlockPos pos) {
+        if (level == null || level.isClientSide) {
+            return BombReturnCode.UNDEFINED;
+        }
+        if (!(resolveCoreBlockEntity(level, pos) instanceof LaunchPadBlockEntity launchPad)) {
+            return BombReturnCode.ERROR_MISSING_COMPONENT;
+        }
+        return launchPad.launchFromDesignator() ? BombReturnCode.LAUNCHED : BombReturnCode.ERROR_MISSING_COMPONENT;
+    }
+
+    @Override
     public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos,
             CollisionContext context) {
         return SHAPE;
@@ -125,6 +136,11 @@ public class LaunchPadBlock extends LegacyXrMultiblockBlock implements EntityBlo
 
     @Override
     public boolean usesForwardedDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return true;
+    }
+
+    @Override
+    public boolean usesMultiblockHighlightShape(BlockState state, BlockGetter level, BlockPos corePos) {
         return true;
     }
 

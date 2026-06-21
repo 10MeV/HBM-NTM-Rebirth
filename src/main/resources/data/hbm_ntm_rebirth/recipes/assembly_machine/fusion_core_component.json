@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 600,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 8, "ingredient": { "tag": "forge:welded_plates/any_resistant_alloy" }, "legacy_ore": "plateWeldedAnyResistantAlloy" },
+    { "count": 32, "ingredient": { "tag": "forge:ingots/any_hard_plastic" }, "legacy_ore": "ingotAnyHardPlastic" },
+    { "count": 8, "ingredient": { "item": "hbm_ntm_rebirth:circuit_bismoid" }, "legacy_id": "hbm:circuit", "legacy_meta": 12 }
+  ],
+  "internal_name": "ass.fusioncore",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:struct_torus_core" }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 175
+}

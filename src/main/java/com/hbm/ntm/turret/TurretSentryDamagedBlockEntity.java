@@ -93,16 +93,17 @@ public class TurretSentryDamagedBlockEntity extends DamagedTurretBlockEntityBase
             return;
         }
         if (shotSide) {
-            triggerLeftBarrelRecoil();
             playTurretSound("hbm:turret.sentry_fire", 2.0F, 1.0F);
             spawnBullet(CONFIG, 5.0F);
+            scheduleCasing(CONFIG);
             spawnMuzzleLargeExplodeAt(sentryMuzzlePos(), 1.0F, 1);
+            triggerLeftBarrelRecoil();
         } else {
-            triggerRightBarrelRecoil();
             playTurretSound("hbm:turret.sentry_fire", 2.0F, 0.75F);
+            scheduleCasing(CONFIG);
             spawnMuzzleLargeExplodeAt(getTurretPos(), 1.0F, 1);
+            triggerRightBarrelRecoil();
         }
-        scheduleCasing(CONFIG);
         shotSide = !shotSide;
     }
 

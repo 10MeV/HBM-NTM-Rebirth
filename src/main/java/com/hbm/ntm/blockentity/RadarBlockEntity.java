@@ -375,13 +375,14 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        return RadarClientControlProfile.accepts(tag, SLOT_LINKER);
+        return RadarClientControlProfile.accepts(tag, RadarInventoryProfile.COMMAND_LINK_SLOT_COUNT);
     }
 
     @Override
     public void handleClientControl(ServerPlayer player, CompoundTag tag) {
         RadarClientControlProfile.Request request = RadarClientControlProfile.parse(tag,
-                RadarHostStateProfile.controlState(scanParams(), redMode, showMap), SLOT_LINKER);
+                RadarHostStateProfile.controlState(scanParams(), redMode, showMap),
+                RadarInventoryProfile.COMMAND_LINK_SLOT_COUNT);
         if (request.changedControls()) {
             applyControlState(request.controlApplication());
         }

@@ -26,7 +26,7 @@ public interface IFluidReceiverMK2 extends IFluidUserMK2, HbmFluidReceiver {
 
     @Override
     default int[] getReceivingPressureRange(FluidType type) {
-        return DEFAULT_PRESSURE_RANGE;
+        return IFluidUserMK2.DEFAULT_PRESSURE_RANGE;
     }
 
     default boolean trySubscribe(FluidType type, Level level, BlockPos connectorPos, Direction directionFromReceiver) {

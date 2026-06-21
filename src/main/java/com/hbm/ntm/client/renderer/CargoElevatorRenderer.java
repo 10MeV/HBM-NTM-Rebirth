@@ -1,6 +1,5 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.CargoElevatorBlockEntity;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -10,8 +9,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
 public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorBlockEntity> {
-    public static final ResourceLocation TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/elevator.png");
+    public static final ResourceLocation TEXTURE = ObjMachineModels.ELEVATOR_TEXTURE;
 
     public CargoElevatorRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -29,7 +27,8 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
     @Override
     public void render(CargoElevatorBlockEntity elevator, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(elevator, packedLight);
+        int modelLight = LegacyRenderLighting.resolveBoundsLight(elevator, elevator.getRenderBoundingBox(),
+                packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
 

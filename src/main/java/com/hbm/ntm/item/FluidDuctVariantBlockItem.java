@@ -21,7 +21,10 @@ public class FluidDuctVariantBlockItem extends BlockItem {
         super(block, properties);
         this.creativeMetas = creativeMetas == null || creativeMetas.length == 0
                 ? new int[] {0}
-                : Arrays.stream(creativeMetas).map(FluidDuctBoxBlock::clampLegacyMetadata).toArray();
+                : Arrays.stream(creativeMetas)
+                        .map(FluidDuctBoxBlock::clampLegacyMetadata)
+                        .distinct()
+                        .toArray();
     }
 
     @Override

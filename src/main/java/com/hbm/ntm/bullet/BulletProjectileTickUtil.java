@@ -76,7 +76,6 @@ public final class BulletProjectileTickUtil {
                 BulletTauTrailUtil.appendClientNode(config, level.isClientSide(), hasTauTrailNodes, motion);
         int preMoveParticles = BulletFlightVisualUtil.spawnBlackPowderBurst(config, level, position, motion,
                 ticksExisted, roll);
-        int meteorFlameParticles = BulletFlightVisualUtil.spawnMeteorFlameParticles(config, level, position, roll);
         int flameTrailParticles = BulletFlightVisualUtil.spawnFlamethrowerTrail(config, level, position);
         int fireExtinguisherParticles = BulletFlightVisualUtil.spawnFireExtinguisherTrail(config, level, position,
                 motion, roll);
@@ -93,7 +92,7 @@ public final class BulletProjectileTickUtil {
         if (lifetime.zeroMaxAge() || update.discardProjectile()) {
             return new TickResult(position, updatedMotion, update.homingTarget(),
                     BulletProjectileHitUtil.HitApplication.NONE, update, tauTrail, preMoveParticles,
-                    flameTrailParticles + fireExtinguisherParticles, lifetime, true, false, meteorFlameParticles,
+                    flameTrailParticles + fireExtinguisherParticles, lifetime, true, false,
                     Collections.unmodifiableList(spawnRequests),
                     updatedAcceleration, 0.0D);
         }
@@ -101,7 +100,7 @@ public final class BulletProjectileTickUtil {
         if (config.plink() == BulletPlink.ENERGY) {
             return applyBeamTick(config, level, projectile, shooter, currentHomingTarget, projectileBounds, position,
                     motion, ticksInAir, update, tauTrail, preMoveParticles, flameTrailParticles,
-                    fireExtinguisherParticles, lifetime, meteorFlameParticles, spawnRequests, random, overrideDamage,
+                    fireExtinguisherParticles, lifetime, spawnRequests, random, overrideDamage,
                     inGround, updatedAcceleration, currentBeamLength);
         }
 
@@ -141,14 +140,14 @@ public final class BulletProjectileTickUtil {
 
         return new TickResult(nextPosition, nextMotion, postMoveUpdate.homingTarget(), hit, update, tauTrail,
                 preMoveParticles, trailParticles, lifetime, discardProjectile, hit.enteredPortal(),
-                meteorFlameParticles, Collections.unmodifiableList(spawnRequests), updatedAcceleration, 0.0D);
+                Collections.unmodifiableList(spawnRequests), updatedAcceleration, 0.0D);
     }
 
     private static TickResult applyBeamTick(BulletConfig config, Level level, @Nullable Entity projectile,
             @Nullable Entity shooter, @Nullable Entity currentHomingTarget, AABB projectileBounds,
             Vec3 position, Vec3 motion, int ticksInAir, BulletUpdateBehaviorUtil.KnownUpdateResult update,
             BulletTauTrailUtil.TauTrailAppend tauTrail, int preMoveParticles, int flameTrailParticles,
-            int fireExtinguisherParticles, BulletKinematicsUtil.LifetimeCheck lifetime, int meteorFlameParticles,
+            int fireExtinguisherParticles, BulletKinematicsUtil.LifetimeCheck lifetime,
             List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests, @Nullable RandomSource random,
             float overrideDamage, boolean inGround, float updatedAcceleration, double currentBeamLength) {
         if (ticksInAir > 1) {
@@ -160,7 +159,7 @@ public final class BulletProjectileTickUtil {
             return new TickResult(position, motion, update.homingTarget(),
                     BulletProjectileHitUtil.HitApplication.NONE, update, tauTrail, preMoveParticles,
                     flameTrailParticles + fireExtinguisherParticles, lifetime,
-                    lifetime.shouldDiscard() || update.discardProjectile(), false, meteorFlameParticles,
+                    lifetime.shouldDiscard() || update.discardProjectile(), false,
                     Collections.unmodifiableList(spawnRequests), updatedAcceleration, beamLength);
         }
 
@@ -194,7 +193,7 @@ public final class BulletProjectileTickUtil {
         }
         return new TickResult(position, motion, update.homingTarget(), hit, update, tauTrail, preMoveParticles,
                 flameTrailParticles + fireExtinguisherParticles, lifetime, discardProjectile, hit.enteredPortal(),
-                meteorFlameParticles, Collections.unmodifiableList(spawnRequests), updatedAcceleration, beamLength);
+                Collections.unmodifiableList(spawnRequests), updatedAcceleration, beamLength);
     }
 
     private static BulletCollisionUtil.CollisionScan scanUntilLegacyBeamCoin(
@@ -265,13 +264,13 @@ public final class BulletProjectileTickUtil {
             BulletProjectileHitUtil.HitApplication hit, BulletUpdateBehaviorUtil.KnownUpdateResult update,
             BulletTauTrailUtil.TauTrailAppend tauTrail, int preMoveParticles, int trailParticles,
             BulletKinematicsUtil.LifetimeCheck lifetime, boolean discardProjectile, boolean enteredPortal,
-            int meteorFlameParticles, List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests,
+            List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests,
             float acceleration, double beamLength) {
         public static final TickResult NONE = new TickResult(Vec3.ZERO, Vec3.ZERO, null,
                 BulletProjectileHitUtil.HitApplication.NONE,
                 BulletUpdateBehaviorUtil.KnownUpdateResult.NONE,
                 BulletTauTrailUtil.TauTrailAppend.NONE, 0, 0,
-                new BulletKinematicsUtil.LifetimeCheck(true, false), true, false, 0, Collections.emptyList(),
+                new BulletKinematicsUtil.LifetimeCheck(true, false), true, false, Collections.emptyList(),
                 0.0F, 0.0D);
     }
 

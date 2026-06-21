@@ -194,6 +194,14 @@ public abstract class CoolingTowerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        if (!tag.contains("hbm_fluids")) {
+            if (tag.contains("water") || tag.contains("water_type")) {
+                inputTank.readFromNbt(tag, "water");
+            }
+            if (tag.contains("steam") || tag.contains("steam_type")) {
+                outputTank.readFromNbt(tag, "steam");
+            }
+        }
         normalizeConfigCapacity();
         age = Math.floorMod(tag.getInt("age"), 2);
         waterTimer = Math.max(0, tag.getInt("waterTimer"));

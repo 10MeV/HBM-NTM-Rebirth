@@ -5,10 +5,12 @@ import com.hbm.ntm.util.HbmItemStackUtil;
 
 import com.hbm.ntm.recipe.HbmIngredient;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
+import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
@@ -26,6 +28,14 @@ import java.util.List;
 @Deprecated(forRemoval = false)
 public final class InventoryUtil {
     private InventoryUtil() {
+    }
+
+    public static int[] masquerade(WorldlyContainer sided, int side) {
+        return HbmInventoryUtil.masquerade(sided, side);
+    }
+
+    public static int[] masquerade(WorldlyContainer sided, Direction side) {
+        return HbmInventoryUtil.masquerade(sided, side);
     }
 
     public static boolean doesStackDataMatch(ItemStack first, ItemStack second) {

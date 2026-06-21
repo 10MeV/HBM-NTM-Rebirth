@@ -51,6 +51,9 @@ public class BlockMutatorErode implements BlockMutator {
 
     @Override
     public void mutatePre(ExplosionVnt explosion, BlockState state, BlockPos pos) {
+        if (explosion.level().isOutsideBuildHeight(pos)) {
+            return;
+        }
         Block replacement = replacements.get(state.getBlock());
         if (replacement == null) {
             return;

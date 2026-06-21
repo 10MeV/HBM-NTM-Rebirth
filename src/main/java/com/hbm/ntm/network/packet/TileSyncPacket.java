@@ -1,6 +1,7 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmPreparablePacket;
 import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.network.ModMessages;
@@ -48,12 +49,15 @@ public record TileSyncPacket(BlockPos pos, CompoundTag data) implements HbmPrepa
         if (level == null || !level.hasChunk(packet.pos.getX() >> 4, packet.pos.getZ() >> 4)) {
             return;
         }
-        BlockEntity blockEntity = level.getBlockEntity(packet.pos);
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, packet.pos);
+        BlockPos receiverPos = core == null ? packet.pos : core.pos();
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(level, packet.pos);
         if (blockEntity instanceof HbmTileSyncable syncable) {
             syncable.handleClientSyncTag(packet.data);
         } else {
-            HbmNtm.LOGGER.debug("Tile sync packet at {} had no HbmTileSyncable receiver.", packet.pos);
-            requestResync(level, packet.pos);
+            HbmNtm.LOGGER.debug("Tile sync packet at {} resolved to {} but had no HbmTileSyncable receiver.",
+                    packet.pos, receiverPos);
+            requestResync(level, receiverPos);
         }
     }
 

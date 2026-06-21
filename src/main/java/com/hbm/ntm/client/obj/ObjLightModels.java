@@ -22,8 +22,8 @@ public final class ObjLightModels {
     public static final LegacyWavefrontModel CAGE_LAMP_LEGACY = legacyModel("cage_lamp").noSmooth();
     public static final LegacyWavefrontModel FLUORESCENT_LAMP_LEGACY = legacyModel("fluorescent_lamp").noSmooth();
     public static final LegacyWavefrontModel FLOOD_LAMP_LEGACY = legacyModel("flood_lamp").noSmooth();
-    public static final LegacyWavefrontModel FLOODLIGHT_LEGACY = legacyModel("floodlight", machineTexture("floodlight"));
-    public static final LegacyWavefrontModel DEMON_LAMP_LEGACY = legacyModel("demon_lamp", machineTexture("demon_lamp"));
+    public static final LegacyWavefrontModel FLOODLIGHT_LEGACY = blockLegacyModel("floodlight", machineTexture("floodlight")).asVBO();
+    public static final LegacyWavefrontModel DEMON_LAMP_LEGACY = blockLegacyModel("demon_lamp", machineTexture("demon_lamp")).asVBO();
 
     public static LegacyWavefrontModel legacyModel(String name) {
         return legacyModel(name, texture(name));
@@ -31,7 +31,13 @@ public final class ObjLightModels {
 
     public static LegacyWavefrontModel legacyModel(String name, ResourceLocation texture) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/lights/" + name + ".obj"),
+                new ResourceLocation(HbmNtm.MOD_ID, "models/lights/" + name + ".obj"),
+                texture);
+    }
+
+    public static LegacyWavefrontModel blockLegacyModel(String name, ResourceLocation texture) {
+        return new LegacyWavefrontModel(
+                new ResourceLocation(HbmNtm.MOD_ID, "models/blocks/" + name + ".obj"),
                 texture);
     }
 
@@ -40,7 +46,7 @@ public final class ObjLightModels {
     }
 
     public static ResourceLocation machineTexture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/" + name + ".png");
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/" + name + ".png");
     }
 
     private ObjLightModels() {

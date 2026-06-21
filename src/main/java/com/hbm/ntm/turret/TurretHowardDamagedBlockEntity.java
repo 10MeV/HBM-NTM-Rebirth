@@ -76,17 +76,17 @@ public class TurretHowardDamagedBlockEntity extends DamagedTurretBlockEntityBase
             return;
         }
         timer++;
-        if (timer % 4 != 0) {
+        if (getTargetPos() == null || timer % 4 != 0) {
             return;
         }
-        spawnMuzzleLargeExplodeAt(getMuzzlePos().add(rotateLegacyLocal(new Vec3(0.0D, 0.25D, 0.0D))), 1.5F, 1);
-        spawnHowardCasing();
         playTurretSound("hbm:turret.howard_fire", 4.0F, 0.7F + level.random.nextFloat() * 0.3F);
+        spawnHowardCasing();
         Entity target = getTarget();
         if (target != null && level.random.nextInt(100) + 1 <= WeaponConfig.ciwsHitrate() * 0.5D) {
             EntityDamageUtil.attackEntityFromIgnoreIFrame(target, ModDamageSources.shrapnel(level),
                     2.0F + level.random.nextInt(2));
         }
+        spawnMuzzleLargeExplodeAt(getMuzzlePos().add(rotateLegacyLocal(new Vec3(0.0D, 0.25D, 0.0D))), 1.5F, 1);
     }
 
     private void spawnHowardCasing() {

@@ -3,5 +3,16 @@
   "textures": {
     "layer0": "hbm_ntm_rebirth:item/rbmk_pellet_hep241",
     "layer1": "hbm_ntm_rebirth:item/rbmk_pellet_overlay_e0"
-  }
+  },
+  "overrides": [
+    { "predicate": { "hbm_ntm_rebirth:rbmk_pellet_meta": 1 }, "model": "hbm_ntm_rebirth:item/rbmk_pellet_hep241_meta_1" },
+    { "predicate": { "hbm_ntm_rebirth:rbmk_pellet_meta": 2 }, "model": "hbm_ntm_rebirth:item/rbmk_pellet_hep241_meta_2" },
+    { "predicate": { "hbm_ntm_rebirth:rbmk_pellet_meta": 3 }, "model": "hbm_ntm_rebirth:item/rbmk_pellet_hep241_meta_3" },
+    { "predicate": { "hbm_ntm_rebirth:rbmk_pellet_meta": 4 }, "model": "hbm_ntm_rebirth:item/rbmk_pellet_hep241_meta_4" },
+    { "predicate": { "hbm_ntm_rebirth:rbmk_pellet_meta": 5 }, "model": "hbm_ntm_rebirth:item/rbmk_pellet_hep241_meta_5" },
+    { "predicate": { "hbm_ntm_rebirth:rbmk_pellet_meta": 6 }, "model": "hbm_ntm_rebirth:item/rbmk_pellet_hep241_meta_6" },
+    { "predicate": { "hbm_ntm_rebirth:rbmk_pellet_meta": 7 }, "model": "hbm_ntm_rebirth:item/rbmk_pellet_hep241_meta_7" },
+    { "predicate": { "hbm_ntm_rebirth:rbmk_pellet_meta": 8 }, "model": "hbm_ntm_rebirth:item/rbmk_pellet_hep241_meta_8" },
+    { "predicate": { "hbm_ntm_rebirth:rbmk_pellet_meta": 9 }, "model": "hbm_ntm_rebirth:item/rbmk_pellet_hep241_meta_9" }
+  ]
 }

@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:alumina", "amount": 200 },
+  "input1": { "fluid": "hbm_ntm_rebirth:sodium_aluminate", "amount": 150 },
+  "solid_input": {
+    "ingredient": { "tag": "forge:dusts/fluorite" },
+    "count": 3,
+    "legacy_ore": "dustFluorite"
+  },
+  "duration": 40
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": {
+      "tag": "forge:dusts/fluorite"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:powder_poison"
+    }
+  },
+  "pattern": [
+    "PFP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:plan_c"
+  },
+  "show_notification": true
+}

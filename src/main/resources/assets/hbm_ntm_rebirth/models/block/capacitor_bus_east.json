@@ -1,0 +1,7 @@
+{
+  "parent": "hbm_ntm_rebirth:block/capacitor_bus_up",
+  "textures": {
+    "up": "hbm_ntm_rebirth:block/capacitor_bus_side",
+    "east": "hbm_ntm_rebirth:block/capacitor_bus_out"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 100,
+  "fluid": { "fluid": "REDMUD", "amount": 75 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:powder_calcium" } },
+  "output": { "item": "hbm_ntm_rebirth:powder_cement", "count": 8 },
+  "productivity": 0.1
+}

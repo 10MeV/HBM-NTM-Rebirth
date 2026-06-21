@@ -25,13 +25,10 @@ public final class LegacyBeamRenderer {
 
     public static void beam(PoseStack poseStack, MultiBufferSource buffer, BeamPlan plan) {
         if (plan.beamType() == BeamType.SOLID) {
-            solidBeam(poseStack, buffer, plan.depthWrite(), plan.x(), plan.y(), plan.z(), plan.wave(),
-                    plan.outerColor(), plan.innerColor(), plan.start(), plan.segments(), plan.size(),
-                    plan.layers(), plan.thickness());
+            solidBeam(poseStack, buffer, plan);
             return;
         }
-        lineBeam(poseStack, buffer, plan.x(), plan.y(), plan.z(), plan.wave(), plan.outerColor(),
-                plan.innerColor(), plan.start(), plan.segments(), plan.size());
+        lineBeam(poseStack, buffer, plan);
     }
 
     public static void solidBeam(PoseStack poseStack, MultiBufferSource buffer,
@@ -108,6 +105,43 @@ public final class LegacyBeamRenderer {
             line(consumer, pose, previous, current, outerColor);
         }
         line(consumer, pose, new Vector3d(), skeleton, innerColor);
+    }
+
+    private static void solidBeam(PoseStack poseStack, MultiBufferSource buffer, BeamPlan plan) {
+        if (plan.solidSegments().isEmpty() || plan.orientation().length() <= 1.0E-5D) {
+            return;
+        }
+
+        VertexConsumer consumer = buffer.getBuffer(plan.depthWrite()
+                ? LegacyUntexturedQuadRenderer.additiveDepthWriteNoCullType()
+                : LegacyUntexturedQuadRenderer.additiveNoCullType());
+        PoseStack.Pose pose = poseStack.last();
+
+        for (BeamSegmentPlan segment : plan.solidSegments()) {
+            for (BeamLayerPlan layer : segment.layers()) {
+                for (BeamQuadPlan quad : layer.quads()) {
+                    quad(consumer, pose, quad.v0(), quad.v1(), quad.v2(), quad.v3(), layer.color());
+                }
+            }
+        }
+    }
+
+    private static void lineBeam(PoseStack poseStack, MultiBufferSource buffer, BeamPlan plan) {
+        if ((plan.lineSegments().isEmpty() && plan.centralLine() == null)
+                || plan.orientation().length() <= 1.0E-5D) {
+            return;
+        }
+
+        VertexConsumer consumer = LegacyLineRenderer.consumer(buffer, LegacyLineRenderer.DEFAULT_LINE_WIDTH,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
+        PoseStack.Pose pose = poseStack.last();
+
+        for (BeamLinePlan line : plan.lineSegments()) {
+            line(consumer, pose, line.start(), line.end(), line.color());
+        }
+        if (plan.centralLine() != null) {
+            line(consumer, pose, plan.centralLine().start(), plan.centralLine().end(), plan.centralLine().color());
+        }
     }
 
     public static List<BeamPoint> beamPoints(double x, double y, double z,
@@ -327,7 +361,24 @@ public final class LegacyBeamRenderer {
                 255, 255, 255, 255);
     }
 
+    private static void quad(VertexConsumer consumer, PoseStack.Pose pose,
+                             BeamVector v0, BeamVector v1, BeamVector v2, BeamVector v3, int color) {
+        LegacyUntexturedQuadRenderer.quad(
+                consumer,
+                pose,
+                v0.x, v0.y, v0.z,
+                v1.x, v1.y, v1.z,
+                v2.x, v2.y, v2.z,
+                v3.x, v3.y, v3.z,
+                red(color), green(color), blue(color),
+                255, 255, 255, 255);
+    }
+
     private static void line(VertexConsumer consumer, PoseStack.Pose pose, Vector3d start, Vector3d end, int color) {
+        LegacyLineRenderer.line(consumer, pose, start.x, start.y, start.z, end.x, end.y, end.z, color, 255);
+    }
+
+    private static void line(VertexConsumer consumer, PoseStack.Pose pose, BeamVector start, BeamVector end, int color) {
         LegacyLineRenderer.line(consumer, pose, start.x, start.y, start.z, end.x, end.y, end.z, color, 255);
     }
 

@@ -1,0 +1,73 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 600,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/dura_steel"
+      },
+      "legacy_ore": "plateDuraSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:plate_desh"
+      }
+    },
+    {
+      "count": 6,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:coil_gold_torus"
+      }
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:coil_magnetized_tungsten"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_radius"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_health"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_advanced"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 9
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:machine_transformer"
+      }
+    }
+  ],
+  "internal_name": "ass.forcefield",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_forcefield"
+    }
+  ],
+  "power": 100,
+  "source_order": 93
+}

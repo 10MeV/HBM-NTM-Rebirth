@@ -15,11 +15,9 @@ import net.minecraft.world.entity.animal.Ocelot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.BushBlock;
-import net.minecraft.world.level.block.StainedGlassBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
@@ -33,6 +31,23 @@ import java.util.Objects;
 
 public final class ExplosionNukeGeneric {
     private static final int STANDARD_SCHRAB_ORE_CHANCE = 100;
+    private static final RegistryObject<? extends Block> BRICK_CONCRETE = requireLegacyBlock("brick_concrete");
+    private static final RegistryObject<? extends Block> BRICK_LIGHT = requireLegacyBlock("brick_light");
+    private static final RegistryObject<? extends Block> BRICK_OBSIDIAN = requireLegacyBlock("brick_obsidian");
+    private static final RegistryObject<? extends Block> BLOCK_SCRAP = requireLegacyBlock("block_scrap");
+    private static final RegistryObject<? extends Block> BLOCK_ELECTRICAL_SCRAP = requireLegacyBlock("block_electrical_scrap");
+    private static final RegistryObject<? extends Block> GRAVEL_OBSIDIAN = requireLegacyBlock("gravel_obsidian");
+    private static final RegistryObject<? extends Block> WASTE_TRINITITE = requireLegacyBlock("waste_trinitite");
+    private static final RegistryObject<? extends Block> WASTE_TRINITITE_RED = requireLegacyBlock("waste_trinitite_red");
+    private static final RegistryObject<? extends Block> ORE_URANIUM = requireLegacyBlock("ore_uranium");
+    private static final RegistryObject<? extends Block> ORE_SCHRABIDIUM = requireLegacyBlock("ore_schrabidium");
+    private static final RegistryObject<? extends Block> ORE_URANIUM_SCORCHED = requireLegacyBlock("ore_uranium_scorched");
+    private static final RegistryObject<? extends Block> ORE_NETHER_URANIUM = requireLegacyBlock("ore_nether_uranium");
+    private static final RegistryObject<? extends Block> ORE_NETHER_SCHRABIDIUM = requireLegacyBlock("ore_nether_schrabidium");
+    private static final RegistryObject<? extends Block> ORE_NETHER_URANIUM_SCORCHED = requireLegacyBlock("ore_nether_uranium_scorched");
+    private static final RegistryObject<? extends Block> ORE_GNEISS_URANIUM = requireLegacyBlock("ore_gneiss_uranium");
+    private static final RegistryObject<? extends Block> ORE_GNEISS_SCHRABIDIUM = requireLegacyBlock("ore_gneiss_schrabidium");
+    private static final RegistryObject<? extends Block> ORE_GNEISS_URANIUM_SCORCHED = requireLegacyBlock("ore_gneiss_uranium_scorched");
 
     public static void empBlast(Level level, int x, int y, int z, int bombStartStrength) {
         if (level == null || level.isClientSide() || bombStartStrength <= 0) {
@@ -85,7 +100,7 @@ public final class ExplosionNukeGeneric {
     }
 
     public static int destruction(Level level, BlockPos pos) {
-        if (level == null || level.isClientSide()) {
+        if (level == null || level.isClientSide() || level.isOutsideBuildHeight(pos)) {
             return 0;
         }
 
@@ -97,34 +112,34 @@ public final class ExplosionNukeGeneric {
         float resistance = explosionResistance(state);
         if (resistance >= 200.0F) {
             int protection = (int) (resistance / 300.0F);
-            if (isLegacy(state, "brick_concrete")) {
+            if (state.is(BRICK_CONCRETE.get())) {
                 if (level.random.nextInt(8) == 0) {
                     level.setBlock(pos, Blocks.GRAVEL.defaultBlockState(), 3);
                     return 0;
                 }
-            } else if (isLegacy(state, "brick_light")) {
+            } else if (state.is(BRICK_LIGHT.get())) {
                 int random = level.random.nextInt(3);
                 if (random == 0) {
                     level.setBlock(pos, ModBlocks.WASTE_PLANKS.get().defaultBlockState(), 3);
                     return 0;
                 } else if (random == 1) {
-                    setLegacy(level, pos, "block_scrap");
+                    setLegacy(level, pos, BLOCK_SCRAP);
                     return 0;
                 }
-            } else if (isLegacy(state, "brick_obsidian")) {
+            } else if (state.is(BRICK_OBSIDIAN.get())) {
                 if (level.random.nextInt(20) == 0) {
                     level.setBlock(pos, Blocks.OBSIDIAN.defaultBlockState(), 3);
                 }
             } else if (state.is(Blocks.OBSIDIAN)) {
-                setLegacy(level, pos, "gravel_obsidian");
+                setLegacy(level, pos, GRAVEL_OBSIDIAN);
                 return 0;
             } else if (level.random.nextInt(protection + 3) == 0) {
-                setLegacy(level, pos, "block_scrap");
+                setLegacy(level, pos, BLOCK_SCRAP);
             }
             return protection;
         }
 
-        level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+        LegacyExplosionFluidCleanup.clearBlockOrLegacyLiquidNeighborhood(level, pos, 2);
         return 0;
     }
 
@@ -141,7 +156,7 @@ public final class ExplosionNukeGeneric {
     }
 
     public static int vaporDest(Level level, BlockPos pos) {
-        if (level == null || level.isClientSide()) {
+        if (level == null || level.isClientSide() || level.isOutsideBuildHeight(pos)) {
             return 0;
         }
 
@@ -151,24 +166,30 @@ public final class ExplosionNukeGeneric {
         }
 
         float resistance = explosionResistance(state);
-        if (resistance < 0.5F || state.is(Blocks.COBWEB) || state.is(ModBlocks.RED_CABLE.get()) || !state.getFluidState().isEmpty()) {
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+        if (resistance < 0.5F || state.is(Blocks.COBWEB) || state.is(ModBlocks.RED_CABLE.get())
+                || LegacyExplosionFluidCleanup.isLegacyLiquidBlock(state)) {
+            LegacyExplosionFluidCleanup.clearBlockOrLegacyLiquidNeighborhood(level, pos, 2);
             return 0;
         }
-        if (resistance <= 3.0F && !state.isCollisionShapeFullBlock(level, pos)
-                && !state.is(Blocks.CHEST) && !state.is(Blocks.TRAPPED_CHEST) && !state.is(Blocks.FARMLAND)) {
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+        if (resistance <= 3.0F && !isLegacyOpaqueCubeEquivalent(level, pos, state)
+                && !state.is(Blocks.CHEST) && !state.is(Blocks.FARMLAND)) {
+            LegacyExplosionFluidCleanup.clearBlockOrLegacyLiquidNeighborhood(level, pos, 2);
             return 0;
         }
 
         BlockPos above = pos.above();
-        if (state.isFlammable(level, pos, Direction.UP) && level.getBlockState(above).isAir()) {
-            level.setBlock(above, BaseFireBlock.getState(level, above), 2);
+        if (state.isFlammable(level, pos, Direction.UP)
+                && !level.isOutsideBuildHeight(above)
+                && level.getBlockState(above).isAir()) {
+            level.setBlock(above, Blocks.FIRE.defaultBlockState(), 2);
         }
         return (int) (resistance / 300.0F);
     }
 
     private static float explosionResistance(BlockState state) {
+        if (LegacyExplosionFluidCleanup.isLegacyLiquidBlock(state)) {
+            return 500.0F;
+        }
         return HbmBlockStateUtil.explosionResistance(state);
     }
 
@@ -213,7 +234,7 @@ public final class ExplosionNukeGeneric {
     }
 
     public static void emp(Level level, BlockPos pos) {
-        if (level == null || level.isClientSide()) {
+        if (level == null || level.isClientSide() || level.isOutsideBuildHeight(pos)) {
             return;
         }
 
@@ -227,7 +248,7 @@ public final class ExplosionNukeGeneric {
             energyHandler.setPower(0L);
             handled = true;
             if (level.random.nextInt(5) < 1) {
-                setLegacy(level, pos, "block_electrical_scrap");
+                setLegacy(level, pos, BLOCK_ELECTRICAL_SCRAP);
                 return;
             }
         }
@@ -247,7 +268,7 @@ public final class ExplosionNukeGeneric {
         }
 
         if (forgeEnergy && level.random.nextInt(5) <= 1) {
-            setLegacy(level, pos, "block_electrical_scrap");
+            setLegacy(level, pos, BLOCK_ELECTRICAL_SCRAP);
         } else if (handled || forgeEnergy) {
             blockEntity.setChanged();
         }
@@ -258,7 +279,7 @@ public final class ExplosionNukeGeneric {
     }
 
     public static void solinium(Level level, BlockPos pos) {
-        if (level == null || level.isClientSide()) {
+        if (level == null || level.isClientSide() || level.isOutsideBuildHeight(pos)) {
             return;
         }
 
@@ -272,12 +293,12 @@ public final class ExplosionNukeGeneric {
             return;
         }
         if (isSoliniumCleared(state)) {
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            LegacyExplosionFluidCleanup.clearBlockOrLegacyLiquidNeighborhood(level, pos, 3);
         }
     }
 
     private static void wasteDest(Level level, BlockPos pos, boolean allowSchrabidium) {
-        if (level == null || level.isClientSide()) {
+        if (level == null || level.isClientSide() || level.isOutsideBuildHeight(pos)) {
             return;
         }
 
@@ -286,22 +307,22 @@ public final class ExplosionNukeGeneric {
             return;
         }
 
-        if (state.is(BlockTags.DOORS)
-                || (!allowSchrabidium && (state.is(BlockTags.LEAVES) || isLegacyGlass(state)))) {
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+        if (LegacyExplosionBlockChecks.isLegacyVanillaDoor(state)
+                || (!allowSchrabidium && (LegacyExplosionBlockChecks.isLegacyVanillaLeaves(state) || isLegacyGlass(state)))) {
+            LegacyExplosionFluidCleanup.clearBlockOrLegacyLiquidNeighborhood(level, pos, 2);
         } else if (state.is(Blocks.GRASS_BLOCK)) {
             level.setBlock(pos, ModBlocks.WASTE_EARTH.get().defaultBlockState(), 3);
         } else if (state.is(Blocks.MYCELIUM)) {
             level.setBlock(pos, ModBlocks.WASTE_MYCELIUM.get().defaultBlockState(), 3);
         } else if (state.is(Blocks.SAND) || state.is(Blocks.RED_SAND)) {
             if (level.random.nextInt(20) == 1) {
-                setLegacy(level, pos, state.is(Blocks.RED_SAND) ? "waste_trinitite_red" : "waste_trinitite");
+                setLegacy(level, pos, state.is(Blocks.RED_SAND) ? WASTE_TRINITITE_RED : WASTE_TRINITITE);
             }
         } else if (state.is(Blocks.CLAY)) {
             level.setBlock(pos, Blocks.TERRACOTTA.defaultBlockState(), 3);
         } else if (state.is(Blocks.MOSSY_COBBLESTONE)) {
             level.setBlock(pos, Blocks.COAL_ORE.defaultBlockState(), 3);
-        } else if (state.is(Blocks.COAL_ORE) || state.is(Blocks.DEEPSLATE_COAL_ORE)) {
+        } else if (state.is(Blocks.COAL_ORE)) {
             int bound = allowSchrabidium ? 10 : 30;
             int random = level.random.nextInt(bound);
             if (random >= 1 && random <= 3) {
@@ -309,22 +330,22 @@ public final class ExplosionNukeGeneric {
             } else if (random == bound - 1) {
                 level.setBlock(pos, Blocks.EMERALD_ORE.defaultBlockState(), 3);
             }
-        } else if (state.is(BlockTags.LOGS) || state.is(BlockTags.LOGS_THAT_BURN)) {
+        } else if (LegacyExplosionBlockChecks.isLegacyVanillaLog(state)) {
             level.setBlock(pos, ModBlocks.WASTE_LOG.get().defaultBlockState(), 3);
-        } else if (state.is(BlockTags.PLANKS)) {
+        } else if (LegacyExplosionBlockChecks.isLegacyVanillaPlanks(state)) {
             level.setBlock(pos, ModBlocks.WASTE_PLANKS.get().defaultBlockState(), 3);
         } else if (allowSchrabidium && isLegacyOpaqueWoodMaterial(state)) {
             level.setBlock(pos, ModBlocks.WASTE_PLANKS.get().defaultBlockState(), 3);
         } else if (state.is(Blocks.MUSHROOM_STEM)) {
             level.setBlock(pos, ModBlocks.WASTE_LOG.get().defaultBlockState(), 3);
         } else if (state.is(Blocks.BROWN_MUSHROOM_BLOCK) || state.is(Blocks.RED_MUSHROOM_BLOCK)) {
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
-        } else if (allowSchrabidium && isLegacy(state, "ore_uranium")) {
-            setLegacy(level, pos, level.random.nextInt(schrabOreChance()) == 1 ? "ore_schrabidium" : "ore_uranium_scorched");
-        } else if (allowSchrabidium && isLegacy(state, "ore_nether_uranium")) {
-            setLegacy(level, pos, level.random.nextInt(schrabOreChance()) == 1 ? "ore_nether_schrabidium" : "ore_nether_uranium_scorched");
-        } else if (allowSchrabidium && isLegacy(state, "ore_gneiss_uranium")) {
-            setLegacy(level, pos, level.random.nextInt(schrabOreChance()) == 1 ? "ore_gneiss_schrabidium" : "ore_gneiss_uranium_scorched");
+            LegacyExplosionFluidCleanup.clearBlockOrLegacyLiquidNeighborhood(level, pos, 2);
+        } else if (allowSchrabidium && state.is(ORE_URANIUM.get())) {
+            setLegacy(level, pos, level.random.nextInt(schrabOreChance()) == 1 ? ORE_SCHRABIDIUM : ORE_URANIUM_SCORCHED);
+        } else if (allowSchrabidium && state.is(ORE_NETHER_URANIUM.get())) {
+            setLegacy(level, pos, level.random.nextInt(schrabOreChance()) == 1 ? ORE_NETHER_SCHRABIDIUM : ORE_NETHER_URANIUM_SCORCHED);
+        } else if (allowSchrabidium && state.is(ORE_GNEISS_URANIUM.get())) {
+            setLegacy(level, pos, level.random.nextInt(schrabOreChance()) == 1 ? ORE_GNEISS_SCHRABIDIUM : ORE_GNEISS_URANIUM_SCORCHED);
         }
     }
 
@@ -349,36 +370,14 @@ public final class ExplosionNukeGeneric {
     }
 
     private static boolean isSoliniumCleared(BlockState state) {
-        return state.is(BlockTags.LEAVES)
-                || state.is(BlockTags.LOGS)
-                || state.is(BlockTags.LOGS_THAT_BURN)
-                || state.is(BlockTags.PLANKS)
-                || state.is(BlockTags.WOODEN_DOORS)
-                || state.is(BlockTags.WOODEN_TRAPDOORS)
-                || state.is(BlockTags.WOODEN_STAIRS)
-                || state.is(BlockTags.WOODEN_SLABS)
-                || state.is(BlockTags.WOODEN_FENCES)
-                || state.is(BlockTags.FENCE_GATES)
-                || state.is(BlockTags.WOODEN_BUTTONS)
-                || state.is(BlockTags.WOODEN_PRESSURE_PLATES)
-                || state.is(BlockTags.ALL_SIGNS)
-                || state.is(BlockTags.ALL_HANGING_SIGNS)
-                || state.is(ModBlocks.WASTE_LOG.get())
-                || state.is(ModBlocks.WASTE_PLANKS.get())
-                || state.is(Blocks.MUSHROOM_STEM)
-                || state.is(Blocks.BROWN_MUSHROOM_BLOCK)
-                || state.is(Blocks.RED_MUSHROOM_BLOCK)
+        return isLegacyWoodMaterial(state)
                 || state.is(Blocks.CACTUS)
-                || state.is(Blocks.VINE)
                 || isLegacyCoralMaterial(state)
-                || state.is(Blocks.MELON)
-                || state.is(Blocks.PUMPKIN)
-                || state.is(Blocks.CARVED_PUMPKIN)
-                || state.is(Blocks.JACK_O_LANTERN)
-                || state.is(Blocks.SPONGE)
-                || state.is(Blocks.WET_SPONGE)
-                || state.getBlock() instanceof BushBlock
-                || state.canBeReplaced();
+                || state.is(BlockTags.LEAVES)
+                || isLegacyPlantMaterial(state)
+                || isLegacySpongeMaterial(state)
+                || isLegacyVineMaterial(state)
+                || isLegacyGourdMaterial(state);
     }
 
     private static boolean isLegacyCoralMaterial(BlockState state) {
@@ -425,16 +424,76 @@ public final class ExplosionNukeGeneric {
     }
 
     private static boolean isLegacyOpaqueWoodMaterial(BlockState state) {
-        return state.is(Blocks.BOOKSHELF)
+        return state.is(BlockTags.LOGS)
+                || state.is(BlockTags.LOGS_THAT_BURN)
+                || state.is(BlockTags.PLANKS)
+                || state.is(Blocks.BOOKSHELF)
                 || state.is(Blocks.CRAFTING_TABLE)
                 || state.is(Blocks.JUKEBOX)
                 || state.is(Blocks.NOTE_BLOCK);
     }
 
+    private static boolean isLegacyWoodMaterial(BlockState state) {
+        return state.is(BlockTags.LOGS)
+                || state.is(BlockTags.LOGS_THAT_BURN)
+                || state.is(BlockTags.PLANKS)
+                || state.is(BlockTags.WOODEN_DOORS)
+                || state.is(BlockTags.WOODEN_TRAPDOORS)
+                || state.is(BlockTags.WOODEN_STAIRS)
+                || state.is(BlockTags.WOODEN_SLABS)
+                || state.is(BlockTags.WOODEN_FENCES)
+                || state.is(BlockTags.FENCE_GATES)
+                || state.is(BlockTags.WOODEN_BUTTONS)
+                || state.is(BlockTags.WOODEN_PRESSURE_PLATES)
+                || state.is(BlockTags.ALL_SIGNS)
+                || state.is(BlockTags.ALL_HANGING_SIGNS)
+                || state.is(ModBlocks.WASTE_LOG.get())
+                || state.is(ModBlocks.WASTE_PLANKS.get())
+                || state.is(Blocks.MUSHROOM_STEM)
+                || state.is(Blocks.BROWN_MUSHROOM_BLOCK)
+                || state.is(Blocks.RED_MUSHROOM_BLOCK);
+    }
+
+    private static boolean isLegacyPlantMaterial(BlockState state) {
+        return state.getBlock() instanceof BushBlock
+                || state.is(Blocks.SUGAR_CANE)
+                || state.is(Blocks.BAMBOO)
+                || state.is(Blocks.BAMBOO_SAPLING)
+                || state.is(Blocks.LILY_PAD)
+                || state.is(Blocks.SEAGRASS)
+                || state.is(Blocks.TALL_SEAGRASS)
+                || state.is(Blocks.KELP)
+                || state.is(Blocks.KELP_PLANT);
+    }
+
+    private static boolean isLegacySpongeMaterial(BlockState state) {
+        return state.is(Blocks.SPONGE)
+                || state.is(Blocks.WET_SPONGE);
+    }
+
+    private static boolean isLegacyVineMaterial(BlockState state) {
+        return state.is(Blocks.VINE)
+                || state.is(Blocks.CAVE_VINES)
+                || state.is(Blocks.CAVE_VINES_PLANT)
+                || state.is(Blocks.WEEPING_VINES)
+                || state.is(Blocks.WEEPING_VINES_PLANT)
+                || state.is(Blocks.TWISTING_VINES)
+                || state.is(Blocks.TWISTING_VINES_PLANT);
+    }
+
+    private static boolean isLegacyGourdMaterial(BlockState state) {
+        return state.is(Blocks.MELON)
+                || state.is(Blocks.PUMPKIN)
+                || state.is(Blocks.CARVED_PUMPKIN)
+                || state.is(Blocks.JACK_O_LANTERN);
+    }
+
+    private static boolean isLegacyOpaqueCubeEquivalent(Level level, BlockPos pos, BlockState state) {
+        return state.isSolidRender(level, pos);
+    }
+
     private static boolean isLegacyGlass(BlockState state) {
-        return state.is(Blocks.GLASS)
-                || state.is(Blocks.TINTED_GLASS)
-                || state.getBlock() instanceof StainedGlassBlock;
+        return LegacyExplosionBlockChecks.isLegacyGlassBlock(state);
     }
 
     private static void applySphere(Level level, int x, int y, int z, int radius, boolean jagged, BlockOperation operation) {
@@ -447,6 +506,9 @@ public final class ExplosionNukeGeneric {
             int xx2 = xx * xx;
             for (int yy = -radius; yy < radius; yy++) {
                 int worldY = yy + y;
+                if (level.isOutsideBuildHeight(worldY)) {
+                    continue;
+                }
                 int yy2 = xx2 + yy * yy;
                 for (int zz = -radius; zz < radius; zz++) {
                     int distanceSquared = yy2 + zz * zz;
@@ -459,14 +521,13 @@ public final class ExplosionNukeGeneric {
         }
     }
 
-    private static boolean isLegacy(BlockState state, String name) {
+    private static RegistryObject<? extends Block> requireLegacyBlock(String name) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        return block != null && state.is(block.get());
+        return Objects.requireNonNull(block, "Missing legacy block hbm_ntm_rebirth:" + name);
     }
 
-    private static void setLegacy(Level level, BlockPos pos, String name) {
-        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        level.setBlock(pos, Objects.requireNonNull(block, "Missing legacy block hbm_ntm_rebirth:" + name).get().defaultBlockState(), 3);
+    private static void setLegacy(Level level, BlockPos pos, RegistryObject<? extends Block> block) {
+        level.setBlock(pos, block.get().defaultBlockState(), 3);
     }
 
     @FunctionalInterface

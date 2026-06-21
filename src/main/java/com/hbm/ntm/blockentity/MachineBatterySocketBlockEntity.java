@@ -709,7 +709,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         return priority;
     }
 
-    private static final class SocketSidedItemHandler implements IItemHandler {
+    private final class SocketSidedItemHandler implements IItemHandler {
         private final ItemStackHandler items;
 
         private SocketSidedItemHandler(ItemStackHandler items) {
@@ -735,10 +735,18 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
 
         @Override
         public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            if (slot != SLOT_BATTERY || !HbmBatteryTransfer.isFullBattery(items.getStackInSlot(SLOT_BATTERY))) {
+            if (slot != SLOT_BATTERY || !canExtractBattery(items.getStackInSlot(SLOT_BATTERY))) {
                 return ItemStack.EMPTY;
             }
             return items.extractItem(SLOT_BATTERY, amount, simulate);
+        }
+
+        private boolean canExtractBattery(ItemStack stack) {
+            return switch (getCurrentMode()) {
+                case MODE_OUTPUT -> HbmBatteryTransfer.isEmptyBattery(stack);
+                case MODE_INPUT -> HbmBatteryTransfer.isFullBattery(stack);
+                default -> false;
+            };
         }
 
         @Override

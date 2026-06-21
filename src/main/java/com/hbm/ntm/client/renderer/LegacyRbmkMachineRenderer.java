@@ -168,7 +168,7 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) interpolate(lastTiltFront, tiltFront, partialTick)));
         poseStack.mulPose(Axis.XP.rotationDegrees((float) interpolate(lastTiltLeft, tiltLeft, partialTick)));
         poseStack.translate(-CRANE_JOYSTICK_PIVOT_X, CRANE_JOYSTICK_RETURN_Y, 0.0D);
-        ObjRbmkModels.CRANE_CONSOLE.renderPart("JoyStick", ObjRbmkModels.CRANE_CONSOLE_TEXTURE, context);
+        ObjRbmkModels.CRANE_CONSOLE.renderPart("Joystick", ObjRbmkModels.CRANE_CONSOLE_TEXTURE, context);
         poseStack.popPose();
     }
 
@@ -182,7 +182,7 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) plan.tiltFrontDegrees()));
         poseStack.mulPose(Axis.XP.rotationDegrees((float) plan.tiltLeftDegrees()));
         poseStack.translate(-plan.pivotX(), plan.restoreY(), 0.0D);
-        ObjRbmkModels.CRANE_CONSOLE.renderPart("JoyStick", ObjRbmkModels.CRANE_CONSOLE_TEXTURE, context);
+        ObjRbmkModels.CRANE_CONSOLE.renderPart("Joystick", ObjRbmkModels.CRANE_CONSOLE_TEXTURE, context);
         poseStack.popPose();
     }
 

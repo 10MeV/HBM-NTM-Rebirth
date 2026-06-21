@@ -1,0 +1,24 @@
+{
+  "parent": "hbm_ntm_rebirth:digamma_know",
+  "display": {
+    "icon": {
+      "item": "hbm_ntm_rebirth:particle_digamma"
+    },
+    "title": {
+      "translate": "advancements.hbm_ntm_rebirth.digamma_kauai_moho.title"
+    },
+    "description": {
+      "translate": "advancements.hbm_ntm_rebirth.digamma_kauai_moho.description"
+    },
+    "background": "minecraft:textures/gui/advancements/backgrounds/adventure.png",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

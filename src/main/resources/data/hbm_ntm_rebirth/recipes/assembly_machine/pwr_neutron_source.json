@@ -1,0 +1,30 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:plates/welded_zirconium"
+      },
+      "legacy_ore": "plateWeldedZirconium"
+    },
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:billet_ra226be"
+      }
+    }
+  ],
+  "internal_name": "ass.pwrneutronsource",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:pwr_neutron_source"
+    }
+  ],
+  "pools": [],
+  "power": 500,
+  "source_order": 174
+}

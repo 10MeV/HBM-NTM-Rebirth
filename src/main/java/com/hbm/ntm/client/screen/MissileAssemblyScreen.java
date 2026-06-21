@@ -3,10 +3,13 @@ package com.hbm.ntm.client.screen;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.MissileAssemblyMenu;
 import com.hbm.ntm.network.ModMessages;
+import com.mojang.math.Axis;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -37,6 +40,7 @@ public class MissileAssemblyScreen extends AbstractContainerScreen<MissileAssemb
         if (!preview.isEmpty()) {
             graphics.pose().pushPose();
             graphics.pose().translate(leftPos + 83.0F, topPos + 89.0F, 120.0F);
+            graphics.pose().mulPose(Axis.YN.rotationDegrees((float) ((System.currentTimeMillis() / 10L) % 360L)));
             graphics.pose().scale(2.0F, 2.0F, 1.0F);
             graphics.renderItem(preview, -8, -8);
             graphics.pose().popPose();
@@ -59,6 +63,9 @@ public class MissileAssemblyScreen extends AbstractContainerScreen<MissileAssemb
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isHovering(115, 35, 18, 18, mouseX, mouseY)) {
+            if (minecraft != null) {
+                minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            }
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), 0, 0);
             return true;
         }

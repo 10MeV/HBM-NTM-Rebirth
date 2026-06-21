@@ -160,7 +160,7 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
 
                 if (!level.isOutsideBuildHeight(blockY)) {
                     BlockState state = level.getBlockState(blockPos);
-                    if (state.getFluidState().isEmpty()) {
+                    if (!LegacyExplosionFluidCleanup.isLegacyLiquidBlock(state)) {
                         remaining -= Math.pow(masqueradeResistance(state), 7.5D - factor);
                     }
 
@@ -260,7 +260,7 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
                         toRemoveTips.add(blockPos);
                     }
                     toRemove.add(blockPos);
-                    if (!state.getFluidState().isEmpty()) {
+                    if (LegacyExplosionFluidCleanup.isLegacyLiquidBlock(state)) {
                         addFluidCleanup(blockPos, toRemove, loadedFluidChunks);
                     }
                 }
@@ -284,7 +284,7 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
     }
 
     private void clearLegacyExplosionBlock(BlockPos blockPos, int flags) {
-        level.setBlock(blockPos, Blocks.AIR.defaultBlockState(), flags);
+        LegacyExplosionFluidCleanup.clearBlockOrLegacyLiquidNeighborhood(level, blockPos, flags);
     }
 
     private void addFluidCleanup(BlockPos center, Set<BlockPos> toRemove, Set<Long> loadedFluidChunks) {
@@ -296,8 +296,7 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
                         continue;
                     }
                     loadFluidCleanupChunk(fluidPos.getX() >> 4, fluidPos.getZ() >> 4, loadedFluidChunks);
-                    BlockState state = level.getBlockState(fluidPos);
-                    if (!state.getFluidState().isEmpty()) {
+                    if (LegacyExplosionFluidCleanup.isLegacyLiquidBlock(level.getBlockState(fluidPos))) {
                         toRemove.add(fluidPos);
                     }
                 }
@@ -312,6 +311,7 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
 
     private void loadFluidCleanupChunk(int chunkX, int chunkZ, Set<Long> loadedFluidChunks) {
         if (loadedFluidChunks.add(ChunkPos.asLong(chunkX, chunkZ))) {
+            chunkLoader.accept(chunkX, chunkZ);
             level.getChunk(chunkX, chunkZ);
         }
     }

@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 1200,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 16, "ingredient": { "tag": "forge:welded_plates/any_resistant_alloy" }, "legacy_ore": "plateWeldedAnyResistantAlloy" },
+    { "count": 64, "ingredient": { "tag": "forge:welded_plates/copper" }, "legacy_ore": "plateWeldedCopper" },
+    { "count": 16, "ingredient": { "tag": "forge:cast_plates/any_bismoid_bronze" }, "legacy_ore": "plateCastAnyBismoidBronze" },
+    { "count": 64, "ingredient": { "tag": "forge:dense_wires/schrabidium" }, "legacy_ore": "wireDenseSchrabidium" },
+    { "count": 4, "ingredient": { "item": "hbm_ntm_rebirth:circuit_quantum" }, "legacy_id": "hbm:circuit", "legacy_meta": 13 }
+  ],
+  "internal_name": "ass.fusionmhdt",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:fusion_mhdt" }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 183
+}

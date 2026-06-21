@@ -4,10 +4,13 @@ import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.tile.HeatSource;
+import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.block.StirlingBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
+import com.hbm.ntm.entity.projectile.CogEntity;
+import com.hbm.ntm.entity.projectile.MachinePartProjectileEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import java.util.ArrayList;
@@ -74,6 +77,7 @@ public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPers
                     stirling.energy.setPower(0L);
                     level.explode(null, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D,
                             5.0F, false, Level.ExplosionInteraction.NONE);
+                    stirling.spawnCog(level, pos, stirling.facing());
                 }
             } else {
                 stirling.overspeed = 0;
@@ -90,7 +94,6 @@ public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPers
         if (stirling.hasCog && stirling.powerBuffer > 0L) {
             stirling.tryProvideEnergyToPorts();
         }
-        stirling.heat = 0;
 
         if (oldPower != stirling.powerBuffer || oldHeat != stirling.heat || oldCog != stirling.hasCog
                 || level.getGameTime() % 20L == 0L) {
@@ -98,6 +101,7 @@ public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPers
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
         stirling.networkPackNT(150);
+        stirling.heat = 0;
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, StirlingBlockEntity stirling) {
@@ -146,6 +150,18 @@ public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPers
         return hasCog;
     }
 
+    private void spawnCog(Level level, BlockPos pos, Direction facing) {
+        CogEntity cog = new CogEntity(level,
+                pos.getX() + 0.5D + facing.getStepX(),
+                pos.getY() + 1.0D,
+                pos.getZ() + 0.5D + facing.getStepZ());
+        cog.setOrientation(MachinePartProjectileEntity.legacyOrientation(facing));
+        cog.setMeta(gearMeta());
+        Direction side = MachinePartProjectileEntity.legacyDownRotation(facing);
+        cog.setDeltaMovement(side.getStepX(), 1.0D + (heat - maxHeat()) * 0.0001D, side.getStepZ());
+        level.addFreshEntity(cog);
+    }
+
     public void installCog() {
         hasCog = true;
         overspeed = 0;
@@ -184,6 +200,13 @@ public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPers
             }
         }
         return LegacyLookOverlay.forBlock(this, lines);
+    }
+
+    private Direction facing() {
+        BlockState state = getBlockState();
+        return state.hasProperty(LegacyVisibleMultiblockMachineBlock.FACING)
+                ? state.getValue(LegacyVisibleMultiblockMachineBlock.FACING)
+                : Direction.SOUTH;
     }
 
     @Override

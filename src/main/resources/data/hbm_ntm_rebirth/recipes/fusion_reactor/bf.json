@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:fusion_reactor",
+  "internal_name": "fus.bf",
+  "duration": 100,
+  "power": 25000,
+  "input_items": [],
+  "input_fluids": [
+    { "fluid": "hbm_ntm_rebirth:balefire", "amount": 15 },
+    { "fluid": "hbm_ntm_rebirth:amat", "amount": 5 }
+  ],
+  "output_items": [{ "item": "hbm_ntm_rebirth:powder_balefire" }],
+  "output_fluids": [],
+  "pools": [],
+  "ignitionTemp": 1000000,
+  "outputTemp": 12500000,
+  "outputFlux": 2000.0,
+  "r": 0.2,
+  "g": 1.0,
+  "b": 0.2
+}

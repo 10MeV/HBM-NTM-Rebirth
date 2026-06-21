@@ -1,0 +1,35 @@
+{
+  "type": "hbm_ntm_rebirth:blast_furnace",
+  "duration": 1200,
+  "inputs": [
+    {
+      "ingredient": [
+        {
+          "item": "minecraft:copper_ore"
+        },
+        {
+          "item": "minecraft:deepslate_copper_ore"
+        }
+      ],
+      "count": 1,
+      "legacy_ore": "oreCopper"
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:redstone"
+      },
+      "count": 6,
+      "legacy_ore": "dustRedstone"
+    }
+  ],
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:ingot_red_copper",
+      "count": 6
+    },
+    {
+      "item": "hbm_ntm_rebirth:scraps",
+      "nbt": "{mat:41,amount:72}"
+    }
+  ]
+}

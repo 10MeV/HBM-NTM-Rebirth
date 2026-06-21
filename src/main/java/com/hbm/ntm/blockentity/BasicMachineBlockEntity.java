@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.menu.BasicMachineMenu;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.PressRecipe;
@@ -32,6 +33,7 @@ import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +88,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
             return super.insertItem(slot, stack, simulate);
         }
     };
-    private final LazyOptional<ItemStackHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> automationItems = LazyOptional.of(() -> new AccessibleItemHandler());
 
     private int burnTime;
     private int speed;
@@ -115,7 +117,8 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
         boolean canProcess = recipe != null;
 
         if ((canProcess || blockEntity.retracting) && blockEntity.burnTime >= FUEL_PER_OPERATION) {
-            blockEntity.speed = Math.min(MAX_SPEED, blockEntity.speed + 1);
+            int acceleration = blockEntity.hasPressPreheater(level, pos) ? 4 : 1;
+            blockEntity.speed = Math.min(MAX_SPEED, blockEntity.speed + acceleration);
         } else {
             blockEntity.speed = Math.max(0, blockEntity.speed - 1);
         }
@@ -312,13 +315,13 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        automationItems.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return automationItems.cast();
         }
         return super.getCapability(capability, side);
     }
@@ -345,6 +348,15 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
 
     private boolean isPressActiveForSync(boolean canProcess) {
         return canProcess || retracting || press > 0 || speed > 0 || delay > 0;
+    }
+
+    private boolean hasPressPreheater(Level level, BlockPos pos) {
+        for (Direction direction : Direction.values()) {
+            if (level.getBlockState(pos.relative(direction)).is(ModBlocks.PRESS_PREHEATER.get())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void consumeFuel() {
@@ -380,6 +392,49 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
             if (stamp.getDamageValue() >= stamp.getMaxDamage()) {
                 items.setStackInSlot(SLOT_STAMP, ItemStack.EMPTY);
             }
+        }
+    }
+
+    private final class AccessibleItemHandler implements IItemHandler {
+        private final int[] slots = { SLOT_FUEL, SLOT_STAMP, SLOT_INPUT, SLOT_OUTPUT };
+
+        @Override
+        public int getSlots() {
+            return slots.length;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return valid(slot) ? items.getStackInSlot(slots[slot]) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            if (!valid(slot) || slots[slot] == SLOT_OUTPUT) {
+                return stack;
+            }
+            return items.insertItem(slots[slot], stack, simulate);
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return valid(slot) && slots[slot] == SLOT_OUTPUT
+                    ? items.extractItem(slots[slot], amount, simulate)
+                    : ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return valid(slot) ? items.getSlotLimit(slots[slot]) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return valid(slot) && slots[slot] != SLOT_OUTPUT && items.isItemValid(slots[slot], stack);
+        }
+
+        private boolean valid(int slot) {
+            return slot >= 0 && slot < slots.length;
         }
     }
 }

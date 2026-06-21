@@ -51,6 +51,10 @@ public final class HbmMachineRecipeCategory implements IRecipeCategory<GenericMa
             case PUREX -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_purex", "PUREX");
             case PRECASS -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_precass", "Precision Assembly Machine");
             case ARC_WELDER -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_arc_welder", "Arc Welder");
+            case ARC_FURNACE -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_arc_furnace", "Electric Arc Furnace");
+            case FUSION_REACTOR -> Component.translatableWithFallback("container.fusionTorus", "Fusion Reactor Vessel");
+            case PLASMA_FORGE -> Component.translatableWithFallback("container.machinePlasmaForge", "Plasma Forge");
+            default -> Component.literal(machine.name());
         };
     }
 

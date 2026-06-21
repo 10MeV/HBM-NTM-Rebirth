@@ -54,6 +54,7 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
+        context = context.withRenderMode(LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
         renderPlan(MODEL, plan, context, poseStack);
 
         poseStack.popPose();

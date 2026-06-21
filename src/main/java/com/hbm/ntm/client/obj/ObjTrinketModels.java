@@ -6,12 +6,12 @@ import net.minecraft.resources.ResourceLocation;
 
 public final class ObjTrinketModels {
     public static final LegacyWavefrontModel LANTERN = legacyModel("lantern").noSmooth();
-    public static final LegacyWavefrontModel BOBBLE_LEGACY = legacyModel("bobble_legacy", "socket");
-    public static final LegacyWavefrontModel YOMI_LEGACY = legacyModel("yomi_legacy", "yomi").asVBO();
-    public static final LegacyWavefrontModel HUNDUN_LEGACY = legacyModel("hundun_legacy", "hundun").asVBO();
-    public static final LegacyWavefrontModel DERG_LEGACY = legacyModel("derg_legacy", "derg").asVBO();
-    public static final LegacyWavefrontModel SNOWGLOBE_LEGACY = legacyModel("snowglobe_legacy", "snowglobe").asVBO();
-    public static final LegacyWavefrontModel CHIP_LEGACY = legacyModel("chip_legacy", "chip_gold").asVBO();
+    public static final LegacyWavefrontModel BOBBLE_LEGACY = legacyModel("bobble", "socket");
+    public static final LegacyWavefrontModel YOMI_LEGACY = legacyModel("yomi").asVBO();
+    public static final LegacyWavefrontModel HUNDUN_LEGACY = legacyModel("hundun").asVBO();
+    public static final LegacyWavefrontModel DERG_LEGACY = legacyModel("derg").asVBO();
+    public static final LegacyWavefrontModel SNOWGLOBE_LEGACY = legacyModel("snowglobe").asVBO();
+    public static final LegacyWavefrontModel CHIP_LEGACY = legacyModel("chip", "chip_gold").asVBO();
 
     public static final ResourceLocation LANTERN_TEXTURE = texture("lantern");
     public static final ResourceLocation LANTERN_RUSTY_TEXTURE = texture("lantern_rusty");
@@ -52,18 +52,22 @@ public final class ObjTrinketModels {
         return ObjModelLibrary.blockPart("trinkets/" + name, renderType);
     }
 
+    public static ObjModelPart part(String name, RenderType renderType, boolean translucent) {
+        return ObjModelLibrary.blockPart("trinkets/" + name, renderType, translucent);
+    }
+
     public static LegacyWavefrontModel legacyModel(String name) {
         return legacyModel(name, name);
     }
 
     public static LegacyWavefrontModel legacyModel(String modelName, String textureName) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/trinkets/" + modelName + ".obj"),
+                new ResourceLocation(HbmNtm.MOD_ID, "models/trinkets/" + modelName + ".obj"),
                 texture(textureName));
     }
 
     public static ResourceLocation texture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/trinkets/" + name + ".png");
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/trinkets/" + name + ".png");
     }
 
     private ObjTrinketModels() {

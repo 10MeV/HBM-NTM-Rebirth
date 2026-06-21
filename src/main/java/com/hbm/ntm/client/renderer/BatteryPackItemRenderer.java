@@ -17,7 +17,7 @@ import net.minecraft.world.item.ItemStack;
 public class BatteryPackItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final ResourceLocation MODEL_LOCATION = new ResourceLocation(HbmNtm.MOD_ID, "models/machines/battery.obj");
     private static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/battery_lead.png");
-    private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, DEFAULT_TEXTURE);
+    private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, DEFAULT_TEXTURE).asVBO();
 
     public static final BatteryPackItemRenderer INSTANCE = new BatteryPackItemRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(),

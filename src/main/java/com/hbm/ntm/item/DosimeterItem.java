@@ -5,6 +5,7 @@ import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
@@ -15,6 +16,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 public class DosimeterItem extends Item {
+    private final Random random = new Random();
+
     public DosimeterItem(Properties properties) {
         super(properties);
     }
@@ -34,11 +37,11 @@ public class DosimeterItem extends Item {
             if (rate >= 0.5F && rate < 2.0F) candidates.add(2);
             if (rate >= 2.0F) candidates.add(3);
 
-            int sound = candidates.get(living.getRandom().nextInt(candidates.size()));
+            int sound = candidates.get(random.nextInt(candidates.size()));
             if (sound > 0) {
                 playGeiger(level, entity, sound);
             }
-        } else if (living.getRandom().nextInt(100) == 0) {
+        } else if (random.nextInt(100) == 0) {
             playGeiger(level, entity, 1);
         }
     }

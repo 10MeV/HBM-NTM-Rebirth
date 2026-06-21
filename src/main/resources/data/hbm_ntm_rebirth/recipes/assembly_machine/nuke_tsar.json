@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.tsarbomba",
+  "duration": 1200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:sphere_steel" }, "count": 1 },
+    { "ingredient": { "tag": "forge:shells/titanium" }, "count": 6, "legacy_ore": "shellTitanium" },
+    { "ingredient": { "tag": "forge:shells/steel" }, "count": 2, "legacy_ore": "shellSteel" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:fins_tri_steel" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_controller_advanced" }, "count": 16, "legacy_id": "hbm:circuit", "legacy_meta": 14 },
+    { "ingredient": { "tag": "forge:dyes/black" }, "count": 8, "legacy_ore": "dyeBlack" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:nuke_tsar" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 201
+}

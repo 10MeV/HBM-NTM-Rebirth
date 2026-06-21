@@ -109,7 +109,7 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
         if (customName != null && !customName.isBlank()) {
             return Component.literal(customName);
         }
-        return Component.translatable("container.hbm_ntm_rebirth.sat_linker");
+        return Component.translatable("container.satLinker");
     }
 
     @Nullable

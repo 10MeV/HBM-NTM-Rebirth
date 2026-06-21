@@ -11,7 +11,6 @@ public final class LegacyBulletConfigs {
     public static final BulletConfig MASKMAN_BOLT = maskmanBolt();
     public static final BulletConfig MASKMAN_ROCKET = maskmanRocket();
     public static final BulletConfig MASKMAN_TRACER = maskmanTracer();
-    public static final BulletConfig MASKMAN_METEOR = maskmanMeteor();
     public static final BulletConfig WORM_BOLT = wormBolt();
     public static final BulletConfig WORM_LASER = wormHeadBolt();
     public static final BulletConfig UFO_ROCKET = rocketUfo();
@@ -56,7 +55,7 @@ public final class LegacyBulletConfigs {
     public static BulletConfig chlorophyte(BulletConfig base, BulletAmmo ammo) {
         return base.toBuilder()
                 .ammo(ammo)
-                .ballistics(base.velocity() * 0.3F, base.spread(), (int) (base.wear() * 0.5D),
+                .ballistics(base.velocity() * 0.3F, base.spread(), base.wear() * 0.5F,
                         base.bulletsMin(), base.bulletsMax())
                 .damage(base.damageMin() * 2.0F, base.damageMax() * 2.0F)
                 .ricochet(false, base.ricochetAngle(), base.lowerBoundRicochetChance(),
@@ -132,7 +131,6 @@ public final class LegacyBulletConfigs {
                 .setToBolt(BulletTrail.NIGHTMARE)
                 .appearance(BulletStyle.BOLT, BulletTrail.NIGHTMARE.legacyId(), BulletPlink.BULLET, "reddust")
                 .damageType(ModDamageSources.LASER)
-                .behavior(BulletBehaviorTag.MASKMAN_TRACER_METEOR)
                 .build();
     }
 
@@ -145,20 +143,6 @@ public final class LegacyBulletConfigs {
                 .blockDamage(false)
                 .explosive(5.0F)
                 .appearance(BulletStyle.ROCKET, 0, BulletPlink.GRENADE, "smoke")
-                .build();
-    }
-
-    private static BulletConfig maskmanMeteor() {
-        return standardGrenade("maskman_meteor").toBuilder()
-                .ammo(BulletAmmo.legacyItem("coin_maskman"))
-                .ballistics(1.0F, DEFAULT_SPREAD, 10, 1, 1)
-                .physics(0.1D, 300)
-                .damage(20.0F, 30.0F)
-                .blockDamage(false)
-                .incendiaryTicks(3)
-                .explosive(2.5F)
-                .appearance(BulletStyle.METEOR, 0, BulletPlink.GRENADE, "smoke")
-                .behavior(BulletBehaviorTag.MASKMAN_METEOR_FLAME_PARTICLES)
                 .build();
     }
 

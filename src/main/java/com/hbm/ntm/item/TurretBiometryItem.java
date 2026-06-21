@@ -36,7 +36,7 @@ public class TurretBiometryItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
         addName(stack, player.getDisplayName().getString());
         if (level.isClientSide) {
-            player.displayClientMessage(Component.translatable("item.hbm_ntm_rebirth.turret_biometry.added"), false);
+            player.displayClientMessage(Component.translatable("item.hbm_ntm_rebirth.turret_chip.added"), false);
         }
         LegacySoundPlayer.playLegacyTechBleep(player, 1.0F, 1.0F);
         player.swing(hand);

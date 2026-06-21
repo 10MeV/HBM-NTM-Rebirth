@@ -325,7 +325,7 @@ public final class LegacySednaRuntimeBulletConfigs {
                 .damageType(damageType(config.damageClass()))
                 .damageFlags(damageProjectile(config.damageClass()), damageFire(config.damageClass()),
                         damageExplosion(config.damageClass()), damageBypass(config.damageClass())),
-                config), config).ballistics(config.velocity(), config.spread(), Math.max(0, Math.round(config.wear())),
+                config), config).ballistics(config.velocity(), config.spread(), Math.max(0.0F, config.wear()),
                 config.projectilesMin(), config.projectilesMax()).build();
         BY_NAME.put(built.legacyName(), built);
         return built;
@@ -518,6 +518,7 @@ public final class LegacySednaRuntimeBulletConfigs {
     }
 
     private static BulletConfig.Builder applyBehaviors(BulletConfig.Builder builder, SednaBulletConfig config) {
+        builder.behavior(BulletBehaviorTag.VNT_CROSS_KNOCKBACK_IMMUNE);
         for (SednaBehaviorTag behavior : config.behaviors()) {
             builder.behavior(mapBehavior(behavior));
         }

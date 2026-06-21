@@ -4,6 +4,8 @@ import com.hbm.ntm.explosion.CustomNukeExplosion;
 import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -11,6 +13,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.network.NetworkHooks;
 
 public class FallingNukeEntity extends Entity {
     private static final EntityDataAccessor<Byte> LEGACY_FACING_META =
@@ -27,6 +30,7 @@ public class FallingNukeEntity extends Entity {
     public FallingNukeEntity(EntityType<? extends FallingNukeEntity> type, Level level) {
         super(type, level);
         noPhysics = true;
+        noCulling = true;
     }
 
     public FallingNukeEntity(Level level, float tnt, float nuke, float hydro, float amat, float dirty, float schrab, float euph) {
@@ -38,6 +42,8 @@ public class FallingNukeEntity extends Entity {
         this.dirty = dirty;
         this.schrab = schrab;
         this.euph = euph;
+        setYRot(90.0F);
+        yRotO = 90.0F;
         setXRot(90.0F);
         xRotO = 90.0F;
     }
@@ -74,6 +80,16 @@ public class FallingNukeEntity extends Entity {
 
     public byte legacyFacingMeta() {
         return entityData.get(LEGACY_FACING_META);
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return distance < 25000.0D;
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
     }
 
     private void setLegacyFacingMeta(byte legacyFacingMeta) {

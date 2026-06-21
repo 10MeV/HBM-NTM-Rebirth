@@ -28,11 +28,12 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.List;
 
 @SuppressWarnings("deprecation")
 public class MachineBatterySocketBlock extends LegacyOffsetMultiblockBlock implements EntityBlock {
+    private static final int[] LEGACY_DIMENSIONS = { 1, 0, 1, 0, 1, 0 };
+
     public MachineBatterySocketBlock(Properties properties) {
         super(properties);
     }
@@ -45,8 +46,9 @@ public class MachineBatterySocketBlock extends LegacyOffsetMultiblockBlock imple
 
     @Override
     protected LegacyMultiblockLayout getLayout(BlockState state) {
-        return LegacyMultiblockLayout.ofOffsets(socketOffsets(state.getValue(FACING)))
-                .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO),
+        Direction facing = state.getValue(FACING);
+        return LegacyMultiblockLayout.ofLegacyXrChecked(LEGACY_DIMENSIONS, facing)
+                .withExtraProxyOffsets(socketProxyOffsets(facing),
                         LegacyProxyMode.passive().inventoryProxy().powerProxy().conductorProxy());
     }
 
@@ -130,15 +132,16 @@ public class MachineBatterySocketBlock extends LegacyOffsetMultiblockBlock imple
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
-    public static Set<BlockPos> socketOffsets(Direction facing) {
+    public static List<BlockPos> socketProxyOffsets(Direction facing) {
         BlockPos behind = LegacyMultiblockLayout.behind(facing);
         BlockPos clockwise = LegacyMultiblockLayout.clockwise(facing);
-        Set<BlockPos> offsets = new LinkedHashSet<>();
-        offsets.add(BlockPos.ZERO);
-        offsets.add(behind);
-        offsets.add(clockwise);
-        offsets.add(behind.offset(clockwise));
-        return offsets;
+        return List.of(behind, clockwise, behind.offset(clockwise));
+    }
+
+    public static List<BlockPos> socketOffsets(Direction facing) {
+        BlockPos behind = LegacyMultiblockLayout.behind(facing);
+        BlockPos clockwise = LegacyMultiblockLayout.clockwise(facing);
+        return List.of(BlockPos.ZERO, behind, clockwise, behind.offset(clockwise));
     }
 
 }

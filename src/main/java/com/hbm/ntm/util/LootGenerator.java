@@ -21,7 +21,6 @@ public final class LootGenerator {
     public static final String LOOT_NUKE_STORAGE = HbmLegacyLootUtil.LOOT_NUKE_STORAGE;
     public static final String LOOT_BONES = HbmLegacyLootUtil.LOOT_BONES;
     public static final String LOOT_GLYPHID_HIVE = HbmLegacyLootUtil.LOOT_GLYPHID_HIVE;
-    public static final String LOOT_METEOR = HbmLegacyLootUtil.LOOT_METEOR;
     public static final String LOOT_FLAREGUN = HbmLegacyLootUtil.LOOT_FLAREGUN;
     public static final String LOOT_SHIT = HbmLegacyLootUtil.LOOT_SHIT;
     public static final String LOOT_MECHANICAL = HbmLegacyLootUtil.LOOT_MECHANICAL;

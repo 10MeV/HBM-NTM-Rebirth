@@ -41,10 +41,13 @@ public final class RadiationConfig {
             fogRad = com.hbm.ntm.config.RadiationConfig.radiationFogThreshold();
             fogCh = com.hbm.ntm.config.RadiationConfig.radiationFogChance();
             hellRad = com.hbm.ntm.config.RadiationConfig.hellRadiation();
+            worldRad = com.hbm.ntm.config.RadiationConfig.worldRadiation();
+            worldRadThreshold = com.hbm.ntm.config.RadiationConfig.worldRadiationThreshold();
             worldRadEffects = com.hbm.ntm.config.RadiationConfig.worldRadiationEffectsEnabled();
             cleanupDeadDirt = com.hbm.ntm.config.RadiationConfig.cleanupDeadDirtEnabled();
             enableContamination = com.hbm.ntm.config.RadiationConfig.contaminationEnabled();
             enableChunkRads = com.hbm.ntm.config.RadiationConfig.chunkRadiationEnabled();
+            enablePRISM = false;
             disableAsbestos = com.hbm.ntm.config.RadiationConfig.asbestosHazardDisabled();
             disableCoal = com.hbm.ntm.config.RadiationConfig.coalHazardDisabled();
             disableHot = com.hbm.ntm.config.RadiationConfig.hotHazardDisabled();
@@ -141,6 +144,16 @@ public final class RadiationConfig {
         return worldRadEffects;
     }
 
+    public static int worldRad() {
+        syncFromModern();
+        return worldRad;
+    }
+
+    public static int worldRadThreshold() {
+        syncFromModern();
+        return worldRadThreshold;
+    }
+
     public static boolean cleanupDeadDirt() {
         syncFromModern();
         return cleanupDeadDirt;
@@ -179,6 +192,10 @@ public final class RadiationConfig {
     public static boolean disableFibrosis() {
         syncFromModern();
         return disableFibrosis;
+    }
+
+    public static void loadFromConfig(Object ignored) {
+        syncFromModern();
     }
 
     private RadiationConfig() {

@@ -42,7 +42,6 @@ public final class ModDamageSources {
     public static final ResourceKey<DamageType> EXPLOSION = ResourceKey.create(
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "explosion"));
     public static final ResourceKey<DamageType> BLENDER = key("blender");
-    public static final ResourceKey<DamageType> METEORITE = key("meteorite");
     public static final ResourceKey<DamageType> BOXCAR = key("boxcar");
     public static final ResourceKey<DamageType> BOAT = key("boat");
     public static final ResourceKey<DamageType> BUILDING = key("building");
@@ -109,7 +108,6 @@ public final class ModDamageSources {
             legacy(SUICIDE, true, false, false, false, false, false),
             legacy(EXPLOSION, false, true, false, false, false, false),
             legacy(BLENDER, false, false, false, true, true, false),
-            legacy(METEORITE, false, false, false, true, true, false),
             legacy(BOXCAR, false, false, false, true, true, false),
             legacy(BOAT, false, false, false, true, true, false),
             legacy(BUILDING, false, false, false, true, true, false),
@@ -148,7 +146,7 @@ public final class ModDamageSources {
             legacy(TAU, true, false, false, true, false, false),
             legacy(COMBINE_BALL, true, false, false, true, false, false),
             legacy(ACID_PLAYER, false, false, false, false, false, false),
-            legacy(BOIL, false, false, true, false, false, false),
+            legacy(BOIL, false, false, false, false, false, false),
             legacy(ICE, false, false, false, false, false, false),
             legacy(FLAMETHROWER, false, false, true, false, false, false)
     );
@@ -735,6 +733,7 @@ public final class ModDamageSources {
         expectLegacy(problems, SUBATOMIC_3, true, false, false, true, false, false);
         expectLegacy(problems, PLASMA, false, false, true, false, false, false);
         expectLegacy(problems, FLAMETHROWER, false, false, true, false, false, false);
+        expectLegacy(problems, BOIL, false, false, false, false, false, false);
         expect(problems, "tau expected tags", legacyDamageType(TAU)
                 .map(LegacyDamageType::expectedTagLabels)
                 .filter(tags -> tags.equals(List.of("projectile", "bypassesArmor")))

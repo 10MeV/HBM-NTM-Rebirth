@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.RBMKConsoleBlock;
+import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
@@ -19,6 +20,8 @@ import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 public class RBMKConsoleBlockEntity extends BlockEntity implements HbmLegacyLoadedTile {
+    private static final int LAYOUT_REPAIR_INTERVAL = 20;
+
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private BlockPos target = BlockPos.ZERO;
     private int rotation;
@@ -32,6 +35,9 @@ public class RBMKConsoleBlockEntity extends BlockEntity implements HbmLegacyLoad
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RBMKConsoleBlockEntity console) {
+        if (!console.ensureConsoleLayout(level, pos)) {
+            return;
+        }
         RBMKConsolePlanner.ConsoleTickPlan plan = RBMKConsolePlanner.planTick(level.getGameTime());
         if (plan.rescan()) {
             console.rescan(level);
@@ -40,6 +46,29 @@ public class RBMKConsoleBlockEntity extends BlockEntity implements HbmLegacyLoad
             console.prepareScreenInfo();
         }
         console.networkPackNT(plan.networkRange());
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && !level.isClientSide) {
+            ensureConsoleLayoutNow(level, worldPosition);
+        }
+    }
+
+    private boolean ensureConsoleLayout(Level level, BlockPos pos) {
+        if (level.isClientSide || (level.getGameTime() + pos.asLong()) % LAYOUT_REPAIR_INTERVAL != 0) {
+            return MultiblockHelper.isOperationalCoreLayoutComplete(level, pos);
+        }
+        return ensureConsoleLayoutNow(level, pos);
+    }
+
+    private static boolean ensureConsoleLayoutNow(Level level, BlockPos pos) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCoreAt(level, pos);
+        if (level.isClientSide || core == null) {
+            return false;
+        }
+        return MultiblockHelper.ensureOperationalCoreLayoutComplete(level, core.pos());
     }
 
     @Override
@@ -56,30 +85,38 @@ public class RBMKConsoleBlockEntity extends BlockEntity implements HbmLegacyLoad
     }
 
     public int[] fluxBuffer() {
-        return fluxBuffer.clone();
+        return hasCompleteLayout() ? fluxBuffer.clone() : new int[fluxBuffer.length];
     }
 
     public RBMKConsolePlanner.ColumnSnapshot[] columns() {
-        return columns.clone();
+        return hasCompleteLayout() ? columns.clone() : new RBMKConsolePlanner.ColumnSnapshot[columns.length];
     }
 
     public RBMKConsolePlanner.ScreenState[] screens() {
         return screens.clone();
     }
 
-    public void setTarget(BlockPos target) {
-        if (target == null) {
-            return;
+    public boolean setTarget(BlockPos target) {
+        if (target == null || !hasCompleteLayout()) {
+            return false;
         }
-        this.target = target.immutable();
+        BlockPos normalized = normalizeColumnTarget(target);
+        if (normalized == null) {
+            return false;
+        }
+        this.target = normalized;
         if (level != null && !level.isClientSide) {
             rescan(level);
             prepareScreenInfo();
         }
         setChangedAndSync();
+        return true;
     }
 
     public void rotateConsole() {
+        if (!hasCompleteLayout()) {
+            return;
+        }
         rotation = RBMKConsolePlanner.rotate(rotation);
         if (level != null && !level.isClientSide) {
             rescan(level);
@@ -90,6 +127,12 @@ public class RBMKConsoleBlockEntity extends BlockEntity implements HbmLegacyLoad
 
     @Override
     public AABB getRenderBoundingBox() {
+        if (level != null && getBlockState().getBlock() instanceof RBMKConsoleBlock block) {
+            LegacyMultiblockLayout layout = block.getMultiblockLayout(getBlockState(), level, worldPosition);
+            if (layout != null) {
+                return layout.renderBoundingBox(worldPosition, 1.0D);
+            }
+        }
         return RBMKConsolePlanner.renderBoundingBox(worldPosition);
     }
 
@@ -150,13 +193,15 @@ public class RBMKConsoleBlockEntity extends BlockEntity implements HbmLegacyLoad
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        return tag != null && RBMKConsolePlanner.planPermission(player.distanceToSqr(
+        return tag != null
+                && hasCompleteLayout()
+                && RBMKConsolePlanner.planPermission(player.distanceToSqr(
                 worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D, worldPosition.getZ() + 0.5D)).permitted();
     }
 
     @Override
     public void handleClientControl(ServerPlayer player, CompoundTag tag) {
-        if (tag == null || level == null || level.isClientSide) {
+        if (tag == null || level == null || level.isClientSide || !hasCompleteLayout()) {
             return;
         }
         if (tag.contains("level")) {
@@ -183,6 +228,21 @@ public class RBMKConsoleBlockEntity extends BlockEntity implements HbmLegacyLoad
     }
 
     private void rescan(Level level) {
+        BlockPos normalizedTarget = normalizeColumnTarget(target);
+        if (normalizedTarget == null) {
+            if (!target.equals(BlockPos.ZERO)) {
+                target = BlockPos.ZERO;
+                setChanged();
+            }
+            clearColumns();
+            fluxBuffer = RBMKConsolePlanner.shiftFluxBuffer(fluxBuffer, 0.0D);
+            setChanged();
+            return;
+        }
+        if (!normalizedTarget.equals(target)) {
+            target = normalizedTarget;
+            setChanged();
+        }
         double flux = 0.0D;
         int index = 0;
         for (BlockPos scanPos : RBMKConsolePlanner.scanPositions(target, RBMKConsolePlanner.CONSOLE_GRID_SIZE, rotation)) {
@@ -211,11 +271,22 @@ public class RBMKConsoleBlockEntity extends BlockEntity implements HbmLegacyLoad
 
     @Nullable
     private RBMKColumnBlockEntity columnAt(Level level, BlockPos pos) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
-        if (core == null) {
+        return RBMKColumnBlockEntity.resolveOperationalColumn(level, pos);
+    }
+
+    @Nullable
+    private BlockPos normalizeColumnTarget(BlockPos pos) {
+        if (pos == null || level == null) {
             return null;
         }
-        return level.getBlockEntity(core.pos()) instanceof RBMKColumnBlockEntity column ? column : null;
+        RBMKColumnBlockEntity column = RBMKColumnBlockEntity.resolveOperationalColumn(level, pos);
+        return column == null ? null : column.getBlockPos();
+    }
+
+    private void clearColumns() {
+        for (int i = 0; i < columns.length; i++) {
+            columns[i] = null;
+        }
     }
 
     private void applyManualLevel(double levelValue, int[] selectedColumns) {
@@ -340,5 +411,9 @@ public class RBMKConsoleBlockEntity extends BlockEntity implements HbmLegacyLoad
                 networkPackNT(RBMKConsolePlanner.NETWORK_RANGE);
             }
         }
+    }
+
+    private boolean hasCompleteLayout() {
+        return level != null && MultiblockHelper.isOperationalCoreLayoutComplete(level, worldPosition);
     }
 }

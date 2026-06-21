@@ -7,10 +7,12 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.GraphicsStatus;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -75,8 +77,11 @@ public class FalloutRainRenderer extends EntityRenderer<FalloutRainEntity> {
                 double distZ = z + 0.5D - camZ;
                 LegacyFalloutRainRenderer.ColumnStyle style =
                         LegacyFalloutRainRenderer.columnStyle(random, timer, partialTick, distX, distZ, range);
+                int lightY = LegacyFalloutRainRenderer.sampleLightY(groundY, centerY);
+                int light = LegacyFalloutRainRenderer.blendLegacyLight(
+                        LevelRenderer.getLightColor(level, new BlockPos(x, lightY, z)));
                 LegacyFalloutRainRenderer.renderColumn(consumer, pose, normal, x, z, height, rainX, rainZ, style,
-                        originX, originY, originZ);
+                        light, originX, originY, originZ);
             }
         }
     }

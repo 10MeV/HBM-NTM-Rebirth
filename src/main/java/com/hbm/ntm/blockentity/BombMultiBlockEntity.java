@@ -11,6 +11,7 @@ import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -23,13 +24,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
 public class BombMultiBlockEntity extends BlockEntity implements MenuProvider {
     public static final int SLOT_COUNT = 6;
-    private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_ITEMS = "items";
+    private static final String TAG_CUSTOM_NAME = "name";
+    private static final String TAG_MODERN_INVENTORY = "Inventory";
     private static final float EXPLOSION_BASE_VALUE = 8.0F;
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
@@ -43,6 +47,8 @@ public class BombMultiBlockEntity extends BlockEntity implements MenuProvider {
             setChanged();
         }
     };
+    @Nullable
+    private String customName;
 
     public BombMultiBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.BOMB_MULTI.get(), pos, state);
@@ -54,6 +60,10 @@ public class BombMultiBlockEntity extends BlockEntity implements MenuProvider {
 
     public ItemStack[] getDrops() {
         return HbmItemStackUtil.carefulCopyArray(items);
+    }
+
+    public void spillDrops(Level level, BlockPos pos) {
+        HbmItemStackUtil.spillItems(level, pos, items);
     }
 
     public boolean isLoaded() {
@@ -122,20 +132,41 @@ public class BombMultiBlockEntity extends BlockEntity implements MenuProvider {
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmItemStackUtil.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmItemStackUtil.saveLegacyItemsToTag(tag, TAG_ITEMS, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        if (tag.contains(TAG_INVENTORY)) {
-            HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        if (tag.contains(TAG_ITEMS, Tag.TAG_LIST)) {
+            HbmItemStackUtil.loadLegacyItems(tag, TAG_ITEMS, items);
+        } else if (tag.contains(TAG_MODERN_INVENTORY)) {
+            HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY, items);
         }
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
+    }
+
+    public boolean hasCustomName() {
+        return customName != null && !customName.isBlank();
+    }
+
+    public void setCustomName(@Nullable String customName) {
+        this.customName = customName == null || customName.isBlank() ? null : customName;
+        setChanged();
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        BlockPos pos = getBlockPos();
+        return new AABB(pos.offset(-1, 0, -1), pos.offset(2, 1, 2));
     }
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.hbm_ntm_rebirth.bomb_multi");
+        return hasCustomName() ? Component.literal(customName) : Component.translatable("container.bombMulti");
     }
 
     @Nullable

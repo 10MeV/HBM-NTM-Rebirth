@@ -151,6 +151,10 @@ public final class ArmorUtil {
         com.hbm.ntm.radiation.ArmorUtil.damageSuitAll(entity, amount);
     }
 
+    public static void resetFlightTime(Player player) {
+        com.hbm.ntm.util.ArmorUtil.resetFlightTime(player);
+    }
+
     public static boolean checkForHazmat(LivingEntity entity) {
         return com.hbm.ntm.radiation.ArmorUtil.checkForHazmat(entity);
     }

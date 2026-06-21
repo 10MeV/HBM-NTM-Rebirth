@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.obj;
 
 public final class LegacyUvAnimation {
+    public static final float LEGACY_HMF_TEXTURE_OFFSET = 0.0005F;
     public static final double FLAT_GLINT_TEXTURE_SIZE = 256.0D;
     public static final double FLAT_GLINT_BASE_PERIOD_MILLIS = 3000.0D;
     public static final double FLAT_GLINT_PASS_PERIOD_OFFSET_MILLIS = 1873.0D;

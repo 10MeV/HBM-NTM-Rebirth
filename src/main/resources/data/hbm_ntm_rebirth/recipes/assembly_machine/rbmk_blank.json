@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.rbmk",
+  "duration": 100,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:concrete_asbestos" }, "count": 4 },
+    { "ingredient": { "tag": "forge:cast_plates/steel" }, "count": 2, "legacy_ore": "plateCastSteel" },
+    { "ingredient": { "tag": "forge:plates/copper" }, "count": 4, "legacy_ore": "plateCopper" },
+    { "ingredient": { "tag": "forge:ingots/rubber" }, "count": 2, "legacy_ore": "ingotRubber" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:rbmk_blank" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 162
+}

@@ -1,6 +1,11 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/rbmk/debris.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
   "textures": {
-    "all": "hbm_ntm_rebirth:block/rbmk/rbmk_debris"
+    "particle": "hbm_ntm_rebirth:block/rbmk/rbmk_debris",
+    "default": "hbm_ntm_rebirth:block/rbmk/rbmk_debris"
   }
 }

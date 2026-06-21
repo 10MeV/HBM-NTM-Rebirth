@@ -2,6 +2,7 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -113,7 +114,7 @@ public class MachineBatterySocketMenu extends AbstractContainerMenu {
     }
 
     private static MachineBatterySocketBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof MachineBatterySocketBlockEntity socket) {
             return socket;
         }

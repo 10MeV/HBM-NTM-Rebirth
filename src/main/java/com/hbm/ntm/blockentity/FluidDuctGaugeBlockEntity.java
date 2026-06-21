@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class FluidDuctGaugeBlockEntity extends FluidDuctBoxBlockEntity implements RORValueProvider, HbmLegacyBufPacketReceiver {
+public class FluidDuctGaugeBlockEntity extends FluidPipeBlockEntity implements RORValueProvider, HbmLegacyBufPacketReceiver {
     private static final String TAG_DELTA_TICK = "deltaTick";
     private static final String TAG_DELTA_SECOND = "deltaSecond";
     private static final String TAG_DELTA_LAST_SECOND = "deltaLastSecond";

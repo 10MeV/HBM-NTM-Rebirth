@@ -377,40 +377,183 @@ public final class LegacyTileRenderPlans {
     public static final int CRANE_LAMP_TARGET_VALID_COLOR = 0x00FF00;
     public static final int CRANE_LAMP_TARGET_INVALID_COLOR = 0xFF0000;
 
+    private static final FullbrightStatePlan FULLBRIGHT_STATE =
+            new FullbrightStatePlan(true, true, true, true,
+                    LEGACY_FULLBRIGHT_LIGHTMAP_X, LEGACY_FULLBRIGHT_LIGHTMAP_Y);
+    private static final FullbrightStatePlan LIGHTMAP_ONLY_FULLBRIGHT_STATE =
+            new FullbrightStatePlan(false, false, true, false,
+                    LEGACY_FULLBRIGHT_LIGHTMAP_X, LEGACY_FULLBRIGHT_LIGHTMAP_Y);
+    private static final FullbrightStatePlan BATTERY_REDD_MANUAL_FULLBRIGHT_STATE =
+            new FullbrightStatePlan(false, false, true, true,
+                    LEGACY_FULLBRIGHT_LIGHTMAP_X, LEGACY_FULLBRIGHT_LIGHTMAP_Y);
+    private static final BlendStatePlan NORMAL_ALPHA_DEPTH_WRITE_ALPHA_0 =
+            blendState(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO,
+                    0.0F, true, LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE);
+    private static final BlendStatePlan NORMAL_ALPHA_NO_DEPTH_WRITE_ALPHA_0 =
+            blendState(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO,
+                    0.0F, false, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
+    private static final BlendStatePlan NORMAL_ALPHA_DEPTH_WRITE_ALPHA_0_1 =
+            blendState(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO,
+                    0.1F, true, LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE);
+    private static final BlendStatePlan NORMAL_ALPHA_NO_DEPTH_WRITE_ALPHA_0_1 =
+            blendState(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO,
+                    0.1F, false, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
+    private static final BlendStatePlan ADDITIVE_DEPTH_WRITE_ALPHA_0 =
+            blendState(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ZERO,
+                    0.0F, true, LegacyTexturedRenderMode.ADDITIVE_DEPTH_WRITE);
+    private static final BlendStatePlan ADDITIVE_NO_DEPTH_WRITE_ALPHA_0 =
+            blendState(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ZERO,
+                    0.0F, false, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
+    private static final BlendStatePlan ADDITIVE_DEPTH_WRITE_ALPHA_0_1 =
+            blendState(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ZERO,
+                    0.1F, true, LegacyTexturedRenderMode.ADDITIVE_DEPTH_WRITE);
+    private static final BlendStatePlan ADDITIVE_NO_DEPTH_WRITE_ALPHA_0_1 =
+            blendState(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ZERO,
+                    0.1F, false, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
+    private static final BlendStatePlan ONE_ONE_ADDITIVE_DEPTH_WRITE_ALPHA_0_1 =
+            blendState(GL_ONE, GL_ONE, GL_ONE, GL_ZERO,
+                    0.1F, true, LegacyTexturedRenderMode.ADDITIVE_DEPTH_WRITE);
+    private static final TankDangerDiamondPlan SMALL_TANK_DANGER_DIAMOND_EMPTY =
+            new TankDangerDiamondPlan(false, List.of(
+                    new DiamondTransformPlan("front", -0.25D, 0.5D, -1.501D,
+                            90.0F, 1.0F, 0.375F, 0.375F),
+                    new DiamondTransformPlan("back", 0.25D, 0.5D, 1.501D,
+                            -90.0F, 1.0F, 0.375F, 0.375F)));
+    private static final TankDangerDiamondPlan SMALL_TANK_DANGER_DIAMOND_FILLED =
+            new TankDangerDiamondPlan(true, List.of(
+                    new DiamondTransformPlan("front", -0.25D, 0.5D, -1.501D,
+                            90.0F, 1.0F, 0.375F, 0.375F),
+                    new DiamondTransformPlan("back", 0.25D, 0.5D, 1.501D,
+                            -90.0F, 1.0F, 0.375F, 0.375F)));
+    private static final TankDangerDiamondPlan FLUID_BARREL_DANGER_DIAMOND_EMPTY =
+            radialDangerDiamondPlan(false, 4, 0.0F, 90.0F, 0.4D, 0.3D, -0.24D,
+                    1.0F, 0.25F, 0.25F);
+    private static final TankDangerDiamondPlan FLUID_BARREL_DANGER_DIAMOND_FILLED =
+            radialDangerDiamondPlan(true, 4, 0.0F, 90.0F, 0.4D, 0.3D, -0.24D,
+                    1.0F, 0.25F, 0.25F);
+    private static final TankDangerDiamondPlan BIG_ASS_TANK_DANGER_DIAMOND_EMPTY =
+            radialDangerDiamondPlan(false, 2, 22.5F, 180.0F, 5.5D, 2.0D,
+                    0.0D, 1.0F, 1.0F, 1.0F);
+    private static final TankDangerDiamondPlan BIG_ASS_TANK_DANGER_DIAMOND_FILLED =
+            radialDangerDiamondPlan(true, 2, 22.5F, 180.0F, 5.5D, 2.0D,
+                    0.0D, 1.0F, 1.0F, 1.0F);
+    private static final TankDangerDiamondPlan BAT9000_DANGER_DIAMOND_EMPTY =
+            radialDangerDiamondPlan(false, 4, 45.0F, 90.0F, 2.5D, 2.25D,
+                    0.0D, 1.0F, 0.75F, 0.75F);
+    private static final TankDangerDiamondPlan BAT9000_DANGER_DIAMOND_FILLED =
+            radialDangerDiamondPlan(true, 4, 45.0F, 90.0F, 2.5D, 2.25D,
+                    0.0D, 1.0F, 0.75F, 0.75F);
+    private static final ModelPartTintPlan RADGEN_LIGHT_OFF =
+            new ModelPartTintPlan("radgen_light", "Light", true,
+                    rgba(0.0F, 0.1F, 0.0F, 1.0F),
+                    LIGHTMAP_ONLY_FULLBRIGHT_STATE, null, false);
+    private static final ModelPartTintPlan RADGEN_LIGHT_ON =
+            new ModelPartTintPlan("radgen_light", "Light", true,
+                    rgba(0.0F, 1.0F, 0.0F, 1.0F),
+                    LIGHTMAP_ONLY_FULLBRIGHT_STATE, null, false);
+    private static final ModelPartTintPlan RADGEN_GLASS =
+            new ModelPartTintPlan("radgen_glass", "Glass", true,
+                    rgba(0.5F, 0.75F, 1.0F, 0.3F), null,
+                    NORMAL_ALPHA_NO_DEPTH_WRITE_ALPHA_0, false);
+    private static final VisibleMachineStaticPlan RADGEN_STATIC_OFF =
+            new VisibleMachineStaticPlan(List.of(
+                    texturedModelPart("radgen_base", "Base"),
+                    texturedModelPart("radgen_rotor", "Rotor"),
+                    RADGEN_LIGHT_OFF,
+                    texturedModelPart("radgen_glass_textured", "Glass"),
+                    RADGEN_GLASS));
+    private static final VisibleMachineStaticPlan RADGEN_STATIC_ON =
+            new VisibleMachineStaticPlan(List.of(
+                    texturedModelPart("radgen_base", "Base"),
+                    texturedModelPart("radgen_rotor", "Rotor"),
+                    RADGEN_LIGHT_ON,
+                    texturedModelPart("radgen_glass_textured", "Glass"),
+                    RADGEN_GLASS));
+    private static final VisibleMachineStaticPlan BATTERY_REDD_STATIC =
+            new VisibleMachineStaticPlan(List.of(
+                    texturedModelPart("battery_redd_base", "Base"),
+                    texturedModelPart("battery_redd_wheel", "Wheel"),
+                    new ModelPartTintPlan("battery_redd_lights", "Lights", true,
+                            null, BATTERY_REDD_MANUAL_FULLBRIGHT_STATE, null, true)));
+    private static final ModelPartTintPlan LIQUEFACTOR_GLASS =
+            new ModelPartTintPlan("liquefactor_glass", "Glass", true,
+                    rgba(0.75F, 1.0F, 1.0F, 0.15F), null,
+                    NORMAL_ALPHA_NO_DEPTH_WRITE_ALPHA_0, false);
+    private static final ModelPartTintPlan SOLIDIFIER_GLASS =
+            new ModelPartTintPlan("solidifier_glass", "Glass", true,
+                    rgba(0.75F, 1.0F, 1.0F, 0.15F), null,
+                    NORMAL_ALPHA_NO_DEPTH_WRITE_ALPHA_0, false);
+    private static final ModelPartTintPlan CRYSTALLIZER_FLUID_IDLE =
+            new ModelPartTintPlan("crystallizer_fluid", "Fluid", false,
+                    rgba(1.0F, 1.0F, 1.0F, 1.0F), null,
+                    NORMAL_ALPHA_NO_DEPTH_WRITE_ALPHA_0_1, true);
+    private static final ModelPartTintPlan CRYSTALLIZER_FLUID_SPINNING =
+            new ModelPartTintPlan("crystallizer_fluid", "Fluid", true,
+                    rgba(1.0F, 1.0F, 1.0F, 1.0F), null,
+                    NORMAL_ALPHA_NO_DEPTH_WRITE_ALPHA_0_1, true);
+    private static final VisibleMachineStaticPlan CRYSTALLIZER_STATIC_IDLE =
+            new VisibleMachineStaticPlan(List.of(
+                    texturedModelPart("crystallizer_body", "Body"),
+                    texturedModelPart("crystallizer_spinner", "Spinner"),
+                    CRYSTALLIZER_FLUID_IDLE));
+    private static final VisibleMachineStaticPlan CRYSTALLIZER_STATIC_SPINNING =
+            new VisibleMachineStaticPlan(List.of(
+                    texturedModelPart("crystallizer_body", "Body"),
+                    texturedModelPart("crystallizer_spinner", "Spinner"),
+                    CRYSTALLIZER_FLUID_SPINNING));
+
     public static FullbrightStatePlan fullbrightStatePlan() {
-        return new FullbrightStatePlan(true, true, true, true,
-                LEGACY_FULLBRIGHT_LIGHTMAP_X, LEGACY_FULLBRIGHT_LIGHTMAP_Y);
+        return FULLBRIGHT_STATE;
     }
 
     public static FullbrightStatePlan lightmapOnlyFullbrightPlan() {
-        return new FullbrightStatePlan(false, false, true, false,
-                LEGACY_FULLBRIGHT_LIGHTMAP_X, LEGACY_FULLBRIGHT_LIGHTMAP_Y);
+        return LIGHTMAP_ONLY_FULLBRIGHT_STATE;
     }
 
     public static FullbrightStatePlan batteryReddManualFullbrightPlan() {
-        return new FullbrightStatePlan(false, false, true, true,
-                LEGACY_FULLBRIGHT_LIGHTMAP_X, LEGACY_FULLBRIGHT_LIGHTMAP_Y);
+        return BATTERY_REDD_MANUAL_FULLBRIGHT_STATE;
     }
 
     public static BlendStatePlan normalAlphaBlendPlan(boolean depthWrite, float alphaThreshold) {
-        return new BlendStatePlan(true, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO,
+        if (alphaThreshold == 0.0F) {
+            return depthWrite ? NORMAL_ALPHA_DEPTH_WRITE_ALPHA_0 : NORMAL_ALPHA_NO_DEPTH_WRITE_ALPHA_0;
+        }
+        if (alphaThreshold == 0.1F) {
+            return depthWrite ? NORMAL_ALPHA_DEPTH_WRITE_ALPHA_0_1 : NORMAL_ALPHA_NO_DEPTH_WRITE_ALPHA_0_1;
+        }
+        return blendState(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO,
                 alphaThreshold, depthWrite, depthWrite
-                ? LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE
-                : LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
+                        ? LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE
+                        : LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
     }
 
     public static BlendStatePlan additiveBlendPlan(boolean depthWrite, float alphaThreshold) {
-        return new BlendStatePlan(true, GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ZERO,
+        if (alphaThreshold == 0.0F) {
+            return depthWrite ? ADDITIVE_DEPTH_WRITE_ALPHA_0 : ADDITIVE_NO_DEPTH_WRITE_ALPHA_0;
+        }
+        if (alphaThreshold == 0.1F) {
+            return depthWrite ? ADDITIVE_DEPTH_WRITE_ALPHA_0_1 : ADDITIVE_NO_DEPTH_WRITE_ALPHA_0_1;
+        }
+        return blendState(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ZERO,
                 alphaThreshold, depthWrite, depthWrite
-                ? LegacyTexturedRenderMode.ADDITIVE_DEPTH_WRITE
-                : LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
+                        ? LegacyTexturedRenderMode.ADDITIVE_DEPTH_WRITE
+                        : LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
     }
 
     public static BlendStatePlan oneOneAdditiveBlendPlan(boolean depthWrite, float alphaThreshold) {
-        return new BlendStatePlan(true, GL_ONE, GL_ONE, GL_ONE, GL_ZERO,
+        if (depthWrite && alphaThreshold == 0.1F) {
+            return ONE_ONE_ADDITIVE_DEPTH_WRITE_ALPHA_0_1;
+        }
+        return blendState(GL_ONE, GL_ONE, GL_ONE, GL_ZERO,
                 alphaThreshold, depthWrite, depthWrite
-                ? LegacyTexturedRenderMode.ADDITIVE_DEPTH_WRITE
-                : LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
+                        ? LegacyTexturedRenderMode.ADDITIVE_DEPTH_WRITE
+                        : LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
+    }
+
+    private static BlendStatePlan blendState(int srcRgb, int dstRgb, int srcAlpha, int dstAlpha,
+            float alphaThreshold, boolean depthWrite, LegacyTexturedRenderMode modernRenderMode) {
+        return new BlendStatePlan(true, srcRgb, dstRgb, srcAlpha, dstAlpha,
+                alphaThreshold, depthWrite, modernRenderMode);
     }
 
     public static AssemblyMachinePlan assemblyMachinePlan(double ringDegrees, double[] arm1, double[] arm2) {
@@ -577,8 +720,13 @@ public final class LegacyTileRenderPlans {
     }
 
     public static ElectricPressPlan electricPressStaticPlan() {
+        return electricPressPlan(0.0D, 1.0D);
+    }
+
+    public static ElectricPressPlan electricPressPlan(double press, double maxPress) {
+        double progress = maxPress <= 0.0D ? 0.0D : Math.max(0.0D, Math.min(1.0D, press / maxPress));
         return new ElectricPressPlan(new TranslatedModelPartPlan("electric_press_head", "Head", true,
-                0.0D, ELECTRIC_PRESS_HEAD_BASE_Y + ELECTRIC_PRESS_HEAD_TRAVEL, 0.0D));
+                0.0D, ELECTRIC_PRESS_HEAD_BASE_Y + (1.0D - progress) * ELECTRIC_PRESS_HEAD_TRAVEL, 0.0D));
     }
 
     public static PyroOvenPlan pyroOvenPlan(double animation) {
@@ -859,26 +1007,19 @@ public final class LegacyTileRenderPlans {
     }
 
     public static TankDangerDiamondPlan smallTankDangerDiamondPlan(boolean hasFluid) {
-        return new TankDangerDiamondPlan(hasFluid, List.of(
-                new DiamondTransformPlan("front", -0.25D, 0.5D, -1.501D,
-                        90.0F, 1.0F, 0.375F, 0.375F),
-                new DiamondTransformPlan("back", 0.25D, 0.5D, 1.501D,
-                        -90.0F, 1.0F, 0.375F, 0.375F)));
+        return hasFluid ? SMALL_TANK_DANGER_DIAMOND_FILLED : SMALL_TANK_DANGER_DIAMOND_EMPTY;
     }
 
     public static TankDangerDiamondPlan fluidBarrelDangerDiamondPlan(boolean hasFluid) {
-        return radialDangerDiamondPlan(hasFluid, 4, 0.0F, 90.0F, 0.4D, 0.3D, -0.24D,
-                1.0F, 0.25F, 0.25F);
+        return hasFluid ? FLUID_BARREL_DANGER_DIAMOND_FILLED : FLUID_BARREL_DANGER_DIAMOND_EMPTY;
     }
 
     public static TankDangerDiamondPlan bigAssTankDangerDiamondPlan(boolean hasFluid) {
-        return radialDangerDiamondPlan(hasFluid, 2, 22.5F, 180.0F, 5.5D, 2.0D,
-                0.0D, 1.0F, 1.0F, 1.0F);
+        return hasFluid ? BIG_ASS_TANK_DANGER_DIAMOND_FILLED : BIG_ASS_TANK_DANGER_DIAMOND_EMPTY;
     }
 
     public static TankDangerDiamondPlan bat9000DangerDiamondPlan(boolean hasFluid) {
-        return radialDangerDiamondPlan(hasFluid, 4, 45.0F, 90.0F, 2.5D, 2.25D,
-                0.0D, 1.0F, 0.75F, 0.75F);
+        return hasFluid ? BAT9000_DANGER_DIAMOND_FILLED : BAT9000_DANGER_DIAMOND_EMPTY;
     }
 
     public static CherenkovShellPlan smallReactorCherenkovPlan(double totalFlux,
@@ -954,39 +1095,23 @@ public final class LegacyTileRenderPlans {
     }
 
     public static VisibleMachineStaticPlan radgenStaticPlan(boolean on) {
-        return new VisibleMachineStaticPlan(List.of(
-                texturedModelPart("radgen_base", "Base"),
-                texturedModelPart("radgen_rotor", "Rotor"),
-                radgenLightPlan(on),
-                radgenGlassPlan(),
-                texturedModelPart("radgen_glass_textured", "Glass")));
+        return on ? RADGEN_STATIC_ON : RADGEN_STATIC_OFF;
     }
 
     public static ModelPartTintPlan radgenLightPlan(boolean on) {
-        return new ModelPartTintPlan("radgen_light", "Light", true,
-                on ? rgba(0.0F, 1.0F, 0.0F, 1.0F) : rgba(0.0F, 0.1F, 0.0F, 1.0F),
-                lightmapOnlyFullbrightPlan(), null, false);
+        return on ? RADGEN_LIGHT_ON : RADGEN_LIGHT_OFF;
     }
 
     public static ModelPartTintPlan radgenGlassPlan() {
-        return new ModelPartTintPlan("radgen_glass", "Glass", true,
-                rgba(0.5F, 0.75F, 1.0F, 0.3F), null,
-                normalAlphaBlendPlan(false, 0.0F), false);
+        return RADGEN_GLASS;
     }
 
     public static VisibleMachineStaticPlan batteryReddStaticPlan() {
-        return new VisibleMachineStaticPlan(List.of(
-                texturedModelPart("battery_redd_base", "Base"),
-                texturedModelPart("battery_redd_wheel", "Wheel"),
-                new ModelPartTintPlan("battery_redd_lights", "Lights", true,
-                        null, batteryReddManualFullbrightPlan(), null, true)));
+        return BATTERY_REDD_STATIC;
     }
 
     public static VisibleMachineStaticPlan crystallizerStaticPlan(boolean spinning) {
-        return new VisibleMachineStaticPlan(List.of(
-                texturedModelPart("crystallizer_body", "Body"),
-                texturedModelPart("crystallizer_spinner", "Spinner"),
-                crystallizerFluidPlan(spinning)));
+        return spinning ? CRYSTALLIZER_STATIC_SPINNING : CRYSTALLIZER_STATIC_IDLE;
     }
 
     public static ScaledModelPartPlan liquefactorFluidPlan(int fill, int maxFill, int fluidColor) {
@@ -997,9 +1122,7 @@ public final class LegacyTileRenderPlans {
     }
 
     public static ModelPartTintPlan liquefactorGlassPlan() {
-        return new ModelPartTintPlan("liquefactor_glass", "Glass", true,
-                rgba(0.75F, 1.0F, 1.0F, 0.15F), null,
-                normalAlphaBlendPlan(false, 0.0F), false);
+        return LIQUEFACTOR_GLASS;
     }
 
     public static ScaledModelPartPlan solidifierFluidPlan(int fill, int maxFill, int fluidColor) {
@@ -1010,15 +1133,11 @@ public final class LegacyTileRenderPlans {
     }
 
     public static ModelPartTintPlan solidifierGlassPlan() {
-        return new ModelPartTintPlan("solidifier_glass", "Glass", true,
-                rgba(0.75F, 1.0F, 1.0F, 0.15F), null,
-                normalAlphaBlendPlan(false, 0.0F), false);
+        return SOLIDIFIER_GLASS;
     }
 
     public static ModelPartTintPlan crystallizerFluidPlan(boolean spinning) {
-        return new ModelPartTintPlan("crystallizer_fluid", "Fluid", spinning,
-                rgba(1.0F, 1.0F, 1.0F, 1.0F), null,
-                normalAlphaBlendPlan(false, 0.1F), true);
+        return spinning ? CRYSTALLIZER_FLUID_SPINNING : CRYSTALLIZER_FLUID_IDLE;
     }
 
     private static ModelPartTintPlan texturedModelPart(String role, String partName) {

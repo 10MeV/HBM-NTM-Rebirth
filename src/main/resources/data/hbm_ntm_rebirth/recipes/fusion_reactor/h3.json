@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:fusion_reactor",
+  "internal_name": "fus.h3",
+  "duration": 100,
+  "power": 25000,
+  "input_items": [],
+  "input_fluids": [{ "fluid": "hbm_ntm_rebirth:helium3", "amount": 20 }],
+  "output_items": [],
+  "output_fluids": [{ "fluid": "hbm_ntm_rebirth:helium4", "amount": 1000 }],
+  "pools": [],
+  "ignitionTemp": 500000,
+  "outputTemp": 3750000,
+  "outputFlux": 0.0,
+  "r": 0.2,
+  "g": 0.2,
+  "b": 1.0
+}

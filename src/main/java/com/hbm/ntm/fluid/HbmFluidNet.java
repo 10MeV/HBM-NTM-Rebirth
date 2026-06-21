@@ -342,33 +342,6 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
                 priorityUsed += accepted;
             }
 
-            long leftover = priorityBudget - priorityUsed;
-            int iterationsLeft = 100;
-            while (iterationsLeft > 0 && leftover > 0L) {
-                iterationsLeft--;
-                boolean moved = false;
-                for (Entry<HbmFluidReceiver> entry : priorityReceivers) {
-                    if (leftover <= 0L) {
-                        break;
-                    }
-                    long demandLeft = Math.min(Math.max(0L, entry.value.getDemand(type, pressure)),
-                            Math.max(0L, entry.value.getReceiverSpeed(type, pressure)));
-                    if (demandLeft <= 0L) {
-                        continue;
-                    }
-                    long toSend = Math.min(leftover, demandLeft);
-                    long accepted = toSend - entry.value.transferFluid(type, pressure, toSend);
-                    if (accepted > 0L) {
-                        priorityUsed += accepted;
-                        leftover -= accepted;
-                        moved = true;
-                    }
-                }
-                if (!moved) {
-                    break;
-                }
-            }
-
             used += priorityUsed;
             toTransfer -= priorityUsed;
         }

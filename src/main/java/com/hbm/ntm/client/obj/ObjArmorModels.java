@@ -22,7 +22,7 @@ public final class ObjArmorModels {
     public static final LegacyWavefrontModel WINGS = model("murk", "wings_murk").asVBO();
     public static final LegacyWavefrontModel AXEPACK = model("wings_pheo", "axepack").asVBO();
     public static final LegacyWavefrontModel TAIL = model("tail_peep").asVBO();
-    public static final LegacyWavefrontModel PLAYER_FEM = model("player_fem").noSmooth().asVBO();
+    public static final LegacyWavefrontModel PLAYER_FEM = model("player_fem", playerTexture("player_fem")).noSmooth().asVBO();
     public static final LegacyWavefrontModel ENVSUIT = model("envsuit", "envsuit_chest").asVBO();
     public static final LegacyWavefrontModel TAURUN = model("taurun", "taurun_chest").asVBO();
     public static final LegacyWavefrontModel TRENCHMASTER = model("trenchmaster", "trenchmaster_chest").asVBO();
@@ -111,20 +111,28 @@ public final class ObjArmorModels {
     public static final ResourceLocation NO9_TEXTURE = texture("no9");
     public static final ResourceLocation NO9_INSIGNIA_TEXTURE = texture("no9_insignia");
     public static final ResourceLocation GOGGLES_TEXTURE = texture("goggles");
-    public static final ResourceLocation PLAYER_FEM_TEXTURE = texture("player_fem");
+    public static final ResourceLocation PLAYER_FEM_TEXTURE = playerTexture("player_fem");
 
     public static LegacyWavefrontModel model(String name) {
         return model(name, name);
     }
 
-    public static LegacyWavefrontModel model(String modelName, String textureName) {
+    public static LegacyWavefrontModel model(String modelName, ResourceLocation texture) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/armor/" + modelName + ".obj"),
-                texture(textureName));
+                new ResourceLocation(HbmNtm.MOD_ID, "models/armor/" + modelName + ".obj"),
+                texture);
+    }
+
+    public static LegacyWavefrontModel model(String modelName, String textureName) {
+        return model(modelName, texture(textureName));
     }
 
     public static ResourceLocation texture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/armor/" + name + ".png");
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/armor/" + name + ".png");
+    }
+
+    public static ResourceLocation playerTexture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/entity/" + name + ".png");
     }
 
     private ObjArmorModels() {

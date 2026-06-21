@@ -36,7 +36,11 @@ public class HazardTypeBase {
 
     public void addHazardInformation(Player player, List<Component> list, float level, ItemStack stack,
                                      List<HazardModifier> modifiers) {
-        com.hbm.ntm.radiation.HazardTooltipUtil.addHazardInformation(stack, list);
+        float displayLevel = switch (modernType) {
+            case RADIATION, DIGAMMA, HOT -> HazardModifier.evalAllModifiers(stack, player, level, modifiers);
+            default -> level;
+        };
+        com.hbm.ntm.radiation.HazardTooltipUtil.addHazardTypeInformation(stack, list, modernType, displayLevel);
     }
 
     public static HazardTypeBase fromModern(HazardType type) {

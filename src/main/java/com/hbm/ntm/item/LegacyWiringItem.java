@@ -104,13 +104,10 @@ public class LegacyWiringItem extends Item {
         if (!isLoadedBlock(level, pos)) {
             return null;
         }
-        BlockPos corePos = MultiblockHelper.resolveCorePos(level, pos);
-        if (!isLoadedBlock(level, corePos)) {
-            return null;
-        }
-        BlockEntity blockEntity = level.getBlockEntity(corePos);
-        if (blockEntity instanceof HbmLegacyWireNode wireNode) {
-            return new WireNodeLookup(corePos, wireNode);
+        BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
+        if (blockEntity instanceof HbmLegacyWireNode wireNode
+                && isLoadedBlock(level, blockEntity.getBlockPos())) {
+            return new WireNodeLookup(blockEntity.getBlockPos(), wireNode);
         }
         return null;
     }

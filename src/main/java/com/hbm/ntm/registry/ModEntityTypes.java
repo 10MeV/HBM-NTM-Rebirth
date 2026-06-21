@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.entity.effect.CloudFleijaEntity;
 import com.hbm.ntm.entity.effect.CloudFleijaRainbowEntity;
 import com.hbm.ntm.entity.effect.CloudSoliniumEntity;
+import com.hbm.ntm.entity.effect.DigammaSpearEntity;
 import com.hbm.ntm.entity.effect.EmpBlastEntity;
 import com.hbm.ntm.entity.effect.FalloutRainEntity;
 import com.hbm.ntm.entity.effect.FireLingeringEntity;
@@ -19,6 +20,7 @@ import com.hbm.ntm.entity.logic.DeathBlastEntity;
 import com.hbm.ntm.entity.logic.EmpLogicEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
+import com.hbm.ntm.entity.logic.TomBlastEntity;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
 import com.hbm.ntm.entity.missile.AntiBallisticMissileEntity;
@@ -32,10 +34,14 @@ import com.hbm.ntm.entity.projectile.ArtilleryShellEntity;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.entity.projectile.ChemicalProjectileEntity;
 import com.hbm.ntm.entity.projectile.CoinEntity;
+import com.hbm.ntm.entity.projectile.CogEntity;
 import com.hbm.ntm.entity.projectile.DynamiteStickEntity;
 import com.hbm.ntm.entity.projectile.FallingNukeEntity;
+import com.hbm.ntm.entity.projectile.RBMKDebrisEntity;
 import com.hbm.ntm.entity.projectile.RubbleEntity;
+import com.hbm.ntm.entity.projectile.SawbladeEntity;
 import com.hbm.ntm.entity.projectile.ShrapnelEntity;
+import com.hbm.ntm.entity.projectile.ZirnoxDebrisEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -80,6 +86,16 @@ public final class ModEntityTypes {
                     .updateInterval(1)
                     .noSummon()
                     .build("entity_nuke_mk3"));
+
+    public static final RegistryObject<EntityType<TomBlastEntity>> TOM_BLAST =
+            ENTITY_TYPES.register("entity_tom_bust", () -> EntityType.Builder
+                    .<TomBlastEntity>of(TomBlastEntity::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_tom_bust"));
 
     public static final RegistryObject<EntityType<FalloutRainEntity>> FALLOUT_RAIN =
             ENTITY_TYPES.register("entity_fallout_rain", () -> EntityType.Builder
@@ -208,6 +224,16 @@ public final class ModEntityTypes {
                     .fireImmune()
                     .noSummon()
                     .build("entity_digamma_quasar"));
+
+    public static final RegistryObject<EntityType<DigammaSpearEntity>> DIGAMMA_SPEAR =
+            ENTITY_TYPES.register("entity_spear", () -> EntityType.Builder
+                    .<DigammaSpearEntity>of(DigammaSpearEntity::new, MobCategory.MISC)
+                    .sized(2.0F, 10.0F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_spear"));
 
     public static final RegistryObject<EntityType<BalefireExplosionEntity>> BALEFIRE_EXPLOSION =
             ENTITY_TYPES.register("entity_balefire", () -> EntityType.Builder
@@ -527,6 +553,40 @@ public final class ModEntityTypes {
                     .clientTrackingRange(128)
                     .updateInterval(1)
                     .build("entity_rubble"));
+
+    public static final RegistryObject<EntityType<RBMKDebrisEntity>> RBMK_DEBRIS =
+            ENTITY_TYPES.register("entity_rbmk_debris", () -> EntityType.Builder
+                    .<RBMKDebrisEntity>of(RBMKDebrisEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(128)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .build("entity_rbmk_debris"));
+
+    public static final RegistryObject<EntityType<ZirnoxDebrisEntity>> ZIRNOX_DEBRIS =
+            ENTITY_TYPES.register("entity_zirnox_debris", () -> EntityType.Builder
+                    .<ZirnoxDebrisEntity>of(ZirnoxDebrisEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(128)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .build("entity_zirnox_debris"));
+
+    public static final RegistryObject<EntityType<CogEntity>> COG =
+            ENTITY_TYPES.register("entity_stray_cog", () -> EntityType.Builder
+                    .<CogEntity>of(CogEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(128)
+                    .updateInterval(1)
+                    .build("entity_stray_cog"));
+
+    public static final RegistryObject<EntityType<SawbladeEntity>> SAWBLADE =
+            ENTITY_TYPES.register("entity_stray_saw", () -> EntityType.Builder
+                    .<SawbladeEntity>of(SawbladeEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(128)
+                    .updateInterval(1)
+                    .build("entity_stray_saw"));
 
     public static final RegistryObject<EntityType<BulletProjectileEntity>> BULLET_PROJECTILE =
             ENTITY_TYPES.register("entity_bullet_base_nt", () -> EntityType.Builder

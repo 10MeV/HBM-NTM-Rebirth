@@ -1,10 +1,13 @@
 package com.hbm.ntm.item;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.neutron.RBMKFuelRodRegistry;
 import com.hbm.ntm.neutron.RBMKItemPlanner;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -14,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class RBMKPelletItem extends Item {
+    public static final ResourceLocation META_PROPERTY = new ResourceLocation(HbmNtm.MOD_ID, "rbmk_pellet_meta");
+
     private final RBMKFuelRodRegistry.Entry entry;
 
     public RBMKPelletItem(Properties properties, RBMKFuelRodRegistry.Entry entry) {
@@ -31,6 +36,15 @@ public class RBMKPelletItem extends Item {
 
     public RBMKItemPlanner.PelletMetaPlan getMetaPlan(ItemStack stack) {
         return RBMKItemPlanner.pelletMeta(stack.getDamageValue(), entry.pelletXenonOverlay());
+    }
+
+    public static void addCreativeStacks(CreativeModeTab.Output output, RBMKPelletItem pellet) {
+        int count = RBMKItemPlanner.pelletMeta(0, pellet.isXenonEnabled()).creativeSubItemCount();
+        for (int meta = 0; meta < count; meta++) {
+            ItemStack stack = new ItemStack(pellet);
+            stack.setDamageValue(meta);
+            output.accept(stack);
+        }
     }
 
     @Override

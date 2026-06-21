@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north,variant=0": { "model": "hbm_ntm_rebirth:block/mass_storage_iron" },
+    "facing=east,variant=0": { "model": "hbm_ntm_rebirth:block/mass_storage_iron", "y": 90 },
+    "facing=south,variant=0": { "model": "hbm_ntm_rebirth:block/mass_storage_iron", "y": 180 },
+    "facing=west,variant=0": { "model": "hbm_ntm_rebirth:block/mass_storage_iron", "y": 270 },
+    "facing=north,variant=1": { "model": "hbm_ntm_rebirth:block/mass_storage_desh" },
+    "facing=east,variant=1": { "model": "hbm_ntm_rebirth:block/mass_storage_desh", "y": 90 },
+    "facing=south,variant=1": { "model": "hbm_ntm_rebirth:block/mass_storage_desh", "y": 180 },
+    "facing=west,variant=1": { "model": "hbm_ntm_rebirth:block/mass_storage_desh", "y": 270 },
+    "facing=north,variant=2": { "model": "hbm_ntm_rebirth:block/mass_storage_tungsten" },
+    "facing=east,variant=2": { "model": "hbm_ntm_rebirth:block/mass_storage_tungsten", "y": 90 },
+    "facing=south,variant=2": { "model": "hbm_ntm_rebirth:block/mass_storage_tungsten", "y": 180 },
+    "facing=west,variant=2": { "model": "hbm_ntm_rebirth:block/mass_storage_tungsten", "y": 270 },
+    "facing=north,variant=3": { "model": "hbm_ntm_rebirth:block/mass_storage_wood" },
+    "facing=east,variant=3": { "model": "hbm_ntm_rebirth:block/mass_storage_wood", "y": 90 },
+    "facing=south,variant=3": { "model": "hbm_ntm_rebirth:block/mass_storage_wood", "y": 180 },
+    "facing=west,variant=3": { "model": "hbm_ntm_rebirth:block/mass_storage_wood", "y": 270 }
+  }
+}

@@ -1,7 +1,19 @@
 {
   "multipart": [
-    {
-      "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust" }
-    }
+    { "when": { "legacy_metadata": "0" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_0" } },
+    { "when": { "legacy_metadata": "1" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_1" } },
+    { "when": { "legacy_metadata": "2" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_2" } },
+    { "when": { "legacy_metadata": "3" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_3" } },
+    { "when": { "legacy_metadata": "4" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_4" } },
+    { "when": { "legacy_metadata": "5" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_5" } },
+    { "when": { "legacy_metadata": "6" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_6" } },
+    { "when": { "legacy_metadata": "7" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_7" } },
+    { "when": { "legacy_metadata": "8" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_8" } },
+    { "when": { "legacy_metadata": "9" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_9" } },
+    { "when": { "legacy_metadata": "10" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_10" } },
+    { "when": { "legacy_metadata": "11" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_11" } },
+    { "when": { "legacy_metadata": "12" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_12" } },
+    { "when": { "legacy_metadata": "13" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_13" } },
+    { "when": { "legacy_metadata": "14" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_exhaust_14" } }
   ]
 }

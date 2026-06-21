@@ -157,11 +157,11 @@ public final class CompatEnergyControl {
     }
 
     public static BlockEntity findTileEntity(BlockEntity blockEntity) {
-        return CompatExternal.getCoreFromTile(blockEntity);
+        return CompatExternal.getOperationalCoreFromTile(blockEntity);
     }
 
     public static BlockEntity findTileEntity(Level level, BlockPos pos) {
-        return CompatExternal.getCoreFromPos(level, pos);
+        return CompatExternal.getOperationalCoreFromPos(level, pos);
     }
 
     public static ResourceLocation getFluidTexture(String name) {

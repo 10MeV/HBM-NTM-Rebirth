@@ -14,16 +14,26 @@ public class BlockMutatorDebris implements BlockMutator {
         this(block.defaultBlockState());
     }
 
+    public BlockMutatorDebris(Block block, int meta) {
+        this(LegacyVntBlockStateMapper.fromLegacyMeta(block, meta));
+    }
+
     public BlockMutatorDebris(BlockState replacement) {
         this.replacement = replacement;
     }
 
     @Override
     public void mutatePost(ExplosionVnt explosion, BlockPos pos) {
+        if (explosion.level().isOutsideBuildHeight(pos)) {
+            return;
+        }
         for (Direction direction : Direction.values()) {
             BlockPos neighbor = pos.relative(direction);
+            if (explosion.level().isOutsideBuildHeight(neighbor)) {
+                continue;
+            }
             BlockState neighborState = explosion.level().getBlockState(neighbor);
-            if (neighborState.isCollisionShapeFullBlock(explosion.level(), neighbor) && !neighborState.equals(replacement)) {
+            if (neighborState.isSolidRender(explosion.level(), neighbor) && !neighborState.equals(replacement)) {
                 explosion.level().setBlock(pos, replacement, 3);
                 return;
             }

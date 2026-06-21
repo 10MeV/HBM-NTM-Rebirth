@@ -1,6 +1,7 @@
 package com.hbm.ntm.explosion;
 
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.world.level.Level;
 
 public final class CustomNukeExplosion {
@@ -19,7 +20,8 @@ public final class CustomNukeExplosion {
         dirty = Math.min(dirty, 100.0F);
 
         if (euph > 0.0F) {
-            NuclearExplosionUtil.spawnFleijaRainbow(level, x, y, z, 150, 50);
+            NuclearExplosionUtil.spawnCustomEuphemium(level, x, y, z);
+            LegacySoundPlayer.playSoundEffect(level, x, y, z, "random.explode", 100000.0F, 1.0F);
             return;
         }
 

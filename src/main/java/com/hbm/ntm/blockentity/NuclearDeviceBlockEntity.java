@@ -3,10 +3,12 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.block.NuclearDeviceBlock;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -14,6 +16,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -21,7 +24,6 @@ import com.hbm.ntm.menu.NuclearDeviceMenu;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
@@ -30,17 +32,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvider {
-    private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_ITEMS = "items";
+    private static final String TAG_CUSTOM_NAME = "name";
+    private static final String TAG_MODERN_INVENTORY = "Inventory";
 
     private final NuclearDeviceBlock.Kind kind;
     private final ItemStackHandler items;
-    private final LazyOptional<IItemHandler> itemHandler;
+    @Nullable
+    private String customName;
 
     public NuclearDeviceBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.NUCLEAR_DEVICE.get(), pos, state);
         this.kind = state.getBlock() instanceof NuclearDeviceBlock device ? device.kind() : NuclearDeviceBlock.Kind.GADGET;
         this.items = createItemHandler(kind, this::setChanged);
-        this.itemHandler = LazyOptional.of(() -> items);
     }
 
     public static ItemStackHandler createItemHandler(NuclearDeviceBlock.Kind kind) {
@@ -115,6 +119,10 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
         return HbmItemStackUtil.carefulCopyArray(items);
     }
 
+    public void spillDrops(Level level, BlockPos pos) {
+        HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
     public void clearSlots() {
         for (int i = 0; i < items.getSlots(); i++) {
             items.setStackInSlot(i, ItemStack.EMPTY);
@@ -187,7 +195,7 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
     }
 
     public static int slotLimit(NuclearDeviceBlock.Kind kind) {
-        return 1;
+        return kind == NuclearDeviceBlock.Kind.PROTOTYPE ? 64 : 1;
     }
 
     private static boolean isValidComponent(NuclearDeviceBlock.Kind kind, int slot, ItemStack stack) {
@@ -269,11 +277,28 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private static boolean isRod(ItemStack stack, String rodType) {
-        if (stack.isEmpty() || !is(stack, "rod_quad")) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        RegistryObject<Item> splitRod = LegacyMetaItemMappings.item(LegacyMetaItemMappings.ROD_QUAD,
+                legacyRodMeta(rodType)).orElse(null);
+        if (splitRod != null && stack.is(splitRod.get())) {
+            return true;
+        }
+        if (!is(stack, "rod_quad")) {
             return false;
         }
         CompoundTag tag = stack.getTag();
         return tag != null && rodType.equalsIgnoreCase(tag.getString("BreedingRodType"));
+    }
+
+    private static int legacyRodMeta(String rodType) {
+        return switch (rodType.toUpperCase(java.util.Locale.ROOT)) {
+            case "NP237" -> 7;
+            case "LEAD" -> 13;
+            case "URANIUM" -> 14;
+            default -> -1;
+        };
     }
 
     private static boolean hasAll(ItemStackHandler items, String name, int... slots) {
@@ -292,44 +317,57 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmItemStackUtil.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmItemStackUtil.saveLegacyItemsToTag(tag, TAG_ITEMS, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        if (tag.contains(TAG_INVENTORY)) {
-            HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        if (tag.contains(TAG_ITEMS, Tag.TAG_LIST)) {
+            HbmItemStackUtil.loadLegacyItems(tag, TAG_ITEMS, items);
+        } else if (tag.contains(TAG_MODERN_INVENTORY)) {
+            HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY, items);
         }
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
     }
 
-    @Override
-    public void invalidateCaps() {
-        super.invalidateCaps();
-        itemHandler.invalidate();
+    public boolean hasCustomName() {
+        return customName != null && !customName.isBlank();
+    }
+
+    public void setCustomName(@Nullable String customName) {
+        this.customName = customName == null || customName.isBlank() ? null : customName;
+        setChanged();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return LazyOptional.empty();
         }
         return super.getCapability(capability, side);
     }
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.hbm_ntm_rebirth." + switch (kind) {
-            case GADGET -> "nuke_gadget";
-            case BOY -> "nuke_boy";
-            case MAN -> "nuke_man";
-            case TSAR -> "nuke_tsar";
-            case MIKE -> "nuke_mike";
-            case PROTOTYPE -> "nuke_prototype";
-            case FLEIJA -> "nuke_fleija";
-            case SOLINIUM -> "nuke_solinium";
-            case N2 -> "nuke_n2";
-        });
+        return hasCustomName() ? Component.literal(customName) : Component.translatable(containerKey(kind));
+    }
+
+    public static String containerKey(NuclearDeviceBlock.Kind kind) {
+        return switch (kind) {
+            case GADGET -> "container.nukeGadget";
+            case BOY -> "container.nukeBoy";
+            case MAN -> "container.nukeMan";
+            case TSAR -> "container.nukeTsar";
+            case MIKE -> "container.nukeMike";
+            case PROTOTYPE -> "container.nukePrototype";
+            case FLEIJA -> "container.nukeFleija";
+            case SOLINIUM -> "container.nukeSolinium";
+            case N2 -> "container.nukeN2";
+        };
     }
 
     @Nullable

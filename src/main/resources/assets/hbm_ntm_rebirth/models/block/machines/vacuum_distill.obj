@@ -1,3 +1,5 @@
+mtllib hbm_default.mtl
+usemtl default
 # Blender v2.79 (sub 0) OBJ File: 'vacuum_distill.blend'
 # www.blender.org
 o Cylinder

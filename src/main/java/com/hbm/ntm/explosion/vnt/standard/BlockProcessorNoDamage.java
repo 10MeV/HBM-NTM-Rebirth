@@ -22,13 +22,16 @@ public class BlockProcessorNoDamage implements BlockProcessor {
     public void process(ExplosionVnt explosion, ServerLevel level, Vec3 position, Set<BlockPos> affectedBlocks) {
         if (mutator != null) {
             for (BlockPos pos : affectedBlocks) {
+                if (level.isOutsideBuildHeight(pos)) {
+                    continue;
+                }
                 BlockState state = level.getBlockState(pos);
                 if (!state.isAir()) {
                     mutator.mutatePre(explosion, state, pos);
                 }
             }
             for (BlockPos pos : affectedBlocks) {
-                if (level.getBlockState(pos).isAir()) {
+                if (!level.isOutsideBuildHeight(pos) && level.getBlockState(pos).isAir()) {
                     mutator.mutatePost(explosion, pos);
                 }
             }

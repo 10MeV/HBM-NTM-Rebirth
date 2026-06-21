@@ -1,7 +1,21 @@
 {
-  "parent": "hbm_ntm_rebirth:block/fluid_duct_paintable",
+  "parent": "minecraft:block/block",
   "textures": {
     "particle": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust",
     "base": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
-  }
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "down": { "texture": "#base", "cullface": "down" },
+        "up": { "texture": "#base", "cullface": "up" },
+        "north": { "texture": "#base", "cullface": "north" },
+        "south": { "texture": "#base", "cullface": "south" },
+        "west": { "texture": "#base", "cullface": "west" },
+        "east": { "texture": "#base", "cullface": "east" }
+      }
+    }
+  ]
 }

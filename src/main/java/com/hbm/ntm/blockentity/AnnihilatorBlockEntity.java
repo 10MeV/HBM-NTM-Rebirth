@@ -125,7 +125,7 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
             if (!trash.isEmpty()) {
                 ItemStack destroyed = trash.copy();
                 annihilator.onDestroy(destroyed);
-                annihilator.tryAddPayout(data.pushToPool(annihilator.pool, destroyed, false));
+                annihilator.tryAddPayout(data.pushToPool(serverLevel, annihilator.pool, destroyed, false));
                 annihilator.items.setStackInSlot(SLOT_TRASH, ItemStack.EMPTY);
                 didSomething = true;
                 changed = true;
@@ -134,7 +134,7 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
                 int amount = annihilator.tank.getFill();
                 HbmFluidReleaseEffects.applyRelease(level, pos, annihilator.tank.getTankType(),
                         safeDoubleMb(amount), FluidReleaseType.BURN);
-                annihilator.tryAddPayout(data.pushToPool(annihilator.pool,
+                annihilator.tryAddPayout(data.pushToPool(serverLevel, annihilator.pool,
                         annihilator.tank.getTankType(), amount, false));
                 annihilator.tank.setFill(0);
                 didSomething = true;
@@ -144,7 +144,7 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
                 annihilator.spawnBurnEffects(level);
             }
             annihilator.updateMonitor(data);
-            if (annihilator.processRequest(data)) {
+            if (annihilator.processRequest(serverLevel, data)) {
                 changed = true;
             }
         } else {
@@ -163,14 +163,14 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
         }
     }
 
-    private boolean processRequest(AnnihilatorSavedData data) {
+    private boolean processRequest(ServerLevel level, AnnihilatorSavedData data) {
         ItemStack request = items.getStackInSlot(SLOT_REQUEST);
         if (request.isEmpty()) {
             return false;
         }
         ItemStack single = request.copyWithCount(1);
         onDestroy(single);
-        tryAddPayout(data.pushToPool(pool, single, true));
+        tryAddRequestPayout(data.pushToPool(level, pool, single, true));
         items.extractItem(SLOT_REQUEST, 1, false);
         return true;
     }
@@ -243,6 +243,19 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
         }
     }
 
+    private void tryAddRequestPayout(@Nullable ItemStack payout) {
+        if (payout == null || payout.isEmpty()) {
+            return;
+        }
+        ItemStack existing = items.getStackInSlot(SLOT_REQUEST_OUTPUT);
+        if (existing.isEmpty()) {
+            items.setStackInSlot(SLOT_REQUEST_OUTPUT, payout.copy());
+        } else if (canMerge(existing, payout)) {
+            existing.grow(payout.getCount());
+            items.setStackInSlot(SLOT_REQUEST_OUTPUT, existing);
+        }
+    }
+
     private static boolean canMerge(ItemStack existing, ItemStack payout) {
         return !existing.isEmpty()
                 && ItemStack.isSameItemSameTags(existing, payout)
@@ -294,7 +307,7 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
                 worldPosition.getY(),
                 worldPosition.getZ() - 5.0D,
                 worldPosition.getX() + 6.0D,
-                worldPosition.getY() + 8.0D,
+                worldPosition.getY() + 9.0D,
                 worldPosition.getZ() + 6.0D);
     }
 

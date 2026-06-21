@@ -10,8 +10,6 @@ import com.hbm.ntm.fluid.HbmFluidNet;
 import com.hbm.ntm.fluid.HbmFluidNode;
 import com.hbm.ntm.fluid.HbmFluidNodeHost;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
-import com.hbm.ntm.fluid.HbmFluidReceiver;
-import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -23,7 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.Set;
 
 public class FluidDuctExhaustBlockEntity extends BlockEntity implements HbmFluidConnector, HbmFluidNodeHost,
-        HbmFluidReceiver, LegacyLookOverlayProvider {
+        LegacyLookOverlayProvider {
     private final HbmFluidNode[] nodes = new HbmFluidNode[SmokeExhaustPollution.SMOKES.length];
 
     public FluidDuctExhaustBlockEntity(BlockPos pos, BlockState state) {
@@ -33,7 +31,6 @@ public class FluidDuctExhaustBlockEntity extends BlockEntity implements HbmFluid
     public static void serverTick(Level level, BlockPos pos, BlockState state, FluidDuctExhaustBlockEntity exhaust) {
         if (!level.isClientSide) {
             exhaust.ensureFluidNodes();
-            exhaust.refreshSubscriptions();
         }
     }
 
@@ -90,37 +87,9 @@ public class FluidDuctExhaustBlockEntity extends BlockEntity implements HbmFluid
     }
 
     @Override
-    public List<HbmFluidTank> getAllTanks() {
-        return List.of();
-    }
-
-    @Override
-    public long transferFluid(FluidType type, int pressure, long amount) {
-        if (!SmokeExhaustPollution.isSmoke(type) || amount <= 0L) {
-            return amount;
-        }
-        SmokeExhaustPollution.pollute(level, worldPosition, type, amount);
-        return 0L;
-    }
-
-    @Override
-    public long getDemand(FluidType type, int pressure) {
-        return SmokeExhaustPollution.isSmoke(type) ? 1_000_000L : 0L;
-    }
-
-    @Override
     public void onLoad() {
         super.onLoad();
         refreshFluidNode();
-    }
-
-    private void refreshSubscriptions() {
-        for (FluidType type : SmokeExhaustPollution.SMOKES) {
-            HbmFluidNet fluidNet = getFluidNet(type);
-            if (fluidNet != null && fluidNet.isValid()) {
-                fluidNet.addReceiver(this);
-            }
-        }
     }
 
     private void ensureFluidNodes() {

@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -34,6 +35,8 @@ public class LegacyPrimedExplosiveEntity extends Entity {
     private boolean detonateOnCollision;
     @Nullable
     private Block bombBlock;
+    @Nullable
+    private LivingEntity tntPlacedBy;
 
     public LegacyPrimedExplosiveEntity(EntityType<? extends LegacyPrimedExplosiveEntity> type, Level level) {
         super(type, level);
@@ -46,16 +49,27 @@ public class LegacyPrimedExplosiveEntity extends Entity {
 
     public static LegacyPrimedExplosiveEntity create(Level level, double x, double y, double z, Block bombBlock,
             int fuseWindow, boolean detonateOnCollision) {
+        return create(level, x, y, z, bombBlock, fuseWindow, detonateOnCollision, null);
+    }
+
+    public static LegacyPrimedExplosiveEntity create(Level level, double x, double y, double z, Block bombBlock,
+            int fuseWindow, boolean detonateOnCollision, @Nullable LivingEntity owner) {
         int fuse = fuseWindow <= 0 ? 0 : level.random.nextInt(fuseWindow) + fuseWindow / 2;
-        return createFixedFuse(level, x, y, z, bombBlock, fuse, detonateOnCollision);
+        return createFixedFuse(level, x, y, z, bombBlock, fuse, detonateOnCollision, owner);
     }
 
     public static LegacyPrimedExplosiveEntity createFixedFuse(Level level, double x, double y, double z, Block bombBlock,
             int fuse, boolean detonateOnCollision) {
+        return createFixedFuse(level, x, y, z, bombBlock, fuse, detonateOnCollision, null);
+    }
+
+    public static LegacyPrimedExplosiveEntity createFixedFuse(Level level, double x, double y, double z, Block bombBlock,
+            int fuse, boolean detonateOnCollision, @Nullable LivingEntity owner) {
         LegacyPrimedExplosiveEntity entity = new LegacyPrimedExplosiveEntity(level);
         entity.bombBlock = bombBlock;
         entity.fuse = Math.max(0, fuse);
         entity.detonateOnCollision = detonateOnCollision;
+        entity.tntPlacedBy = owner;
         entity.entityData.set(BLOCK_STATE_ID, Block.getId(bombBlock.defaultBlockState()));
         entity.entityData.set(FUSE, entity.fuse);
         entity.setPos(x, y, z);
@@ -101,9 +115,24 @@ public class LegacyPrimedExplosiveEntity extends Entity {
         return state == null ? Blocks.TNT.defaultBlockState() : state;
     }
 
+    @Nullable
+    public Block getBlock() {
+        return bombBlock;
+    }
+
+    @Nullable
+    public ChainExplodable getBomb() {
+        return bombBlock instanceof ChainExplodable chainExplodable ? chainExplodable : null;
+    }
+
+    @Nullable
+    public LivingEntity getTntPlacedBy() {
+        return tntPlacedBy;
+    }
+
     private void explode() {
-        Block block = bombBlock;
-        if (block instanceof ChainExplodable chainExplodable) {
+        ChainExplodable chainExplodable = getBomb();
+        if (chainExplodable != null) {
             chainExplodable.explodeEntity(level(), position(), this);
         }
     }

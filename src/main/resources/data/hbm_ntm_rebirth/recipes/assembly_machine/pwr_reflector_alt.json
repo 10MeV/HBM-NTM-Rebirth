@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:cast_plates/steel"
+      },
+      "legacy_ore": "plateCastSteel"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:plates/weapon_steel"
+      },
+      "legacy_ore": "plateWeaponSteel"
+    }
+  ],
+  "internal_name": "ass.pwrreflectoralt",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:pwr_reflector"
+    }
+  ],
+  "pools": [],
+  "power": 500,
+  "source_order": 170
+}

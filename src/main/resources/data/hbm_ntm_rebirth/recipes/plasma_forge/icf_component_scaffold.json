@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 800,
+  "ignitionTemp": 1000000,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 4, "ingredient": { "tag": "forge:welded_plates/steel" }, "legacy_ore": "plateWeldedSteel" },
+    { "count": 2, "ingredient": { "tag": "forge:welded_plates/titanium" }, "legacy_ore": "plateWeldedTitanium" }
+  ],
+  "internal_name": "plsm.icfscaffold",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:icf_component_scaffold" }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 126
+}

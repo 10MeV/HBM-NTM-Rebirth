@@ -25,6 +25,10 @@ public class FluidNode extends HbmFluidNode {
         super(positions(positions), type, connections(connections));
     }
 
+    public FluidNode(FluidType type, BlockPos position, Set<Direction> connections) {
+        this(type, positions(position), connections);
+    }
+
     public FluidNode setConnections(Direction... connections) {
         return new FluidNode(getFluidType(), getPositions(), directions(connections));
     }

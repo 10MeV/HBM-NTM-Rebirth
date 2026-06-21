@@ -18,6 +18,7 @@ import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.fuel.LegacyBurnTimeModule;
 import com.hbm.ntm.menu.WoodBurnerMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
+import com.hbm.ntm.recipe.WoodBurnerRecipeRuntime;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -69,9 +70,7 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final int TANK_CAPACITY = 16_000;
     private static final int ASH_THRESHOLD = 2_000;
     private static final long MAX_POWER = 100_000L;
-    private static final LegacyBurnTimeModule BURN_MODULE = new LegacyBurnTimeModule()
-            .setLogTimeMod(4)
-            .setWoodTimeMod(2);
+    private static final LegacyBurnTimeModule BURN_MODULE = WoodBurnerRecipeRuntime.burnModule();
 
     private final HbmFluidTank tank;
     private final MachinePollutionBuffers pollution = new MachinePollutionBuffers(50);
@@ -460,36 +459,40 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
     private final class AccessibleItemHandler implements IItemHandler {
         @Override
         public int getSlots() {
-            return SLOT_COUNT;
+            return 2;
         }
 
         @Override
         public @NotNull ItemStack getStackInSlot(int slot) {
-            return slot >= 0 && slot < SLOT_COUNT ? items.getStackInSlot(slot) : ItemStack.EMPTY;
-        }
-
-        @Override
-        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
             return switch (slot) {
-                case SLOT_FUEL, SLOT_IDENTIFIER, SLOT_FLUID_INPUT, SLOT_BATTERY ->
-                        items.insertItem(slot, stack, simulate);
-                default -> stack;
+                case 0 -> items.getStackInSlot(SLOT_FUEL);
+                case 1 -> items.getStackInSlot(SLOT_ASH);
+                default -> ItemStack.EMPTY;
             };
         }
 
         @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return slot == 0 ? items.insertItem(SLOT_FUEL, stack, simulate) : stack;
+        }
+
+        @Override
         public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            return slot == SLOT_ASH ? items.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
+            return slot == 1 ? items.extractItem(SLOT_ASH, amount, simulate) : ItemStack.EMPTY;
         }
 
         @Override
         public int getSlotLimit(int slot) {
-            return slot >= 0 && slot < SLOT_COUNT ? items.getSlotLimit(slot) : 0;
+            return switch (slot) {
+                case 0 -> items.getSlotLimit(SLOT_FUEL);
+                case 1 -> items.getSlotLimit(SLOT_ASH);
+                default -> 0;
+            };
         }
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot >= 0 && slot < SLOT_COUNT && items.isItemValid(slot, stack);
+            return slot == 0 && items.isItemValid(SLOT_FUEL, stack);
         }
     }
 

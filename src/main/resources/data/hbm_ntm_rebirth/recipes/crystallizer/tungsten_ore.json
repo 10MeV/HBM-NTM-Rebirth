@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 600,
+  "fluid": { "fluid": "SULFURIC_ACID", "amount": 500 },
+  "input": { "ingredient": { "tag": "forge:ores/tungsten" }, "legacy_ore": "oreTungsten" },
+  "output": { "item": "hbm_ntm_rebirth:crystal_tungsten" },
+  "productivity": 0.05
+}

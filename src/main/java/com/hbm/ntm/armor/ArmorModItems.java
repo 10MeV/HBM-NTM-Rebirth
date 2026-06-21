@@ -1652,21 +1652,15 @@ public final class ArmorModItems {
     }
 
     public static class Charm extends ArmorModItem {
-        private final boolean meteor;
 
-        public Charm(Item.Properties properties, boolean meteor) {
+        public Charm(Item.Properties properties) {
             super(properties, ArmorModHandler.ArmorModSlot.HELMET_ONLY, true, true, false, false);
-            this.meteor = meteor;
         }
 
         @Override
         public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.literal("You feel blessed.").withStyle(ChatFormatting.AQUA));
-            if (meteor) {
-                tooltip.add(Component.literal("Negates broadcaster damage").withStyle(ChatFormatting.AQUA));
-            } else {
-                tooltip.add(Component.literal("Halves broadcaster damage").withStyle(ChatFormatting.AQUA));
-            }
+            tooltip.add(Component.literal("Halves broadcaster damage").withStyle(ChatFormatting.AQUA));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
         }
@@ -1682,7 +1676,7 @@ public final class ArmorModItems {
             if (!event.getSource().is(ModDamageSources.BROADCAST)) {
                 return;
             }
-            event.setAmount(meteor ? 0.0F : event.getAmount() * 0.5F);
+            event.setAmount(event.getAmount() * 0.5F);
         }
     }
 

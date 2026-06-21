@@ -3,7 +3,9 @@ package com.hbm.ntm.client.particle;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.GameRenderer;
@@ -61,6 +63,7 @@ public final class HbmDeferredParticleRenderer {
             "hbm_deferred_particle_sheet_additive_no_depth_write", TextureAtlas.LOCATION_PARTICLES,
             ADDITIVE_TRANSPARENCY, false);
     private static final Map<ResourceLocation, RenderType> TEXTURED_DEPTH_WRITE = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, RenderType> TEXTURED_NO_DEPTH_WRITE = new ConcurrentHashMap<>();
     private static final Map<ResourceLocation, RenderType> TEXTURED_ADDITIVE_NO_DEPTH_WRITE = new ConcurrentHashMap<>();
     private static final List<Entry> QUEUE = new ArrayList<>();
     private static final Set<DeferredParticle> SEEN =
@@ -85,17 +88,21 @@ public final class HbmDeferredParticleRenderer {
         QUEUE.clear();
         SEEN.clear();
 
-        entries.sort(Comparator.comparingDouble((Entry entry) -> entry.distanceToCameraSqr).reversed());
-        for (Entry entry : entries) {
-            entry.particle.renderDeferred(buffer, camera, partialTick);
-        }
-        buffer.endBatch(PARTICLE_SHEET_DEPTH_WRITE);
-        buffer.endBatch(PARTICLE_SHEET_ADDITIVE_NO_DEPTH_WRITE);
-        for (RenderType renderType : TEXTURED_DEPTH_WRITE.values()) {
-            buffer.endBatch(renderType);
-        }
-        for (RenderType renderType : TEXTURED_ADDITIVE_NO_DEPTH_WRITE.values()) {
-            buffer.endBatch(renderType);
+        PoseStack modelView = RenderSystem.getModelViewStack();
+        modelView.pushPose();
+        modelView.setIdentity();
+        modelView.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
+        modelView.mulPose(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
+        RenderSystem.applyModelViewMatrix();
+        try {
+            entries.sort(Comparator.comparingDouble((Entry entry) -> entry.distanceToCameraSqr).reversed());
+            for (Entry entry : entries) {
+                entry.particle.renderDeferred(buffer, camera, partialTick);
+            }
+            endDeferredBatches(buffer);
+        } finally {
+            modelView.popPose();
+            RenderSystem.applyModelViewMatrix();
         }
     }
 
@@ -107,6 +114,12 @@ public final class HbmDeferredParticleRenderer {
         return TEXTURED_DEPTH_WRITE.computeIfAbsent(texture,
                 key -> createRenderType("hbm_deferred_particle_depth_write_" + sanitize(key), key,
                         NORMAL_ALPHA_TRANSPARENCY, true));
+    }
+
+    public static RenderType texturedNoDepthWrite(ResourceLocation texture) {
+        return TEXTURED_NO_DEPTH_WRITE.computeIfAbsent(texture,
+                key -> createRenderType("hbm_deferred_particle_no_depth_write_" + sanitize(key), key,
+                        NORMAL_ALPHA_TRANSPARENCY, false));
     }
 
     public static RenderType particleSheetAdditiveNoDepthWrite() {
@@ -122,6 +135,20 @@ public final class HbmDeferredParticleRenderer {
     public static void clear() {
         QUEUE.clear();
         SEEN.clear();
+    }
+
+    private static void endDeferredBatches(MultiBufferSource.BufferSource buffer) {
+        buffer.endBatch(PARTICLE_SHEET_DEPTH_WRITE);
+        buffer.endBatch(PARTICLE_SHEET_ADDITIVE_NO_DEPTH_WRITE);
+        for (RenderType renderType : TEXTURED_DEPTH_WRITE.values()) {
+            buffer.endBatch(renderType);
+        }
+        for (RenderType renderType : TEXTURED_NO_DEPTH_WRITE.values()) {
+            buffer.endBatch(renderType);
+        }
+        for (RenderType renderType : TEXTURED_ADDITIVE_NO_DEPTH_WRITE.values()) {
+            buffer.endBatch(renderType);
+        }
     }
 
     private static RenderType createRenderType(String name, ResourceLocation texture,

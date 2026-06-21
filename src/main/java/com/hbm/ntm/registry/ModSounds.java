@@ -166,7 +166,6 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> ENTITY_BOMBER_SMALL_LOOP = register("entity.bomber_small_loop");
     public static final RegistryObject<SoundEvent> ENTITY_PLANE_CRASH = register("entity.plane_crash");
     public static final RegistryObject<SoundEvent> ENTITY_PLANE_SHOT_DOWN = register("entity.plane_shot_down");
-    public static final RegistryObject<SoundEvent> ENTITY_METEORITE_FALLING_LOOP = register("entity.meteorite_falling_loop");
     public static final RegistryObject<SoundEvent> TURRET_CHEKHOV_FIRE = register("turret.chekhov_fire");
     public static final RegistryObject<SoundEvent> TURRET_JEREMY_FIRE = register("turret.jeremy_fire");
     public static final RegistryObject<SoundEvent> TURRET_JEREMY_RELOAD = register("turret.jeremy_reload");

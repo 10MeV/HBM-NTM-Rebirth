@@ -114,12 +114,10 @@ public class LegacySubstationBlock extends LegacyXrMultiblockBlock implements En
     }
 
     private static List<BlockPos> substationExtraOffsets(Direction facing) {
-        int ox = facing.getStepX();
-        int oz = facing.getStepZ();
         return List.of(
-                new BlockPos(ox + 1, 0, oz + 1),
-                new BlockPos(ox + 1, 0, oz - 1),
-                new BlockPos(ox - 1, 0, oz + 1),
-                new BlockPos(ox - 1, 0, oz - 1));
+                new BlockPos(1, 0, 1),
+                new BlockPos(1, 0, -1),
+                new BlockPos(-1, 0, 1),
+                new BlockPos(-1, 0, -1));
     }
 }

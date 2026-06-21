@@ -9,6 +9,7 @@ import com.hbm.ntm.blockentity.RadioTorchDeviceBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchLogicBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchReaderBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchReceiverBlockEntity;
+import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjRenderContext;
@@ -22,9 +23,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEntity> {
-    private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(
-            new ResourceLocation(HbmNtm.MOD_ID, "models/block/network/rtty.obj"),
-            textureFile("rtty_sender_off")).noSmooth().asVBO();
+    private static final LegacyWavefrontModel MODEL = ObjBlockModels.RTTY.asVBO();
 
     private static final ResourceLocation SENDER_OFF = blockSprite("rtty_sender_off");
     private static final ResourceLocation SENDER_ON = blockSprite("rtty_sender_on");
@@ -46,7 +45,7 @@ public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEn
         Direction facing = state.hasProperty(RadioTorchBlock.FACING)
                 ? state.getValue(RadioTorchBlock.FACING)
                 : Direction.UP;
-        int light = LegacyRenderLighting.resolveBlockEntityLight(torch, packedLight);
+        int light = LegacyRenderLighting.resolveMultiblockLight(torch, packedLight);
         TextureAtlasSprite sprite = LegacyTexturedQuadRenderer.blockSprite(textureFor(torch));
 
         poseStack.pushPose();
@@ -98,10 +97,6 @@ public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEn
 
     private static ResourceLocation blockSprite(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "block/" + name);
-    }
-
-    private static ResourceLocation textureFile(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/" + name + ".png");
     }
 
     private record Rotation(float yaw, float pitch) {

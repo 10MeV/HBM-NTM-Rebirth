@@ -2,6 +2,7 @@
     "render_type":  "minecraft:cutout",
     "loader":  "forge:obj",
     "flip_v":  true,
+  "automatic_culling": false,
     "model":  "hbm_ntm_rebirth:models/block/trinkets/bobble_vaultboy_17.obj",
     "textures":  {
                      "default":  "hbm_ntm_rebirth:block/trinkets/vaultboy",

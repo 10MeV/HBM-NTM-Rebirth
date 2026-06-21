@@ -1,0 +1,52 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.teleporter",
+  "duration": 100,
+  "power": 100,
+  "input_items": [
+    {
+      "ingredient": {
+        "tag": "forge:plates/titanium"
+      },
+      "count": 12,
+      "legacy_ore": "plateTitanium"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:plates/dura_steel"
+      },
+      "count": 12,
+      "legacy_ore": "plateDuraSteel"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:wires/gold"
+      },
+      "count": 32,
+      "legacy_ore": "wireFineGold"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:entanglement_kit"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:battery_lithium"
+      },
+      "count": 1,
+      "legacy_id": "hbm:battery_pack",
+      "legacy_meta": 2
+    }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_teleporter"
+    }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 119
+}

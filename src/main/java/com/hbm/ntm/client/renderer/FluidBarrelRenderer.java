@@ -36,7 +36,7 @@ public class FluidBarrelRenderer implements BlockEntityRenderer<FluidBarrelBlock
         }
 
         BlockState state = barrel.getBlockState();
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(barrel, packedLight);
+        int modelLight = LegacyRenderLighting.resolveMultiblockLight(barrel, packedLight);
         ResourceLocation barrelTexture = barrelTexture(barrel.getVariant());
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
 

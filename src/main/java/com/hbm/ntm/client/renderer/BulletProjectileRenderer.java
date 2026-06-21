@@ -20,6 +20,7 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjEffectModels;
+import com.hbm.ntm.client.obj.ObjNetworkModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.item.ChargeThrowerItem;
@@ -66,8 +67,6 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             new ResourceLocation(HbmNtm.MOD_ID, "models/weapons/charge_thrower.obj");
     private static final ResourceLocation LEADBURSTER_MODEL =
             new ResourceLocation(HbmNtm.MOD_ID, "models/projectiles/leadburster.obj");
-    private static final ResourceLocation METEOR_MODEL =
-            new ResourceLocation(HbmNtm.MOD_ID, "models/weapons/meteor.obj");
     private static final ResourceLocation BULLET_RIFLE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/models/projectiles/bullet_rifle.png");
     private static final ResourceLocation TAU_TEXTURE =
@@ -104,14 +103,9 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             new ResourceLocation(HbmNtm.MOD_ID, "textures/models/projectiles/leadburster.png");
     private static final ResourceLocation TOM_FLAME =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/models/weapons/tom_flame.png");
-    private static final ResourceLocation METEOR_MOLTEN =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/block_meteor_molten.png");
-    private static final ResourceLocation OBSIDIAN =
-            new ResourceLocation("minecraft", "textures/block/obsidian.png");
     private static final ResourceLocation FLARE_TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/flare.png");
-    private static final ResourceLocation WIRE_GREYSCALE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/network/wire_greyscale.png");
+    private static final ResourceLocation WIRE_GREYSCALE = ObjNetworkModels.texture("wire_greyscale");
     private static final ResourceLocation BLADE_TITANIUM =
             new ResourceLocation(HbmNtm.MOD_ID, "blade_titanium");
     private static final LegacyWavefrontModel PROJECTILES =
@@ -124,8 +118,6 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             new LegacyWavefrontModel(CHARGE_THROWER_MODEL, CHARGE_THROWER_HOOK).asVBO();
     private static final LegacyWavefrontModel LEADBURSTER =
             new LegacyWavefrontModel(LEADBURSTER_MODEL, LEADBURSTER_TEXTURE).asVBO();
-    private static final LegacyWavefrontModel METEOR =
-            new LegacyWavefrontModel(METEOR_MODEL, METEOR_MOLTEN).asVBO();
     private static final RenderType FLARE_RENDER_TYPE =
             LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE.renderType(FLARE_TEXTURE);
     private final ModelPart bulletCube;
@@ -209,7 +201,6 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             }
             case GRENADE -> renderProjectilePart("Grenade", GRENADE, 0.25F, poseStack, buffer, packedLight);
             case ORB -> renderOrb(trail, entity, partialTick, poseStack, buffer);
-            case METEOR -> renderMeteor(trail, poseStack, buffer);
             case APDS -> renderProjectilePart("Flechette", FLECHETTE, 2.0F, poseStack, buffer, packedLight);
             case BLADE -> renderBlade(entity, partialTick, poseStack, buffer, packedLight);
             case LEADBURSTER -> renderLeadburster(entity, partialTick, poseStack, buffer, packedLight);
@@ -782,11 +773,6 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         vertex(consumer, pose, (float) pastX, (float) (pastY + yOffset), (float) pastZ,
                 red, green, blue, pastAlpha * outerAlpha);
         vertex(consumer, pose, (float) pastX, (float) pastY, (float) pastZ, red, green, blue, pastAlpha);
-    }
-
-    private static void renderMeteor(int trail, PoseStack poseStack, MultiBufferSource buffer) {
-        ResourceLocation texture = trail == 1 ? OBSIDIAN : METEOR_MOLTEN;
-        METEOR.renderAll(texture, poseStack, buffer, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
     }
 
     private static void renderBlade(BulletProjectileEntity entity, float partialTick, PoseStack poseStack,

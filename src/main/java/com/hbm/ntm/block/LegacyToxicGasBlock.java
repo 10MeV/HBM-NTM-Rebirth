@@ -1,5 +1,6 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ArmorUtil;
@@ -21,7 +22,7 @@ public class LegacyToxicGasBlock extends LegacyGasBlock {
     private final Kind kind;
 
     public LegacyToxicGasBlock(Properties properties, Kind kind) {
-        super(properties);
+        super(properties, kind.red, kind.green, kind.blue);
         this.kind = kind;
     }
 
@@ -33,15 +34,15 @@ public class LegacyToxicGasBlock extends LegacyGasBlock {
         }
 
         switch (kind) {
-            case ASBESTOS -> RadiationUtil.applyAsbestos(living, 1, 0);
-            case COAL -> RadiationUtil.applyCoalDust(living, 10, 0, 1);
+            case ASBESTOS -> RadiationUtil.applyAsbestosGasExposure(living, 1);
+            case COAL -> RadiationUtil.applyCoalGasExposure(living, 10);
             case MONOXIDE -> {
-                if (!ArmorUtil.hasMonoxideGasProtectionAndDamageFilter(living, 1)) {
+                if (!ArmorUtil.hasProtectionAndDamageFilter(living, 3, HazardClass.GAS_MONOXIDE, 1)) {
                     EntityDamageUtil.attackEntityFromNt(living, ModDamageSources.monoxide(level), 1.0F);
                 }
             }
             case CHLORINE -> {
-                if (!ArmorUtil.hasLungGasProtectionAndDamageFilter(living, 1)) {
+                if (!ArmorUtil.hasAllProtectionAndDamageFilter(living, 3, 1, HazardClass.GAS_LUNG)) {
                     living.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 5 * 20, 0));
                     living.addEffect(new MobEffectInstance(MobEffects.POISON, 20 * 20, 2));
                     living.addEffect(new MobEffectInstance(MobEffects.WITHER, 1 * 20, 1));
@@ -94,10 +95,20 @@ public class LegacyToxicGasBlock extends LegacyGasBlock {
     }
 
     public enum Kind {
-        ASBESTOS,
-        COAL,
-        MONOXIDE,
-        CHLORINE
+        ASBESTOS(0.6F, 0.6F, 0.5F),
+        COAL(0.2F, 0.2F, 0.2F),
+        MONOXIDE(0.1F, 0.1F, 0.1F),
+        CHLORINE(0.7F, 0.8F, 0.6F);
+
+        private final float red;
+        private final float green;
+        private final float blue;
+
+        Kind(float red, float green, float blue) {
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+        }
     }
 }
 

@@ -1,9 +1,13 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.neutron.PileGraphiteBlockPlanner;
 import com.hbm.ntm.neutron.PileGraphiteInsertionPlanner;
+import com.hbm.ntm.neutron.PileGraphiteMetadata;
 import com.hbm.ntm.neutron.PileGraphiteTogglePlanner;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -44,6 +48,13 @@ public class PileGraphiteRodBlock extends PileGraphiteDrilledBaseBlock {
                         Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
             }
         }
+        LegacySoundPlayer.playSoundEffect(
+                level,
+                pos,
+                PileGraphiteBlockPlanner.LEGACY_RANDOM_CLICK_SOUND,
+                SoundSource.BLOCKS,
+                0.3F,
+                PileGraphiteMetadata.isActive(legacyMeta(state)) ? 0.65F : 0.75F);
         return InteractionResult.CONSUME;
     }
 }

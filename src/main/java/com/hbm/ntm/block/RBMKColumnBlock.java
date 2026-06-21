@@ -10,13 +10,16 @@ import com.hbm.ntm.multiblock.MultiblockCoreBlock;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.neutron.NeutronNode;
 import com.hbm.ntm.neutron.NeutronNodeWorld;
+import com.hbm.ntm.neutron.RBMKBaseRuntimePlanner;
 import com.hbm.ntm.neutron.RBMKNeutronHandler;
+import com.hbm.ntm.neutron.RBMKStructureDimensions;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.ChatFormatting;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,6 +44,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -54,9 +58,6 @@ import java.util.List;
 
 public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, MultiblockCoreBlock, LegacyMultiblockPlaceable {
     public static final EnumProperty<LidType> LID = EnumProperty.create("lid", LidType.class);
-
-    private static final VoxelShape NO_LID_SHAPE = Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
-    private static final VoxelShape LID_SHAPE = Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, 1.25D, 1.0D);
 
     private final Kind kind;
 
@@ -120,6 +121,14 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
         fillColumnLayout(level, pos, state);
     }
 
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (!oldState.is(state.getBlock())) {
+            fillColumnLayout(level, pos, state);
+        }
+    }
+
     @Nullable
     @Override
     public LegacyMultiblockLayout getMultiblockLayout(BlockState state, BlockGetter level, BlockPos corePos) {
@@ -128,25 +137,109 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return state.getValue(LID).hasLid() ? LID_SHAPE : NO_LID_SHAPE;
+        return localColumnSegmentShape(state, BlockPos.ZERO);
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
+            CollisionContext context) {
+        return localColumnCollisionShape(state, BlockPos.ZERO);
+    }
+
+    @Override
+    public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+        return Shapes.empty();
+    }
+
+    @Override
+    public VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return Shapes.empty();
+    }
+
+    @Override
+    public boolean useShapeForLightOcclusion(BlockState state) {
+        return false;
+    }
+
+    @Override
+    public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
+        return false;
+    }
+
+    @Override
+    public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos,
+            CollisionContext context) {
+        VoxelShape shape = Shapes.empty();
+        int heightAbove = columnHeightAbove();
+        for (int y = 0; y <= heightAbove; y++) {
+            double segmentHeight = y == heightAbove && state.getValue(LID).hasLid() ? 1.25D : 1.0D;
+            shape = Shapes.or(shape, Shapes.box(0.0D, y, 0.0D, 1.0D, y + segmentHeight, 1.0D));
+        }
+        return shape.optimize();
+    }
+
+    @Override
+    public boolean usesForwardedDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    @Override
+    public boolean usesForwardedDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    @Override
+    public boolean usesLocalDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return true;
+    }
+
+    @Override
+    public boolean usesLocalDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return true;
+    }
+
+    @Override
+    public boolean usesMultiblockHighlightShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    @Override
+    public boolean requiresCompleteOperationalLayout(BlockState state, BlockGetter level, BlockPos corePos) {
+        return true;
+    }
+
+    @Override
+    public VoxelShape getMultiblockDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
+            BlockPos dummyPos, CollisionContext context) {
+        return localColumnSegmentShape(state, dummyPos.subtract(corePos));
+    }
+
+    @Override
+    public VoxelShape getMultiblockDummyShape(BlockState state, BlockGetter level, BlockPos corePos,
+            BlockPos dummyPos, CollisionContext context) {
+        return localColumnSegmentShape(state, dummyPos.subtract(corePos));
     }
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        CoreColumnLookup core = resolveOperationalColumn(level, pos);
+        if (core == null) {
+            return InteractionResult.PASS;
+        }
         ItemStack held = player.getItemInHand(hand);
-        if (kind.rod() && held.getItem() instanceof RBMKFuelRodItem) {
-            BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (!(blockEntity instanceof RBMKColumnBlockEntity column) || column.hasFuelRod()) {
+        Kind coreKind = core.block().kind();
+        if (coreKind.rod() && held.getItem() instanceof RBMKFuelRodItem) {
+            if (core.entity().hasFuelRod()) {
                 return InteractionResult.PASS;
             }
-            if (!level.isClientSide && column.loadFuelRod(held)) {
-                LegacySoundPlayer.playLegacyUpgradePlug(level, pos, SoundSource.BLOCKS, 1.0F, 1.0F);
+            if (!level.isClientSide && core.entity().loadFuelRod(held)) {
+                LegacySoundPlayer.playLegacyUpgradePlug(level, core.pos(), SoundSource.BLOCKS, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     held.shrink(1);
                 }
@@ -155,35 +248,72 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
         }
 
         LidType lid = lidForStack(held);
-        if (kind.storage() && lid == LidType.NONE) {
-            if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                    && level.getBlockEntity(pos) instanceof RBMKColumnBlockEntity column) {
+        if (coreKind.storage() && lid == LidType.NONE) {
+            if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
                 NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
                         (containerId, inventory, opener) ->
-                                new com.hbm.ntm.menu.RBMKStorageMenu(containerId, inventory, column),
-                        Component.translatable("container.rbmkStorage")), pos);
+                                new com.hbm.ntm.menu.RBMKStorageMenu(containerId, inventory, core.entity()),
+                        Component.translatable("container.rbmkStorage")), core.pos());
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
-        if (kind == Kind.OUTGASSER && lid == LidType.NONE) {
-            if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                    && level.getBlockEntity(pos) instanceof RBMKColumnBlockEntity column) {
+        if (coreKind.rod() && lid == LidType.NONE) {
+            if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+                String key = coreKind.reasim() ? "container.rbmkReaSim" : "container.rbmkRod";
                 NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
                         (containerId, inventory, opener) ->
-                                new com.hbm.ntm.menu.RBMKOutgasserMenu(containerId, inventory, column),
-                        Component.translatable("container.rbmkOutgasser")), pos);
+                                new com.hbm.ntm.menu.RBMKRodMenu(containerId, inventory, core.entity()),
+                        Component.translatable(key)), core.pos());
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (coreKind.control() && lid == LidType.NONE) {
+            if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+                String key = coreKind.automatic() ? "container.rbmkControlAuto" : "container.rbmkControl";
+                NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
+                        (containerId, inventory, opener) -> coreKind.automatic()
+                                ? new com.hbm.ntm.menu.RBMKControlAutoMenu(containerId, inventory, core.entity())
+                                : new com.hbm.ntm.menu.RBMKControlMenu(containerId, inventory, core.entity()),
+                        Component.translatable(key)), core.pos());
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (coreKind == Kind.HEATER && lid == LidType.NONE) {
+            if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+                NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
+                        (containerId, inventory, opener) ->
+                                new com.hbm.ntm.menu.RBMKHeaterMenu(containerId, inventory, core.entity()),
+                        Component.translatable("container.rbmkHeater")), core.pos());
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (coreKind == Kind.BOILER && lid == LidType.NONE) {
+            if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+                NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
+                        (containerId, inventory, opener) ->
+                                new com.hbm.ntm.menu.RBMKBoilerMenu(containerId, inventory, core.entity()),
+                        Component.translatable("container.rbmkBoiler")), core.pos());
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (coreKind == Kind.OUTGASSER && lid == LidType.NONE) {
+            if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+                NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
+                        (containerId, inventory, opener) ->
+                                new com.hbm.ntm.menu.RBMKOutgasserMenu(containerId, inventory, core.entity()),
+                        Component.translatable("container.rbmkOutgasser")), core.pos());
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         if (lid == LidType.NONE) {
             return InteractionResult.PASS;
         }
-        if (state.getValue(LID).hasLid()) {
+        if (core.state().getValue(LID).hasLid()) {
             return InteractionResult.PASS;
         }
         if (!level.isClientSide) {
-            setLid(level, pos, state, lid);
-            level.playSound(null, pos, lid == LidType.GLASS ? SoundType.GLASS.getPlaceSound()
+            setLid(level, core.pos(), core.state(), lid);
+            level.playSound(null, core.pos(), lid == LidType.GLASS ? SoundType.GLASS.getPlaceSound()
                     : SoundType.STONE.getPlaceSound(), SoundSource.BLOCKS, 1.0F, 0.8F);
             if (!player.getAbilities().instabuild) {
                 held.shrink(1);
@@ -194,6 +324,16 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
 
     @Override
     public boolean onToolUse(Level level, Player player, BlockPos pos, Direction side, Vec3 hit, ToolType tool) {
+        if (tool == ToolType.HAND_DRILL) {
+            CoreColumnLookup core = resolveOperationalColumn(level, pos);
+            if (core == null) {
+                return false;
+            }
+            if (!level.isClientSide) {
+                sendDiagnostics(player, core);
+            }
+            return true;
+        }
         if (tool != ToolType.SCREWDRIVER) {
             return false;
         }
@@ -202,6 +342,12 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
             return false;
         }
         BlockPos corePos = core.pos();
+        boolean operational = level.isClientSide
+                ? MultiblockHelper.isOperationalCoreLayoutComplete(level, corePos)
+                : MultiblockHelper.ensureOperationalCoreLayoutComplete(level, corePos);
+        if (!operational) {
+            return false;
+        }
         BlockState state = core.state();
         if (!(state.getBlock() instanceof RBMKColumnBlock) || !state.getValue(LID).hasLid()) {
             return false;
@@ -210,45 +356,44 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
             LidType lid = state.getValue(LID);
             setLid(level, corePos, state, LidType.NONE);
             ItemStack drop = new ItemStack(lid == LidType.GLASS ? ModItems.RBMK_LID_GLASS.get() : ModItems.RBMK_LID.get());
-            BlockPos dropPos = corePos.above(columnHeightAbove());
+            BlockPos dropPos = RBMKStructureDimensions.columnTop(corePos);
             HbmItemStackUtil.dropStack(level, dropPos, drop);
         }
         return true;
     }
 
+    private static void sendDiagnostics(Player player, CoreColumnLookup core) {
+        player.sendSystemMessage(Component.literal("RBMK COLUMN "
+                + core.pos().getX() + " " + core.pos().getY() + " " + core.pos().getZ())
+                .withStyle(ChatFormatting.GOLD));
+        player.sendSystemMessage(Component.literal("TYPE: " + core.block().kind().name())
+                .withStyle(ChatFormatting.YELLOW));
+        for (RBMKBaseRuntimePlanner.DiagnosticEntry entry :
+                RBMKBaseRuntimePlanner.diagnosticEntries(core.entity().diagnosticData())) {
+            player.sendSystemMessage(Component.literal(entry.key() + ": " + entry.legacyValue())
+                    .withStyle(ChatFormatting.YELLOW));
+        }
+    }
+
     @Override
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (!level.isClientSide && state.getValue(LID).hasLid() && !player.getAbilities().instabuild) {
-            LidType lid = state.getValue(LID);
-            popResource(level, pos, new ItemStack(lid == LidType.GLASS ? ModItems.RBMK_LID_GLASS.get() : ModItems.RBMK_LID.get()));
-        }
-        if (!level.isClientSide && state.getBlock() instanceof RBMKColumnBlock column && column.kind().rod()
-                && level.getBlockEntity(pos) instanceof RBMKColumnBlockEntity blockEntity) {
-            ItemStack rod = blockEntity.removeFuelRodForDrop();
-            if (!rod.isEmpty()) {
-                popResource(level, pos, rod);
-            }
-        }
-        if (!level.isClientSide && state.getBlock() instanceof RBMKColumnBlock column && column.kind().storage()
-                && level.getBlockEntity(pos) instanceof RBMKColumnBlockEntity blockEntity
-                && !player.getAbilities().instabuild) {
-            for (ItemStack stack : blockEntity.removeStorageForDrop()) {
-                if (!stack.isEmpty()) {
-                    popResource(level, pos, stack);
-                }
-            }
-        }
-        if (!level.isClientSide && state.getBlock() instanceof RBMKColumnBlock column
-                && column.kind() == Kind.OUTGASSER
-                && level.getBlockEntity(pos) instanceof RBMKColumnBlockEntity blockEntity
-                && !player.getAbilities().instabuild) {
-            for (ItemStack stack : blockEntity.removeOutgasserItemsForDrop()) {
-                if (!stack.isEmpty()) {
-                    popResource(level, pos, stack);
-                }
+        if (!level.isClientSide && !player.getAbilities().instabuild) {
+            CoreColumnLookup core = resolveOwnedColumn(level, pos);
+            if (core != null) {
+                dropCoreContents(level, core.pos(), core.state(), core.block(), core.entity());
             }
         }
         super.playerWillDestroy(level, pos, state, player);
+    }
+
+    @Override
+    public void beforeMultiblockDummyDestroysCore(Level level, BlockPos corePos, BlockState coreState,
+            BlockPos dummyPos, boolean drop) {
+        if (drop && !level.isClientSide
+                && coreState.getBlock() instanceof RBMKColumnBlock column
+                && level.getBlockEntity(corePos) instanceof RBMKColumnBlockEntity blockEntity) {
+            dropCoreContents(level, corePos, coreState, column, blockEntity);
+        }
     }
 
     @Override
@@ -268,19 +413,31 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
         }
         List<BlockPos> legacyExtraOffsets = heightAbove <= 0 ? List.of() : List.of(new BlockPos(0, heightAbove, 0));
         return LegacyMultiblockLayout.ofOffsets(offsets)
-                .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyMode())
+                .withProxyModes(offset -> proxyMode(offset, heightAbove))
                 .withLegacyExtraOffsets(legacyExtraOffsets);
     }
 
     private void fillColumnLayout(Level level, BlockPos corePos, BlockState state) {
         if (!level.isClientSide) {
-            MultiblockHelper.fillLayout(level, corePos, layoutForCurrentHeight(state));
+            LegacyMultiblockLayout layout = layoutForCurrentHeight(state);
+            boolean filled = MultiblockHelper.fillLayout(level, corePos, layout);
+            if (!filled || !MultiblockHelper.isLayoutComplete(level, corePos, layout)) {
+                level.destroyBlock(corePos, false);
+            }
         }
     }
 
-    private LegacyProxyMode proxyMode() {
+    private LegacyProxyMode proxyMode(BlockPos offset, int heightAbove) {
+        if (offset.equals(BlockPos.ZERO)) {
+            return LegacyProxyMode.none();
+        }
         if (kind.storage()) {
             return LegacyProxyMode.passive().withInventory(true);
+        }
+        boolean topExtra = heightAbove > 0 && offset.getX() == 0 && offset.getY() == heightAbove
+                && offset.getZ() == 0;
+        if (!topExtra) {
+            return LegacyProxyMode.none();
         }
         if (kind == Kind.BOILER || kind == Kind.HEATER || kind == Kind.COOLER) {
             return LegacyProxyMode.passive().withFluid(true);
@@ -298,7 +455,17 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
     }
 
     private static int columnHeightAbove() {
-        return Math.max(0, RBMKNeutronHandler.settings().columnHeight() - 1);
+        return RBMKStructureDimensions.columnHeightAboveCore();
+    }
+
+    private static VoxelShape localColumnCollisionShape(BlockState state, BlockPos offset) {
+        return localColumnSegmentShape(state, offset);
+    }
+
+    private static VoxelShape localColumnSegmentShape(BlockState state, BlockPos offset) {
+        boolean topSegment = offset.getX() == 0 && offset.getZ() == 0 && offset.getY() == columnHeightAbove();
+        double height = topSegment && state.hasProperty(LID) && state.getValue(LID).hasLid() ? 1.25D : 1.0D;
+        return Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, height, 1.0D);
     }
 
     private static LidType lidForStack(ItemStack stack) {
@@ -321,6 +488,68 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
                 rbmkNode.removeLid();
             }
         }
+    }
+
+    @Nullable
+    private static CoreColumnLookup resolveOperationalColumn(Level level, BlockPos pos) {
+        CoreColumnLookup core = resolveOwnedColumn(level, pos);
+        if (core == null) {
+            return null;
+        }
+        if (level.isClientSide) {
+            return MultiblockHelper.isOperationalCoreLayoutComplete(level, core.pos()) ? core : null;
+        }
+        return MultiblockHelper.ensureOperationalCoreLayoutComplete(level, core.pos()) ? core : null;
+    }
+
+    @Nullable
+    private static CoreColumnLookup resolveOwnedColumn(Level level, BlockPos pos) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core == null || !(core.state().getBlock() instanceof RBMKColumnBlock column)
+                || !(level.getBlockEntity(core.pos()) instanceof RBMKColumnBlockEntity blockEntity)) {
+            return null;
+        }
+        return new CoreColumnLookup(core.pos(), core.state(), column, blockEntity);
+    }
+
+    private static void dropCoreContents(Level level, BlockPos pos, BlockState state, RBMKColumnBlock column,
+            RBMKColumnBlockEntity blockEntity) {
+        if (state.getValue(LID).hasLid()) {
+            LidType lid = state.getValue(LID);
+            popResource(level, RBMKStructureDimensions.columnTop(pos),
+                    new ItemStack(lid == LidType.GLASS ? ModItems.RBMK_LID_GLASS.get() : ModItems.RBMK_LID.get()));
+        }
+        if (column.kind().rod()) {
+            ItemStack rod = blockEntity.removeFuelRodForDrop();
+            if (!rod.isEmpty()) {
+                popResource(level, pos, rod);
+            }
+        }
+        if (column.kind().storage()) {
+            for (ItemStack stack : blockEntity.removeStorageForDrop()) {
+                if (!stack.isEmpty()) {
+                    popResource(level, pos, stack);
+                }
+            }
+        }
+        if (column.kind() == Kind.OUTGASSER) {
+            for (ItemStack stack : blockEntity.removeOutgasserItemsForDrop()) {
+                if (!stack.isEmpty()) {
+                    popResource(level, pos, stack);
+                }
+            }
+        }
+        if (column.kind() == Kind.HEATER) {
+            for (ItemStack stack : blockEntity.removeHeaterItemsForDrop()) {
+                if (!stack.isEmpty()) {
+                    popResource(level, pos, stack);
+                }
+            }
+        }
+    }
+
+    private record CoreColumnLookup(BlockPos pos, BlockState state, RBMKColumnBlock block,
+                                    RBMKColumnBlockEntity entity) {
     }
 
     @Nullable

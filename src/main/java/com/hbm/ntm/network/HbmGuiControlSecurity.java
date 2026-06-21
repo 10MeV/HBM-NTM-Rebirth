@@ -1,6 +1,7 @@
 package com.hbm.ntm.network;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,26 +22,27 @@ public final class HbmGuiControlSecurity {
         if (player == null || pos == null) {
             return null;
         }
-        if (player.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) > DEFAULT_MAX_DISTANCE_SQ) {
-            HbmNtm.LOGGER.warn("Blocked remote {} from {} at {}: too far",
-                    packetName, player.getGameProfile().getName(), pos);
-            return null;
-        }
-        if (requiredMenu != null && !requiredMenu.isInstance(player.containerMenu)) {
-            HbmNtm.LOGGER.warn("Blocked remote {} from {} at {}: wrong menu {}",
-                    packetName, player.getGameProfile().getName(), pos,
-                    player.containerMenu == null ? "none" : player.containerMenu.getClass().getSimpleName());
-            return null;
-        }
-
         ServerLevel level = player.serverLevel();
         if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) {
             return null;
         }
-        BlockEntity blockEntity = level.getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
+        BlockPos receiverPos = blockEntity == null ? pos : blockEntity.getBlockPos();
+        if (player.distanceToSqr(receiverPos.getX() + 0.5D, receiverPos.getY() + 0.5D,
+                receiverPos.getZ() + 0.5D) > DEFAULT_MAX_DISTANCE_SQ) {
+            HbmNtm.LOGGER.warn("Blocked remote {} from {} at {} resolved to {}: too far",
+                    packetName, player.getGameProfile().getName(), pos, receiverPos);
+            return null;
+        }
+        if (requiredMenu != null && !requiredMenu.isInstance(player.containerMenu)) {
+            HbmNtm.LOGGER.warn("Blocked remote {} from {} at {} resolved to {}: wrong menu {}",
+                    packetName, player.getGameProfile().getName(), pos, receiverPos,
+                    player.containerMenu == null ? "none" : player.containerMenu.getClass().getSimpleName());
+            return null;
+        }
         if (!blockEntityType.isInstance(blockEntity)) {
-            HbmNtm.LOGGER.warn("Blocked remote {} from {} at {}: wrong block entity {}",
-                    packetName, player.getGameProfile().getName(), pos,
+            HbmNtm.LOGGER.warn("Blocked remote {} from {} at {} resolved to {}: wrong block entity {}",
+                    packetName, player.getGameProfile().getName(), pos, receiverPos,
                     blockEntity == null ? "none" : blockEntity.getClass().getSimpleName());
             return null;
         }

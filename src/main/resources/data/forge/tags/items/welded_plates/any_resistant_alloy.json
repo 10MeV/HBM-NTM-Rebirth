@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "hbm_ntm_rebirth:plate_welded_tcalloy",
+    "hbm_ntm_rebirth:plate_welded_cdalloy"
+  ]
+}

@@ -1,6 +1,3 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "hbm_ntm_rebirth:block/wood_barrier"
-  }
+  "parent": "hbm_ntm_rebirth:block/wood_barrier_east"
 }

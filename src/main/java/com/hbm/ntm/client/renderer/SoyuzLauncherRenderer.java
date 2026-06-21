@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.SoyuzLauncherBlockEntity;
 import com.hbm.ntm.client.obj.ObjLaunchModels;
 import com.hbm.ntm.client.obj.ObjSoyuzModels;
@@ -26,13 +27,17 @@ public class SoyuzLauncherRenderer implements BlockEntityRenderer<SoyuzLauncherB
     @Override
     public void render(SoyuzLauncherBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        int modelLight = blockEntity.getBlockState().getBlock() instanceof LegacyVisibleMultiblockMachineBlock machine
+                ? LegacyRenderLighting.resolveMachineLight(blockEntity, blockEntity.getBlockState(),
+                        machine.definition(), packedLight)
+                : LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, -4.0D, 0.5D);
-        renderLauncher(blockEntity.getTowerRotation(partialTick), poseStack, buffer, packedLight);
+        renderLauncher(blockEntity.getTowerRotation(partialTick), poseStack, buffer, modelLight);
         if (blockEntity.getRocketType() >= 0) {
             poseStack.translate(0.0D, 5.0D, 0.0D);
             ObjSoyuzModels.renderSoyuz(ObjSoyuzModels.textureSetForSkin(blockEntity.getRocketType()), poseStack, buffer,
-                    packedLight, OverlayTexture.NO_OVERLAY);
+                    modelLight, OverlayTexture.NO_OVERLAY);
         }
         poseStack.popPose();
     }

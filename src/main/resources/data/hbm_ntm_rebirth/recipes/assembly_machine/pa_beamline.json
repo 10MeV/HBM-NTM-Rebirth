@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:cast_plates/steel"
+      },
+      "legacy_ore": "plateCastSteel"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:plates/copper"
+      },
+      "legacy_ore": "plateCopper"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:dense_wires/gold"
+      },
+      "legacy_ore": "wireDenseGold"
+    }
+  ],
+  "internal_name": "ass.beamline",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:pa_beamline"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 148
+}

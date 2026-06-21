@@ -1,10 +1,10 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.VendingMachineBlock;
 import com.hbm.ntm.blockentity.VendingMachineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -15,10 +15,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class VendingMachineRenderer implements BlockEntityRenderer<VendingMachineBlockEntity> {
-    public static final ResourceLocation TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/vending_machine.png");
-    public static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(
-            new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/vending_machine.obj"), TEXTURE).noSmooth().asVBO();
+    public static final ResourceLocation TEXTURE = ObjMachineModels.VENDING_MACHINE_TEXTURE;
+    public static final LegacyWavefrontModel MODEL = ObjMachineModels.VENDING_MACHINE;
 
     public VendingMachineRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -37,7 +35,7 @@ public class VendingMachineRenderer implements BlockEntityRenderer<VendingMachin
     public void render(VendingMachineBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         render(blockEntity.getBlockState(), poseStack, buffer,
-                LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight), packedOverlay);
+                LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight), packedOverlay);
     }
 
     public static void render(BlockState state, PoseStack poseStack, MultiBufferSource buffer, int packedLight,

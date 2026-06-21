@@ -1,17 +1,16 @@
 package com.hbm.ntm.client.particle;
 
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public class LegacyAuraParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
+public class LegacyAuraParticle extends TextureSheetParticle {
+    private static final float LEGACY_QUAD_SIZE = 0.025F;
+    private static final double LEGACY_LIFETIME_BASE = 8.0D;
     private final SpriteSet sprites;
 
     private LegacyAuraParticle(ClientLevel level, double x, double y, double z,
@@ -20,14 +19,14 @@ public class LegacyAuraParticle extends TextureSheetParticle implements HbmDefer
         super(level, x, y, z, 0.0D, 0.0D, 0.0D);
         this.sprites = sprites;
         this.setSize(0.02F, 0.02F);
-        this.quadSize *= this.random.nextFloat() * 0.6F + 0.5F;
+        this.quadSize = LEGACY_QUAD_SIZE * (this.random.nextFloat() * 0.6F + 0.5F);
         this.xd *= 0.019999999552965164D;
         this.yd *= 0.019999999552965164D;
         this.zd *= 0.019999999552965164D;
         this.rCol = red;
         this.gCol = green;
         this.bCol = blue;
-        this.lifetime = Math.max(1, (int) (20.0D / (this.random.nextDouble() * 0.8D + 0.2D)));
+        this.lifetime = Math.max(1, (int) (LEGACY_LIFETIME_BASE / (this.random.nextDouble() * 0.8D + 0.2D)));
         this.friction = 0.99F;
         this.gravity = 0.0F;
         this.hasPhysics = false;
@@ -45,18 +44,8 @@ public class LegacyAuraParticle extends TextureSheetParticle implements HbmDefer
     }
 
     @Override
-    public void render(VertexConsumer consumer, Camera camera, float partialTick) {
-        HbmDeferredParticleRenderer.enqueue(this, camera, this.x, this.y, this.z);
-    }
-
-    @Override
-    public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
-        super.render(buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite()), camera, partialTick);
-    }
-
-    @Override
     public ParticleRenderType getRenderType() {
-        return HbmDeferredParticleRenderer.DEFERRED_RENDER_TYPE;
+        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
     public static LegacyAuraParticle create(ClientLevel level, double x, double y, double z,

@@ -1,5 +1,6 @@
 package com.hbm.ntm.explosion.vnt;
 
+import com.hbm.ntm.entity.item.LegacyPrimedExplosiveEntity;
 import com.hbm.ntm.explosion.vnt.interfaces.BlockAllocator;
 import com.hbm.ntm.explosion.vnt.interfaces.BlockProcessor;
 import com.hbm.ntm.explosion.vnt.interfaces.EntityProcessor;
@@ -132,6 +133,10 @@ public class ExplosionVnt {
         return this;
     }
 
+    public ExplosionVnt setSFX(ExplosionEffect... effects) {
+        return setEffects(effects);
+    }
+
     public ExplosionVnt makeStandard() {
         return setBlockAllocator(new BlockAllocatorStandard())
                 .setBlockProcessor(new BlockProcessorStandard())
@@ -152,6 +157,10 @@ public class ExplosionVnt {
                         .withDamageMod(new CustomDamageHandlerAmat(50.0F)))
                 .setPlayerProcessor(new PlayerProcessorStandard())
                 .setEffects(new ExplosionEffectAmat());
+    }
+
+    public Map<net.minecraft.world.entity.player.Player, Vec3> func_77277_b() {
+        return compat.getHitPlayers();
     }
 
     public Level level() {
@@ -189,6 +198,9 @@ public class ExplosionVnt {
 
     @Nullable
     public LivingEntity indirectSourceEntity() {
+        if (exploder instanceof LegacyPrimedExplosiveEntity legacyPrimed) {
+            return legacyPrimed.getTntPlacedBy();
+        }
         if (exploder instanceof PrimedTnt primedTnt) {
             return primedTnt.getOwner();
         }

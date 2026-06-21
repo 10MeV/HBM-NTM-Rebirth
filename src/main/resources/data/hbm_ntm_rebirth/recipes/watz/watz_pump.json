@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "MPM",
+    "PCP",
+    "PSP"
+  ],
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_bismoid"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor_desh"
+    },
+    "P": {
+      "tag": "forge:cast_plates/any_resistant_alloy"
+    },
+    "S": {
+      "tag": "forge:pipes/dura_steel"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:watz_pump"
+  },
+  "show_notification": true
+}

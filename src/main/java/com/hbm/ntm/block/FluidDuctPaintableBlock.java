@@ -3,6 +3,8 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.api.block.Toolable;
 import com.hbm.ntm.blockentity.FluidDuctPaintableBlockEntity;
 import com.hbm.ntm.blockentity.PaintableDuctBlockEntity;
+import com.hbm.ntm.item.FluidDuctVariantBlockItem;
+import com.hbm.ntm.item.LegacyStateBlockItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -20,13 +22,17 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
-public class FluidDuctPaintableBlock extends FluidDuctBoxBlock implements Toolable {
+public class FluidDuctPaintableBlock extends FluidPipeBlock implements Toolable {
     public static final BooleanProperty OVERLAY = BooleanProperty.create("overlay");
+    private static final VoxelShape FULL_BLOCK_SHAPE = Shapes.block();
 
     public FluidDuctPaintableBlock(Properties properties) {
         super(properties);
@@ -35,7 +41,18 @@ public class FluidDuctPaintableBlock extends FluidDuctBoxBlock implements Toolab
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return RenderShape.INVISIBLE;
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return FULL_BLOCK_SHAPE;
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
+            CollisionContext context) {
+        return FULL_BLOCK_SHAPE;
     }
 
     @Nullable
@@ -60,7 +77,7 @@ public class FluidDuctPaintableBlock extends FluidDuctBoxBlock implements Toolab
                 && !paintable.hasPaintedState()
                 && canPaintWith(level, pos, blockItem.getBlock(), this)) {
             if (!level.isClientSide) {
-                paintable.setPaintedState(blockItem.getBlock().defaultBlockState(), held.getDamageValue() & 15);
+                paintable.setPaintedState(blockItem.getBlock().defaultBlockState(), legacyPaintMeta(held));
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
@@ -97,6 +114,16 @@ public class FluidDuctPaintableBlock extends FluidDuctBoxBlock implements Toolab
         }
         BlockState state = paint.defaultBlockState();
         return state.getRenderShape() == RenderShape.MODEL && state.isSolidRender(level, pos);
+    }
+
+    public static int legacyPaintMeta(ItemStack stack) {
+        if (stack.getItem() instanceof FluidDuctVariantBlockItem duct) {
+            return duct.getLegacyMetadata(stack) & 15;
+        }
+        if (stack.getItem() instanceof LegacyStateBlockItem stateItem) {
+            return stateItem.getVariant(stack) & 15;
+        }
+        return stack.getDamageValue() & 15;
     }
 
     @Override

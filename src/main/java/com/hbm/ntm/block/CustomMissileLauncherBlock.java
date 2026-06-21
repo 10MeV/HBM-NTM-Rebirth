@@ -32,7 +32,7 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
-public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implements EntityBlock {
+public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implements EntityBlock, RemoteDetonatableBlock {
     private static final int[] COMPACT_DIMENSIONS = new int[] { 0, 0, 1, 1, 1, 1 };
     private static final int[] TABLE_DIMENSIONS = new int[] { 0, 0, 4, 4, 4, 4 };
     private static final VoxelShape COMPACT_SHAPE = Shapes.box(-1.0D, 0.0D, -1.0D, 2.0D, 1.0D, 2.0D).optimize();
@@ -114,6 +114,17 @@ public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implemen
     }
 
     @Override
+    public BombReturnCode detonateFromRemote(Level level, BlockPos pos) {
+        if (level == null || level.isClientSide) {
+            return BombReturnCode.UNDEFINED;
+        }
+        if (!(resolveCoreBlockEntity(level, pos) instanceof CustomMissileLauncherBlockEntity launcher)) {
+            return BombReturnCode.ERROR_MISSING_COMPONENT;
+        }
+        return launcher.launchFromDesignator() ? BombReturnCode.LAUNCHED : BombReturnCode.ERROR_MISSING_COMPONENT;
+    }
+
+    @Override
     public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos,
             CollisionContext context) {
         return kind == Kind.LAUNCH_TABLE ? TABLE_SHAPE : COMPACT_SHAPE;
@@ -127,17 +138,51 @@ public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implemen
 
     @Override
     public boolean usesForwardedDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos) {
-        return true;
+        return false;
     }
 
     @Override
     public boolean usesForwardedDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    @Override
+    public boolean usesLocalDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos) {
         return true;
+    }
+
+    @Override
+    public boolean usesLocalDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return true;
+    }
+
+    @Override
+    public VoxelShape getMultiblockDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
+            BlockPos dummyPos, CollisionContext context) {
+        return isLegacyPlateDummy(state, dummyPos.subtract(corePos)) ? Shapes.empty() : Shapes.block();
+    }
+
+    @Override
+    public VoxelShape getMultiblockDummyShape(BlockState state, BlockGetter level, BlockPos corePos,
+            BlockPos dummyPos, CollisionContext context) {
+        return getMultiblockDummyCollisionShape(state, level, corePos, dummyPos, context);
     }
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.INVISIBLE;
+    }
+
+    private boolean isLegacyPlateDummy(BlockState state, BlockPos offset) {
+        if (offset.equals(BlockPos.ZERO)) {
+            return false;
+        }
+        if (kind == Kind.COMPACT_LAUNCHER) {
+            return offset.getX() == 0 || offset.getZ() == 0;
+        }
+        Direction facing = state.getValue(FACING);
+        boolean xAxisPlate = facing == Direction.EAST || facing == Direction.WEST;
+        return xAxisPlate ? offset.getX() != 0 && offset.getZ() == 0 : offset.getX() == 0 && offset.getZ() != 0;
     }
 
     private static List<BlockPos> squareRingOffsets(int radius) {

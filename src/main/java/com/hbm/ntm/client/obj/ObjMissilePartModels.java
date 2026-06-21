@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 public final class ObjMissilePartModels {
-    public static final ResourceLocation UNIVERSAL_TEXTURE = texture("universal");
-    public static final ResourceLocation BOXCAR_TEXTURE = texture("boxcar");
+    public static final ResourceLocation UNIVERSAL_TEXTURE = modelTexture("thegadget3_");
+    public static final ResourceLocation BOXCAR_TEXTURE = modelTexture("boxcar");
 
     public static final LegacyWavefrontModel MISSILE_V2 = missileModel("missile_v2").asVBO();
     public static final LegacyWavefrontModel MISSILE_ABM = missileModel("missile_abm").asVBO();
@@ -22,8 +22,8 @@ public final class ObjMissilePartModels {
     public static final LegacyWavefrontModel MISSILE_HUGE = missileModel("missile_huge").asVBO();
     public static final LegacyWavefrontModel MISSILE_ATLAS = missileModel("missile_atlas", "missile_atlas_nuclear").asVBO();
     public static final LegacyWavefrontModel MISSILE_MICRO = missileModel("missile_micro").asVBO();
-    public static final LegacyWavefrontModel MISSILE_SHUTTLE = missileModel("missile_shuttle");
-    public static final LegacyWavefrontModel MINER_ROCKET = missileModel("miner_rocket");
+    public static final LegacyWavefrontModel MISSILE_SHUTTLE = missileModel("missile_shuttle").asVBO();
+    public static final LegacyWavefrontModel MINER_ROCKET = missileModel("miner_rocket").asVBO();
 
     public static final ResourceLocation MISSILE_V2_HE_TEXTURE = missileTexture("missile_v2");
     public static final ResourceLocation MISSILE_V2_IN_TEXTURE = missileTexture("missile_v2_inc");
@@ -53,7 +53,7 @@ public final class ObjMissilePartModels {
     public static final ResourceLocation MISSILE_MICRO_EMP_TEXTURE = missileTexture("missile_micro_emp");
     public static final ResourceLocation MISSILE_MICRO_TEST_TEXTURE = missileTexture("missile_test");
     public static final ResourceLocation MISSILE_SHUTTLE_TEXTURE = missileTexture("missile_shuttle");
-    public static final ResourceLocation MINER_ROCKET_TEXTURE = missileTexture("miner_rocket");
+    public static final ResourceLocation MINER_ROCKET_TEXTURE = modelTexture("miner_rocket");
 
     public static final LegacyWavefrontModel MP_T_10_KEROSENE = legacyModel("mp_t_10_kerosene");
     public static final LegacyWavefrontModel MP_T_10_SOLID = legacyModel("mp_t_10_solid");
@@ -386,8 +386,8 @@ public final class ObjMissilePartModels {
 
     private static LegacyWavefrontModel legacyModel(String name) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/missile_parts/" + name + ".obj"),
-                UNIVERSAL_TEXTURE);
+                new ResourceLocation(HbmNtm.MOD_ID, "models/missile_parts/" + name + ".obj"),
+                UNIVERSAL_TEXTURE).asVBO();
     }
 
     private static LegacyWavefrontModel missileModel(String name) {
@@ -396,16 +396,16 @@ public final class ObjMissilePartModels {
 
     private static LegacyWavefrontModel missileModel(String modelName, String textureName) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/missiles/" + modelName + ".obj"),
+                new ResourceLocation(HbmNtm.MOD_ID, "models/" + modelName + ".obj"),
                 missileTexture(textureName));
     }
 
     public static ResourceLocation missileTexture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/missiles/" + name + ".png");
+        return modelTexture("missile/" + name);
     }
 
     public static ResourceLocation missilePartTexture(String path) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/missile_parts/" + path + ".png");
+        return modelTexture("missile_parts/" + path);
     }
 
     public static ResourceLocation textureForPart(String legacyItemName) {
@@ -415,6 +415,10 @@ public final class ObjMissilePartModels {
 
     private static ResourceLocation texture(String path) {
         return missilePartTexture(path);
+    }
+
+    private static ResourceLocation modelTexture(String path) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + path + ".png");
     }
 
     private ObjMissilePartModels() {

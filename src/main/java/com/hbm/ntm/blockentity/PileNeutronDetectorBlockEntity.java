@@ -62,8 +62,19 @@ public class PileNeutronDetectorBlockEntity extends PileGraphiteBlockEntity
                                 level,
                                 probe,
                                 PileGraphiteInsertionPlanner.GraphiteBlockKind.ROD));
-        if (plan.lifecycle() != null && plan.lifecycle().togglePlan().hasMutations()) {
-            for (PileGraphiteTogglePlanner.ToggleMutation mutation : plan.lifecycle().togglePlan().mutations()) {
+        if (plan.lifecycle() != null) {
+            PileGraphiteTogglePlanner.TogglePlan togglePlan = plan.lifecycle().togglePlan();
+            if (togglePlan.oldMeta() != togglePlan.newMeta()) {
+                BlockState detectorState = level.getBlockState(pos);
+                if (detectorState.getBlock() instanceof PileGraphiteDrilledBaseBlock graphite
+                        && graphite.graphiteKind() == PileGraphiteInsertionPlanner.GraphiteBlockKind.DETECTOR) {
+                    level.setBlock(
+                            pos,
+                            PileGraphiteDrilledBaseBlock.withLegacyMeta(detectorState, togglePlan.newMeta()),
+                            Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
+                }
+            }
+            for (PileGraphiteTogglePlanner.ToggleMutation mutation : togglePlan.mutations()) {
                 BlockState target = level.getBlockState(mutation.pos());
                 if (target.getBlock() instanceof PileGraphiteRodBlock) {
                     level.setBlock(

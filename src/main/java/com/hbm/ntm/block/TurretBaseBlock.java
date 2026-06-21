@@ -176,6 +176,11 @@ public class TurretBaseBlock extends LegacyXrMultiblockBlock implements EntityBl
         return !isArtilleryLayout();
     }
 
+    @Override
+    public boolean usesMultiblockHighlightShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
     private boolean isArtilleryLayout() {
         return legacyDimensions.length == ARTILLERY_DIMENSIONS.length
                 && java.util.Arrays.equals(legacyDimensions, ARTILLERY_DIMENSIONS);

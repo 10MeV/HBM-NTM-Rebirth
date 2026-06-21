@@ -16,6 +16,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
 import com.hbm.ntm.multiblock.LegacyProxyMode;
+import com.hbm.ntm.multiblock.MultiblockCoreBlock;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -143,7 +144,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
                 && !proxyMode.allCapabilities())) {
             return false;
         }
-        MultiblockHelper.CoreLookup core = validCore();
+        MultiblockHelper.CoreLookup core = operationalCore();
         if (core == null || level == null) {
             return false;
         }
@@ -163,7 +164,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
                 || (!proxyMode.fluid() && !proxyMode.moltenMetal() && !proxyMode.allCapabilities())) {
             return false;
         }
-        MultiblockHelper.CoreLookup core = validCore();
+        MultiblockHelper.CoreLookup core = operationalCore();
         if (core == null || level == null) {
             return false;
         }
@@ -179,7 +180,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
 
     @Override
     public List<HbmFluidTank> getAllTanks() {
-        MultiblockHelper.CoreLookup core = validCore();
+        MultiblockHelper.CoreLookup core = operationalCore();
         if (level == null || core == null) {
             return List.of();
         }
@@ -199,7 +200,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         if (!canProxyFluid() || type == null || type == HbmFluids.NONE || amount <= 0L) {
             return amount;
         }
-        MultiblockHelper.CoreLookup core = validCore();
+        MultiblockHelper.CoreLookup core = operationalCore();
         if (level == null || core == null) {
             return amount;
         }
@@ -227,7 +228,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         if (!canProxyFluid() || type == null || type == HbmFluids.NONE) {
             return 0L;
         }
-        MultiblockHelper.CoreLookup core = validCore();
+        MultiblockHelper.CoreLookup core = operationalCore();
         if (level == null || core == null) {
             return 0L;
         }
@@ -250,7 +251,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
 
     @Override
     public long getReceiverSpeed(FluidType type, int pressure) {
-        MultiblockHelper.CoreLookup core = validCore();
+        MultiblockHelper.CoreLookup core = operationalCore();
         if (level != null && core != null) {
             ICapabilityProvider target = legacyProxyTarget(level.getBlockEntity(core.pos()));
             if (target instanceof HbmFluidReceiver receiver && target != this) {
@@ -262,7 +263,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
 
     @Override
     public int[] getReceivingPressureRange(FluidType type) {
-        MultiblockHelper.CoreLookup core = validCore();
+        MultiblockHelper.CoreLookup core = operationalCore();
         if (level != null && core != null) {
             ICapabilityProvider target = legacyProxyTarget(level.getBlockEntity(core.pos()));
             if (target instanceof HbmFluidReceiver receiver && target != this) {
@@ -277,7 +278,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         if (!canProxyHeat()) {
             return 0;
         }
-        MultiblockHelper.CoreLookup core = validCore();
+        MultiblockHelper.CoreLookup core = operationalCore();
         if (level == null || core == null) {
             return 0;
         }
@@ -290,7 +291,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         if (!canProxyHeat()) {
             return;
         }
-        MultiblockHelper.CoreLookup core = validCore();
+        MultiblockHelper.CoreLookup core = operationalCore();
         if (level == null || core == null) {
             return;
         }
@@ -309,7 +310,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
     }
 
     public InteractionResult forwardUse(ServerPlayer player, InteractionHand hand, BlockHitResult hit) {
-        MultiblockHelper.CoreLookup core = validCore();
+        MultiblockHelper.CoreLookup core = operationalCore();
         if (level == null || core == null) {
             return InteractionResult.PASS;
         }
@@ -346,13 +347,16 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         dropCoreOnRemoval = false;
         MultiblockHelper.CoreLookup core = validCore();
         if (level != null && core != null && !core.pos().equals(worldPosition)) {
+            if (core.state().getBlock() instanceof MultiblockCoreBlock coreBlock) {
+                coreBlock.beforeMultiblockDummyDestroysCore(level, core.pos(), core.state(), worldPosition, drop);
+            }
             level.destroyBlock(core.pos(), drop);
         }
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-        MultiblockHelper.CoreLookup core = validCore();
+        MultiblockHelper.CoreLookup core = operationalCore();
         if (proxyMode.allows(capability) && level != null && core != null && !core.pos().equals(worldPosition)) {
             ICapabilityProvider target = legacyProxyTarget(level.getBlockEntity(core.pos()));
             if (target != null) {
@@ -381,7 +385,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         if (!proxyMode.isProxy()) {
             return null;
         }
-        MultiblockHelper.CoreLookup core = validCore();
+        MultiblockHelper.CoreLookup core = operationalCore();
         if (level == null || core == null) {
             return null;
         }
@@ -396,6 +400,12 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         }
         MultiblockHelper.CoreLookup core = MultiblockHelper.findCoreAt(level, corePos);
         return MultiblockHelper.ownsDummy(level, core, worldPosition) ? core : null;
+    }
+
+    @Nullable
+    private MultiblockHelper.CoreLookup operationalCore() {
+        MultiblockHelper.CoreLookup core = validCore();
+        return core != null && MultiblockHelper.isOperationalCoreLayoutComplete(level, core.pos()) ? core : null;
     }
 
     @Override

@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip"
+      },
+      "count": 4
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      },
+      "count": 4
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_template"
+      }
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:glowstone_dust"
+      },
+      "count": 4,
+      "legacy_ore": "dustGlowstone"
+    }
+  ],
+  "solder": [],
+  "output": {
+    "item": "hbm_ntm_rebirth:upgrade_radius"
+  },
+  "duration": 200,
+  "consumption": 1000,
+  "source_order": 104
+}

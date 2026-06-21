@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": { "item": "hbm_ntm_rebirth:billet_u233" },
+    "I": { "item": "hbm_ntm_rebirth:plate_polymer" }
+  },
+  "pattern": [
+    "F",
+    "I",
+    "F"
+  ],
+  "result": { "item": "hbm_ntm_rebirth:pwr_fuel_heu233" },
+  "show_notification": true
+}

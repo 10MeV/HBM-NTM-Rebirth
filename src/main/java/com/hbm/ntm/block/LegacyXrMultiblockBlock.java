@@ -127,8 +127,9 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
 
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        BlockPos corePos = pos;
         if (!level.isClientSide) {
-            BlockPos corePos = MultiblockHelper.legacyCoreFromPlacement(pos, state.getValue(FACING), getLegacyOffset());
+            corePos = MultiblockHelper.legacyCoreFromPlacement(pos, state.getValue(FACING), getLegacyOffset());
             if (getLegacyHeightOffset() != 0) {
                 corePos = corePos.above(getLegacyHeightOffset());
             }
@@ -138,9 +139,11 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
                 RELOCATING.set(false);
                 level.setBlock(corePos, state, Block.UPDATE_ALL);
             }
-            fillLayout(level, corePos, state);
+            if (!fillLayout(level, corePos, state) && requiresCompleteLegacyLayout(state)) {
+                return;
+            }
         }
-        super.setPlacedBy(level, pos, state, placer, stack);
+        super.setPlacedBy(level, corePos, state, placer, stack);
     }
 
     @Override
@@ -153,6 +156,14 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
     }
 
     protected void onCoreRemoved(Level level, BlockPos pos, BlockState state) {
+    }
+
+    protected boolean requiresCompleteLegacyLayout(BlockState state) {
+        return false;
+    }
+
+    protected void onIncompleteLegacyLayout(Level level, BlockPos corePos, BlockState state) {
+        level.destroyBlock(corePos, false);
     }
 
     @Nullable
@@ -171,7 +182,13 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
         });
     }
 
-    private void fillLayout(Level level, BlockPos corePos, BlockState state) {
-        MultiblockHelper.fillLayout(level, corePos, getLayout(state));
+    private boolean fillLayout(Level level, BlockPos corePos, BlockState state) {
+        LegacyMultiblockLayout layout = getLayout(state);
+        boolean filled = MultiblockHelper.fillLayout(level, corePos, layout);
+        boolean complete = filled && MultiblockHelper.isLayoutComplete(level, corePos, layout);
+        if (!complete && requiresCompleteLegacyLayout(state)) {
+            onIncompleteLegacyLayout(level, corePos, state);
+        }
+        return complete;
     }
 }

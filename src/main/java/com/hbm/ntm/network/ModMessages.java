@@ -1385,6 +1385,12 @@ public final class ModMessages {
         sendToAllAround(auxParticlePacket(x, y, z, data), level, x, y, z, range);
     }
 
+    public static void sendAuxParticle(ServerLevel level, double x, double y, double z,
+                                       double targetX, double targetY, double targetZ,
+                                       net.minecraft.nbt.CompoundTag data, double range) {
+        sendToAllAround(auxParticlePacket(x, y, z, data), level, targetX, targetY, targetZ, range);
+    }
+
     public static void sendAuxParticleNT(ServerLevel level, double x, double y, double z,
                                          net.minecraft.nbt.CompoundTag data, double range) {
         sendAuxParticle(level, x, y, z, data, range);

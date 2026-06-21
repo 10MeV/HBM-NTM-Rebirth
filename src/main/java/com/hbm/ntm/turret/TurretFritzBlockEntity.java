@@ -7,8 +7,6 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
-import com.hbm.ntm.fluid.HbmFluidPortLayouts;
-import com.hbm.ntm.fluid.HbmFluidPortLayouts.LegacyPort;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -41,16 +39,6 @@ public class TurretFritzBlockEntity extends TurretBlockEntityBase
     private static final int FLUID_PER_SHOT = 2;
     private static final int DIESEL_CAN_AMOUNT = 1_000;
     private static final float LEGACY_FLAME_SPREAD = 0.05F;
-    private static final LegacyPort[] FLUID_PORT_TEMPLATE = {
-            LegacyPort.of(-1, 0, Direction.NORTH),
-            LegacyPort.of(-1, -1, Direction.NORTH),
-            LegacyPort.of(0, -2, Direction.WEST),
-            LegacyPort.of(1, -2, Direction.WEST),
-            LegacyPort.of(0, 1, Direction.EAST),
-            LegacyPort.of(1, 1, Direction.EAST),
-            LegacyPort.of(2, 0, Direction.SOUTH),
-            LegacyPort.of(2, -1, Direction.SOUTH)
-    };
 
     private final HbmFluidTank tank = new HbmFluidTank(HbmFluids.DIESEL, TANK_CAPACITY);
     private final LazyOptional<IFluidHandler> fluidHandler =
@@ -217,7 +205,26 @@ public class TurretFritzBlockEntity extends TurretBlockEntityBase
         Direction facing = getBlockState().hasProperty(HorizontalMachineBlock.FACING)
                 ? getBlockState().getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
-        return HbmFluidPortLayouts.legacy(facing, FLUID_PORT_TEMPLATE);
+        Direction dir = facing.getOpposite();
+        Direction rot = dir.getClockWise();
+        return List.of(
+                fluidPort(dir, -1, rot, 0, dir.getOpposite()),
+                fluidPort(dir, -1, rot, -1, dir.getOpposite()),
+                fluidPort(dir, 0, rot, -2, rot.getOpposite()),
+                fluidPort(dir, 1, rot, -2, rot.getOpposite()),
+                fluidPort(dir, 0, rot, 1, rot),
+                fluidPort(dir, 1, rot, 1, rot),
+                fluidPort(dir, 2, rot, 0, dir),
+                fluidPort(dir, 2, rot, -1, dir));
+    }
+
+    private static FluidPort fluidPort(Direction forward, int forwardScale, Direction side, int sideScale,
+            Direction direction) {
+        return FluidPort.of(
+                forward.getStepX() * forwardScale + side.getStepX() * sideScale,
+                0,
+                forward.getStepZ() * forwardScale + side.getStepZ() * sideScale,
+                direction);
     }
 
     private void onFluidContentsChanged() {

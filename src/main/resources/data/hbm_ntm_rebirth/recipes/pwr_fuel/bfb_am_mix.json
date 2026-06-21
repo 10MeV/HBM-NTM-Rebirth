@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": { "item": "hbm_ntm_rebirth:billet_bismuth" },
+    "F": { "item": "hbm_ntm_rebirth:billet_am_mix" },
+    "I": { "item": "hbm_ntm_rebirth:plate_polymer" },
+    "N": { "item": "hbm_ntm_rebirth:nugget_plutonium_fuel" }
+  },
+  "pattern": [
+    "NFN",
+    "NIN",
+    "NBN"
+  ],
+  "result": { "item": "hbm_ntm_rebirth:pwr_fuel_bfb_am_mix" },
+  "show_notification": true
+}

@@ -3,6 +3,7 @@ package com.hbm.util;
 import com.google.gson.JsonObject;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.item.ItemPressStamp;
+import com.hbm.ntm.recipe.AnvilConstructionRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.recipe.HbmItemOutput;
@@ -411,6 +412,46 @@ public final class CompatRecipeRegistry {
             List<HbmFluidStack> outputFluids) {
         return com.hbm.ntm.compat.CompatRecipeRegistry.registerGeneric(sink, name, machine, named, icon, duration,
                 power, inputItems, inputFluids, outputItems, outputFluids);
+    }
+
+    public static JsonObject createAnvilConstruction(List<HbmIngredient> inputs, List<HbmItemOutput> outputs,
+            int tierLower, int tierUpper, AnvilConstructionRecipe.OverlayType overlay) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createAnvilConstruction(inputs, outputs, tierLower, tierUpper,
+                overlay);
+    }
+
+    public static JsonObject createAnvilConstruction(HbmIngredient[] inputs, HbmItemOutput[] outputs,
+            int tierLower, int tierUpper, AnvilConstructionRecipe.OverlayType overlay) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createAnvilConstruction(inputs, outputs, tierLower, tierUpper,
+                overlay);
+    }
+
+    public static ResourceLocation registerAnvilConstruction(com.hbm.ntm.api.recipe.RecipeSink sink,
+            ResourceLocation id, List<HbmIngredient> inputs, List<HbmItemOutput> outputs, int tierLower,
+            int tierUpper, AnvilConstructionRecipe.OverlayType overlay) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerAnvilConstruction(sink, id, inputs, outputs, tierLower,
+                tierUpper, overlay);
+    }
+
+    public static ResourceLocation registerAnvilConstruction(com.hbm.ntm.api.recipe.RecipeSink sink,
+            ResourceLocation id, HbmIngredient[] inputs, HbmItemOutput[] outputs, int tierLower, int tierUpper,
+            AnvilConstructionRecipe.OverlayType overlay) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerAnvilConstruction(sink, id, inputs, outputs, tierLower,
+                tierUpper, overlay);
+    }
+
+    public static ResourceLocation registerAnvilConstruction(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            List<HbmIngredient> inputs, List<HbmItemOutput> outputs, int tierLower, int tierUpper,
+            AnvilConstructionRecipe.OverlayType overlay) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerAnvilConstruction(sink, name, inputs, outputs,
+                tierLower, tierUpper, overlay);
+    }
+
+    public static ResourceLocation registerAnvilConstruction(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient[] inputs, HbmItemOutput[] outputs, int tierLower, int tierUpper,
+            AnvilConstructionRecipe.OverlayType overlay) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerAnvilConstruction(sink, name, inputs, outputs,
+                tierLower, tierUpper, overlay);
     }
 
     public static com.hbm.ntm.compat.CompatRecipeRegistry.Diagnostics diagnostics() {

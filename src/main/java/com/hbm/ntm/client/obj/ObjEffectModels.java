@@ -18,17 +18,17 @@ public final class ObjEffectModels {
             CASINGS_TEXTURE).asVBO();
 
     public static LegacyWavefrontModel model(String name) {
-        return new LegacyWavefrontModel(new ResourceLocation(HbmNtm.MOD_ID, "models/block/effects/" + name + ".obj"));
+        return new LegacyWavefrontModel(new ResourceLocation(HbmNtm.MOD_ID, "models/" + name + ".obj")).asVBO();
     }
 
     public static LegacyWavefrontModel model(String name, ResourceLocation texture) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/effects/" + name + ".obj"),
-                texture);
+                new ResourceLocation(HbmNtm.MOD_ID, "models/" + name + ".obj"),
+                texture).asVBO();
     }
 
     public static ResourceLocation effectTexture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/effects/" + name + ".png");
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + name + ".png");
     }
 
     private ObjEffectModels() {

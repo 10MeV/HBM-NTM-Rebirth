@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": {
+    "fluid": "hbm_ntm_rebirth:fishoil",
+    "amount": 100
+  },
+  "solid_input": {
+    "ingredient": {
+      "tag": "forge:raw_fishes"
+    }
+  },
+  "duration": 50
+}

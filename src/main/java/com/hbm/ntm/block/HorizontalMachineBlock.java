@@ -59,5 +59,15 @@ public class HorizontalMachineBlock extends HorizontalDirectionalBlock {
     public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
         return fullOcclusion ? FULL_BLOCK : Shapes.empty();
     }
+
+    @Override
+    public float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
+        return fullOcclusion ? super.getShadeBrightness(state, level, pos) : 1.0F;
+    }
+
+    @Override
+    public boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
+        return !fullOcclusion || super.propagatesSkylightDown(state, level, pos);
+    }
 }
 

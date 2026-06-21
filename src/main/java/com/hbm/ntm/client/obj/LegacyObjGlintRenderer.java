@@ -11,10 +11,10 @@ public final class LegacyObjGlintRenderer {
     public static final ResourceLocation BALEFIRE_GLINT_TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/misc/glintbf.png");
     public static final float DEFAULT_COLOR_MOD = 0.5F;
-    public static final float DEFAULT_RED = 0.25F;
-    public static final float DEFAULT_GREEN = 0.8F;
-    public static final float DEFAULT_BLUE = 20.0F;
-    public static final float DEFAULT_SPEED = 1.0F;
+    public static final float DEFAULT_RED = 0.5F;
+    public static final float DEFAULT_GREEN = 0.25F;
+    public static final float DEFAULT_BLUE = 0.8F;
+    public static final float DEFAULT_SPEED = 20.0F;
     public static final float DEFAULT_SCALE = 1.0F / 3.0F;
     public static final float GLINT_COLOR_MULTIPLIER = 0.76F;
     public static final int LAYERS = 2;

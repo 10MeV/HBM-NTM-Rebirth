@@ -109,7 +109,6 @@ public final class ParticleUtil {
     public static final String VANILLA_TOWN_AURA = "townaura";
     public static final String VANILLA_VOLCANO = "volcano";
     public static final String EXHAUST_SOYUZ = "soyuz";
-    public static final String EXHAUST_METEOR = "meteor";
     public static final String CHAOS_CLOUD_ORANGE = "orange";
     public static final String CHAOS_CLOUD_GREEN = "green";
     public static final String CHAOS_CLOUD_PINK = "pink";
@@ -274,10 +273,6 @@ public final class ParticleUtil {
         spawnExhaust(level, x, y, z, EXHAUST_SOYUZ, count, width);
     }
 
-    public static void spawnExhaustMeteor(Level level, double x, double y, double z, int count, double width) {
-        spawnExhaust(level, x, y, z, EXHAUST_METEOR, count, width);
-    }
-
     public static void spawnExhaust(Level level, double x, double y, double z, String mode, int count, double width) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_EXHAUST);
@@ -345,6 +340,19 @@ public final class ParticleUtil {
                     center.y,
                     center.z + level.random.nextGaussian() * horizontalSpread);
         }
+    }
+
+    public static void spawnLegacyColoredGasCloud(Level level, BlockPos pos, float red, float green, float blue) {
+        if (level == null || pos == null) {
+            return;
+        }
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_VANILLA_EXT);
+        data.putString("mode", VANILLA_CLOUD);
+        data.putFloat("r", red);
+        data.putFloat("g", green);
+        data.putFloat("b", blue);
+        spawnAux(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, data, 0.0D);
     }
 
     public static void spawnPlasmaBlast(Level level, double x, double y, double z, float red, float green, float blue,
@@ -1153,7 +1161,7 @@ public final class ParticleUtil {
         data.putFloat("debrisHorizontalDeviation", debrisHorizontalDeviation);
         data.putFloat("debrisVerticalOffset", debrisVerticalOffset);
         data.putFloat("soundRange", soundRange);
-        spawnAux(level, x, y, z, data, Math.max(Math.max(300.0D, waveScale * 6.0D), soundRange));
+        spawnAux(level, x, y, z, data, Math.max(300.0D, soundRange));
     }
 
     public static void spawnExplosionSmall(Level level, double x, double y, double z, int cloudCount, float cloudScale, float cloudSpeedMult) {
@@ -1410,6 +1418,13 @@ public final class ParticleUtil {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_RBMK_STEAM);
         spawnAux(level, x, y, z, data, 100.0D);
+    }
+
+    public static void spawnRbmkSteam(Level level, double x, double y, double z,
+            double targetX, double targetY, double targetZ) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_RBMK_STEAM);
+        spawnAux(level, x, y, z, targetX, targetY, targetZ, data, 100.0D);
     }
 
     public static void spawnRbmkMush(Level level, double x, double y, double z, float scale) {
@@ -1884,6 +1899,22 @@ public final class ParticleUtil {
             ClientParticleBridge.handleAux(payload);
         } else if (level instanceof ServerLevel serverLevel) {
             ModMessages.sendAuxParticle(serverLevel, x, y, z, payload, range);
+        }
+    }
+
+    public static void spawnAux(Level level, double x, double y, double z,
+            double targetX, double targetY, double targetZ, CompoundTag data, double range) {
+        if (level == null) {
+            return;
+        }
+        CompoundTag payload = data.copy();
+        payload.putDouble("posX", x);
+        payload.putDouble("posY", y);
+        payload.putDouble("posZ", z);
+        if (level.isClientSide()) {
+            ClientParticleBridge.handleAux(payload);
+        } else if (level instanceof ServerLevel serverLevel) {
+            ModMessages.sendAuxParticle(serverLevel, x, y, z, targetX, targetY, targetZ, payload, range);
         }
     }
 

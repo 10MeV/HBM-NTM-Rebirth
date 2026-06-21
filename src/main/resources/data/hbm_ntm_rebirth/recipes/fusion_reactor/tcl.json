@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:fusion_reactor",
+  "internal_name": "fus.tcl",
+  "duration": 100,
+  "power": 25000,
+  "input_items": [],
+  "input_fluids": [
+    { "fluid": "hbm_ntm_rebirth:tritium", "amount": 10 },
+    { "fluid": "hbm_ntm_rebirth:chlorine", "amount": 10 }
+  ],
+  "output_items": [{ "item": "hbm_ntm_rebirth:powder_chlorophyte" }],
+  "output_fluids": [],
+  "pools": [],
+  "ignitionTemp": 2500000,
+  "outputTemp": 6250000,
+  "outputFlux": 500.0,
+  "r": 0.8,
+  "g": 0.6,
+  "b": 0.4
+}

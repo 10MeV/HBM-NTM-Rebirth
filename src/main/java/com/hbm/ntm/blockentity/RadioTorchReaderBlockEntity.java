@@ -33,7 +33,7 @@ public class RadioTorchReaderBlockEntity extends RadioTorchBlockEntity {
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RadioTorchReaderBlockEntity torch) {
-        BlockEntity attached = level.getBlockEntity(torch.attachedPos());
+        BlockEntity attached = torch.attachedBlockEntity(level);
         if (attached instanceof RORValueProvider provider
                 && ROR.hasValueInfo(provider)
                 && torch.radio.broadcastChangedValues(level, provider) > 0) {

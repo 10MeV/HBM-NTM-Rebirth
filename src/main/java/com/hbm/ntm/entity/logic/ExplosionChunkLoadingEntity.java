@@ -3,12 +3,15 @@ package com.hbm.ntm.entity.logic;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.config.BombConfig;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.world.ForgeChunkManager;
+import net.minecraftforge.network.NetworkHooks;
 
 public abstract class ExplosionChunkLoadingEntity extends Entity {
     private static final String TAG_SAVED_MILLIS = "loaderSavedMillis";
@@ -74,6 +77,11 @@ public abstract class ExplosionChunkLoadingEntity extends Entity {
         }
         long savedMillis = tag.contains("milliTime") ? tag.getLong("milliTime") : tag.getLong(TAG_SAVED_MILLIS);
         return savedMillis > 0L && System.currentTimeMillis() - savedMillis > limitSeconds * 1000L;
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
     }
 
     private static boolean chunkLoadingEnabled() {

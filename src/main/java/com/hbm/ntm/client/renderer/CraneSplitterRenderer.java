@@ -34,9 +34,10 @@ public class CraneSplitterRenderer implements BlockEntityRenderer<CraneSplitterB
     public void render(CraneSplitterBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = blockEntity.getBlockState();
-        renderHalf(state, true, 0.0D, 0.0D, poseStack, buffer, packedLight, packedOverlay);
+        int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
+        renderHalf(state, true, 0.0D, 0.0D, poseStack, buffer, modelLight, packedOverlay);
         Direction side = CraneSplitterBlock.sideOffset(state);
-        renderHalf(state, false, side.getStepX(), side.getStepZ(), poseStack, buffer, packedLight, packedOverlay);
+        renderHalf(state, false, side.getStepX(), side.getStepZ(), poseStack, buffer, modelLight, packedOverlay);
     }
 
     public static void renderItem(ItemDisplayContext displayContext, BlockState state, PoseStack poseStack,

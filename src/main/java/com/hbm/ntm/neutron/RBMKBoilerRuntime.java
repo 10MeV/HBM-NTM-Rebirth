@@ -1,5 +1,7 @@
 package com.hbm.ntm.neutron;
 
+import java.util.function.IntSupplier;
+
 public final class RBMKBoilerRuntime {
     private RBMKBoilerRuntime() {
     }
@@ -7,7 +9,8 @@ public final class RBMKBoilerRuntime {
     public static BoilerTickResult tickBoiler(
             RBMKRuntimeSettings settings,
             RBMKThermalState thermalState,
-            RBMKBoilerState boilerState) {
+            RBMKBoilerState boilerState,
+            IntSupplier nextVentDelay) {
         boilerState.setConsumption(0);
         boilerState.setOutput(0);
         if (boilerState.ventDelay() > 0) {
@@ -42,10 +45,10 @@ public final class RBMKBoilerRuntime {
         boilerState.setSteamFill(boilerState.steamFill() + steamProduced);
 
         boolean vented = false;
-        if (boilerState.steamFill() >= boilerState.steamMax()) {
+        if (boilerState.steamFill() > boilerState.steamMax()) {
             boilerState.setSteamFill(boilerState.steamMax());
             if (boilerState.ventDelay() <= 0) {
-                boilerState.setVentDelay(20);
+                boilerState.setVentDelay(nextVentDelay == null ? 20 : nextVentDelay.getAsInt());
                 vented = true;
             }
         }

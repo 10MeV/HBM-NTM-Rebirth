@@ -76,8 +76,8 @@ public class LegacyComplexShapeBlock extends Block {
         return new LegacyComplexShapeBlock(properties, REBAR);
     }
 
-    public static LegacyComplexShapeBlock woodBarrier(BlockBehaviour.Properties properties) {
-        return new LegacyComplexShapeBlock(properties, WOOD_BARRIER);
+    public static Block woodBarrier(BlockBehaviour.Properties properties) {
+        return new LegacyBarrierBlock(properties);
     }
 
     public static LegacyComplexShapeBlock sandbags(BlockBehaviour.Properties properties) {

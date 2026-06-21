@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 800,
+  "ignitionTemp": 1000000,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 2, "ingredient": { "tag": "forge:welded_plates/any_resistant_alloy" }, "legacy_ore": "plateWeldedAnyResistantAlloy" },
+    { "count": 4, "ingredient": { "tag": "forge:dense_wires/dineutronium" }, "legacy_ore": "wireDenseDineutronium" },
+    { "count": 4, "ingredient": { "tag": "forge:dense_wires/schrabidium" }, "legacy_ore": "wireDenseSchrabidium" }
+  ],
+  "internal_name": "plsm.icfturbo",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:icf_laser_turbo" }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 122
+}

@@ -12,6 +12,10 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.Objects;
 
 public class ExplosionBalefire {
+    private static final RegistryObject<? extends Block> SCHRABIDIUM_CLUSTER = requireLegacyBlock("block_schrabidium_cluster");
+    private static final RegistryObject<? extends Block> EUPHEMIUM_CLUSTER = requireLegacyBlock("block_euphemium_cluster");
+    private static final double MODERN_BEDROCK_CORE_FRACTION = 0.75D;
+
     public int posX;
     public int posY;
     public int posZ;
@@ -97,28 +101,29 @@ public class ExplosionBalefire {
         int y = level.getHeight(Heightmap.Types.WORLD_SURFACE, worldX, worldZ);
         int maxDepth = (int) (10 + radius * 0.25D);
         int depthOffset = (int) ((maxDepth * distance / (double) radius) + (Math.sin(distance * 0.15D + 2.0D) * 2.0D));
-        int depth = Math.max(y - depthOffset, 0);
+        int minBuildHeight = level.getMinBuildHeight();
+        int depth = modernBottomRelativeDepth(y, depthOffset, distance);
 
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         while (y > depth) {
             cursor.set(worldX, y, worldZ);
-            if (isLegacy(cursor, "block_schrabidium_cluster")) {
+            if (level.getBlockState(cursor).is(SCHRABIDIUM_CLUSTER.get())) {
                 transmuteSchrabidiumCluster(cursor);
                 return;
             }
 
-            level.setBlock(cursor, Blocks.AIR.defaultBlockState(), 3);
+            clearBlock(cursor);
             y--;
         }
 
         if (level.random.nextInt(10) == 0) {
             placeBalefire(cursor.set(worldX, depth + 1, worldZ));
-            if (isLegacy(cursor.set(worldX, y, worldZ), "block_schrabidium_cluster")) {
-                setLegacy(cursor, "block_euphemium_cluster");
+            if (level.getBlockState(cursor.set(worldX, y, worldZ)).is(SCHRABIDIUM_CLUSTER.get())) {
+                level.setBlock(cursor, EUPHEMIUM_CLUSTER.get().defaultBlockState(), 3);
             }
         }
 
-        for (int i = depth; i > depth - 5 && i >= 0; i--) {
+        for (int i = depth; i > depth - 5 && i >= minBuildHeight; i--) {
             cursor.set(worldX, i, worldZ);
             if (level.getBlockState(cursor).is(Blocks.STONE)) {
                 level.setBlock(cursor, ModBlocks.SELLAFIELD_SLAKED.get().defaultBlockState(), 3);
@@ -126,10 +131,22 @@ public class ExplosionBalefire {
         }
     }
 
+    private int modernBottomRelativeDepth(int surfaceY, int depthOffset, int distance) {
+        int legacyDepth = surfaceY - depthOffset;
+        if (legacyDepth <= 0 || distance >= radius * MODERN_BEDROCK_CORE_FRACTION) {
+            return level.getMinBuildHeight();
+        }
+        return Math.min(legacyDepth, level.getMaxBuildHeight() - 1);
+    }
+
+    private void clearBlock(BlockPos pos) {
+        LegacyExplosionFluidCleanup.clearBlockOrLegacyLiquidNeighborhood(level, pos, 3);
+    }
+
     private void transmuteSchrabidiumCluster(BlockPos pos) {
         if (level.random.nextInt(10) == 0) {
             placeBalefire(pos.above());
-            setLegacy(pos, "block_euphemium_cluster");
+            level.setBlock(pos, EUPHEMIUM_CLUSTER.get().defaultBlockState(), 3);
         }
     }
 
@@ -137,13 +154,8 @@ public class ExplosionBalefire {
         level.setBlock(pos, ModBlocks.BALEFIRE.get().defaultBlockState(), 3);
     }
 
-    private boolean isLegacy(BlockPos pos, String name) {
+    private static RegistryObject<? extends Block> requireLegacyBlock(String name) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        return block != null && level.getBlockState(pos).is(block.get());
-    }
-
-    private void setLegacy(BlockPos pos, String name) {
-        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        level.setBlock(pos, Objects.requireNonNull(block, "Missing legacy block hbm_ntm_rebirth:" + name).get().defaultBlockState(), 3);
+        return Objects.requireNonNull(block, "Missing legacy block hbm_ntm_rebirth:" + name);
     }
 }

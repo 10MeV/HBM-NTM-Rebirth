@@ -12,6 +12,7 @@ import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
@@ -22,6 +23,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
@@ -198,6 +200,10 @@ public class LegacyFurnaceBlockEntity extends BlockEntity implements MenuProvide
             wasOn = true;
             ironProgress++;
             burnTime--;
+            if (ironProgress % 15 == 0 && !isMuffled()) {
+                LegacySoundPlayer.playSoundEffect(level, worldPosition, "fire.fire", SoundSource.BLOCKS,
+                        1.0F, 0.5F + level.random.nextFloat() * 0.5F);
+            }
             if (ironProgress >= ironProcessingTime) {
                 smeltIron();
                 ironProgress = 0;

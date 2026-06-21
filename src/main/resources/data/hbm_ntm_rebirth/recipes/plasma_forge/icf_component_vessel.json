@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 800,
+  "ignitionTemp": 1000000,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 1, "ingredient": { "tag": "forge:ingots/cft" }, "legacy_id": "hbm:ingot_cft" },
+    { "count": 1, "ingredient": { "tag": "forge:cast_plates/combine_steel" }, "legacy_ore": "plateCastCMBSteel" },
+    { "count": 2, "ingredient": { "tag": "forge:welded_plates/tungsten" }, "legacy_ore": "plateWeldedTungsten" }
+  ],
+  "internal_name": "plsm.icfvessel",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:icf_component_vessel" }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 127
+}

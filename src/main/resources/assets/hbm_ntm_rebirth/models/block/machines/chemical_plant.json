@@ -2,6 +2,7 @@
   "loader": "forge:obj",
   "model": "hbm_ntm_rebirth:models/block/machines/chemical_plant.obj",
   "flip_v": true,
+  "automatic_culling": false,
   "render_type": "minecraft:cutout",
   "textures": { "particle": "hbm_ntm_rebirth:block/machines/chemical_plant", "default": "hbm_ntm_rebirth:block/machines/chemical_plant" }
 }

@@ -10,7 +10,8 @@ import com.hbm.ntm.menu.RadGenMenu;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.recipe.RadGenRecipeRuntime;
+import com.hbm.ntm.recipe.RadGenRecipeRuntime.FuelSpec;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import java.util.Map;
@@ -57,14 +58,6 @@ public class RadGenBlockEntity extends BlockEntity implements MenuProvider, HbmE
     private static final String TAG_SLOT = "slot";
     private static final int LANES = 12;
     private static final long MAX_POWER = 1_000_000L;
-
-    private static final Map<String, FuelSpec> FUELS = Map.of(
-            "nuclear_waste_short", new FuelSpec(1500, 30 * 60 * 20, "nuclear_waste_short_depleted"),
-            "nuclear_waste_short_tiny", new FuelSpec(150, 3 * 60 * 20, "nuclear_waste_short_depleted_tiny"),
-            "nuclear_waste_long", new FuelSpec(500, 2 * 60 * 60 * 20, "nuclear_waste_long_depleted"),
-            "nuclear_waste_long_tiny", new FuelSpec(50, 12 * 60 * 20, "nuclear_waste_long_depleted_tiny"),
-            "scrap_nuclear", new FuelSpec(50, 5 * 60 * 20, null),
-            "gem_rad", new FuelSpec(25_000, 30 * 60 * 20, "minecraft:diamond"));
 
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private final HbmEnergyStorage energy = new HbmEnergyStorage(MAX_POWER, 0L, MAX_POWER);
@@ -227,11 +220,7 @@ public class RadGenBlockEntity extends BlockEntity implements MenuProvider, HbmE
 
     @Nullable
     private static FuelSpec fuelFor(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) {
-            return null;
-        }
-        ResourceLocation key = ForgeRegistries.ITEMS.getKey(stack.getItem());
-        return key == null ? null : FUELS.get(key.getPath());
+        return RadGenRecipeRuntime.fuelFor(stack);
     }
 
     private List<EnergyPort> energyPorts(BlockState state) {
@@ -447,16 +436,4 @@ public class RadGenBlockEntity extends BlockEntity implements MenuProvider, HbmE
         }
     }
 
-    private record FuelSpec(int powerPerTick, int duration, @Nullable String outputName) {
-        ItemStack output() {
-            if (outputName == null || outputName.isBlank()) {
-                return ItemStack.EMPTY;
-            }
-            if ("minecraft:diamond".equals(outputName)) {
-                return new ItemStack(Items.DIAMOND);
-            }
-            Item item = ModItems.legacyItem(outputName).get();
-            return new ItemStack(item);
-        }
-    }
 }

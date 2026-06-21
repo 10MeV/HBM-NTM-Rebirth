@@ -132,7 +132,8 @@ public class LegacyTntBaseBlock extends Block implements ChainExplodable, Toolab
         level.removeBlock(pos, false);
         if (!level.isClientSide) {
             level.addFreshEntity(LegacyPrimedExplosiveEntity.create(level,
-                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, POP_FUSE_WINDOW, false));
+                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, POP_FUSE_WINDOW, false,
+                    explosion.getIndirectSourceEntity()));
         }
     }
 
@@ -203,7 +204,8 @@ public class LegacyTntBaseBlock extends Block implements ChainExplodable, Toolab
         level.removeBlock(pos, false);
         level.gameEvent(owner, GameEvent.PRIME_FUSE, pos);
         LegacyPrimedExplosiveEntity entity = LegacyPrimedExplosiveEntity.createFixedFuse(level,
-                pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, PRIMED_FUSE, false);
+                pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, PRIMED_FUSE, false,
+                owner instanceof LivingEntity livingOwner ? livingOwner : null);
         level.addFreshEntity(entity);
         level.playSound(null, pos, SoundEvents.TNT_PRIMED, SoundSource.BLOCKS, 1.0F, 1.0F);
     }

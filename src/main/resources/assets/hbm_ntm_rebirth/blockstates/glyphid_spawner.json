@@ -1,1 +1,7 @@
-{ "variants": { "": { "model": "hbm_ntm_rebirth:block/glyphid_spawner" } } }
+{
+  "variants": {
+    "variant=0": { "model": "hbm_ntm_rebirth:block/glyphid_spawner" },
+    "variant=1": { "model": "hbm_ntm_rebirth:block/glyphid_spawner_infested" },
+    "variant=2": { "model": "hbm_ntm_rebirth:block/glyphid_spawner_rad" }
+  }
+}

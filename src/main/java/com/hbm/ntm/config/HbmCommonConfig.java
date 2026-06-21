@@ -10,6 +10,7 @@ public final class HbmCommonConfig {
     public static final ForgeConfigSpec.BooleanValue ENABLE_EXTENDED_LOGGING;
     public static final ForgeConfigSpec.BooleanValue ENABLE_CRYSTAL_VIRUS_SPREADING;
     public static final ForgeConfigSpec.BooleanValue ENABLE_MOTD;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_MACHINE_GRAVITY;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -33,6 +34,9 @@ public final class HbmCommonConfig {
         ENABLE_MOTD = builder
                 .comment("Legacy GeneralConfig 1.36_enableMOTD: shows the HBM loaded-world chat message when a player joins.")
                 .define("enableMotd", true);
+        ENABLE_MACHINE_GRAVITY = builder
+                .comment("Legacy GeneralConfig 1.44_enableMachineGravity: large machines require a proper foundation and tilt when unsupported. The old 528-only companion switch is intentionally not migrated.")
+                .define("enableMachineGravity", false);
         builder.pop();
 
         NetworkConfig.define(builder);
@@ -50,6 +54,7 @@ public final class HbmCommonConfig {
         OilDrillConfig.define(builder);
         BoilerConfig.define(builder);
         RadarConfig.define(builder);
+        RtgConfig.define(builder);
 
         SPEC = builder.build();
     }
@@ -72,6 +77,10 @@ public final class HbmCommonConfig {
 
     public static boolean motdEnabled() {
         return booleanValue(ENABLE_MOTD, true);
+    }
+
+    public static boolean machineGravityEnabled() {
+        return booleanValue(ENABLE_MACHINE_GRAVITY, false);
     }
 
     private static boolean booleanValue(ForgeConfigSpec.BooleanValue value, boolean fallback) {

@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.quartzdust",
+  "duration": 400,
+  "power": 1000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:dusts/quartz" }, "count": 1 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:nugget_silicon", "count": 3 }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 3
+}

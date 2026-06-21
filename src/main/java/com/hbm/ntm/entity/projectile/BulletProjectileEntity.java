@@ -271,7 +271,6 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         }
 
         Vec3 currentPosition = position();
-        BulletFlightVisualUtil.spawnMeteorFlameParticles(currentConfig, level(), currentPosition, random);
         BulletFlightVisualUtil.spawnFlamethrowerTrail(currentConfig, level(), currentPosition);
         BulletFlightVisualUtil.spawnFireExtinguisherTrail(currentConfig, level(), currentPosition, motion, random);
         BulletFlightVisualUtil.spawnVanillaTrail(currentConfig, level(), previousPosition, currentPosition);

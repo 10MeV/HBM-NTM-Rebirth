@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.ninadidnothingwrong",
+  "duration": 300,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:dysfunctional_reactor" }, "count": 1 },
+    { "ingredient": { "tag": "forge:shells/steel" }, "count": 2, "legacy_ore": "shellSteel" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:ingot_euphemium" }, "count": 3 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_controller_advanced" }, "count": 8, "legacy_id": "hbm:circuit", "legacy_meta": 14 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:nuke_prototype" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 202
+}

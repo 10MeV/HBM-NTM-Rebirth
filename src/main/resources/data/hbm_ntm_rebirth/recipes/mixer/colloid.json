@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": {
+    "fluid": "hbm_ntm_rebirth:colloid",
+    "amount": 500
+  },
+  "input1": {
+    "fluid": "hbm_ntm_rebirth:water",
+    "amount": 500
+  },
+  "solid_input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:dust"
+    }
+  },
+  "duration": 20
+}

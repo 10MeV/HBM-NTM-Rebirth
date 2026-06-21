@@ -7,36 +7,23 @@ import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
+import com.hbm.ntm.util.RtgPelletRuntime;
 import java.util.List;
-import java.util.Map;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.registries.ForgeRegistries;
 
 public class RadiolysisMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = RadiolysisBlockEntity.SLOT_COUNT;
     private static final int PLAYER_INVENTORY_START = MACHINE_SLOT_COUNT;
     private static final int PLAYER_SLOT_END = PLAYER_INVENTORY_START + 36;
-    private static final Map<String, Integer> RTG_HEAT = Map.ofEntries(
-            Map.entry("pellet_rtg_radium", 3),
-            Map.entry("pellet_rtg_weak", 5),
-            Map.entry("pellet_rtg", 10),
-            Map.entry("pellet_rtg_strontium", 15),
-            Map.entry("pellet_rtg_cobalt", 15),
-            Map.entry("pellet_rtg_actinium", 20),
-            Map.entry("pellet_rtg_americium", 20),
-            Map.entry("pellet_rtg_polonium", 50),
-            Map.entry("pellet_rtg_gold", 100),
-            Map.entry("pellet_rtg_lead", 200));
-
     private final RadiolysisBlockEntity blockEntity;
     private HbmFluidGuiHelper.TankData inputTank;
     private HbmFluidGuiHelper.TankData outputTank1;
@@ -158,15 +145,11 @@ public class RadiolysisMenu extends AbstractContainerMenu {
     }
 
     private static int rtgHeat(ItemStack stack) {
-        if (stack.isEmpty()) {
-            return 0;
-        }
-        ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
-        return id == null ? 0 : RTG_HEAT.getOrDefault(id.getPath(), 0);
+        return RtgPelletRuntime.heat(stack);
     }
 
     private static RadiolysisBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof RadiolysisBlockEntity radiolysis) {
             return radiolysis;
         }

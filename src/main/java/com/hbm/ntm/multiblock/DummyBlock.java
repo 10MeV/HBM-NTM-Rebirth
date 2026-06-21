@@ -1,5 +1,7 @@
 package com.hbm.ntm.multiblock;
 
+import api.hbm.block.ICrucibleAcceptor;
+import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayBlockProvider;
@@ -9,6 +11,7 @@ import com.hbm.ntm.api.conveyor.IConveyorItem;
 import com.hbm.ntm.api.conveyor.IConveyorPackage;
 import com.hbm.ntm.api.conveyor.IEnterableBlock;
 import com.hbm.ntm.api.multiblock.DummyPart;
+import com.hbm.ntm.neutron.RBMKStructureDimensions;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.client.particle.ParticleEngine;
@@ -30,6 +33,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -42,6 +46,7 @@ import java.util.function.Consumer;
 
 @SuppressWarnings("deprecation")
 public class DummyBlock extends Block implements EntityBlock, DummyPart, IConveyorBelt, IEnterableBlock, Toolable,
+        ICrucibleAcceptor,
         LegacyLookOverlayBlockProvider {
     private static final VoxelShape SHAPE = Shapes.block();
 
@@ -72,17 +77,20 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
         if (player.getItemInHand(hand).is(ModItems.RADAR_LINKER.get())) {
             return InteractionResult.PASS;
         }
+        if (level.isClientSide) {
+            return operationalCore(level, pos) == null ? InteractionResult.PASS : InteractionResult.SUCCESS;
+        }
         if (!level.isClientSide
                 && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
             return dummy.forwardUse(serverPlayer, hand, hit);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.PASS;
     }
 
     @Override
     public boolean canItemStay(Level level, BlockPos pos, Vec3 itemPos) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         return core != null
                 && core.state().getBlock() instanceof IConveyorBelt belt
                 && belt.canItemStay(level, pos, itemPos);
@@ -90,7 +98,7 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
 
     @Override
     public Vec3 getTravelLocation(Level level, BlockPos pos, Vec3 itemPos, double speed) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         if (core != null && core.state().getBlock() instanceof IConveyorBelt belt) {
             return belt.getTravelLocation(level, pos, itemPos, speed);
         }
@@ -99,7 +107,7 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
 
     @Override
     public Vec3 getClosestSnappingPosition(Level level, BlockPos pos, Vec3 itemPos) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         if (core != null && core.state().getBlock() instanceof IConveyorBelt belt) {
             return belt.getClosestSnappingPosition(level, pos, itemPos);
         }
@@ -108,7 +116,7 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
 
     @Override
     public boolean canItemEnter(Level level, BlockPos pos, Direction side, IConveyorItem entity) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         return core != null
                 && core.state().getBlock() instanceof IEnterableBlock enterable
                 && enterable.canItemEnter(level, pos, side, entity);
@@ -116,7 +124,7 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
 
     @Override
     public void onItemEnter(Level level, BlockPos pos, Direction side, IConveyorItem entity) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         if (core != null && core.state().getBlock() instanceof IEnterableBlock enterable) {
             enterable.onItemEnter(level, pos, side, entity);
         }
@@ -124,7 +132,7 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
 
     @Override
     public boolean canPackageEnter(Level level, BlockPos pos, Direction side, IConveyorPackage entity) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         return core != null
                 && core.state().getBlock() instanceof IEnterableBlock enterable
                 && enterable.canPackageEnter(level, pos, side, entity);
@@ -132,7 +140,7 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
 
     @Override
     public void onPackageEnter(Level level, BlockPos pos, Direction side, IConveyorPackage entity) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         if (core != null && core.state().getBlock() instanceof IEnterableBlock enterable) {
             enterable.onPackageEnter(level, pos, side, entity);
         }
@@ -140,16 +148,40 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
 
     @Override
     public boolean onToolUse(Level level, Player player, BlockPos pos, Direction side, Vec3 hit, ToolType tool) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         return core != null
                 && core.state().getBlock() instanceof Toolable toolable
                 && toolable.onToolUse(level, player, pos, side, hit, tool);
     }
 
+    @Override
+    public boolean canAcceptPartialPour(Level level, BlockPos pos, Vec3 hit, Direction side, MaterialStack stack) {
+        ICrucibleAcceptor acceptor = moltenAcceptor(level, pos);
+        return acceptor != null && acceptor.canAcceptPartialPour(level, pos, hit, side, stack);
+    }
+
+    @Override
+    public MaterialStack pour(Level level, BlockPos pos, Vec3 hit, Direction side, MaterialStack stack) {
+        ICrucibleAcceptor acceptor = moltenAcceptor(level, pos);
+        return acceptor == null ? stack : acceptor.pour(level, pos, hit, side, stack);
+    }
+
+    @Override
+    public boolean canAcceptPartialFlow(Level level, BlockPos pos, Direction side, MaterialStack stack) {
+        ICrucibleAcceptor acceptor = moltenAcceptor(level, pos);
+        return acceptor != null && acceptor.canAcceptPartialFlow(level, pos, side, stack);
+    }
+
+    @Override
+    public MaterialStack flow(Level level, BlockPos pos, Direction side, MaterialStack stack) {
+        ICrucibleAcceptor acceptor = moltenAcceptor(level, pos);
+        return acceptor == null ? stack : acceptor.flow(level, pos, side, stack);
+    }
+
     @Nullable
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos, BlockState viewedState) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, viewedPos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, viewedPos);
         if (core != null && core.state().getBlock() instanceof LegacyLookOverlayBlockProvider provider) {
             return provider.getLookOverlay(level, viewedPos, viewedState);
         }
@@ -159,7 +191,7 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
     @Nullable
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, Player player, BlockPos viewedPos, BlockState viewedState) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, viewedPos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, viewedPos);
         if (core != null && core.state().getBlock() instanceof LegacyLookOverlayBlockProvider provider) {
             return provider.getLookOverlay(level, player, viewedPos, viewedState);
         }
@@ -220,7 +252,7 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
 
     @Override
     public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         if (core == null || !core.state().isSignalSource()) {
             return 0;
         }
@@ -239,7 +271,7 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
 
     @Override
     public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         if (core == null || !core.state().hasAnalogOutputSignal()) {
             return 0;
         }
@@ -262,17 +294,32 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
     }
 
     @Override
+    public VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return Shapes.empty();
+    }
+
+    @Override
+    public boolean useShapeForLightOcclusion(BlockState state) {
+        return false;
+    }
+
+    @Override
+    public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
+        return false;
+    }
+
+    @Override
     public PushReaction getPistonPushReaction(BlockState state) {
         return PushReaction.BLOCK;
     }
 
     private VoxelShape forwardedShape(BlockGetter level, BlockPos pos, CollisionContext context, boolean collision) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         if (core != null && core.state().getBlock() instanceof MultiblockCoreBlock coreBlock) {
-            if (!collision && !coreBlock.usesForwardedDummyShape(core.state(), level, core.pos())) {
+            if (!collision && !coreBlock.usesLocalDummyShape(core.state(), level, core.pos())) {
                 return SHAPE;
             }
-            if (collision && !coreBlock.usesForwardedDummyCollisionShape(core.state(), level, core.pos())) {
+            if (collision && !coreBlock.usesLocalDummyCollisionShape(core.state(), level, core.pos())) {
                 return SHAPE;
             }
             return collision
@@ -282,8 +329,26 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
         return SHAPE;
     }
 
+    @Nullable
+    private ICrucibleAcceptor moltenAcceptor(Level level, BlockPos pos) {
+        if (!(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy)
+                || !dummy.getProxyMode().isProxy()
+                || (!dummy.getProxyMode().moltenMetal() && !dummy.getProxyMode().allCapabilities())) {
+            return null;
+        }
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
+        if (core == null || core.pos().equals(pos)) {
+            return null;
+        }
+        if (core.state().getBlock() instanceof ICrucibleAcceptor acceptor) {
+            return acceptor;
+        }
+        BlockEntity coreEntity = level.getBlockEntity(core.pos());
+        return coreEntity instanceof ICrucibleAcceptor acceptor ? acceptor : null;
+    }
+
     private BlockState particleState(BlockGetter level, BlockPos pos) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         if (core != null && core.state().getBlock() instanceof MultiblockCoreBlock coreBlock) {
             BlockState particleState = coreBlock.multiblockParticleState(core.state(), level, core.pos());
             if (particleState.getBlock() instanceof MultiblockCoreBlock || particleState.getBlock() instanceof DummyBlock) {
@@ -292,6 +357,15 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
             return particleState;
         }
         return MultiblockHelper.steelParticleState();
+    }
+
+    @Nullable
+    private static MultiblockHelper.CoreLookup operationalCore(BlockGetter level, BlockPos pos) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core == null) {
+            core = RBMKStructureDimensions.findVerticalColumnCore(level, pos);
+        }
+        return core != null && MultiblockHelper.isOperationalCoreLayoutComplete(level, core.pos()) ? core : null;
     }
 
     @Override

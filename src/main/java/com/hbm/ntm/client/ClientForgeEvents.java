@@ -20,6 +20,7 @@ import com.hbm.ntm.client.renderer.LegacyHeadArmorRenderer;
 import com.hbm.ntm.client.renderer.LegacyJetpackRenderer;
 import com.hbm.ntm.client.renderer.LegacyObjArmorRenderer;
 import com.hbm.ntm.client.renderer.LegacyScreenQuadRenderer;
+import com.hbm.ntm.client.renderer.NukeTorexRenderer;
 import com.hbm.ntm.client.screen.ArmorTableScreen;
 import com.hbm.ntm.client.renderer.SednaGunHudRenderer;
 import com.hbm.ntm.client.renderer.SednaGunItemRenderer;
@@ -31,11 +32,9 @@ import com.hbm.ntm.config.HbmClientConfig;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.damage.DamageResistanceTooltipUtil;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
-import com.hbm.ntm.client.renderer.NukeTorexRenderer;
 import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
-import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.item.SednaGunItem;
 import com.hbm.ntm.item.StingerGunItem;
@@ -44,20 +43,23 @@ import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ArmorRegistry;
 import com.hbm.ntm.radiation.ArmorUtil;
+import com.hbm.ntm.radiation.CraterBiomeUtil;
 import com.hbm.ntm.radiation.HazardTooltipUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.ParticleStatus;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -68,6 +70,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiEvent;
@@ -85,7 +88,6 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -106,7 +108,7 @@ public final class ClientForgeEvents {
 
     @SubscribeEvent
     public static void onTooltip(ItemTooltipEvent event) {
-        HazardTooltipUtil.addHazardInformation(event.getItemStack(), event.getToolTip());
+        HazardTooltipUtil.addHazardInformation(event.getItemStack(), event.getToolTip(), event.getEntity());
         DamageResistanceTooltipUtil.addResistanceInformation(event.getItemStack(), event.getToolTip());
         addHazmatProtectionInformation(event.getItemStack(), event.getToolTip());
         addCustomNukeInformation(event.getItemStack(), event.getToolTip());
@@ -338,9 +340,13 @@ public final class ClientForgeEvents {
         }
 
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
-            renderNukeTorexCloudlets(minecraft, event);
             HbmDeferredParticleRenderer.renderAfterLevel(event.getCamera(), event.getPartialTick(),
                     minecraft.renderBuffers().bufferSource());
+            PoseStack torexPoseStack = new PoseStack();
+            torexPoseStack.mulPose(Axis.XP.rotationDegrees(event.getCamera().getXRot()));
+            torexPoseStack.mulPose(Axis.YP.rotationDegrees(event.getCamera().getYRot() + 180.0F));
+            NukeTorexRenderer.renderCloudletsAfterLevel(minecraft.level, event.getCamera(), event.getPartialTick(),
+                    torexPoseStack, minecraft.renderBuffers().bufferSource());
         }
 
         if (HbmBlackHoleEffects.isRenderStage(event.getStage())) {
@@ -352,42 +358,6 @@ public final class ClientForgeEvents {
     @SubscribeEvent
     public static void onRenderBlockHighlight(RenderHighlightEvent.Block event) {
         LegacyMultiblockHighlightRenderer.render(event);
-    }
-
-    private static void renderNukeTorexCloudlets(Minecraft minecraft, RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
-            return;
-        }
-
-        List<NukeTorexEntity> clouds = new ArrayList<>();
-        for (Entity entity : minecraft.level.entitiesForRendering()) {
-            if (entity instanceof NukeTorexEntity torex && !torex.cloudlets.isEmpty()) {
-                clouds.add(torex);
-            }
-        }
-        if (clouds.isEmpty()) {
-            return;
-        }
-
-        clouds.sort(Comparator.comparingDouble(
-                cloud -> -event.getCamera().getPosition().distanceToSqr(cloud.getX(), cloud.getY(), cloud.getZ())));
-
-        MultiBufferSource.BufferSource buffer = minecraft.renderBuffers().bufferSource();
-        PoseStack worldViewPoseStack = createWorldViewPoseStack(event.getCamera());
-        for (NukeTorexEntity cloud : clouds) {
-            EntityRenderer<? super NukeTorexEntity> renderer = minecraft.getEntityRenderDispatcher().getRenderer(cloud);
-            if (renderer instanceof NukeTorexRenderer torexRenderer) {
-                torexRenderer.renderCloudletsAfterLevel(cloud, event.getCamera(), event.getPartialTick(),
-                        worldViewPoseStack, buffer);
-            }
-        }
-    }
-
-    private static PoseStack createWorldViewPoseStack(net.minecraft.client.Camera camera) {
-        PoseStack poseStack = new PoseStack();
-        poseStack.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
-        poseStack.mulPose(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
-        return poseStack;
     }
 
     @SubscribeEvent
@@ -419,6 +389,7 @@ public final class ClientForgeEvents {
         hadLevel = true;
         tickClientArmorMods(minecraft.player);
         spawnRadiationAura(minecraft);
+        spawnCraterTownAura(minecraft);
     }
 
     private static void tickClientArmorMods(Player player) {
@@ -481,6 +452,29 @@ public final class ClientForgeEvents {
         float radiation = ClientHbmLivingProperties.getRadiation();
         if (radiation > 600.0F) {
             ParticleUtil.spawnRadiationAura(minecraft.level, radiation > 900.0F ? 4 : radiation > 800.0F ? 2 : 1);
+        }
+    }
+
+    private static void spawnCraterTownAura(Minecraft minecraft) {
+        Player player = minecraft.player;
+        if (player == null || minecraft.level == null) {
+            return;
+        }
+        ResourceKey<Biome> biome = minecraft.level.getBiome(player.blockPosition()).unwrapKey().orElse(null);
+        if (!CraterBiomeUtil.CRATER.equals(biome) && !CraterBiomeUtil.CRATER_INNER.equals(biome)) {
+            return;
+        }
+        ParticleStatus particleStatus = minecraft.options.particles().get();
+        if (particleStatus == ParticleStatus.MINIMAL) {
+            return;
+        }
+        RandomSource random = player.getRandom();
+        int count = particleStatus == ParticleStatus.ALL ? 3 : 1;
+        for (int i = 0; i < count; i++) {
+            ParticleUtil.spawnTownAura(minecraft.level,
+                    player.getX() + random.nextGaussian() * 3.0D,
+                    player.getY() + random.nextGaussian() * 2.0D,
+                    player.getZ() + random.nextGaussian() * 3.0D);
         }
     }
 

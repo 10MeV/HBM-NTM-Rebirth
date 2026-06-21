@@ -1,5 +1,7 @@
 package com.hbm.ntm.explosion.vnt.standard;
 
+import com.hbm.ntm.bullet.BulletBehaviorTag;
+import com.hbm.ntm.bullet.BulletConfig;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
@@ -98,7 +100,11 @@ public class EntityProcessorCross implements EntityProcessor {
     }
 
     protected boolean shouldDealKnockback(Entity entity) {
-        return !(entity instanceof BulletProjectileEntity);
+        if (!(entity instanceof BulletProjectileEntity projectile)) {
+            return true;
+        }
+        BulletConfig config = projectile.config();
+        return config == null || !config.hasBehavior(BulletBehaviorTag.VNT_CROSS_KNOCKBACK_IMMUNE);
     }
 
     protected void attackEntity(Entity entity, ExplosionVnt explosion, float amount) {

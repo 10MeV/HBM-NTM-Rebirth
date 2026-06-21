@@ -13,6 +13,7 @@ import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import java.util.List;
@@ -46,6 +47,17 @@ public class ChimneyBlockEntity extends BlockEntity
         chimney.networkPackNT(150);
         if (chimney.onTicks > 0) {
             chimney.onTicks--;
+        }
+    }
+
+    public static void clientTick(Level level, BlockPos pos, BlockState state, ChimneyBlockEntity chimney) {
+        if (!level.isClientSide || chimney.onTicks <= 0 || level.getGameTime() % 2L != 0L) {
+            return;
+        }
+        if (state.is(ModBlocks.CHIMNEY_INDUSTRIAL.get())) {
+            ParticleUtil.spawnIndustrialChimneySmoke(level, pos);
+        } else {
+            ParticleUtil.spawnBrickChimneySmoke(level, pos);
         }
     }
 

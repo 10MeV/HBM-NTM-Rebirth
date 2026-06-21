@@ -1,6 +1,7 @@
 package com.hbm.ntm.command;
 
 import com.google.gson.JsonObject;
+import com.hbm.commands.CommandRadiation;
 import com.hbm.ntm.api.tile.InfoProviderEC;
 import com.hbm.ntm.api.redstoneoverradio.RORFunctionException;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
@@ -73,6 +74,7 @@ import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionSavedData;
@@ -176,13 +178,7 @@ public final class ModCommands {
     private static final int MAX_SUBCHUNK_DIAGNOSTIC_SCAN = 4096;
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("ntmrad")
-                .requires(source -> source.hasPermission(2))
-                .then(Commands.literal("clear")
-                        .executes(context -> clearChunkRadiation(context.getSource())))
-                .then(Commands.literal("set")
-                        .then(Commands.argument("amount", FloatArgumentType.floatArg(0.0F, RadiationConstants.MAX_CHUNK_RADIATION))
-                                .executes(context -> setChunkRadiation(context.getSource(), FloatArgumentType.getFloat(context, "amount"))))));
+        CommandRadiation.register(dispatcher);
 
         dispatcher.register(Commands.literal("hbm")
                 .requires(source -> source.hasPermission(2))
@@ -1794,7 +1790,7 @@ public final class ModCommands {
                         .then(Commands.argument("field", StringArgumentType.word())
                                 .suggests((context, builder) -> SharedSuggestionProvider.suggest(StatusField.NAMES, builder))
                                 .then(Commands.argument("targets", EntityArgument.players())
-                                        .then(Commands.argument("amount", IntegerArgumentType.integer(0))
+                                        .then(Commands.argument("amount", IntegerArgumentType.integer())
                                                 .executes(context -> setPlayerStatus(context.getSource(), EntityArgument.getPlayers(context, "targets"), StringArgumentType.getString(context, "field"), IntegerArgumentType.getInteger(context, "amount")))))))
                 .then(Commands.literal("add")
                         .then(Commands.argument("field", StringArgumentType.word())
@@ -2708,7 +2704,7 @@ public final class ModCommands {
                                                         IntegerArgumentType.getInteger(context, "maxTime"),
                                                         IntegerArgumentType.getInteger(context, "maxTime"),
                                                         false))
-                                                .then(Commands.argument("time", IntegerArgumentType.integer(0))
+                                                .then(Commands.argument("time", IntegerArgumentType.integer())
                                                         .executes(context -> addContamination(
                                                                 context.getSource(),
                                                                 EntityArgument.getPlayers(context, "targets"),
@@ -3648,7 +3644,7 @@ public final class ModCommands {
     }
 
     private static int getEnergyPorts(CommandSourceStack source, BlockPos pos) {
-        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        BlockEntity blockEntity = getCoreAwareBlockEntity(source, pos);
         HbmEnergyUtil.PortSetSnapshot snapshot;
         if (blockEntity instanceof HbmEnergyBlockEntity energyBlockEntity) {
             snapshot = energyBlockEntity.inspectEnergyPorts();
@@ -3691,6 +3687,10 @@ public final class ModCommands {
         return data.size();
     }
 
+    private static BlockEntity getCoreAwareBlockEntity(CommandSourceStack source, BlockPos pos) {
+        return MultiblockHelper.resolveOperationalCoreBlockEntity(source.getLevel(), pos);
+    }
+
     private static String formatEnergyControlInfo(CompoundTag data) {
         List<String> keys = new ArrayList<>(data.getAllKeys());
         Collections.sort(keys);
@@ -3719,7 +3719,7 @@ public final class ModCommands {
     }
 
     private static int getRorFunctions(CommandSourceStack source, BlockPos pos) {
-        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        BlockEntity blockEntity = getCoreAwareBlockEntity(source, pos);
         if (!(blockEntity instanceof RORInfo info)) {
             source.sendFailure(Component.literal("No HBM ROR component at " + pos.toShortString()));
             return 0;
@@ -3730,7 +3730,7 @@ public final class ModCommands {
     }
 
     private static int getRorValue(CommandSourceStack source, BlockPos pos, String name) {
-        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        BlockEntity blockEntity = getCoreAwareBlockEntity(source, pos);
         if (!(blockEntity instanceof RORValueProvider provider)) {
             source.sendFailure(Component.literal("No HBM ROR value provider at " + pos.toShortString()));
             return 0;
@@ -3746,7 +3746,7 @@ public final class ModCommands {
     }
 
     private static int runRorFunction(CommandSourceStack source, BlockPos pos, String command) {
-        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        BlockEntity blockEntity = getCoreAwareBlockEntity(source, pos);
         if (!(blockEntity instanceof RORInteractive interactive)) {
             source.sendFailure(Component.literal("No HBM ROR interactive component at " + pos.toShortString()));
             return 0;
@@ -3773,7 +3773,7 @@ public final class ModCommands {
 
     private static CompletableFuture<Suggestions> suggestRorEntries(CommandSourceStack source, BlockPos pos,
             SuggestionsBuilder builder, String prefix, boolean commandExamples) {
-        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        BlockEntity blockEntity = getCoreAwareBlockEntity(source, pos);
         if (!(blockEntity instanceof RORInfo info)) {
             return builder.buildFuture();
         }
@@ -3844,7 +3844,7 @@ public final class ModCommands {
     }
 
     private static int readAndBroadcastRorValue(CommandSourceStack source, BlockPos pos, String channel, String name) {
-        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        BlockEntity blockEntity = getCoreAwareBlockEntity(source, pos);
         if (!(blockEntity instanceof RORValueProvider provider)) {
             source.sendFailure(Component.literal("No HBM ROR value provider at " + pos.toShortString()));
             return 0;
@@ -3864,7 +3864,7 @@ public final class ModCommands {
     }
 
     private static int runRorCommandFromSignal(CommandSourceStack source, BlockPos pos, String channel) {
-        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        BlockEntity blockEntity = getCoreAwareBlockEntity(source, pos);
         if (!(blockEntity instanceof RORInteractive interactive)) {
             source.sendFailure(Component.literal("No HBM ROR interactive component at " + pos.toShortString()));
             return 0;
@@ -6212,7 +6212,7 @@ public final class ModCommands {
         }
 
         private void set(ServerPlayer player, int value) {
-            setter.accept(player, Math.max(0, value));
+            setter.accept(player, value);
         }
 
         private static StatusField byName(String name) {

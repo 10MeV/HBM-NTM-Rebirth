@@ -145,11 +145,18 @@ public final class ObjSoyuzModels {
     }
 
     private static ResourceLocation model(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "models/block/soyuz/" + name + ".obj");
+        return new ResourceLocation(HbmNtm.MOD_ID, "models/" + name + ".obj");
     }
 
     private static ResourceLocation texture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/soyuz/" + name + ".png");
+        if ("polaroid_memento".equals(name)) {
+            return new ResourceLocation(HbmNtm.MOD_ID, "textures/item/polaroid_memento.png");
+        }
+        if (name.startsWith("capsule/")) {
+            return new ResourceLocation(HbmNtm.MOD_ID,
+                    "textures/models/soyuz_capsule/" + name.substring("capsule/".length()) + ".png");
+        }
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + name + ".png");
     }
 
     private ObjSoyuzModels() {

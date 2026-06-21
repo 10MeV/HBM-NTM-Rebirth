@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "entries": [{ "type": "minecraft:item", "name": "hbm_ntm_rebirth:fusion_klystron_creative" }],
+      "conditions": [{ "condition": "minecraft:survives_explosion" }]
+    }
+  ]
+}

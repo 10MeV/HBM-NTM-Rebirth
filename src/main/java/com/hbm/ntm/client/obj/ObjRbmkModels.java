@@ -117,12 +117,18 @@ public final class ObjRbmkModels {
 
     private static LegacyWavefrontModel model(String name, ResourceLocation texture) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/rbmk/" + name + ".obj"),
+                new ResourceLocation(HbmNtm.MOD_ID, "models/rbmk/" + name + ".obj"),
                 texture);
     }
 
     public static ResourceLocation modelTexture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/rbmk/models/" + name + ".png");
+        return switch (name) {
+            case "crane_console", "rbmk_crane", "rbmk_autoloader", "rbmk_control" ->
+                    new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/" + name + ".png");
+            case "keypad", "gauge", "numitron", "numitron_lights", "lever", "indicator", "terminal" ->
+                    new ResourceLocation(HbmNtm.MOD_ID, "textures/models/network/" + name + ".png");
+            default -> new ResourceLocation(HbmNtm.MOD_ID, "textures/block/rbmk/models/" + name + ".png");
+        };
     }
 
     public static ResourceLocation iconTexture(String name) {

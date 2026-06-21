@@ -7,7 +7,6 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
-import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.neutron.NeutronHandler;
 import com.hbm.ntm.neutron.RBMKIOPlanner;
 import com.hbm.ntm.neutron.RBMKThermalState;
@@ -19,7 +18,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,8 +61,8 @@ public class RBMKSteamInletBlockEntity extends HbmFluidNetworkBlockEntity implem
                 waterTank.getFill(), states, NeutronHandler.rbmkRuntimeSettings(level).reasimBoilers());
         int moved = 0;
         for (RBMKIOPlanner.ColumnTransfer transfer : plan.toColumns()) {
-            BlockEntity blockEntity = level.getBlockEntity(transfer.columnPos());
-            if (blockEntity instanceof RBMKColumnBlockEntity column) {
+            RBMKColumnBlockEntity column = columnAt(level, transfer.columnPos());
+            if (column != null) {
                 moved += column.receiveReaSimWater(transfer.amount());
             }
         }
@@ -79,17 +77,18 @@ public class RBMKSteamInletBlockEntity extends HbmFluidNetworkBlockEntity implem
     private static List<RBMKIOPlanner.ReaSimColumnFluidState> adjacentColumnStates(Level level, BlockPos pos) {
         List<RBMKIOPlanner.ReaSimColumnFluidState> columns = new ArrayList<>();
         for (BlockPos neighbor : RBMKIOPlanner.horizontalNeighborPositions(pos)) {
-            MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, neighbor);
-            if (core == null) {
-                continue;
-            }
-            BlockEntity blockEntity = level.getBlockEntity(core.pos());
-            if (blockEntity instanceof RBMKColumnBlockEntity column) {
-                columns.add(new RBMKIOPlanner.ReaSimColumnFluidState(
-                        core.pos(), column.reasimWater(), RBMKThermalState.MAX_WATER, column.reasimSteam()));
+            RBMKColumnBlockEntity column = columnAt(level, neighbor);
+            if (column != null) {
+                columns.add(new RBMKIOPlanner.ReaSimColumnFluidState(column.getBlockPos(),
+                        column.reasimWater(), RBMKThermalState.MAX_WATER, column.reasimSteam()));
             }
         }
         return columns;
+    }
+
+    @Nullable
+    private static RBMKColumnBlockEntity columnAt(Level level, BlockPos pos) {
+        return RBMKColumnBlockEntity.resolveOperationalColumn(level, pos);
     }
 
     @Override

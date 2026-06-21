@@ -2,12 +2,302 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "bonus_rolls": 0.0,
       "conditions": [
-        { "condition": "minecraft:survives_explosion" }
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "0" }
+        }
       ],
       "entries": [
-        { "type": "minecraft:item", "name": "hbm_ntm_rebirth:fluid_duct_box" }
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:0}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "1" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:1}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "2" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:2}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "3" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:3}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "4" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:4}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "5" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:5}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "6" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:6}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "7" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:7}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "8" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:8}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "9" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:9}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "10" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:10}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "11" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:11}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "12" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:12}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "13" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:13}" }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:fluid_duct_box",
+          "properties": { "legacy_metadata": "14" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_box",
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:14}" }
+          ]
+        }
       ],
       "rolls": 1.0
     }

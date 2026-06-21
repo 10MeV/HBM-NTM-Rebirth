@@ -3,6 +3,7 @@ package com.hbm.ntm.menu;
 import com.hbm.ntm.blockentity.BombMultiBlockEntity;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -81,8 +82,26 @@ public class BombMultiMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index, playerInventoryStart,
-                playerInventoryStart, hotbarEnd, 0, playerInventoryStart);
+        if (index < 0 || index >= slots.size()) {
+            return ItemStack.EMPTY;
+        }
+        Slot slot = slots.get(index);
+        if (!slot.hasItem()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack stack = slot.getItem();
+        ItemStack original = stack.copy();
+        if (index < playerInventoryStart) {
+            if (!moveItemStackTo(stack, playerInventoryStart, hotbarEnd, true)) {
+                return ItemStack.EMPTY;
+            }
+        } else {
+            return ItemStack.EMPTY;
+        }
+
+        HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+        return original;
     }
 
     private void addPlayerInventory(Inventory inventory) {
@@ -99,7 +118,7 @@ public class BombMultiMenu extends AbstractContainerMenu {
 
     private static MenuSource sourceFromClient(Inventory inventory, FriendlyByteBuf data) {
         BlockPos pos = data.readBlockPos();
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof BombMultiBlockEntity bombMulti) {
             return new MenuSource(bombMulti, pos, bombMulti.getItems());
         }

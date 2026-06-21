@@ -26,6 +26,7 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 public class SettingsToolItem extends Item {
@@ -159,7 +160,7 @@ public class SettingsToolItem extends Item {
 
     private static void copyGenericSettings(Level level, BlockPos pos, ItemStack stack, Player player) {
         copiableAt(level, pos).ifPresentOrElse(copiable -> {
-            BlockPos corePos = MultiblockHelper.resolveCorePos(level, pos);
+            BlockPos corePos = MultiblockHelper.resolveOperationalCorePos(level, pos);
             CompoundTag settings = copiable.getSettings(level, corePos);
             settings.putString(TAG_COPY_KIND, COPY_KIND_GENERIC);
             settings.putString(TAG_TILE_NAME, copiable.getSettingsSourceDisplay(level, corePos).getString());
@@ -180,7 +181,8 @@ public class SettingsToolItem extends Item {
     private static boolean pasteGenericSettings(Level level, BlockPos pos, CompoundTag tag, int index, Player player) {
         return copiableAt(level, pos)
                 .map(copiable -> {
-                    copiable.pasteSettings(tag, index, level, player, MultiblockHelper.resolveCorePos(level, pos));
+                    copiable.pasteSettings(tag, index, level, player,
+                            MultiblockHelper.resolveOperationalCorePos(level, pos));
                     return true;
                 })
                 .orElse(false);
@@ -190,7 +192,9 @@ public class SettingsToolItem extends Item {
         if (level == null || pos == null) {
             return Optional.empty();
         }
-        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(level, pos);
+        BlockEntity blockEntity = level.isClientSide
+                ? MultiblockHelper.resolveCoreBlockEntity(level, pos)
+                : MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
         return blockEntity instanceof CopiableSettings copiable ? Optional.of(copiable) : Optional.empty();
     }
 
@@ -211,6 +215,7 @@ public class SettingsToolItem extends Item {
     }
 
     private static String getSettingsSourceId(Level level, BlockPos pos) {
-        return MultiblockHelper.resolveCoreState(level, pos).getBlock().getDescriptionId();
+        BlockState state = MultiblockHelper.resolveOperationalCoreState(level, pos);
+        return (state == null ? level.getBlockState(pos) : state).getBlock().getDescriptionId();
     }
 }

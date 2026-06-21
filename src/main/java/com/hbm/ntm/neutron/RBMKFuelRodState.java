@@ -76,6 +76,12 @@ public class RBMKFuelRodState {
         tag.putDouble(TAG_HULL_HEAT, hullHeat);
     }
 
+    public void saveLegacyDefaults(CompoundTag tag) {
+        tag.putDouble(TAG_YIELD, remainingYield);
+        tag.putDouble(TAG_CORE_HEAT, coreHeat);
+        tag.putDouble(TAG_HULL_HEAT, hullHeat);
+    }
+
     static double rectify(double value) {
         if (value > 1_000_000.0D) {
             return 1_000_000.0D;

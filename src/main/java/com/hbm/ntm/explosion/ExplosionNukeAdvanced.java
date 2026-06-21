@@ -63,7 +63,7 @@ public class ExplosionNukeAdvanced {
         lastposZ = tag.getInt(name + "lastposZ");
         radius = tag.getInt(name + "radius");
         radius2 = tag.getInt(name + "radius2");
-        n = Math.max(tag.getInt(name + "n"), 1);
+        n = tag.getInt(name + "n");
         nlimit = tag.getInt(name + "nlimit");
         shell = tag.getInt(name + "shell");
         leg = tag.getInt(name + "leg");

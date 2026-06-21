@@ -141,7 +141,7 @@ public record ObjRenderContext(
     }
 
     public ObjRenderContext withTranslucency() {
-        return withRenderMode(LegacyTexturedRenderMode.TRANSLUCENT);
+        return withTranslucencyNoDepthWrite();
     }
 
     public ObjRenderContext withTranslucencyNoDepthWrite() {
@@ -215,13 +215,18 @@ public record ObjRenderContext(
 
     public ObjRenderContext withLegacyHmfAnimation(float currentTime, double modulo, double quotient) {
         if (quotient == 0.0D) {
-            return this;
+            return withLegacyTextureOffset(LegacyUvAnimation.LEGACY_HMF_TEXTURE_OFFSET);
         }
-        return withUvMatrix(uScale, uFromV, vFromU, vScale, uOffset, vOffset + (float) (((double) currentTime % modulo) / quotient));
+        return new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay, color,
+                alpha, hasColor, legacyShadow, renderMode, uScale, uFromV, vFromU, vScale, uOffset,
+                vOffset + (float) (((double) currentTime % modulo) / quotient),
+                LegacyUvAnimation.LEGACY_HMF_TEXTURE_OFFSET);
     }
 
     public ObjRenderContext withLegacyHmfAnimation(LegacyUvAnimation.HmfUvModPlan plan) {
-        return withUvMatrix(uScale, uFromV, vFromU, vScale, uOffset, vOffset + (float) plan.offset());
+        return new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay, color,
+                alpha, hasColor, legacyShadow, renderMode, uScale, uFromV, vFromU, vScale, uOffset,
+                vOffset + (float) plan.offset(), LegacyUvAnimation.LEGACY_HMF_TEXTURE_OFFSET);
     }
 
     public ObjRenderContext withLegacyTextureOffset(float textureOffset) {

@@ -6,19 +6,21 @@ import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnectionUtil;
 import com.hbm.ntm.fluid.HbmFluidConnector;
+import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidNet;
 import com.hbm.ntm.fluid.HbmFluidNode;
 import com.hbm.ntm.fluid.HbmFluidNodeHost;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
-import com.hbm.ntm.fluid.HbmFluidReceiver;
-import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.registry.ModBlockEntities;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -29,7 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
-        implements HbmFluidConnector, HbmFluidNodeHost, HbmFluidReceiver, PaintableDuctBlockEntity, LegacyLookOverlayProvider {
+        implements HbmFluidConnector, HbmFluidNodeHost, HbmFluidCopiable,
+        PaintableDuctBlockEntity, LegacyLookOverlayProvider {
     private static final String TAG_PAINT_BLOCK = "block";
     private static final String TAG_PAINT_META = "meta";
     private static final String TAG_PAINT_BLOCK_NAME = "paint_block";
@@ -47,7 +50,6 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
             FluidDuctPaintableExhaustBlockEntity exhaust) {
         if (!level.isClientSide) {
             exhaust.ensureFluidNodes();
-            exhaust.refreshSubscriptions();
         }
     }
 
@@ -73,6 +75,25 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
+    }
+
+    @Override
+    public CompoundTag getFluidSettings() {
+        return addPaintSettings(new CompoundTag());
+    }
+
+    @Override
+    public boolean pasteFluidSettings(CompoundTag tag, int index, @Nullable Player player, boolean recursive) {
+        return pastePaintSettings(tag);
+    }
+
+    @Override
+    public List<Component> fluidSettingsDisplayInfo() {
+        List<Component> lines = new ArrayList<>(paintSettingsDisplayInfo());
+        if (lines.isEmpty()) {
+            lines.addAll(LegacyLookOverlayLines.fluidNames(SmokeExhaustPollution.SMOKES));
+        }
+        return lines;
     }
 
     @Override
@@ -125,25 +146,6 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
     @Override
     public boolean canConnectFluid(FluidType type, Direction side) {
         return side != null && SmokeExhaustPollution.isSmoke(type);
-    }
-
-    @Override
-    public List<HbmFluidTank> getAllTanks() {
-        return List.of();
-    }
-
-    @Override
-    public long transferFluid(FluidType type, int pressure, long amount) {
-        if (!SmokeExhaustPollution.isSmoke(type) || amount <= 0L) {
-            return amount;
-        }
-        SmokeExhaustPollution.pollute(level, worldPosition, type, amount);
-        return 0L;
-    }
-
-    @Override
-    public long getDemand(FluidType type, int pressure) {
-        return SmokeExhaustPollution.isSmoke(type) ? 1_000_000L : 0L;
     }
 
     @Override
@@ -201,15 +203,6 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
     public void onLoad() {
         super.onLoad();
         refreshFluidNode();
-    }
-
-    private void refreshSubscriptions() {
-        for (FluidType type : SmokeExhaustPollution.SMOKES) {
-            HbmFluidNet fluidNet = getFluidNet(type);
-            if (fluidNet != null && fluidNet.isValid()) {
-                fluidNet.addReceiver(this);
-            }
-        }
     }
 
     private void ensureFluidNodes() {

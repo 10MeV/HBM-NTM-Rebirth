@@ -2,6 +2,7 @@
   "loader": "forge:obj",
   "model": "hbm_ntm_rebirth:models/block/launch_table/soyuz_launcher_support_base.obj",
   "flip_v": true,
+  "automatic_culling": false,
   "render_type": "minecraft:cutout",
   "textures": { "particle": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_support_base", "default": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_support_base" }
 }

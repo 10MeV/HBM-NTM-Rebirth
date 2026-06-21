@@ -31,25 +31,39 @@ public final class ObjModelLibrary {
     public static final ObjModelPart MACHINE_ELEVATOR = ObjMachineModels.ELEVATOR;
     public static final ObjModelPart MACHINE_CRUCIBLE = ObjMachineModels.CRUCIBLE;
     public static final ObjModelPart MACHINE_DRUM = ObjMachineModels.DRUM;
+    public static final ResourceLocation MACHINE_DRUM_GRAY_TEXTURE = ObjMachineModels.DRUM_GRAY_TEXTURE;
     public static final ObjModelPart MACHINE_FRACTION_SPACER = ObjMachineModels.FRACTION_SPACER;
     public static final ObjModelPart MACHINE_HEATING_OVEN = ObjMachineModels.HEATING_OVEN;
+    public static final ResourceLocation MACHINE_HEATING_OVEN_TEXTURE = ObjMachineModels.HEATING_OVEN_TEXTURE;
     public static final ObjModelPart MACHINE_CHIMNEY_BRICK = ObjMachineModels.CHIMNEY_BRICK;
+    public static final ResourceLocation MACHINE_CHIMNEY_BRICK_TEXTURE = ObjMachineModels.CHIMNEY_BRICK_TEXTURE;
     public static final ObjModelPart MACHINE_TURBINE = ObjMachineModels.TURBINE;
     public static final ObjModelPart MACHINE_DIESELGEN = ObjMachineModels.DIESELGEN;
     public static final ObjModelPart MACHINE_FIREBOX = ObjMachineModels.FIREBOX;
     public static final ObjModelPart MACHINE_OILBURNER = ObjMachineModels.OILBURNER;
+    public static final ResourceLocation MACHINE_OILBURNER_TEXTURE = ObjMachineModels.OILBURNER_TEXTURE;
     public static final ObjModelPart MACHINE_ELECTRIC_HEATER = ObjMachineModels.ELECTRIC_HEATER;
+    public static final ResourceLocation MACHINE_ELECTRIC_HEATER_TEXTURE = ObjMachineModels.ELECTRIC_HEATER_TEXTURE;
     public static final ObjModelPart MACHINE_HEATEX = ObjMachineModels.HEATEX;
+    public static final ResourceLocation MACHINE_HEATEX_TEXTURE = ObjMachineModels.HEATEX_TEXTURE;
     public static final ObjModelPart MACHINE_BOILER = ObjMachineModels.BOILER;
+    public static final ResourceLocation MACHINE_BOILER_TEXTURE = ObjMachineModels.BOILER_TEXTURE;
     public static final ObjModelPart MACHINE_BOILER_BURST = ObjMachineModels.BOILER_BURST;
     public static final ObjModelPart MACHINE_INDUSTRIAL_BOILER = ObjMachineModels.INDUSTRIAL_BOILER;
+    public static final ResourceLocation MACHINE_INDUSTRIAL_BOILER_TEXTURE = ObjMachineModels.INDUSTRIAL_BOILER_TEXTURE;
     public static final ObjModelPart MACHINE_HEPHAESTUS = ObjMachineModels.HEPHAESTUS;
+    public static final ResourceLocation MACHINE_HEPHAESTUS_TEXTURE = ObjMachineModels.HEPHAESTUS_TEXTURE;
     public static final ObjModelPart MACHINE_DERRICK = ObjMachineModels.DERRICK;
     public static final ObjModelPart MACHINE_PUMPJACK = ObjMachineModels.PUMPJACK;
     public static final ObjModelPart MACHINE_FRACKING_TOWER = ObjMachineModels.FRACKING_TOWER;
     public static final ObjModelPart MACHINE_OILFLARE = ObjMachineModels.OILFLARE;
+    public static final ResourceLocation MACHINE_OILFLARE_TEXTURE = ObjMachineModels.OILFLARE_TEXTURE;
     public static final ObjModelPart MACHINE_CHIMNEY_INDUSTRIAL = ObjMachineModels.CHIMNEY_INDUSTRIAL;
+    public static final ResourceLocation MACHINE_CHIMNEY_INDUSTRIAL_TEXTURE = ObjMachineModels.CHIMNEY_INDUSTRIAL_TEXTURE;
     public static final ObjModelPart MACHINE_BATTERY_REDD = ObjMachineModels.BATTERY_REDD;
+    public static final ResourceLocation MACHINE_BATTERY_SOCKET_TEXTURE = ObjMachineModels.BATTERY_SOCKET_TEXTURE;
+    public static final ResourceLocation MACHINE_BATTERY_SC_TEXTURE = ObjMachineModels.BATTERY_SC_TEXTURE;
+    public static final ResourceLocation MACHINE_BATTERY_REDD_TEXTURE = ObjMachineModels.BATTERY_REDD_TEXTURE;
     public static final ObjModelPart MACHINE_FENSU = ObjMachineModels.FENSU;
     public static final ObjPartModel MACHINE_ASSEMBLY_MACHINE = ObjMachineModels.ASSEMBLY_MACHINE;
     public static final LegacyWavefrontModel MACHINE_REFINERY = ObjMachineModels.REFINERY;
@@ -64,6 +78,7 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MACHINE_SOLIDIFIER = ObjMachineModels.SOLIDIFIER;
     public static final LegacyWavefrontModel MACHINE_COMPRESSOR = ObjMachineModels.COMPRESSOR;
     public static final LegacyWavefrontModel MACHINE_COKER = ObjMachineModels.COKER;
+    public static final ResourceLocation MACHINE_COKER_TEXTURE = ObjMachineModels.COKER_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_PYROOVEN = ObjMachineModels.PYROOVEN;
     public static final LegacyWavefrontModel MACHINE_BAT9000 = ObjMachineModels.BAT9000;
     public static final LegacyWavefrontModel MACHINE_BIGASSTANK = ObjMachineModels.BIGASSTANK;
@@ -74,19 +89,27 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MACHINE_TURBINE_LEGACY = ObjMachineModels.TURBINE_LEGACY;
     public static final LegacyWavefrontModel MACHINE_INDUSTRIAL_TURBINE = ObjMachineModels.INDUSTRIAL_TURBINE;
     public static final LegacyWavefrontModel MACHINE_CHUNGUS = ObjMachineModels.CHUNGUS;
+    public static final ResourceLocation MACHINE_CHUNGUS_TEXTURE = ObjMachineModels.CHUNGUS_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_TOWER_SMALL = ObjMachineModels.TOWER_SMALL;
     public static final LegacyWavefrontModel MACHINE_TOWER_LARGE = ObjMachineModels.TOWER_LARGE;
     public static final LegacyWavefrontModel MACHINE_CONDENSER = ObjMachineModels.CONDENSER;
     public static final LegacyWavefrontModel MACHINE_WOOD_BURNER = ObjMachineModels.WOOD_BURNER;
     public static final LegacyWavefrontModel MACHINE_COMBUSTION_ENGINE = ObjMachineModels.COMBUSTION_ENGINE;
+    public static final ResourceLocation MACHINE_COMBUSTION_ENGINE_TEXTURE = ObjMachineModels.COMBUSTION_ENGINE_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_PUMP = ObjMachineModels.PUMP;
+    public static final ResourceLocation MACHINE_PUMP_STEAM_TEXTURE = ObjMachineModels.PUMP_STEAM_TEXTURE;
+    public static final ResourceLocation MACHINE_PUMP_ELECTRIC_TEXTURE = ObjMachineModels.PUMP_ELECTRIC_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_AMMO_PRESS = ObjMachineModels.AMMO_PRESS;
+    public static final ResourceLocation MACHINE_AMMO_PRESS_TEXTURE = ObjMachineModels.AMMO_PRESS_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_ANNIHILATOR = ObjMachineModels.ANNIHILATOR;
+    public static final ResourceLocation MACHINE_ANNIHILATOR_TEXTURE = ObjMachineModels.ANNIHILATOR_TEXTURE;
+    public static final ResourceLocation MACHINE_ANNIHILATOR_BELT_TEXTURE = ObjMachineModels.ANNIHILATOR_BELT_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_ASSEMBLY_FACTORY = ObjMachineModels.ASSEMBLY_FACTORY;
     public static final LegacyWavefrontModel MACHINE_CHEMICAL_PLANT = ObjMachineModels.CHEMICAL_PLANT;
     public static final LegacyWavefrontModel MACHINE_CHEMICAL_FACTORY = ObjMachineModels.CHEMICAL_FACTORY;
     public static final LegacyWavefrontModel MACHINE_PUREX = ObjMachineModels.PUREX;
     public static final LegacyWavefrontModel MACHINE_MIXER = ObjMachineModels.MIXER;
+    public static final ResourceLocation MACHINE_MIXER_TEXTURE = ObjMachineModels.MIXER_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_FIREBOX_LEGACY = ObjMachineModels.FIREBOX_LEGACY;
     public static final LegacyWavefrontModel MACHINE_HEATING_OVEN_LEGACY = ObjMachineModels.HEATING_OVEN_LEGACY;
     public static final LegacyWavefrontModel MACHINE_OILBURNER_LEGACY = ObjMachineModels.OILBURNER_LEGACY;
@@ -107,7 +130,9 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MACHINE_ELEVATOR_LEGACY = ObjMachineModels.ELEVATOR_LEGACY;
     public static final LegacyWavefrontModel MACHINE_DIESELGEN_LEGACY = ObjMachineModels.DIESELGEN_LEGACY;
     public static final LegacyWavefrontModel MACHINE_BATTERY_SOCKET_LEGACY = ObjMachineModels.BATTERY_SOCKET_LEGACY;
+    public static final ResourceLocation MACHINE_BATTERY_SOCKET_LEGACY_TEXTURE = ObjMachineModels.BATTERY_SOCKET_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_BATTERY_REDD_LEGACY = ObjMachineModels.BATTERY_REDD_LEGACY;
+    public static final ResourceLocation MACHINE_BATTERY_REDD_LEGACY_TEXTURE = ObjMachineModels.BATTERY_REDD_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_FENSU_LEGACY = ObjMachineModels.FENSU_LEGACY;
     public static final LegacyWavefrontModel MACHINE_RADAR_BODY_LEGACY = ObjMachineModels.RADAR_BODY_LEGACY;
     public static final LegacyWavefrontModel MACHINE_RADAR_LEGACY = ObjMachineModels.RADAR_LEGACY;
@@ -115,28 +140,39 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MACHINE_RADAR_SCREEN_LEGACY = ObjMachineModels.RADAR_SCREEN_LEGACY;
     public static final LegacyWavefrontModel MACHINE_SOLAR_MIRROR_LEGACY = ObjMachineModels.SOLAR_MIRROR_LEGACY;
     public static final LegacyWavefrontModel MACHINE_ARC_WELDER_LEGACY = ObjMachineModels.ARC_WELDER;
+    public static final ResourceLocation MACHINE_ARC_WELDER_LEGACY_TEXTURE = ObjMachineModels.ARC_WELDER_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_SOLDERING_STATION_LEGACY = ObjMachineModels.SOLDERING_STATION;
     public static final LegacyWavefrontModel MACHINE_ARC_WELDER = ObjMachineModels.ARC_WELDER;
+    public static final ResourceLocation MACHINE_ARC_WELDER_TEXTURE = ObjMachineModels.ARC_WELDER_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_SOLDERING_STATION = ObjMachineModels.SOLDERING_STATION;
     public static final LegacyWavefrontModel MACHINE_ARC_FURNACE = ObjMachineModels.ARC_FURNACE;
+    public static final ResourceLocation MACHINE_ARC_FURNACE_TEXTURE = ObjMachineModels.ARC_FURNACE_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_TANK = ObjMachineModels.TANK;
+    public static final ResourceLocation MACHINE_UF6_TANK_TEXTURE = ObjMachineModels.UF6_TANK_TEXTURE;
+    public static final ResourceLocation MACHINE_PUF6_TANK_TEXTURE = ObjMachineModels.PUF6_TANK_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_CENTRIFUGE = ObjMachineModels.CENTRIFUGE;
+    public static final ResourceLocation MACHINE_CENTRIFUGE_TEXTURE = ObjMachineModels.CENTRIFUGE_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_GASCENT = ObjMachineModels.GASCENT;
+    public static final ResourceLocation MACHINE_GASCENT_TEXTURE = ObjMachineModels.GASCENT_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_SILEX = ObjMachineModels.SILEX;
     public static final LegacyWavefrontModel MACHINE_FEL = ObjMachineModels.FEL;
     public static final LegacyWavefrontModel MACHINE_AUTOSAW = ObjMachineModels.AUTOSAW;
+    public static final ResourceLocation MACHINE_AUTOSAW_TEXTURE = ObjMachineModels.AUTOSAW_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_MINING_DRILL = ObjMachineModels.MINING_DRILL;
     public static final LegacyWavefrontModel MACHINE_ORE_SLOPPER = ObjMachineModels.ORE_SLOPPER;
     public static final LegacyWavefrontModel MACHINE_MINING_LASER = ObjMachineModels.MINING_LASER;
     public static final LegacyWavefrontModel MACHINE_ACIDIZER = ObjMachineModels.ACIDIZER;
+    public static final ResourceLocation MACHINE_CRYSTALLIZER_TEXTURE = ObjMachineModels.CRYSTALLIZER_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_CYCLOTRON = ObjMachineModels.CYCLOTRON;
     public static final LegacyWavefrontModel MACHINE_EXPOSURE_CHAMBER = ObjMachineModels.EXPOSURE_CHAMBER;
     public static final LegacyWavefrontModel MACHINE_DEUTERIUM_TOWER = ObjMachineModels.DEUTERIUM_TOWER;
     public static final LegacyWavefrontModel MACHINE_RADGEN = ObjMachineModels.RADGEN;
     public static final LegacyWavefrontModel MACHINE_RADIOLYSIS = ObjMachineModels.RADIOLYSIS;
     public static final LegacyWavefrontModel MACHINE_ROTARY_FURNACE = ObjMachineModels.ROTARY_FURNACE;
+    public static final ResourceLocation MACHINE_ROTARY_FURNACE_TEXTURE = ObjMachineModels.ROTARY_FURNACE_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_ELECTROLYSER = ObjMachineModels.ELECTROLYSER;
     public static final LegacyWavefrontModel MACHINE_CHARGER = ObjMachineModels.CHARGER;
+    public static final ResourceLocation MACHINE_CHARGER_TEXTURE = ObjMachineModels.CHARGER_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_REFUELER = ObjMachineModels.REFUELER;
     public static final LegacyWavefrontModel MACHINE_SOLAR_BOILER = ObjMachineModels.SOLAR_BOILER;
     public static final LegacyWavefrontModel MACHINE_DFC_EMITTER = ObjMachineModels.DFC_EMITTER;
@@ -147,7 +183,10 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MACHINE_STRAND_CASTER = ObjMachineModels.STRAND_CASTER;
     public static final LegacyWavefrontModel MACHINE_FURNACE_STEEL = ObjMachineModels.FURNACE_STEEL;
     public static final LegacyWavefrontModel MACHINE_CONVEYOR_PRESS = ObjMachineModels.CONVEYOR_PRESS;
+    public static final ResourceLocation MACHINE_CONVEYOR_PRESS_TEXTURE = ObjMachineModels.CONVEYOR_PRESS_TEXTURE;
+    public static final ResourceLocation MACHINE_CONVEYOR_PRESS_BELT_TEXTURE = ObjMachineModels.CONVEYOR_PRESS_BELT_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_MICROWAVE = ObjMachineModels.MICROWAVE;
+    public static final ResourceLocation MACHINE_MICROWAVE_TEXTURE = ObjMachineModels.MICROWAVE_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_PISTON_INSERTER = ObjMachineModels.PISTON_INSERTER;
     public static final LegacyWavefrontModel MACHINE_IGEN = ObjMachineModels.IGEN;
     public static final LegacyWavefrontModel MACHINE_DELIVERY_DRONE = ObjMachineModels.DELIVERY_DRONE;
@@ -155,6 +194,7 @@ public final class ObjModelLibrary {
     public static final ObjModelPart NETWORK_CONNECTOR = ObjNetworkModels.CONNECTOR;
     public static final ObjModelPart NETWORK_CONNECTOR_SUPER = ObjNetworkModels.CONNECTOR_SUPER;
     public static final ObjModelPart NETWORK_FLUID_DIODE = ObjNetworkModels.FLUID_DIODE;
+    public static final ResourceLocation NETWORK_FLUID_DIODE_TEXTURE = ObjNetworkModels.FLUID_DIODE_TEXTURE;
     public static final ObjModelPart NETWORK_PIPE_ANCHOR = ObjNetworkModels.PIPE_ANCHOR;
     public static final ObjModelPart NETWORK_PYLON_LARGE = ObjNetworkModels.PYLON_LARGE;
     public static final ObjModelPart NETWORK_PYLON_MEDIUM = ObjNetworkModels.PYLON_MEDIUM;
@@ -213,7 +253,9 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MISSILE_PAD = ObjLaunchModels.MISSILE_PAD;
     public static final LegacyWavefrontModel MISSILE_ERECTOR = ObjLaunchModels.MISSILE_ERECTOR;
     public static final LegacyWavefrontModel MISSILE_ASSEMBLY = ObjLaunchModels.MISSILE_ASSEMBLY;
+    public static final ResourceLocation MISSILE_ASSEMBLY_TEXTURE = ObjLaunchModels.MISSILE_ASSEMBLY_TEXTURE;
     public static final LegacyWavefrontModel LAUNCH_STRUT = ObjLaunchModels.STRUT;
+    public static final ResourceLocation LAUNCH_STRUT_TEXTURE = ObjLaunchModels.STRUT_TEXTURE;
     public static final LegacyWavefrontModel COMPACT_LAUNCHER = ObjLaunchModels.COMPACT_LAUNCHER;
     public static final LegacyWavefrontModel LAUNCH_TABLE_BASE_LEGACY = ObjLaunchModels.LAUNCH_TABLE_BASE_LEGACY;
     public static final LegacyWavefrontModel LAUNCH_TABLE_LARGE_PAD_LEGACY = ObjLaunchModels.LAUNCH_TABLE_LARGE_PAD_LEGACY;
@@ -285,6 +327,8 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel BLOCK_CRYSTAL_TRIXITE = ObjBlockModels.CRYSTAL_TRIXITE;
     public static final LegacyWavefrontModel BLOCK_CABLE_NEO = ObjBlockModels.CABLE_NEO;
     public static final LegacyWavefrontModel BLOCK_PIPE_NEO = ObjBlockModels.PIPE_NEO;
+    public static final ResourceLocation BLOCK_PIPE_NEO_TEXTURE = ObjBlockModels.PIPE_NEO_TEXTURE;
+    public static final ResourceLocation BLOCK_PIPE_SILVER_TEXTURE = ObjBlockModels.PIPE_SILVER_TEXTURE;
     public static final LegacyWavefrontModel BLOCK_DIFURNACE_EXTENSION = ObjBlockModels.DIFURNACE_EXTENSION;
     public static final LegacyWavefrontModel BLOCK_SPLITTER = ObjBlockModels.SPLITTER;
     public static final LegacyWavefrontModel BLOCK_CRANE_BUFFER = ObjBlockModels.CRANE_BUFFER;
@@ -359,6 +403,8 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel PROJECTILE_ZIRNOX_DEBRIS_SHRAPNEL = ObjProjectileModels.ZIRNOX_DEBRIS_SHRAPNEL;
     public static final LegacyWavefrontModel PROJECTILE_BOMBLET_ZETA = ObjProjectileModels.BOMBLET_ZETA;
     public static final LegacyWavefrontModel TRINKET_LANTERN = ObjTrinketModels.LANTERN;
+    public static final ResourceLocation TRINKET_LANTERN_TEXTURE = ObjTrinketModels.LANTERN_TEXTURE;
+    public static final ResourceLocation TRINKET_LANTERN_RUSTY_TEXTURE = ObjTrinketModels.LANTERN_RUSTY_TEXTURE;
     public static final LegacyWavefrontModel TRINKET_BOBBLE_LEGACY = ObjTrinketModels.BOBBLE_LEGACY;
     public static final LegacyWavefrontModel TRINKET_YOMI_LEGACY = ObjTrinketModels.YOMI_LEGACY;
     public static final LegacyWavefrontModel TRINKET_HUNDUN_LEGACY = ObjTrinketModels.HUNDUN_LEGACY;
@@ -374,10 +420,14 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel EFFECT_CASINGS = ObjEffectModels.CASINGS;
     public static final LegacyWavefrontModel UTILITY_GEIGER_COUNTER = ObjUtilityModels.GEIGER_COUNTER;
     public static final LegacyWavefrontModel UTILITY_FORCEFIELD_TOP = ObjUtilityModels.FORCEFIELD_TOP;
+    public static final ResourceLocation UTILITY_GEIGER_TEXTURE = ObjUtilityModels.GEIGER_TEXTURE;
+    public static final ResourceLocation UTILITY_FORCEFIELD_BASE_TEXTURE = ObjUtilityModels.FORCEFIELD_BASE_TEXTURE;
+    public static final ResourceLocation UTILITY_FORCEFIELD_TOP_TEXTURE = ObjUtilityModels.FORCEFIELD_TOP_TEXTURE;
     public static final LegacyWavefrontModel UTILITY_SAT_FOEQ_BURNING = ObjUtilityModels.SAT_FOEQ_BURNING;
     public static final LegacyWavefrontModel UTILITY_SAT_FOEQ_FIRE = ObjUtilityModels.SAT_FOEQ_FIRE;
     public static final LegacyWavefrontModel UTILITY_SAT_DOCK = ObjUtilityModels.SAT_DOCK;
     public static final LegacyWavefrontModel UTILITY_TESLA = ObjUtilityModels.TESLA;
+    public static final ResourceLocation UTILITY_TESLA_TEXTURE = ObjUtilityModels.TESLA_TEXTURE;
     public static final LegacyWavefrontModel UTILITY_FILE_CABINET = ObjUtilityModels.FILE_CABINET;
     public static final LegacyWavefrontModel ENTITY_TESLACRAB = ObjEntityModels.TESLACRAB;
     public static final LegacyWavefrontModel ENTITY_MASKMAN = ObjEntityModels.MASKMAN;
@@ -442,7 +492,6 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel WEAPON_QUADRO = ObjWeaponModels.QUADRO;
     public static final LegacyWavefrontModel WEAPON_MINIGUN = ObjWeaponModels.MINIGUN;
     public static final LegacyWavefrontModel WEAPON_MISSILE_LAUNCHER = ObjWeaponModels.MISSILE_LAUNCHER;
-    public static final LegacyWavefrontModel WEAPON_METEOR = ObjWeaponModels.METEOR;
     public static final LegacyWavefrontModel WEAPON_TESLA_CANNON = ObjWeaponModels.TESLA_CANNON;
     public static final LegacyWavefrontModel WEAPON_LASER_PISTOL = ObjWeaponModels.LASER_PISTOL;
     public static final LegacyWavefrontModel WEAPON_STG77 = ObjWeaponModels.STG77;
@@ -463,6 +512,7 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel WEAPON_BUILDING = ObjWeaponModels.BUILDING;
     public static final LegacyWavefrontModel WEAPON_TORPEDO = ObjWeaponModels.TORPEDO;
     public static final LegacyWavefrontModel WEAPON_TOM_MAIN = ObjWeaponModels.TOM_MAIN;
+    public static final LegacyWavefrontModel WEAPON_TOM_FLAME = ObjWeaponModels.TOM_FLAME;
     public static final LegacyWavefrontModel ARMOR_BJ = ObjArmorModels.BJ;
     public static final LegacyWavefrontModel ARMOR_HEV = ObjArmorModels.HEV;
     public static final LegacyWavefrontModel ARMOR_AJR = ObjArmorModels.AJR;
@@ -561,6 +611,10 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel REACTOR_LPW2 = ObjReactorModels.LPW2;
     public static final LegacyWavefrontModel REACTOR_ZIRNOX = ObjReactorModels.ZIRNOX;
     public static final LegacyWavefrontModel REACTOR_ZIRNOX_DESTROYED = ObjReactorModels.ZIRNOX_DESTROYED;
+    public static final ResourceLocation REACTOR_WATZ_TEXTURE = ObjReactorModels.WATZ_TEXTURE;
+    public static final ResourceLocation REACTOR_WATZ_PUMP_TEXTURE = ObjReactorModels.WATZ_PUMP_TEXTURE;
+    public static final ResourceLocation REACTOR_ZIRNOX_TEXTURE = ObjReactorModels.ZIRNOX_TEXTURE;
+    public static final ResourceLocation REACTOR_ZIRNOX_DESTROYED_TEXTURE = ObjReactorModels.ZIRNOX_DESTROYED_TEXTURE;
 
     public static final LegacyWavefrontModel RBMK_ELEMENT = ObjRbmkModels.ELEMENT;
     public static final LegacyWavefrontModel RBMK_ELEMENT_RODS = ObjRbmkModels.ELEMENT_RODS;
@@ -610,6 +664,14 @@ public final class ObjModelLibrary {
 
     public static ObjModelPart blockPart(String name, RenderType renderType) {
         return new ObjModelPart(blockModel(name), renderType);
+    }
+
+    public static ObjModelPart blockPart(String name, RenderType renderType, boolean translucent) {
+        return new ObjModelPart(blockModel(name), renderType, ObjPartTransform.IDENTITY, 1.0F, false, translucent);
+    }
+
+    public static ObjModelPart blockTranslucentPart(String name) {
+        return blockPart(name, RenderType.translucent(), true);
     }
 
     public static ObjModelPartBuilder blockCenteredPart(String name) {
@@ -701,25 +763,31 @@ public final class ObjModelLibrary {
     private ObjModelLibrary() {
     }
 
-    public record ObjModelPartBuilder(ResourceLocation modelLocation, RenderType renderType, float lightMultiplier, boolean directRender) {
+    public record ObjModelPartBuilder(ResourceLocation modelLocation, RenderType renderType, float lightMultiplier,
+            boolean directRender, boolean translucent) {
         public ObjModelPartBuilder(ResourceLocation modelLocation, RenderType renderType) {
-            this(modelLocation, renderType, 1.0F, false);
+            this(modelLocation, renderType, 1.0F, false, renderType == RenderType.translucent());
         }
 
         public ObjModelPartBuilder withRenderType(RenderType renderType) {
-            return new ObjModelPartBuilder(modelLocation, renderType, lightMultiplier, directRender);
+            return new ObjModelPartBuilder(modelLocation, renderType, lightMultiplier, directRender,
+                    renderType == RenderType.translucent());
         }
 
         public ObjModelPartBuilder withLightMultiplier(float lightMultiplier) {
-            return new ObjModelPartBuilder(modelLocation, renderType, lightMultiplier, directRender);
+            return new ObjModelPartBuilder(modelLocation, renderType, lightMultiplier, directRender, translucent);
         }
 
         public ObjModelPartBuilder direct() {
-            return new ObjModelPartBuilder(modelLocation, renderType, lightMultiplier, true);
+            return new ObjModelPartBuilder(modelLocation, renderType, lightMultiplier, true, translucent);
+        }
+
+        public ObjModelPartBuilder markTranslucent() {
+            return new ObjModelPartBuilder(modelLocation, renderType, lightMultiplier, directRender, true);
         }
 
         public ObjModelPart withOrigin(ObjPartTransform transform) {
-            return new ObjModelPart(modelLocation, renderType, transform, lightMultiplier, directRender);
+            return new ObjModelPart(modelLocation, renderType, transform, lightMultiplier, directRender, translucent);
         }
     }
 }

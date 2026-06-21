@@ -1,0 +1,19 @@
+﻿{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 1, "ingredient": { "tag": "forge:dense_wires/bscco" }, "legacy_ore": "wireDenseBSCCO" },
+    { "count": 1, "ingredient": { "tag": "forge:pipes/copper" }, "legacy_ore": "pipeCopper" },
+    { "count": 1, "ingredient": { "tag": "forge:ingots/any_resistant_alloy" }, "legacy_ore": "ingotAnyResistantAlloy" },
+    { "count": 4, "ingredient": { "tag": "forge:ingots/any_plastic" }, "legacy_ore": "ingotAnyPlastic" }
+  ],
+  "internal_name": "ass.fusionbscco",
+  "output_fluids": [],
+  "output_items": [
+    { "count": 2, "item": "hbm_ntm_rebirth:fusion_component_bscco" }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 176
+}

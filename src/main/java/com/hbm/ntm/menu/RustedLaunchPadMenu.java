@@ -4,6 +4,7 @@ import com.hbm.ntm.blockentity.RustedLaunchPadBlockEntity;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -83,7 +84,7 @@ public class RustedLaunchPadMenu extends AbstractContainerMenu {
     }
 
     private static RustedLaunchPadBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof RustedLaunchPadBlockEntity launchPad) {
             return launchPad;
         }

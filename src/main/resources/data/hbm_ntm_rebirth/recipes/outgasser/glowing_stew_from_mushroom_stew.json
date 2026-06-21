@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:outgasser",
+  "input": {
+    "ingredient": {
+      "item": "minecraft:mushroom_stew"
+    },
+    "count": 1
+  },
+  "solid_output": {
+    "item": "hbm_ntm_rebirth:glowing_stew",
+    "count": 1
+  }
+}

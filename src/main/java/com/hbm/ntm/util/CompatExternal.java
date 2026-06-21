@@ -227,6 +227,9 @@ public final class CompatExternal {
     }
 
     public static void registerTurretTargetSimple(Class clazz, int type) {
+        if (type < 0 || type > 3) {
+            return;
+        }
         addWithoutCallback(typeSet(type), clazz);
         Class<? extends Entity> entityClass = asEntityClass(clazz);
         if (entityClass != null) {
@@ -296,7 +299,7 @@ public final class CompatExternal {
             case 1 -> turretTargetFriendly;
             case 2 -> turretTargetHostile;
             case 3 -> turretTargetMachine;
-            default -> turretTargetHostile;
+            default -> throw new IllegalArgumentException("Invalid turret target type: " + type);
         };
     }
 

@@ -20,7 +20,11 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
 public class FluidDuctBoxBlock extends FluidPipeBlock {
-    public static final IntegerProperty LEGACY_METADATA = IntegerProperty.create("legacy_metadata", 0, 14);
+    public static final int LEGACY_METADATA_COUNT = 15;
+    private static final int[] BOX_CREATIVE_METADATA = createSequentialMetadata();
+    private static final int[] EXHAUST_CREATIVE_METADATA = {0, 3, 6, 9, 12};
+    public static final IntegerProperty LEGACY_METADATA = IntegerProperty.create("legacy_metadata", 0,
+            LEGACY_METADATA_COUNT - 1);
 
     public FluidDuctBoxBlock(Properties properties) {
         super(properties);
@@ -73,27 +77,27 @@ public class FluidDuctBoxBlock extends FluidPipeBlock {
         VoxelShape shape = box(coreMin, coreMin, coreMin, coreMax, coreMax, coreMax);
         if (north) {
             shape = Shapes.or(shape, box(bounds.lowerPx(), bounds.lowerPx(), 0.0D,
-                    bounds.upperPx(), bounds.upperPx(), coreMin));
+                    bounds.upperPx(), bounds.upperPx(), bounds.lowerPx()));
         }
         if (east) {
-            shape = Shapes.or(shape, box(coreMax, bounds.lowerPx(), bounds.lowerPx(),
+            shape = Shapes.or(shape, box(bounds.upperPx(), bounds.lowerPx(), bounds.lowerPx(),
                     16.0D, bounds.upperPx(), bounds.upperPx()));
         }
         if (south) {
-            shape = Shapes.or(shape, box(bounds.lowerPx(), bounds.lowerPx(), coreMax,
+            shape = Shapes.or(shape, box(bounds.lowerPx(), bounds.lowerPx(), bounds.upperPx(),
                     bounds.upperPx(), bounds.upperPx(), 16.0D));
         }
         if (west) {
             shape = Shapes.or(shape, box(0.0D, bounds.lowerPx(), bounds.lowerPx(),
-                    coreMin, bounds.upperPx(), bounds.upperPx()));
+                    bounds.lowerPx(), bounds.upperPx(), bounds.upperPx()));
         }
         if (up) {
-            shape = Shapes.or(shape, box(bounds.lowerPx(), coreMax, bounds.lowerPx(),
+            shape = Shapes.or(shape, box(bounds.lowerPx(), bounds.upperPx(), bounds.lowerPx(),
                     bounds.upperPx(), 16.0D, bounds.upperPx()));
         }
         if (down) {
             shape = Shapes.or(shape, box(bounds.lowerPx(), 0.0D, bounds.lowerPx(),
-                    bounds.upperPx(), coreMin, bounds.upperPx()));
+                    bounds.upperPx(), bounds.lowerPx(), bounds.upperPx()));
         }
         return shape;
     }
@@ -121,7 +125,15 @@ public class FluidDuctBoxBlock extends FluidPipeBlock {
     }
 
     public static int clampLegacyMetadata(int metadata) {
-        return Math.max(0, Math.min(14, metadata));
+        return Math.max(0, Math.min(LEGACY_METADATA_COUNT - 1, metadata));
+    }
+
+    public static int[] boxCreativeMetadata() {
+        return BOX_CREATIVE_METADATA.clone();
+    }
+
+    public static int[] exhaustCreativeMetadata() {
+        return EXHAUST_CREATIVE_METADATA.clone();
     }
 
     public static int rectifyLegacyMaterial(int metadata) {
@@ -150,6 +162,14 @@ public class FluidDuctBoxBlock extends FluidPipeBlock {
             boolean down) {
         return (north ? 1 : 0) + (east ? 1 : 0) + (south ? 1 : 0) + (west ? 1 : 0)
                 + (up ? 1 : 0) + (down ? 1 : 0);
+    }
+
+    private static int[] createSequentialMetadata() {
+        int[] metadata = new int[LEGACY_METADATA_COUNT];
+        for (int i = 0; i < metadata.length; i++) {
+            metadata[i] = i;
+        }
+        return metadata;
     }
 
     public record DuctBounds(double lower, double upper, double junctionLower, double junctionUpper) {

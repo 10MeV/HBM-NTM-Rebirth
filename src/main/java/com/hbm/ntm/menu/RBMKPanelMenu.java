@@ -1,6 +1,7 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.RBMKPanelBlockEntity;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -40,7 +41,7 @@ public class RBMKPanelMenu extends AbstractContainerMenu {
     }
 
     private static RBMKPanelBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof RBMKPanelBlockEntity panel) {
             return panel;
         }

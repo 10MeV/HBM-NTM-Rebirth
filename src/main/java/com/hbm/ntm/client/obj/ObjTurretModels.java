@@ -9,7 +9,7 @@ public final class ObjTurretModels {
     public static final LegacyWavefrontModel TAUON = model("turret_tauon", "tauon").asVBO();
     public static final LegacyWavefrontModel RICHARD = model("turret_richard", "richard").asVBO();
     public static final LegacyWavefrontModel HOWARD = model("turret_howard", "howard").asVBO();
-    public static final LegacyWavefrontModel HOWARD_DAMAGED = model("turret_howard_damaged", "rusted_howard").asVBO();
+    public static final LegacyWavefrontModel HOWARD_DAMAGED = model("turret_howard_damaged", "rusted/howard").asVBO();
     public static final LegacyWavefrontModel MAXWELL = model("turret_microwave", "maxwell").asVBO();
     public static final LegacyWavefrontModel FRITZ = model("turret_fritz", "fritz").asVBO();
     public static final LegacyWavefrontModel ARTY = model("turret_arty", "arty").asVBO();
@@ -38,19 +38,19 @@ public final class ObjTurretModels {
     public static final ResourceLocation SENTRY_TEXTURE = texture("sentry");
     public static final ResourceLocation SENTRY_DAMAGED_TEXTURE = texture("sentry_damaged");
     public static final ResourceLocation ZACH_TEXTURE = texture("zach");
-    public static final ResourceLocation BASE_RUSTED_TEXTURE = texture("rusted_base");
-    public static final ResourceLocation CARRIAGE_CIWS_RUSTED_TEXTURE = texture("rusted_carriage_ciws");
-    public static final ResourceLocation HOWARD_RUSTED_TEXTURE = texture("rusted_howard");
-    public static final ResourceLocation HOWARD_BARRELS_RUSTED_TEXTURE = texture("rusted_howard_barrels");
+    public static final ResourceLocation BASE_RUSTED_TEXTURE = texture("rusted/base");
+    public static final ResourceLocation CARRIAGE_CIWS_RUSTED_TEXTURE = texture("rusted/carriage_ciws");
+    public static final ResourceLocation HOWARD_RUSTED_TEXTURE = texture("rusted/howard");
+    public static final ResourceLocation HOWARD_BARRELS_RUSTED_TEXTURE = texture("rusted/howard_barrels");
 
     public static LegacyWavefrontModel model(String modelName, String textureName) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/turrets/" + modelName + ".obj"),
+                new ResourceLocation(HbmNtm.MOD_ID, "models/turrets/" + modelName + ".obj"),
                 texture(textureName));
     }
 
     public static ResourceLocation texture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/turrets/" + name + ".png");
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/turrets/" + name + ".png");
     }
 
     private ObjTurretModels() {

@@ -1,0 +1,1 @@
+{"variants":{"facing=north":{"model":"hbm_ntm_rebirth:block/anvil_schrabidate"},"facing=east":{"model":"hbm_ntm_rebirth:block/anvil_schrabidate","y":90},"facing=south":{"model":"hbm_ntm_rebirth:block/anvil_schrabidate","y":180},"facing=west":{"model":"hbm_ntm_rebirth:block/anvil_schrabidate","y":270}}}

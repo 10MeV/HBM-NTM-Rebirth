@@ -1,0 +1,9 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:gasoline_leaded", "amount": 12000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:gasoline", "amount": 10000 },
+  "solid_input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:fuel_additive_antiknock" }
+  },
+  "duration": 40
+}

@@ -23,7 +23,10 @@ import net.minecraftforge.client.model.data.ModelData;
 import java.util.List;
 
 public final class ObjRenderUtils {
+    private static final long BAKED_MODEL_RANDOM_SEED = 42L;
     private static final Direction[] DIRECTIONS = Direction.values();
+    private static final ThreadLocal<RandomSource> BAKED_MODEL_RANDOM =
+            ThreadLocal.withInitial(() -> RandomSource.create(BAKED_MODEL_RANDOM_SEED));
 
     public static void renderBlockModel(
             BakedModel model,
@@ -61,7 +64,7 @@ public final class ObjRenderUtils {
             green *= legacyShadowFactor(poseStack);
             blue *= legacyShadowFactor(poseStack);
         }
-        RandomSource random = RandomSource.create(42L);
+        RandomSource random = bakedModelRandom();
 
         for (RenderType renderType : model.getRenderTypes(state, random, ModelData.EMPTY)) {
             RenderType effectiveType = overrideRenderType != null
@@ -116,7 +119,7 @@ public final class ObjRenderUtils {
             boolean legacyShadow) {
         VertexConsumer consumer = buffer.getBuffer(renderType);
         BlockState dummyState = Blocks.AIR.defaultBlockState();
-        RandomSource random = RandomSource.create(42L);
+        RandomSource random = bakedModelRandom();
 
         for (Direction direction : DIRECTIONS) {
             renderQuadList(poseStack.last(), consumer, model.getQuads(dummyState, direction, random, ModelData.EMPTY, renderType), packedLight, packedOverlay, lightMultiplier, colorOverride, hasColorOverride, legacyShadow);
@@ -155,6 +158,12 @@ public final class ObjRenderUtils {
         normal.mul(pose.normal());
         float brightness = (normal.y() + 0.7F) * 0.9F - Math.abs(normal.x()) * 0.1F + Math.abs(normal.z()) * 0.1F;
         return Math.max(0.45F, brightness);
+    }
+
+    private static RandomSource bakedModelRandom() {
+        RandomSource random = BAKED_MODEL_RANDOM.get();
+        random.setSeed(BAKED_MODEL_RANDOM_SEED);
+        return random;
     }
 
     private ObjRenderUtils() {

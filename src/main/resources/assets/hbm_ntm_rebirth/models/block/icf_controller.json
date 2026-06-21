@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "hbm_ntm_rebirth:block/icf_controller",
+    "side": "hbm_ntm_rebirth:block/icf_casing",
+    "top": "hbm_ntm_rebirth:block/icf_casing"
+  }
+}

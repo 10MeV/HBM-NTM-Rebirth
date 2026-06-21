@@ -15,7 +15,6 @@ public enum BulletStyle {
     GRENADE(10),
     BALEFIRE(11),
     ORB(12),
-    METEOR(13),
     APDS(14),
     BLADE(15),
     TAU(17),

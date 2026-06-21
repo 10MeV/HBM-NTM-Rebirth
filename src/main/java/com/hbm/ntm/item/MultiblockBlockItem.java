@@ -60,14 +60,19 @@ public class MultiblockBlockItem extends BlockItem {
         Player player = context.getPlayer();
         ItemStack stack = context.getItemInHand();
         BlockState placedState = level.getBlockState(corePos);
-        if (placedState.is(state.getBlock())) {
-            updateCustomBlockEntityTag(level, player, corePos, stack);
-            multiblock.afterDirectCorePlaced(level, corePos, placedState, player, stack);
-            restorePersistentState(level, corePos, stack);
-            multiblock.completeDirectMultiblockPlacement(level, corePos, placedState, player, stack);
-            if (player instanceof ServerPlayer serverPlayer) {
-                CriteriaTriggers.PLACED_BLOCK.trigger(serverPlayer, corePos, stack);
-            }
+        if (!placedState.is(state.getBlock())) {
+            return InteractionResult.FAIL;
+        }
+        updateCustomBlockEntityTag(level, player, corePos, stack);
+        multiblock.afterDirectCorePlaced(level, corePos, placedState, player, stack);
+        restorePersistentState(level, corePos, stack);
+        multiblock.completeDirectMultiblockPlacement(level, corePos, placedState, player, stack);
+        placedState = level.getBlockState(corePos);
+        if (!placedState.is(state.getBlock())) {
+            return InteractionResult.FAIL;
+        }
+        if (player instanceof ServerPlayer serverPlayer) {
+            CriteriaTriggers.PLACED_BLOCK.trigger(serverPlayer, corePos, stack);
         }
 
         SoundType sound = placedState.getSoundType(level, corePos, player);

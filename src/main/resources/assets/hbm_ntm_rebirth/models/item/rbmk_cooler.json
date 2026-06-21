@@ -1,3 +1,1 @@
-{
-  "parent": "hbm_ntm_rebirth:block/rbmk_cooler"
-}
+{ "parent": "builtin/entity" }

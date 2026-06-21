@@ -6,6 +6,7 @@ import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.registry.ModEffects;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,7 +16,17 @@ import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.concurrent.ConcurrentHashMap;
+
 public final class RadiationUtil {
+    private static final Set<Class<?>> REGISTERED_IMMUNE_ENTITIES = ConcurrentHashMap.newKeySet();
+    @SuppressWarnings("rawtypes")
+    private static final HashSet<Class> LEGACY_IMMUNE_ENTITIES = new LegacyImmuneEntitySet();
+
     public static float calculateRadiationMod(LivingEntity entity) {
         return RadiationResistance.calculateRadiationMod(entity);
     }
@@ -36,10 +47,6 @@ public final class RadiationUtil {
     }
 
     public static boolean contaminate(LivingEntity entity, HazardType hazard, ContaminationType contamination, float amount) {
-        if (amount <= 0.0F) {
-            return false;
-        }
-
         if (hazard == HazardType.RADIATION) {
             RadiationData.setRadEnv(entity, RadiationData.getRadEnv(entity) + amount);
         }
@@ -100,21 +107,23 @@ public final class RadiationUtil {
         if (isDigammaDataImmune(entity)) {
             return;
         }
-        if (entity.hasEffect(ModEffects.STABILITY.get())) {
-            return;
+        if (entity instanceof Player player) {
+            if (player.isCreative() || player.tickCount < 200) {
+                return;
+            }
+            if (ArmorUtil.checkForDigamma(player)) {
+                return;
+            }
         }
-        contaminate(entity, HazardType.DIGAMMA, ContaminationType.DIGAMMA, amount);
+        RadiationData.incrementDigamma(entity, amount);
     }
 
     public static void applyDigammaItemHazard(LivingEntity entity, float level, int stackCount) {
-        if (level <= 0.0F || stackCount <= 0) {
-            return;
-        }
         applyDigammaData(entity, level / 20.0F);
     }
 
     public static void applyDigammaDirect(LivingEntity entity, float amount) {
-        if (amount <= 0.0F || isRadiationImmuneMarker(entity) || isLegacyClassName(entity, "EntityDuck")) {
+        if (isRadiationImmuneMarker(entity)) {
             return;
         }
         if (entity instanceof Player player && player.isCreative()) {
@@ -127,38 +136,79 @@ public final class RadiationUtil {
         return entity instanceof RadiationImmune;
     }
 
+    @SuppressWarnings("rawtypes")
+    public static HashSet<Class> legacyImmuneEntitiesView() {
+        return LEGACY_IMMUNE_ENTITIES;
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static void registerRadImmune(Class type) {
+        if (type != null) {
+            REGISTERED_IMMUNE_ENTITIES.add(type);
+        }
+    }
+
+    public static boolean isRegisteredRadImmune(Entity entity) {
+        if (entity == null) {
+            return false;
+        }
+        ensureLegacyDefaultImmuneEntities();
+        Class<?> entityType = entity.getClass();
+        for (Class<?> immuneType : REGISTERED_IMMUNE_ENTITIES) {
+            if (immuneType.isAssignableFrom(entityType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean isRadImmune(LivingEntity entity) {
-        return isRadiationImmuneMarker(entity)
+        return isRegisteredRadImmune(entity)
+                || isRadiationImmuneMarker(entity)
                 || entity.hasEffect(ModEffects.MUTATION.get())
-                || entity instanceof MushroomCow
-                || entity instanceof Zombie
-                || entity instanceof Skeleton
-                || entity instanceof Ocelot
                 || isLegacyImmuneEntityName(entity);
     }
 
     private static boolean isDigammaDataImmune(LivingEntity entity) {
-        return entity instanceof Ocelot
-                || isLegacyClassName(entity, "EntityDuck");
+        return entity.hasEffect(ModEffects.STABILITY.get())
+                || entity instanceof Ocelot
+                || hasLegacyClassName(entity, "EntityDuck");
     }
 
     private static boolean isLegacyImmuneEntityName(LivingEntity entity) {
-        return isLegacyClassName(entity, "CreeperNuclear")
-                || isLegacyClassName(entity, "EntityCreeperNuclear")
-                || isLegacyClassName(entity, "EntityCreeperTainted")
-                || isLegacyClassName(entity, "EntityQuackos")
-                || isLegacyClassName(entity, "EntityLootableBody");
+        return hasLegacyClassName(entity, "CreeperNuclear")
+                || hasLegacyClassName(entity, "EntityCreeperNuclear")
+                || hasLegacyClassName(entity, "EntityCreeperTainted")
+                || hasLegacyClassName(entity, "EntityQuackos")
+                || hasLegacyClassName(entity, "cyano.lootable.entities.EntityLootableBody");
     }
 
-    private static boolean isLegacyClassName(LivingEntity entity, String simpleName) {
+    public static boolean hasLegacyClassName(Entity entity, String legacyName) {
+        if (entity == null || legacyName == null || legacyName.isEmpty()) {
+            return false;
+        }
+        boolean fullName = legacyName.indexOf('.') >= 0;
         Class<?> type = entity.getClass();
         while (type != null) {
-            if (type.getSimpleName().equals(simpleName) || type.getName().endsWith("." + simpleName)) {
+            String typeName = type.getName();
+            if (fullName ? typeName.equals(legacyName)
+                    : type.getSimpleName().equals(legacyName) || typeName.endsWith("." + legacyName)) {
                 return true;
             }
             type = type.getSuperclass();
         }
         return false;
+    }
+
+    private static void ensureLegacyDefaultImmuneEntities() {
+        if (!REGISTERED_IMMUNE_ENTITIES.isEmpty()) {
+            return;
+        }
+        REGISTERED_IMMUNE_ENTITIES.add(MushroomCow.class);
+        REGISTERED_IMMUNE_ENTITIES.add(Zombie.class);
+        REGISTERED_IMMUNE_ENTITIES.add(Skeleton.class);
+        REGISTERED_IMMUNE_ENTITIES.add(Ocelot.class);
+        REGISTERED_IMMUNE_ENTITIES.add(RadiationImmune.class);
     }
 
     public static void applyRadiationEffect(LivingEntity entity, int amplifier) {
@@ -170,24 +220,30 @@ public final class RadiationUtil {
     }
 
     public static boolean applyAsbestos(LivingEntity entity, int amount, int filterDamage) {
-        return applyAsbestos(entity, amount, filterDamage, false);
+        return applyAsbestos(entity, amount, filterDamage, false, true);
     }
 
     public static boolean applyAsbestosExposure(LivingEntity entity, int amount, int filterDamage) {
-        return applyAsbestos(entity, amount, filterDamage, true);
+        return applyAsbestos(entity, amount, filterDamage, true, false);
     }
 
-    private static boolean applyAsbestos(LivingEntity entity, int amount, int filterDamage, boolean playerExposureProtection) {
-        if (amount <= 0) {
+    public static boolean applyAsbestosGasExposure(LivingEntity entity, int amount) {
+        if (ArmorUtil.hasProtection(entity, 3, HazardClass.PARTICLE_FINE)) {
             return false;
         }
-        if (RadiationConfig.asbestosHazardDisabled()) {
+        RadiationData.incrementAsbestos(entity, amount);
+        return true;
+    }
+
+    private static boolean applyAsbestos(LivingEntity entity, int amount, int filterDamage,
+            boolean playerExposureProtection, boolean respectHazardDisable) {
+        if (respectHazardDisable && RadiationConfig.asbestosHazardDisabled()) {
             return false;
         }
         if (playerExposureProtection && blocksNewPlayerOrCreative(entity)) {
             return false;
         }
-        if (ArmorUtil.hasProtectionAndDamageFilter(entity, HazardClass.PARTICLE_FINE, filterDamage)) {
+        if (ArmorUtil.hasProtectionAndDamageFilter(entity, 3, HazardClass.PARTICLE_FINE, filterDamage)) {
             return false;
         }
         RadiationData.incrementAsbestos(entity, amount);
@@ -195,28 +251,33 @@ public final class RadiationUtil {
     }
 
     public static boolean applyCoalDust(LivingEntity entity, int amount, int filterDamage, int filterDamageChance) {
-        return applyCoalDust(entity, amount, filterDamage, filterDamageChance, false);
+        return applyCoalDust(entity, amount, filterDamage, filterDamageChance, false, true);
     }
 
     public static boolean applyCoalDustExposure(LivingEntity entity, int amount, int filterDamage, int filterDamageChance) {
-        return applyCoalDust(entity, amount, filterDamage, filterDamageChance, true);
+        return applyCoalDust(entity, amount, filterDamage, filterDamageChance, true, false);
+    }
+
+    public static boolean applyCoalGasExposure(LivingEntity entity, int amount) {
+        if (ArmorUtil.hasProtection(entity, 3, HazardClass.PARTICLE_COARSE)) {
+            return false;
+        }
+        RadiationData.incrementBlackLung(entity, amount);
+        return true;
     }
 
     private static boolean applyCoalDust(LivingEntity entity, int amount, int filterDamage, int filterDamageChance,
-            boolean playerExposureProtection) {
-        if (amount <= 0) {
-            return false;
-        }
-        if (RadiationConfig.coalHazardDisabled()) {
+            boolean playerExposureProtection, boolean respectHazardDisable) {
+        if (respectHazardDisable && RadiationConfig.coalHazardDisabled()) {
             return false;
         }
         if (playerExposureProtection && blocksNewPlayerOrCreative(entity)) {
             return false;
         }
-        int actualFilterDamage = filterDamage > 0 && entity.getRandom().nextInt(Math.max(filterDamageChance, 1)) == 0
-                ? filterDamage
-                : 0;
-        if (ArmorUtil.hasProtectionAndDamageFilter(entity, HazardClass.PARTICLE_COARSE, actualFilterDamage)) {
+        if (ArmorUtil.hasProtection(entity, 3, HazardClass.PARTICLE_COARSE)) {
+            if (entity.getRandom().nextInt(Math.max(filterDamageChance, 1)) == 0) {
+                ArmorUtil.damageGasMaskFilter(entity, filterDamage);
+            }
             return false;
         }
         RadiationData.incrementBlackLung(entity, amount);
@@ -231,33 +292,29 @@ public final class RadiationUtil {
     }
 
     public static void printGeigerData(Player player) {
-        float playerRad = getRads(player);
-        float envRad = RadiationData.getRadBuf(player);
-        float chunkRad = ChunkRadiationManager.getRadiation(player.level(), player.blockPosition());
-        float resistanceCoefficient = HazmatRegistry.getResistance(player);
-        float resistance = (1.0F - RadiationResistance.calculateRadiationModifier(player)) * 100.0F;
+        float playerRad = truncate1(RadiationData.getRadiation(player));
+        float envRad = truncate1(RadiationData.getRadBuf(player));
+        float chunkRad = truncate1(ChunkRadiationManager.getRadiation(player.level(), player.blockPosition()));
+        float resistanceCoefficient = truncate2(HazmatRegistry.getResistance(player));
+        float resistance = truncate2(100.0F - RadiationResistance.calculateRadiationModifier(player) * 100.0F);
         ChatFormatting resistancePrefix = resistanceCoefficient > 0.0F ? ChatFormatting.GREEN : ChatFormatting.WHITE;
 
-        player.displayClientMessage(Component.translatable("geiger.title"), false);
-        player.displayClientMessage(Component.translatable("geiger.chunkRad",
-                Component.literal(String.valueOf(round(chunkRad))).withStyle(radiationPrefix(chunkRad))), false);
-        player.displayClientMessage(Component.translatable("geiger.envRad",
-                Component.literal(String.valueOf(round(envRad))).withStyle(radiationPrefix(envRad))), false);
-        player.displayClientMessage(Component.translatable("geiger.playerRad",
-                Component.literal(String.valueOf(round(playerRad))).withStyle(storedRadiationPrefix(playerRad))), false);
-        player.displayClientMessage(Component.translatable("geiger.playerRes",
-                Component.literal(String.valueOf(round2(resistance))).withStyle(resistancePrefix),
-                Component.literal(String.valueOf(round2(resistanceCoefficient))).withStyle(resistancePrefix)), false);
+        player.displayClientMessage(geigerTitle("geiger.title"), false);
+        player.displayClientMessage(geigerLine("geiger.chunkRad", chunkRad + " RAD/s", radiationPrefix(chunkRad)), false);
+        player.displayClientMessage(geigerLine("geiger.envRad", envRad + " RAD/s", radiationPrefix(envRad)), false);
+        player.displayClientMessage(geigerLine("geiger.playerRad", playerRad + " RAD", storedRadiationPrefix(playerRad)), false);
+        player.displayClientMessage(geigerLine("geiger.playerRes",
+                resistance + "% (" + resistanceCoefficient + ")", resistancePrefix), false);
     }
 
     public static void printDosimeterData(Player player) {
-        float envRad = round(RadiationData.getRadBuf(player));
+        float envRad = truncate1(RadiationData.getRadBuf(player));
         boolean limited = envRad > 3.6F;
         float displayed = limited ? 3.6F : envRad;
 
-        player.displayClientMessage(Component.translatable("geiger.title.dosimeter"), false);
-        player.displayClientMessage(Component.translatable("geiger.envRad",
-                Component.literal((limited ? ">" : "") + displayed).withStyle(radiationPrefix(displayed))), false);
+        player.displayClientMessage(geigerTitle("geiger.title.dosimeter"), false);
+        player.displayClientMessage(geigerLine("geiger.envRad",
+                (limited ? ">" : "") + displayed + " RAD/s", radiationPrefix(displayed)), false);
     }
 
     public static ChatFormatting radiationPrefix(double rads) {
@@ -303,28 +360,131 @@ public final class RadiationUtil {
     }
 
     public static void printDiagnosticData(Player player) {
-        float digamma = Math.round(getDigamma(player) * 100.0F) / 100.0F;
-        float healthInfluence = Math.round((1.0F - (float) Math.pow(0.5D, digamma)) * 10000.0F) / 100.0F;
+        float digamma = truncate2(getDigamma(player));
+        float healthInfluence = truncate2((1.0F - (float) Math.pow(0.5D, digamma)) * 100.0F);
 
-        player.displayClientMessage(Component.translatable("digamma.title"), false);
-        player.displayClientMessage(Component.translatable("digamma.playerDigamma", digamma), false);
-        player.displayClientMessage(Component.translatable("digamma.playerHealth", healthInfluence), false);
-        player.displayClientMessage(Component.translatable("digamma.playerRes", "N/A"), false);
+        player.displayClientMessage(digammaTitle(), false);
+        player.displayClientMessage(digammaLine("digamma.playerDigamma", digamma + " DRX", ChatFormatting.RED), false);
+        player.displayClientMessage(digammaLine("digamma.playerHealth", healthInfluence + "%", ChatFormatting.RED), false);
+        player.displayClientMessage(digammaLine("digamma.playerRes", "N/A", ChatFormatting.BLUE), false);
+    }
+
+    private static MutableComponent geigerTitle(String key) {
+        return Component.literal("===== \u2622 ")
+                .append(Component.translatable(key))
+                .append(Component.literal(" \u2622 ====="))
+                .withStyle(ChatFormatting.GOLD);
+    }
+
+    private static MutableComponent geigerLine(String key, String value, ChatFormatting valueStyle) {
+        return Component.translatable(key)
+                .withStyle(ChatFormatting.YELLOW)
+                .append(Component.literal(" " + value).withStyle(valueStyle));
+    }
+
+    private static MutableComponent digammaTitle() {
+        return Component.literal("===== \u03DC ")
+                .append(Component.translatable("digamma.title"))
+                .append(Component.literal(" \u03DC ====="))
+                .withStyle(ChatFormatting.DARK_PURPLE);
+    }
+
+    private static MutableComponent digammaLine(String key, String value, ChatFormatting valueStyle) {
+        return Component.translatable(key)
+                .withStyle(ChatFormatting.LIGHT_PURPLE)
+                .append(Component.literal(" " + value).withStyle(valueStyle));
     }
 
     public static void addRadiationPoisoning(LivingEntity entity, int durationTicks, int amplifier) {
         entity.addEffect(new MobEffectInstance(ModEffects.RADIATION.get(), durationTicks, amplifier));
     }
 
-    private static float round(float value) {
-        return Math.round(value * 10.0F) / 10.0F;
+    private static float truncate1(float value) {
+        return (int) (value * 10.0F) / 10.0F;
     }
 
-    private static float round2(float value) {
-        return Math.round(value * 100.0F) / 100.0F;
+    private static float truncate2(float value) {
+        return (int) (value * 100.0F) / 100.0F;
     }
 
     private RadiationUtil() {
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static final class LegacyImmuneEntitySet extends HashSet<Class> {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public boolean add(Class type) {
+            if (type == null) {
+                return false;
+            }
+            return REGISTERED_IMMUNE_ENTITIES.add(type);
+        }
+
+        @Override
+        public boolean remove(Object type) {
+            return REGISTERED_IMMUNE_ENTITIES.remove(type);
+        }
+
+        @Override
+        public boolean contains(Object type) {
+            return REGISTERED_IMMUNE_ENTITIES.contains(type);
+        }
+
+        @Override
+        public Iterator<Class> iterator() {
+            return (Iterator) Set.copyOf(REGISTERED_IMMUNE_ENTITIES).iterator();
+        }
+
+        @Override
+        public Spliterator<Class> spliterator() {
+            return (Spliterator) Set.copyOf(REGISTERED_IMMUNE_ENTITIES).spliterator();
+        }
+
+        @Override
+        public Object[] toArray() {
+            return Set.copyOf(REGISTERED_IMMUNE_ENTITIES).toArray();
+        }
+
+        @Override
+        public <T> T[] toArray(T[] array) {
+            return Set.copyOf(REGISTERED_IMMUNE_ENTITIES).toArray(array);
+        }
+
+        @Override
+        public int size() {
+            return REGISTERED_IMMUNE_ENTITIES.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return REGISTERED_IMMUNE_ENTITIES.isEmpty();
+        }
+
+        @Override
+        public void clear() {
+            REGISTERED_IMMUNE_ENTITIES.clear();
+        }
+
+        @Override
+        public boolean addAll(java.util.Collection<? extends Class> types) {
+            boolean changed = false;
+            for (Class type : types) {
+                changed |= add(type);
+            }
+            return changed;
+        }
+
+        @Override
+        public boolean removeAll(java.util.Collection<?> types) {
+            return REGISTERED_IMMUNE_ENTITIES.removeAll(types);
+        }
+
+        @Override
+        public boolean retainAll(java.util.Collection<?> types) {
+            return REGISTERED_IMMUNE_ENTITIES.retainAll(types);
+        }
     }
 
     public enum ContaminationType {

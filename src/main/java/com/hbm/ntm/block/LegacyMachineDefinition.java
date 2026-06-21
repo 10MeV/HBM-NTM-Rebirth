@@ -26,6 +26,7 @@ public record LegacyMachineDefinition(
         ResourceLocation textureLocation,
         Map<String, ResourceLocation> partTextures,
         Map<String, LegacyMachinePartRenderProperties> partRenderProperties,
+        LegacyMachinePartRenderMode renderMode,
         boolean renderAll,
         List<String> renderParts,
         boolean itemRenderAll,
@@ -34,6 +35,7 @@ public record LegacyMachineDefinition(
         Map<String, LegacyMachinePartRenderProperties> itemPartRenderProperties,
         float itemFitSize,
         float legacyItemScale,
+        Vec3 legacyInventoryTranslation,
         Function<Direction, Vec3> modelTranslationFactory,
         Function<Direction, Float> postModelYRotationFactory,
         float yRotationOffset,
@@ -57,6 +59,10 @@ public record LegacyMachineDefinition(
             return renderBoundingBoxFactory.apply(corePos);
         }
         return layout(state).renderBoundingBox(corePos, 1.0D);
+    }
+
+    public AABB lightingBoundingBox(BlockState state, BlockPos corePos) {
+        return layout(state).structureBoundingBox(corePos, 0.0D);
     }
 
     public float yRotation(BlockState state) {
@@ -119,6 +125,7 @@ public record LegacyMachineDefinition(
         private Function<Direction, LegacyMultiblockLayout> layoutFactory;
         private Map<String, ResourceLocation> partTextures = Map.of();
         private Map<String, LegacyMachinePartRenderProperties> partRenderProperties = Map.of();
+        private LegacyMachinePartRenderMode renderMode = LegacyMachinePartRenderMode.CUTOUT_NO_CULL;
         private boolean renderAll = true;
         private List<String> renderParts = List.of();
         private Boolean itemRenderAll;
@@ -127,6 +134,7 @@ public record LegacyMachineDefinition(
         private Map<String, LegacyMachinePartRenderProperties> itemPartRenderProperties = Map.of();
         private float itemFitSize = 0.58F;
         private float legacyItemScale;
+        private Vec3 legacyInventoryTranslation = Vec3.ZERO;
         private Function<Direction, Vec3> modelTranslationFactory;
         private Function<Direction, Float> postModelYRotationFactory;
         private float yRotationOffset = 90.0F;
@@ -190,6 +198,11 @@ public record LegacyMachineDefinition(
             return this;
         }
 
+        public Builder renderMode(LegacyMachinePartRenderMode renderMode) {
+            this.renderMode = renderMode;
+            return this;
+        }
+
         public Builder translucentPart(String part, int color, int alpha) {
             return partRenderProperty(part, LegacyMachinePartRenderProperties.color(color, alpha,
                     LegacyMachinePartRenderMode.TRANSLUCENT_NO_DEPTH_WRITE));
@@ -246,6 +259,11 @@ public record LegacyMachineDefinition(
 
         public Builder legacyItemScale(double inventoryScale, double commonScale) {
             return legacyItemScale((float) (inventoryScale * commonScale));
+        }
+
+        public Builder legacyInventoryTranslation(double x, double y, double z) {
+            this.legacyInventoryTranslation = new Vec3(x, y, z);
+            return this;
         }
 
         public Builder modelTranslation(Function<Direction, Vec3> modelTranslationFactory) {
@@ -315,9 +333,9 @@ public record LegacyMachineDefinition(
                     itemPartRenderProperties.isEmpty() ? partRenderProperties : itemPartRenderProperties;
             return new LegacyMachineDefinition(legacyXrDimensions, legacyOffset, legacyHeightOffset,
                     placementFacingFactory, resolvedLayout, modelLocation, textureLocation, partTextures,
-                    partRenderProperties, renderAll, renderParts, resolvedItemRenderAll, resolvedItemRenderParts,
+                    partRenderProperties, renderMode, renderAll, renderParts, resolvedItemRenderAll, resolvedItemRenderParts,
                     itemPartTextures, resolvedItemPartRenderProperties, itemFitSize,
-                    legacyItemScale, modelTranslationFactory, postModelYRotationFactory, yRotationOffset,
+                    legacyItemScale, legacyInventoryTranslation, modelTranslationFactory, postModelYRotationFactory, yRotationOffset,
                     yRotationFactory, renderBoundingBoxFactory, collisionShapeFactory, highlightShapeFactory,
                     particleStateFactory, renderProfile);
         }

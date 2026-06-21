@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": { "tag": "forge:plates/copper" },
+    "count": 1,
+    "legacy_ore": "plateCopper"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:fluid_duct_box",
+    "nbt": "{hbmLegacyVariant:10}"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

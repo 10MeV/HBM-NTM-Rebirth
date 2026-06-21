@@ -5,7 +5,54 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
 
+import java.util.Set;
+
 public final class ObjMachineModels {
+    private static final Set<String> ROOT_DIRECT_MODELS = Set.of(
+            "core_emitter", "core_injector", "core_receiver", "epress_body", "epress_head",
+            "fluidtank", "fluidtank_exploded", "press_body", "press_head", "radar_base",
+            "radiolysis", "refinery", "refinery_exploded", "tank");
+    private static final Set<String> BLOCK_DIRECT_MODELS = Set.of("charger", "refueler");
+    private static final Set<String> MACHINE_DIRECT_MODELS = Set.of(
+            "acidizer", "ammo_press", "annihilator", "arc_furnace", "arc_welder", "autocal",
+            "assembly_factory", "assembly_machine", "autosaw", "bat9000", "battery", "bigasstank", "boiler",
+            "boiler_burst", "catalytic_cracker", "catalytic_reformer", "centrifuge",
+            "chemical_factory", "chemical_plant", "chimney_brick", "chimney_industrial",
+            "chungus", "coker", "combustion_engine", "compressor", "condenser",
+            "conveyor_press", "cyclotron", "derrick", "dieselgen", "drone",
+            "electric_heater", "electrolyser", "elevator", "exposure_chamber", "fel",
+            "fensu", "fensu2", "firebox", "flare_stack", "fracking_tower", "furnace_steel",
+            "gascent", "heatex", "heating_oven", "hephaestus", "hydrotreater", "igen",
+            "industrial_boiler", "industrial_turbine", "intake", "liquefactor",
+            "machine_deuterium_tower", "microwave", "mining_drill", "mining_laser", "mixer",
+            "oilburner", "orbus", "ore_slopper", "piston_inserter", "pump", "pumpjack",
+            "purex", "pyrooven", "radar", "radar_large", "radar_screen", "radgen",
+            "rotary_furnace", "rtg", "sawmill", "silex", "solar_boiler", "solar_mirror",
+            "soldering_station", "solidifier", "steam_engine", "stirling", "strand_caster", "telex",
+            "tower_large", "tower_small", "turbine", "turbinegas", "turbofan",
+            "vacuum_distill", "vending_machine", "wood_burner");
+    private static final Set<String> DIRECT_MODEL_TEXTURES = Set.of(
+            "acidizer", "ammo_press", "annihilator", "arc_furnace", "arc_welder", "autocal",
+            "assembly_factory", "assembly_machine", "autosaw", "bat9000", "battery_socket",
+            "bigasstank", "blast_furnace", "boiler", "catalytic_cracker", "catalytic_reformer",
+            "centrifuge", "charger", "chemical_factory", "chemical_plant", "chimney_brick",
+            "chimney_industrial", "chungus",
+            "coker", "combination_oven", "combustion_engine", "compressor", "compressor_compact",
+            "condenser", "conveyor_press", "crucible_heat", "cyclotron", "derrick", "dieselgen",
+            "drain", "drone", "drum_gray", "electric_heater", "electrolyser", "elevator",
+            "exposure_chamber", "fel", "fensu", "fensu2", "firebox",
+            "flare_stack", "fracking_tower", "fraction_spacer", "fraction_tower", "furnace_iron",
+            "furnace_steel", "gascent", "heater_heatex", "heating_oven", "hephaestus", "igen",
+            "hydrotreater", "industrial_boiler", "industrial_turbine", "intake", "liquefactor",
+            "machine_deuterium_tower", "microwave", "mining_drill", "mining_laser_base",
+            "mining_laser_laser", "mining_laser_pivot", "mixer", "oilburner",
+            "orbus", "ore_slopper", "piston_inserter", "pump_electric", "pump_steam", "pumpjack",
+            "purex", "pyrooven", "radar_base", "radar_large", "radar_screen", "radgen", "refueler",
+            "rotary_furnace", "rtg", "sawmill", "silex", "solar_boiler",
+            "solar_mirror", "soldering_station", "solidifier", "steam_engine", "strand_caster", "telex",
+            "stirling", "tower_large", "tower_small", "turbine", "turbinegas", "turbofan",
+            "vacuum_distill", "vending_machine", "wood_burner");
+
     public static final ObjModelPart PRESS_HEAD = ObjModelLibrary.directBlockPart("press_head")
             .withRenderType(RenderType.entityCutoutNoCull(InventoryMenu.BLOCK_ATLAS))
             .withLightMultiplier(0.82F)
@@ -17,6 +64,8 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel PRESS_HEAD_LEGACY = legacyModel("press_head");
     public static final LegacyWavefrontModel EPRESS_BODY = legacyModel("epress_body");
     public static final LegacyWavefrontModel EPRESS_HEAD = legacyModel("epress_head");
+    public static final LegacyWavefrontModel VENDING_MACHINE = legacyModel("vending_machine").noSmooth();
+    public static final LegacyWavefrontModel ASSEMBLY_MACHINE_LEGACY = legacyModel("assembly_machine").asVBO();
     public static final ObjModelPart BATTERY_SOCKET_SOCKET = directPart("battery_socket_socket")
             .withOrigin(ObjPartTransform.BLOCK_CENTER);
     public static final ObjModelPart BATTERY_SOCKET_SUPPORTS = directPart("battery_socket_supports")
@@ -235,6 +284,8 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel RADAR_LARGE_LEGACY = legacyModel("radar_large").noSmooth().asVBO();
     public static final LegacyWavefrontModel RADAR_SCREEN_LEGACY = legacyModel("radar_screen").noSmooth().asVBO();
     public static final LegacyWavefrontModel SOLAR_MIRROR_LEGACY = legacyModel("solar_mirror").noSmooth();
+    public static final LegacyWavefrontModel TELEX_LEGACY = legacyModel("telex").asVBO();
+    public static final LegacyWavefrontModel AUTOCAL_LEGACY = legacyModel("autocal").asVBO();
     public static final LegacyWavefrontModel ARC_WELDER = legacyModel("arc_welder").noSmooth().asVBO();
     public static final LegacyWavefrontModel SOLDERING_STATION = legacyModel("soldering_station").noSmooth().asVBO();
     public static final LegacyWavefrontModel ARC_FURNACE = legacyModel("arc_furnace").asVBO();
@@ -246,7 +297,7 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel AUTOSAW = legacyModel("autosaw").noSmooth().asVBO();
     public static final LegacyWavefrontModel MINING_DRILL = legacyModel("mining_drill").asVBO();
     public static final LegacyWavefrontModel ORE_SLOPPER = legacyModel("ore_slopper").asVBO();
-    public static final LegacyWavefrontModel MINING_LASER = legacyModel("mining_laser").asVBO();
+    public static final LegacyWavefrontModel MINING_LASER = legacyModel("mining_laser", "mining_laser_base");
     public static final LegacyWavefrontModel ACIDIZER = legacyModel("acidizer").asVBO();
     public static final LegacyWavefrontModel CYCLOTRON = legacyModel("cyclotron").asVBO();
     public static final LegacyWavefrontModel EXPOSURE_CHAMBER = legacyModel("exposure_chamber").asVBO();
@@ -264,7 +315,7 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel STIRLING = legacyModel("stirling");
     public static final LegacyWavefrontModel SAWMILL = legacyModel("sawmill");
     public static final LegacyWavefrontModel STRAND_CASTER = legacyModel("strand_caster");
-    public static final LegacyWavefrontModel FURNACE_STEEL = legacyModel("furnace_steel");
+    public static final LegacyWavefrontModel FURNACE_STEEL = legacyModel("furnace_steel").asVBO();
     public static final LegacyWavefrontModel CONVEYOR_PRESS = legacyModel("conveyor_press");
     public static final LegacyWavefrontModel MICROWAVE = legacyModel("microwave");
     public static final LegacyWavefrontModel PISTON_INSERTER = legacyModel("piston_inserter");
@@ -274,28 +325,60 @@ public final class ObjMachineModels {
     public static final ResourceLocation FLUIDTANK_INNER_TEXTURE = machineTexture("fluidtank_inner");
     public static final ResourceLocation LEGACY_FLUIDTANK_INNER_TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/models/tank/tank_inner.png");
+    public static final ResourceLocation BATTERY_SOCKET_TEXTURE = machineTexture("battery_socket");
+    public static final ResourceLocation ASSEMBLY_MACHINE_TEXTURE = machineTexture("assembly_machine");
+    public static final ResourceLocation BATTERY_SC_TEXTURE = machineTexture("battery_sc");
+    public static final ResourceLocation BATTERY_REDD_TEXTURE = machineTexture("fensu2");
+    public static final ResourceLocation DRUM_GRAY_TEXTURE = machineTexture("drum_gray");
+    public static final ResourceLocation HEATING_OVEN_TEXTURE = machineTexture("heating_oven");
+    public static final ResourceLocation HEATEX_TEXTURE = machineTexture("heater_heatex");
+    public static final ResourceLocation OILBURNER_TEXTURE = machineTexture("oilburner");
+    public static final ResourceLocation ELECTRIC_HEATER_TEXTURE = machineTexture("electric_heater");
+    public static final ResourceLocation BOILER_TEXTURE = machineTexture("boiler");
+    public static final ResourceLocation INDUSTRIAL_BOILER_TEXTURE = machineTexture("industrial_boiler");
+    public static final ResourceLocation CHIMNEY_BRICK_TEXTURE = machineTexture("chimney_brick");
+    public static final ResourceLocation CHIMNEY_INDUSTRIAL_TEXTURE = machineTexture("chimney_industrial");
+    public static final ResourceLocation PUMP_STEAM_TEXTURE = machineTexture("pump_steam");
+    public static final ResourceLocation COKER_TEXTURE = machineTexture("coker");
+    public static final ResourceLocation COMBUSTION_ENGINE_TEXTURE = machineTexture("combustion_engine");
+    public static final ResourceLocation HEPHAESTUS_TEXTURE = machineTexture("hephaestus");
+    public static final ResourceLocation OILFLARE_TEXTURE = machineTexture("flare_stack");
+    public static final ResourceLocation CHUNGUS_TEXTURE = machineTexture("chungus");
     public static final ResourceLocation TURBOFAN_BACK_TEXTURE = machineTexture("turbofan_back");
     public static final ResourceLocation TURBOFAN_AFTERBURNER_TEXTURE = machineTexture("turbofan_afterburner");
     public static final ResourceLocation TURBOFAN_BLADES_TEXTURE = machineTexture("turbofan_blades");
     public static final ResourceLocation PUMP_ELECTRIC_TEXTURE = machineTexture("pump_electric");
+    public static final ResourceLocation AMMO_PRESS_TEXTURE = machineTexture("ammo_press");
+    public static final ResourceLocation ANNIHILATOR_TEXTURE = machineTexture("annihilator");
     public static final ResourceLocation ANNIHILATOR_BELT_TEXTURE = machineTexture("annihilator_belt");
     public static final ResourceLocation ASSEMBLY_FACTORY_SPARKS_TEXTURE = machineTexture("assembly_factory_sparks");
     public static final ResourceLocation CHEMICAL_PLANT_FLUID_TEXTURE = machineTexture("chemical_plant_fluid");
+    public static final ResourceLocation MIXER_TEXTURE = machineTexture("mixer");
+    public static final ResourceLocation CRYSTALLIZER_TEXTURE = machineTexture("acidizer");
+    public static final ResourceLocation MINING_LASER_BASE_TEXTURE = machineTexture("mining_laser_base");
     public static final ResourceLocation MINING_LASER_PIVOT_TEXTURE = machineTexture("mining_laser_pivot");
     public static final ResourceLocation MINING_LASER_LASER_TEXTURE = machineTexture("mining_laser_laser");
     public static final ResourceLocation STIRLING_TEXTURE = machineTexture("stirling");
     public static final ResourceLocation STIRLING_STEEL_TEXTURE = machineTexture("stirling_steel");
     public static final ResourceLocation STIRLING_CREATIVE_TEXTURE = machineTexture("stirling_creative");
+    public static final ResourceLocation ASHPIT_TEXTURE = machineTexture("ashpit");
     public static final ResourceLocation SAWMILL_TEXTURE = machineTexture("sawmill");
     public static final ResourceLocation STRAND_CASTER_TEXTURE = machineTexture("strand_caster");
     public static final ResourceLocation FURNACE_STEEL_TEXTURE = machineTexture("furnace_steel");
     public static final ResourceLocation CONVEYOR_PRESS_TEXTURE = machineTexture("conveyor_press");
     public static final ResourceLocation CONVEYOR_PRESS_BELT_TEXTURE = machineTexture("conveyor_press_belt");
+    public static final ResourceLocation ROTARY_FURNACE_TEXTURE = machineTexture("rotary_furnace");
     public static final ResourceLocation MICROWAVE_TEXTURE = machineTexture("microwave");
     public static final ResourceLocation PISTON_INSERTER_TEXTURE = machineTexture("piston_inserter");
     public static final ResourceLocation LEGACY_FLUIDTANK_FRAME_TEXTURE = machineTexture("tank");
     public static final ResourceLocation UF6_TANK_TEXTURE = machineTexture("uf6_tank");
     public static final ResourceLocation PUF6_TANK_TEXTURE = machineTexture("puf6_tank");
+    public static final ResourceLocation CENTRIFUGE_TEXTURE = machineTexture("centrifuge");
+    public static final ResourceLocation CHARGER_TEXTURE = machineTexture("charger");
+    public static final ResourceLocation ARC_WELDER_TEXTURE = machineTexture("arc_welder");
+    public static final ResourceLocation ARC_FURNACE_TEXTURE = machineTexture("arc_furnace");
+    public static final ResourceLocation GASCENT_TEXTURE = machineTexture("gascent");
+    public static final ResourceLocation AUTOSAW_TEXTURE = machineTexture("autosaw");
     public static final ResourceLocation IGEN_TEXTURE = machineTexture("igen");
     public static final ResourceLocation DELIVERY_DRONE_TEXTURE = machineTexture("drone");
     public static final ResourceLocation DELIVERY_DRONE_EXPRESS_TEXTURE = machineTexture("drone_express");
@@ -304,6 +387,12 @@ public final class ObjMachineModels {
     public static final ResourceLocation PRESS_HEAD_TEXTURE = machineTexture("press_head");
     public static final ResourceLocation EPRESS_BODY_TEXTURE = machineTexture("epress_body");
     public static final ResourceLocation EPRESS_HEAD_TEXTURE = machineTexture("epress_head");
+    public static final ResourceLocation ELEVATOR_TEXTURE = machineTexture("elevator");
+    public static final ResourceLocation FENSU_TEXTURE = machineTexture("fensu");
+    public static final ResourceLocation SOLAR_MIRROR_TEXTURE = machineTexture("solar_mirror");
+    public static final ResourceLocation TELEX_TEXTURE = machineTexture("telex");
+    public static final ResourceLocation AUTOCAL_TEXTURE = machineTexture("autocal");
+    public static final ResourceLocation VENDING_MACHINE_TEXTURE = machineTexture("vending_machine");
 
     public static ObjModelPart part(String name) {
         return part(name, RenderType.cutout());
@@ -327,11 +416,47 @@ public final class ObjMachineModels {
 
     public static LegacyWavefrontModel legacyModel(String modelName, String textureName) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/" + modelName + ".obj"),
-                machineTexture(textureName));
+                machineModel(modelName),
+                machineTexture(textureName)).asVBO();
+    }
+
+    private static ResourceLocation machineModel(String name) {
+        if (ROOT_DIRECT_MODELS.contains(name)) {
+            return new ResourceLocation(HbmNtm.MOD_ID, "models/" + name + ".obj");
+        }
+        if (MACHINE_DIRECT_MODELS.contains(name)) {
+            return new ResourceLocation(HbmNtm.MOD_ID, "models/machines/" + name + ".obj");
+        }
+        if (BLOCK_DIRECT_MODELS.contains(name)) {
+            return new ResourceLocation(HbmNtm.MOD_ID, "models/blocks/" + name + ".obj");
+        }
+        return new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/" + name + ".obj");
     }
 
     public static ResourceLocation machineTexture(String name) {
+        switch (name) {
+            case "core_emitter", "core_injector", "core_receiver", "epress_body", "epress_head",
+                    "press_body", "press_head", "radiolysis", "refinery", "tank" -> {
+                return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + name + ".png");
+            }
+            case "fluidtank" -> {
+                return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/tank.png");
+            }
+            case "fluidtank_inner" -> {
+                return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/tank/tank_inner.png");
+            }
+            case "uf6_tank" -> {
+                return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/uf6_tank.png");
+            }
+            case "puf6_tank" -> {
+                return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/puf6_tank.png");
+            }
+            default -> {
+            }
+        }
+        if (DIRECT_MODEL_TEXTURES.contains(name)) {
+            return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/" + name + ".png");
+        }
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/" + name + ".png");
     }
 

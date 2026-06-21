@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.hbm.ntm.block.LegacyGlyphidSpawnerBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.registry.ModBlocks;
@@ -16,7 +17,6 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
@@ -99,17 +99,18 @@ public final class LegacyFalloutConversions {
     private static List<Entry> defaultEntries() {
         List<Entry> defaults = new ArrayList<>();
 
-        defaults.add(entry(matchesBlock(Blocks.MUSHROOM_STEM), WOOD_EFFECT_RANGE, false, preserveAxisLegacy("waste_log", 1)));
-        defaults.add(entry(matchesTag(BlockTags.LOGS), WOOD_EFFECT_RANGE, false, preserveAxisLegacy("waste_log", 1)));
+        defaults.add(entry(matchesBlock(Blocks.MUSHROOM_STEM), WOOD_EFFECT_RANGE, false, legacy("waste_log", 1)));
+        defaults.add(entry(LegacyFalloutConversions::isLegacyVanillaLog, WOOD_EFFECT_RANGE, false, legacy("waste_log", 1)));
         defaults.add(entry(matchesBlock(Blocks.RED_MUSHROOM_BLOCK), WOOD_EFFECT_RANGE, false, block(Blocks.AIR, 1)));
         defaults.add(entry(matchesBlock(Blocks.BROWN_MUSHROOM_BLOCK), WOOD_EFFECT_RANGE, false, block(Blocks.AIR, 1)));
         defaults.add(entry(matchesBlock(Blocks.SNOW), WOOD_EFFECT_RANGE, false, block(Blocks.AIR, 1)));
-        defaults.add(entry(matchesTag(BlockTags.PLANKS), WOOD_EFFECT_RANGE, false, legacy("waste_planks", 1)));
+        defaults.add(entry(LegacyFalloutConversions::isLegacyVanillaPlanks, WOOD_EFFECT_RANGE, false, legacy("waste_planks", 1)));
         defaults.add(entry(LegacyFalloutConversions::isLegacyWoodenMaterial, WOOD_EFFECT_RANGE, false, block(Blocks.AIR, 1)));
         defaults.add(entry(LegacyFalloutConversions::isLegacyLeafOrPlant, WOOD_EFFECT_RANGE, false, block(Blocks.AIR, 1)));
-        defaults.add(entry(matchesTag(BlockTags.LEAVES), 60.0D, 100.0D, false, legacy("waste_leaves", 1)));
+        defaults.add(entry(LegacyFalloutConversions::isLegacyVanillaLeaves, 60.0D, 100.0D, false, legacy("waste_leaves", 1)));
 
         defaults.add(entry(matchesBlock(Blocks.MOSSY_COBBLESTONE), 100.0D, false, block(Blocks.COAL_ORE, 1)));
+        defaults.add(entry(matchesLegacy("glyphid_spawner"), 100.0D, false, glyphidSpawner(2, 1)));
         defaults.add(entry(matchesLegacy("ore_nether_uranium"), 100.0D, false,
                 legacy("ore_nether_schrabidium", 1),
                 legacy("ore_nether_uranium_scorched", 99)));
@@ -118,9 +119,6 @@ public final class LegacyFalloutConversions {
             double maxDistance = distanceBand * 5.0D;
             int level = 10 - distanceBand;
             defaults.add(entry(matchesBlock(Blocks.COAL_ORE), 0.0D, maxDistance, 0.5D, true,
-                    legacyLevel("ore_sellafield_diamond", level, 3),
-                    legacyLevel("ore_sellafield_emerald", level, 2)));
-            defaults.add(entry(matchesBlock(Blocks.DEEPSLATE_COAL_ORE), 0.0D, maxDistance, 0.5D, true,
                     legacyLevel("ore_sellafield_diamond", level, 3),
                     legacyLevel("ore_sellafield_emerald", level, 2)));
             defaults.add(entry(matchesLegacy("ore_lignite"), 0.0D, maxDistance, 0.2D, true,
@@ -136,9 +134,7 @@ public final class LegacyFalloutConversions {
                         legacyLevel("ore_sellafield_uranium_scorched", level, 9)));
             }
             defaults.add(entry(matchesBlock(Blocks.DIAMOND_ORE), 0.0D, maxDistance, true, legacyLevel("ore_sellafield_radgem", level, 1)));
-            defaults.add(entry(matchesBlock(Blocks.DEEPSLATE_DIAMOND_ORE), 0.0D, maxDistance, true, legacyLevel("ore_sellafield_radgem", level, 1)));
             defaults.add(entry(matchesBlock(Blocks.BEDROCK), 0.0D, maxDistance, true, bedrockSellafield(level, 1)));
-            defaults.add(entry(matchesLegacy("ore_bedrock"), 0.0D, maxDistance, true, bedrockSellafield(level, 1)));
             defaults.add(entry(matchesLegacy("ore_bedrock_oil"), 0.0D, maxDistance, true, bedrockSellafield(level, 1)));
             defaults.add(entry(matchesLegacy("sellafield_bedrock"), 0.0D, maxDistance, true, bedrockSellafield(level, 1)));
             defaults.add(entry(LegacyFalloutConversions::isLegacyIronMaterial, 0.0D, maxDistance, true, slaked(level, 1)));
@@ -244,10 +240,13 @@ public final class LegacyFalloutConversions {
             return matchesBlock(Blocks.MUSHROOM_STEM);
         }
         if ("minecraft:log".equals(normalized) || "minecraft:log2".equals(normalized)) {
-            return matchesTag(BlockTags.LOGS);
+            return LegacyFalloutConversions::isLegacyVanillaLog;
+        }
+        if ("minecraft:planks".equals(normalized)) {
+            return LegacyFalloutConversions::isLegacyVanillaPlanks;
         }
         if ("minecraft:leaves".equals(normalized) || "minecraft:leaves2".equals(normalized)) {
-            return matchesTag(BlockTags.LEAVES);
+            return LegacyFalloutConversions::isLegacyVanillaLeaves;
         }
         if ("minecraft:snow_layer".equals(normalized)) {
             return matchesBlock(Blocks.SNOW);
@@ -273,6 +272,11 @@ public final class LegacyFalloutConversions {
             int level = clamp(metadata, 0, 15);
             return context -> context.state().is(block)
                     && context.state().getValue(LegacySellafieldSlakedBlock.LEVEL) == level;
+        }
+        if (metadata != null && block.defaultBlockState().hasProperty(LegacyGlyphidSpawnerBlock.VARIANT)) {
+            int variant = clamp(metadata, 0, 2);
+            return context -> context.state().is(block)
+                    && context.state().getValue(LegacyGlyphidSpawnerBlock.VARIANT) == variant;
         }
         return matchesBlock(block);
     }
@@ -330,7 +334,8 @@ public final class LegacyFalloutConversions {
             }
             if (metadata != 0
                     && !block.defaultBlockState().hasProperty(LegacySellafieldBlock.LEVEL)
-                    && !block.defaultBlockState().hasProperty(LegacySellafieldSlakedBlock.LEVEL)) {
+                    && !block.defaultBlockState().hasProperty(LegacySellafieldSlakedBlock.LEVEL)
+                    && !block.defaultBlockState().hasProperty(LegacyGlyphidSpawnerBlock.VARIANT)) {
                 warnings.add("Entry #" + entryIndex + " metadata for '" + name + "' has no modern state mapping and was skipped.");
                 continue;
             }
@@ -340,17 +345,7 @@ public final class LegacyFalloutConversions {
     }
 
     private static BlockState configuredState(Block block, int metadata, Context context) {
-        BlockState replacement = block.defaultBlockState();
-        if (replacement.hasProperty(LegacySellafieldBlock.LEVEL)) {
-            replacement = replacement.setValue(LegacySellafieldBlock.LEVEL, clamp(metadata, 0, 5));
-        }
-        if (replacement.hasProperty(LegacySellafieldSlakedBlock.LEVEL)) {
-            replacement = replacement.setValue(LegacySellafieldSlakedBlock.LEVEL, clamp(metadata, 0, 15));
-        }
-        if (replacement.hasProperty(RotatedPillarBlock.AXIS) && context.state().hasProperty(RotatedPillarBlock.AXIS)) {
-            replacement = replacement.setValue(RotatedPillarBlock.AXIS, context.state().getValue(RotatedPillarBlock.AXIS));
-        }
-        return replacement;
+        return setLegacyState(block.defaultBlockState(), metadata);
     }
 
     private static Block resolveBlock(String normalizedName) {
@@ -395,25 +390,25 @@ public final class LegacyFalloutConversions {
         JsonObject root = new JsonObject();
         JsonArray templateEntries = new JsonArray();
         templateEntries.add(templateEntry("matchesBlock", "minecraft:mushroom_stem", 0.0D, WOOD_EFFECT_RANGE, false, outcome("hbm_ntm_rebirth:waste_log", 0, 1)));
-        templateEntries.add(templateEntry("matchesTag", BlockTags.LOGS.location().toString(), 0.0D, WOOD_EFFECT_RANGE, false, outcome("hbm_ntm_rebirth:waste_log", 0, 1)));
+        templateEntries.add(templateEntry("matchesBlock", "minecraft:log", 0.0D, WOOD_EFFECT_RANGE, false, outcome("hbm_ntm_rebirth:waste_log", 0, 1)));
         templateEntries.add(templateEntry("matchesBlock", "minecraft:red_mushroom_block", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
         templateEntries.add(templateEntry("matchesBlock", "minecraft:brown_mushroom_block", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
         templateEntries.add(templateEntry("matchesBlock", "minecraft:snow", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
-        templateEntries.add(templateEntry("matchesTag", BlockTags.PLANKS.location().toString(), 0.0D, WOOD_EFFECT_RANGE, false, outcome("hbm_ntm_rebirth:waste_planks", 0, 1)));
+        templateEntries.add(templateEntry("matchesBlock", "minecraft:planks", 0.0D, WOOD_EFFECT_RANGE, false, outcome("hbm_ntm_rebirth:waste_planks", 0, 1)));
         templateEntries.add(templateEntry("matchesMaterial", "wood", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
         templateEntries.add(templateEntry("matchesMaterial", "leaves", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
         templateEntries.add(templateEntry("matchesMaterial", "plants", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
         templateEntries.add(templateEntry("matchesMaterial", "vine", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
-        templateEntries.add(templateEntry("matchesTag", BlockTags.LEAVES.location().toString(), 60.0D, 100.0D, false, outcome("hbm_ntm_rebirth:waste_leaves", 0, 1)));
+        templateEntries.add(templateEntry("matchesBlock", "minecraft:leaves", 60.0D, 100.0D, false, outcome("hbm_ntm_rebirth:waste_leaves", 0, 1)));
         templateEntries.add(templateEntry("matchesBlock", "minecraft:mossy_cobblestone", 0.0D, 100.0D, false, outcome("minecraft:coal_ore", 0, 1)));
+        templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:glyphid_spawner", 0.0D, 100.0D, false,
+                outcome("hbm_ntm_rebirth:glyphid_spawner", 2, 1)));
         templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:ore_nether_uranium", 0.0D, 100.0D, false,
                 outcome("hbm_ntm_rebirth:ore_nether_schrabidium", 0, 1), outcome("hbm_ntm_rebirth:ore_nether_uranium_scorched", 0, 99)));
         for (int distanceBand = 1; distanceBand <= 10; distanceBand++) {
             int level = 10 - distanceBand;
             double maxDistance = distanceBand * 5.0D;
             templateEntries.add(templateEntryWithChance("matchesBlock", "minecraft:coal_ore", 0.0D, maxDistance, 0.5D, true,
-                    outcome("hbm_ntm_rebirth:ore_sellafield_diamond", level, 3), outcome("hbm_ntm_rebirth:ore_sellafield_emerald", level, 2)));
-            templateEntries.add(templateEntryWithChance("matchesBlock", "minecraft:deepslate_coal_ore", 0.0D, maxDistance, 0.5D, true,
                     outcome("hbm_ntm_rebirth:ore_sellafield_diamond", level, 3), outcome("hbm_ntm_rebirth:ore_sellafield_emerald", level, 2)));
             templateEntries.add(templateEntryWithChance("matchesBlock", "hbm_ntm_rebirth:ore_lignite", 0.0D, maxDistance, 0.2D, true,
                     outcome("hbm_ntm_rebirth:ore_sellafield_diamond", level, 1)));
@@ -427,11 +422,7 @@ public final class LegacyFalloutConversions {
             }
             templateEntries.add(templateEntry("matchesBlock", "minecraft:diamond_ore", 0.0D, maxDistance, true,
                     outcome("hbm_ntm_rebirth:ore_sellafield_radgem", level, 1)));
-            templateEntries.add(templateEntry("matchesBlock", "minecraft:deepslate_diamond_ore", 0.0D, maxDistance, true,
-                    outcome("hbm_ntm_rebirth:ore_sellafield_radgem", level, 1)));
             templateEntries.add(templateEntry("matchesBlock", "minecraft:bedrock", 0.0D, maxDistance, true,
-                    outcome("hbm_ntm_rebirth:sellafield_bedrock", level, 1)));
-            templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:ore_bedrock", 0.0D, maxDistance, true,
                     outcome("hbm_ntm_rebirth:sellafield_bedrock", level, 1)));
             templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:ore_bedrock_oil", 0.0D, maxDistance, true,
                     outcome("hbm_ntm_rebirth:sellafield_bedrock", level, 1)));
@@ -534,6 +525,13 @@ public final class LegacyFalloutConversions {
         return new WeightedOutcome(weight, context -> legacyState(legacyName));
     }
 
+    private static WeightedOutcome glyphidSpawner(int variant, int weight) {
+        return new WeightedOutcome(weight, context -> {
+            BlockState state = legacyState("glyphid_spawner");
+            return state == null ? null : LegacyGlyphidSpawnerBlock.withLegacyVariant(state, variant);
+        });
+    }
+
     private static WeightedOutcome slaked(int level, int weight) {
         return legacyLevel("sellafield_slaked", level, weight);
     }
@@ -543,20 +541,7 @@ public final class LegacyFalloutConversions {
     }
 
     private static WeightedOutcome legacyLevel(String legacyName, int level, int weight) {
-        return new WeightedOutcome(weight, context -> withSlakedLevel(legacyState(legacyName), level));
-    }
-
-    private static WeightedOutcome preserveAxisLegacy(String legacyName, int weight) {
-        return new WeightedOutcome(weight, context -> {
-            BlockState replacement = legacyState(legacyName);
-            if (replacement == null) {
-                return null;
-            }
-            if (context.state().hasProperty(RotatedPillarBlock.AXIS) && replacement.hasProperty(RotatedPillarBlock.AXIS)) {
-                return replacement.setValue(RotatedPillarBlock.AXIS, context.state().getValue(RotatedPillarBlock.AXIS));
-            }
-            return replacement;
-        });
+        return new WeightedOutcome(weight, context -> setLegacyState(legacyState(legacyName), level));
     }
 
     private static BlockState legacyState(String legacyName) {
@@ -564,11 +549,30 @@ public final class LegacyFalloutConversions {
         return block == null || !block.isPresent() ? null : block.get().defaultBlockState();
     }
 
-    private static BlockState withSlakedLevel(BlockState replacement, int level) {
-        if (replacement == null || !replacement.hasProperty(LegacySellafieldSlakedBlock.LEVEL)) {
+    private static BlockState setLegacyState(BlockState replacement, int level) {
+        if (replacement == null) {
             return replacement;
         }
-        return replacement.setValue(LegacySellafieldSlakedBlock.LEVEL, clamp(level, 0, 15));
+        if (replacement.hasProperty(LegacySellafieldSlakedBlock.LEVEL)) {
+            return replacement.setValue(LegacySellafieldSlakedBlock.LEVEL, clamp(level, 0, 15));
+        }
+        if (replacement.hasProperty(LegacySellafieldBlock.LEVEL)) {
+            return replacement.setValue(LegacySellafieldBlock.LEVEL, clamp(level, 0, 5));
+        }
+        if (replacement.hasProperty(LegacyGlyphidSpawnerBlock.VARIANT)) {
+            return LegacyGlyphidSpawnerBlock.withLegacyVariant(replacement, level);
+        }
+        return replacement;
+    }
+
+    private static int legacyFalloutLevel(BlockState state) {
+        if (state.hasProperty(LegacySellafieldSlakedBlock.LEVEL)) {
+            return state.getValue(LegacySellafieldSlakedBlock.LEVEL);
+        }
+        if (state.hasProperty(LegacySellafieldBlock.LEVEL)) {
+            return state.getValue(LegacySellafieldBlock.LEVEL);
+        }
+        return 0;
     }
 
     private static boolean isLegacyLeafOrPlant(Context context) {
@@ -576,6 +580,36 @@ public final class LegacyFalloutConversions {
                 || context.state().is(BlockTags.LEAVES)
                 || isLegacyPlantMaterial(context)
                 || isLegacyVineMaterial(context);
+    }
+
+    private static boolean isLegacyVanillaLog(Context context) {
+        BlockState state = context.state();
+        return state.is(Blocks.OAK_LOG)
+                || state.is(Blocks.SPRUCE_LOG)
+                || state.is(Blocks.BIRCH_LOG)
+                || state.is(Blocks.JUNGLE_LOG)
+                || state.is(Blocks.ACACIA_LOG)
+                || state.is(Blocks.DARK_OAK_LOG);
+    }
+
+    private static boolean isLegacyVanillaPlanks(Context context) {
+        BlockState state = context.state();
+        return state.is(Blocks.OAK_PLANKS)
+                || state.is(Blocks.SPRUCE_PLANKS)
+                || state.is(Blocks.BIRCH_PLANKS)
+                || state.is(Blocks.JUNGLE_PLANKS)
+                || state.is(Blocks.ACACIA_PLANKS)
+                || state.is(Blocks.DARK_OAK_PLANKS);
+    }
+
+    private static boolean isLegacyVanillaLeaves(Context context) {
+        BlockState state = context.state();
+        return state.is(Blocks.OAK_LEAVES)
+                || state.is(Blocks.SPRUCE_LEAVES)
+                || state.is(Blocks.BIRCH_LEAVES)
+                || state.is(Blocks.JUNGLE_LEAVES)
+                || state.is(Blocks.ACACIA_LEAVES)
+                || state.is(Blocks.DARK_OAK_LEAVES);
     }
 
     private static boolean isLegacyPlantMaterial(Context context) {
@@ -664,12 +698,10 @@ public final class LegacyFalloutConversions {
             return true;
         }
         if (original.is(ModBlocks.SELLAFIELD_SLAKED.get()) && replacement.is(ModBlocks.SELLAFIELD_SLAKED.get())) {
-            return replacement.getValue(LegacySellafieldSlakedBlock.LEVEL)
-                    <= original.getValue(LegacySellafieldSlakedBlock.LEVEL);
+            return legacyFalloutLevel(replacement) <= legacyFalloutLevel(original);
         }
         if (original.is(ModBlocks.SELLAFIELD_BEDROCK.get()) && replacementIsBedrockSellafield) {
-            return replacement.getValue(LegacySellafieldSlakedBlock.LEVEL)
-                    <= original.getValue(LegacySellafieldSlakedBlock.LEVEL);
+            return legacyFalloutLevel(replacement) <= legacyFalloutLevel(original);
         }
         return false;
     }

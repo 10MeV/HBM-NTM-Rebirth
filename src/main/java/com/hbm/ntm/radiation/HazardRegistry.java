@@ -98,6 +98,28 @@ public final class HazardRegistry {
         TRANSFORMERS.add(transformer);
     }
 
+    public static void registerTransformerBefore(HazardTransformer transformer, HazardTransformer before) {
+        int index = TRANSFORMERS.indexOf(before);
+        if (index < 0) {
+            TRANSFORMERS.add(transformer);
+        } else {
+            TRANSFORMERS.add(index, transformer);
+        }
+    }
+
+    public static void replaceTransformer(HazardTransformer previous, HazardTransformer replacement) {
+        int index = TRANSFORMERS.indexOf(previous);
+        if (index < 0) {
+            TRANSFORMERS.add(replacement);
+        } else {
+            TRANSFORMERS.set(index, replacement);
+        }
+    }
+
+    public static void unregisterTransformer(HazardTransformer transformer) {
+        TRANSFORMERS.remove(transformer);
+    }
+
     private static void registerTransformers() {
         TRANSFORMERS.add(new NbtRadiationHazardTransformer());
         // LBSM hazard bypasses are intentionally not modernized; keep legacy standard-mode behavior.
@@ -882,17 +904,11 @@ public final class HazardRegistry {
     }
 
     public static void register(Item item, HazardType type, float level) {
-        if (level <= 0.0F || isDisabled(type)) {
-            return;
-        }
         ITEM_HAZARDS.computeIfAbsent(item, key -> new HazardData()).addEntry(type, level);
     }
 
     public static void register(Item item, HazardData data) {
-        if (data.entries().isEmpty()) {
-            return;
-        }
-        mergeData(ITEM_HAZARDS.computeIfAbsent(item, key -> new HazardData()), data);
+        ITEM_HAZARDS.put(item, data);
     }
 
     public static void register(Item item, HazardEntry... entries) {
@@ -918,17 +934,11 @@ public final class HazardRegistry {
     }
 
     public static void registerTag(TagKey<Item> tag, HazardType type, float level) {
-        if (level <= 0.0F || isDisabled(type)) {
-            return;
-        }
         TAG_HAZARDS.computeIfAbsent(tag, key -> new HazardData()).addEntry(type, level);
     }
 
     public static void registerTag(TagKey<Item> tag, HazardData data) {
-        if (data.entries().isEmpty()) {
-            return;
-        }
-        mergeData(TAG_HAZARDS.computeIfAbsent(tag, key -> new HazardData()), data);
+        TAG_HAZARDS.put(tag, data);
     }
 
     public static void registerTag(String namespace, String path, HazardType type, float level) {
@@ -952,23 +962,20 @@ public final class HazardRegistry {
     }
 
     public static void registerStack(ItemStack stack, HazardType type, float level) {
-        if (stack.isEmpty() || level <= 0.0F || isDisabled(type)) {
+        if (stack.isEmpty()) {
             return;
         }
         STACK_HAZARDS.computeIfAbsent(HazardStackKey.of(stack), key -> new HazardData()).addEntry(type, level);
     }
 
     public static void registerStack(ItemStack stack, HazardData data) {
-        if (stack.isEmpty() || data.entries().isEmpty()) {
+        if (stack.isEmpty()) {
             return;
         }
-        mergeData(STACK_HAZARDS.computeIfAbsent(HazardStackKey.of(stack), key -> new HazardData()), data);
+        STACK_HAZARDS.put(HazardStackKey.of(stack), data);
     }
 
     public static void registerLegacyStateVariant(Item item, int variant, HazardType type, float level) {
-        if (level <= 0.0F || isDisabled(type)) {
-            return;
-        }
         LEGACY_STATE_VARIANT_HAZARDS.computeIfAbsent(new LegacyStateVariantKey(item, variant), key -> new HazardData())
                 .addEntry(type, level);
     }
@@ -1144,20 +1151,8 @@ public final class HazardRegistry {
                 .ifPresent(HazardRegistry::blacklist);
     }
 
-    private static void mergeData(HazardData target, HazardData data) {
-        if (data.overrides()) {
-            target.entries().clear();
-            target.setOverrides(true);
-        }
-        target.setMutex(target.mutexBits() | data.mutexBits());
-        for (HazardEntry entry : data.entries()) {
-            if (!isDisabled(entry.type())) {
-                target.addEntry(entry);
-            }
-        }
-    }
 
-    private static boolean isDisabled(HazardType type) {
+    public static boolean isHazardTypeDisabled(HazardType type) {
         return switch (type) {
             case ASBESTOS -> RadiationConfig.asbestosHazardDisabled();
             case BLINDING -> RadiationConfig.blindingHazardDisabled();
@@ -1211,11 +1206,10 @@ public final class HazardRegistry {
     }
 
     private static void collectTagData(ItemStack stack, List<HazardData> chronological) {
-        for (Map.Entry<TagKey<Item>, HazardData> entry : TAG_HAZARDS.entrySet()) {
-            if (stack.is(entry.getKey())) {
-                chronological.add(entry.getValue());
-            }
-        }
+        stack.getTags()
+                .map(TAG_HAZARDS::get)
+                .filter(data -> data != null)
+                .forEach(chronological::add);
     }
 
     public static boolean isBlacklisted(ItemStack stack) {

@@ -24,10 +24,13 @@ public class ChimneyBlock extends LegacyVisibleMultiblockMachineBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide || type != ModBlockEntities.CHIMNEY.get()) {
+        if (type != ModBlockEntities.CHIMNEY.get()) {
             return null;
         }
-        return (tickLevel, tickPos, tickState, blockEntity) ->
+        return level.isClientSide
+                ? (tickLevel, tickPos, tickState, blockEntity) ->
+                ChimneyBlockEntity.clientTick(tickLevel, tickPos, tickState, (ChimneyBlockEntity) blockEntity)
+                : (tickLevel, tickPos, tickState, blockEntity) ->
                 ChimneyBlockEntity.serverTick(tickLevel, tickPos, tickState, (ChimneyBlockEntity) blockEntity);
     }
 }

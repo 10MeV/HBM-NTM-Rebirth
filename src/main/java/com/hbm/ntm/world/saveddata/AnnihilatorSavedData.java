@@ -4,6 +4,7 @@ import com.hbm.ntm.util.HbmRegistryUtil;
 
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.recipe.AnnihilatorRecipeRuntime;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -412,6 +413,15 @@ public class AnnihilatorSavedData extends SavedData {
         return null;
     }
 
+    public ItemStack pushToPool(ServerLevel level, String pool, FluidType type, long amount, boolean alwaysPayOut) {
+        if (type == null || amount <= 0L) {
+            return ItemStack.EMPTY;
+        }
+        PoolKey key = PoolKey.fluid(type);
+        IncrementResult result = increment(pool, key, amount);
+        return AnnihilatorRecipeRuntime.findPayout(level, key, result, alwaysPayOut);
+    }
+
     public PoolPushResult pushToPoolResult(String pool, FluidType type, long amount, boolean alwaysPayOut) {
         if (type == null || amount <= 0L) {
             return PoolPushResult.empty(alwaysPayOut);
@@ -423,6 +433,21 @@ public class AnnihilatorSavedData extends SavedData {
     public ItemStack pushToPool(String pool, ItemStack stack, boolean alwaysPayOut) {
         pushToPoolResult(pool, stack, alwaysPayOut);
         return null;
+    }
+
+    public ItemStack pushToPool(ServerLevel level, String pool, ItemStack stack, boolean alwaysPayOut) {
+        if (stack == null || stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        PoolKey itemKey = PoolKey.item(stack.getItem());
+        IncrementResult itemResult = increment(pool, itemKey, stack.getCount());
+        PoolKey metaKey = PoolKey.itemMeta(stack, stack.getDamageValue());
+        IncrementResult metaResult = increment(pool, metaKey, stack.getCount());
+        ItemStack metaPayout = AnnihilatorRecipeRuntime.findPayout(level, metaKey, metaResult, alwaysPayOut);
+        if (!metaPayout.isEmpty()) {
+            return metaPayout;
+        }
+        return AnnihilatorRecipeRuntime.findPayout(level, itemKey, itemResult, alwaysPayOut);
     }
 
     public PoolPushResult pushToPoolResult(String pool, ItemStack stack, boolean alwaysPayOut) {
@@ -460,6 +485,41 @@ public class AnnihilatorSavedData extends SavedData {
                 false, "payout_deferred", alwaysPayOut);
     }
 
+    public ItemStack pushLegacyItemToPool(ServerLevel level, String pool, ItemStack stack, int legacyMeta,
+            Collection<String> legacyOreDictNames, boolean alwaysPayOut) {
+        if (stack == null || stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+
+        PoolKey itemKey = PoolKey.item(stack.getItem());
+        IncrementResult itemResult = increment(pool, itemKey, stack.getCount());
+        PoolKey metaKey = legacyMeta < 0 ? null : PoolKey.itemMeta(stack, legacyMeta);
+        IncrementResult metaResult = metaKey == null ? null : increment(pool, metaKey, stack.getCount());
+
+        ItemStack dictPayout = ItemStack.EMPTY;
+        Collection<String> oreDictNames = legacyOreDictNames == null ? List.of() : legacyOreDictNames;
+        for (String name : oreDictNames) {
+            if (name != null && !name.isBlank()) {
+                PoolKey dictKey = PoolKey.oreDict(name);
+                IncrementResult dictResult = increment(pool, dictKey, stack.getCount());
+                ItemStack payout = AnnihilatorRecipeRuntime.findPayout(level, dictKey, dictResult, alwaysPayOut);
+                if (!payout.isEmpty()) {
+                    dictPayout = payout;
+                }
+            }
+        }
+        if (!dictPayout.isEmpty()) {
+            return dictPayout;
+        }
+        if (metaKey != null && metaResult != null) {
+            ItemStack metaPayout = AnnihilatorRecipeRuntime.findPayout(level, metaKey, metaResult, alwaysPayOut);
+            if (!metaPayout.isEmpty()) {
+                return metaPayout;
+            }
+        }
+        return AnnihilatorRecipeRuntime.findPayout(level, itemKey, itemResult, alwaysPayOut);
+    }
+
     public PoolPushResult pushItemMetaToPool(String pool, ItemStack stack, int legacyMeta, boolean alwaysPayOut) {
         if (stack == null || stack.isEmpty()) {
             return PoolPushResult.empty(alwaysPayOut);
@@ -469,12 +529,32 @@ public class AnnihilatorSavedData extends SavedData {
         return new PoolPushResult(result, false, "payout_deferred", alwaysPayOut);
     }
 
+    public ItemStack pushItemMetaToPool(ServerLevel level, String pool, ItemStack stack, int legacyMeta,
+            boolean alwaysPayOut) {
+        if (stack == null || stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        PoolKey key = PoolKey.itemMeta(HbmRegistryUtil.itemKey(stack.getItem()), legacyMeta);
+        IncrementResult result = increment(pool, key, stack.getCount());
+        return AnnihilatorRecipeRuntime.findPayout(level, key, result, alwaysPayOut);
+    }
+
     public PoolPushResult pushOreDictToPool(String pool, String oreDict, long amount, boolean alwaysPayOut) {
         if (oreDict == null || oreDict.isBlank() || amount <= 0L) {
             return PoolPushResult.empty(alwaysPayOut);
         }
         IncrementResult result = increment(pool, PoolKey.oreDict(oreDict), amount);
         return new PoolPushResult(result, false, "payout_deferred", alwaysPayOut);
+    }
+
+    public ItemStack pushOreDictToPool(ServerLevel level, String pool, String oreDict, long amount,
+            boolean alwaysPayOut) {
+        if (oreDict == null || oreDict.isBlank() || amount <= 0L) {
+            return ItemStack.EMPTY;
+        }
+        PoolKey key = PoolKey.oreDict(oreDict);
+        IncrementResult result = increment(pool, key, amount);
+        return AnnihilatorRecipeRuntime.findPayout(level, key, result, alwaysPayOut);
     }
 
     public BigInteger getAmount(String pool, PoolKey key) {

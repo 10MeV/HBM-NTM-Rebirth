@@ -5,6 +5,7 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.OilDrillBlockEntity;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -44,7 +45,7 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
         LegacyMachineDefinition definition = block.definition();
         int modelLight = LegacyRenderLighting.resolveMachineLight(drill, state, definition, packedLight);
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
-                key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()));
+                key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()).asVBO());
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -55,14 +56,34 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
 
         if (drill.getKind() == OilDrillBlockEntity.Kind.PUMPJACK) {
             renderPumpjack(drill, partialTick, poseStack, buffer, modelLight, packedOverlay, definition, model);
-        } else if (definition.renderAll()) {
-            model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         } else {
-            for (String part : definition.renderParts()) {
-                model.renderPart(part, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+            if (definition.renderAll()) {
+                model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+            } else {
+                for (String part : definition.renderParts()) {
+                    model.renderPart(part, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+                }
+            }
+            if (drill.getKind() == OilDrillBlockEntity.Kind.FRACKING_TOWER) {
+                renderFrackingPipes(poseStack, buffer, modelLight, packedOverlay);
             }
         }
 
+        poseStack.popPose();
+    }
+
+    private static void renderFrackingPipes(PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.5D, 0.0D);
+        ObjBlockModels.PIPE_NEO.renderPart("pX", ObjBlockModels.PIPE_SILVER_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        ObjBlockModels.PIPE_NEO.renderPart("nX", ObjBlockModels.PIPE_SILVER_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        ObjBlockModels.PIPE_NEO.renderPart("pZ", ObjBlockModels.PIPE_SILVER_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        ObjBlockModels.PIPE_NEO.renderPart("nZ", ObjBlockModels.PIPE_SILVER_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 

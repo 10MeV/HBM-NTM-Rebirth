@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "key": {
+    "#": { "tag": "forge:ingots/any_plastic" },
+    "A": { "tag": "forge:plates/steel" },
+    "B": { "tag": "forge:circuits/basic" }
+  },
+  "pattern": [
+    "  A",
+    "#B#",
+    "#B#"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:designator"
+  },
+  "show_notification": true
+}

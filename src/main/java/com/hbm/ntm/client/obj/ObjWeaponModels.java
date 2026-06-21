@@ -44,7 +44,6 @@ public final class ObjWeaponModels {
     public static final LegacyWavefrontModel MIKE_HAWK = model("mike_hawk").asVBO();
     public static final LegacyWavefrontModel MINIGUN = model("minigun").asVBO();
     public static final LegacyWavefrontModel MISSILE_LAUNCHER = model("missile_launcher").asVBO();
-    public static final LegacyWavefrontModel METEOR = model("meteor");
     public static final LegacyWavefrontModel TESLA_CANNON = model("tesla_cannon").asVBO();
     public static final LegacyWavefrontModel LASER_PISTOL = model("laser_pistol").asVBO();
     public static final LegacyWavefrontModel STG77 = model("stg77").asVBO();
@@ -64,7 +63,8 @@ public final class ObjWeaponModels {
     public static final LegacyWavefrontModel GRENADES = model("grenades");
     public static final LegacyWavefrontModel BUILDING = model("building");
     public static final LegacyWavefrontModel TORPEDO = model("torpedo");
-    public static final LegacyWavefrontModel TOM_MAIN = model("tom_main");
+    public static final LegacyWavefrontModel TOM_MAIN = model("tom_main").asVBO();
+    public static final LegacyWavefrontModel TOM_FLAME = hmfModel("tom_flame").asVBO();
 
     public static final ResourceLocation SHIMMER_SLEDGE_TEXTURE = texture("shimmer_sledge");
     public static final ResourceLocation SHIMMER_AXE_TEXTURE = texture("shimmer_axe");
@@ -142,7 +142,6 @@ public final class ObjWeaponModels {
     public static final ResourceLocation MINIGUN_LACUNAE_TEXTURE = texture("minigun_lacunae");
     public static final ResourceLocation MINIGUN_DUAL_TEXTURE = texture("minigun_dual");
     public static final ResourceLocation MISSILE_LAUNCHER_TEXTURE = texture("missile_launcher");
-    public static final ResourceLocation METEOR_TEXTURE = texture("meteor");
     public static final ResourceLocation TESLA_CANNON_TEXTURE = texture("tesla_cannon");
     public static final ResourceLocation LASER_PISTOL_TEXTURE = texture("laser_pistol");
     public static final ResourceLocation LASER_PISTOL_PEW_PEW_TEXTURE = texture("laser_pistol_pew_pew");
@@ -193,16 +192,38 @@ public final class ObjWeaponModels {
 
     public static LegacyWavefrontModel model(String name) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/weapons/" + name + ".obj"),
+                modelLocation(name),
+                texture(name));
+    }
+
+    private static ResourceLocation modelLocation(String name) {
+        String path = switch (name) {
+            case "shimmer_axe", "shimmer_sledge" -> "models/" + name + ".obj";
+            default -> "models/weapons/" + name + ".obj";
+        };
+        return new ResourceLocation(HbmNtm.MOD_ID, path);
+    }
+
+    public static LegacyWavefrontModel hmfModel(String name) {
+        return new LegacyWavefrontModel(
+                new ResourceLocation(HbmNtm.MOD_ID, "models/block/weapons/" + name + ".hmf"),
                 texture(name));
     }
 
     public static ResourceLocation texture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/weapons/" + name + ".png");
+        return switch (name) {
+            case "shimmer_axe", "shimmer_sledge" ->
+                    new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + name + ".png");
+            default -> modelTexture("weapons/" + name);
+        };
     }
 
     public static ResourceLocation grenadeTexture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/grenades/" + name + ".png");
+        return modelTexture("grenades/" + name);
+    }
+
+    private static ResourceLocation modelTexture(String path) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + path + ".png");
     }
 
     private ObjWeaponModels() {

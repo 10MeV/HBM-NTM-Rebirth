@@ -3,7 +3,6 @@ package com.hbm.ntm.menu;
 import com.mojang.datafixers.util.Pair;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.armor.ArmorModItem;
-import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
@@ -32,7 +31,6 @@ public class ArmorTableMenu extends AbstractContainerMenu {
 
     private final SimpleContainer upgrades = new SimpleContainer(UPGRADE_SLOT_COUNT);
     private final SimpleContainer armor = new SimpleContainer(1);
-    private final BlockPos pos;
 
     public ArmorTableMenu(int containerId, Inventory playerInventory, FriendlyByteBuf data) {
         this(containerId, playerInventory, data.readBlockPos());
@@ -40,7 +38,6 @@ public class ArmorTableMenu extends AbstractContainerMenu {
 
     public ArmorTableMenu(int containerId, Inventory playerInventory, BlockPos pos) {
         super(ModMenuTypes.ARMOR_TABLE.get(), containerId);
-        this.pos = pos;
 
         addSlot(new UpgradeSlot(upgrades, ArmorModHandler.helmet_only, 48, 27));
         addSlot(new UpgradeSlot(upgrades, ArmorModHandler.plate_only, 84, 27));
@@ -71,8 +68,7 @@ public class ArmorTableMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return player.level().getBlockState(pos).is(ModBlocks.MACHINE_ARMOR_TABLE.get())
-                && player.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) <= 64.0D;
+        return true;
     }
 
     @Override

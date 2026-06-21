@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:fusion_reactor",
+  "internal_name": "fus.dd",
+  "duration": 100,
+  "power": 25000,
+  "input_items": [],
+  "input_fluids": [{ "fluid": "hbm_ntm_rebirth:deuterium", "amount": 20 }],
+  "output_items": [],
+  "output_fluids": [{ "fluid": "hbm_ntm_rebirth:helium4", "amount": 1000 }],
+  "pools": [],
+  "ignitionTemp": 750000,
+  "outputTemp": 1000000,
+  "outputFlux": 50.0,
+  "r": 1.0,
+  "g": 0.2,
+  "b": 0.2
+}

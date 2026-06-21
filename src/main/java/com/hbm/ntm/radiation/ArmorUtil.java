@@ -455,7 +455,7 @@ public final class ArmorUtil {
     }
 
     private static void damageFilterIfProtected(LivingEntity entity, boolean protectedByArmor, int filterDamage) {
-        if (protectedByArmor && filterDamage > 0) {
+        if (protectedByArmor) {
             damageGasMaskFilter(entity, filterDamage);
         }
     }
@@ -489,7 +489,7 @@ public final class ArmorUtil {
         if (!wornMask.isPresent()) {
             return;
         }
-        wornMask.mask().damageFilter(wornMask.maskStack(), entity, Math.max(0, damage));
+        wornMask.mask().damageFilter(wornMask.maskStack(), entity, damage);
         wornMask.persist();
     }
 
@@ -696,7 +696,7 @@ public final class ArmorUtil {
         if (filter.isEmpty() || !filter.isDamageableItem()) {
             return;
         }
-        filter.setDamageValue(filter.getDamageValue() + Math.max(0, damage));
+        filter.setDamageValue(filter.getDamageValue() + damage);
         if (filter.getDamageValue() > filter.getMaxDamage()) {
             removeFilter(mask);
         } else {
@@ -806,7 +806,7 @@ public final class ArmorUtil {
         }
         return checkLegacyArmorSet(player, "robes")
                 && player.hasEffect(ModEffects.STABILITY.get())
-                && hasIronCladdingOnEveryArmorPiece(player)
+                && onlyIronCladdingWhenArmorModsArePresent(player)
                 && player.getMaxHealth() < 3.0F;
     }
 
@@ -883,10 +883,10 @@ public final class ArmorUtil {
         return checkArmor(entity, helmet, chest, legs, boots);
     }
 
-    private static boolean hasIronCladdingOnEveryArmorPiece(Player player) {
+    private static boolean onlyIronCladdingWhenArmorModsArePresent(Player player) {
         for (ItemStack armor : player.getArmorSlots()) {
             if (armor.isEmpty() || !ArmorModHandler.hasMods(armor)) {
-                return false;
+                continue;
             }
             ItemStack cladding = ArmorModHandler.pryMod(armor, ArmorModHandler.cladding);
             if (cladding.isEmpty() || cladding.getItem() != ModItems.CLADDING_IRON.get()) {

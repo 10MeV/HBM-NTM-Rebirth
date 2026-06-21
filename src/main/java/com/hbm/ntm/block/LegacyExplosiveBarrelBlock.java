@@ -50,7 +50,8 @@ public class LegacyExplosiveBarrelBlock extends Block implements ChainExplodable
         level.removeBlock(pos, false);
         if (!level.isClientSide) {
             level.addFreshEntity(LegacyPrimedExplosiveEntity.create(level,
-                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, 100, true));
+                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, 100, true,
+                    explosion.getIndirectSourceEntity()));
         }
     }
 

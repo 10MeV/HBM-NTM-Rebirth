@@ -14,7 +14,6 @@ public final class HbmItemPoolIds {
     public static final String POOL_VAULT_STANDARD = "POOL_VAULT_STANDARD";
     public static final String POOL_VAULT_REINFORCED = "POOL_VAULT_REINFORCED";
     public static final String POOL_VAULT_UNBREAKABLE = "POOL_VAULT_UNBREAKABLE";
-    public static final String POOL_METEORITE_TREASURE = "POOL_METEORITE_TREASURE";
     public static final String POOL_BLUEPRINTS = "POOL_BLUEPRINTS";
     public static final String POOL_GENERIC = "POOL_GENERIC";
     public static final String POOL_ANTENNA = "POOL_ANTENNA";
@@ -31,7 +30,6 @@ public final class HbmItemPoolIds {
     public static final String POOL_SOLID_FUEL = "POOL_SOLID_FUEL";
     public static final String POOL_VAULT_LAB = "POOL_VAULT_LAB";
     public static final String POOL_VAULT_LOCKERS = "POOL_VAULT_LOCKERS";
-    public static final String POOL_METEOR_SAFE = "POOL_METEOR_SAFE";
     public static final String POOL_OIL_RIG = "POOL_OIL_RIG";
     public static final String POOL_RTG = "POOL_RTG";
     public static final String POOL_REPAIR_MATERIALS = "POOL_REPAIR_MATERIALS";
@@ -65,7 +63,6 @@ public final class HbmItemPoolIds {
             entry(POOL_VAULT_STANDARD, table("vault_standard")),
             entry(POOL_VAULT_REINFORCED, table("vault_reinforced")),
             entry(POOL_VAULT_UNBREAKABLE, table("vault_unbreakable")),
-            entry(POOL_METEORITE_TREASURE, table("meteorite_treasure")),
             entry(POOL_BLUEPRINTS, table("blueprints")),
             entry(POOL_GENERIC, table("legacy/generic")),
             entry(POOL_ANTENNA, table("legacy/antenna")),
@@ -82,7 +79,6 @@ public final class HbmItemPoolIds {
             entry(POOL_SOLID_FUEL, table("component/solid_fuel")),
             entry(POOL_VAULT_LAB, table("component/vault_lab")),
             entry(POOL_VAULT_LOCKERS, table("component/vault_lockers")),
-            entry(POOL_METEOR_SAFE, table("component/meteor_safe")),
             entry(POOL_OIL_RIG, table("component/oil_rig")),
             entry(POOL_RTG, table("component/rtg")),
             entry(POOL_REPAIR_MATERIALS, table("component/repair_materials")),

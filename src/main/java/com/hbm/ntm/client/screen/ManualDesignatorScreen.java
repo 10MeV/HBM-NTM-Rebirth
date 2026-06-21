@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -111,11 +110,10 @@ public class ManualDesignatorScreen extends Screen {
         ModMessages.sendDesignatorAction(hand, button.operator(), button.value(), button.reference());
         int result = button.operator() == 1 ? -button.value() : button.value();
         if (button.operator() == 2 && minecraft.player != null) {
-            BlockPos pos = minecraft.player.blockPosition();
             if (button.reference() == 0) {
-                shownX = pos.getX();
+                shownX = (int) Math.round(minecraft.player.getX());
             } else {
-                shownZ = pos.getZ();
+                shownZ = (int) Math.round(minecraft.player.getZ());
             }
             return;
         }

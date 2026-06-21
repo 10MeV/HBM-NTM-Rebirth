@@ -1,11 +1,11 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.MachineBatterySocketBlock;
 import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
 import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyHorseRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
 import com.hbm.ntm.registry.ModItems;
@@ -21,10 +21,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class MachineBatterySocketRenderer implements BlockEntityRenderer<MachineBatterySocketBlockEntity> {
-    private static final ResourceLocation MODEL_LOCATION = new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/battery.obj");
-    static final ResourceLocation SOCKET_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/battery_socket.png");
-    private static final ResourceLocation SELF_CHARGING_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/battery_sc.png");
-    static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, SOCKET_TEXTURE);
+    static final ResourceLocation SOCKET_TEXTURE = ObjMachineModels.BATTERY_SOCKET_TEXTURE;
+    private static final ResourceLocation SELF_CHARGING_TEXTURE = ObjMachineModels.BATTERY_SC_TEXTURE;
+    static final LegacyWavefrontModel MODEL = ObjMachineModels.BATTERY_SOCKET_LEGACY;
     private static final LegacyHorseRenderer CREATIVE_HORSE = new LegacyHorseRenderer();
 
     public MachineBatterySocketRenderer(BlockEntityRendererProvider.Context context) {
@@ -43,7 +42,7 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
     @Override
     public void render(MachineBatterySocketBlockEntity socket, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(socket, packedLight);
+        int modelLight = LegacyRenderLighting.resolveMultiblockLight(socket, packedLight);
         poseStack.pushPose();
         applyLegacySocketTransform(socket.getBlockState(), poseStack);
 
@@ -54,7 +53,7 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
 
         ItemStack stack = socket.getBatteryStack();
         if (stack.getItem() instanceof HbmBatteryPackItem pack) {
-            ResourceLocation texture = new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/" + pack.getLegacyTextureName() + ".png");
+            ResourceLocation texture = ObjMachineModels.machineTexture(pack.getLegacyTextureName());
             String part = pack.isCapacitor() ? "Capacitor" : "Battery";
             MODEL.renderPart(part, texture, poseStack, buffer, modelLight, packedOverlay);
         } else if (stack.getItem() instanceof HbmSelfChargingBatteryItem) {

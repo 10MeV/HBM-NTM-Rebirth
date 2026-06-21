@@ -1,0 +1,42 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip"
+      },
+      "count": 16
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      },
+      "count": 16
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_effect_2"
+      }
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "count": 4,
+      "legacy_ore": "ingotRubber"
+    }
+  ],
+  "solder": [],
+  "fluid": {
+    "fluid": "SOLVENT",
+    "amount": 500
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:upgrade_effect_3"
+  },
+  "duration": 400,
+  "consumption": 25000,
+  "source_order": 110
+}

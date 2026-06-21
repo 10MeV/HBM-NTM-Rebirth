@@ -3,6 +3,7 @@ package com.hbm.ntm.menu;
 import com.hbm.ntm.blockentity.StorageCrateBlockEntity;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -24,11 +25,11 @@ public class CrateMenu extends AbstractContainerMenu {
         super(ModMenuTypes.STORAGE_CRATE.get(), containerId);
         this.blockEntity = blockEntity;
         this.slotCount = blockEntity.slotCount();
-        int rows = blockEntity.kind().rows();
-        HbmInventoryMenuHelper.addSlots(this::addSlot, blockEntity.getItems(), 0, 8, 18, rows, 9, 18);
-        int playerInvY = 18 + rows * 18 + 14;
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, playerInvY,
-                playerInvY + 58);
+        StorageCrateBlockEntity.Kind kind = blockEntity.kind();
+        HbmInventoryMenuHelper.addSlots(this::addSlot, blockEntity.getItems(), 0, kind.slotX(), kind.slotY(),
+                kind.rows(), kind.columns(), 18);
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, kind.playerInventoryX(),
+                kind.playerInventoryY(), kind.hotbarY());
         blockEntity.playOpenSound();
     }
 
@@ -71,7 +72,7 @@ public class CrateMenu extends AbstractContainerMenu {
     }
 
     private static StorageCrateBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof StorageCrateBlockEntity crate) {
             return crate;
         }

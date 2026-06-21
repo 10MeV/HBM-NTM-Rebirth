@@ -8,6 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmClientTileBinaryReceiver;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.ClientTileBinarySyncRequestPacket;
@@ -47,17 +48,21 @@ public final class ClientTileBinaryData {
         if (level == null || !level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) {
             return;
         }
-        BlockEntity blockEntity = level.getBlockEntity(pos);
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        BlockPos receiverPos = core == null ? pos : core.pos();
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(level, pos);
         if (!(blockEntity instanceof HbmClientTileBinaryReceiver receiver)) {
-            HbmNtm.LOGGER.debug("Tile binary data at {} had no HbmClientTileBinaryReceiver receiver.", pos);
-            requestResync(level, pos, channel);
+            HbmNtm.LOGGER.debug("Tile binary data at {} resolved to {} but had no HbmClientTileBinaryReceiver receiver.",
+                    pos, receiverPos);
+            requestResync(level, receiverPos, channel);
             return;
         }
         FriendlyByteBuf payloadBuffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(payload));
         try {
             receiver.handleClientTileBinaryData(channel, payloadBuffer);
         } catch (Exception exception) {
-            HbmNtm.LOGGER.warn("Tile binary data receiver failed at {} for channel {}.", pos, channel, exception);
+            HbmNtm.LOGGER.warn("Tile binary data receiver failed at {} resolved to {} for channel {}.",
+                    pos, receiverPos, channel, exception);
         } finally {
             payloadBuffer.release();
         }

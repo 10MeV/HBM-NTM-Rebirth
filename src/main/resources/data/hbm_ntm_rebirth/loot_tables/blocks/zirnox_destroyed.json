@@ -1,0 +1,57 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:concrete_smooth",
+          "functions": [
+            { "function": "minecraft:set_count", "count": 6 }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:pipes_steel",
+          "functions": [
+            { "function": "minecraft:set_count", "count": 4 }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:steel_grate",
+          "functions": [
+            { "function": "minecraft:set_count", "count": 2 }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:debris_metal",
+          "functions": [
+            { "function": "minecraft:set_count", "count": 6 }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:debris_graphite",
+          "functions": [
+            { "function": "minecraft:set_count", "count": 2 }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fallout",
+          "functions": [
+            { "function": "minecraft:set_count", "count": 4 }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

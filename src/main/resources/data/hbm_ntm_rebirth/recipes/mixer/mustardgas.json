@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:mustardgas", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:reformgas", "amount": 750 },
+  "input2": { "fluid": "hbm_ntm_rebirth:chlorine", "amount": 250 },
+  "solid_input": {
+    "ingredient": { "tag": "forge:dusts/sulfur" },
+    "legacy_ore": "dustSulfur"
+  },
+  "duration": 20
+}

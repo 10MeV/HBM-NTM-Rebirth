@@ -37,7 +37,7 @@ public class SpentCasingParticle extends Particle {
     private static final float SMOKE_JITTER = 0.001F;
     private static final ResourceLocation MODEL_LOCATION = new ResourceLocation(HbmNtm.MOD_ID, "models/effect/casings.obj");
     private static final ResourceLocation TEXTURE_LOCATION = new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/casings.png");
-    private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, TEXTURE_LOCATION).noSmooth();
+    private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, TEXTURE_LOCATION).noSmooth().asVBO();
     private static final ParticleRenderType RENDER_TYPE = new ParticleRenderType() {
         @Override
         public void begin(BufferBuilder builder, TextureManager textureManager) {
@@ -69,6 +69,10 @@ public class SpentCasingParticle extends Particle {
     private float momentumYaw;
     private boolean lastMoveHitGround;
     private double lastInitMotionY;
+    private boolean setupSmokeDeltas;
+    private double previousSmokeRenderX;
+    private double previousSmokeRenderY;
+    private double previousSmokeRenderZ;
 
     public SpentCasingParticle(ClientLevel level, double x, double y, double z, double motionX, double motionY, double motionZ,
             float yaw, float pitch, float momentumPitch, float momentumYaw, String name, boolean smoking, int smokeLife,
@@ -182,19 +186,15 @@ public class SpentCasingParticle extends Particle {
         if (!this.smoking || this.age > this.maxSmokeGen) {
             return;
         }
-        double deltaX = this.xo - this.x;
-        double deltaY = this.yo - this.y;
-        double deltaZ = this.zo - this.z;
         for (SmokeNode node : this.smokeNodes) {
-            node.x += deltaX;
-            node.y += deltaY;
-            node.z += deltaZ;
             node.x += this.random.nextGaussian() * SMOKE_JITTER;
             node.z += this.random.nextGaussian() * SMOKE_JITTER;
             node.y += this.smokeLift * MODEL_SCALE;
             node.alpha = Math.max(0.0F, node.alpha - 1.0F / this.nodeLife);
         }
-        this.smokeNodes.add(new SmokeNode(0.0D, 0.0D, 0.0D, this.smokeNodes.isEmpty() ? 0.0F : 1.0F));
+        if (this.age < this.maxSmokeGen) {
+            this.smokeNodes.add(new SmokeNode(0.0D, 0.0D, 0.0D, this.smokeNodes.isEmpty() ? 0.0F : 1.0F));
+        }
     }
 
     private void playBounceSound() {
@@ -242,10 +242,24 @@ public class SpentCasingParticle extends Particle {
         double renderX = Mth.lerp(partialTick, this.xo, this.x);
         double renderY = Mth.lerp(partialTick, this.yo, this.y);
         double renderZ = Mth.lerp(partialTick, this.zo, this.z);
+        if (!this.setupSmokeDeltas) {
+            this.previousSmokeRenderX = renderX;
+            this.previousSmokeRenderY = renderY;
+            this.previousSmokeRenderZ = renderZ;
+            this.setupSmokeDeltas = true;
+        }
         Vec3 cameraPos = camera.getPosition();
         double originX = renderX - cameraPos.x();
         double originY = renderY - cameraPos.y() - this.bbHeight / 4.0F;
         double originZ = renderZ - cameraPos.z();
+        double deltaX = this.previousSmokeRenderX - renderX;
+        double deltaY = this.previousSmokeRenderY - renderY;
+        double deltaZ = this.previousSmokeRenderZ - renderZ;
+        for (SmokeNode node : this.smokeNodes) {
+            node.x += deltaX;
+            node.y += deltaY;
+            node.z += deltaZ;
+        }
         float width = this.definition.scaleX() * 0.5F * MODEL_SCALE;
         float yaw = camera.getYRot() * Mth.DEG_TO_RAD;
         float offX = Mth.cos(-yaw) * width;
@@ -284,6 +298,9 @@ public class SpentCasingParticle extends Particle {
         RenderSystem.depthMask(true);
         RenderSystem.enableCull();
         RenderSystem.disableBlend();
+        this.previousSmokeRenderX = renderX;
+        this.previousSmokeRenderY = renderY;
+        this.previousSmokeRenderZ = renderZ;
     }
 
     @Override

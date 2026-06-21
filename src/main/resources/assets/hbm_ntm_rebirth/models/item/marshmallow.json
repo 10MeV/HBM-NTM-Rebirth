@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "hbm_ntm_rebirth:item/marshmallow"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:roasted": 1.0
+      },
+      "model": "hbm_ntm_rebirth:item/marshmallow_roasted"
+    }
+  ]
+}

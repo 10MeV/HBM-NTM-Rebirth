@@ -3,12 +3,14 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.api.tile.ControlReceiver;
+import com.hbm.ntm.block.MachineBatteryBlock;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.energy.HbmEnergyNode;
@@ -31,6 +33,7 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -49,7 +52,8 @@ import java.util.List;
 import java.util.function.IntSupplier;
 
 public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity implements MenuProvider, HbmTileSyncable,
-        RORValueProvider, RORInteractive, LegacyLookOverlayProvider, ControlReceiver, CopiableSettings {
+        RORValueProvider, RORInteractive, LegacyLookOverlayProvider, ControlReceiver, CopiableSettings,
+        HbmPersistentBlockState {
     private static final String TAG_INVENTORY = "Inventory";
     protected static final long MAX_POWER = 1_000_000L;
     protected static final long MAX_RECEIVE = MAX_POWER / 200L;
@@ -109,7 +113,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     private int lastMode = MODE_NONE;
 
     public MachineBatteryBlockEntity(BlockPos pos, BlockState state) {
-        this(ModBlockEntities.MACHINE_BATTERY.get(), pos, state, MAX_POWER, MAX_RECEIVE, MAX_EXTRACT);
+        this(ModBlockEntities.MACHINE_BATTERY.get(), pos, state, maxPowerFor(state), maxReceiveFor(state), maxExtractFor(state));
     }
 
     protected MachineBatteryBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state,
@@ -248,6 +252,18 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         return mode >= MODE_INPUT && mode <= MODE_NONE ? mode : MODE_INPUT;
     }
 
+    private static long maxPowerFor(BlockState state) {
+        return state.getBlock() instanceof MachineBatteryBlock battery ? battery.maxPower() : MAX_POWER;
+    }
+
+    private static long maxReceiveFor(BlockState state) {
+        return state.getBlock() instanceof MachineBatteryBlock battery ? battery.maxReceive() : MAX_RECEIVE;
+    }
+
+    private static long maxExtractFor(BlockState state) {
+        return state.getBlock() instanceof MachineBatteryBlock battery ? battery.maxExtract() : MAX_EXTRACT;
+    }
+
     private static short cycleMode(short mode) {
         short next = (short) (clampMode(mode) + 1);
         return next > MODE_NONE ? MODE_INPUT : next;
@@ -281,6 +297,12 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
 
     public List<ItemStack> getDrops() {
         return HbmInventoryMenuHelper.clearToDrops(items);
+    }
+
+    public ItemStack createPersistentBlockDrop(Item item) {
+        ItemStack stack = new ItemStack(item);
+        writePersistentStateToStack(stack);
+        return stack;
     }
 
     public long getDelta() {
@@ -504,6 +526,33 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         }
         if (tag.contains(TAG_PRIORITY)) {
             batteryEnergy.setPriority(readLegacyPriority(tag));
+        }
+        markSettingsChanged();
+    }
+
+    @Override
+    public void writePersistentState(CompoundTag persistent) {
+        if (getPower() == 0L && previousPowerState == 0L
+                && redLow == MODE_INPUT
+                && redHigh == MODE_OUTPUT
+                && batteryEnergy.getPriority() == HbmEnergyReceiver.ConnectionPriority.LOW) {
+            return;
+        }
+        persistent.putLong("power", getPower());
+        persistent.putLong("prevPowerState", previousPowerState);
+        persistent.putShort(TAG_RED_LOW, redLow);
+        persistent.putShort(TAG_RED_HIGH, redHigh);
+        persistent.putInt(TAG_PRIORITY, batteryEnergy.getPriority().ordinal());
+    }
+
+    @Override
+    public void readPersistentState(CompoundTag persistent) {
+        energy.setPower(persistent.getLong("power"));
+        previousPowerState = persistent.getLong("prevPowerState");
+        redLow = persistent.contains(TAG_RED_LOW) ? clampMode(persistent.getShort(TAG_RED_LOW)) : MODE_INPUT;
+        redHigh = persistent.contains(TAG_RED_HIGH) ? clampMode(persistent.getShort(TAG_RED_HIGH)) : MODE_OUTPUT;
+        if (persistent.contains(TAG_PRIORITY)) {
+            batteryEnergy.setPriority(readLegacyPriority(persistent));
         }
         markSettingsChanged();
     }

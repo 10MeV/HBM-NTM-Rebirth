@@ -29,9 +29,10 @@ final class LegacyMachinePartRenderContexts {
         return properties != null && properties.translucent();
     }
 
-    private static LegacyTexturedRenderMode renderMode(LegacyMachinePartRenderMode mode) {
+    static LegacyTexturedRenderMode renderMode(LegacyMachinePartRenderMode mode) {
         return switch (mode) {
             case CUTOUT_NO_CULL -> LegacyTexturedRenderMode.CUTOUT_NO_CULL;
+            case CUTOUT_CULL -> LegacyTexturedRenderMode.CUTOUT_CULL;
             case TRANSLUCENT_NO_DEPTH_WRITE -> LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE;
             case TRANSLUCENT_DEPTH_WRITE -> LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE;
             case ADDITIVE_NO_DEPTH_WRITE -> LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE;

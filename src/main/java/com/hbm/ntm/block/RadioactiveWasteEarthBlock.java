@@ -62,7 +62,7 @@ public class RadioactiveWasteEarthBlock extends Block {
 
         if (level.getBlockState(pos.above()).is(Blocks.BROWN_MUSHROOM)
                 || level.getBlockState(pos.above()).is(Blocks.RED_MUSHROOM)) {
-            level.destroyBlock(pos.above(), false);
+            level.setBlock(pos.above(), ModBlocks.MUSH.get().defaultBlockState(), 2);
         }
     }
 

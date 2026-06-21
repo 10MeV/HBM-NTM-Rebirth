@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:outgasser",
+  "input": {
+    "ingredient": {
+      "item": "minecraft:red_mushroom"
+    },
+    "count": 1
+  },
+  "solid_output": {
+    "item": "hbm_ntm_rebirth:mush",
+    "count": 1
+  }
+}

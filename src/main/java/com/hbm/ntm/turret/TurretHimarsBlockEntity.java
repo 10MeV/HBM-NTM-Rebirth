@@ -29,6 +29,7 @@ public class TurretHimarsBlockEntity extends TurretBlockEntityBase implements Ar
     private float crane;
     private float lastCrane;
     private int timer;
+    private boolean craneBranchThisTick;
     private final ArtilleryTargetQueue targetQueue = new ArtilleryTargetQueue();
 
     public TurretHimarsBlockEntity(BlockPos pos, BlockState state) {
@@ -165,6 +166,11 @@ public class TurretHimarsBlockEntity extends TurretBlockEntityBase implements Ar
     }
 
     @Override
+    protected boolean canKeepCurrentTarget(Entity entity) {
+        return canAcquireTarget(entity);
+    }
+
+    @Override
     protected boolean canSeekNewTarget() {
         return mode != MODE_MANUAL;
     }
@@ -181,9 +187,11 @@ public class TurretHimarsBlockEntity extends TurretBlockEntityBase implements Ar
 
     @Override
     protected void updateTargetingBeforeMovement() {
+        craneBranchThisTick = false;
         if (!isActive() || !hasPower() || (hasAmmo() && crane <= 0.0F)) {
             return;
         }
+        craneBranchThisTick = true;
         turnTowardsAngle(0.0D, getRotationYaw());
         if (!isAligned()) {
             return;
@@ -215,7 +223,7 @@ public class TurretHimarsBlockEntity extends TurretBlockEntityBase implements Ar
 
     @Override
     protected boolean shouldTurnTowardTargetPosition() {
-        return hasAmmo() && crane <= 0.0F;
+        return hasAmmo() && crane <= 0.0F && !craneBranchThisTick;
     }
 
     @Override

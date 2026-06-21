@@ -4,14 +4,18 @@ import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
 import com.hbm.ntm.block.RBMKPanelBlock;
+import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.menu.RBMKPanelMenu;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.neutron.RBMKConsolePlanner;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -26,6 +30,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,9 +98,13 @@ public class RBMKPanelBlockEntity extends BlockEntity
         return displayColumns.clone();
     }
 
-    public void setDisplayTarget(BlockPos target) {
+    public boolean setDisplayTarget(BlockPos target) {
         if (target == null) {
-            return;
+            return false;
+        }
+        target = normalizeDisplayTarget(target);
+        if (target == null) {
+            return false;
         }
         targetX = target.getX();
         targetY = target.getY();
@@ -104,6 +113,7 @@ public class RBMKPanelBlockEntity extends BlockEntity
             rescanDisplay(level);
         }
         setChangedAndSync(false);
+        return true;
     }
 
     public void rotateDisplay() {
@@ -162,7 +172,7 @@ public class RBMKPanelBlockEntity extends BlockEntity
         RBMKPanelPlanner.LeverClickPlan plan = RBMKPanelPlanner.clickLever(levers[index]);
         levers[index] = plan.unit();
         if (plan.startSound()) {
-            level.playSound(null, worldPosition, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 1.0F, 1.0F);
+            level.playSound(null, worldPosition, ModSounds.BLOCK_LEVER_START.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
         }
         setChangedAndSync(false);
     }
@@ -295,15 +305,33 @@ public class RBMKPanelBlockEntity extends BlockEntity
             RBMKPanelPlanner.LeverTickPlan plan = RBMKPanelPlanner.tickLever(levers[i]);
             broadcast(level, plan.broadcast());
             if (plan.stopSound()) {
-                level.playSound(null, worldPosition, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.5F, 1.0F);
+                level.playSound(null, worldPosition, ModSounds.BLOCK_LEVER_STOP.get(), SoundSource.BLOCKS, 0.5F, 1.0F);
             }
             if (plan.arcFlash()) {
-                level.playSound(null, worldPosition, SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.BLOCKS, 1.0F, 1.0F);
+                level.playSound(null, worldPosition, ModSounds.BLOCK_SPARK.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
+                spawnLeverArcFlash(level, i);
             }
             changed |= !plan.unit().equals(levers[i]) || plan.broadcast() != null;
             levers[i] = plan.unit();
         }
         return changed;
+    }
+
+    private void spawnLeverArcFlash(Level level, int leverIndex) {
+        if (panelType() != RBMKPanelPlanner.PanelType.LEVER) {
+            return;
+        }
+        Direction facing = getBlockState().getBlock() instanceof RBMKPanelBlock
+                ? getBlockState().getValue(RBMKPanelBlock.FACING) : Direction.NORTH;
+        Direction rot = facing.getClockWise();
+        for (int i = 0; i < 2; i++) {
+            double x = worldPosition.getX() + 0.5D + facing.getStepX() * 0.4D
+                    - rot.getStepX() * (leverIndex - 0.5D) * (i == 0 ? 0.375D : 0.625D);
+            double y = worldPosition.getY() + 0.40625D;
+            double z = worldPosition.getZ() + 0.5D + facing.getStepZ() * 0.4D
+                    - rot.getStepZ() * (leverIndex - 0.5D) * (i == 0 ? 0.375D : 0.625D);
+            ParticleUtil.spawnTau(level, x, y, z, 5, true);
+        }
     }
 
     private boolean tickNumitrons(Level level) {
@@ -327,6 +355,29 @@ public class RBMKPanelBlockEntity extends BlockEntity
     private boolean rescanDisplay(Level level) {
         boolean changed = false;
         BlockPos target = new BlockPos(targetX, targetY, targetZ);
+        BlockPos normalizedTarget = normalizeDisplayTarget(target);
+        if (normalizedTarget == null) {
+            if (!target.equals(BlockPos.ZERO)) {
+                targetX = 0;
+                targetY = 0;
+                targetZ = 0;
+                changed = true;
+            }
+            for (int index = 0; index < displayColumns.length; index++) {
+                if (displayColumns[index] != null) {
+                    displayColumns[index] = null;
+                    changed = true;
+                }
+            }
+            return changed;
+        }
+        if (!normalizedTarget.equals(target)) {
+            target = normalizedTarget;
+            targetX = target.getX();
+            targetY = target.getY();
+            targetZ = target.getZ();
+            changed = true;
+        }
         for (int index = 0; index < displayColumns.length; index++) {
             BlockPos scanPos = target.offset(
                     RBMKPanelPlanner.displayRelativeX(index, displayRotation),
@@ -342,12 +393,17 @@ public class RBMKPanelBlockEntity extends BlockEntity
     }
 
     private RBMKConsolePlanner.ColumnSnapshot displayColumnAt(Level level, BlockPos pos) {
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
-        if (core == null) {
+        RBMKColumnBlockEntity column = RBMKColumnBlockEntity.resolveOperationalColumn(level, pos);
+        return column == null ? null : column.displaySnapshot();
+    }
+
+    @Nullable
+    private BlockPos normalizeDisplayTarget(BlockPos pos) {
+        if (pos == null || level == null) {
             return null;
         }
-        BlockEntity blockEntity = level.getBlockEntity(core.pos());
-        return blockEntity instanceof RBMKColumnBlockEntity column ? column.displaySnapshot() : null;
+        RBMKColumnBlockEntity column = RBMKColumnBlockEntity.resolveOperationalColumn(level, pos);
+        return column == null ? null : column.getBlockPos();
     }
 
     private static boolean columnEquals(RBMKConsolePlanner.ColumnSnapshot left,
@@ -392,10 +448,24 @@ public class RBMKPanelBlockEntity extends BlockEntity
                         RBMKPanelPlanner.planTerminalControl(terminal, tag.getString("cmd"), tag.contains("cmd"));
                 terminal = plan.state();
                 broadcast(level, plan.broadcast());
+                if (plan.action() == RBMKPanelPlanner.TerminalAction.SELF_DESTRUCT) {
+                    selfDestructTerminal();
+                }
             }
             case DISPLAY -> {
             }
         }
+    }
+
+    private void selfDestructTerminal() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        double x = worldPosition.getX() + 0.5D;
+        double y = worldPosition.getY() + 0.5D;
+        double z = worldPosition.getZ() + 0.5D;
+        level.destroyBlock(worldPosition, false);
+        WeaponExplosionUtil.smooth(level, x, y, z, 5.0F, null, 50.0F, 1.0D, true, 5.0F, 0.5F).explode();
     }
 
     private RBMKPanelPlanner.GaugeControlEntry[] gaugeEntries(CompoundTag tag) {

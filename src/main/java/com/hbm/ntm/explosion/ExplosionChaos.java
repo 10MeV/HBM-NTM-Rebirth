@@ -19,7 +19,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SnowLayerBlock;
@@ -59,8 +58,10 @@ public final class ExplosionChaos {
         applyHalfSphere(level, x, y, z, bound, pos -> {
             BlockState state = level.getBlockState(pos);
             BlockPos above = pos.above();
-            if (state.isFlammable(level, pos, Direction.UP) && level.getBlockState(above).isAir()) {
-                level.setBlock(above, BaseFireBlock.getState(level, above), 3);
+            if (!level.isOutsideBuildHeight(above)
+                    && state.isFlammable(level, pos, Direction.UP)
+                    && level.getBlockState(above).isAir()) {
+                level.setBlock(above, Blocks.FIRE.defaultBlockState(), 3);
             }
         });
     }
@@ -72,9 +73,12 @@ public final class ExplosionChaos {
         applyHalfSphere(level, x, y, z, bound, pos -> {
             BlockState state = level.getBlockState(pos);
             BlockPos above = pos.above();
+            if (level.isOutsideBuildHeight(above)) {
+                return;
+            }
             BlockState aboveState = level.getBlockState(above);
             if (!state.isAir() && (aboveState.isAir() || aboveState.getBlock() instanceof SnowLayerBlock)) {
-                level.setBlock(above, BaseFireBlock.getState(level, above), 3);
+                level.setBlock(above, Blocks.FIRE.defaultBlockState(), 3);
             }
         });
     }
@@ -124,7 +128,7 @@ public final class ExplosionChaos {
             return;
         }
         for (LivingEntity entity : livingInRange(level, x, y, z, range)) {
-            if (!ArmorUtil.hasAnyProtectionAndDamageFilter(entity, 1,
+            if (!ArmorUtil.hasAnyProtectionAndDamageFilter(entity, 3, 1,
                     HazardClass.GAS_LUNG, HazardClass.GAS_BLISTERING)) {
                 entity.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 5 * 20, 0));
                 entity.addEffect(new MobEffectInstance(MobEffects.POISON, 20 * 20, 2));
@@ -168,7 +172,11 @@ public final class ExplosionChaos {
         }
         applyHalfSphere(level, x, y, z, radius, pos -> {
             BlockState state = level.getBlockState(pos);
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            if (LegacyExplosionFluidCleanup.isLegacyLiquidBlock(state)) {
+                LegacyExplosionFluidCleanup.clearLegacyLiquidNeighborhood(level, pos, 3);
+                return;
+            }
+            LegacyExplosionFluidCleanup.clearBlockOrLegacyLiquidNeighborhood(level, pos, 3);
             if (state.isAir()) {
                 return;
             }

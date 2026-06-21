@@ -7,12 +7,29 @@ import com.hbm.ntm.entity.effect.CloudSoliniumEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
+import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 
 public final class NuclearExplosionUtil {
+    public static boolean spawnNuclearCore(Level level, int radius, double x, double y, double z) {
+        return add(level, NukeExplosionMk5Entity.statFac(level, radius, x, y, z));
+    }
+
+    public static boolean spawnNuclearCoreLoaded(Level level, int radius, double x, double y, double z) {
+        return addLoaded(level, NukeExplosionMk5Entity.statFac(level, radius, x, y, z));
+    }
+
     public static boolean spawnNuclear(Level level, int radius, double x, double y, double z) {
-        boolean spawned = add(level, NukeExplosionMk5Entity.statFac(level, radius, x, y, z));
+        boolean spawned = spawnNuclearCore(level, radius, x, y, z);
+        if (spawned) {
+            add(level, NukeTorexEntity.createStandard(level, x, y, z, radius));
+        }
+        return spawned;
+    }
+
+    private static boolean spawnNuclearLoaded(Level level, int radius, double x, double y, double z) {
+        boolean spawned = spawnNuclearCoreLoaded(level, radius, x, y, z);
         if (spawned) {
             add(level, NukeTorexEntity.createStandard(level, x, y, z, radius));
         }
@@ -41,6 +58,15 @@ public final class NuclearExplosionUtil {
         boolean spawned = add(level, NukeExplosionMk5Entity.statFac(level, radius, x, y, z).moreFallout(fallout));
         if (spawned) {
             add(level, NukeTorexEntity.createStandard(level, cloudX, cloudY, cloudZ, radius));
+        }
+        return spawned;
+    }
+
+    private static boolean spawnNuclearWithFalloutLoaded(Level level, int radius, double x, double y, double z,
+            int fallout) {
+        boolean spawned = addLoaded(level, NukeExplosionMk5Entity.statFac(level, radius, x, y, z).moreFallout(fallout));
+        if (spawned) {
+            add(level, NukeTorexEntity.createStandard(level, x, y, z, radius));
         }
         return spawned;
     }
@@ -83,6 +109,12 @@ public final class NuclearExplosionUtil {
         return spawned;
     }
 
+    public static boolean spawnCustomEuphemium(Level level, double x, double y, double z) {
+        boolean spawned = add(level, NukeExplosionMk3Entity.createFleija(level, x, y, z, 150));
+        add(level, CloudFleijaRainbowEntity.create(level, x, y, z, 50));
+        return spawned;
+    }
+
     public static boolean spawnAntiSchrabidium(Level level, double x, double y, double z) {
         return spawnFleija(level, x, y, z, antiSchrabRadius());
     }
@@ -92,7 +124,14 @@ public final class NuclearExplosionUtil {
     }
 
     public static boolean spawnBoy(Level level, double x, double y, double z) {
-        return spawnNuclear(level, boyRadius(), x, y, z);
+        boolean spawned = spawnNuclearCore(level, boyRadius(), x, y, z);
+        if (spawned) {
+            NukeTorexEntity torex = new NukeTorexEntity(level).setScale(1.5F);
+            torex.setType(0);
+            torex.setPos(x, y + 0.5D, z);
+            add(level, torex);
+        }
+        return spawned;
     }
 
     public static boolean spawnMan(Level level, double x, double y, double z) {
@@ -124,19 +163,19 @@ public final class NuclearExplosionUtil {
     }
 
     public static boolean spawnMissileNuclear(Level level, double x, double y, double z) {
-        return spawnNuclear(level, missileRadius(), x, y, z);
+        return spawnNuclearLoaded(level, missileRadius(), x, y, z);
     }
 
     public static boolean spawnMissileMirv(Level level, double x, double y, double z) {
-        return spawnNuclear(level, missileRadius() * 2, x, y, z);
+        return spawnNuclearLoaded(level, missileRadius() * 2, x, y, z);
     }
 
     public static boolean spawnMissileDoomsday(Level level, double x, double y, double z) {
-        return spawnNuclearWithFallout(level, missileRadius() * 2, x, y, z, 100);
+        return spawnNuclearWithFalloutLoaded(level, missileRadius() * 2, x, y, z, 100);
     }
 
     public static boolean spawnMissileDoomsdayRusted(Level level, double x, double y, double z) {
-        return spawnNuclearWithFallout(level, missileRadius(), x, y, z, 100);
+        return spawnNuclearWithFalloutLoaded(level, missileRadius(), x, y, z, 100);
     }
 
     public static void explodeFatman(Level level, double x, double y, double z) {
@@ -208,6 +247,13 @@ public final class NuclearExplosionUtil {
             return false;
         }
         return level.addFreshEntity(entity);
+    }
+
+    private static boolean addLoaded(Level level, Entity entity) {
+        if (level == null || level.isClientSide() || entity == null || entity.isRemoved()) {
+            return false;
+        }
+        return WorldUtil.loadAndSpawnEntityInWorld(entity);
     }
 
     private NuclearExplosionUtil() {

@@ -21,8 +21,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 
 import java.util.List;
@@ -122,8 +124,8 @@ public class MistEntity extends Entity {
     public AABB area() {
         float width = getAreaWidth();
         float height = getAreaHeight();
-        return new AABB(getX() - width / 2.0D, getY(), getZ() - width / 2.0D,
-                getX() + width / 2.0D, getY() + height, getZ() + width / 2.0D);
+        return new AABB(getX() - width, getY(), getZ() - width,
+                getX(), getY() + height, getZ());
     }
 
     private void releaseVentRadiation(FluidType type) {
@@ -145,6 +147,24 @@ public class MistEntity extends Entity {
 
     private boolean isExtinguishing(FluidType type) {
         return type.getTemperature() < 50 && !type.hasTrait(FlammableFluidTrait.class);
+    }
+
+    @Override
+    public void move(MoverType type, Vec3 movement) {
+    }
+
+    @Override
+    public void push(double x, double y, double z) {
+    }
+
+    @Override
+    public boolean isPushable() {
+        return false;
+    }
+
+    @Override
+    public boolean displayFireAnimation() {
+        return false;
     }
 
     private void teleportRandomly(LivingEntity living) {

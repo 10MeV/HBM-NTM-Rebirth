@@ -1,8 +1,8 @@
 {
   "variants": {
     "facing=north": { "model": "hbm_ntm_rebirth:block/network/fluid_diode", "y": 180 },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/network/fluid_diode", "y": 270 },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/network/fluid_diode", "y": 90 },
     "facing=south": { "model": "hbm_ntm_rebirth:block/network/fluid_diode" },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/network/fluid_diode", "y": 90 }
+    "facing=west": { "model": "hbm_ntm_rebirth:block/network/fluid_diode", "y": 270 }
   }
 }

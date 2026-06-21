@@ -547,11 +547,8 @@ public final class HazmatRegistry {
     }
 
     public static float calculateRadiationModifier(LivingEntity entity) {
-        if (!(entity instanceof Player player)) {
+        if (!(entity instanceof Player)) {
             return 1.0F;
-        }
-        if (player.isCreative()) {
-            return 0.0F;
         }
         return (float) Math.pow(10.0F, -getResistance(entity));
     }

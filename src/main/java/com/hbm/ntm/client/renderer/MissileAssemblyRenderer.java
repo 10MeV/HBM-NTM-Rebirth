@@ -39,7 +39,7 @@ public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssem
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
+        poseStack.mulPose(Axis.YP.rotationDegrees(legacyRotation(facing)));
         ObjLaunchModels.MISSILE_ASSEMBLY.renderAll(ObjLaunchModels.MISSILE_ASSEMBLY_TEXTURE,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
 
@@ -88,5 +88,15 @@ public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssem
 
     private static LegacyMissilePart part(CustomMissilePartProfile.ResolvedPart part) {
         return part == null ? null : ObjMissilePartModels.part(part.legacyName());
+    }
+
+    private static float legacyRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 180.0F;
+            case WEST -> 270.0F;
+            case EAST -> 90.0F;
+            case SOUTH -> 0.0F;
+            default -> 0.0F;
+        };
     }
 }

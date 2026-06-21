@@ -7,11 +7,11 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -32,6 +32,11 @@ public class BombMultiBlock extends HorizontalMachineBlock implements EntityBloc
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new BombMultiBlockEntity(pos, state);
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.INVISIBLE;
     }
 
     @Override
@@ -72,9 +77,7 @@ public class BombMultiBlock extends HorizontalMachineBlock implements EntityBloc
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && !level.isClientSide()
                 && level.getBlockEntity(pos) instanceof BombMultiBlockEntity blockEntity) {
-            for (ItemStack stack : blockEntity.getDrops()) {
-                Block.popResource(level, pos, stack);
-            }
+            blockEntity.spillDrops(level, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
@@ -85,18 +88,20 @@ public class BombMultiBlock extends HorizontalMachineBlock implements EntityBloc
         return level.getBlockEntity(pos) instanceof BombMultiBlockEntity blockEntity ? blockEntity : null;
     }
 
-    public boolean detonate(Level level, BlockPos pos) {
+    public BombReturnCode detonate(Level level, BlockPos pos) {
         if (level == null || level.isClientSide()
-                || !(level.getBlockEntity(pos) instanceof BombMultiBlockEntity blockEntity)
-                || !blockEntity.isLoaded()) {
-            return false;
+                || !(level.getBlockEntity(pos) instanceof BombMultiBlockEntity blockEntity)) {
+            return BombReturnCode.UNDEFINED;
+        }
+        if (!blockEntity.isLoaded()) {
+            return BombReturnCode.ERROR_MISSING_COMPONENT;
         }
 
         BombMultiBlockEntity.BombMultiStats stats = blockEntity.getStats();
         blockEntity.clearSlots();
         level.removeBlock(pos, false);
         stats.explode(level, pos);
-        return true;
+        return BombReturnCode.DETONATED;
     }
 
     @Override
@@ -110,6 +115,7 @@ public class BombMultiBlock extends HorizontalMachineBlock implements EntityBloc
         if (!(level.getBlockEntity(pos) instanceof BombMultiBlockEntity blockEntity) || !blockEntity.isLoaded()) {
             return BombReturnCode.ERROR_MISSING_COMPONENT;
         }
-        return detonate(level, pos) ? BombReturnCode.DETONATED : BombReturnCode.ERROR_INCOMPATIBLE;
+        BombReturnCode result = detonate(level, pos);
+        return result.wasSuccessful() ? result : BombReturnCode.ERROR_INCOMPATIBLE;
     }
 }

@@ -11,6 +11,7 @@ public final class ObjModelPart {
     private final ObjPartTransform originTransform;
     private final float lightMultiplier;
     private final boolean directRender;
+    private final boolean translucent;
 
     public ObjModelPart(ResourceLocation modelLocation, RenderType renderType) {
         this(modelLocation, renderType, ObjPartTransform.IDENTITY);
@@ -25,16 +26,26 @@ public final class ObjModelPart {
     }
 
     public ObjModelPart(ResourceLocation modelLocation, RenderType renderType, ObjPartTransform originTransform, float lightMultiplier, boolean directRender) {
+        this(modelLocation, renderType, originTransform, lightMultiplier, directRender, renderType == RenderType.translucent());
+    }
+
+    public ObjModelPart(ResourceLocation modelLocation, RenderType renderType, ObjPartTransform originTransform, float lightMultiplier,
+            boolean directRender, boolean translucent) {
         this.modelLocation = modelLocation;
         this.renderType = renderType;
         this.originTransform = originTransform;
         this.lightMultiplier = lightMultiplier;
         this.directRender = directRender;
+        this.translucent = translucent;
         ObjModelLibrary.register(modelLocation);
     }
 
     public ResourceLocation modelLocation() {
         return modelLocation;
+    }
+
+    public boolean translucent() {
+        return translucent;
     }
 
     public void render(ObjRenderContext context) {

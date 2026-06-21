@@ -1,6 +1,5 @@
 package com.hbm.ntm.block;
 
-import com.hbm.ntm.blockentity.LegacyVisibleMachineBlockEntity;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.multiblock.MultiblockCoreBlock;
 import com.hbm.ntm.multiblock.MultiblockHelper;
@@ -61,7 +60,7 @@ public class LegacyVisibleMultiblockMachineBlock extends LegacyXrMultiblockBlock
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new LegacyVisibleMachineBlockEntity(pos, state);
+        return null;
     }
 
     @Override
@@ -97,6 +96,11 @@ public class LegacyVisibleMultiblockMachineBlock extends LegacyXrMultiblockBlock
 
     @Override
     public boolean usesForwardedDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return definition.hasCollisionShapeFactory();
+    }
+
+    @Override
+    public boolean usesMultiblockHighlightShape(BlockState state, BlockGetter level, BlockPos corePos) {
         return definition.hasCollisionShapeFactory();
     }
 

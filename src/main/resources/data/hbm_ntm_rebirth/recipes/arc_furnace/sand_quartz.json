@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.sandquartz",
+  "duration": 400,
+  "power": 1000,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:sand_quartz" }, "count": 1 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:glass_quartz" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 5
+}

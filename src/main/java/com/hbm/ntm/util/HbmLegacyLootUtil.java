@@ -23,7 +23,6 @@ public final class HbmLegacyLootUtil {
     public static final String LOOT_NUKE_STORAGE = "LOOT_NUKE_STORAGE";
     public static final String LOOT_BONES = "LOOT_BONES";
     public static final String LOOT_GLYPHID_HIVE = "LOOT_GLYPHID_HIVE";
-    public static final String LOOT_METEOR = "LOOT_METEOR";
     public static final String LOOT_FLAREGUN = "LOOT_FLAREGUN";
     public static final String LOOT_SHIT = "LOOT_SHIT";
     public static final String LOOT_MECHANICAL = "LOOT_MECHANICAL";
@@ -38,7 +37,6 @@ public final class HbmLegacyLootUtil {
             LOOT_NUKE_STORAGE,
             LOOT_BONES,
             LOOT_GLYPHID_HIVE,
-            LOOT_METEOR,
             LOOT_FLAREGUN,
             LOOT_MECHANICAL,
             LOOT_GEAR,

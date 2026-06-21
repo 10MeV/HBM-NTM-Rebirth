@@ -4,6 +4,7 @@ import com.hbm.ntm.api.block.Toolable;
 import com.hbm.ntm.blockentity.RBMKPanelBlockEntity;
 import com.hbm.ntm.neutron.RBMKPanelBlockPlanner;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -69,12 +70,15 @@ public class RBMKPanelBlock extends BaseEntityBlock implements Toolable {
         if (tool != ToolType.SCREWDRIVER) {
             return false;
         }
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof RBMKPanelBlockEntity panel) {
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+            RBMKPanelBlockEntity panel = resolvePanel(level, pos);
+            if (panel == null) {
+                return false;
+            }
             if (panelType == RBMKPanelPlanner.PanelType.DISPLAY) {
                 panel.rotateDisplay();
             } else {
-                NetworkHooks.openScreen(serverPlayer, panel, pos);
+                NetworkHooks.openScreen(serverPlayer, panel, panel.getBlockPos());
             }
         }
         return true;
@@ -88,24 +92,27 @@ public class RBMKPanelBlock extends BaseEntityBlock implements Toolable {
             return onToolUse(level, player, pos, hit.getDirection(), hit.getLocation(), tool)
                     ? InteractionResult.sidedSuccess(level.isClientSide) : InteractionResult.PASS;
         }
-        if (!level.isClientSide && level.getBlockEntity(pos) instanceof RBMKPanelBlockEntity panel) {
+        RBMKPanelBlockEntity panel = level.isClientSide ? null : resolvePanel(level, pos);
+        if (!level.isClientSide && panel != null) {
+            BlockPos panelPos = panel.getBlockPos();
+            BlockState panelState = panel.getBlockState();
             if (panelType == RBMKPanelPlanner.PanelType.TERMINAL && player instanceof ServerPlayer serverPlayer) {
-                NetworkHooks.openScreen(serverPlayer, panel, pos);
+                NetworkHooks.openScreen(serverPlayer, panel, panelPos);
                 return InteractionResult.CONSUME;
             }
             if (panelType == RBMKPanelPlanner.PanelType.KEYPAD) {
                 RBMKPanelBlockPlanner.KeypadHitPlan plan = RBMKPanelBlockPlanner.planKeypadHit(
-                        state.getValue(FACING).ordinal(), hit.getDirection().ordinal(),
-                        hit.getLocation().x - pos.getX(), hit.getLocation().y - pos.getY(),
-                        hit.getLocation().z - pos.getZ(), player.isShiftKeyDown());
+                        panelState.getValue(FACING).ordinal(), hit.getDirection().ordinal(),
+                        hit.getLocation().x - panelPos.getX(), hit.getLocation().y - panelPos.getY(),
+                        hit.getLocation().z - panelPos.getZ(), player.isShiftKeyDown());
                 if (plan.hitButton()) {
                     panel.clickKey(plan.keyIndex());
                     return InteractionResult.CONSUME;
                 }
             } else if (panelType == RBMKPanelPlanner.PanelType.LEVER) {
                 RBMKPanelBlockPlanner.LeverHitPlan plan = RBMKPanelBlockPlanner.planLeverHit(
-                        state.getValue(FACING).ordinal(), hit.getDirection().ordinal(),
-                        hit.getLocation().x - pos.getX(), hit.getLocation().z - pos.getZ(),
+                        panelState.getValue(FACING).ordinal(), hit.getDirection().ordinal(),
+                        hit.getLocation().x - panelPos.getX(), hit.getLocation().z - panelPos.getZ(),
                         player.isShiftKeyDown());
                 if (plan.hitLever()) {
                     panel.clickLever(plan.leverIndex());
@@ -133,5 +140,11 @@ public class RBMKPanelBlock extends BaseEntityBlock implements Toolable {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
+    }
+
+    @Nullable
+    private static RBMKPanelBlockEntity resolvePanel(Level level, BlockPos pos) {
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(level, pos);
+        return blockEntity instanceof RBMKPanelBlockEntity panel ? panel : null;
     }
 }

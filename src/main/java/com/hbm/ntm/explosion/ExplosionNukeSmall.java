@@ -46,9 +46,7 @@ public final class ExplosionNukeSmall {
         if (params.miniNuke) {
             irradiateMiniNukeFootprint(level, x, y, z, params.radiationLevel);
         } else {
-            int blastRadius = (int) params.blastRadius;
-            ExplosionLarge.spawnParticles(level, x, y, z, ExplosionLarge.cloudFunction(blastRadius));
-            NuclearExplosionUtil.spawnNuclear(level, blastRadius, x, y, z);
+            NuclearExplosionUtil.spawnNuclearCoreLoaded(level, (int) params.blastRadius, x, y, z);
         }
     }
 

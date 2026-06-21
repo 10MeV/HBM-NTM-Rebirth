@@ -162,9 +162,15 @@ public class LegacyToolItem extends Item {
 
     private static ToolTarget resolveToolTarget(Level level, BlockPos pos, BlockState state) {
         if (state.getBlock() instanceof Toolable toolable) {
+            if (!level.isClientSide && MultiblockHelper.findCore(level, pos) != null
+                    && MultiblockHelper.findOperationalCore(level, pos) == null) {
+                return null;
+            }
             return new ToolTarget(pos, toolable);
         }
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        MultiblockHelper.CoreLookup core = level.isClientSide
+                ? MultiblockHelper.findCore(level, pos)
+                : MultiblockHelper.findOperationalCore(level, pos);
         if (core != null && core.state().getBlock() instanceof Toolable toolable) {
             return new ToolTarget(core.pos(), toolable);
         }
@@ -180,13 +186,10 @@ public class LegacyToolItem extends Item {
         if (!isLoadedBlock(level, pos)) {
             return null;
         }
-        BlockPos corePos = MultiblockHelper.resolveCorePos(level, pos);
-        if (!isLoadedBlock(level, corePos)) {
-            return null;
-        }
-        BlockEntity blockEntity = level.getBlockEntity(corePos);
-        if (blockEntity instanceof FluidPipeAnchorBlockEntity anchor) {
-            return new PipeAnchorLookup(corePos, anchor);
+        BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
+        if (blockEntity instanceof FluidPipeAnchorBlockEntity anchor
+                && isLoadedBlock(level, blockEntity.getBlockPos())) {
+            return new PipeAnchorLookup(blockEntity.getBlockPos(), anchor);
         }
         return null;
     }

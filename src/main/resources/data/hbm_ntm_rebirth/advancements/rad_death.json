@@ -1,0 +1,24 @@
+{
+  "parent": "hbm_ntm_rebirth:rad_poison",
+  "display": {
+    "icon": {
+      "item": "minecraft:skeleton_skull"
+    },
+    "title": {
+      "translate": "advancements.hbm_ntm_rebirth.rad_death.title"
+    },
+    "description": {
+      "translate": "advancements.hbm_ntm_rebirth.rad_death.description"
+    },
+    "background": "minecraft:textures/gui/advancements/backgrounds/adventure.png",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

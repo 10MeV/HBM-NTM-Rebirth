@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:fracksol", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:water", "amount": 1000 },
+  "input2": { "fluid": "hbm_ntm_rebirth:petroleum", "amount": 100 },
+  "solid_input": {
+    "ingredient": { "tag": "forge:dusts/sulfur" },
+    "legacy_ore": "dustSulfur"
+  },
+  "duration": 20
+}

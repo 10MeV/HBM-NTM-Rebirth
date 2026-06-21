@@ -14,8 +14,11 @@ import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class GeigerCounterItem extends Item {
+    private final Random random = new Random();
+
     public GeigerCounterItem(Properties properties) {
         super(properties);
     }
@@ -39,11 +42,11 @@ public class GeigerCounterItem extends Item {
             if (rate > 20.0F && rate < 30.0F) candidates.add(5);
             if (rate > 25.0F) candidates.add(6);
 
-            int sound = candidates.get(living.getRandom().nextInt(candidates.size()));
+            int sound = candidates.get(random.nextInt(candidates.size()));
             if (sound > 0) {
                 playGeiger(level, entity, sound);
             }
-        } else if (living.getRandom().nextInt(50) == 0) {
+        } else if (random.nextInt(50) == 0) {
             playGeiger(level, entity, 1);
         }
     }

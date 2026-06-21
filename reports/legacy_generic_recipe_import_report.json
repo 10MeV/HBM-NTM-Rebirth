@@ -24,8 +24,14 @@
       "legacy_file": "hbmPrecisionAssembly.json",
       "modern_recipe_type": "precass",
       "status": "missing_template"
+    },
+    {
+      "legacy_class": "PlasmaForgeRecipes",
+      "legacy_file": "hbmPlasmaForge.json",
+      "modern_recipe_type": "plasma_forge",
+      "status": "missing_template"
     }
   ],
   "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes",
-  "supported_generic_handler_count": 4
+  "supported_generic_handler_count": 5
 }

@@ -15,7 +15,6 @@ public final class BulletConfigSyncRegistry {
     public static final int MASKMAN_BOLT = 4;
     public static final int MASKMAN_ROCKET = 5;
     public static final int MASKMAN_TRACER = 6;
-    public static final int MASKMAN_METEOR = 7;
     public static final int WORM_BOLT = 8;
     public static final int WORM_LASER = 9;
     public static final int UFO_ROCKET = 10;
@@ -44,7 +43,6 @@ public final class BulletConfigSyncRegistry {
         register(MASKMAN_BOLT, LegacyBulletConfigs.MASKMAN_BOLT);
         register(MASKMAN_ROCKET, LegacyBulletConfigs.MASKMAN_ROCKET);
         register(MASKMAN_TRACER, LegacyBulletConfigs.MASKMAN_TRACER);
-        register(MASKMAN_METEOR, LegacyBulletConfigs.MASKMAN_METEOR);
         register(WORM_BOLT, LegacyBulletConfigs.WORM_BOLT);
         register(WORM_LASER, LegacyBulletConfigs.WORM_LASER);
         register(UFO_ROCKET, LegacyBulletConfigs.UFO_ROCKET);

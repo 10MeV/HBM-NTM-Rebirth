@@ -141,23 +141,6 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.GUN_CONGOLAKE, 1, 1, 1),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_ADVANCED, 6, 12, 1)));
 
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_METEORITE_TREASURE), pool(
-                entry(ModItems.COBALT_PICKAXE, 1, 1, 10),
-                entry(ModItems.legacyItem("ingot_zirconium"), 1, 16, 10),
-                entry(ModItems.legacyItem("ingot_niobium"), 1, 16, 10),
-                entry(ModItems.COBALT_INGOT, 1, 16, 10),
-                entry(ModItems.legacyItem("ingot_boron"), 1, 16, 10),
-                entry(legacyItem("ingot_starmetal"), 1, 1, 5),
-                entry(legacyItem("crystal_gold"), 1, 4, 10),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 4, 8, 10),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CHIP, 2, 4, 10),
-                entry(ModItems.DEFINITELYFOOD, 16, 32, 25),
-                entry(ModItems.PILL_HERBAL, 1, 2, 10),
-                entry(ModItems.SERUM, 1, 1, 5),
-                entry(ModItems.HEART_PIECE, 1, 1, 5),
-                entry(ModItems.SCRUMPY, 1, 1, 5),
-                blueprint(BLUEPRINT_DISCOVER_SOYUZ, 1, 1, 1)));
-
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_BLUEPRINTS), pool(
                 blueprint(BLUEPRINT_DISCOVER_SOYUZ, 1, 1, 5)));
 
@@ -433,16 +416,6 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.AMMO_CONTAINER, 1, 1, 1),
                 entry(ModItems.COIN_TOKEN, 1, 1, 5),
                 blueprint(BLUEPRINT_DISCOVER_SOYUZ, 1, 1, 1)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_METEOR_SAFE), pool(
-                meta(LegacyMetaItemMappings.STAMP_BOOK, 0, 1, 1, 1),
-                meta(LegacyMetaItemMappings.STAMP_BOOK, 1, 1, 1, 1),
-                meta(LegacyMetaItemMappings.STAMP_BOOK, 2, 1, 1, 1),
-                meta(LegacyMetaItemMappings.STAMP_BOOK, 3, 1, 1, 1),
-                meta(LegacyMetaItemMappings.STAMP_BOOK, 4, 1, 1, 1),
-                meta(LegacyMetaItemMappings.STAMP_BOOK, 5, 1, 1, 1),
-                meta(LegacyMetaItemMappings.STAMP_BOOK, 6, 1, 1, 1),
-                meta(LegacyMetaItemMappings.STAMP_BOOK, 7, 1, 1, 1)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_OIL_RIG), pool(
                 fluidCanister(HbmFluids.OIL, 1, 4, 5),

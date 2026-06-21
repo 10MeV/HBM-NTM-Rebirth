@@ -35,6 +35,12 @@ public final class ModRecipes {
             register("precass", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.PRECASS));
     public static final RecipeHolder<GenericMachineRecipe> ARC_WELDER =
             register("arc_welder", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.ARC_WELDER));
+    public static final RecipeHolder<GenericMachineRecipe> ARC_FURNACE =
+            register("arc_furnace", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.ARC_FURNACE));
+    public static final RecipeHolder<GenericMachineRecipe> FUSION_REACTOR =
+            register("fusion_reactor", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.FUSION_REACTOR));
+    public static final RecipeHolder<GenericMachineRecipe> PLASMA_FORGE =
+            register("plasma_forge", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.PLASMA_FORGE));
     public static final RecipeHolder<LiquefactionRecipe> LIQUEFACTION = register("liquefaction", LiquefactionRecipe.Serializer::new);
     public static final RecipeHolder<PyroOvenRecipe> PYRO_OVEN = register("pyro_oven", PyroOvenRecipe.Serializer::new);
     public static final RecipeHolder<CombinationOvenRecipe> COMBINATION_OVEN =
@@ -53,10 +59,16 @@ public final class ModRecipes {
             register("ammo_press", AmmoPressRecipe.Serializer::new);
     public static final RecipeHolder<OutgasserRecipe> OUTGASSER =
             register("outgasser", OutgasserRecipe.Serializer::new);
+    public static final RecipeHolder<FusionFluidBreederRecipe> FUSION_FLUID_BREEDER =
+            register("fusion_fluid_breeder", FusionFluidBreederRecipe.Serializer::new);
     public static final RecipeHolder<ExposureChamberRecipe> EXPOSURE_CHAMBER =
             register("exposure_chamber", ExposureChamberRecipe.Serializer::new);
     public static final RecipeHolder<SolderingStationRecipe> SOLDERING_STATION =
             register("soldering_station", SolderingStationRecipe.Serializer::new);
+    public static final RecipeHolder<AnnihilatorRecipe> ANNIHILATOR =
+            register("annihilator", AnnihilatorRecipe.Serializer::new);
+    public static final RecipeHolder<AnvilConstructionRecipe> ANVIL_CONSTRUCTION =
+            register("anvil_construction", AnvilConstructionRecipe.Serializer::new);
 
     public static void register(IEventBus modBus) {
         RECIPE_TYPES.register(modBus);

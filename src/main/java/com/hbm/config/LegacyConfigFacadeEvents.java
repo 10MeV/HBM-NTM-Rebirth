@@ -22,8 +22,13 @@ public final class LegacyConfigFacadeEvents {
     }
 
     public static void sync() {
+        ClientConfig.syncFromModern();
+        GeneralConfig.syncFromModern();
+        BombConfig.syncFromModern();
         RadiationConfig.syncFromModern();
+        ServerConfig.syncFromModern();
         MobConfig.syncFromModern();
+        WorldConfig.syncFromModern();
     }
 
     private LegacyConfigFacadeEvents() {

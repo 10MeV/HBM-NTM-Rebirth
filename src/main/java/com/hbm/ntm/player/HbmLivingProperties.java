@@ -154,15 +154,15 @@ public final class HbmLivingProperties {
 
     public static SyncData writeSyncedData(LivingEntity entity, float chunkRadiation, float resistance) {
         return new SyncData(
-                getRadiation(entity),
+                RadiationData.getStoredRadiation(entity),
                 getDigamma(entity),
                 getRadBuf(entity),
                 chunkRadiation,
                 resistance,
-                getAsbestos(entity),
-                getBlackLung(entity),
+                RadiationData.getStoredAsbestos(entity),
+                RadiationData.getStoredBlackLung(entity),
                 getBombTimer(entity),
-                getContagion(entity),
+                RadiationData.getStoredContagion(entity),
                 getOil(entity),
                 getFire(entity),
                 getPhosphorus(entity),
@@ -190,12 +190,12 @@ public final class HbmLivingProperties {
 
     public static LegacySyncData writeLegacySyncedData(LivingEntity entity) {
         return new LegacySyncData(
-                getRadiation(entity),
+                RadiationData.getStoredRadiation(entity),
                 getDigamma(entity),
-                getAsbestos(entity),
+                RadiationData.getStoredAsbestos(entity),
                 getBombTimer(entity),
-                getContagion(entity),
-                getBlackLung(entity),
+                RadiationData.getStoredContagion(entity),
+                RadiationData.getStoredBlackLung(entity),
                 getOil(entity),
                 getContaminationEffectsForSync(entity));
     }
@@ -473,7 +473,7 @@ public final class HbmLivingProperties {
     }
 
     public static int addTimer(LivingEntity entity, int amount) {
-        int timer = Math.max(0, getTimer(entity) + amount);
+        int timer = getTimer(entity) + amount;
         setTimer(entity, timer);
         return timer;
     }
@@ -520,7 +520,7 @@ public final class HbmLivingProperties {
     }
 
     public static int addContagion(LivingEntity entity, int amount) {
-        int contagion = Math.max(0, RadiationData.getContagion(entity) + amount);
+        int contagion = RadiationData.getContagion(entity) + amount;
         setContagion(entity, contagion);
         return contagion;
     }
@@ -789,7 +789,7 @@ public final class HbmLivingProperties {
         public ContaminationEffect(float maxRad, int maxTime, int time, boolean ignoreArmor) {
             this.maxRad = maxRad;
             this.maxTime = Math.max(1, maxTime);
-            this.time = Math.max(0, time);
+            this.time = time;
             this.ignoreArmor = ignoreArmor;
         }
 
@@ -809,7 +809,7 @@ public final class HbmLivingProperties {
             CompoundTag tag = new CompoundTag();
             tag.putFloat("maxRad", maxRad);
             tag.putInt("maxTime", Math.max(1, maxTime));
-            tag.putInt("time", Math.max(0, time));
+            tag.putInt("time", time);
             tag.putBoolean("ignoreArmor", ignoreArmor);
             return tag;
         }
@@ -819,7 +819,7 @@ public final class HbmLivingProperties {
             return new ContaminationEffect(
                     safeTag.getFloat("maxRad"),
                     Math.max(1, safeTag.getInt("maxTime")),
-                    Math.max(0, safeTag.getInt("time")),
+                    safeTag.getInt("time"),
                     safeTag.getBoolean("ignoreArmor"));
         }
     }

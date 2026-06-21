@@ -12,6 +12,7 @@ import com.hbm.ntm.neutron.PileGraphiteNeutronRules;
 import com.hbm.ntm.neutron.PileGraphiteTogglePlanner;
 import com.hbm.ntm.neutron.PileNeutronBlockBehavior;
 import com.hbm.ntm.neutron.PileNeutronBlockResult;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
@@ -33,6 +34,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -103,7 +105,7 @@ public class PileGraphiteDrilledBaseBlock extends BaseEntityBlock
             return false;
         }
         if (!level.isClientSide) {
-            executeInteraction(level, player, plan.interaction());
+            executeInteraction(level, player, InteractionHand.MAIN_HAND, plan.interaction());
             sendDiagnostics(player, pos, plan.diagnosticSnapshot());
             if (plan.detectorThresholdPlan() != null
                     && level.getBlockEntity(pos) instanceof PileNeutronDetectorBlockEntity detector) {
@@ -163,8 +165,8 @@ public class PileGraphiteDrilledBaseBlock extends BaseEntityBlock
             return InteractionResult.SUCCESS;
         }
         boolean accepted = held.insertedItem() == PileGraphiteInsertionPlanner.InsertedItem.NONE
-                ? executeSimpleActivation(level, player, pos, hit.getDirection(), held)
-                : executeInsertion(level, player, pos, hit.getDirection(), held.insertedItem());
+                ? executeSimpleActivation(level, player, hand, pos, hit.getDirection(), held)
+                : executeInsertion(level, player, hand, pos, hit.getDirection(), held.insertedItem());
         return accepted ? InteractionResult.CONSUME : InteractionResult.PASS;
     }
 
@@ -225,6 +227,14 @@ public class PileGraphiteDrilledBaseBlock extends BaseEntityBlock
             Level level,
             @Nullable Player player,
             PileGraphiteInteractionPlanner.InteractionPlan plan) {
+        executeInteraction(level, player, InteractionHand.MAIN_HAND, plan);
+    }
+
+    protected static void executeInteraction(
+            Level level,
+            @Nullable Player player,
+            InteractionHand hand,
+            PileGraphiteInteractionPlanner.InteractionPlan plan) {
         for (PileGraphiteInteractionPlanner.BlockMutation mutation : plan.blockMutations()) {
             setLegacyBlock(level, mutation.pos(), mutation.legacyBlockId(), mutation.newMeta(), null);
         }
@@ -234,8 +244,11 @@ public class PileGraphiteDrilledBaseBlock extends BaseEntityBlock
         for (PileGraphiteInteractionPlanner.SoundCue sound : plan.sounds()) {
             playPlannedSound(level, sound.legacySoundId(), sound.pos(), sound.volume(), sound.pitch());
         }
+        for (PileGraphiteInteractionPlanner.ParticleCue particle : plan.particles()) {
+            spawnPlannedParticle(level, particle);
+        }
         if (plan.consumeHeldItem() && player != null && !player.getAbilities().instabuild) {
-            player.getMainHandItem().shrink(1);
+            player.getItemInHand(hand).shrink(1);
         }
     }
 
@@ -284,6 +297,7 @@ public class PileGraphiteDrilledBaseBlock extends BaseEntityBlock
     private boolean executeSimpleActivation(
             Level level,
             Player player,
+            InteractionHand hand,
             BlockPos pos,
             Direction side,
             PileGraphiteInteractionPlanner.HeldItem held) {
@@ -292,13 +306,14 @@ public class PileGraphiteDrilledBaseBlock extends BaseEntityBlock
         if (!plan.accepted()) {
             return false;
         }
-        executeInteraction(level, player, plan);
+        executeInteraction(level, player, hand, plan);
         return plan.hasWorldMutation();
     }
 
     private boolean executeInsertion(
             Level level,
             Player player,
+            InteractionHand hand,
             BlockPos pos,
             Direction direction,
             PileGraphiteInsertionPlanner.InsertedItem insertedItem) {
@@ -326,7 +341,7 @@ public class PileGraphiteDrilledBaseBlock extends BaseEntityBlock
                     PileGraphiteInteractionPlanner.LegacyItemStack.insertedItem(plan.ejection().item()));
         }
         if (!player.getAbilities().instabuild) {
-            player.getMainHandItem().shrink(1);
+            player.getItemInHand(hand).shrink(1);
         }
         playPlannedSound(level, PileGraphiteInteractionPlanner.LEGACY_SOUND_UPGRADE_PLUG, pos, 1.0F, 1.0F);
         return true;
@@ -360,8 +375,36 @@ public class PileGraphiteDrilledBaseBlock extends BaseEntityBlock
                     LegacySoundPlayer.playLegacyUpgradePlug(level, pos, SoundSource.BLOCKS, volume, pitch);
             case PileGraphiteInteractionPlanner.LEGACY_SOUND_TECH_BLEEP ->
                     LegacySoundPlayer.playLegacyTechBleep(level, pos, SoundSource.BLOCKS, volume, pitch);
+            case PileGraphiteInteractionPlanner.LEGACY_STEP_SOUND_GRAPHITE ->
+                    playGraphiteStepSound(level, pos, volume, pitch);
             default -> {
             }
+        }
+    }
+
+    private static void playGraphiteStepSound(Level level, BlockPos pos, float volume, float pitch) {
+        SoundType soundType = level.getBlockState(pos).getSoundType(level, pos, null);
+        level.playSound(
+                null,
+                pos,
+                soundType.getStepSound(),
+                SoundSource.BLOCKS,
+                (soundType.getVolume() + volume) * 0.5F,
+                soundType.getPitch() * pitch);
+    }
+
+    private static void spawnPlannedParticle(Level level, PileGraphiteInteractionPlanner.ParticleCue particle) {
+        if (PileGraphiteInteractionPlanner.LEGACY_PARTICLE_GRAPHITE_DRILL.equals(particle.legacyParticleId())) {
+            BlockPos pos = particle.pos();
+            ParticleUtil.spawnVanillaLegacyBlockDustBurst(
+                    level,
+                    pos.getX() + 0.5D,
+                    pos.getY() + 0.5D,
+                    pos.getZ() + 0.5D,
+                    24,
+                    0.18D,
+                    PileGraphiteInteractionPlanner.LEGACY_BLOCK_GRAPHITE,
+                    0);
         }
     }
 

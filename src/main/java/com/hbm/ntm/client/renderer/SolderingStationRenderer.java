@@ -52,8 +52,9 @@ public class SolderingStationRenderer implements BlockEntityRenderer<SolderingSt
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        MODEL.renderAll(definition.textureLocation(),
-                new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay));
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay)
+                .withRenderMode(LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
+        MODEL.renderAll(definition.textureLocation(), context);
         renderOutputItem(blockEntity, poseStack, buffer, packedLight);
 
         poseStack.popPose();

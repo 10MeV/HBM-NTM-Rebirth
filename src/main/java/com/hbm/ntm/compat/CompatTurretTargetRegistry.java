@@ -8,6 +8,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.boss.EnderDragonPart;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.npc.Npc;
 import net.minecraft.world.entity.player.Player;
@@ -35,7 +37,12 @@ public final class CompatTurretTargetRegistry {
     private static final List<Class<? extends Entity>> PLAYER_CLASSES = new CopyOnWriteArrayList<>();
 
     static {
-        registerFriendly(entity -> entity instanceof Animal || entity instanceof Npc || entity instanceof TamableAnimal);
+        registerFriendly(entity -> entity instanceof Animal
+                || entity instanceof Npc
+                || entity instanceof TamableAnimal
+                || (entity instanceof Enemy
+                && !(entity instanceof EnderDragon)
+                && !(entity instanceof EnderDragonPart)));
         registerHostile(entity -> entity instanceof Enemy);
         registerMachine(entity -> entity instanceof AbstractMinecart);
         registerPlayer(entity -> entity instanceof Player && !(entity instanceof FakePlayer));
@@ -61,6 +68,9 @@ public final class CompatTurretTargetRegistry {
     }
 
     public static void registerSimple(Class<? extends Entity> clazz, int type) {
+        if (type < 0 || type > 3) {
+            return;
+        }
         registerSimple(clazz, TargetType.fromLegacyInt(type));
     }
 
@@ -178,7 +188,7 @@ public final class CompatTurretTargetRegistry {
                 case 1 -> FRIENDLY;
                 case 2 -> HOSTILE;
                 case 3 -> MACHINE;
-                default -> HOSTILE;
+                default -> throw new IllegalArgumentException("Invalid turret target type: " + type);
             };
         }
     }

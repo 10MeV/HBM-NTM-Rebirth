@@ -33,6 +33,7 @@
     "hbm_ntm_rebirth:block_cadmium",
     "hbm_ntm_rebirth:block_coltan",
     "hbm_ntm_rebirth:block_tantalium",
+    "hbm_ntm_rebirth:block_niobium",
     "hbm_ntm_rebirth:block_schraranium",
     "hbm_ntm_rebirth:block_schrabidium",
     "hbm_ntm_rebirth:block_schrabidate",
@@ -62,6 +63,8 @@
     "hbm_ntm_rebirth:block_lanthanium",
     "hbm_ntm_rebirth:block_ra226",
     "hbm_ntm_rebirth:block_actinium",
-    "hbm_ntm_rebirth:block_australium"
+    "hbm_ntm_rebirth:block_australium",
+    "hbm_ntm_rebirth:block_lithium",
+    "hbm_ntm_rebirth:block_slag"
   ]
 }

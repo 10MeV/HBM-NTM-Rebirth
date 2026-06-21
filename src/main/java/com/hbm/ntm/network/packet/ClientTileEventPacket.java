@@ -1,9 +1,10 @@
 package com.hbm.ntm.network.packet;
 
+import com.hbm.ntm.client.sound.SoundLoopSiren;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmClientTileEventReceiver;
 import com.hbm.ntm.network.HbmNetworkActions;
 import com.hbm.ntm.network.HbmPreparablePacket;
-import com.hbm.ntm.client.sound.SoundLoopSiren;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -40,7 +41,7 @@ public record ClientTileEventPacket(BlockPos pos, ResourceLocation eventType, Co
             if (minecraft.level == null) {
                 return;
             }
-            BlockEntity blockEntity = minecraft.level.getBlockEntity(packet.pos);
+            BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(minecraft.level, packet.pos);
             if (HbmNetworkActions.SIREN.equals(packet.eventType)) {
                 SoundLoopSiren.handleClientTileEvent(blockEntity, packet.data);
                 return;

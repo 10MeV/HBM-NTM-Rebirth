@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/machine_lithium_battery",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/machine_lithium_battery",
+      "y": 270
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/machine_lithium_battery"
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/machine_lithium_battery",
+      "y": 90
+    }
+  }
+}

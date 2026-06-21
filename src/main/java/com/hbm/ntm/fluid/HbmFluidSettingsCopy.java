@@ -33,7 +33,9 @@ public final class HbmFluidSettingsCopy {
         if (level == null || pos == null) {
             return Optional.empty();
         }
-        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(level, pos);
+        BlockEntity blockEntity = level.isClientSide
+                ? MultiblockHelper.resolveCoreBlockEntity(level, pos)
+                : MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
         return blockEntity instanceof HbmFluidCopiable copiable ? Optional.of(copiable) : Optional.empty();
     }
 

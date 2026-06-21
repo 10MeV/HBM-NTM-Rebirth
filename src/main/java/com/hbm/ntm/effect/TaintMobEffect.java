@@ -4,6 +4,7 @@ import com.hbm.ntm.block.LegacyTaintBlock;
 import com.hbm.ntm.config.ServerConfig;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
+import com.hbm.ntm.radiation.RadiationUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -46,7 +47,7 @@ public class TaintMobEffect extends MobEffect {
     }
 
     private static boolean isLegacyTaintMob(LivingEntity entity) {
-        String simpleName = entity.getClass().getSimpleName();
-        return "EntityCreeperTainted".equals(simpleName) || "EntityTaintCrab".equals(simpleName);
+        return RadiationUtil.hasLegacyClassName(entity, "EntityCreeperTainted")
+                || RadiationUtil.hasLegacyClassName(entity, "EntityTaintCrab");
     }
 }

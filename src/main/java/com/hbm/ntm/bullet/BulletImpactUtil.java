@@ -6,7 +6,6 @@ import com.hbm.ntm.damage.DamageClass;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.entity.effect.EmpBlastEntity;
 import com.hbm.ntm.entity.effect.FireLingeringEntity;
-import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.explosion.ExplosionLarge;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.explosion.NuclearExplosionUtil;
@@ -664,7 +663,7 @@ public final class BulletImpactUtil {
         }
         if (config.hasBehavior(BulletBehaviorTag.CHARGE_MORTAR_CHARGE_EXPLODE)) {
             BlockProcessorStandard processor = new BlockProcessorStandard().setNoDrop();
-            processor.withBlockEffect(new BlockMutatorDebris(ModBlocks.legacyBlock("block_slag").get()));
+            processor.withBlockEffect(new BlockMutatorDebris(ModBlocks.legacyBlock("block_slag").get(), 1));
             ParticleUtil.spawnLegacyExplosionSmall(level, position.x, position.y + 0.5D, position.z);
             ExplosionVnt explosion = new ExplosionVnt(level, position.x, position.y, position.z, 15.0F, source);
             explosion.setBlockAllocator(new BlockAllocatorStandard())
@@ -808,8 +807,7 @@ public final class BulletImpactUtil {
         if (config.hasBehavior(BulletBehaviorTag.FOLLY_NUKE_IMPACT)) {
             return NuclearExplosionUtil.spawnNuclear(level, config.nuke(), position.x, position.y, position.z);
         }
-        boolean spawned = level.addFreshEntity(NukeExplosionMk5Entity.statFac(level, config.nuke(),
-                position.x, position.y, position.z));
+        boolean spawned = NuclearExplosionUtil.spawnNuclearCore(level, config.nuke(), position.x, position.y, position.z);
         if (spawned) {
             ParticleUtil.spawnMuke(level, position.x, position.y + 0.5D, position.z,
                     level.random.nextInt(100) == 0);

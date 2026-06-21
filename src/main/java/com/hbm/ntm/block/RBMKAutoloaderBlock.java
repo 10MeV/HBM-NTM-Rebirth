@@ -26,7 +26,12 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +41,9 @@ import java.util.List;
 public class RBMKAutoloaderBlock extends BaseEntityBlock implements MultiblockCoreBlock, LegacyMultiblockPlaceable {
     public static final int HEIGHT_ABOVE = 8;
     private static final LegacyMultiblockLayout LAYOUT = createLayout();
+    private static final VoxelShape DETAILED_SHAPE = Shapes.or(
+            Shapes.box(0.375D, 0.0D, 0.375D, 0.625D, 4.0D, 0.625D),
+            Shapes.box(0.0D, 4.0D, 0.0D, 1.0D, 9.0D, 1.0D)).optimize();
 
     public RBMKAutoloaderBlock(BlockBehaviour.Properties properties) {
         super(properties);
@@ -92,6 +100,14 @@ public class RBMKAutoloaderBlock extends BaseEntityBlock implements MultiblockCo
         fillLayout(level, pos);
     }
 
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (!oldState.is(state.getBlock())) {
+            fillLayout(level, pos);
+        }
+    }
+
     @Nullable
     @Override
     public LegacyMultiblockLayout getMultiblockLayout(BlockState state, BlockGetter level, BlockPos corePos) {
@@ -100,26 +116,122 @@ public class RBMKAutoloaderBlock extends BaseEntityBlock implements MultiblockCo
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return RenderShape.ENTITYBLOCK_ANIMATED;
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return localDetailedShape(BlockPos.ZERO);
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
+            CollisionContext context) {
+        return localDetailedShape(BlockPos.ZERO);
+    }
+
+    @Override
+    public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+        return Shapes.empty();
+    }
+
+    @Override
+    public VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return Shapes.empty();
+    }
+
+    @Override
+    public boolean useShapeForLightOcclusion(BlockState state) {
+        return false;
+    }
+
+    @Override
+    public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
+        return false;
+    }
+
+    @Override
+    public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos,
+            CollisionContext context) {
+        return DETAILED_SHAPE;
+    }
+
+    @Override
+    public VoxelShape getMultiblockCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
+            CollisionContext context) {
+        return DETAILED_SHAPE;
+    }
+
+    @Override
+    public boolean usesForwardedDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    @Override
+    public boolean usesForwardedDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    @Override
+    public boolean usesLocalDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return true;
+    }
+
+    @Override
+    public boolean usesLocalDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return true;
+    }
+
+    @Override
+    public boolean requiresCompleteOperationalLayout(BlockState state, BlockGetter level, BlockPos corePos) {
+        return true;
+    }
+
+    @Override
+    public VoxelShape getMultiblockDummyShape(BlockState state, BlockGetter level, BlockPos corePos,
+            BlockPos dummyPos, CollisionContext context) {
+        return localDetailedShape(dummyPos.subtract(corePos));
+    }
+
+    @Override
+    public VoxelShape getMultiblockDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
+            BlockPos dummyPos, CollisionContext context) {
+        return localDetailedShape(dummyPos.subtract(corePos));
     }
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof RBMKAutoloaderBlockEntity autoloader) {
-            NetworkHooks.openScreen(serverPlayer, autoloader, autoloader.getBlockPos());
+        if (level.isClientSide) {
+            return MultiblockHelper.isOperationalCoreLayoutComplete(level, pos)
+                    ? InteractionResult.SUCCESS
+                    : InteractionResult.PASS;
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
+        if (player instanceof ServerPlayer serverPlayer
+                && blockEntity instanceof RBMKAutoloaderBlockEntity autoloader) {
+            NetworkHooks.openScreen(serverPlayer, autoloader, autoloader.getBlockPos());
+            return InteractionResult.SUCCESS;
+        }
+        return InteractionResult.PASS;
     }
 
     @Override
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide && !player.getAbilities().instabuild
-                && level.getBlockEntity(pos) instanceof RBMKAutoloaderBlockEntity autoloader) {
-            HbmItemStackUtil.dropStacks(level, pos, autoloader.removeItemsForDrop());
+                && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof RBMKAutoloaderBlockEntity autoloader) {
+            HbmItemStackUtil.dropStacks(level, autoloader.getBlockPos(), autoloader.removeItemsForDrop());
         }
         super.playerWillDestroy(level, pos, state, player);
+    }
+
+    @Override
+    public void beforeMultiblockDummyDestroysCore(Level level, BlockPos corePos, BlockState coreState,
+            BlockPos dummyPos, boolean drop) {
+        if (drop && !level.isClientSide
+                && level.getBlockEntity(corePos) instanceof RBMKAutoloaderBlockEntity autoloader) {
+            HbmItemStackUtil.dropStacks(level, corePos, autoloader.removeItemsForDrop());
+        }
     }
 
     @Override
@@ -146,7 +258,10 @@ public class RBMKAutoloaderBlock extends BaseEntityBlock implements MultiblockCo
 
     private static void fillLayout(Level level, BlockPos corePos) {
         if (!level.isClientSide) {
-            MultiblockHelper.fillLayout(level, corePos, LAYOUT);
+            boolean filled = MultiblockHelper.fillLayout(level, corePos, LAYOUT);
+            if (!filled || !MultiblockHelper.isLayoutComplete(level, corePos, LAYOUT)) {
+                level.destroyBlock(corePos, false);
+            }
         }
     }
 
@@ -160,5 +275,21 @@ public class RBMKAutoloaderBlock extends BaseEntityBlock implements MultiblockCo
                 .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO),
                         LegacyProxyMode.passive().withInventory(true))
                 .withLegacyExtraOffsets(List.of(new BlockPos(0, HEIGHT_ABOVE, 0)));
+    }
+
+    private static VoxelShape localDetailedShape(BlockPos offset) {
+        VoxelShape shape = Shapes.empty();
+        for (AABB box : DETAILED_SHAPE.toAabbs()) {
+            double minX = Math.max(0.0D, box.minX - offset.getX());
+            double minY = Math.max(0.0D, box.minY - offset.getY());
+            double minZ = Math.max(0.0D, box.minZ - offset.getZ());
+            double maxX = Math.min(1.0D, box.maxX - offset.getX());
+            double maxY = Math.min(1.0D, box.maxY - offset.getY());
+            double maxZ = Math.min(1.0D, box.maxZ - offset.getZ());
+            if (minX < maxX && minY < maxY && minZ < maxZ) {
+                shape = Shapes.or(shape, Shapes.box(minX, minY, minZ, maxX, maxY, maxZ));
+            }
+        }
+        return shape.optimize();
     }
 }

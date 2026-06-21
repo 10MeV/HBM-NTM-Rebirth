@@ -1,6 +1,7 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmTileBinaryControlReceiver;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
@@ -51,15 +52,18 @@ public record ServerTileBinaryControlPacket(BlockPos pos, ResourceLocation chann
         if (player == null) {
             return;
         }
-        if (player.distanceToSqr(packet.pos.getX() + 0.5D, packet.pos.getY() + 0.5D, packet.pos.getZ() + 0.5D) > MAX_DISTANCE_SQ) {
-            HbmNtm.LOGGER.warn("Blocked remote tile binary control from {} at {}", player.getGameProfile().getName(), packet.pos);
-            return;
-        }
         ServerLevel level = player.serverLevel();
         if (!level.hasChunk(packet.pos.getX() >> 4, packet.pos.getZ() >> 4)) {
             return;
         }
-        BlockEntity blockEntity = level.getBlockEntity(packet.pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level, packet.pos);
+        BlockPos receiverPos = blockEntity == null ? packet.pos : blockEntity.getBlockPos();
+        if (player.distanceToSqr(receiverPos.getX() + 0.5D, receiverPos.getY() + 0.5D,
+                receiverPos.getZ() + 0.5D) > MAX_DISTANCE_SQ) {
+            HbmNtm.LOGGER.warn("Blocked remote tile binary control from {} at {} resolved to {}",
+                    player.getGameProfile().getName(), packet.pos, receiverPos);
+            return;
+        }
         if (!(blockEntity instanceof HbmTileBinaryControlReceiver receiver)) {
             return;
         }
@@ -72,7 +76,7 @@ public record ServerTileBinaryControlPacket(BlockPos pos, ResourceLocation chann
         try {
             receiver.handleClientTileBinaryData(player, packet.channel, payloadBuffer);
             blockEntity.setChanged();
-            level.sendBlockUpdated(packet.pos, blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
+            level.sendBlockUpdated(blockEntity.getBlockPos(), blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
         } catch (Exception exception) {
             HbmNtm.LOGGER.warn("Tile binary control receiver failed at {} for channel {}.", packet.pos, packet.channel, exception);
         } finally {

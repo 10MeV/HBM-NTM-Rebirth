@@ -20,13 +20,17 @@ final class LegacyRecipeIconRenderer {
     }
 
     static boolean shouldRender(BlockEntity blockEntity) {
+        return shouldRenderWithin(blockEntity, 35.0D);
+    }
+
+    static boolean shouldRenderWithin(BlockEntity blockEntity, double range) {
         Minecraft minecraft = Minecraft.getInstance();
         return blockEntity.getLevel() != null
                 && minecraft.player != null
                 && minecraft.player.distanceToSqr(
                 blockEntity.getBlockPos().getX() + 0.5D,
                 blockEntity.getBlockPos().getY() + 1.0D,
-                blockEntity.getBlockPos().getZ() + 0.5D) < RECIPE_ICON_RANGE;
+                blockEntity.getBlockPos().getZ() + 0.5D) < range * range;
     }
 
     static void renderInLegacyMachineSpace(GenericMachineRecipe recipe, Level level, PoseStack poseStack,
@@ -57,6 +61,47 @@ final class LegacyRecipeIconRenderer {
             poseStack.translate(0.0D, -0.25D, 0.0D);
         }
         poseStack.scale(1.25F, 1.25F, 1.25F);
+        minecraft.getItemRenderer().renderStatic(
+                stack,
+                ItemDisplayContext.FIXED,
+                packedLight,
+                OverlayTexture.NO_OVERLAY,
+                poseStack,
+                buffer,
+                level,
+                0);
+        poseStack.popPose();
+    }
+
+    static void renderPlasmaForgeIcon(GenericMachineRecipe recipe, Level level, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, float partialTick) {
+        if (recipe == null || level == null) {
+            return;
+        }
+        ItemStack stack = recipe.getIcon();
+        if (stack.isEmpty()) {
+            return;
+        }
+        stack.setCount(1);
+
+        Minecraft minecraft = Minecraft.getInstance();
+        poseStack.pushPose();
+        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        poseStack.translate(0.0D, 1.75D, 0.0D);
+        if (stack.getItem() instanceof BlockItem blockItem) {
+            BakedModel blockModel = minecraft.getBlockRenderer().getBlockModel(blockItem.getBlock().defaultBlockState());
+            if (blockModel.isGui3d()) {
+                poseStack.translate(0.0D, -0.0625D, 0.0D);
+            } else {
+                poseStack.scale(0.5F, 0.5F, 0.5F);
+            }
+        } else {
+            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        }
+        float ticks = minecraft.player == null ? level.getGameTime() + partialTick
+                : minecraft.player.tickCount + partialTick;
+        poseStack.translate(0.0D, Math.sin(ticks * 0.1D) * 0.0625D, 0.0D);
+        poseStack.scale(1.5F, 1.5F, 1.5F);
         minecraft.getItemRenderer().renderStatic(
                 stack,
                 ItemDisplayContext.FIXED,

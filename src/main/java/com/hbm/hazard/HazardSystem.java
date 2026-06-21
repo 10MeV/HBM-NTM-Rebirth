@@ -23,11 +23,11 @@ import java.util.List;
 @Deprecated(forRemoval = false)
 public final class HazardSystem {
     public static final List<HazardTransformerBase> trafos = new AbstractList<>() {
-        private final List<HazardTransformerBase> backing = new ArrayList<>();
+        private final List<TransformerRegistration> backing = new ArrayList<>();
 
         @Override
         public HazardTransformerBase get(int index) {
-            return backing.get(index);
+            return backing.get(index).legacy();
         }
 
         @Override
@@ -37,13 +37,28 @@ public final class HazardSystem {
 
         @Override
         public void add(int index, HazardTransformerBase element) {
-            backing.add(index, element);
-            com.hbm.ntm.radiation.HazardRegistry.registerTransformer(element.toModern());
+            TransformerRegistration registration = TransformerRegistration.of(element);
+            if (index < backing.size()) {
+                com.hbm.ntm.radiation.HazardRegistry.registerTransformerBefore(registration.modern(), backing.get(index).modern());
+            } else {
+                com.hbm.ntm.radiation.HazardRegistry.registerTransformer(registration.modern());
+            }
+            backing.add(index, registration);
+        }
+
+        @Override
+        public HazardTransformerBase set(int index, HazardTransformerBase element) {
+            TransformerRegistration registration = TransformerRegistration.of(element);
+            TransformerRegistration previous = backing.set(index, registration);
+            com.hbm.ntm.radiation.HazardRegistry.replaceTransformer(previous.modern(), registration.modern());
+            return previous.legacy();
         }
 
         @Override
         public HazardTransformerBase remove(int index) {
-            return backing.remove(index);
+            TransformerRegistration removed = backing.remove(index);
+            com.hbm.ntm.radiation.HazardRegistry.unregisterTransformer(removed.modern());
+            return removed.legacy();
         }
     };
 
@@ -116,7 +131,13 @@ public final class HazardSystem {
     }
 
     public static void addFullTooltip(ItemStack stack, Player player, List<Component> list) {
-        com.hbm.ntm.radiation.HazardTooltipUtil.addHazardInformation(stack, list);
+        com.hbm.ntm.radiation.HazardTooltipUtil.addHazardInformation(stack, list, player);
+    }
+
+    private record TransformerRegistration(HazardTransformerBase legacy, com.hbm.ntm.radiation.HazardTransformer modern) {
+        private static TransformerRegistration of(HazardTransformerBase legacy) {
+            return new TransformerRegistration(legacy, legacy.toModern());
+        }
     }
 
     private HazardSystem() {

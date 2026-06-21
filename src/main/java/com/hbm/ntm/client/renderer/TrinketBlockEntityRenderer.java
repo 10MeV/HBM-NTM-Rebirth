@@ -7,6 +7,9 @@ import com.hbm.ntm.client.obj.ObjTrinketModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -22,7 +25,7 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
     private static final ObjModelPart BOBBLEHEAD_FUMO = trinketPart("bobble_fumo", RenderType.cutout());
     private static final ObjModelPart BOBBLEHEAD_DRILLGON = trinketPart("bobble_drillgon", RenderType.cutout());
     private static final ObjModelPart SNOWGLOBE_SOCKET = trinketPart("snowglobe_socket", RenderType.cutout());
-    private static final ObjModelPart SNOWGLOBE_GLASS = trinketPart("snowglobe_glass", RenderType.translucent());
+    private static final ObjModelPart SNOWGLOBE_GLASS = translucentTrinketPart("snowglobe_glass");
     private static final Map<String, ObjModelPart> BOBBLEHEAD_MODELS = new HashMap<>();
     private static final Map<String, ObjModelPart> SNOWGLOBE_FEATURES = new HashMap<>();
     private static final Map<String, ObjModelPart> PLUSHIE_MODELS = new HashMap<>();
@@ -104,7 +107,25 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
         if (feature != null) {
             feature.render(context);
         }
+        renderSnowglobeLabel(variant, context);
         SNOWGLOBE_GLASS.render(context);
+        context.poseStack().popPose();
+    }
+
+    private static void renderSnowglobeLabel(int variant, ObjRenderContext context) {
+        String label = TrinketVariant.snowglobeLabel(variant);
+        if ("NONE".equals(label)) {
+            return;
+        }
+        Font font = Minecraft.getInstance().font;
+        context.poseStack().pushPose();
+        context.poseStack().translate(4.025D, 0.5D, 0.0D);
+        context.poseStack().scale(0.05F, -0.05F, 0.05F);
+        context.poseStack().translate(0.0D, -font.lineHeight / 2.0D, font.width(label) * 0.5D);
+        context.poseStack().mulPose(Axis.YP.rotationDegrees(90.0F));
+        context.poseStack().translate(0.0D, 1.0D, 0.0D);
+        font.drawInBatch(label, 0.0F, 0.0F, 0xFFFFFF, false, context.poseStack().last().pose(),
+                context.buffer(), Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
         context.poseStack().popPose();
     }
 
@@ -132,5 +153,9 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
 
     private static ObjModelPart trinketPart(String name, RenderType renderType) {
         return ObjTrinketModels.part(name, renderType);
+    }
+
+    private static ObjModelPart translucentTrinketPart(String name) {
+        return ObjTrinketModels.part(name, RenderType.translucent(), true);
     }
 }

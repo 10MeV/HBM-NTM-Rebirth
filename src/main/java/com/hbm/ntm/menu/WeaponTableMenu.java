@@ -2,7 +2,6 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.bullet.SednaWeaponModInstallManager;
 import com.hbm.ntm.item.SednaGunItem;
-import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
@@ -26,7 +25,6 @@ public class WeaponTableMenu extends AbstractContainerMenu {
 
     private final SimpleContainer mods = new SimpleContainer(MOD_SLOT_COUNT);
     private final SimpleContainer gun = new SimpleContainer(1);
-    private final BlockPos pos;
     private int configIndex;
 
     public WeaponTableMenu(int containerId, Inventory playerInventory, FriendlyByteBuf data) {
@@ -35,7 +33,6 @@ public class WeaponTableMenu extends AbstractContainerMenu {
 
     public WeaponTableMenu(int containerId, Inventory playerInventory, BlockPos pos) {
         super(ModMenuTypes.WEAPON_TABLE.get(), containerId);
-        this.pos = pos;
 
         for (int i = 0; i < MOD_SLOT_COUNT; i++) {
             addSlot(new ModSlot(mods, i, 44 + 18 * i, 108));
@@ -87,8 +84,7 @@ public class WeaponTableMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return player.level().getBlockState(pos).is(ModBlocks.MACHINE_WEAPON_TABLE.get())
-                && player.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) <= 64.0D;
+        return true;
     }
 
     @Override

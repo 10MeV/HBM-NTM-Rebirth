@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 1, "ingredient": { "tag": "forge:welded_plates/any_resistant_alloy" }, "legacy_ore": "plateWeldedAnyResistantAlloy" },
+    { "count": 3, "ingredient": { "tag": "forge:ingots/boron" }, "legacy_ore": "ingotBoron" },
+    { "count": 2, "ingredient": { "tag": "forge:welded_plates/steel" }, "legacy_ore": "plateWeldedSteel" }
+  ],
+  "internal_name": "ass.watzcasing",
+  "output_fluids": [],
+  "output_items": [
+    { "count": 3, "item": "hbm_ntm_rebirth:watz_end" }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 190
+}

@@ -61,7 +61,7 @@ public record RBMKDialSettings(
         columnHeatFlow = clamp01(columnHeatFlow);
         fuelDiffusionModifier = Math.max(0.0D, fuelDiffusionModifier);
         fuelHeatProvision = clamp01(fuelHeatProvision);
-        columnHeightAbove = Math.max(1, columnHeightAbove);
+        columnHeightAbove = clampInt(columnHeightAbove, 1, 15);
         boilerHeatConsumption = Math.max(0.0D, boilerHeatConsumption);
         controlSpeedModifier = Math.max(0.0D, controlSpeedModifier);
         reactivityModifier = Math.max(0.0D, reactivityModifier);
@@ -118,6 +118,16 @@ public record RBMKDialSettings(
         }
         if (value > 1.0D) {
             return 1.0D;
+        }
+        return value;
+    }
+
+    private static int clampInt(int value, int min, int max) {
+        if (value < min) {
+            return min;
+        }
+        if (value > max) {
+            return max;
         }
         return value;
     }

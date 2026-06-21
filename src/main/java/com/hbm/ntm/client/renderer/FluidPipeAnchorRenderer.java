@@ -27,7 +27,7 @@ public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnc
     @Override
     public void render(FluidPipeAnchorBlockEntity anchor, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(anchor, packedLight);
+        int modelLight = LegacyRenderLighting.resolveMultiblockLight(anchor, packedLight);
         Direction facing = anchor.getBlockState().hasProperty(FluidPipeAnchorBlock.FACING)
                 ? anchor.getBlockState().getValue(FluidPipeAnchorBlock.FACING)
                 : Direction.UP;

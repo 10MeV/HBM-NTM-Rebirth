@@ -54,6 +54,13 @@ public final class HbmMenuDataSlots {
         });
     }
 
+    public static void addDouble(DataSlotSink sink, DoubleGetter serverGetter, DoubleGetter clientGetter,
+            DoubleSetter setter) {
+        addLong(sink, () -> Double.doubleToLongBits(serverGetter.get()),
+                () -> Double.doubleToLongBits(clientGetter.get()),
+                value -> setter.set(Double.longBitsToDouble(value)));
+    }
+
     public static void addInt(DataSlotSink sink, IntGetter serverGetter, IntSetter setter) {
         int[] syncedValue = new int[1];
         sink.add(new DataSlot() {
@@ -128,6 +135,11 @@ public final class HbmMenuDataSlots {
     @FunctionalInterface
     public interface DoubleGetter {
         double get();
+    }
+
+    @FunctionalInterface
+    public interface DoubleSetter {
+        void set(double value);
     }
 
     @FunctionalInterface

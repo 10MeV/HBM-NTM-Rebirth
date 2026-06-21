@@ -72,7 +72,8 @@ public class LegacyPlasticExplosiveBlock extends DirectionalBlock implements Cha
         level.removeBlock(pos, false);
         if (!level.isClientSide) {
             level.addFreshEntity(LegacyPrimedExplosiveEntity.create(level,
-                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, 0, false));
+                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, 0, false,
+                    explosion.getIndirectSourceEntity()));
         }
     }
 

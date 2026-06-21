@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:gray_dye",
+    "hbm_ntm_rebirth:oil_tar_coal",
+    "hbm_ntm_rebirth:powder_ash_misc"
+  ]
+}

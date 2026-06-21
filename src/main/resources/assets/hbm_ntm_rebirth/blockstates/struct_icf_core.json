@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "hbm_ntm_rebirth:block/struct_icf_core" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/struct_icf_core" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/struct_icf_core" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/struct_icf_core" }
+  }
+}

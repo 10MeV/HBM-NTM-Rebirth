@@ -34,7 +34,7 @@ public class RadioTorchControllerBlockEntity extends RadioTorchBlockEntity {
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RadioTorchControllerBlockEntity torch) {
         if (!torch.radio.channel().isEmpty()) {
-            BlockEntity attached = level.getBlockEntity(torch.attachedPos());
+            BlockEntity attached = torch.attachedBlockEntity(level);
             if (attached instanceof RORInteractive interactive && ROR.hasFunctionInfo(interactive)) {
                 RTTYSystem.RTTYChannel channel = RTTYSystem.listen(level, torch.radio.channel());
                 RTTYControllerState.ControllerRunResult result =

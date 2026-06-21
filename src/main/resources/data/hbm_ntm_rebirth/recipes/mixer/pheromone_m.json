@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:pheromone_m", "amount": 2000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:pheromone", "amount": 1500 },
+  "input2": { "fluid": "hbm_ntm_rebirth:blood", "amount": 500 },
+  "solid_input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:pill_herbal" }
+  },
+  "duration": 10
+}

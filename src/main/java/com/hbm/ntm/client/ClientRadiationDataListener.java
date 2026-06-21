@@ -1,6 +1,6 @@
 package com.hbm.ntm.client;
 
 @FunctionalInterface
-interface ClientRadiationDataListener {
+public interface ClientRadiationDataListener {
     void onClientRadiationData(ClientRadiationData.PlayerRadiationSyncData data);
 }

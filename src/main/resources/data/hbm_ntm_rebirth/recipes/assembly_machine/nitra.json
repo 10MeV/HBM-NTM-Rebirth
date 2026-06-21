@@ -1,0 +1,58 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "custom_localization": true,
+  "duration": 200,
+  "icon": {
+    "item": "hbm_ntm_rebirth:nitra"
+  },
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:nitra"
+      }
+    }
+  ],
+  "internal_name": "ass.nitra",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "type": "one_of",
+      "entries": [
+        {
+          "item": "hbm_ntm_rebirth:casing_shotshell",
+          "weight": 20
+        },
+        {
+          "item": "hbm_ntm_rebirth:casing_buckshot",
+          "weight": 10
+        },
+        {
+          "count": 2,
+          "item": "hbm_ntm_rebirth:casing_small",
+          "weight": 20
+        },
+        {
+          "item": "hbm_ntm_rebirth:casing_large",
+          "weight": 10
+        },
+        {
+          "item": "minecraft:gunpowder",
+          "weight": 30
+        },
+        {
+          "item": "hbm_ntm_rebirth:cordite",
+          "weight": 20
+        },
+        {
+          "item": "hbm_ntm_rebirth:ballistite",
+          "weight": 20
+        }
+      ]
+    }
+  ],
+  "pools": [],
+  "power": 500,
+  "source_order": 332
+}

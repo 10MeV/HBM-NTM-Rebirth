@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 800,
+  "ignitionTemp": 1000000,
+  "input_fluids": [
+    { "amount": 16000, "fluid": "hbm_ntm_rebirth:xenon" }
+  ],
+  "input_items": [
+    { "count": 4, "ingredient": { "tag": "forge:welded_plates/tungsten" }, "legacy_ore": "plateWeldedTungsten" },
+    { "count": 16, "ingredient": { "tag": "forge:dense_wires/magnetized_tungsten" }, "legacy_ore": "wireDenseMagnetizedTungsten" }
+  ],
+  "internal_name": "plsm.icfemitter",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:icf_laser_emitter" }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 120
+}

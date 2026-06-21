@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:fusion_reactor",
+  "internal_name": "fus.dhc",
+  "duration": 100,
+  "power": 25000,
+  "input_items": [],
+  "input_fluids": [{ "fluid": "hbm_ntm_rebirth:dhc", "amount": 20 }],
+  "output_items": [{ "item": "hbm_ntm_rebirth:powder_chlorophyte" }],
+  "output_fluids": [],
+  "pools": [],
+  "ignitionTemp": 10000000,
+  "outputTemp": 25000000,
+  "outputFlux": 2000.0,
+  "r": 0.2,
+  "g": 0.8,
+  "b": 0.8
+}

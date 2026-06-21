@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 2, "ingredient": { "tag": "forge:cast_plates/steel" }, "legacy_ore": "plateCastSteel" },
+    { "count": 2, "ingredient": { "tag": "forge:ingots/zirconium" }, "legacy_ore": "ingotZirconium" },
+    { "count": 2, "ingredient": { "tag": "forge:ingots/saturnite" }, "legacy_ore": "ingotBigMt" },
+    { "count": 4, "ingredient": { "tag": "forge:ingots/any_hard_plastic" }, "legacy_ore": "ingotAnyHardPlastic" }
+  ],
+  "internal_name": "ass.watzrod",
+  "output_fluids": [],
+  "output_items": [
+    { "count": 3, "item": "hbm_ntm_rebirth:watz_element" }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 188
+}

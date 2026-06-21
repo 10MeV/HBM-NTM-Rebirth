@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip"
+      },
+      "count": 4
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      },
+      "count": 4
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_template"
+      }
+    },
+    {
+      "ingredient": {
+        "tag": "forge:dusts/lithium"
+      },
+      "count": 4,
+      "legacy_ore": "dustLithium"
+    }
+  ],
+  "solder": [],
+  "output": {
+    "item": "hbm_ntm_rebirth:upgrade_health"
+  },
+  "duration": 200,
+  "consumption": 1000,
+  "source_order": 105
+}

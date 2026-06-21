@@ -24,6 +24,7 @@ final class HbmFluidLangEntries {
             hbmfluid.aromatics=Aromatic Hydrocarbons
             hbmfluid.aschrab=Antischrabidium
             hbmfluid.balefire=BF Rocket Fuel
+            hbmfluid.corium_fluid=Corium
             hbmfluid.bauxite_solution=Bauxite Solution
             hbmfluid.biofuel=Biofuel
             hbmfluid.biogas=Biogas
@@ -196,6 +197,7 @@ final class HbmFluidLangEntries {
             hbmfluid.aromatics=芳香烃
             hbmfluid.aschrab=反Sa326
             hbmfluid.balefire=野火火箭燃料
+            hbmfluid.corium_fluid=堆芯熔融物
             hbmfluid.bauxite_solution=铝土矿溶液
             hbmfluid.biofuel=生物燃料
             hbmfluid.biogas=沼气

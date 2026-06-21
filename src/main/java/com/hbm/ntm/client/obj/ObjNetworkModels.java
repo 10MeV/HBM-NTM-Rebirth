@@ -20,6 +20,13 @@ public final class ObjNetworkModels {
     public static final LegacyWavefrontModel SUBSTATION_LEGACY = legacyModel("substation").asVBO();
     public static final LegacyWavefrontModel PIPE_ANCHOR_LEGACY = legacyModel("pipe_anchor").asVBO();
     public static final LegacyWavefrontModel FLUID_DIODE_LEGACY = legacyModel("fluid_diode").asVBO();
+    public static final ResourceLocation FLUID_DIODE_TEXTURE = texture("fluid_diode");
+    public static final ResourceLocation CONNECTOR_TEXTURE = texture("connector");
+    public static final ResourceLocation CONNECTOR_SUPER_TEXTURE = texture("connector_super");
+    public static final ResourceLocation PYLON_LARGE_TEXTURE = texture("pylon_large");
+    public static final ResourceLocation PYLON_MEDIUM_TEXTURE = texture("pylon_medium");
+    public static final ResourceLocation PYLON_MEDIUM_STEEL_TEXTURE = texture("pylon_medium_steel");
+    public static final ResourceLocation SUBSTATION_TEXTURE = texture("substation");
 
     public static ObjModelPart part(String name) {
         return ObjModelLibrary.blockPart("network/" + name, RenderType.cutout());
@@ -27,12 +34,18 @@ public final class ObjNetworkModels {
 
     public static LegacyWavefrontModel legacyModel(String name) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/network/" + name + ".obj"),
+                new ResourceLocation(HbmNtm.MOD_ID, "models/network/" + name + ".obj"),
                 texture(name));
     }
 
     public static ResourceLocation texture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/network/" + name + ".png");
+        return switch (name) {
+            case "connector", "connector_super", "pylon_large", "pylon_medium",
+                 "pylon_medium_steel", "substation", "pipe_anchor", "fluid_diode",
+                 "wire", "wire_greyscale" ->
+                    new ResourceLocation(HbmNtm.MOD_ID, "textures/models/network/" + name + ".png");
+            default -> new ResourceLocation(HbmNtm.MOD_ID, "textures/block/network/" + name + ".png");
+        };
     }
 
     private ObjNetworkModels() {

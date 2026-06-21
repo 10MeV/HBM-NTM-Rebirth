@@ -6,7 +6,14 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "hbm_ntm_rebirth:ore_oil"
+          "name": "hbm_ntm_rebirth:oil_tar_crude",
+          "functions": [
+            {
+              "function": "minecraft:apply_bonus",
+              "enchantment": "minecraft:fortune",
+              "formula": "minecraft:ore_drops"
+            }
+          ]
         }
       ],
       "conditions": [

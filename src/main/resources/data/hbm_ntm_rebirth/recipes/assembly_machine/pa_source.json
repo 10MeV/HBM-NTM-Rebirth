@@ -1,0 +1,51 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:pa_beamline"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:cast_plates/steel"
+      },
+      "legacy_ore": "plateCastSteel"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      },
+      "legacy_ore": "ingotAnyHardPlastic"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:magnetron"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_quantum"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 15
+    }
+  ],
+  "internal_name": "ass.source",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:pa_source"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 152
+}

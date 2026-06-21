@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 3000,
+  "ignitionTemp": 1000000,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 16, "ingredient": { "tag": "forge:welded_plates/cmb_steel" }, "legacy_ore": "plateWeldedCombineSteel" },
+    { "count": 16, "ingredient": { "tag": "forge:welded_plates/any_resistant_alloy" }, "legacy_ore": "plateWeldedAnyResistantAlloy" },
+    { "count": 16, "ingredient": { "tag": "forge:cast_plates/any_bismoid_bronze" }, "legacy_ore": "plateCastAnyBismoidBronze" },
+    { "count": 32, "ingredient": { "tag": "forge:dense_wires/schrabidium" }, "legacy_ore": "wireDenseSchrabidium" },
+    { "count": 32, "ingredient": { "item": "hbm_ntm_rebirth:circuit_bismoid" }, "legacy_id": "hbm:circuit", "legacy_meta": 12 },
+    { "count": 16, "ingredient": { "item": "hbm_ntm_rebirth:circuit_quantum" }, "legacy_id": "hbm:circuit", "legacy_meta": 13 }
+  ],
+  "internal_name": "plsm.icfcore",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:struct_icf_core" }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 130
+}

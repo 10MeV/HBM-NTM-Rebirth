@@ -1262,15 +1262,6 @@
       }
     ]
   },
-  "entity.meteorite_falling_loop": {
-    "subtitle": "subtitles.hbm_ntm_rebirth.entity.meteorite",
-    "sounds": [
-      {
-        "name": "hbm_ntm_rebirth:entity/meteorite_falling_loop",
-        "stream": false
-      }
-    ]
-  },
   "turret.chekhov_fire": {
     "subtitle": "subtitles.hbm_ntm_rebirth.turret.fire",
     "sounds": [

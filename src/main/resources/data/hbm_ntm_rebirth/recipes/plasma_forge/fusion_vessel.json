@@ -1,0 +1,28 @@
+﻿{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 1200,
+  "ignitionTemp": 3000000,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 64, "ingredient": { "item": "hbm_ntm_rebirth:fusion_component_bscco" }, "legacy_id": "hbm:fusion_component", "legacy_meta": 0 },
+    { "count": 64, "ingredient": { "item": "hbm_ntm_rebirth:fusion_component_bscco" }, "legacy_id": "hbm:fusion_component", "legacy_meta": 0 },
+    { "count": 64, "ingredient": { "item": "hbm_ntm_rebirth:fusion_component_bscco" }, "legacy_id": "hbm:fusion_component", "legacy_meta": 0 },
+    { "count": 64, "ingredient": { "item": "hbm_ntm_rebirth:fusion_component_bscco" }, "legacy_id": "hbm:fusion_component", "legacy_meta": 0 },
+    { "count": 64, "ingredient": { "item": "hbm_ntm_rebirth:fusion_component_bscco" }, "legacy_id": "hbm:fusion_component", "legacy_meta": 0 },
+    { "count": 64, "ingredient": { "item": "hbm_ntm_rebirth:fusion_component_bscco" }, "legacy_id": "hbm:fusion_component", "legacy_meta": 0 },
+    { "count": 64, "ingredient": { "item": "hbm_ntm_rebirth:fusion_component_motor" }, "legacy_id": "hbm:fusion_component", "legacy_meta": 3 },
+    { "count": 64, "ingredient": { "item": "hbm_ntm_rebirth:fusion_component_motor" }, "legacy_id": "hbm:fusion_component", "legacy_meta": 3 },
+    { "count": 64, "ingredient": { "item": "hbm_ntm_rebirth:fusion_component_motor" }, "legacy_id": "hbm:fusion_component", "legacy_meta": 3 },
+    { "count": 64, "ingredient": { "item": "hbm_ntm_rebirth:fusion_component_blanket" }, "legacy_id": "hbm:fusion_component", "legacy_meta": 2 },
+    { "count": 64, "ingredient": { "item": "hbm_ntm_rebirth:fusion_component_blanket" }, "legacy_id": "hbm:fusion_component", "legacy_meta": 2 },
+    { "count": 4, "ingredient": { "item": "hbm_ntm_rebirth:circuit_quantum" }, "legacy_id": "hbm:circuit", "legacy_meta": 13 }
+  ],
+  "internal_name": "plsm.fusionvessel",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:fusion_torus" }
+  ],
+  "pools": [],
+  "power": 2000000,
+  "source_order": 118
+}

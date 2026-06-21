@@ -23,7 +23,7 @@ public class RBMKCraneConsoleRenderer implements BlockEntityRenderer<RBMKCraneCo
         Direction facing = state.hasProperty(RBMKCraneConsoleBlock.FACING)
                 ? state.getValue(RBMKCraneConsoleBlock.FACING)
                 : Direction.SOUTH;
-        int light = LegacyRenderLighting.resolveBlockEntityLight(console, packedLight);
+        int light = LegacyRenderLighting.resolveMultiblockLight(console, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -37,7 +37,7 @@ public class RBMKCraneConsoleRenderer implements BlockEntityRenderer<RBMKCraneCo
             poseStack.pushPose();
             BlockPos center = console.craneCenter();
             BlockPos pos = console.getBlockPos();
-            poseStack.translate(center.getX() - pos.getX() + 0.5D, center.getY() - pos.getY() + 1.0D,
+            poseStack.translate(center.getX() - pos.getX() + 0.5D, center.getY() - pos.getY(),
                     center.getZ() - pos.getZ() + 0.5D);
             poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
             LegacyRbmkMachineRenderer.renderCrane(new ObjRenderContext(poseStack, buffer, state, light, packedOverlay),
@@ -53,7 +53,7 @@ public class RBMKCraneConsoleRenderer implements BlockEntityRenderer<RBMKCraneCo
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     private static float legacyYaw(Direction facing) {

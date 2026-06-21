@@ -9,6 +9,9 @@ import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.hbm.ntm.util.HbmMathUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.util.Mth;
 
 public final class LegacyRbmkPanelRenderer {
@@ -36,6 +39,8 @@ public final class LegacyRbmkPanelRenderer {
     public static final double GAUGE_LIMIT_LABEL_X = 0.032D;
     public static final double GAUGE_LIMIT_LABEL_Y = 0.4375D;
     public static final double GAUGE_LIMIT_LABEL_Z = 0.125D;
+    public static final double GAUGE_LIMIT_TEXT_SCALE = 0.0025D;
+    public static final double GAUGE_LABEL_MAX_WIDTH = 0.4D;
 
     public static final double INDICATOR_ROW_STEP = -0.3125D;
     public static final double INDICATOR_COLUMN_STEP = -0.5D;
@@ -43,6 +48,7 @@ public final class LegacyRbmkPanelRenderer {
     public static final double INDICATOR_Z_START = 0.25D;
     public static final double INDICATOR_LABEL_X = 0.0725D;
     public static final double INDICATOR_LABEL_Y = 0.5D;
+    public static final double INDICATOR_LABEL_MAX_WIDTH = 0.3D;
     public static final float INDICATOR_DIM_MULTIPLIER = 0.35F;
 
     public static final double KEY_ROW_STEP = -0.5D;
@@ -52,6 +58,7 @@ public final class LegacyRbmkPanelRenderer {
     public static final double KEY_PRESSED_X_OFFSET = -0.03125D;
     public static final double KEY_LABEL_X = 0.01D;
     public static final double KEY_LABEL_Y = 0.3125D;
+    public static final double KEY_LABEL_MAX_WIDTH = 0.4D;
     public static final float KEY_DIM_MULTIPLIER = 0.65F;
 
     public static final double LEVER_Z_START = 0.25D;
@@ -60,9 +67,13 @@ public final class LegacyRbmkPanelRenderer {
     public static final double LEVER_PIVOT_Y = 0.5625D;
     public static final double LEVER_LABEL_X = 0.01D;
     public static final double LEVER_LABEL_Y = 0.0625D;
+    public static final double LEVER_LABEL_MAX_WIDTH = 0.4D;
 
     public static final double NUMITRON_ROW_STEP = -0.5D;
     public static final double NUMITRON_Y_START = 0.25D;
+    public static final double NUMITRON_LABEL_X = 0.01D;
+    public static final double NUMITRON_LABEL_Y = 0.3125D;
+    public static final double NUMITRON_LABEL_MAX_WIDTH = 0.75D;
     public static final double NUMITRON_DIGIT_X = 0.03135D;
     public static final double NUMITRON_DIGIT_Y = 0.5625D;
     public static final double NUMITRON_DIGIT_Z_STEP = 0.1D;
@@ -79,6 +90,14 @@ public final class LegacyRbmkPanelRenderer {
     public static final double GRAPH_HEIGHT = 0.1875D;
     public static final double GRAPH_Z_START = 0.375D;
     public static final double GRAPH_Z_SPAN = 0.75D;
+    public static final double GRAPH_LIMIT_LABEL_X = 0.032D;
+    public static final double GRAPH_LIMIT_LABEL_Y = 0.5D - 0.03125D * 1.5D;
+    public static final double GRAPH_LIMIT_LABEL_Z = -0.375D + 0.03125D;
+    public static final double GRAPH_LIMIT_LABEL_STEP_Y = -0.03125D * 7.0D;
+    public static final double GRAPH_LIMIT_TEXT_SCALE = 0.0025D;
+    public static final double GRAPH_LABEL_X = 0.01D;
+    public static final double GRAPH_LABEL_Y = 0.3125D;
+    public static final double GRAPH_LABEL_MAX_WIDTH = 0.75D;
 
     public static void renderGauges(ObjRenderContext context, RBMKPanelPlanner.GaugeUnit[] gauges, float partialTick) {
         if (gauges == null) {
@@ -112,6 +131,9 @@ public final class LegacyRbmkPanelRenderer {
                 poseStack, context.buffer(), context.fullBright().packedLight(), context.packedOverlay(),
                 LegacyRenderColor.red(color), LegacyRenderColor.green(color), LegacyRenderColor.blue(color), 255);
         poseStack.popPose();
+        renderGaugeLimitLabels(context, unit);
+        renderCenteredLegacyText(context, unit == null ? "" : unit.label(),
+                GAUGE_LABEL_X, GAUGE_LABEL_Y, 0.0D, GAUGE_LABEL_MAX_WIDTH, 0x00FF00, true);
         poseStack.popPose();
     }
 
@@ -157,6 +179,8 @@ public final class LegacyRbmkPanelRenderer {
         ObjRbmkModels.INDICATOR.renderPart("Light", ObjRbmkModels.INDICATOR_TEXTURE,
                 poseStack, context.buffer(), lightContext.packedLight(), context.packedOverlay(),
                 LegacyRenderColor.red(color), LegacyRenderColor.green(color), LegacyRenderColor.blue(color), 255);
+        renderCenteredLegacyText(context, unit.label(),
+                INDICATOR_LABEL_X, INDICATOR_LABEL_Y, 0.0D, INDICATOR_LABEL_MAX_WIDTH, 0x000000, false);
         poseStack.popPose();
     }
 
@@ -187,6 +211,8 @@ public final class LegacyRbmkPanelRenderer {
         ObjRbmkModels.LEVER.renderPart("Lever", ObjRbmkModels.LEVER_TEXTURE,
                 poseStack, context.buffer(), context.packedLight(), context.packedOverlay());
         poseStack.popPose();
+        renderCenteredLegacyText(context, unit.label(),
+                LEVER_LABEL_X, LEVER_LABEL_Y, 0.0D, LEVER_LABEL_MAX_WIDTH, 0x00FF00, true);
         poseStack.popPose();
     }
 
@@ -219,6 +245,8 @@ public final class LegacyRbmkPanelRenderer {
         ObjRbmkModels.NUMITRON.renderAll(ObjRbmkModels.NUMITRON_TEXTURE,
                 poseStack, context.buffer(), context.packedLight(), context.packedOverlay());
         renderNumitronDigits(context.fullBright(), unit);
+        renderCenteredLegacyText(context, unit.label(),
+                NUMITRON_LABEL_X, NUMITRON_LABEL_Y, 0.0D, NUMITRON_LABEL_MAX_WIDTH, 0x00FF00, true);
         poseStack.popPose();
     }
 
@@ -325,6 +353,9 @@ public final class LegacyRbmkPanelRenderer {
         ObjRbmkModels.NUMITRON.renderAll(ObjRbmkModels.NUMITRON_TEXTURE,
                 poseStack, context.buffer(), context.packedLight(), context.packedOverlay());
         renderGraphLines(context.fullBright(), unit);
+        renderGraphLimitLabels(context, unit);
+        renderCenteredLegacyText(context, unit.label(),
+                GRAPH_LABEL_X, GRAPH_LABEL_Y, 0.0D, GRAPH_LABEL_MAX_WIDTH, 0x00FF00, true);
         poseStack.popPose();
     }
 
@@ -414,7 +445,84 @@ public final class LegacyRbmkPanelRenderer {
                 poseStack, context.buffer(), buttonContext.packedLight(), context.packedOverlay(),
                 LegacyRenderColor.red(color), LegacyRenderColor.green(color), LegacyRenderColor.blue(color), 255);
         poseStack.popPose();
+        renderCenteredLegacyText(context, key.label(),
+                KEY_LABEL_X, KEY_LABEL_Y, 0.0D, KEY_LABEL_MAX_WIDTH, 0x00FF00, true);
         poseStack.popPose();
+    }
+
+    private static void renderGaugeLimitLabels(ObjRenderContext context, RBMKPanelPlanner.GaugeUnit unit) {
+        if (unit == null) {
+            return;
+        }
+        String lower = gaugeLimitLabel(unit.min());
+        String upper = gaugeLimitLabel(unit.max());
+        for (int i = 0; i < 2; i++) {
+            PoseStack poseStack = context.poseStack();
+            poseStack.pushPose();
+            poseStack.translate(0.0D, GAUGE_PIVOT_Y, GAUGE_PIVOT_Z);
+            poseStack.mulPose(Axis.XP.rotationDegrees((float) -(GAUGE_MIN_MARK_ANGLE
+                    + i * (GAUGE_MAX_MARK_ANGLE - GAUGE_MIN_MARK_ANGLE))));
+            poseStack.translate(0.0D, -GAUGE_PIVOT_Y, -GAUGE_PIVOT_Z);
+            poseStack.translate(GAUGE_LIMIT_LABEL_X, GAUGE_LIMIT_LABEL_Y, GAUGE_LIMIT_LABEL_Z);
+            drawLegacyText(context, i == 0 ? lower : upper, 0.0F, -font().lineHeight / 2.0F,
+                    GAUGE_LIMIT_TEXT_SCALE, 0x000000, context.packedLight());
+            poseStack.popPose();
+        }
+    }
+
+    private static String gaugeLimitLabel(long value) {
+        return value <= 10_000L ? Long.toString(value) : HbmMathUtil.getShortNumber(value);
+    }
+
+    private static void renderGraphLimitLabels(ObjRenderContext context, RBMKPanelPlanner.GraphUnit unit) {
+        long lowest = graphLowest(unit);
+        long highest = graphHighest(unit);
+        Font font = font();
+        String lower = Long.toString(lowest);
+        String upper = Long.toString(highest);
+        PoseStack poseStack = context.poseStack();
+        poseStack.pushPose();
+        poseStack.translate(GRAPH_LIMIT_LABEL_X, GRAPH_LIMIT_LABEL_Y, GRAPH_LIMIT_LABEL_Z);
+        drawLegacyText(context, lower, -font.width(lower), -font.lineHeight / 2.0F,
+                GRAPH_LIMIT_TEXT_SCALE, 0x00FF00, LightTexture.FULL_BRIGHT);
+        poseStack.translate(0.0D, GRAPH_LIMIT_LABEL_STEP_Y, 0.0D);
+        drawLegacyText(context, upper, -font.width(upper), -font.lineHeight / 2.0F,
+                GRAPH_LIMIT_TEXT_SCALE, 0x00FF00, LightTexture.FULL_BRIGHT);
+        poseStack.popPose();
+    }
+
+    private static void renderCenteredLegacyText(ObjRenderContext context, String text,
+            double x, double y, double z, double maxWidth, int color, boolean fullBright) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        Font font = font();
+        int width = font.width(text);
+        float scale = (float) Math.min(0.0125D, maxWidth / Math.max(width, 1));
+        PoseStack poseStack = context.poseStack();
+        poseStack.pushPose();
+        poseStack.translate(x, y, z);
+        drawLegacyText(context, text, -width / 2.0F, -font.lineHeight / 2.0F,
+                scale, color, fullBright ? LightTexture.FULL_BRIGHT : context.packedLight());
+        poseStack.popPose();
+    }
+
+    private static void drawLegacyText(ObjRenderContext context, String text, float x, float y,
+            double scale, int color, int packedLight) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        PoseStack poseStack = context.poseStack();
+        poseStack.pushPose();
+        poseStack.scale((float) scale, (float) -scale, (float) scale);
+        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        font().drawInBatch(text, x, y, color, false,
+                poseStack.last().pose(), context.buffer(), Font.DisplayMode.NORMAL, 0, packedLight);
+        poseStack.popPose();
+    }
+
+    private static Font font() {
+        return Minecraft.getInstance().font;
     }
 
     public static void translateGaugeSlot(PoseStack poseStack, int index) {

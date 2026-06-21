@@ -681,6 +681,30 @@ public class DamageResistanceHandler {
         }
     }
 
+    private static void removeSetInfoObject(Tuple.Quartet<?, ?, ?, ?> set) {
+        removeSetInfoObject(set.getW(), set);
+        removeSetInfoObject(set.getX(), set);
+        removeSetInfoObject(set.getY(), set);
+        removeSetInfoObject(set.getZ(), set);
+    }
+
+    private static void removeSetInfoObject(Object item, Tuple.Quartet<?, ?, ?, ?> set) {
+        if (!(item instanceof Item stackItem)) {
+            return;
+        }
+        List<Tuple.Quartet<Item, Item, Item, Item>> sets = itemInfoSet.get(stackItem);
+        if (sets == null) {
+            return;
+        }
+        sets.removeIf(existing -> existing.getW() == set.getW()
+                && existing.getX() == set.getX()
+                && existing.getY() == set.getY()
+                && existing.getZ() == set.getZ());
+        if (sets.isEmpty()) {
+            itemInfoSet.remove(stackItem);
+        }
+    }
+
     private static final class ItemStatsMap extends HashMap<Item, ResistanceStats> {
         @Override
         public ResistanceStats put(Item item, ResistanceStats stats) {
@@ -689,6 +713,30 @@ public class DamageResistanceHandler {
                 com.hbm.ntm.damage.DamageResistanceHandler.registerItem(item, stats.modern());
             }
             return previous;
+        }
+
+        @Override
+        public ResistanceStats remove(Object key) {
+            ResistanceStats previous = super.remove(key);
+            if (key instanceof Item item) {
+                com.hbm.ntm.damage.DamageResistanceHandler.removeItem(item);
+            }
+            return previous;
+        }
+
+        @Override
+        public void clear() {
+            for (Item item : keySet()) {
+                com.hbm.ntm.damage.DamageResistanceHandler.removeItem(item);
+            }
+            super.clear();
+        }
+
+        @Override
+        public void putAll(Map<? extends Item, ? extends ResistanceStats> map) {
+            for (Map.Entry<? extends Item, ? extends ResistanceStats> entry : map.entrySet()) {
+                put(entry.getKey(), entry.getValue());
+            }
         }
     }
 
@@ -703,6 +751,36 @@ public class DamageResistanceHandler {
             }
             return previous;
         }
+
+        @Override
+        public ResistanceStats remove(Object key) {
+            ResistanceStats previous = super.remove(key);
+            if (key instanceof Tuple.Quartet<?, ?, ?, ?> set) {
+                removeSetInfoObject(set);
+                Item helmet = set.getW() instanceof Item item ? item : null;
+                Item plate = set.getX() instanceof Item item ? item : null;
+                Item legs = set.getY() instanceof Item item ? item : null;
+                Item boots = set.getZ() instanceof Item item ? item : null;
+                com.hbm.ntm.damage.DamageResistanceHandler.removeSet(helmet, plate, legs, boots);
+            }
+            return previous;
+        }
+
+        @Override
+        public void clear() {
+            for (Tuple.Quartet<Item, Item, Item, Item> set : keySet()) {
+                com.hbm.ntm.damage.DamageResistanceHandler.removeSet(set.getW(), set.getX(), set.getY(), set.getZ());
+            }
+            super.clear();
+            itemInfoSet.clear();
+        }
+
+        @Override
+        public void putAll(Map<? extends Tuple.Quartet<Item, Item, Item, Item>, ? extends ResistanceStats> map) {
+            for (Map.Entry<? extends Tuple.Quartet<Item, Item, Item, Item>, ? extends ResistanceStats> entry : map.entrySet()) {
+                put(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     private static final class EntityStatsMap extends HashMap<Class<? extends Entity>, ResistanceStats> {
@@ -713,6 +791,32 @@ public class DamageResistanceHandler {
                 com.hbm.ntm.damage.DamageResistanceHandler.registerEntity(entityClass, stats.modern());
             }
             return previous;
+        }
+
+        @Override
+        public ResistanceStats remove(Object key) {
+            ResistanceStats previous = super.remove(key);
+            if (key instanceof Class<?> type && Entity.class.isAssignableFrom(type)) {
+                @SuppressWarnings("unchecked")
+                Class<? extends Entity> entityClass = (Class<? extends Entity>) type;
+                com.hbm.ntm.damage.DamageResistanceHandler.removeEntity(entityClass);
+            }
+            return previous;
+        }
+
+        @Override
+        public void clear() {
+            for (Class<? extends Entity> entityClass : keySet()) {
+                com.hbm.ntm.damage.DamageResistanceHandler.removeEntity(entityClass);
+            }
+            super.clear();
+        }
+
+        @Override
+        public void putAll(Map<? extends Class<? extends Entity>, ? extends ResistanceStats> map) {
+            for (Map.Entry<? extends Class<? extends Entity>, ? extends ResistanceStats> entry : map.entrySet()) {
+                put(entry.getKey(), entry.getValue());
+            }
         }
     }
 

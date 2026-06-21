@@ -73,7 +73,6 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
     private static final String TAG_LAST_REDSTONE = "lastRedstone";
     private static final String TAG_PRIORITY = "priority";
     private static final String TAG_CONTROL = "control";
-    private static final String TAG_MUFFLED = "muffled";
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -106,7 +105,6 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
     private short redHigh = MODE_OUTPUT;
     private boolean lastRedstone;
     private HbmEnergyReceiver.ConnectionPriority priority = HbmEnergyReceiver.ConnectionPriority.LOW;
-    private boolean muffled;
     private float previousRotation;
     private float rotation;
     private Object audioLoop;
@@ -156,15 +154,16 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, BatteryReddBlockEntity battery) {
         battery.previousRotation = battery.rotation;
-        battery.rotation += battery.getSpeed();
+        float speed = battery.getSpeed();
+        battery.rotation += speed;
         if (battery.rotation >= 360.0F) {
             battery.rotation -= 360.0F;
             battery.previousRotation -= 360.0F;
         }
-        float pitch = 0.5F + battery.getSpeed() / 15.0F * 1.5F;
+        float pitch = 0.5F + speed / 15.0F * 1.5F;
         battery.audioLoop = LegacyMachineAudioBridge.updateLoop(battery.audioLoop, battery,
-                "hbm:block.fensuHum", !battery.muffled && battery.previousRotation != battery.rotation,
-                25.0D, 25.0F, 1.5F, pitch);
+                "hbm:block.fensuHum", battery.previousRotation != battery.rotation, 30.0D, 25.0F,
+                battery.getVolume(1.5F), pitch);
     }
 
     private boolean chargeItemFromStorage() {
@@ -463,7 +462,6 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
         tag.putShort(TAG_RED_HIGH, redHigh);
         tag.putBoolean(TAG_LAST_REDSTONE, lastRedstone);
         tag.putByte(TAG_PRIORITY, (byte) priority.ordinal());
-        tag.putBoolean(TAG_MUFFLED, muffled);
     }
 
     @Override
@@ -478,7 +476,6 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
         if (tag.contains(TAG_PRIORITY)) {
             priority = readPriority(tag);
         }
-        muffled = tag.getBoolean(TAG_MUFFLED);
     }
 
     private static BigInteger readBigInteger(CompoundTag tag, String key) {
@@ -489,13 +486,15 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
     @Override
     public void writePersistentState(CompoundTag persistent) {
         persistent.putByteArray(TAG_POWER, power.toByteArray());
-        persistent.putBoolean(TAG_MUFFLED, muffled);
+        persistent.putBoolean("muffled", isMuffled());
     }
 
     @Override
     public void readPersistentState(CompoundTag persistent) {
         power = readBigInteger(persistent, TAG_POWER);
-        muffled = persistent.getBoolean(TAG_MUFFLED);
+        if (persistent.contains("muffled", Tag.TAG_BYTE)) {
+            setMuffled(persistent.getBoolean("muffled"));
+        }
     }
 
     @Override

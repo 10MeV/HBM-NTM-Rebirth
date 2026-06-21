@@ -34,7 +34,6 @@ public final class ModDamageSource {
     public static final ResourceKey<DamageType> shrapnel = ModDamageSources.SHRAPNEL;
     public static final ResourceKey<DamageType> blackhole = ModDamageSources.BLACKHOLE;
     public static final ResourceKey<DamageType> turbofan = ModDamageSources.BLENDER;
-    public static final ResourceKey<DamageType> meteorite = ModDamageSources.METEORITE;
     public static final ResourceKey<DamageType> boxcar = ModDamageSources.BOXCAR;
     public static final ResourceKey<DamageType> boat = ModDamageSources.BOAT;
     public static final ResourceKey<DamageType> building = ModDamageSources.BUILDING;
@@ -607,6 +606,8 @@ public final class ModDamageSource {
         expect(problems, "digamma string absolute", isDamageAbsolute("digamma") && bypassesEffects("digamma"));
         expect(problems, "nitan string creative", isDamageAllowedInCreativeMode("nitan"));
         expect(problems, "subatomic expected damage type", getDamageType(s_zomg_prefix + "4").equals("subAtomic4"));
+        expect(problems, "boil string non-fire",
+                getDamageType(s_boil).equals("boil") && !isFireDamage(s_boil) && expectedTagLabels(s_boil).isEmpty());
         expect(problems, "combine expected tags", expectedTagLabels(s_combineball)
                 .equals(List.of("projectile", "bypassesArmor")));
         expect(problems, "damage class physical projectile",

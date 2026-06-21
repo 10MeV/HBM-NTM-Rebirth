@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machine_rtg_furnace_side_alt",
+    "down": "hbm_ntm_rebirth:block/machine_rtg_furnace_base_alt",
+    "up": "hbm_ntm_rebirth:block/rtg_difurnace_top_on",
+    "north": "hbm_ntm_rebirth:block/machine_rtg_furnace_side_alt",
+    "east": "hbm_ntm_rebirth:block/machine_rtg_furnace_side_alt",
+    "south": "hbm_ntm_rebirth:block/rtg_difurnace_front_on",
+    "west": "hbm_ntm_rebirth:block/machine_rtg_furnace_side_alt"
+  }
+}

@@ -10,8 +10,11 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.registry.ModBlockEntities;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Set;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
@@ -34,6 +37,8 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     private final HbmFluidTank steamTank;
     private int display;
     private int heat;
+    private final Set<BlockPos> primaryBeamTargets = new LinkedHashSet<>();
+    private final Set<BlockPos> secondaryBeamTargets = new LinkedHashSet<>();
 
     public SolarBoilerBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmFluidTank(HbmFluids.WATER, WATER_CAPACITY),
@@ -75,6 +80,15 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         boiler.networkPackNT(15);
     }
 
+    public static void clientTick(Level level, BlockPos pos, BlockState state, SolarBoilerBlockEntity boiler) {
+        if (!level.isClientSide) {
+            return;
+        }
+        boiler.secondaryBeamTargets.clear();
+        boiler.secondaryBeamTargets.addAll(boiler.primaryBeamTargets);
+        boiler.primaryBeamTargets.clear();
+    }
+
     public HbmFluidTank getWaterTank() {
         return waterTank;
     }
@@ -89,6 +103,14 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
 
     public int getHeat() {
         return heat;
+    }
+
+    public void registerSolarMirrorBeam(BlockPos mirrorPos) {
+        primaryBeamTargets.add(mirrorPos.immutable());
+    }
+
+    public Set<BlockPos> getSolarMirrorBeamTargets() {
+        return Collections.unmodifiableSet(secondaryBeamTargets);
     }
 
     @Nullable

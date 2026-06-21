@@ -1,7 +1,7 @@
 {
   "multipart": [
-    {
-      "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_neo" }
-    }
+    { "when": { "legacy_style": "0" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_neo_0" } },
+    { "when": { "legacy_style": "1" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_neo_1" } },
+    { "when": { "legacy_style": "2" }, "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_neo_2" } }
   ]
 }

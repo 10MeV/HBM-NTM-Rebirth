@@ -4,7 +4,9 @@ import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.WoodBurnerBlockEntity;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.recipe.WoodBurnerRecipeRuntime;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
 import java.util.List;
@@ -15,9 +17,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 
 public class WoodBurnerMenu extends AbstractContainerMenu {
@@ -131,7 +131,7 @@ public class WoodBurnerMenu extends AbstractContainerMenu {
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
                     WoodBurnerBlockEntity.SLOT_IDENTIFIER, WoodBurnerBlockEntity.SLOT_IDENTIFIER + 1);
         }
-        if (ForgeHooks.getBurnTime(stack, RecipeType.SMELTING) > 0) {
+        if (WoodBurnerRecipeRuntime.burnModule().getBurnTime(stack) > 0) {
             return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
                     WoodBurnerBlockEntity.SLOT_FUEL, WoodBurnerBlockEntity.SLOT_FUEL + 1);
@@ -153,7 +153,7 @@ public class WoodBurnerMenu extends AbstractContainerMenu {
     }
 
     private static WoodBurnerBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof WoodBurnerBlockEntity burner) {
             return burner;
         }

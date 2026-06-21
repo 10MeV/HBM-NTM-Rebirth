@@ -107,7 +107,6 @@ public final class DamageResistanceTooltipUtil {
             case "laser" -> "Laser";
             case "lead" -> "Lead";
             case "lunar" -> "Lunar";
-            case "meteorite" -> "Meteorite";
             case "microwave" -> "Microwave";
             case "mku" -> "MKU";
             case "monoxide" -> "Carbon monoxide";

@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.pistonsetsteel",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/steel" }, "count": 16, "legacy_ore": "plateSteel" },
+    { "ingredient": { "tag": "forge:plates/copper" }, "count": 4, "legacy_ore": "plateCopper" },
+    { "ingredient": { "tag": "forge:ingots/tungsten" }, "count": 8, "legacy_ore": "ingotTungsten" },
+    { "ingredient": { "tag": "forge:bolts/tungsten" }, "count": 16, "legacy_ore": "boltTungsten" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:piston_set_steel" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 128
+}

@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 600,
+  "fluid": { "fluid": "SULFURIC_ACID", "amount": 500 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:ore_tikite" } },
+  "output": { "item": "hbm_ntm_rebirth:crystal_trixite" },
+  "productivity": 0.05
+}

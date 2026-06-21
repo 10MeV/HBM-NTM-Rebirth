@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:cast_plates/any_bismoid_bronze"
+      },
+      "legacy_ore": "plateCastAnyBismoidBronze"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:cast_plates/copper"
+      },
+      "legacy_ore": "plateCastCopper"
+    }
+  ],
+  "internal_name": "ass.pwrheatsink",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:pwr_heatsink"
+    }
+  ],
+  "pools": [],
+  "power": 500,
+  "source_order": 168
+}

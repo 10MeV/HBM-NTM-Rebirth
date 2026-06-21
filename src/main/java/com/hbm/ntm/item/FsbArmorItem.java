@@ -140,6 +140,11 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
         return null;
     }
 
+    public static boolean hasCustomGeigerHud(Player player) {
+        FsbArmorItem chestplate = chestplate(player);
+        return chestplate != null && chestplate.fullSetTraits.customGeiger();
+    }
+
     public static void handleFullSetJump(Player player) {
         FsbArmorItem chestplate = chestplate(player);
         if (chestplate == null) {

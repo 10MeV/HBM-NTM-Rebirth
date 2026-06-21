@@ -200,6 +200,14 @@ public final class RadiationConfig {
         return WORLD_RAD_EFFECTS.get();
     }
 
+    public static int worldRadiation() {
+        return WORLD_RAD.get();
+    }
+
+    public static int worldRadiationThreshold() {
+        return WORLD_RAD_THRESHOLD.get();
+    }
+
     public static boolean cleanupDeadDirtEnabled() {
         return CLEANUP_DEAD_DIRT.get();
     }

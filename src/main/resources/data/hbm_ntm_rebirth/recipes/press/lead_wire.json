@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "stamp": "wire",
+  "ingredient": {
+    "tag": "forge:ingots/lead"
+  },
+  "result": {
+    "count": 8,
+    "item": "hbm_ntm_rebirth:wire_fine_lead"
+  }
+}

@@ -2,18 +2,23 @@ package com.hbm.ntm.radiation;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
 public final class HazardTooltipUtil {
     public static void addHazardInformation(ItemStack stack, List<Component> tooltip) {
+        addHazardInformation(stack, tooltip, null);
+    }
+
+    public static void addHazardInformation(ItemStack stack, List<Component> tooltip, LivingEntity holder) {
         if (stack.isEmpty()) {
             return;
         }
 
         for (HazardEntry entry : HazardRegistry.getHazards(stack)) {
-            addHazardEntryInformation(stack, tooltip, entry);
+            addHazardEntryInformation(stack, tooltip, entry, holder);
         }
 
         double resistance = HazmatRegistry.getResistance(stack);
@@ -24,23 +29,32 @@ public final class HazardTooltipUtil {
         }
     }
 
-    private static void addHazardEntryInformation(ItemStack stack, List<Component> tooltip, HazardEntry entry) {
-        float level = entry.modifiedLevel(stack, null);
-        if (entry.type() == HazardType.RADIATION) {
+    public static void addHazardTypeInformation(ItemStack stack, List<Component> tooltip,
+                                                HazardType type, float level) {
+        if (type == HazardType.RADIATION) {
             addRadiationInformation(stack, tooltip, level);
             return;
         }
-        if (entry.type() == HazardType.DIGAMMA) {
+        if (type == HazardType.DIGAMMA) {
             addDigammaInformation(stack, tooltip, level);
             return;
         }
-        if (entry.type() == HazardType.HOT && level <= 0.0F) {
+        if (type == HazardType.HOT && level <= 0.0F) {
             return;
         }
         tooltip.add(Component.literal("[")
-                .append(Component.translatable(traitKey(entry.type())))
+                .append(Component.translatable(traitKey(type)))
                 .append(Component.literal("]"))
-                .withStyle(colorForHazard(entry.type())));
+                .withStyle(colorForHazard(type)));
+    }
+
+    private static void addHazardEntryInformation(ItemStack stack, List<Component> tooltip,
+                                                  HazardEntry entry, LivingEntity holder) {
+        float displayLevel = switch (entry.type()) {
+            case RADIATION, DIGAMMA, HOT -> entry.modifiedLevel(stack, holder);
+            default -> entry.level();
+        };
+        addHazardTypeInformation(stack, tooltip, entry.type(), displayLevel);
     }
 
     private static void addRadiationInformation(ItemStack stack, List<Component> tooltip, float radiation) {

@@ -1,6 +1,7 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.RBMKConsoleBlockEntity;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -31,7 +32,8 @@ public class RBMKConsoleMenu extends AbstractContainerMenu {
         return !blockEntity.isRemoved() && player.distanceToSqr(
                 blockEntity.getBlockPos().getX() + 0.5D,
                 blockEntity.getBlockPos().getY() + 0.5D,
-                blockEntity.getBlockPos().getZ() + 0.5D) <= 20.0D * 20.0D;
+                blockEntity.getBlockPos().getZ() + 0.5D) <= 20.0D * 20.0D
+                && MultiblockHelper.isOperationalCoreLayoutComplete(player.level(), blockEntity.getBlockPos());
     }
 
     @Override
@@ -40,7 +42,9 @@ public class RBMKConsoleMenu extends AbstractContainerMenu {
     }
 
     private static RBMKConsoleBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = inventory.player.level().isClientSide
+                ? MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos)
+                : MultiblockHelper.resolveOperationalCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof RBMKConsoleBlockEntity console) {
             return console;
         }

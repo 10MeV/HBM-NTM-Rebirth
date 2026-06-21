@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 600,
+  "fluid": { "fluid": "SULFURIC_ACID", "amount": 500 },
+  "input": { "ingredient": { "tag": "forge:dusts/borax" }, "legacy_ore": "dustBorax" },
+  "output": { "item": "hbm_ntm_rebirth:powder_boron_tiny", "count": 3 },
+  "productivity": 0.25
+}

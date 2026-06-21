@@ -11,21 +11,23 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +38,9 @@ import java.util.List;
 
 public class CustomNukeBlockEntity extends BlockEntity implements MenuProvider {
     public static final int SLOT_COUNT = 27;
-    private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_ITEMS = "items";
+    private static final String TAG_CUSTOM_NAME = "name";
+    private static final String TAG_MODERN_INVENTORY = "Inventory";
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -45,9 +49,10 @@ public class CustomNukeBlockEntity extends BlockEntity implements MenuProvider {
             setChanged();
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
     private boolean statsDirty = true;
     private CustomNukeStats cachedStats = CustomNukeStats.EMPTY;
+    @Nullable
+    private String customName;
 
     public CustomNukeBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CUSTOM_NUKE.get(), pos, state);
@@ -59,6 +64,10 @@ public class CustomNukeBlockEntity extends BlockEntity implements MenuProvider {
 
     public ItemStack[] getDrops() {
         return HbmItemStackUtil.carefulCopyArray(items);
+    }
+
+    public void spillDrops(Level level, BlockPos pos) {
+        HbmItemStackUtil.spillItems(level, pos, items);
     }
 
     public void clearSlots() {
@@ -181,35 +190,44 @@ public class CustomNukeBlockEntity extends BlockEntity implements MenuProvider {
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmItemStackUtil.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmItemStackUtil.saveLegacyItemsToTag(tag, TAG_ITEMS, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        if (tag.contains(TAG_INVENTORY)) {
-            HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        if (tag.contains(TAG_ITEMS, Tag.TAG_LIST)) {
+            HbmItemStackUtil.loadLegacyItems(tag, TAG_ITEMS, items);
+        } else if (tag.contains(TAG_MODERN_INVENTORY)) {
+            HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY, items);
         }
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         statsDirty = true;
     }
 
-    @Override
-    public void invalidateCaps() {
-        super.invalidateCaps();
-        itemHandler.invalidate();
+    public boolean hasCustomName() {
+        return customName != null && !customName.isBlank();
+    }
+
+    public void setCustomName(@Nullable String customName) {
+        this.customName = customName == null || customName.isBlank() ? null : customName;
+        setChanged();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return LazyOptional.empty();
         }
         return super.getCapability(capability, side);
     }
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.hbm_ntm_rebirth.nuke_custom");
+        return hasCustomName() ? Component.literal(customName) : Component.translatable("container.nukeCustom");
     }
 
     @Nullable
@@ -237,6 +255,8 @@ public class CustomNukeBlockEntity extends BlockEntity implements MenuProvider {
 
         private static List<CustomNukeEntry> buildEntries() {
             List<CustomNukeEntry> entries = new ArrayList<>();
+            addVanillaItem(entries, Items.GUNPOWDER, BombType.TNT, 0.8F);
+            addVanillaBlock(entries, Blocks.TNT, BombType.TNT, 4.0F);
             addItem(entries, "custom_tnt", BombType.TNT, 10.0F);
             addItem(entries, "custom_nuke", BombType.NUKE, 30.0F);
             addItem(entries, "custom_hydro", BombType.HYDRO, 30.0F);
@@ -281,6 +301,9 @@ public class CustomNukeBlockEntity extends BlockEntity implements MenuProvider {
             addItem(entries, "nugget_euphemium", BombType.EUPH, 1.0F);
             addItem(entries, "ingot_euphemium", BombType.EUPH, 1.0F);
 
+            addVanillaItem(entries, Items.REDSTONE, BombType.TNT, 1.05F, true);
+            addVanillaBlock(entries, Blocks.REDSTONE_BLOCK, BombType.TNT, 1.5F, true);
+
             addItem(entries, "ingot_uranium", BombType.NUKE, 1.05F, true);
             addItem(entries, "ingot_plutonium", BombType.NUKE, 1.15F, true);
             addItem(entries, "ingot_u238", BombType.NUKE, 1.1F, true);
@@ -318,10 +341,38 @@ public class CustomNukeBlockEntity extends BlockEntity implements MenuProvider {
                 entries.add(new CustomNukeEntry(name, false, type, value, multiplier));
             }
         }
+
+        private static void addVanillaItem(List<CustomNukeEntry> entries, Item item, BombType type, float value) {
+            addVanillaItem(entries, item, type, value, false);
+        }
+
+        private static void addVanillaItem(List<CustomNukeEntry> entries, Item item, BombType type, float value, boolean multiplier) {
+            entries.add(new CustomNukeEntry(item, type, value, multiplier));
+        }
+
+        private static void addVanillaBlock(List<CustomNukeEntry> entries, Block block, BombType type, float value) {
+            addVanillaBlock(entries, block, type, value, false);
+        }
+
+        private static void addVanillaBlock(List<CustomNukeEntry> entries, Block block, BombType type, float value, boolean multiplier) {
+            entries.add(new CustomNukeEntry(block.asItem(), type, value, multiplier));
+        }
     }
 
-    private record CustomNukeEntry(String name, boolean item, BombType type, float value, boolean multiplier) {
+    private record CustomNukeEntry(String name, boolean item, Item vanillaItem, BombType type, float value,
+            boolean multiplier) {
+        private CustomNukeEntry(String name, boolean item, BombType type, float value, boolean multiplier) {
+            this(name, item, null, type, value, multiplier);
+        }
+
+        private CustomNukeEntry(Item vanillaItem, BombType type, float value, boolean multiplier) {
+            this(null, true, vanillaItem, type, value, multiplier);
+        }
+
         boolean matches(ItemStack stack) {
+            if (vanillaItem != null) {
+                return !stack.isEmpty() && stack.is(vanillaItem);
+            }
             return item ? isItem(stack, name) : isBlock(stack, name);
         }
     }

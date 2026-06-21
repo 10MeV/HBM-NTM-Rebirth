@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 800,
+  "ignitionTemp": 1000000,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 2, "ingredient": { "tag": "forge:welded_plates/steel" }, "legacy_ore": "plateWeldedSteel" },
+    { "count": 2, "ingredient": { "tag": "forge:welded_plates/copper" }, "legacy_ore": "plateWeldedCopper" },
+    { "count": 1, "ingredient": { "tag": "forge:cast_plates/any_bismoid_bronze" }, "legacy_ore": "plateCastAnyBismoidBronze" }
+  ],
+  "internal_name": "plsm.icfstructural",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:icf_component_structure" }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 128
+}

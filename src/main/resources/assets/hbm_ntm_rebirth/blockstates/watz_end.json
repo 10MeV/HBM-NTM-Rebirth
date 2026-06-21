@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "riveted=false": {
+      "model": "hbm_ntm_rebirth:block/watz_end"
+    },
+    "riveted=true": {
+      "model": "hbm_ntm_rebirth:block/watz_end_riveted"
+    }
+  }
+}

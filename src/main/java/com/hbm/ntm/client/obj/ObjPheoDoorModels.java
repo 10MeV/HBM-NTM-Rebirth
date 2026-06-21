@@ -53,16 +53,16 @@ public final class ObjPheoDoorModels {
 
     public static LegacyWavefrontModel model(String name, ResourceLocation texture) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/pheodoors/" + name + ".obj"),
+                new ResourceLocation(HbmNtm.MOD_ID, "models/pheodoors/" + name + ".obj"),
                 texture);
     }
 
     public static ResourceLocation texture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/pheodoors/" + name + ".png");
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/pheodoors/" + name + ".png");
     }
 
     public static ResourceLocation vaultTexture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/pheodoors/vault/" + name + ".png");
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/pheodoors/vault/" + name + ".png");
     }
 
     private ObjPheoDoorModels() {

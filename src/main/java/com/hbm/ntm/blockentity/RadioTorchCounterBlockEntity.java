@@ -80,7 +80,7 @@ public class RadioTorchCounterBlockEntity extends RadioTorchBlockEntity {
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RadioTorchCounterBlockEntity torch) {
-        BlockEntity attached = level.getBlockEntity(torch.attachedPos());
+        BlockEntity attached = torch.attachedBlockEntity(level);
         if (attached != null) {
             attached.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(handler -> {
                 int[] counts = new int[RTTYCounterState.SLOT_COUNT];

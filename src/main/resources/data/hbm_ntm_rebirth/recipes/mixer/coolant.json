@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:coolant", "amount": 2000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:water", "amount": 1800 },
+  "solid_input": {
+    "ingredient": { "tag": "forge:dusts/niter" },
+    "legacy_ore": "dustNiter"
+  },
+  "duration": 50
+}

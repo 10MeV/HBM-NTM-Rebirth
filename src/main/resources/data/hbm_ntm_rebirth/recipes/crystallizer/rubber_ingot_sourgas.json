@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 20,
+  "fluid": { "fluid": "SOURGAS", "amount": 25 },
+  "input": { "ingredient": { "tag": "forge:ingots/rubber" } },
+  "output": { "item": "hbm_ntm_rebirth:ingot_rubber" },
+  "productivity": 0.15
+}

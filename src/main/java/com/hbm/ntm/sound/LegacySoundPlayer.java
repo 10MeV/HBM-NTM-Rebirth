@@ -160,6 +160,14 @@ public final class LegacySoundPlayer {
         playSoundEffect(level, pos, "hbm:block.crateClose", SoundSource.BLOCKS, volume, pitch);
     }
 
+    public static void playLegacyStorageOpen(Level level, BlockPos pos, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:block.storageOpen", SoundSource.BLOCKS, volume, pitch);
+    }
+
+    public static void playLegacyStorageClose(Level level, BlockPos pos, float volume, float pitch) {
+        playSoundEffect(level, pos, "hbm:block.storageClose", SoundSource.BLOCKS, volume, pitch);
+    }
+
     public static void playLegacySonarPing(Level level, BlockPos pos, float volume, float pitch) {
         playSoundEffect(level, pos, "hbm:block.sonarPing", SoundSource.BLOCKS, volume, pitch);
     }

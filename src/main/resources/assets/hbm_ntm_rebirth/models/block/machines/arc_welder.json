@@ -2,6 +2,7 @@
   "loader": "forge:obj",
   "model": "hbm_ntm_rebirth:models/block/machines/arc_welder.obj",
   "flip_v": true,
+  "automatic_culling": false,
   "render_type": "minecraft:cutout",
   "textures": { "particle": "hbm_ntm_rebirth:block/machines/arc_welder", "default": "hbm_ntm_rebirth:block/machines/arc_welder" }
 }

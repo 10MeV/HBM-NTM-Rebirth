@@ -1,5 +1,6 @@
 package com.hbm.ntm.explosion.vnt.standard;
 
+import com.hbm.ntm.explosion.LegacyExplosionFluidCleanup;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.explosion.vnt.interfaces.BlockAllocator;
 import net.minecraft.core.BlockPos;
@@ -79,6 +80,9 @@ public class BlockAllocatorStandard implements BlockAllocator {
             if (powerRemaining > 0.0F && explosion.damageCalculator().shouldBlockExplode(
                     explosion.compat(), level, blockPos, state, powerRemaining)) {
                 affectedBlocks.add(blockPos.immutable());
+                if (LegacyExplosionFluidCleanup.isLegacyLiquidBlock(state)) {
+                    LegacyExplosionFluidCleanup.addLegacyLiquidNeighborhood(level, blockPos, affectedBlocks);
+                }
             } else if (forceInclude.test(state)) {
                 affectedBlocks.add(blockPos.immutable());
             }

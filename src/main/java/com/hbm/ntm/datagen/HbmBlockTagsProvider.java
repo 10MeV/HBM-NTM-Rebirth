@@ -40,8 +40,34 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_GRATE_WIDE.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_GRATE_WIDE.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.CHAIN.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STRUCT_ICF_CORE.get(),
+                ModBlocks.ICF_COMPONENT_SCAFFOLD.get(),
+                ModBlocks.ICF_COMPONENT_VESSEL.get(),
+                ModBlocks.ICF_COMPONENT_VESSEL_WELDED.get(),
+                ModBlocks.ICF_COMPONENT_STRUCTURE.get(),
+                ModBlocks.ICF_COMPONENT_STRUCTURE_BOLTED.get(),
+                ModBlocks.ICF_BLOCK.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STRUCT_ICF_CORE.get(),
+                ModBlocks.ICF_COMPONENT_SCAFFOLD.get(),
+                ModBlocks.ICF_COMPONENT_VESSEL.get(),
+                ModBlocks.ICF_COMPONENT_VESSEL_WELDED.get(),
+                ModBlocks.ICF_COMPONENT_STRUCTURE.get(),
+                ModBlocks.ICF_COMPONENT_STRUCTURE_BOLTED.get(),
+                ModBlocks.ICF_BLOCK.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STRUCT_TORUS_CORE.get(),
+                ModBlocks.FUSION_COMPONENT_BSCCO.get(),
+                ModBlocks.FUSION_COMPONENT_BSCCO_WELDED.get(),
+                ModBlocks.FUSION_COMPONENT_BLANKET.get(),
+                ModBlocks.FUSION_COMPONENT_MOTOR.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STRUCT_TORUS_CORE.get(),
+                ModBlocks.FUSION_COMPONENT_BSCCO.get(),
+                ModBlocks.FUSION_COMPONENT_BSCCO_WELDED.get(),
+                ModBlocks.FUSION_COMPONENT_BLANKET.get(),
+                ModBlocks.FUSION_COMPONENT_MOTOR.get());
         ModBlocks.CAP_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CAP_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.BLOCK_SLAG_BROKEN.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.BLOCK_SLAG_BROKEN.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.PRIBRIS.get(), ModBlocks.PRIBRIS_BURNING.get(),
                 ModBlocks.PRIBRIS_RADIATING.get(), ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),
                 ModBlocks.RAD_LAVA_BLOCK.get(), ModBlocks.SELLAFIELD.get(), ModBlocks.SELLAFIELD_SLAKED.get(),

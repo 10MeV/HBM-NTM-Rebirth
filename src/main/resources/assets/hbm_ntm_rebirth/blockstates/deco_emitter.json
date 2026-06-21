@@ -1,5 +1,10 @@
 {
   "variants": {
-    "": { "model": "hbm_ntm_rebirth:block/deco_emitter" }
+    "facing=down": { "model": "hbm_ntm_rebirth:block/deco_emitter" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/deco_emitter" },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/deco_emitter" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/deco_emitter" },
+    "facing=up": { "model": "hbm_ntm_rebirth:block/deco_emitter" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/deco_emitter" }
   }
 }

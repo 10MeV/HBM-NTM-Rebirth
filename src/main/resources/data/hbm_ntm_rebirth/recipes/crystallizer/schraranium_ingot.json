@@ -2,7 +2,7 @@
   "type": "hbm_ntm_rebirth:crystallizer",
   "duration": 600,
   "fluid": { "fluid": "PEROXIDE", "amount": 500 },
-  "input": { "ingredient": { "tag": "forge:ingots/schraranium" } },
+  "input": { "ingredient": { "tag": "forge:ingots/schraranium" }, "legacy_ore": "ingotSchraranium" },
   "output": { "item": "hbm_ntm_rebirth:crystal_schraranium" },
   "productivity": 0.05
 }

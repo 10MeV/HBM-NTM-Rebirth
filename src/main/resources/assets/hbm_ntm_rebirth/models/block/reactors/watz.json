@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/reactors/watz.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/reactors/watz",
+    "default": "hbm_ntm_rebirth:block/reactors/watz"
+  }
+}

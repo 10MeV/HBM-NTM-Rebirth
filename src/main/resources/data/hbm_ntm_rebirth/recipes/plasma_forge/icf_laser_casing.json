@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 800,
+  "ignitionTemp": 1000000,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 4, "ingredient": { "tag": "forge:cast_plates/any_bismoid_bronze" }, "legacy_ore": "plateCastAnyBismoidBronze" },
+    { "count": 4, "ingredient": { "tag": "forge:cast_plates/saturnite" }, "legacy_ore": "plateCastBigMt" },
+    { "count": 16, "ingredient": { "tag": "forge:ingots/any_hardplastic" }, "legacy_ore": "ingotAnyHardplastic" }
+  ],
+  "internal_name": "plsm.icfcasing",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:icf_laser_casing" }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 123
+}

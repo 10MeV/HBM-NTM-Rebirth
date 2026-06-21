@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.WoodBurnerBlockEntity;
 import com.hbm.ntm.menu.WoodBurnerMenu;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.recipe.WoodBurnerRecipeRuntime;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -66,6 +67,15 @@ public class WoodBurnerScreen extends AbstractContainerScreen<WoodBurnerMenu> {
         } else if (!menu.isLiquidBurn() && isHovering(16, 17, 8, 54, mouseX, mouseY)) {
             graphics.renderTooltip(font, List.of(
                     Component.literal((menu.getBurnTime() / 20) + "s").getVisualOrderText()), mouseX, mouseY);
+        } else if (menu.getCarried().isEmpty()
+                && menu.getBlockEntity().getItems().getStackInSlot(WoodBurnerBlockEntity.SLOT_FUEL).isEmpty()
+                && isHovering(26, 18, 16, 16, mouseX, mouseY)) {
+            List<Component> bonuses = WoodBurnerRecipeRuntime.burnModule().getDescription().stream()
+                    .map(text -> (Component) Component.literal(text))
+                    .toList();
+            if (!bonuses.isEmpty()) {
+                graphics.renderComponentTooltip(font, bonuses, mouseX, mouseY);
+            }
         } else if (isHovering(53, 17, 16, 15, mouseX, mouseY)) {
             graphics.renderTooltip(font, List.of(
                     Component.literal(menu.isOn() ? "ON" : "OFF").getVisualOrderText()), mouseX, mouseY);

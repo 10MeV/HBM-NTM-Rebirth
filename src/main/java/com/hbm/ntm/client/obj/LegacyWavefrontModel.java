@@ -3,6 +3,7 @@ package com.hbm.ntm.client.obj;
 import com.hbm.ntm.HbmNtm;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -21,6 +22,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
@@ -35,11 +37,13 @@ import java.util.WeakHashMap;
  */
 public final class LegacyWavefrontModel implements LegacyObjModel {
     private static final Set<LegacyWavefrontModel> ALL_MODELS = Collections.newSetFromMap(new WeakHashMap<>());
+    private static final int SELECTION_CACHE_LIMIT = 256;
 
     private final ResourceLocation modelLocation;
     private final ResourceLocation textureLocation;
-    private final Map<String, Group> groups = new LinkedHashMap<>();
+    private final Map<String, List<Group>> groupsByName = new LinkedHashMap<>();
     private final List<Group> groupOrder = new ArrayList<>();
+    private final Map<SelectionCacheKey, List<Group>> selectionCache = new LinkedHashMap<>();
     private final Set<String> missingPartWarnings = new LinkedHashSet<>();
     private boolean smoothing = true;
     private boolean loaded;
@@ -47,6 +51,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     private boolean mixedMode;
     private boolean vboRequested;
     private LegacyWavefrontModel vboView;
+    private int selectionGeneration;
 
     public LegacyWavefrontModel(ResourceLocation modelLocation, ResourceLocation textureLocation) {
         this(modelLocation, textureLocation, false);
@@ -91,6 +96,9 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     @Override
     public synchronized LegacyWavefrontModel asVBO() {
         this.vboRequested = true;
+        if (loaded && !failed) {
+            prepareStaticGeometry();
+        }
         if (vboView == null) {
             vboView = this;
         }
@@ -113,7 +121,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     public synchronized void renderPartTranslucent(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha) {
         renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false,
-                LegacyTexturedRenderMode.TRANSLUCENT, UvTransform.DEFAULT);
+                LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE, UvTransform.DEFAULT);
     }
 
     public synchronized void renderPartAdditive(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
@@ -154,6 +162,13 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, legacyTextureMatrix(uScale, vScale, rotationDegrees, uTranslate, vTranslate));
     }
 
+    public synchronized void renderPartWithLegacyTextureMatrixCull(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+            float uScale, float vScale, float uTranslate, float vTranslate) {
+        renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false,
+                LegacyTexturedRenderMode.CUTOUT_CULL, legacyTextureMatrix(uScale, vScale, 0.0F, uTranslate, vTranslate));
+    }
+
     public synchronized void renderPartGlintWithLegacyTextureMatrix(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             float uScale, float vScale, float rotationDegrees, float uTranslate, float vTranslate) {
@@ -164,18 +179,16 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     private synchronized void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+        rejectMixedModeDirectRender();
         ensureLoaded();
         if (failed) {
             return;
         }
-        String normalized = normalize(partName);
-        boolean rendered = false;
-        for (Group group : groupOrder) {
-            if (normalize(group.name()).equals(normalized)) {
-                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
-                        legacyShadow, smoothing, renderMode, uvTransform);
-                rendered = true;
-            }
+        List<Group> groups = groupsByName.get(normalize(partName));
+        boolean rendered = groups != null && !groups.isEmpty();
+        if (rendered) {
+            renderGroups(groups, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, smoothing, renderMode, uvTransform);
         }
         if (!rendered) {
             warnMissingPart(partName);
@@ -184,17 +197,16 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     public synchronized void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow) {
+        rejectMixedModeDirectRender();
         ensureLoaded();
         if (failed) {
             return;
         }
-        String normalized = normalize(partName);
-        boolean rendered = false;
-        for (Group group : groupOrder) {
-            if (normalize(group.name()).equals(normalized)) {
-                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
-                rendered = true;
-            }
+        List<Group> groups = groupsByName.get(normalize(partName));
+        boolean rendered = groups != null && !groups.isEmpty();
+        if (rendered) {
+            renderGroups(groups, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, smoothing, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
         }
         if (!rendered) {
             warnMissingPart(partName);
@@ -224,10 +236,8 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         }
         poseStack.pushPose();
         LegacyObjTransforms.applyObjUtilRotation(poseStack, yawRadians, pitchRadians, rollRadians);
-        for (Group group : groupOrder) {
-            renderGroupWithSprite(group, sprite, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
-                    legacyShadow, false, renderMode, uvTransform);
-        }
+        renderGroupsWithSprite(groupOrder, sprite, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                legacyShadow, false, renderMode, uvTransform);
         poseStack.popPose();
     }
 
@@ -252,18 +262,14 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         if (failed) {
             return;
         }
-        Group selected = null;
-        for (Group group : groupOrder) {
-            if (group.name().equals(partName)) {
-                selected = group;
-            }
-        }
-        if (selected == null) {
+        List<Group> selected = groupsByName.get(normalize(partName));
+        if (selected == null || selected.isEmpty()) {
             return;
         }
         poseStack.pushPose();
         LegacyObjTransforms.applyObjUtilRotation(poseStack, yawRadians, pitchRadians, rollRadians);
-        renderGroupWithSprite(selected, sprite, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+        Group group = selected.get(selected.size() - 1);
+        renderGroupWithSprite(group, sprite, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                 legacyShadow, true, renderMode, uvTransform);
         poseStack.popPose();
     }
@@ -296,6 +302,29 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
                 context.renderMode(), uvTransform(context));
     }
 
+    public synchronized void renderPartClipped(String name, ResourceLocation textureLocation, ObjRenderContext context,
+            double clipX, double clipY, double clipZ, double clipD) {
+        rejectMixedModeDirectRender();
+        ensureLoaded();
+        if (failed) {
+            return;
+        }
+        List<Group> groups = groupsByName.get(normalize(name));
+        boolean rendered = groups != null && !groups.isEmpty();
+        if (rendered) {
+            int color = context.hasColor() ? context.color() : 0xFFFFFF;
+            for (Group group : groups) {
+                renderGroupClipped(group, textureLocation, context.poseStack(), context.buffer(),
+                        context.packedLight(), context.packedOverlay(), color >> 16 & 255, color >> 8 & 255,
+                        color & 255, context.alpha(), context.legacyShadow(), smoothing, context.renderMode(),
+                        uvTransform(context), clipX, clipY, clipZ, clipD);
+            }
+        }
+        if (!rendered) {
+            warnMissingPart(name);
+        }
+    }
+
     public synchronized void renderPartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha) {
         renderPartUntextured(partName, poseStack, buffer, red, green, blue, alpha, false);
@@ -309,17 +338,15 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     private synchronized void renderPartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
+        rejectMixedModeDirectRender();
         ensureLoaded();
         if (failed) {
             return;
         }
-        String normalized = normalize(partName);
-        boolean rendered = false;
-        for (Group group : groupOrder) {
-            if (normalize(group.name()).equals(normalized)) {
-                renderGroupUntextured(group, poseStack, buffer, red, green, blue, alpha, renderMode);
-                rendered = true;
-            }
+        List<Group> groups = groupsByName.get(normalize(partName));
+        boolean rendered = groups != null && !groups.isEmpty();
+        if (rendered) {
+            renderGroupsUntextured(groups, poseStack, buffer, red, green, blue, alpha, renderMode);
         }
         if (!rendered) {
             warnMissingPart(partName);
@@ -367,14 +394,13 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     public synchronized void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+        rejectMixedModeDirectRender();
         ensureLoaded();
         if (failed) {
             return;
         }
-        for (Group group : groupOrder) {
-            renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
-                    legacyShadow, smoothing, renderMode, uvTransform);
-        }
+        renderGroups(groupOrder, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                legacyShadow, smoothing, renderMode, uvTransform);
     }
 
     @Override
@@ -401,16 +427,16 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     private synchronized void renderAllUntextured(PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
+        rejectMixedModeDirectRender();
         ensureLoaded();
         if (failed) {
             return;
         }
-        for (Group group : groupOrder) {
-            renderGroupUntextured(group, poseStack, buffer, red, green, blue, alpha, renderMode);
-        }
+        renderGroupsUntextured(groupOrder, poseStack, buffer, red, green, blue, alpha, renderMode);
     }
 
     public synchronized void renderAllUntextured(VertexConsumer consumer, Matrix4f position, int red, int green, int blue, int alpha) {
+        rejectMixedModeDirectRender();
         ensureLoaded();
         if (failed) {
             return;
@@ -443,20 +469,15 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     public synchronized void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, String... groupNames) {
+        rejectMixedModeDirectRender();
         ensureLoaded();
         if (failed) {
             return;
         }
-        Set<String> included = normalizedSet(groupNames);
-        Set<String> rendered = new LinkedHashSet<>();
-        for (Group group : groupOrder) {
-            String key = normalize(group.name());
-            if (included.contains(key)) {
-                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false, smoothing);
-                rendered.add(key);
-            }
-        }
-        warnMissingParts(included, rendered);
+        renderGroups(selectedGroups(SelectionCacheMode.ONLY, groupNames), textureLocation, poseStack, buffer,
+                packedLight, packedOverlay, red, green, blue, alpha, false, smoothing,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
+        warnMissingNamedGroups(groupNames);
     }
 
     @Override
@@ -485,20 +506,13 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     private synchronized void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode, String... groupNames) {
+        rejectMixedModeDirectRender();
         ensureLoaded();
         if (failed) {
             return;
         }
-        Set<String> included = normalizedSet(groupNames);
-        Set<String> rendered = new LinkedHashSet<>();
-        for (Group group : groupOrder) {
-            String key = normalize(group.name());
-            if (included.contains(key)) {
-                renderGroupUntextured(group, poseStack, buffer, red, green, blue, alpha, renderMode);
-                rendered.add(key);
-            }
-        }
-        warnMissingParts(included, rendered);
+        renderGroupsUntextured(selectedGroups(SelectionCacheMode.ONLY, groupNames), poseStack, buffer, red, green, blue, alpha, renderMode);
+        warnMissingNamedGroups(groupNames);
     }
 
     public synchronized void renderOnlyUntextured(ObjRenderContext context, String... names) {
@@ -528,21 +542,14 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     public synchronized void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform, String... groupNames) {
+        rejectMixedModeDirectRender();
         ensureLoaded();
         if (failed) {
             return;
         }
-        Set<String> included = normalizedSet(groupNames);
-        Set<String> rendered = new LinkedHashSet<>();
-        for (Group group : groupOrder) {
-            String key = normalize(group.name());
-            if (included.contains(key)) {
-                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
-                        legacyShadow, smoothing, renderMode, uvTransform);
-                rendered.add(key);
-            }
-        }
-        warnMissingParts(included, rendered);
+        renderGroups(selectedGroups(SelectionCacheMode.ONLY, groupNames), textureLocation, poseStack, buffer,
+                packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
+        warnMissingNamedGroups(groupNames);
     }
 
     @Override
@@ -555,6 +562,24 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         renderOnlyInCallOrder(textureLocation, context.poseStack(), context.buffer(), context.packedLight(), context.packedOverlay(),
                 color >> 16 & 255, color >> 8 & 255, color & 255, context.alpha(), context.legacyShadow(),
                 context.renderMode(), uvTransform(context), names);
+    }
+
+    public SelectionHandle prepareRenderOnlyInCallOrder(String... groupNames) {
+        return new SelectionHandle(SelectionCacheMode.CALL_ORDER, requestedNames(groupNames), normalizedList(groupNames),
+                groupNames == null ? new String[0] : groupNames.clone());
+    }
+
+    public SelectionHandle prepareRenderOnly(String... groupNames) {
+        return new SelectionHandle(SelectionCacheMode.ONLY, requestedNames(groupNames), normalizedList(groupNames),
+                groupNames == null ? new String[0] : groupNames.clone());
+    }
+
+    public synchronized void renderOnlyInCallOrder(ResourceLocation textureLocation, ObjRenderContext context,
+            SelectionHandle selection) {
+        int color = context.hasColor() ? context.color() : 0xFFFFFF;
+        renderSelection(textureLocation, context.poseStack(), context.buffer(), context.packedLight(),
+                context.packedOverlay(), color >> 16 & 255, color >> 8 & 255, color & 255, context.alpha(),
+                context.legacyShadow(), context.renderMode(), uvTransform(context), selection);
     }
 
     public synchronized void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
@@ -573,26 +598,27 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     public synchronized void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform, String... groupNames) {
+        rejectMixedModeDirectRender();
         ensureLoaded();
         if (failed) {
             return;
         }
-        Set<String> rendered = new LinkedHashSet<>();
-        for (String groupName : groupNames) {
-            String key = normalize(groupName);
-            boolean found = false;
-            for (Group group : groupOrder) {
-                if (normalize(group.name()).equals(key)) {
-                    renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
-                            legacyShadow, smoothing, renderMode, uvTransform);
-                    rendered.add(key);
-                    found = true;
-                }
-            }
-            if (!found) {
-                warnMissingPart(groupName);
-            }
+        renderGroups(selectedGroups(SelectionCacheMode.CALL_ORDER, groupNames), textureLocation, poseStack, buffer,
+                packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
+        warnMissingNamedGroups(groupNames);
+    }
+
+    private void renderSelection(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
+            LegacyTexturedRenderMode renderMode, UvTransform uvTransform, SelectionHandle selection) {
+        rejectMixedModeDirectRender();
+        ensureLoaded();
+        if (failed) {
+            return;
         }
+        renderGroups(selection.groups(this), textureLocation, poseStack, buffer, packedLight, packedOverlay,
+                red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
+        warnMissingNamedGroups(selection.rawNames());
     }
 
     public synchronized void renderAllExcept(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... excludedGroupNames) {
@@ -605,16 +631,14 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     public synchronized void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, String... excludedGroupNames) {
+        rejectMixedModeDirectRender();
         ensureLoaded();
         if (failed) {
             return;
         }
-        Set<String> excluded = normalizedSet(excludedGroupNames);
-        for (Group group : groupOrder) {
-            if (!excluded.contains(normalize(group.name()))) {
-                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false, smoothing);
-            }
-        }
+        renderGroups(selectedGroups(SelectionCacheMode.ALL_EXCEPT, excludedGroupNames), textureLocation, poseStack, buffer,
+                packedLight, packedOverlay, red, green, blue, alpha, false, smoothing,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
     }
 
     @Override
@@ -645,33 +669,59 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     public synchronized void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform, String... excludedGroupNames) {
+        rejectMixedModeDirectRender();
         ensureLoaded();
         if (failed) {
             return;
         }
-        Set<String> excluded = normalizedSet(excludedGroupNames);
-        for (Group group : groupOrder) {
-            if (!excluded.contains(normalize(group.name()))) {
-                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
-                        legacyShadow, smoothing, renderMode, uvTransform);
-            }
-        }
+        renderGroups(selectedGroups(SelectionCacheMode.ALL_EXCEPT, excludedGroupNames), textureLocation, poseStack, buffer,
+                packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
     }
 
     public synchronized void tessellateAll(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        renderAll(textureLocation, poseStack, buffer, packedLight, packedOverlay);
+        ensureLoaded();
+        if (failed) {
+            return;
+        }
+        renderGroups(groupOrder, textureLocation, poseStack, buffer, packedLight, packedOverlay,
+                255, 255, 255, 255, false, smoothing, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
     }
 
     public synchronized void tessellateOnly(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... groupNames) {
-        renderOnly(textureLocation, poseStack, buffer, packedLight, packedOverlay, groupNames);
+        ensureLoaded();
+        if (failed) {
+            return;
+        }
+        renderGroups(selectedGroups(SelectionCacheMode.ONLY, groupNames), textureLocation, poseStack, buffer,
+                packedLight, packedOverlay, 255, 255, 255, 255, false, smoothing,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
+        warnMissingNamedGroups(groupNames);
     }
 
     public synchronized void tessellatePart(String partName, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay);
+        ensureLoaded();
+        if (failed) {
+            return;
+        }
+        List<Group> groups = groupsByName.get(normalize(partName));
+        boolean rendered = groups != null && !groups.isEmpty();
+        if (rendered) {
+            renderGroups(groups, textureLocation, poseStack, buffer, packedLight, packedOverlay,
+                    255, 255, 255, 255, false, smoothing, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
+        }
+        if (!rendered) {
+            warnMissingPart(partName);
+        }
     }
 
     public synchronized void tessellateAllExcept(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... excludedGroupNames) {
-        renderAllExcept(textureLocation, poseStack, buffer, packedLight, packedOverlay, excludedGroupNames);
+        ensureLoaded();
+        if (failed) {
+            return;
+        }
+        renderGroups(selectedGroups(SelectionCacheMode.ALL_EXCEPT, excludedGroupNames), textureLocation, poseStack, buffer,
+                packedLight, packedOverlay, 255, 255, 255, 255, false, smoothing,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
     }
 
     @Override
@@ -686,7 +736,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     @Override
     public synchronized boolean hasPart(String name) {
         ensureLoaded();
-        return !failed && groups.containsKey(normalize(name));
+        return !failed && groupsByName.containsKey(normalize(name));
     }
 
     public synchronized boolean isLoaded() {
@@ -790,6 +840,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         synchronized (ALL_MODELS) {
             models = new ArrayList<>(ALL_MODELS);
         }
+        LegacyTexturedRenderMode.clearCachedRenderTypes();
         for (LegacyWavefrontModel model : models) {
             model.reload(resourceManager);
         }
@@ -817,13 +868,76 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     private static void renderGroup(Group group, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             boolean smoothing, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
-        VertexConsumer consumer = buffer.getBuffer(renderMode.withAlpha(alpha).renderType(textureLocation));
+        renderGroups(List.of(group), textureLocation, poseStack, buffer, packedLight, packedOverlay,
+                red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
+    }
+
+    private static void renderGroups(List<Group> groups, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
+            boolean smoothing, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+        if (groups.isEmpty()) {
+            return;
+        }
+        LegacyTexturedRenderMode alphaMode = renderMode.withAlpha(alpha);
+        VertexConsumer quadConsumer = null;
+        VertexConsumer triangleConsumer = null;
+        PoseStack.Pose pose = poseStack.last();
+        Matrix4f position = pose.pose();
+        Matrix3f normal = pose.normal();
+        for (Group group : groups) {
+            List<PreparedVertex> quadVertices = group.quadVertices();
+            if (!quadVertices.isEmpty()) {
+                if (quadConsumer == null) {
+                    quadConsumer = buffer.getBuffer(alphaMode.renderType(textureLocation, VertexFormat.Mode.QUADS));
+                }
+                emitPreparedVertices(quadVertices, quadConsumer, position, normal, packedLight, packedOverlay,
+                        red, green, blue, alpha, legacyShadow, smoothing, uvTransform);
+            }
+            List<PreparedVertex> triangleVertices = group.triangleVertices();
+            if (!triangleVertices.isEmpty()) {
+                if (triangleConsumer == null) {
+                    triangleConsumer = buffer.getBuffer(alphaMode.renderType(textureLocation, VertexFormat.Mode.TRIANGLES));
+                }
+                emitPreparedVertices(triangleVertices, triangleConsumer, position, normal, packedLight, packedOverlay,
+                        red, green, blue, alpha, legacyShadow, smoothing, uvTransform);
+            }
+        }
+    }
+
+    private static void renderGroupClipped(Group group, ResourceLocation textureLocation, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+            boolean legacyShadow, boolean smoothing, LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
+            double clipX, double clipY, double clipZ, double clipD) {
+        LegacyTexturedRenderMode alphaMode = renderMode.withAlpha(alpha);
+        VertexConsumer quadConsumer = null;
+        VertexConsumer triangleConsumer = null;
         PoseStack.Pose pose = poseStack.last();
         Matrix4f position = pose.pose();
         Matrix3f normal = pose.normal();
         for (Face face : group.faces()) {
-            emitFace(face, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
-                    legacyShadow, smoothing, uvTransform);
+            Face clipped = clipFace(face, clipX, clipY, clipZ, clipD);
+            if (clipped != null) {
+                int vertexCount = clipped.vertices().size();
+                if (vertexCount == 3) {
+                    if (triangleConsumer == null) {
+                        triangleConsumer = buffer.getBuffer(alphaMode.renderType(textureLocation, VertexFormat.Mode.TRIANGLES));
+                    }
+                    emitFace(clipped, triangleConsumer, triangleConsumer, position, normal, packedLight, packedOverlay,
+                            red, green, blue, alpha, legacyShadow, smoothing, uvTransform);
+                } else if (vertexCount == 4) {
+                    if (quadConsumer == null) {
+                        quadConsumer = buffer.getBuffer(alphaMode.renderType(textureLocation, VertexFormat.Mode.QUADS));
+                    }
+                    emitFace(clipped, quadConsumer, quadConsumer, position, normal, packedLight, packedOverlay,
+                            red, green, blue, alpha, legacyShadow, smoothing, uvTransform);
+                } else {
+                    if (triangleConsumer == null) {
+                        triangleConsumer = buffer.getBuffer(alphaMode.renderType(textureLocation, VertexFormat.Mode.TRIANGLES));
+                    }
+                    emitFace(clipped, triangleConsumer, triangleConsumer, position, normal, packedLight, packedOverlay,
+                            red, green, blue, alpha, legacyShadow, smoothing, uvTransform);
+                }
+            }
         }
     }
 
@@ -836,13 +950,39 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     private static void renderGroupWithSprite(Group group, TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             boolean partBrightness, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
-        VertexConsumer consumer = buffer.getBuffer(renderMode.withAlpha(alpha).renderType(InventoryMenu.BLOCK_ATLAS));
+        renderGroupsWithSprite(List.of(group), sprite, poseStack, buffer, packedLight, packedOverlay,
+                red, green, blue, alpha, legacyShadow, partBrightness, renderMode, uvTransform);
+    }
+
+    private static void renderGroupsWithSprite(List<Group> groups, TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
+            boolean partBrightness, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+        if (groups.isEmpty()) {
+            return;
+        }
+        LegacyTexturedRenderMode alphaMode = renderMode.withAlpha(alpha);
+        VertexConsumer quadConsumer = null;
+        VertexConsumer triangleConsumer = null;
         PoseStack.Pose pose = poseStack.last();
         Matrix4f position = pose.pose();
         Matrix3f normal = pose.normal();
-        for (Face face : group.faces()) {
-            emitFaceWithSprite(face, sprite, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
-                    legacyShadow, partBrightness, uvTransform);
+        for (Group group : groups) {
+            List<PreparedVertex> quadVertices = group.quadVertices();
+            if (!quadVertices.isEmpty()) {
+                if (quadConsumer == null) {
+                    quadConsumer = buffer.getBuffer(alphaMode.renderType(InventoryMenu.BLOCK_ATLAS, VertexFormat.Mode.QUADS));
+                }
+                emitPreparedVerticesWithSprite(quadVertices, sprite, quadConsumer, position, normal, packedLight,
+                        packedOverlay, red, green, blue, alpha, legacyShadow, partBrightness, uvTransform);
+            }
+            List<PreparedVertex> triangleVertices = group.triangleVertices();
+            if (!triangleVertices.isEmpty()) {
+                if (triangleConsumer == null) {
+                    triangleConsumer = buffer.getBuffer(alphaMode.renderType(InventoryMenu.BLOCK_ATLAS, VertexFormat.Mode.TRIANGLES));
+                }
+                emitPreparedVerticesWithSprite(triangleVertices, sprite, triangleConsumer, position, normal, packedLight,
+                        packedOverlay, red, green, blue, alpha, legacyShadow, partBrightness, uvTransform);
+            }
         }
     }
 
@@ -854,14 +994,85 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     private static void renderGroupUntextured(Group group, PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
-        VertexConsumer consumer = buffer.getBuffer(LegacyUntexturedQuadRenderer.type(renderMode, alpha));
+        renderGroupsUntextured(List.of(group), poseStack, buffer, red, green, blue, alpha, renderMode);
+    }
+
+    private static void renderGroupsUntextured(List<Group> groups, PoseStack poseStack, MultiBufferSource buffer,
+            int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
+        if (groups.isEmpty()) {
+            return;
+        }
+        VertexConsumer quadConsumer = null;
+        VertexConsumer triangleConsumer = null;
         PoseStack.Pose pose = poseStack.last();
         Matrix4f position = pose.pose();
-        for (Face face : group.faces()) {
-            emitFaceUntextured(face, consumer, position, red, green, blue, alpha);
+        for (Group group : groups) {
+            List<PreparedVertex> quadVertices = group.quadVertices();
+            if (!quadVertices.isEmpty()) {
+                if (quadConsumer == null) {
+                    quadConsumer = buffer.getBuffer(LegacyUntexturedQuadRenderer.type(renderMode, alpha, VertexFormat.Mode.QUADS));
+                }
+                emitPreparedVerticesUntextured(quadVertices, quadConsumer, position, red, green, blue, alpha);
+            }
+            List<PreparedVertex> triangleVertices = group.triangleVertices();
+            if (!triangleVertices.isEmpty()) {
+                if (triangleConsumer == null) {
+                    triangleConsumer = buffer.getBuffer(LegacyUntexturedQuadRenderer.type(renderMode, alpha, VertexFormat.Mode.TRIANGLES));
+                }
+                emitPreparedVerticesUntextured(triangleVertices, triangleConsumer, position, red, green, blue, alpha);
+            }
         }
     }
 
+    private static void emitPreparedVertices(List<PreparedVertex> vertices, VertexConsumer consumer, Matrix4f position,
+            Matrix3f normal, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+            boolean legacyShadow, boolean smoothing, UvTransform uvTransform) {
+        for (PreparedVertex vertex : vertices) {
+            Vector3f vertexNormal = smoothing ? vertex.smoothNormal() : vertex.faceNormal();
+            float shadow = legacyShadow ? legacyShadowFactor(normal, vertexNormal) : 1.0F;
+            UV uv = vertex.uv();
+            UV average = vertex.averageUv();
+            Vector3f point = vertex.position();
+            consumer.vertex(position, point.x(), point.y(), point.z())
+                    .color(clampColor(red * shadow), clampColor(green * shadow), clampColor(blue * shadow), alpha)
+                    .uv(transformU(uv, average, uvTransform), transformV(uv, average, uvTransform))
+                    .overlayCoords(packedOverlay)
+                    .uv2(packedLight)
+                    .normal(normal, vertexNormal.x(), vertexNormal.y(), vertexNormal.z())
+                    .endVertex();
+        }
+    }
+
+    private static void emitPreparedVerticesWithSprite(List<PreparedVertex> vertices, TextureAtlasSprite sprite,
+            VertexConsumer consumer, Matrix4f position, Matrix3f normal, int packedLight, int packedOverlay,
+            int red, int green, int blue, int alpha, boolean legacyShadow, boolean partBrightness,
+            UvTransform uvTransform) {
+        for (PreparedVertex vertex : vertices) {
+            Vector3f vertexNormal = vertex.faceNormal();
+            float shadow = legacyShadow ? legacyObjUtilShadowFactor(normal, vertexNormal, partBrightness) : 1.0F;
+            UV uv = vertex.uv();
+            UV average = vertex.averageUv();
+            Vector3f point = vertex.position();
+            consumer.vertex(position, point.x(), point.y(), point.z())
+                    .color(clampColor(red * shadow), clampColor(green * shadow), clampColor(blue * shadow), alpha)
+                    .uv(sprite.getU(transformU(uv, average, uvTransform) * 16.0D),
+                            sprite.getV(transformV(uv, average, uvTransform) * 16.0D))
+                    .overlayCoords(packedOverlay)
+                    .uv2(packedLight)
+                    .normal(normal, vertexNormal.x(), vertexNormal.y(), vertexNormal.z())
+                    .endVertex();
+        }
+    }
+
+    private static void emitPreparedVerticesUntextured(List<PreparedVertex> vertices, VertexConsumer consumer,
+            Matrix4f position, int red, int green, int blue, int alpha) {
+        for (PreparedVertex vertex : vertices) {
+            Vector3f point = vertex.position();
+            consumer.vertex(position, point.x(), point.y(), point.z())
+                    .color(red, green, blue, alpha)
+                    .endVertex();
+        }
+    }
     private static void emitFace(Face face, VertexConsumer consumer, Matrix4f position, Matrix3f normal, int packedLight, int packedOverlay,
             int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing) {
         emitFace(face, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
@@ -876,29 +1087,34 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     private static void emitFace(Face face, VertexConsumer consumer, Matrix4f position, Matrix3f normal, int packedLight, int packedOverlay,
             int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing, UvTransform uvTransform) {
+        emitFace(face, consumer, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                legacyShadow, smoothing, uvTransform);
+    }
+
+    private static void emitFace(Face face, VertexConsumer quadConsumer, VertexConsumer triangleConsumer, Matrix4f position, Matrix3f normal,
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
+            boolean smoothing, UvTransform uvTransform) {
         if (face.vertices().size() < 3) {
             return;
         }
-        UV average = averageUv(face);
+        UV average = face.averageUv();
         if (face.vertices().size() == 3) {
-            emitVertex(face, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
-            emitVertex(face, 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
-            emitVertex(face, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
-            emitVertex(face, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
+            emitVertex(face, 0, triangleConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
+            emitVertex(face, 1, triangleConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
+            emitVertex(face, 2, triangleConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
             return;
         }
         if (face.vertices().size() == 4) {
-            emitVertex(face, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
-            emitVertex(face, 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
-            emitVertex(face, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
-            emitVertex(face, 3, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
+            emitVertex(face, 0, quadConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
+            emitVertex(face, 1, quadConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
+            emitVertex(face, 2, quadConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
+            emitVertex(face, 3, quadConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
             return;
         }
         for (int i = 1; i + 1 < face.vertices().size(); i++) {
-            emitVertex(face, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
-            emitVertex(face, i, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
-            emitVertex(face, i + 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
-            emitVertex(face, i + 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
+            emitVertex(face, 0, triangleConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
+            emitVertex(face, i, triangleConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
+            emitVertex(face, i + 1, triangleConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform, average);
         }
     }
 
@@ -911,68 +1127,74 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     private static void emitFaceWithSprite(Face face, TextureAtlasSprite sprite, VertexConsumer consumer, Matrix4f position, Matrix3f normal,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             boolean partBrightness, UvTransform uvTransform) {
+        emitFaceWithSprite(face, sprite, consumer, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                legacyShadow, partBrightness, uvTransform);
+    }
+
+    private static void emitFaceWithSprite(Face face, TextureAtlasSprite sprite, VertexConsumer quadConsumer, VertexConsumer triangleConsumer,
+            Matrix4f position, Matrix3f normal, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+            boolean legacyShadow, boolean partBrightness, UvTransform uvTransform) {
         if (face.vertices().size() < 3) {
             return;
         }
-        UV average = averageUv(face);
+        UV average = face.averageUv();
         if (face.vertices().size() == 3) {
-            emitVertexWithSprite(face, sprite, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+            emitVertexWithSprite(face, sprite, 0, triangleConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
                     legacyShadow, partBrightness, uvTransform, average);
-            emitVertexWithSprite(face, sprite, 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+            emitVertexWithSprite(face, sprite, 1, triangleConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
                     legacyShadow, partBrightness, uvTransform, average);
-            emitVertexWithSprite(face, sprite, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
-                    legacyShadow, partBrightness, uvTransform, average);
-            emitVertexWithSprite(face, sprite, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+            emitVertexWithSprite(face, sprite, 2, triangleConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
                     legacyShadow, partBrightness, uvTransform, average);
             return;
         }
         if (face.vertices().size() == 4) {
-            emitVertexWithSprite(face, sprite, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+            emitVertexWithSprite(face, sprite, 0, quadConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
                     legacyShadow, partBrightness, uvTransform, average);
-            emitVertexWithSprite(face, sprite, 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+            emitVertexWithSprite(face, sprite, 1, quadConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
                     legacyShadow, partBrightness, uvTransform, average);
-            emitVertexWithSprite(face, sprite, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+            emitVertexWithSprite(face, sprite, 2, quadConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
                     legacyShadow, partBrightness, uvTransform, average);
-            emitVertexWithSprite(face, sprite, 3, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+            emitVertexWithSprite(face, sprite, 3, quadConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
                     legacyShadow, partBrightness, uvTransform, average);
             return;
         }
         for (int i = 1; i + 1 < face.vertices().size(); i++) {
-            emitVertexWithSprite(face, sprite, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+            emitVertexWithSprite(face, sprite, 0, triangleConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
                     legacyShadow, partBrightness, uvTransform, average);
-            emitVertexWithSprite(face, sprite, i, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+            emitVertexWithSprite(face, sprite, i, triangleConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
                     legacyShadow, partBrightness, uvTransform, average);
-            emitVertexWithSprite(face, sprite, i + 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
-                    legacyShadow, partBrightness, uvTransform, average);
-            emitVertexWithSprite(face, sprite, i + 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+            emitVertexWithSprite(face, sprite, i + 1, triangleConsumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
                     legacyShadow, partBrightness, uvTransform, average);
         }
     }
 
     private static void emitFaceUntextured(Face face, VertexConsumer consumer, Matrix4f position,
             int red, int green, int blue, int alpha) {
+        emitFaceUntextured(face, consumer, consumer, position, red, green, blue, alpha);
+    }
+
+    private static void emitFaceUntextured(Face face, VertexConsumer quadConsumer, VertexConsumer triangleConsumer,
+            Matrix4f position, int red, int green, int blue, int alpha) {
         if (face.vertices().size() < 3) {
             return;
         }
         if (face.vertices().size() == 3) {
-            emitVertexUntextured(face, 0, consumer, position, red, green, blue, alpha);
-            emitVertexUntextured(face, 1, consumer, position, red, green, blue, alpha);
-            emitVertexUntextured(face, 2, consumer, position, red, green, blue, alpha);
-            emitVertexUntextured(face, 2, consumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 0, triangleConsumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 1, triangleConsumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 2, triangleConsumer, position, red, green, blue, alpha);
             return;
         }
         if (face.vertices().size() == 4) {
-            emitVertexUntextured(face, 0, consumer, position, red, green, blue, alpha);
-            emitVertexUntextured(face, 1, consumer, position, red, green, blue, alpha);
-            emitVertexUntextured(face, 2, consumer, position, red, green, blue, alpha);
-            emitVertexUntextured(face, 3, consumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 0, quadConsumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 1, quadConsumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 2, quadConsumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 3, quadConsumer, position, red, green, blue, alpha);
             return;
         }
         for (int i = 1; i + 1 < face.vertices().size(); i++) {
-            emitVertexUntextured(face, 0, consumer, position, red, green, blue, alpha);
-            emitVertexUntextured(face, i, consumer, position, red, green, blue, alpha);
-            emitVertexUntextured(face, i + 1, consumer, position, red, green, blue, alpha);
-            emitVertexUntextured(face, i + 1, consumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 0, triangleConsumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, i, triangleConsumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, i + 1, triangleConsumer, position, red, green, blue, alpha);
         }
     }
 
@@ -986,7 +1208,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             boolean smoothing, float uOffset, float vOffset) {
         emitVertex(face, index, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
-                legacyShadow, smoothing, uvTransform(uOffset, vOffset), averageUv(face));
+                legacyShadow, smoothing, uvTransform(uOffset, vOffset), face.averageUv());
     }
 
     private static void emitVertex(Face face, int index, VertexConsumer consumer, Matrix4f position, Matrix3f normal,
@@ -1054,6 +1276,9 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         failed = false;
         try (InputStream stream = resourceManager.open(modelLocation)) {
             load(stream);
+            if (vboRequested) {
+                prepareStaticGeometry();
+            }
         } catch (IOException | RuntimeException e) {
             destroy();
             loaded = true;
@@ -1063,11 +1288,13 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     }
 
     private void destroy() {
-        groups.clear();
+        groupsByName.clear();
         groupOrder.clear();
+        selectionCache.clear();
         missingPartWarnings.clear();
         loaded = false;
         failed = false;
+        selectionGeneration++;
     }
 
     private void load(InputStream stream) throws IOException {
@@ -1092,13 +1319,11 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
                 } else if (line.startsWith("g ") || line.startsWith("o ")) {
                     String name = line.substring(2).trim();
                     currentGroup = new Group(name, new ArrayList<>());
-                    groups.put(normalize(name), currentGroup);
-                    groupOrder.add(currentGroup);
+                    registerGroup(currentGroup);
                 } else if (line.startsWith("f ")) {
                     if (currentGroup == null) {
                         currentGroup = new Group("Default", new ArrayList<>());
-                        groups.put(normalize(currentGroup.name()), currentGroup);
-                        groupOrder.add(currentGroup);
+                        registerGroup(currentGroup);
                     }
                     currentGroup.faces().add(parseFace(line, vertices, uvs, normals));
                 }
@@ -1136,7 +1361,85 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
             }
         }
         Vector3f faceNormal = calculateFaceNormal(faceVertices);
-        return new Face(faceVertices, faceUvs, faceNormals, faceNormal);
+        return new Face(faceVertices, faceUvs, faceNormals, faceNormal, averageUv(faceUvs));
+    }
+
+    private static Face clipFace(Face face, double clipX, double clipY, double clipZ, double clipD) {
+        if (face.vertices().size() < 3) {
+            return null;
+        }
+        List<ClippedVertex> input = new ArrayList<>(face.vertices().size());
+        for (int index = 0; index < face.vertices().size(); index++) {
+            Vector3f vertex = face.vertices().get(index);
+            UV uv = index < face.uvs().size() ? face.uvs().get(index) : UV.ZERO;
+            Vector3f normal = index < face.normals().size() ? face.normals().get(index) : face.faceNormal();
+            input.add(new ClippedVertex(vertex, uv, normal));
+        }
+        List<ClippedVertex> clipped = clipVertices(input, clipX, clipY, clipZ, clipD);
+        if (clipped.size() < 3) {
+            return null;
+        }
+        List<Vector3f> vertices = new ArrayList<>(clipped.size());
+        List<UV> uvs = new ArrayList<>(clipped.size());
+        List<Vector3f> normals = new ArrayList<>(clipped.size());
+        for (ClippedVertex vertex : clipped) {
+            vertices.add(vertex.vertex());
+            uvs.add(vertex.uv());
+            normals.add(vertex.normal());
+        }
+        return new Face(vertices, uvs, normals, face.faceNormal(), averageUv(uvs));
+    }
+
+    private static List<ClippedVertex> clipVertices(List<ClippedVertex> input,
+            double clipX, double clipY, double clipZ, double clipD) {
+        List<ClippedVertex> output = new ArrayList<>();
+        ClippedVertex previous = input.get(input.size() - 1);
+        double previousDistance = clipDistance(previous.vertex(), clipX, clipY, clipZ, clipD);
+        boolean previousInside = previousDistance >= -1.0E-6D;
+        for (ClippedVertex current : input) {
+            double currentDistance = clipDistance(current.vertex(), clipX, clipY, clipZ, clipD);
+            boolean currentInside = currentDistance >= -1.0E-6D;
+            if (currentInside != previousInside) {
+                double divisor = previousDistance - currentDistance;
+                double t = Math.abs(divisor) < 1.0E-12D ? 0.0D : previousDistance / divisor;
+                output.add(interpolate(previous, current, t));
+            }
+            if (currentInside) {
+                output.add(current.copy());
+            }
+            previous = current;
+            previousDistance = currentDistance;
+            previousInside = currentInside;
+        }
+        return output;
+    }
+
+    private static double clipDistance(Vector3f vertex, double clipX, double clipY, double clipZ, double clipD) {
+        return clipX * vertex.x() + clipY * vertex.y() + clipZ * vertex.z() + clipD;
+    }
+
+    private static ClippedVertex interpolate(ClippedVertex start, ClippedVertex end, double t) {
+        float clamped = (float) Math.max(0.0D, Math.min(1.0D, t));
+        return new ClippedVertex(
+                interpolate(start.vertex(), end.vertex(), clamped),
+                interpolate(start.uv(), end.uv(), clamped),
+                normalizeOrDefault(interpolate(start.normal(), end.normal(), clamped), start.normal()));
+    }
+
+    private static Vector3f interpolate(Vector3f start, Vector3f end, float t) {
+        return new Vector3f(
+                start.x() + (end.x() - start.x()) * t,
+                start.y() + (end.y() - start.y()) * t,
+                start.z() + (end.z() - start.z()) * t);
+    }
+
+    private static UV interpolate(UV start, UV end, float t) {
+        return new UV(start.u() + (end.u() - start.u()) * t,
+                start.v() + (end.v() - start.v()) * t);
+    }
+
+    private static Vector3f normalizeOrDefault(Vector3f value, Vector3f fallback) {
+        return value.lengthSquared() < 1.0E-6F ? new Vector3f(fallback) : value.normalize();
     }
 
     private static int parseObjIndex(String value, int size) {
@@ -1158,6 +1461,57 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         return name == null ? "" : name.toLowerCase(Locale.ROOT);
     }
 
+    private void registerGroup(Group group) {
+        groupOrder.add(group);
+        groupsByName.computeIfAbsent(normalize(group.name()), ignored -> new ArrayList<>()).add(group);
+    }
+
+    private void prepareStaticGeometry() {
+        for (Group group : groupOrder) {
+            group.ensurePrepared();
+        }
+    }
+
+    private List<Group> selectedGroups(SelectionCacheMode mode, String... names) {
+        SelectionCacheKey key = new SelectionCacheKey(mode, normalizedList(names));
+        List<Group> cached = selectionCache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        List<Group> selected = createSelectedGroups(key);
+        if (selectionCache.size() >= SELECTION_CACHE_LIMIT) {
+            selectionCache.clear();
+        }
+        selectionCache.put(key, selected);
+        return selected;
+    }
+
+    private List<Group> createSelectedGroups(SelectionCacheKey key) {
+        return switch (key.mode()) {
+            case ONLY -> selectedOnly(new LinkedHashSet<>(key.names()));
+            case ALL_EXCEPT -> selectedAllExcept(new LinkedHashSet<>(key.names()));
+            case CALL_ORDER -> selectedInCallOrder(key.names());
+        };
+    }
+
+    private List<Group> selectedInCallOrder(List<String> names) {
+        List<Group> selected = new ArrayList<>();
+        for (String key : names) {
+            List<Group> groups = groupsByName.get(key);
+            if (groups != null && !groups.isEmpty()) {
+                selected.addAll(groups);
+            }
+        }
+        return List.copyOf(selected);
+    }
+
+    private static List<String> normalizedList(String... names) {
+        if (names == null || names.length == 0) {
+            return List.of();
+        }
+        return Arrays.stream(names).map(LegacyWavefrontModel::normalize).toList();
+    }
+
     private static Set<String> normalizedSet(String... names) {
         Set<String> normalized = new LinkedHashSet<>();
         if (names == null) {
@@ -1170,15 +1524,23 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     }
 
     private static LegacyTexturedRenderMode renderMode(boolean translucent) {
-        return translucent ? LegacyTexturedRenderMode.TRANSLUCENT : LegacyTexturedRenderMode.CUTOUT_NO_CULL;
+        return translucent ? LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE : LegacyTexturedRenderMode.CUTOUT_NO_CULL;
     }
 
     private static UvTransform uvTransform(ObjRenderContext context) {
+        if (context.uScale() == 1.0F && context.uFromV() == 0.0F && context.vFromU() == 0.0F
+                && context.vScale() == 1.0F && context.uOffset() == 0.0F && context.vOffset() == 0.0F
+                && context.legacyTextureOffset() == 0.0F) {
+            return UvTransform.DEFAULT;
+        }
         return new UvTransform(context.uScale(), context.uFromV(), context.vFromU(), context.vScale(),
                 context.uOffset(), context.vOffset(), context.legacyTextureOffset());
     }
 
     private static UvTransform uvTransform(float uOffset, float vOffset) {
+        if (uOffset == 0.0F && vOffset == 0.0F) {
+            return UvTransform.DEFAULT;
+        }
         return new UvTransform(1.0F, 0.0F, 0.0F, 1.0F, uOffset, vOffset, 0.0F);
     }
 
@@ -1200,17 +1562,17 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
                 0.0F);
     }
 
-    private static UV averageUv(Face face) {
-        if (face.uvs().isEmpty()) {
+    private static UV averageUv(List<UV> uvs) {
+        if (uvs.isEmpty()) {
             return UV.ZERO;
         }
         float u = 0.0F;
         float v = 0.0F;
-        for (UV uv : face.uvs()) {
+        for (UV uv : uvs) {
             u += uv.u();
             v += uv.v();
         }
-        return new UV(u / face.uvs().size(), v / face.uvs().size());
+        return new UV(u / uvs.size(), v / uvs.size());
     }
 
     private static float transformU(UV uv, UV average, UvTransform transform) {
@@ -1234,10 +1596,28 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         return value > average ? -textureOffset : textureOffset;
     }
 
+    private void rejectMixedModeDirectRender() {
+        if (mixedMode) {
+            throw new UnsupportedOperationException("Rendering of mixed-mode model " + modelLocation + " is not supported!");
+        }
+    }
+
     private void warnMissingParts(Set<String> requested, Set<String> rendered) {
         for (String key : requested) {
             if (!rendered.contains(key)) {
                 warnMissingPart(key);
+            }
+        }
+    }
+
+    private void warnMissingNamedGroups(String... names) {
+        if (names == null) {
+            return;
+        }
+        for (String name : names) {
+            String key = normalize(name);
+            if (!key.isEmpty() && !groupsByName.containsKey(key)) {
+                warnMissingPart(name);
             }
         }
     }
@@ -1391,10 +1771,137 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
             boolean mixedModeDirectRenderUnsupported) {
     }
 
-    private record Group(String name, List<Face> faces) {
+    private static final class Group {
+        private final String name;
+        private final List<Face> faces;
+        private List<PreparedVertex> quadVertices;
+        private List<PreparedVertex> triangleVertices;
+
+        private Group(String name, List<Face> faces) {
+            this.name = name;
+            this.faces = faces;
+        }
+
+        private String name() {
+            return name;
+        }
+
+        private List<Face> faces() {
+            return faces;
+        }
+
+        private List<PreparedVertex> quadVertices() {
+            ensurePrepared();
+            return quadVertices;
+        }
+
+        private List<PreparedVertex> triangleVertices() {
+            ensurePrepared();
+            return triangleVertices;
+        }
+
+        private void ensurePrepared() {
+            if (quadVertices != null && triangleVertices != null) {
+                return;
+            }
+            List<PreparedVertex> quads = new ArrayList<>();
+            List<PreparedVertex> triangles = new ArrayList<>();
+            for (Face face : faces) {
+                prepareFace(face, quads, triangles);
+            }
+            quadVertices = List.copyOf(quads);
+            triangleVertices = List.copyOf(triangles);
+        }
+
+        private static void prepareFace(Face face, List<PreparedVertex> quads, List<PreparedVertex> triangles) {
+            int vertexCount = face.vertices().size();
+            if (vertexCount < 3) {
+                return;
+            }
+            if (vertexCount == 3) {
+                addPrepared(face, triangles, 0);
+                addPrepared(face, triangles, 1);
+                addPrepared(face, triangles, 2);
+                return;
+            }
+            if (vertexCount == 4) {
+                addPrepared(face, quads, 0);
+                addPrepared(face, quads, 1);
+                addPrepared(face, quads, 2);
+                addPrepared(face, quads, 3);
+                return;
+            }
+            for (int i = 1; i + 1 < vertexCount; i++) {
+                addPrepared(face, triangles, 0);
+                addPrepared(face, triangles, i);
+                addPrepared(face, triangles, i + 1);
+            }
+        }
+
+        private static void addPrepared(Face face, List<PreparedVertex> target, int index) {
+            Vector3f smoothNormal = index < face.normals().size() ? face.normals().get(index) : face.faceNormal();
+            target.add(new PreparedVertex(face.vertices().get(index),
+                    index < face.uvs().size() ? face.uvs().get(index) : UV.ZERO,
+                    smoothNormal, face.faceNormal(), face.averageUv()));
+        }
     }
 
-    private record Face(List<Vector3f> vertices, List<UV> uvs, List<Vector3f> normals, Vector3f faceNormal) {
+    private record Face(List<Vector3f> vertices, List<UV> uvs, List<Vector3f> normals, Vector3f faceNormal,
+                        UV averageUv) {
+    }
+
+    private record PreparedVertex(Vector3f position, UV uv, Vector3f smoothNormal, Vector3f faceNormal,
+                                  UV averageUv) {
+    }
+
+    private enum SelectionCacheMode {
+        ONLY,
+        ALL_EXCEPT,
+        CALL_ORDER
+    }
+
+    private record SelectionCacheKey(SelectionCacheMode mode, List<String> names) {
+    }
+
+    public static final class SelectionHandle {
+        private final SelectionCacheMode mode;
+        private final List<String> requestedNames;
+        private final List<String> normalizedNames;
+        private final String[] rawNames;
+        private LegacyWavefrontModel model;
+        private int generation = Integer.MIN_VALUE;
+        private List<Group> groups = List.of();
+
+        private SelectionHandle(SelectionCacheMode mode, List<String> requestedNames, List<String> normalizedNames,
+                String[] rawNames) {
+            this.mode = mode;
+            this.requestedNames = requestedNames;
+            this.normalizedNames = normalizedNames;
+            this.rawNames = rawNames;
+        }
+
+        private List<Group> groups(LegacyWavefrontModel model) {
+            if (this.model != model || generation != model.selectionGeneration) {
+                groups = model.createSelectedGroups(new SelectionCacheKey(mode, normalizedNames));
+                this.model = model;
+                generation = model.selectionGeneration;
+            }
+            return groups;
+        }
+
+        private String[] rawNames() {
+            return rawNames;
+        }
+
+        public List<String> requestedNames() {
+            return requestedNames;
+        }
+    }
+
+    private record ClippedVertex(Vector3f vertex, UV uv, Vector3f normal) {
+        private ClippedVertex copy() {
+            return new ClippedVertex(new Vector3f(vertex), uv, new Vector3f(normal));
+        }
     }
 
     public record UvTransform(float uScale, float uFromV, float vFromU, float vScale,

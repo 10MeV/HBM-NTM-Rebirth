@@ -1,6 +1,8 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.api.item.DesignatorItem;
+import com.hbm.ntm.block.LaunchPadBlock;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmItemActionReceiver;
 import com.hbm.ntm.network.HbmNetworkActions;
 import com.hbm.ntm.sound.LegacySoundPlayer;
@@ -47,6 +49,9 @@ public class MissileDesignatorItem extends Item implements DesignatorItem, HbmIt
         }
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
+        if (isLegacyLaunchPad(level, pos)) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide) {
             setTarget(context.getItemInHand(), pos.getX(), pos.getZ());
             playSetSound(level, context.getPlayer());
@@ -68,6 +73,9 @@ public class MissileDesignatorItem extends Item implements DesignatorItem, HbmIt
             BlockHitResult hit = RayTraceUtil.rayTrace(player, 300.0D, 1.0F);
             if (hit.getType() == HitResult.Type.BLOCK) {
                 BlockPos pos = hit.getBlockPos();
+                if (isLegacyLaunchPad(level, pos)) {
+                    return InteractionResultHolder.pass(stack);
+                }
                 setTarget(stack, pos.getX(), pos.getZ());
                 playSetSound(level, player);
                 return InteractionResultHolder.success(stack);
@@ -91,9 +99,9 @@ public class MissileDesignatorItem extends Item implements DesignatorItem, HbmIt
         CompoundTag tag = stack.getOrCreateTag();
         if (operator == 2) {
             if (reference == 0) {
-                tag.putInt(TAG_X, Math.round((float) player.getX()));
+                tag.putInt(TAG_X, (int) Math.round(player.getX()));
             } else {
-                tag.putInt(TAG_Z, Math.round((float) player.getZ()));
+                tag.putInt(TAG_Z, (int) Math.round(player.getZ()));
             }
             playSetSound(player.level(), player);
             return;
@@ -146,6 +154,10 @@ public class MissileDesignatorItem extends Item implements DesignatorItem, HbmIt
         if (player != null) {
             LegacySoundPlayer.playLegacyTechBleep(player, 1.0F, 1.0F);
         }
+    }
+
+    private static boolean isLegacyLaunchPad(Level level, BlockPos pos) {
+        return MultiblockHelper.resolveCoreState(level, pos).getBlock() instanceof LaunchPadBlock;
     }
 
     public enum Mode {

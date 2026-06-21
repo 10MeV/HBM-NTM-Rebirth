@@ -1,9 +1,13 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.particle.ClientParticleBridge;
+import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -18,8 +22,19 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 @SuppressWarnings("deprecation")
 public abstract class LegacyGasBlock extends Block {
+    private final float red;
+    private final float green;
+    private final float blue;
+
     public LegacyGasBlock(Properties properties) {
+        this(properties, 1.0F, 1.0F, 1.0F);
+    }
+
+    public LegacyGasBlock(Properties properties, float red, float green, float blue) {
         super(properties);
+        this.red = red;
+        this.green = green;
+        this.blue = blue;
     }
 
     @Override
@@ -108,6 +123,14 @@ public abstract class LegacyGasBlock extends Block {
     @Override
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.INVISIBLE;
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        super.animateTick(state, level, pos, random);
+        if (ClientParticleBridge.isLocalPlayerWearing(ModItems.ASHGLASSES.get(), EquipmentSlot.HEAD)) {
+            ParticleUtil.spawnLegacyColoredGasCloud(level, pos, red, green, blue);
+        }
     }
 
     @Override

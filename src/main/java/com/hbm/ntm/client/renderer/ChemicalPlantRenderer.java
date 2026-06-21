@@ -48,7 +48,7 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
         LegacyMachineDefinition definition = block.definition();
         int modelLight = LegacyRenderLighting.resolveMachineLight(chemicalPlant, state, definition, packedLight);
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
-                key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()));
+                key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()).asVBO());
         float anim = Mth.lerp(partialTick, chemicalPlant.getPrevAnim(), chemicalPlant.getAnim());
 
         poseStack.pushPose();

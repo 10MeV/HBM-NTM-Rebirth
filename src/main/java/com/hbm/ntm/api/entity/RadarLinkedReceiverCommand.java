@@ -14,7 +14,7 @@ public final class RadarLinkedReceiverCommand {
         if (level == null || radarPos == null || receiverPos == null || command == null) {
             return RadarCommandResult.ERROR_INCOMPATIBLE;
         }
-        BlockEntity target = MultiblockHelper.resolveCoreBlockEntity(level, receiverPos);
+        BlockEntity target = MultiblockHelper.resolveOperationalCoreBlockEntity(level, receiverPos);
         if (target == null) {
             return RadarCommandResult.ERROR_NO_TARGET;
         }

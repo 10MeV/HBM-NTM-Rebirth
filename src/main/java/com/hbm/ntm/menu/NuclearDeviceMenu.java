@@ -4,6 +4,7 @@ import com.hbm.ntm.block.NuclearDeviceBlock;
 import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -24,7 +25,6 @@ public class NuclearDeviceMenu extends AbstractContainerMenu {
     private final ItemStackHandler items;
     private final Layout layout;
     private final int playerInventoryStart;
-    private final int playerInventoryEnd;
     private final int hotbarEnd;
 
     public NuclearDeviceMenu(int containerId, Inventory playerInventory, FriendlyByteBuf data) {
@@ -47,9 +47,8 @@ public class NuclearDeviceMenu extends AbstractContainerMenu {
             addSlot(new SlotItemHandler(items, slot.index(), slot.x(), slot.y()));
         }
         this.playerInventoryStart = layout.deviceSlots().length;
-        this.playerInventoryEnd = playerInventoryStart + 27;
-        this.hotbarEnd = playerInventoryEnd + 9;
         addPlayerInventory(playerInventory);
+        this.hotbarEnd = slots.size();
     }
 
     @Nullable
@@ -94,8 +93,26 @@ public class NuclearDeviceMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index, playerInventoryStart,
-                playerInventoryStart, hotbarEnd);
+        if (index < 0 || index >= slots.size()) {
+            return ItemStack.EMPTY;
+        }
+        Slot slot = slots.get(index);
+        if (!slot.hasItem()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack stack = slot.getItem();
+        ItemStack original = stack.copy();
+        if (index < playerInventoryStart) {
+            if (!moveItemStackTo(stack, playerInventoryStart, hotbarEnd, true)) {
+                return ItemStack.EMPTY;
+            }
+        } else {
+            return ItemStack.EMPTY;
+        }
+
+        HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+        return original;
     }
 
     private void addPlayerInventory(Inventory inventory) {
@@ -115,7 +132,7 @@ public class NuclearDeviceMenu extends AbstractContainerMenu {
     private static MenuSource readClientSource(Inventory inventory, FriendlyByteBuf data) {
         BlockPos pos = data.readBlockPos();
         NuclearDeviceBlock.Kind payloadKind = readPayloadKind(inventory, data, pos);
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof NuclearDeviceBlockEntity device && device.kind() == payloadKind) {
             return MenuSource.fromBlockEntity(device);
         }
@@ -130,7 +147,7 @@ public class NuclearDeviceMenu extends AbstractContainerMenu {
                 return values[ordinal];
             }
         }
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof NuclearDeviceBlockEntity device) {
             return device.kind();
         }

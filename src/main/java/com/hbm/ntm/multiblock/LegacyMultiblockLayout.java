@@ -218,13 +218,21 @@ public final class LegacyMultiblockLayout {
     }
 
     public AABB renderBoundingBox(BlockPos corePos, double padding) {
+        return boundingBox(corePos, checkOffsets(), padding);
+    }
+
+    public AABB structureBoundingBox(BlockPos corePos, double padding) {
+        return boundingBox(corePos, offsets, padding);
+    }
+
+    private static AABB boundingBox(BlockPos corePos, Iterable<BlockPos> offsets, double padding) {
         int minX = 0;
         int minY = 0;
         int minZ = 0;
         int maxX = 1;
         int maxY = 1;
         int maxZ = 1;
-        for (BlockPos offset : checkOffsets()) {
+        for (BlockPos offset : offsets) {
             minX = Math.min(minX, offset.getX());
             minY = Math.min(minY, offset.getY());
             minZ = Math.min(minZ, offset.getZ());

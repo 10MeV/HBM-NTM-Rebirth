@@ -18,6 +18,9 @@ public class BlockMutatorLava implements BlockMutator {
 
     @Override
     public void mutatePost(ExplosionVnt explosion, BlockPos pos) {
+        if (explosion.level().isOutsideBuildHeight(pos) || explosion.level().isOutsideBuildHeight(pos.below())) {
+            return;
+        }
         if (explosion.level().getBlockState(pos).isAir()
                 && explosion.level().getBlockState(pos.below()).isSolidRender(explosion.level(), pos.below())
                 && (always || explosion.level().random.nextInt(3) == 0)) {

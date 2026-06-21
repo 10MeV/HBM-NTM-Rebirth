@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
@@ -16,14 +17,21 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.item.ItemMachineUpgrade;
+import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.CompressorMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
+import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmMathUtil;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -48,7 +56,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
-        implements MenuProvider, HbmStandardFluidTransceiver, HbmLegacyButtonReceiver {
+        implements MenuProvider, HbmStandardFluidTransceiver, HbmLegacyButtonReceiver, LegacyUpgradeInfoProvider {
     public static final int SLOT_IDENTIFIER = 0;
     public static final int SLOT_BATTERY = 1;
     public static final int SLOT_UPGRADE_SPEED = 2;
@@ -64,6 +72,8 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final long MAX_POWER = 100_000L;
     private static final int TANK_CAPACITY = 16_000;
     private static final int BASE_POWER_REQUIREMENT = 2_500;
+    private static final int PROCESS_TIME_BASE = 100;
+    private static final Map<UpgradeType, Integer> VALID_UPGRADES = createValidUpgrades();
 
     private final HbmFluidTank inputTank;
     private final HbmFluidTank outputTank;
@@ -78,7 +88,8 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
             return switch (slot) {
                 case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
                 case SLOT_BATTERY -> stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
-                case SLOT_UPGRADE_SPEED, SLOT_UPGRADE_POWER -> false;
+                case SLOT_UPGRADE_SPEED, SLOT_UPGRADE_POWER -> stack.getItem() instanceof ItemMachineUpgrade upgrade
+                        && VALID_UPGRADES.containsKey(upgrade.getUpgradeType());
                 default -> false;
             };
         }
@@ -128,6 +139,8 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
         int oldOutputPressure = compressor.outputTank.getPressure();
         long oldPower = compressor.energy.getPower();
         int oldProgress = compressor.progress;
+        int oldProcessTime = compressor.processTime;
+        int oldPowerRequirement = compressor.powerRequirement;
         boolean oldOn = compressor.on;
 
         changed |= compressor.setInputTypeFromIdentifierSlot();
@@ -145,6 +158,8 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldOutputPressure != compressor.outputTank.getPressure()
                 || oldPower != compressor.energy.getPower()
                 || oldProgress != compressor.progress
+                || oldProcessTime != compressor.processTime
+                || oldPowerRequirement != compressor.powerRequirement
                 || oldOn != compressor.on;
         if (changed) {
             compressor.setChanged();
@@ -286,8 +301,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean processRecipe() {
-        processTime = HbmFluidCompressorRecipes.durationFor(inputTank.getTankType(), inputTank.getPressure());
-        powerRequirement = BASE_POWER_REQUIREMENT;
+        updateUpgradeAdjustedRecipeState();
         if (!canProcess()) {
             progress = 0;
             on = false;
@@ -321,6 +335,29 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     private void setupOutputTank() {
         HbmFluidStack output = HbmFluidCompressorRecipes.outputFor(inputTank.getTankType(), inputTank.getPressure());
         outputTank.conform(new HbmFluidStack(output.type(), 0, output.pressure()));
+    }
+
+    private void updateUpgradeAdjustedRecipeState() {
+        LegacyMachineUpgradeManager.Levels levels =
+                LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_SPEED, SLOT_UPGRADE_POWER, VALID_UPGRADES);
+        int speedLevel = levels.getLevel(UpgradeType.SPEED);
+        int powerLevel = levels.getLevel(UpgradeType.POWER);
+        int overLevel = levels.getLevel(UpgradeType.OVERDRIVE);
+        HbmFluidCompressorRecipes.Recipe recipe =
+                HbmFluidCompressorRecipes.find(inputTank.getTankType(), inputTank.getPressure());
+
+        int timeBase = recipe == null ? PROCESS_TIME_BASE : recipe.duration();
+        if (recipe == null) {
+            processTime = speedLevel == 3 ? 10 : speedLevel == 2 ? 20 : speedLevel == 1 ? 60 : timeBase;
+        } else {
+            processTime = timeBase / (speedLevel + 1);
+        }
+        powerRequirement = BASE_POWER_REQUIREMENT / (powerLevel + 1);
+        processTime /= overLevel + 1;
+        powerRequirement *= (overLevel * 2) + 1;
+        if (processTime <= 0) {
+            processTime = 1;
+        }
     }
 
     private void setInputPressure(int pressure) {
@@ -434,6 +471,45 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (id == CONTROL_INPUT_PRESSURE) {
             setInputPressure(value);
         }
+    }
+
+    @Override
+    public Map<UpgradeType, Integer> getValidUpgrades() {
+        return VALID_UPGRADES;
+    }
+
+    @Override
+    public void provideInfo(UpgradeType type, int level, List<Component> info, boolean extendedInfo) {
+        info.add(Component.literal(">>> ")
+                .append(Component.translatable(getBlockState().getBlock().getDescriptionId()))
+                .append(" <<<")
+                .withStyle(ChatFormatting.YELLOW));
+        switch (type) {
+            case SPEED -> {
+                info.add(Component.literal("Generic compression: ")
+                        .append(Component.translatableWithFallback(KEY_DELAY, "Delay %s",
+                                "-" + (level == 3 ? 90 : level == 2 ? 80 : level == 1 ? 40 : 0) + "%"))
+                        .withStyle(ChatFormatting.GREEN));
+                info.add(Component.literal("Recipe: ")
+                        .append(Component.translatableWithFallback(KEY_DELAY, "Delay %s",
+                                "-" + (100 - 100 / (level + 1)) + "%"))
+                        .withStyle(ChatFormatting.GREEN));
+            }
+            case POWER -> info.add(Component.translatableWithFallback(KEY_CONSUMPTION, "Consumption %s",
+                    "-" + (100 - 100 / (level + 1)) + "%").withStyle(ChatFormatting.GREEN));
+            case OVERDRIVE -> info.add(Component.literal("YES")
+                    .withStyle(HbmMathUtil.getBlink() ? ChatFormatting.RED : ChatFormatting.DARK_GRAY));
+            default -> {
+            }
+        }
+    }
+
+    private static Map<UpgradeType, Integer> createValidUpgrades() {
+        EnumMap<UpgradeType, Integer> upgrades = new EnumMap<>(UpgradeType.class);
+        upgrades.put(UpgradeType.SPEED, 3);
+        upgrades.put(UpgradeType.POWER, 3);
+        upgrades.put(UpgradeType.OVERDRIVE, 9);
+        return Map.copyOf(upgrades);
     }
 
     @Override

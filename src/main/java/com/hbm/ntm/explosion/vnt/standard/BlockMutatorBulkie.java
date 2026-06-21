@@ -14,13 +14,20 @@ public class BlockMutatorBulkie implements BlockMutator {
         this(block.defaultBlockState());
     }
 
+    public BlockMutatorBulkie(Block block, int meta) {
+        this(LegacyVntBlockStateMapper.fromLegacyMeta(block, meta));
+    }
+
     public BlockMutatorBulkie(BlockState replacement) {
         this.replacement = replacement;
     }
 
     @Override
     public void mutatePre(ExplosionVnt explosion, BlockState state, BlockPos pos) {
-        if (!state.isCollisionShapeFullBlock(explosion.level(), pos)) {
+        if (explosion.level().isOutsideBuildHeight(pos)) {
+            return;
+        }
+        if (!state.isSolidRender(explosion.level(), pos)) {
             return;
         }
         Vec3 offset = Vec3.atCenterOf(pos).subtract(explosion.position());

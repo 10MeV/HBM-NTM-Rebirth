@@ -1,6 +1,5 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.LegacyConnectorBlock;
 import com.hbm.ntm.block.LegacyLargePylonBlock;
 import com.hbm.ntm.block.LegacyMediumPylonBlock;
@@ -30,21 +29,21 @@ import java.util.List;
 
 public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> implements BlockEntityRenderer<T> {
     public static final ResourceLocation PYLON_MEDIUM_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/network/pylon_medium.png");
+            ObjNetworkModels.PYLON_MEDIUM_TEXTURE;
     public static final ResourceLocation PYLON_MEDIUM_STEEL_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/network/pylon_medium_steel.png");
+            ObjNetworkModels.PYLON_MEDIUM_STEEL_TEXTURE;
     public static final ResourceLocation PYLON_LARGE_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/network/pylon_large.png");
+            ObjNetworkModels.PYLON_LARGE_TEXTURE;
     public static final ResourceLocation CONNECTOR_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/network/connector.png");
+            ObjNetworkModels.CONNECTOR_TEXTURE;
     public static final ResourceLocation CONNECTOR_SUPER_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/network/connector_super.png");
+            ObjNetworkModels.CONNECTOR_SUPER_TEXTURE;
     public static final ResourceLocation SUBSTATION_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/network/substation.png");
+            ObjNetworkModels.SUBSTATION_TEXTURE;
     public static final ResourceLocation WIRE_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/network/wire.png");
+            ObjNetworkModels.texture("wire");
     public static final ResourceLocation WIRE_GREYSCALE_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/network/wire_greyscale.png");
+            ObjNetworkModels.texture("wire_greyscale");
 
     public LegacyPylonRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -62,7 +61,8 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
     @Override
     public void render(T pylon, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        renderPylonModel(pylon.getBlockState(), poseStack, buffer, packedLight, packedOverlay);
+        int modelLight = LegacyRenderLighting.resolveMultiblockLight(pylon, packedLight);
+        renderPylonModel(pylon.getBlockState(), poseStack, buffer, modelLight, packedOverlay);
         renderWires(pylon, poseStack, buffer, packedLight, packedOverlay);
     }
 

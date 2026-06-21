@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 800,
+  "ignitionTemp": 1000000,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 8, "ingredient": { "tag": "forge:cast_plates/gold" }, "legacy_ore": "plateCastGold" },
+    { "count": 4, "ingredient": { "item": "hbm_ntm_rebirth:motor" } },
+    { "count": 1, "ingredient": { "item": "hbm_ntm_rebirth:circuit_bismoid" }, "legacy_id": "hbm:circuit", "legacy_meta": 12 }
+  ],
+  "internal_name": "plsm.icfpress",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:machine_icf_press" }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 134
+}

@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 600,
+  "fluid": { "fluid": "SULFURIC_ACID", "amount": 500 },
+  "input": { "ingredient": { "tag": "forge:ores/uranium" }, "legacy_ore": "oreUranium" },
+  "output": { "item": "hbm_ntm_rebirth:crystal_uranium" },
+  "productivity": 0.05
+}

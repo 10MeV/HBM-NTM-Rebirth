@@ -528,56 +528,8 @@
           "source_order": 69
         },
         {
-          "internal_name": "ass.rtg",
-          "source_order": 86
-        },
-        {
           "internal_name": "ass.excavator",
           "source_order": 106
-        },
-        {
-          "internal_name": "ass.teleporter",
-          "source_order": 119
-        },
-        {
-          "internal_name": "ass.forcefield",
-          "source_order": 122
-        },
-        {
-          "internal_name": "ass.dieselgen",
-          "source_order": 126
-        },
-        {
-          "internal_name": "ass.combustiongen",
-          "source_order": 127
-        },
-        {
-          "internal_name": "ass.pistonsetstar",
-          "source_order": 131
-        },
-        {
-          "internal_name": "ass.beamline",
-          "source_order": 148
-        },
-        {
-          "internal_name": "ass.rfc",
-          "source_order": 149
-        },
-        {
-          "internal_name": "ass.quadrupole",
-          "source_order": 150
-        },
-        {
-          "internal_name": "ass.dipole",
-          "source_order": 151
-        },
-        {
-          "internal_name": "ass.source",
-          "source_order": 152
-        },
-        {
-          "internal_name": "ass.detector",
-          "source_order": 153
         },
         {
           "internal_name": "ass.breedingreactor",
@@ -590,58 +542,6 @@
         {
           "internal_name": "ass.cirnox",
           "source_order": 161
-        },
-        {
-          "internal_name": "ass.rbmk",
-          "source_order": 162
-        },
-        {
-          "internal_name": "ass.rbmkautoloader",
-          "source_order": 163
-        },
-        {
-          "internal_name": "ass.pwrfuel",
-          "source_order": 164
-        },
-        {
-          "internal_name": "ass.pwrcontrol",
-          "source_order": 165
-        },
-        {
-          "internal_name": "ass.pwrchannel",
-          "source_order": 166
-        },
-        {
-          "internal_name": "ass.pwrheatex",
-          "source_order": 167
-        },
-        {
-          "internal_name": "ass.pwrheatsink",
-          "source_order": 168
-        },
-        {
-          "internal_name": "ass.pwrreflector",
-          "source_order": 169
-        },
-        {
-          "internal_name": "ass.pwrreflectoralt",
-          "source_order": 170
-        },
-        {
-          "internal_name": "ass.pwrcasing",
-          "source_order": 171
-        },
-        {
-          "internal_name": "ass.pwrcontroller",
-          "source_order": 172
-        },
-        {
-          "internal_name": "ass.pwrport",
-          "source_order": 173
-        },
-        {
-          "internal_name": "ass.pwrneutronsource",
-          "source_order": 174
         },
         {
           "internal_name": "ass.fusioncore",
@@ -712,50 +612,6 @@
           "source_order": 196
         },
         {
-          "internal_name": "ass.gadget",
-          "source_order": 197
-        },
-        {
-          "internal_name": "ass.littleboy",
-          "source_order": 198
-        },
-        {
-          "internal_name": "ass.fatman",
-          "source_order": 199
-        },
-        {
-          "internal_name": "ass.ivymike",
-          "source_order": 200
-        },
-        {
-          "internal_name": "ass.tsarbomba",
-          "source_order": 201
-        },
-        {
-          "internal_name": "ass.ninadidnothingwrong",
-          "source_order": 202
-        },
-        {
-          "internal_name": "ass.fleija",
-          "source_order": 203
-        },
-        {
-          "internal_name": "ass.solinium",
-          "source_order": 204
-        },
-        {
-          "internal_name": "ass.n2mine",
-          "source_order": 205
-        },
-        {
-          "internal_name": "ass.balefirebomb",
-          "source_order": 206
-        },
-        {
-          "internal_name": "ass.customnuke",
-          "source_order": 207
-        },
-        {
           "internal_name": "ass.levibomb",
           "source_order": 208
         },
@@ -772,24 +628,12 @@
           "source_order": 268
         },
         {
-          "internal_name": "ass.launchpadsilo",
-          "source_order": 269
-        },
-        {
-          "internal_name": "ass.50bmgbypass",
-          "source_order": 316
-        },
-        {
-          "internal_name": "ass.nitra",
-          "source_order": 332
-        },
-        {
           "internal_name": "ass.digimemer",
           "source_order": 334
         }
       ],
-      "missing_count": 81,
-      "modern_count": 527,
+      "missing_count": 42,
+      "modern_count": 566,
       "present": [
         {
           "internal_name": "ass.plateiron",
@@ -1212,6 +1056,12 @@
           "source_order": 85
         },
         {
+          "internal_name": "ass.rtg",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/rtg",
+          "modern_source_order": 93,
+          "source_order": 86
+        },
+        {
           "internal_name": "ass.derrick",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/derrick",
           "modern_source_order": 87,
@@ -1398,6 +1248,12 @@
           "source_order": 118
         },
         {
+          "internal_name": "ass.teleporter",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/teleporter",
+          "modern_source_order": 119,
+          "source_order": 119
+        },
+        {
           "internal_name": "ass.radar",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/radar",
           "modern_source_order": 120,
@@ -1408,6 +1264,12 @@
           "modern_id": "hbm_ntm_rebirth:assembly_machine/radar_large",
           "modern_source_order": 121,
           "source_order": 121
+        },
+        {
+          "internal_name": "ass.forcefield",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/forcefield",
+          "modern_source_order": 93,
+          "source_order": 122
         },
         {
           "internal_name": "ass.strandcaster",
@@ -1428,6 +1290,18 @@
           "source_order": 125
         },
         {
+          "internal_name": "ass.dieselgen",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/diesel_generator",
+          "modern_source_order": 126,
+          "source_order": 126
+        },
+        {
+          "internal_name": "ass.combustiongen",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/combustion_engine",
+          "modern_source_order": 127,
+          "source_order": 127
+        },
+        {
           "internal_name": "ass.pistonsetsteel",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/piston_set_steel",
           "modern_source_order": 128,
@@ -1444,6 +1318,12 @@
           "modern_id": "hbm_ntm_rebirth:assembly_machine/piston_set_desh",
           "modern_source_order": 130,
           "source_order": 130
+        },
+        {
+          "internal_name": "ass.pistonsetstar",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/piston_set_starmetal",
+          "modern_source_order": 131,
+          "source_order": 131
         },
         {
           "internal_name": "ass.turbofan",
@@ -1542,6 +1422,42 @@
           "source_order": 147
         },
         {
+          "internal_name": "ass.beamline",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pa_beamline",
+          "modern_source_order": 148,
+          "source_order": 148
+        },
+        {
+          "internal_name": "ass.rfc",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pa_rfc",
+          "modern_source_order": 149,
+          "source_order": 149
+        },
+        {
+          "internal_name": "ass.quadrupole",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pa_quadrupole",
+          "modern_source_order": 150,
+          "source_order": 150
+        },
+        {
+          "internal_name": "ass.dipole",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pa_dipole",
+          "modern_source_order": 151,
+          "source_order": 151
+        },
+        {
+          "internal_name": "ass.source",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pa_source",
+          "modern_source_order": 152,
+          "source_order": 152
+        },
+        {
+          "internal_name": "ass.detector",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pa_detector",
+          "modern_source_order": 153,
+          "source_order": 153
+        },
+        {
           "internal_name": "ass.pagold",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/pa_coil_gold",
           "modern_source_order": 154,
@@ -1572,6 +1488,84 @@
           "source_order": 158
         },
         {
+          "internal_name": "ass.rbmk",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/rbmk_blank",
+          "modern_source_order": 162,
+          "source_order": 162
+        },
+        {
+          "internal_name": "ass.rbmkautoloader",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/rbmk_autoloader",
+          "modern_source_order": 163,
+          "source_order": 163
+        },
+        {
+          "internal_name": "ass.pwrfuel",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pwr_fuel",
+          "modern_source_order": 164,
+          "source_order": 164
+        },
+        {
+          "internal_name": "ass.pwrcontrol",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pwr_control",
+          "modern_source_order": 165,
+          "source_order": 165
+        },
+        {
+          "internal_name": "ass.pwrchannel",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pwr_channel",
+          "modern_source_order": 166,
+          "source_order": 166
+        },
+        {
+          "internal_name": "ass.pwrheatex",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pwr_heatex",
+          "modern_source_order": 167,
+          "source_order": 167
+        },
+        {
+          "internal_name": "ass.pwrheatsink",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pwr_heatsink",
+          "modern_source_order": 168,
+          "source_order": 168
+        },
+        {
+          "internal_name": "ass.pwrreflector",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pwr_reflector",
+          "modern_source_order": 169,
+          "source_order": 169
+        },
+        {
+          "internal_name": "ass.pwrreflectoralt",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pwr_reflector_alt",
+          "modern_source_order": 170,
+          "source_order": 170
+        },
+        {
+          "internal_name": "ass.pwrcasing",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pwr_casing",
+          "modern_source_order": 171,
+          "source_order": 171
+        },
+        {
+          "internal_name": "ass.pwrcontroller",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pwr_controller",
+          "modern_source_order": 172,
+          "source_order": 172
+        },
+        {
+          "internal_name": "ass.pwrport",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pwr_port",
+          "modern_source_order": 173,
+          "source_order": 173
+        },
+        {
+          "internal_name": "ass.pwrneutronsource",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pwr_neutron_source",
+          "modern_source_order": 174,
+          "source_order": 174
+        },
+        {
           "internal_name": "ass.overdrive1",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/overdrive1",
           "modern_source_order": 189,
@@ -1600,6 +1594,72 @@
           "modern_id": "hbm_ntm_rebirth:assembly_machine/buckshot",
           "modern_source_order": 195,
           "source_order": 195
+        },
+        {
+          "internal_name": "ass.gadget",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/nuke_gadget",
+          "modern_source_order": 197,
+          "source_order": 197
+        },
+        {
+          "internal_name": "ass.littleboy",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/nuke_boy",
+          "modern_source_order": 198,
+          "source_order": 198
+        },
+        {
+          "internal_name": "ass.fatman",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/nuke_man",
+          "modern_source_order": 199,
+          "source_order": 199
+        },
+        {
+          "internal_name": "ass.ivymike",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/nuke_mike",
+          "modern_source_order": 200,
+          "source_order": 200
+        },
+        {
+          "internal_name": "ass.tsarbomba",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/nuke_tsar",
+          "modern_source_order": 201,
+          "source_order": 201
+        },
+        {
+          "internal_name": "ass.ninadidnothingwrong",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/nuke_prototype",
+          "modern_source_order": 202,
+          "source_order": 202
+        },
+        {
+          "internal_name": "ass.fleija",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/nuke_fleija",
+          "modern_source_order": 203,
+          "source_order": 203
+        },
+        {
+          "internal_name": "ass.solinium",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/nuke_solinium",
+          "modern_source_order": 204,
+          "source_order": 204
+        },
+        {
+          "internal_name": "ass.n2mine",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/nuke_n2",
+          "modern_source_order": 205,
+          "source_order": 205
+        },
+        {
+          "internal_name": "ass.balefirebomb",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/nuke_fstbmb",
+          "modern_source_order": 206,
+          "source_order": 206
+        },
+        {
+          "internal_name": "ass.customnuke",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/nuke_custom",
+          "modern_source_order": 207,
+          "source_order": 207
         },
         {
           "internal_name": "ass.explosivelenses1",
@@ -1944,6 +2004,12 @@
           "source_order": 267
         },
         {
+          "internal_name": "ass.launchpadsilo",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/launch_pad_silo",
+          "modern_source_order": 269,
+          "source_order": 269
+        },
+        {
           "internal_name": "ass.mpt10kero",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt10kero",
           "modern_source_order": 270,
@@ -2220,6 +2286,12 @@
           "source_order": 315
         },
         {
+          "internal_name": "ass.50bmgbypass",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/50bmgbypass",
+          "modern_source_order": 316,
+          "source_order": 316
+        },
+        {
           "internal_name": "chem.shellchlorine",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/shell_chlorine",
           "modern_source_order": 2147483647,
@@ -2310,13 +2382,19 @@
           "source_order": 331
         },
         {
+          "internal_name": "ass.nitra",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/nitra",
+          "modern_source_order": 332,
+          "source_order": 332
+        },
+        {
           "internal_name": "ass.emptypackage",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/emptypackage",
           "modern_source_order": 333,
           "source_order": 333
         }
       ],
-      "present_count": 254,
+      "present_count": 293,
       "status": "checked"
     }
   ],

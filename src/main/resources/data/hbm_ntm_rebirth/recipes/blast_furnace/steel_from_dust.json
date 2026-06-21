@@ -1,0 +1,30 @@
+{
+  "type": "hbm_ntm_rebirth:blast_furnace",
+  "duration": 800,
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "forge:dusts/iron"
+      },
+      "count": 2,
+      "legacy_ore": "dustIron"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:sand"
+      },
+      "count": 1,
+      "legacy_ore": "sand"
+    }
+  ],
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:ingot_steel",
+      "count": 2
+    },
+    {
+      "item": "hbm_ntm_rebirth:scraps",
+      "nbt": "{mat:41,amount:72}"
+    }
+  ]
+}

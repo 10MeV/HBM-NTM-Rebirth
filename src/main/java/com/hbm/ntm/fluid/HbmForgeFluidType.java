@@ -45,6 +45,10 @@ public class HbmForgeFluidType extends net.minecraftforge.fluids.FluidType {
                 .descriptionId(hbmType.getTranslationKey())
                 .temperature(Math.max(0, hbmType.getTemperature() + 273));
 
+        if (hbmType == HbmFluids.CORIUM_FLUID) {
+            return properties.density(600_000).viscosity(12_000).lightLevel(10);
+        }
+
         if (hbmType.hasTrait(SimpleFluidTraits.Gaseous.class)) {
             properties.density(-100).viscosity(100).canSwim(false).canDrown(false);
         } else if (hbmType.hasTrait(SimpleFluidTraits.Viscous.class)) {

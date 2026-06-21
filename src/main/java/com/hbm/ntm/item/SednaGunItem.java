@@ -2389,7 +2389,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         }
     }
 
-    protected void addWear(ItemStack stack, int configIndex, int wear) {
+    protected void addWear(ItemStack stack, int configIndex, float wear) {
         if (wear <= 0) {
             return;
         }
@@ -2398,7 +2398,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         tag.putFloat(key, tag.getFloat(key) + wear);
     }
 
-    protected void addWearClamped(ItemStack stack, int configIndex, int wear, float durability) {
+    protected void addWearClamped(ItemStack stack, int configIndex, float wear, float durability) {
         if (wear <= 0) {
             return;
         }

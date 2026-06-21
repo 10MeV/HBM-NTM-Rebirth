@@ -42,7 +42,7 @@ public class PyroOvenRenderer implements BlockEntityRenderer<PyroOvenBlockEntity
         LegacyMachineDefinition definition = block.definition();
         int modelLight = LegacyRenderLighting.resolveMachineLight(pyroOven, state, definition, packedLight);
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
-                key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()));
+                key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()).asVBO());
         float anim = Mth.lerp(partialTick, pyroOven.getPrevAnim(), pyroOven.getAnim());
 
         poseStack.pushPose();

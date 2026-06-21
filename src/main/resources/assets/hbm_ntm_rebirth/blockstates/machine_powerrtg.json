@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/machine_powerrtg",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/machine_powerrtg",
+      "y": 270
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/machine_powerrtg"
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/machine_powerrtg",
+      "y": 90
+    }
+  }
+}

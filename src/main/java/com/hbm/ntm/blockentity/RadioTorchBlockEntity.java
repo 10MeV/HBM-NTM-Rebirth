@@ -4,6 +4,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.RadioTorchBlock;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.menu.RadioTorchMenu;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import net.minecraft.core.BlockPos;
@@ -46,8 +47,19 @@ public abstract class RadioTorchBlockEntity extends BlockEntity
         return worldPosition.relative(facing().getOpposite());
     }
 
+    protected BlockEntity attachedBlockEntity(Level level) {
+        return MultiblockHelper.resolveOperationalCoreBlockEntity(level, attachedPos());
+    }
+
     protected int attachedRedstoneInput(Level level) {
         BlockPos attached = attachedPos();
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, attached);
+        if (core != null) {
+            if (!MultiblockHelper.ensureOperationalCoreLayoutComplete(level, core.pos())) {
+                return 0;
+            }
+            attached = core.pos();
+        }
         BlockState attachedState = level.getBlockState(attached);
         if (attachedState.hasAnalogOutputSignal()) {
             return attachedState.getAnalogOutputSignal(level, attached);

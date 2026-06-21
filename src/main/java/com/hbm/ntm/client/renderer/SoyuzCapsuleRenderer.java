@@ -20,7 +20,7 @@ public class SoyuzCapsuleRenderer extends EntityRenderer<SoyuzCapsuleEntity> {
     public void render(SoyuzCapsuleEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        double time = entity.tickCount + partialTick;
+        double time = entity.level().getGameTime() + partialTick;
         float zWobble = (float) Math.sin(time * 0.05D) * 5.0F;
         float xWobble = (float) Math.sin(time * 0.05D + Math.PI * 0.5D) * 5.0F;
         poseStack.translate(0.0D, 7.0D, 0.0D);

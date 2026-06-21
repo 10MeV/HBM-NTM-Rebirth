@@ -22,7 +22,7 @@ public final class ObjBlockModels {
     public static final LegacyWavefrontModel TOASTER = model("toaster", "toaster_iron").noSmooth();
     public static final LegacyWavefrontModel DECO_COMPUTER = model("puter", "deco_computer").noSmooth();
     public static final LegacyWavefrontModel HEV_BATTERY = model("battery", "battery_top").noSmooth();
-    public static final LegacyWavefrontModel SKELETON_HOLDER = model("skeleton_holder", "skeleton").noSmooth().asVBO();
+    public static final LegacyWavefrontModel SKELETON_HOLDER = model("skeleton_holder", new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/skeleton.png")).noSmooth().asVBO();
     public static final LegacyWavefrontModel ANVIL = model("anvil", "anvil_iron").noSmooth();
     public static final LegacyWavefrontModel CRYSTAL_POWER = model("crystals_power", "crystal_pulsar").noSmooth();
     public static final LegacyWavefrontModel CRYSTAL_ENERGY = model("crystals_energy", "crystal_pulsar").noSmooth();
@@ -50,12 +50,17 @@ public final class ObjBlockModels {
     public static final LegacyWavefrontModel CHARGE_C4 = model("charge_c4", "charge_c4").noSmooth();
 
     public static final ResourceLocation PIPE_NEO_TEXTURE = texture("pipe_neo");
+    public static final ResourceLocation PIPE_SILVER_TEXTURE = texture("pipe_silver");
     public static final ResourceLocation PIPE_NEO_OVERLAY_TEXTURE = texture("pipe_neo_overlay");
 
     public static LegacyWavefrontModel model(String name, String textureName) {
+        return model(name, texture(textureName));
+    }
+
+    public static LegacyWavefrontModel model(String name, ResourceLocation texture) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/legacy_blocks/" + name + ".obj"),
-                texture(textureName));
+                new ResourceLocation(HbmNtm.MOD_ID, "models/blocks/" + name + ".obj"),
+                texture);
     }
 
     public static ResourceLocation texture(String name) {

@@ -1,0 +1,7 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/particleaccelerator/detector.obj",
+  "automatic_culling": false,
+  "flip_v": true,
+  "textures": { "particle": "hbm_ntm_rebirth:block/particleaccelerator/detector", "default": "hbm_ntm_rebirth:block/particleaccelerator/detector" }
+}

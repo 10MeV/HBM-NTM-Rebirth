@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:rod_zirnox_empty" },
+    { "item": "hbm_ntm_rebirth:lithium" },
+    { "item": "hbm_ntm_rebirth:lithium" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:rod_zirnox_lithium" }
+}

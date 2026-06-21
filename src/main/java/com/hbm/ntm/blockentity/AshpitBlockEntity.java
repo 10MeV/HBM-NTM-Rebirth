@@ -14,12 +14,14 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -39,6 +41,10 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
     private static final String TAG_ASH_MISC = "ashLevelMisc";
     private static final String TAG_ASH_FLY = "ashLevelFly";
     private static final String TAG_ASH_SOOT = "ashLevelSoot";
+    private static final String TAG_PLAYERS_USING = "playersUsing";
+    private static final String TAG_DOOR_ANGLE = "doorAngle";
+    private static final String TAG_PREV_DOOR_ANGLE = "prevDoorAngle";
+    private static final String TAG_IS_FULL = "isFull";
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -59,6 +65,10 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
     private int ashLevelMisc;
     private int ashLevelFly;
     private int ashLevelSoot;
+    private int playersUsing;
+    private float doorAngle;
+    private float prevDoorAngle;
+    private boolean isFull;
 
     public AshpitBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ASHPIT.get(), pos, state);
@@ -68,16 +78,30 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
         if (level.isClientSide) {
             return;
         }
+        boolean oldFull = ashpit.isFull;
         boolean changed = false;
         changed |= ashpit.processAsh(AshType.WOOD);
         changed |= ashpit.processAsh(AshType.COAL);
         changed |= ashpit.processAsh(AshType.MISC);
         changed |= ashpit.processAsh(AshType.FLY);
         changed |= ashpit.processAsh(AshType.SOOT);
+        ashpit.isFull = ashpit.hasOutputAsh();
+        changed |= oldFull != ashpit.isFull;
         if (changed) {
             ashpit.setChanged();
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
         ashpit.networkPackNT(50);
+    }
+
+    public static void clientTick(Level level, BlockPos pos, BlockState state, AshpitBlockEntity ashpit) {
+        if (!level.isClientSide) {
+            return;
+        }
+        ashpit.prevDoorAngle = ashpit.doorAngle;
+        float swingSpeed = ashpit.doorAngle / 10.0F + 3.0F;
+        ashpit.doorAngle += ashpit.playersUsing > 0 ? swingSpeed : -swingSpeed;
+        ashpit.doorAngle = Mth.clamp(ashpit.doorAngle, 0.0F, 135.0F);
     }
 
     @Override
@@ -91,6 +115,19 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
 
     public List<ItemStack> getDrops() {
         return HbmInventoryMenuHelper.clearToDrops(items);
+    }
+
+    public float getDoorAngle(float partialTick) {
+        return prevDoorAngle + (doorAngle - prevDoorAngle) * partialTick;
+    }
+
+    public boolean isFull() {
+        return isFull;
+    }
+
+    public void closeMenu(Player player) {
+        playersUsing = Math.max(0, playersUsing - 1);
+        syncToClient();
     }
 
     public void addWoodAsh(long amount) {
@@ -130,6 +167,15 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
                 new ItemStack(type.item())).isEmpty();
     }
 
+    private boolean hasOutputAsh() {
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
+            if (!items.getStackInSlot(slot).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private int ashLevel(AshType type) {
         return switch (type) {
             case WOOD -> ashLevelWood;
@@ -167,7 +213,18 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
+        playersUsing++;
+        syncToClient();
         return new AshpitMenu(containerId, inventory, this);
+    }
+
+    private void syncToClient() {
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            BlockState state = getBlockState();
+            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
+            networkPackNT(50);
+        }
     }
 
     @Override
@@ -180,6 +237,10 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
         tag.putInt(TAG_ASH_MISC, ashLevelMisc);
         tag.putInt(TAG_ASH_FLY, ashLevelFly);
         tag.putInt(TAG_ASH_SOOT, ashLevelSoot);
+        tag.putInt(TAG_PLAYERS_USING, playersUsing);
+        tag.putFloat(TAG_DOOR_ANGLE, doorAngle);
+        tag.putFloat(TAG_PREV_DOOR_ANGLE, prevDoorAngle);
+        tag.putBoolean(TAG_IS_FULL, isFull);
     }
 
     @Override
@@ -192,6 +253,10 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
         ashLevelMisc = tag.getInt(TAG_ASH_MISC);
         ashLevelFly = tag.getInt(TAG_ASH_FLY);
         ashLevelSoot = tag.getInt(TAG_ASH_SOOT);
+        playersUsing = Math.max(0, tag.getInt(TAG_PLAYERS_USING));
+        doorAngle = tag.getFloat(TAG_DOOR_ANGLE);
+        prevDoorAngle = tag.getFloat(TAG_PREV_DOOR_ANGLE);
+        isFull = tag.getBoolean(TAG_IS_FULL) || hasOutputAsh();
     }
 
     @Override

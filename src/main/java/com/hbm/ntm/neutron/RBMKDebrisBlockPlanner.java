@@ -112,6 +112,13 @@ public final class RBMKDebrisBlockPlanner {
         return new AddBlockPlan(actions, burningTickDelay(nextTickRandomPart));
     }
 
+    public static AddBlockPlan planRadiatingAdded(BlockPos origin, boolean flameRoll, int nextTickRandomPart) {
+        List<DebrisBlockAction> actions = flameRoll
+                ? List.of(DebrisBlockAction.flame(origin == null ? BlockPos.ZERO : origin, false))
+                : List.of();
+        return new AddBlockPlan(actions, radiatingTickDelay(nextTickRandomPart));
+    }
+
     public static AddBlockPlan planDigammaAdded() {
         return new AddBlockPlan(List.of(), DIGAMMA_SPREAD_TICK_DELAY);
     }

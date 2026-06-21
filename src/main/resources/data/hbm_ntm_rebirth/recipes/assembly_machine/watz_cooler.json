@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 2, "ingredient": { "tag": "forge:cast_plates/steel" }, "legacy_ore": "plateCastSteel" },
+    { "count": 4, "ingredient": { "tag": "forge:cast_plates/copper" }, "legacy_ore": "plateCastCopper" },
+    { "count": 2, "ingredient": { "tag": "forge:ingots/rubber" }, "legacy_ore": "ingotRubber" }
+  ],
+  "internal_name": "ass.watzcooler",
+  "output_fluids": [],
+  "output_items": [
+    { "count": 3, "item": "hbm_ntm_rebirth:watz_cooler" }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 189
+}

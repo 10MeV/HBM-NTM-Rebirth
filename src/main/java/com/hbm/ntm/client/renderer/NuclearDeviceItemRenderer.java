@@ -77,7 +77,7 @@ public class NuclearDeviceItemRenderer extends BlockEntityWithoutLevelRenderer {
         if (gui) {
             poseStack.scale(5.0F, 5.0F, 5.0F);
         }
-        NuclearDeviceRenderer.applyCustomNukeLegacyCommon(poseStack);
+        NuclearDeviceRenderer.applyCustomNukeLegacyItemCommon(poseStack);
         NuclearDeviceRenderer.renderCustomNuke(poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }

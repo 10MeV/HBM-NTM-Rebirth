@@ -1,5 +1,6 @@
 package com.hbm.ntm.explosion.vnt.standard;
 
+import com.hbm.ntm.explosion.LegacyExplosionFluidCleanup;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.explosion.vnt.interfaces.BlockAllocator;
 import net.minecraft.core.BlockPos;
@@ -59,7 +60,7 @@ public class BlockAllocatorWater implements BlockAllocator {
 
             BlockState state = level.getBlockState(blockPos);
             FluidState fluidState = level.getFluidState(blockPos);
-            boolean liquid = !fluidState.isEmpty();
+            boolean liquid = LegacyExplosionFluidCleanup.isLegacyLiquidBlock(state);
             if (!state.isAir() && !liquid) {
                 Optional<Float> resistance = explosion.damageCalculator().getBlockExplosionResistance(
                         explosion.compat(), level, blockPos, state, fluidState);
@@ -68,7 +69,9 @@ public class BlockAllocatorWater implements BlockAllocator {
                 }
             }
 
-            if (powerRemaining > 0.0F && !liquid && explosion.damageCalculator().shouldBlockExplode(
+            if (powerRemaining > 0.0F && liquid) {
+                LegacyExplosionFluidCleanup.addLegacyLiquidNeighborhood(level, blockPos, affectedBlocks);
+            } else if (powerRemaining > 0.0F && explosion.damageCalculator().shouldBlockExplode(
                     explosion.compat(), level, blockPos, state, powerRemaining)) {
                 affectedBlocks.add(blockPos.immutable());
             }

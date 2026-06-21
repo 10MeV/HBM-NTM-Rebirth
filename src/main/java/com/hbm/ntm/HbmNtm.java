@@ -103,6 +103,7 @@ public class HbmNtm {
             ModMessages.register();
             ModMessages.logProtocolAudit();
             HbmBatteryTransfer.setCreativeBatteryPredicate(stack -> stack.is(ModItems.BATTERY_CREATIVE.get()));
+            ModItems.registerToolStacks();
         });
         if (HbmCommonConfig.startupLoggingEnabled()) {
             LOGGER.info("HBM NTM migration scaffold loaded. Source semantics: 1.7.10 first, 1.20.1 reference second.");

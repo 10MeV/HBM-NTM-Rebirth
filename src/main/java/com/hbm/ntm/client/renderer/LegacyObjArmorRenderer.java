@@ -165,8 +165,15 @@ public final class LegacyObjArmorRenderer {
     private static void renderExtras(Spec spec, ItemStack stack, net.minecraft.client.model.geom.ModelPart modelPart,
                                      PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                                      ExtraPart... extras) {
+        renderExtrasPass(spec, stack, modelPart, poseStack, buffer, packedLight, false, extras);
+        renderExtrasPass(spec, stack, modelPart, poseStack, buffer, packedLight, true, extras);
+    }
+
+    private static void renderExtrasPass(Spec spec, ItemStack stack, net.minecraft.client.model.geom.ModelPart modelPart,
+                                         PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                         boolean translucentPass, ExtraPart... extras) {
         for (ExtraPart extra : extras) {
-            if (!extra.shouldRender(stack)) {
+            if (!extra.shouldRender(stack) || extra.usesTranslucentRenderType() != translucentPass) {
                 continue;
             }
             poseStack.pushPose();
@@ -179,27 +186,32 @@ public final class LegacyObjArmorRenderer {
                 poseStack.mulPose(Axis.ZP.rotationDegrees((float) extra.rotationDegrees()));
                 poseStack.translate(-extra.pivotX(), -extra.pivotY(), -extra.pivotZ());
             }
-            int light = extra.fullBright() ? FULL_BRIGHT : packedLight;
-            if (extra.untextured()) {
-                ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, light, OverlayTexture.NO_OVERLAY)
-                        .withColor((extra.red() << 16) | (extra.green() << 8) | extra.blue())
-                        .withAlpha(extra.alpha());
-                if (extra.additive()) {
-                    spec.model().renderPartUntexturedAdditive(extra.part(), context);
-                } else {
-                    spec.model().renderPartUntextured(extra.part(), context);
-                }
-            } else if (extra.additive()) {
-                spec.model().renderPartAdditive(extra.part(), extra.texture(), poseStack, buffer, FULL_BRIGHT,
-                        OverlayTexture.NO_OVERLAY, extra.red(), extra.green(), extra.blue(), extra.alpha());
-            } else if (extra.translucent()) {
-                spec.model().renderPartTranslucent(extra.part(), extra.texture(), poseStack, buffer, light,
-                        OverlayTexture.NO_OVERLAY, extra.red(), extra.green(), extra.blue(), extra.alpha());
-            } else {
-                spec.model().renderPart(extra.part(), extra.texture(), poseStack, buffer, light,
-                        OverlayTexture.NO_OVERLAY, extra.red(), extra.green(), extra.blue(), extra.alpha());
-            }
+            renderExtra(spec, extra, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
             poseStack.popPose();
+        }
+    }
+
+    private static void renderExtra(Spec spec, ExtraPart extra, PoseStack poseStack, MultiBufferSource buffer,
+                                    int packedLight, int packedOverlay) {
+        int light = extra.fullBright() ? FULL_BRIGHT : packedLight;
+        if (extra.untextured()) {
+            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, light, packedOverlay)
+                    .withColor((extra.red() << 16) | (extra.green() << 8) | extra.blue())
+                    .withAlpha(extra.alpha());
+            if (extra.additive()) {
+                spec.model().renderPartUntexturedAdditive(extra.part(), context);
+            } else {
+                spec.model().renderPartUntextured(extra.part(), context);
+            }
+        } else if (extra.additive()) {
+            spec.model().renderPartAdditive(extra.part(), extra.texture(), poseStack, buffer, FULL_BRIGHT,
+                    packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());
+        } else if (extra.translucent()) {
+            spec.model().renderPartTranslucent(extra.part(), extra.texture(), poseStack, buffer, light,
+                    packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());
+        } else {
+            spec.model().renderPart(extra.part(), extra.texture(), poseStack, buffer, light,
+                    packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());
         }
     }
 
@@ -527,30 +539,17 @@ public final class LegacyObjArmorRenderer {
 
         private static void renderItemExtras(Spec spec, ItemStack stack, PoseStack poseStack, MultiBufferSource buffer,
                 int packedLight, int packedOverlay, ExtraPart... extras) {
+            renderItemExtrasPass(spec, stack, poseStack, buffer, packedLight, packedOverlay, false, extras);
+            renderItemExtrasPass(spec, stack, poseStack, buffer, packedLight, packedOverlay, true, extras);
+        }
+
+        private static void renderItemExtrasPass(Spec spec, ItemStack stack, PoseStack poseStack, MultiBufferSource buffer,
+                int packedLight, int packedOverlay, boolean translucentPass, ExtraPart... extras) {
             for (ExtraPart extra : extras) {
-                if (!extra.shouldRender(stack)) {
+                if (!extra.shouldRender(stack) || extra.usesTranslucentRenderType() != translucentPass) {
                     continue;
                 }
-                int light = extra.fullBright() ? FULL_BRIGHT : packedLight;
-                if (extra.untextured()) {
-                    ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, light, packedOverlay)
-                            .withColor((extra.red() << 16) | (extra.green() << 8) | extra.blue())
-                            .withAlpha(extra.alpha());
-                    if (extra.additive()) {
-                        spec.model().renderPartUntexturedAdditive(extra.part(), context);
-                    } else {
-                        spec.model().renderPartUntextured(extra.part(), context);
-                    }
-                } else if (extra.additive()) {
-                    spec.model().renderPartAdditive(extra.part(), extra.texture(), poseStack, buffer, FULL_BRIGHT,
-                            packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());
-                } else if (extra.translucent()) {
-                    spec.model().renderPartTranslucent(extra.part(), extra.texture(), poseStack, buffer, light,
-                            packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());
-                } else {
-                    spec.model().renderPart(extra.part(), extra.texture(), poseStack, buffer, light,
-                            packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());
-                }
+                renderExtra(spec, extra, poseStack, buffer, packedLight, packedOverlay);
             }
         }
     }
@@ -665,6 +664,10 @@ public final class LegacyObjArmorRenderer {
 
         private boolean shouldRender(ItemStack stack) {
             return requiredBooleanTag == null || stack.hasTag() && stack.getTag().getBoolean(requiredBooleanTag);
+        }
+
+        private boolean usesTranslucentRenderType() {
+            return translucent || additive;
         }
 
         private double rotationDegrees() {

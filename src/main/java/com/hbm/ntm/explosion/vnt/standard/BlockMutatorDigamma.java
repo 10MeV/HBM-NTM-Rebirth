@@ -15,7 +15,10 @@ public class BlockMutatorDigamma implements BlockMutator {
 
     @Override
     public void mutatePre(ExplosionVnt explosion, BlockState state, BlockPos pos) {
-        if (!state.isCollisionShapeFullBlock(explosion.level(), pos)) {
+        if (explosion.level().isOutsideBuildHeight(pos)) {
+            return;
+        }
+        if (!state.isSolidRender(explosion.level(), pos)) {
             return;
         }
 
@@ -29,6 +32,7 @@ public class BlockMutatorDigamma implements BlockMutator {
         BlockPos above = pos.above();
         BlockState fire = ModBlocks.FIRE_DIGAMMA.get().defaultBlockState();
         if (explosion.level().random.nextInt(5) == 0
+                && !explosion.level().isOutsideBuildHeight(above)
                 && explosion.level().getBlockState(above).isAir()
                 && fire.canSurvive(explosion.level(), above)) {
             explosion.level().setBlock(above, fire, 3);

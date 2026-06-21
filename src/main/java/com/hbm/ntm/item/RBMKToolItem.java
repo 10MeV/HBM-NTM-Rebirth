@@ -39,30 +39,39 @@ public class RBMKToolItem extends Item {
         BlockPos clickedPos = context.getClickedPos();
         ItemStack stack = context.getItemInHand();
 
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, clickedPos);
-        if (core == null) {
-            return InteractionResult.PASS;
-        }
-        BlockEntity blockEntity = level.getBlockEntity(core.pos());
-        if (core.state().getBlock() instanceof RBMKPanelBlock panelBlock
+        BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level, clickedPos);
+        BlockPos resolvedPos = blockEntity == null ? clickedPos : blockEntity.getBlockPos();
+        if (level.getBlockState(resolvedPos).getBlock() instanceof RBMKPanelBlock panelBlock
                 && panelBlock.panelType() == RBMKPanelPlanner.PanelType.DISPLAY
                 && hasStoredTarget(stack)) {
             if (!level.isClientSide && blockEntity instanceof RBMKPanelBlockEntity panel) {
-                panel.setDisplayTarget(storedTarget(stack));
+                if (!panel.setDisplayTarget(storedTarget(stack))) {
+                    return InteractionResult.PASS;
+                }
                 sendStatus(context.getPlayer(), "item.rbmk_tool.set");
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         if (blockEntity instanceof RBMKCraneConsoleBlockEntity console && hasStoredTarget(stack)) {
+            if (!level.isClientSide && !MultiblockHelper.ensureOperationalCoreLayoutComplete(level, resolvedPos)) {
+                return InteractionResult.PASS;
+            }
             if (!level.isClientSide) {
-                console.setTarget(storedTarget(stack));
+                if (!console.setTarget(storedTarget(stack))) {
+                    return InteractionResult.PASS;
+                }
                 sendStatus(context.getPlayer(), "item.rbmk_tool.set");
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         if (blockEntity instanceof RBMKConsoleBlockEntity console && hasStoredTarget(stack)) {
+            if (!level.isClientSide && !MultiblockHelper.ensureOperationalCoreLayoutComplete(level, resolvedPos)) {
+                return InteractionResult.PASS;
+            }
             if (!level.isClientSide) {
-                console.setTarget(storedTarget(stack));
+                if (!console.setTarget(storedTarget(stack))) {
+                    return InteractionResult.PASS;
+                }
                 sendStatus(context.getPlayer(), "item.rbmk_tool.set");
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
@@ -70,8 +79,11 @@ public class RBMKToolItem extends Item {
         if (!(blockEntity instanceof RBMKColumnBlockEntity)) {
             return InteractionResult.PASS;
         }
+        if (!level.isClientSide && !MultiblockHelper.ensureOperationalCoreLayoutComplete(level, resolvedPos)) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide) {
-            storeTarget(stack, core.pos());
+            storeTarget(stack, resolvedPos);
             sendStatus(context.getPlayer(), "item.rbmk_tool.linked");
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

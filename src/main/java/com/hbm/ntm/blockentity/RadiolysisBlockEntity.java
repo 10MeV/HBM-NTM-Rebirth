@@ -16,8 +16,8 @@ import com.hbm.ntm.recipe.RadiolysisRecipes;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmItemStackUtil;
+import com.hbm.ntm.util.RtgPelletRuntime;
 import java.util.List;
-import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -62,18 +62,6 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
     private static final String TAG_POWER = "power";
     private static final String TAG_HEAT = "heat";
     private static final String CONTAGION_TAG = "ntmContagion";
-    private static final Map<String, Integer> RTG_HEAT = Map.ofEntries(
-            Map.entry("pellet_rtg_radium", 3),
-            Map.entry("pellet_rtg_weak", 5),
-            Map.entry("pellet_rtg", 10),
-            Map.entry("pellet_rtg_strontium", 15),
-            Map.entry("pellet_rtg_cobalt", 15),
-            Map.entry("pellet_rtg_actinium", 20),
-            Map.entry("pellet_rtg_americium", 20),
-            Map.entry("pellet_rtg_polonium", 50),
-            Map.entry("pellet_rtg_gold", 100),
-            Map.entry("pellet_rtg_lead", 200));
-
     private final HbmFluidTank inputTank;
     private final HbmFluidTank outputTank1;
     private final HbmFluidTank outputTank2;
@@ -282,7 +270,7 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-1, 0, -1), worldPosition.offset(2, 3, 2));
+        return new AABB(worldPosition.offset(-2, -1, -2), worldPosition.offset(3, 4, 3));
     }
 
     private boolean tickServer(Level level, BlockPos pos, BlockState state) {
@@ -334,11 +322,7 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
     }
 
     private int calculateHeat() {
-        int total = 0;
-        for (int slot = SLOT_RTG_START; slot <= SLOT_RTG_END; slot++) {
-            total += rtgHeat(items.getStackInSlot(slot));
-        }
-        return total;
+        return RtgPelletRuntime.updateHeat(items, SLOT_RTG_START, SLOT_RTG_END);
     }
 
     private void setupTanks() {
@@ -415,14 +399,7 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
     }
 
     private static int rtgHeat(ItemStack stack) {
-        if (stack.isEmpty()) {
-            return 0;
-        }
-        ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
-        if (id == null) {
-            return 0;
-        }
-        return RTG_HEAT.getOrDefault(id.getPath(), 0);
+        return RtgPelletRuntime.heat(stack);
     }
 
     private static boolean isDepletedRtg(ItemStack stack) {

@@ -1,5 +1,7 @@
 package com.hbm.ntm.neutron;
 
+import com.hbm.ntm.block.RBMKColumnBlock;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -48,6 +50,10 @@ public final class RBMKNeutronHandler {
             NeutronNodeWorld.removeNode(level, pos);
             return;
         }
+        if (!isOperationalColumn(level, pos)) {
+            NeutronNodeWorld.removeNode(level, pos);
+            return;
+        }
 
         NeutronNodeWorld.StreamWorld streamWorld = NeutronNodeWorld.getOrAddWorld(level);
         RBMKNeutronNode node = makeNode(streamWorld, blockEntity);
@@ -69,6 +75,10 @@ public final class RBMKNeutronHandler {
             NeutronNodeWorld.removeNode(level, pos);
             return;
         }
+        if (!isOperationalColumn(level, pos)) {
+            NeutronNodeWorld.removeNode(level, pos);
+            return;
+        }
 
         NeutronNodeWorld.StreamWorld streamWorld = NeutronNodeWorld.getOrAddWorld(level);
         RBMKNeutronNode node = makeNode(streamWorld, blockEntity);
@@ -85,6 +95,13 @@ public final class RBMKNeutronHandler {
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
         return new Vec3(vector.x * cos + vector.z * sin, vector.y, vector.z * cos - vector.x * sin);
+    }
+
+    private static boolean isOperationalColumn(Level level, BlockPos pos) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        return core != null
+                && core.state().getBlock() instanceof RBMKColumnBlock
+                && MultiblockHelper.ensureOperationalCoreLayoutComplete(level, core.pos());
     }
 
     public enum RBMKType {
@@ -199,19 +216,9 @@ public final class RBMKNeutronHandler {
             Iterator<BlockPos> positions = getBlocks(fluxRange);
             for (int i = 0; i < fluxRange && positions.hasNext(); i++) {
                 BlockPos pos = positions.next();
-                NeutronNode node = streamWorld.getNode(pos);
-                if (node instanceof RBMKNeutronNode) {
+                RBMKNeutronNode node = resolveNode(level, streamWorld, pos, addNode);
+                if (node != null) {
                     nodes[i] = node;
-                    continue;
-                }
-
-                BlockEntity blockEntity = level.getBlockEntity(pos);
-                if (blockEntity instanceof RBMKNeutronColumn) {
-                    node = makeNode(streamWorld, blockEntity);
-                    nodes[i] = node;
-                    if (addNode) {
-                        streamWorld.addNode(node);
-                    }
                 }
             }
             return nodes;
@@ -260,7 +267,7 @@ public final class RBMKNeutronHandler {
                 }
 
                 if (!targetNode.hasLid()) {
-                    leak(level, targetPos, (float) (getFluxQuantity() * 0.05D));
+                    leak(level, targetNode.getPos(), (float) (getFluxQuantity() * 0.05D));
                 }
 
                 if (type == RBMKType.MODERATOR || targetNode.isModerated()) {
@@ -311,12 +318,20 @@ public final class RBMKNeutronHandler {
             int hits = 0;
             for (int h = 0; h < settings.columnHeight(); h++) {
                 BlockPos hitPos = pos.above(h);
-                BlockState state = level.getBlockState(hitPos);
-                if (state.isSolidRender(level, hitPos)) {
+                if (isFluxBlockingColumnSegment(level, hitPos)) {
                     hits++;
                 }
             }
             return hits;
+        }
+
+        private boolean isFluxBlockingColumnSegment(Level level, BlockPos pos) {
+            MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+            if (core != null && core.state().getBlock() instanceof RBMKColumnBlock) {
+                return true;
+            }
+            BlockState state = level.getBlockState(pos);
+            return state.isSolidRender(level, pos);
         }
 
         public void moderateStream() {
@@ -337,11 +352,33 @@ public final class RBMKNeutronHandler {
         }
 
         private RBMKNeutronNode resolveNode(Level level, NeutronNodeWorld.StreamWorld streamWorld, BlockPos pos, boolean addNode) {
-            NeutronNode node = streamWorld.getNode(pos);
-            if (node instanceof RBMKNeutronNode rbmkNode) {
-                return rbmkNode;
+            BlockPos corePos = pos;
+            MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+            if (core != null) {
+                corePos = core.pos();
+                if (core.state().getBlock() instanceof RBMKColumnBlock
+                        && !MultiblockHelper.ensureOperationalCoreLayoutComplete(level, corePos)) {
+                    streamWorld.removeNode(corePos);
+                    if (!corePos.equals(pos)) {
+                        streamWorld.removeNode(pos);
+                    }
+                    return null;
+                }
+                if (!corePos.equals(pos)) {
+                    streamWorld.removeNode(pos);
+                }
+                NeutronNode node = streamWorld.getNode(corePos);
+                if (node instanceof RBMKNeutronNode rbmkNode) {
+                    return rbmkNode;
+                }
+            } else {
+                NeutronNode node = streamWorld.getNode(pos);
+                if (node instanceof RBMKNeutronNode rbmkNode) {
+                    return rbmkNode;
+                }
             }
-            BlockEntity blockEntity = level.getBlockEntity(pos);
+
+            BlockEntity blockEntity = level.getBlockEntity(corePos);
             if (!(blockEntity instanceof RBMKNeutronColumn)) {
                 return null;
             }

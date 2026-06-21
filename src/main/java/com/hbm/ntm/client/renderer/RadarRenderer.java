@@ -1,6 +1,5 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.RadarBlockEntity;
@@ -44,13 +43,11 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = radar.getBlockState();
         LegacyWavefrontModel model = ObjModelLibrary.MACHINE_RADAR_LEGACY;
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(radar, packedLight);
+        int modelLight = LegacyRenderLighting.resolveMultiblockLight(radar, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        if (state.hasProperty(HorizontalMachineBlock.FACING)) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((state.getValue(HorizontalMachineBlock.FACING).toYRot() + 180.0F) % 360.0F));
-        }
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
         model.renderPart("Base", poseStack, buffer, modelLight, packedOverlay);
 
         poseStack.pushPose();

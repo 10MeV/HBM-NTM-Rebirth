@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "hbm_ntm_rebirth:block/crate_desh_top",
+    "side": "hbm_ntm_rebirth:block/crate_desh_side"
+  }
+}

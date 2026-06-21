@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:fusion_reactor",
+  "internal_name": "fus.stellar",
+  "duration": 100,
+  "power": 25000,
+  "input_items": [],
+  "input_fluids": [{ "fluid": "hbm_ntm_rebirth:stellar_flux", "amount": 10 }],
+  "output_items": [{ "item": "hbm_ntm_rebirth:powder_gold" }],
+  "output_fluids": [],
+  "pools": [],
+  "ignitionTemp": 10000000,
+  "outputTemp": 50000000,
+  "outputFlux": 10000.0,
+  "r": 1.0,
+  "g": 0.4,
+  "b": 0.1
+}

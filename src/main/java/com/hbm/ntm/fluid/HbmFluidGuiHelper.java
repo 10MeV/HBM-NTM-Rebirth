@@ -10,6 +10,7 @@ import net.minecraftforge.fml.DistExecutor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 public final class HbmFluidGuiHelper {
     private HbmFluidGuiHelper() {
@@ -22,8 +23,12 @@ public final class HbmFluidGuiHelper {
     }
 
     public static TankData watchTank(DataSlotSink sink, HbmFluidTank tank) {
+        return watchTank(sink, tank, null);
+    }
+
+    public static TankData watchTank(DataSlotSink sink, HbmFluidTank tank, BooleanSupplier visible) {
         TankData data = new TankData(tank);
-        data.addTo(sink);
+        data.addTo(sink, visible);
         return data;
     }
 
@@ -284,10 +289,15 @@ public final class HbmFluidGuiHelper {
         }
 
         private void addTo(DataSlotSink sink) {
+            addTo(sink, null);
+        }
+
+        private void addTo(DataSlotSink sink, BooleanSupplier visible) {
+            BooleanSupplier guard = visible == null ? () -> true : visible;
             sink.add(new DataSlot() {
                 @Override
                 public int get() {
-                    return tank.getFill();
+                    return guard.getAsBoolean() ? tank.getFill() : 0;
                 }
 
                 @Override
@@ -298,7 +308,7 @@ public final class HbmFluidGuiHelper {
             sink.add(new DataSlot() {
                 @Override
                 public int get() {
-                    return tank.getMaxFill();
+                    return guard.getAsBoolean() ? tank.getMaxFill() : 0;
                 }
 
                 @Override
@@ -309,7 +319,7 @@ public final class HbmFluidGuiHelper {
             sink.add(new DataSlot() {
                 @Override
                 public int get() {
-                    return tank.getTankType().getId();
+                    return guard.getAsBoolean() ? tank.getTankType().getId() : HbmFluids.NONE.getId();
                 }
 
                 @Override
@@ -320,7 +330,7 @@ public final class HbmFluidGuiHelper {
             sink.add(new DataSlot() {
                 @Override
                 public int get() {
-                    return tank.getPressure();
+                    return guard.getAsBoolean() ? tank.getPressure() : 0;
                 }
 
                 @Override

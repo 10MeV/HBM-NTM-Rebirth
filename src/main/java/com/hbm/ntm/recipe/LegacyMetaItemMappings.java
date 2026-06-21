@@ -53,6 +53,9 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation PWR_FUEL_DEPLETED = hbm("pwr_fuel_depleted");
     public static final ResourceLocation WATZ_PELLET = hbm("watz_pellet");
     public static final ResourceLocation AMMO_STANDARD = hbm("ammo_standard");
+    public static final ResourceLocation FUSION_COMPONENT = hbm("fusion_component");
+    public static final ResourceLocation ITEM_SECRET = hbm("item_secret");
+    public static final ResourceLocation MOTOR = hbm("motor");
 
     private static final Map<ResourceLocation, LinkedHashMap<Integer, RegistryObject<Item>>> ITEM_VARIANTS = new LinkedHashMap<>();
 
@@ -194,6 +197,15 @@ public final class LegacyMetaItemMappings {
                 Map.entry(76, requireLegacyItem("ammo_standard_nuke_tots")),
                 Map.entry(83, requireLegacyItem("ammo_standard_bmg50_he")),
                 Map.entry(94, requireLegacyItem("ammo_standard_bmg50_sm"))));
+        registerSparse(FUSION_COMPONENT, Map.of(
+                0, requireLegacyItem("fusion_component_bscco"),
+                1, requireLegacyItem("fusion_component_bscco_welded"),
+                2, requireLegacyItem("fusion_component_blanket"),
+                3, requireLegacyItem("fusion_component_motor")));
+        registerSparse(ITEM_SECRET, Map.of(
+                2, requireLegacyItem("item_secret_selenium_steel")));
+        registerSparse(MOTOR, Map.of(
+                0, ModItems.MOTOR));
         registerSparse(FUEL_ADDITIVE, Map.of(
                 0, requireLegacyItem("fuel_additive_antiknock"),
                 1, requireLegacyItem("fuel_additive_deicer")));

@@ -3,7 +3,7 @@ package com.hbm.ntm.client;
 import java.util.ArrayList;
 import java.util.List;
 
-final class ClientRadiationData {
+public final class ClientRadiationData {
     private static float radiation;
     private static float digamma;
     private static float environment;
@@ -44,7 +44,7 @@ final class ClientRadiationData {
         ClientRadiationData.phosphorus = phosphorus;
         ClientRadiationData.balefire = balefire;
         ClientRadiationData.blackFire = blackFire;
-        ClientRadiationData.contaminationEffects = List.copyOf(contaminationEffects);
+        ClientRadiationData.contaminationEffects = contaminationEffects == null ? List.of() : List.copyOf(contaminationEffects);
         PlayerRadiationSyncData snapshot = snapshot();
         for (ClientRadiationDataListener listener : List.copyOf(LISTENERS)) {
             listener.onClientRadiationData(snapshot);
@@ -161,7 +161,7 @@ final class ClientRadiationData {
             int asbestos, int blackLung, int bombTimer, int contagion, int oil, int fire, int phosphorus, int balefire, int blackFire,
             List<ContaminationEffectData> contaminationEffects) {
         public PlayerRadiationSyncData {
-            contaminationEffects = List.copyOf(contaminationEffects);
+            contaminationEffects = contaminationEffects == null ? List.of() : List.copyOf(contaminationEffects);
         }
     }
 

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    " W ",
+    " B "
+  ],
+  "key": {
+    "B": {
+      "tag": "forge:ingots/boron"
+    },
+    "W": {
+      "tag": "minecraft:planks"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:pile_rod_boron"
+  }
+}

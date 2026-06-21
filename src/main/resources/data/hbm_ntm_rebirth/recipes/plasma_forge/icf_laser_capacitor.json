@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 800,
+  "ignitionTemp": 1000000,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 1, "ingredient": { "tag": "forge:welded_plates/any_resistant_alloy" }, "legacy_ore": "plateWeldedAnyResistantAlloy" },
+    { "count": 16, "ingredient": { "tag": "forge:dense_wires/neodymium" }, "legacy_ore": "wireDenseNeodymium" },
+    { "count": 2, "ingredient": { "tag": "forge:dense_wires/schrabidium" }, "legacy_ore": "wireDenseSchrabidium" }
+  ],
+  "internal_name": "plsm.icfcapacitor",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:icf_laser_capacitor" }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 121
+}

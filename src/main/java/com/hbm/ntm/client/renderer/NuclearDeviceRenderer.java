@@ -2,10 +2,14 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.NuclearDeviceBlock;
 import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjNukeModels;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.client.GraphicsStatus;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -35,7 +39,17 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
 
     public static void renderKind(NuclearDeviceBlock.Kind kind, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        model(kind).renderAll(texture(kind), poseStack, buffer, packedLight, packedOverlay);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
+                .withRenderMode(renderMode(kind));
+        if (kind == NuclearDeviceBlock.Kind.GADGET) {
+            LegacyWavefrontModel model = model(kind);
+            model.renderOnly(texture(kind), context, "Body");
+            if (fancyGraphics()) {
+                model.renderOnly(texture(kind), context, "Wires");
+            }
+            return;
+        }
+        model(kind).renderAll(texture(kind), context);
     }
 
     public static LegacyWavefrontModel model(NuclearDeviceBlock.Kind kind) {
@@ -67,17 +81,34 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
     }
 
     public static void renderCustomNuke(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjNukeModels.BOY.renderAll(ObjNukeModels.CUSTOM_NUKE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
+        ObjNukeModels.BOY.renderAll(ObjNukeModels.CUSTOM_NUKE_TEXTURE, context);
     }
 
-    public static void applyCustomNukeLegacyCommon(PoseStack poseStack) {
+    public static void applyCustomNukeLegacyItemCommon(PoseStack poseStack) {
         poseStack.translate(-1.0D, 0.0D, 0.0D);
+    }
+
+    public static void applyCustomNukeLegacyWorldTranslation(PoseStack poseStack) {
+        poseStack.translate(-2.0D, 0.0D, 0.0D);
     }
 
     private static void applyLegacyBlockTranslation(NuclearDeviceBlock.Kind kind, PoseStack poseStack) {
         if (kind == NuclearDeviceBlock.Kind.BOY) {
             poseStack.translate(-2.0D, 0.0D, 0.0D);
         }
+    }
+
+    private static LegacyTexturedRenderMode renderMode(NuclearDeviceBlock.Kind kind) {
+        return switch (kind) {
+            case BOY, FLEIJA, N2 -> LegacyTexturedRenderMode.CUTOUT_CULL;
+            case GADGET, MAN, TSAR, MIKE, PROTOTYPE, SOLINIUM -> LegacyTexturedRenderMode.CUTOUT_NO_CULL;
+        };
+    }
+
+    private static boolean fancyGraphics() {
+        GraphicsStatus graphics = Minecraft.getInstance().options.graphicsMode().get();
+        return graphics == GraphicsStatus.FANCY || graphics == GraphicsStatus.FABULOUS;
     }
 
     @Override

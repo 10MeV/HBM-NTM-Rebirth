@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 4, "ingredient": { "tag": "forge:ingots/any_hard_plastic" }, "legacy_ore": "ingotAnyHardPlastic" },
+    { "count": 2, "ingredient": { "tag": "forge:pipes/copper" }, "legacy_ore": "pipeCopper" },
+    { "count": 2, "ingredient": { "item": "hbm_ntm_rebirth:motor" }, "legacy_id": "hbm:motor", "legacy_meta": 0 },
+    { "count": 1, "ingredient": { "item": "hbm_ntm_rebirth:circuit_basic" }, "legacy_id": "hbm:circuit", "legacy_meta": 8 }
+  ],
+  "internal_name": "ass.fusionpipes",
+  "output_fluids": [],
+  "output_items": [
+    { "count": 4, "item": "hbm_ntm_rebirth:fusion_component_motor" }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 178
+}

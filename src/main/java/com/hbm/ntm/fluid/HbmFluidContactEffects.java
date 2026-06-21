@@ -60,7 +60,8 @@ public final class HbmFluidContactEffects {
             float damage = (0.2F + (temperature - 100) * 0.02F) * intensity;
             report.addDirectDamage("temperature_hot", damage);
             if (apply) {
-                EntityDamageUtil.attackEntityFromIgnoreIFrame(entity, entity.damageSources().onFire(), damage);
+                EntityDamageUtil.attackEntityFromIgnoreIFrame(entity,
+                        ModDamageSources.source(entity.level(), ModDamageSources.BOIL), damage);
                 if (temperature >= 500) {
                     entity.setSecondsOnFire(10);
                 }
@@ -71,7 +72,8 @@ public final class HbmFluidContactEffects {
             report.addEffect(MobEffects.MOVEMENT_SLOWDOWN, scaleDuration(100, intensity), 2);
             report.addEffect(MobEffects.DIG_SLOWDOWN, scaleDuration(100, intensity), 4);
             if (apply) {
-                EntityDamageUtil.attackEntityFromIgnoreIFrame(living, living.damageSources().freeze(), damage);
+                EntityDamageUtil.attackEntityFromIgnoreIFrame(living,
+                        ModDamageSources.source(living.level(), ModDamageSources.ICE), damage);
                 living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, scaleDuration(100, intensity), 2));
                 living.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, scaleDuration(100, intensity), 4));
             }
@@ -156,6 +158,29 @@ public final class HbmFluidContactEffects {
                         living.addEffect(new MobEffectInstance(effect.get(), duration, spec.amplifier(), spec.ambient(), true));
                     }
                 }
+            } else if (entry instanceof com.hbm.inventory.fluid.trait.FT_Toxin.ToxinDirectDamage damage) {
+                int delay = Math.max(0, damage.getDelayTicks());
+                if (delay == 0 || living.level().getGameTime() % delay == 0) {
+                    float amount = damage.getAmount() * intensity;
+                    report.addDirectDamage(damage.getDamageType().toString(), amount);
+                    if (apply) {
+                        EntityDamageUtil.attackEntityFromIgnoreIFrame(living,
+                                resolveDamage(living.level(), damage.getDamageType()), amount);
+                    }
+                }
+            } else if (entry instanceof com.hbm.inventory.fluid.trait.FT_Toxin.ToxinEffects effects) {
+                for (ToxinFluidTrait.EffectSpec spec : effects.getEffects()) {
+                    Optional<MobEffect> effect = resolveEffect(spec.effect());
+                    if (effect.isEmpty()) {
+                        report.unresolvedEffects++;
+                        continue;
+                    }
+                    int duration = scaleDuration(spec.durationTicks(), intensity);
+                    report.addEffect(effect.get(), duration, spec.amplifier());
+                    if (apply) {
+                        living.addEffect(new MobEffectInstance(effect.get(), duration, spec.amplifier(), spec.ambient(), true));
+                    }
+                }
             }
         }
     }
@@ -180,6 +205,10 @@ public final class HbmFluidContactEffects {
     }
 
     private static DamageSource resolveDamage(Level level, ResourceLocation damageType) {
+        try {
+            return ModDamageSources.source(level, damageType.toString());
+        } catch (IllegalArgumentException ignored) {
+        }
         if (damageType.getNamespace().equals(HbmNtm.MOD_ID) && damageType.getPath().equals("cloud")) {
             return ModDamageSources.cloud(level);
         }

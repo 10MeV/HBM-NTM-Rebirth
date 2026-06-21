@@ -19,17 +19,24 @@ public class LegacyOutgasBlock extends RadiatingHazardBlock {
     private final boolean onBreak;
     private final boolean onNeighbour;
     private final boolean walkingRelease;
+    private final boolean volumeReleaseOnBreak;
 
     public LegacyOutgasBlock(String legacyName, Properties properties, Supplier<? extends Block> gas, boolean onBreak, boolean onNeighbour) {
         this(legacyName, properties, gas, onBreak, onNeighbour, false);
     }
 
     public LegacyOutgasBlock(String legacyName, Properties properties, Supplier<? extends Block> gas, boolean onBreak, boolean onNeighbour, boolean walkingRelease) {
+        this(legacyName, properties, gas, onBreak, onNeighbour, walkingRelease, false);
+    }
+
+    public LegacyOutgasBlock(String legacyName, Properties properties, Supplier<? extends Block> gas, boolean onBreak, boolean onNeighbour,
+            boolean walkingRelease, boolean volumeReleaseOnBreak) {
         super(legacyName, properties);
         this.gas = gas;
         this.onBreak = onBreak;
         this.onNeighbour = onNeighbour;
         this.walkingRelease = walkingRelease;
+        this.volumeReleaseOnBreak = volumeReleaseOnBreak;
     }
 
     @Override
@@ -53,8 +60,13 @@ public class LegacyOutgasBlock extends RadiatingHazardBlock {
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         super.onRemove(state, level, pos, newState, movedByPiston);
-        if (!level.isClientSide && onBreak && state.getBlock() != newState.getBlock() && newState.isAir()) {
-            level.setBlock(pos, gas.get().defaultBlockState(), Block.UPDATE_ALL);
+        if (level.isClientSide || !onBreak || state.getBlock() == newState.getBlock() || !newState.isAir()) {
+            return;
+        }
+
+        level.setBlock(pos, gas.get().defaultBlockState(), Block.UPDATE_ALL);
+        if (volumeReleaseOnBreak) {
+            releaseGasVolume(level, pos);
         }
     }
 
@@ -73,6 +85,19 @@ public class LegacyOutgasBlock extends RadiatingHazardBlock {
     private void placeGas(Level level, BlockPos pos) {
         if (level.isEmptyBlock(pos)) {
             level.setBlock(pos, gas.get().defaultBlockState(), Block.UPDATE_ALL);
+        }
+    }
+
+    private void releaseGasVolume(Level level, BlockPos pos) {
+        for (int ix = -2; ix <= 2; ix++) {
+            for (int iy = -2; iy <= 2; iy++) {
+                for (int iz = -2; iz <= 2; iz++) {
+                    int legacySum = Math.abs(ix + iy + iz);
+                    if (legacySum > 0 && legacySum < 5) {
+                        placeGas(level, pos.offset(ix, iy, iz));
+                    }
+                }
+            }
         }
     }
 }

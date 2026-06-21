@@ -25,7 +25,7 @@ public class CustomNukeRenderer implements BlockEntityRenderer<CustomNukeBlockEn
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(NuclearDeviceBlock.legacyRenderYaw(NuclearDeviceBlock.Kind.BOY, facing)));
-        NuclearDeviceRenderer.applyCustomNukeLegacyCommon(poseStack);
+        NuclearDeviceRenderer.applyCustomNukeLegacyWorldTranslation(poseStack);
         NuclearDeviceRenderer.renderCustomNuke(poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }

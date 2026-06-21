@@ -1,9 +1,11 @@
 package com.hbm.ntm.radiation;
 
+import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmMathUtil;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -37,12 +39,11 @@ public final class HazardExposureUtil {
             return false;
         }
 
+        boolean applied = false;
         for (HazardEntry entry : HazardRegistry.getHazards(stack)) {
-            if (applyDroppedHazard(itemEntity, entry.type(), entry.modifiedLevel(stack, null))) {
-                return true;
-            }
+            applied |= applyDroppedHazard(itemEntity, entry.type(), entry.modifiedLevel(stack, null));
         }
-        return false;
+        return applied;
     }
 
     public static void applyHazards(LivingEntity entity, ItemStack stack) {
@@ -70,12 +71,15 @@ public final class HazardExposureUtil {
     }
 
     private static void applyHazard(LivingEntity entity, ItemStack stack, HazardType type, float level, HazardExposureContext context) {
-        if (level <= 0.0F) {
+        if (HazardRegistry.isHazardTypeDisabled(type)) {
             return;
         }
 
         switch (type) {
             case RADIATION -> {
+                if (level <= 0.0F) {
+                    return;
+                }
                 float rad = level * stack.getCount() / 20.0F;
                 if (context.hasReacher()) {
                     rad = (float) HbmMathUtil.squirt(rad);
@@ -87,27 +91,27 @@ public final class HazardExposureUtil {
             case COAL -> RadiationUtil.applyCoalDust(entity, (int) Math.min(level * stack.getCount(), 10.0F),
                     (int) level, Math.max(65 - stack.getCount(), 1));
             case HOT -> {
-                if (!context.hasReacher() && !entity.isInWaterOrRain()) {
+                if (level > 0.0F && !context.hasReacher() && !entity.isInWaterOrRain()) {
                     entity.setSecondsOnFire((int) Math.ceil(level));
                 }
             }
             case BLINDING -> {
-                if (!ArmorUtil.hasBlindingProtection(entity)) {
+                if (!ArmorUtil.hasProtection(entity, 3, HazardClass.LIGHT)) {
                     entity.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, (int) Math.ceil(level), 0));
                 }
             }
             case HYDROACTIVE -> {
-                if (entity.isInWaterOrRain() && entity.level() instanceof ServerLevel levelAccessor) {
+                if (!stack.isEmpty() && entity.isInWaterOrRain() && entity.level() instanceof ServerLevel levelAccessor) {
                     stack.shrink(stack.getCount());
                     WeaponExplosionUtil.explodeStandard(levelAccessor, entity.getX(), entity.getEyeY(), entity.getZ(),
-                            level, entity, true, false);
+                            level, null, true, false);
                 }
             }
             case EXPLOSIVE -> {
-                if (entity.isOnFire() && entity.level() instanceof ServerLevel levelAccessor) {
+                if (!stack.isEmpty() && entity.isOnFire() && entity.level() instanceof ServerLevel levelAccessor) {
                     stack.shrink(stack.getCount());
                     WeaponExplosionUtil.explodeStandard(levelAccessor, entity.getX(), entity.getEyeY(), entity.getZ(),
-                            level, entity, true, false);
+                            level, null, true, false);
                 }
             }
         }
@@ -137,17 +141,17 @@ public final class HazardExposureUtil {
     }
 
     public static boolean applyDroppedHazard(ItemEntity itemEntity, HazardType type, float level) {
-        if (level <= 0.0F || itemEntity.isRemoved()) {
+        if (HazardRegistry.isHazardTypeDisabled(type)) {
             return false;
         }
 
         switch (type) {
             case HYDROACTIVE -> {
-                if (itemEntity.isInWaterOrRain() && itemEntity.level() instanceof ServerLevel levelAccessor) {
+                if (itemEntity.level() instanceof ServerLevel levelAccessor && isDroppedHydroactiveWet(itemEntity)) {
                     itemEntity.discard();
                     WeaponExplosionUtil.explodeStandard(levelAccessor, itemEntity.getX(),
                             itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(),
-                            level, itemEntity, true, false);
+                            level, null, true, false);
                     return true;
                 }
             }
@@ -156,7 +160,7 @@ public final class HazardExposureUtil {
                     itemEntity.discard();
                     WeaponExplosionUtil.explodeStandard(levelAccessor, itemEntity.getX(),
                             itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(),
-                            level, itemEntity, true, false);
+                            level, null, true, false);
                     return true;
                 }
             }
@@ -164,6 +168,11 @@ public final class HazardExposureUtil {
             }
         }
         return false;
+    }
+
+    private static boolean isDroppedHydroactiveWet(ItemEntity itemEntity) {
+        return itemEntity.isInWaterOrRain()
+                || itemEntity.level().getFluidState(itemEntity.blockPosition()).is(FluidTags.WATER);
     }
 
     private HazardExposureUtil() {

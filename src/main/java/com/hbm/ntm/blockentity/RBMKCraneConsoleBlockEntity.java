@@ -9,7 +9,7 @@ import com.hbm.ntm.neutron.NeutronHandler;
 import com.hbm.ntm.neutron.RBMKCranePlanner;
 import com.hbm.ntm.neutron.RBMKFuelRodSpec;
 import com.hbm.ntm.neutron.RBMKFuelRodState;
-import com.hbm.ntm.neutron.RBMKNeutronHandler;
+import com.hbm.ntm.neutron.RBMKStructureDimensions;
 import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegacyLoadedTile {
+    private static final int LAYOUT_REPAIR_INTERVAL = 20;
+
     private static final String TAG_CRANE = "crane";
     private static final String TAG_CRANE_ROTATION = "craneRotationOffset";
     private static final String TAG_CENTER_X = "centerX";
@@ -79,11 +81,37 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RBMKCraneConsoleBlockEntity console) {
+        if (!console.ensureConsoleLayout(level, pos)) {
+            return;
+        }
         if (!console.setUpCrane) {
             console.networkPackNT(RBMKCranePlanner.NETWORK_RANGE);
             return;
         }
         console.tickServer(level);
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && !level.isClientSide) {
+            ensureConsoleLayoutNow(level, worldPosition);
+        }
+    }
+
+    private boolean ensureConsoleLayout(Level level, BlockPos pos) {
+        if (level.isClientSide || (level.getGameTime() + pos.asLong()) % LAYOUT_REPAIR_INTERVAL != 0) {
+            return MultiblockHelper.isOperationalCoreLayoutComplete(level, pos);
+        }
+        return ensureConsoleLayoutNow(level, pos);
+    }
+
+    private static boolean ensureConsoleLayoutNow(Level level, BlockPos pos) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCoreAt(level, pos);
+        if (level.isClientSide || core == null) {
+            return false;
+        }
+        return MultiblockHelper.ensureOperationalCoreLayoutComplete(level, core.pos());
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, RBMKCraneConsoleBlockEntity console) {
@@ -104,12 +132,16 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
         console.turnProgress = next.turnProgress();
     }
 
-    public void setTarget(BlockPos targetColumnCore) {
-        if (level == null || targetColumnCore == null) {
-            return;
+    public boolean setTarget(BlockPos targetColumnCore) {
+        if (level == null || targetColumnCore == null || !hasCompleteLayout()) {
+            return false;
         }
-        int columnHeight = RBMKNeutronHandler.settings().columnHeight();
-        BlockPos center = targetColumnCore.above(columnHeight + 1);
+        targetColumnCore = normalizeColumnTarget(targetColumnCore);
+        if (targetColumnCore == null) {
+            return false;
+        }
+        int columnHeightAbove = RBMKStructureDimensions.columnHeightAboveCore();
+        BlockPos center = targetColumnCore.above(columnHeightAbove + 1);
         Direction facing = facing();
         int girderY = center.getY() + 6;
         Direction spanFront = facing.getOpposite();
@@ -117,7 +149,7 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
         Direction spanBack = spanRight.getClockWise();
         Direction spanLeft = spanBack.getClockWise();
 
-        RBMKCranePlanner.SetupPlan plan = RBMKCranePlanner.planSetup(targetColumnCore, columnHeight,
+        RBMKCranePlanner.SetupPlan plan = RBMKCranePlanner.planSetup(targetColumnCore, columnHeightAbove,
                 findRoomExtent(center, girderY, spanFront),
                 findRoomExtent(center, girderY, spanBack),
                 findRoomExtent(center, girderY, spanLeft),
@@ -132,19 +164,23 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
         height = plan.height();
         setUpCrane = plan.setUpCrane();
         setChangedAndSync();
+        return true;
     }
 
     public void cycleCraneRotation() {
+        if (!hasCompleteLayout()) {
+            return;
+        }
         craneRotationOffset = RBMKCranePlanner.cycleRotation(craneRotationOffset);
         setChangedAndSync();
     }
 
     public boolean hasItemLoaded() {
-        return !loadedItem.isEmpty() || clientHasLoaded;
+        return hasCompleteLayout() && (!loadedItem.isEmpty() || clientHasLoaded);
     }
 
     public boolean isCraneLoading() {
-        return progress != 1.0D;
+        return hasCompleteLayout() && progress != 1.0D;
     }
 
     public boolean isAboveValidTarget() {
@@ -152,6 +188,11 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
     }
 
     public RBMKCranePlanner.CraneState cranePlannerState() {
+        if (!hasCompleteLayout()) {
+            return new RBMKCranePlanner.CraneState(false, 0, BlockPos.ZERO,
+                    new RBMKCranePlanner.CraneBounds(0, 0, 0, 0), 0,
+                    new RBMKCranePlanner.CranePosition(0.0D, 0.0D));
+        }
         return new RBMKCranePlanner.CraneState(
                 setUpCrane,
                 craneRotationOffset,
@@ -162,6 +203,10 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
     }
 
     public com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneConsoleState consoleRenderState() {
+        if (!hasCompleteLayout()) {
+            return new com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneConsoleState(
+                    0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, false, false, false);
+        }
         return new com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneConsoleState(
                 lastTiltFront,
                 tiltFront,
@@ -175,6 +220,12 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
     }
 
     public com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneState craneRenderState() {
+        if (!hasCompleteLayout()) {
+            return new com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneState(
+                    false, 0,
+                    new com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneSpans(0, 0, 0, 0),
+                    0.0D, 0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 0);
+        }
         return new com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneState(
                 setUpCrane,
                 height,
@@ -379,11 +430,13 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
         }
         BlockPos targetPos = RBMKCranePlanner.targetColumnPos(craneCenter(), facing(), facing().getCounterClockWise(),
                 posFront, posLeft);
-        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, targetPos);
-        if (core == null) {
-            return null;
-        }
-        return level.getBlockEntity(core.pos()) instanceof RBMKColumnBlockEntity column ? column : null;
+        return RBMKColumnBlockEntity.resolveOperationalColumn(level, targetPos);
+    }
+
+    @Nullable
+    private BlockPos normalizeColumnTarget(BlockPos pos) {
+        RBMKColumnBlockEntity column = RBMKColumnBlockEntity.resolveOperationalColumn(level, pos);
+        return column == null ? null : column.getBlockPos();
     }
 
     private int findRoomExtent(BlockPos center, int y, Direction direction) {
@@ -499,5 +552,9 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
                 networkPackNT(RBMKCranePlanner.NETWORK_RANGE);
             }
         }
+    }
+
+    private boolean hasCompleteLayout() {
+        return level != null && MultiblockHelper.isOperationalCoreLayoutComplete(level, worldPosition);
     }
 }

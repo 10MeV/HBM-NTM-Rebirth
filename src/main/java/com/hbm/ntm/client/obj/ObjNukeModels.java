@@ -4,28 +4,55 @@ import com.hbm.ntm.HbmNtm;
 import net.minecraft.resources.ResourceLocation;
 
 public final class ObjNukeModels {
-    public static final LegacyWavefrontModel GADGET = model("gadget", "gadget").asVBO();
-    public static final LegacyWavefrontModel BOY = model("boy", "boy");
-    public static final LegacyWavefrontModel BOY_LEGACY = model("boy_legacy", "lilboy");
-    public static final LegacyWavefrontModel MAN = model("man", "man").asVBO();
-    public static final LegacyWavefrontModel TSAR = model("tsar", "tsar").asVBO();
-    public static final LegacyWavefrontModel MIKE = model("mike", "mike");
-    public static final LegacyWavefrontModel PROTOTYPE = model("prototype", "prototype").asVBO();
-    public static final LegacyWavefrontModel FLEIJA = model("fleija", "fleija").asVBO();
-    public static final LegacyWavefrontModel SOLINIUM = model("solinium", "solinium").asVBO();
-    public static final LegacyWavefrontModel N2 = model("n2", "n2").asVBO();
-    public static final LegacyWavefrontModel BOMB_MULTI_LEGACY = model("bomb_multi_legacy", "bomb_multi_legacy");
-    public static final ResourceLocation CUSTOM_NUKE_TEXTURE = texture("custom_nuke");
+    public static final LegacyWavefrontModel GADGET = model("bombs/gadget", "gadget").asVBO();
+    public static final LegacyWavefrontModel BOY = rootModel("lilboy1", "boy");
+    public static final LegacyWavefrontModel BOY_LEGACY = BOY;
+    public static final LegacyWavefrontModel MAN = model("bombs/fat_man", "man").asVBO();
+    public static final LegacyWavefrontModel TSAR = model("bombs/tsar", "tsar").asVBO();
+    public static final LegacyWavefrontModel MIKE = model("bombs/ivymike", "mike");
+    public static final LegacyWavefrontModel PROTOTYPE = model("bombs/prototype", "prototype").asVBO();
+    public static final LegacyWavefrontModel FLEIJA = model("bombs/fleija", "fleija").asVBO();
+    public static final LegacyWavefrontModel SOLINIUM = model("bombs/ufp", "solinium").asVBO();
+    public static final LegacyWavefrontModel N2 = model("bombs/n2", "n2").asVBO();
+    public static final LegacyWavefrontModel BOMB_MULTI_LEGACY = rootModel("bomb_generic", "bomb_multi_legacy");
+    public static final ResourceLocation CUSTOM_NUKE_TEXTURE = directTexture("custom_nuke");
     public static final ResourceLocation GADGET_LEGACY_TEXTURE = texture("gadget_legacy");
 
     public static LegacyWavefrontModel model(String modelName, String textureName) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/nuke/" + modelName + ".obj"),
+                new ResourceLocation(HbmNtm.MOD_ID, "models/" + modelName + ".obj"),
+                texture(textureName));
+    }
+
+    public static LegacyWavefrontModel rootModel(String modelName, String textureName) {
+        return new LegacyWavefrontModel(
+                new ResourceLocation(HbmNtm.MOD_ID, "models/" + modelName + ".obj"),
                 texture(textureName));
     }
 
     public static ResourceLocation texture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/nuke/" + name + ".png");
+        return switch (name) {
+            case "gadget" -> directBombTexture("gadget");
+            case "boy" -> directTexture("lilboy");
+            case "man" -> directTexture("fat_man");
+            case "tsar" -> directBombTexture("tsar");
+            case "mike" -> directBombTexture("ivymike");
+            case "prototype" -> directBombTexture("prototype");
+            case "fleija" -> directBombTexture("fleija");
+            case "solinium" -> directBombTexture("ufp");
+            case "n2" -> directBombTexture("n2");
+            case "bomb_multi_legacy" -> directTexture("bomb_generic");
+            case "custom_nuke" -> directTexture("custom_nuke");
+            default -> new ResourceLocation(HbmNtm.MOD_ID, "textures/block/nuke/" + name + ".png");
+        };
+    }
+
+    private static ResourceLocation directTexture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + name + ".png");
+    }
+
+    private static ResourceLocation directBombTexture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/bombs/" + name + ".png");
     }
 
     private ObjNukeModels() {

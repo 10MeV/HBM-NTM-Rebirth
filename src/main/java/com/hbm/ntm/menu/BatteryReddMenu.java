@@ -2,6 +2,7 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.BatteryReddBlockEntity;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -100,7 +101,7 @@ public class BatteryReddMenu extends AbstractContainerMenu {
     }
 
     private static BatteryReddBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
-        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(inventory.player.level(), pos);
         if (blockEntity instanceof BatteryReddBlockEntity battery) {
             return battery;
         }

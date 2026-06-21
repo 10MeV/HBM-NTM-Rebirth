@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 10,
+  "fluid": { "fluid": "CONCRETE", "amount": 1000 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:rebar" } },
+  "output": { "item": "hbm_ntm_rebirth:concrete_rebar" },
+  "productivity": 0.0
+}

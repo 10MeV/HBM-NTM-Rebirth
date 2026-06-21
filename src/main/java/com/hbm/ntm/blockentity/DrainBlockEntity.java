@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
+import com.hbm.ntm.block.OilSpillBlock;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
@@ -14,13 +15,18 @@ import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModBlocks;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 public class DrainBlockEntity extends HbmFluidNetworkBlockEntity implements HbmStandardFluidReceiver {
@@ -50,8 +56,10 @@ public class DrainBlockEntity extends HbmFluidNetworkBlockEntity implements HbmS
                         10.0F, true, Level.ExplosionInteraction.BLOCK);
                 return;
             }
+            FluidType spilledType = drain.tank.getTankType();
             int toSpill = Math.max(drain.tank.getFill() / 2, 1);
             drain.tank.release(level, pos, toSpill, FluidReleaseType.SPILL, false);
+            drain.tryPlaceOilSpill(level, pos, spilledType, toSpill);
         }
 
         if (previousFill != drain.tank.getFill() || level.getGameTime() % 20L == 0L) {
@@ -91,6 +99,36 @@ public class DrainBlockEntity extends HbmFluidNetworkBlockEntity implements HbmS
     public void setTankType(FluidType type) {
         tank.setTankType(type);
         onFluidContentsChanged();
+    }
+
+    private void tryPlaceOilSpill(Level level, BlockPos pos, FluidType type, int spilled) {
+        if (spilled < 100
+                || level.random.nextInt(20) != 0
+                || !type.hasTrait(SimpleFluidTraits.Liquid.class)
+                || !type.hasTrait(SimpleFluidTraits.Viscous.class)
+                || !type.hasTrait(com.hbm.ntm.fluid.trait.FlammableFluidTrait.class)) {
+            return;
+        }
+        Direction facing = facing();
+        Vec3 start = new Vec3(
+                pos.getX() + 0.5D - facing.getStepX() * 3.0D,
+                pos.getY() + 0.5D,
+                pos.getZ() + 0.5D - facing.getStepZ() * 3.0D);
+        Vec3 end = start.add(level.random.nextGaussian() * 5.0D, -25.0D, level.random.nextGaussian() * 5.0D);
+        BlockHitResult hit = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE, null));
+        if (hit.getType() != HitResult.Type.BLOCK || hit.getDirection() != Direction.UP) {
+            return;
+        }
+        BlockPos spillPos = hit.getBlockPos().above();
+        BlockState target = level.getBlockState(spillPos);
+        if (target.getFluidState().isEmpty()
+                && (target.canBeReplaced() || target.getBlock() instanceof OilSpillBlock)
+                && ModBlocks.OIL_SPILL.get() instanceof OilSpillBlock oilSpill
+                && oilSpill.canBeReplacedByDrain(level, spillPos)
+                && oilSpill.defaultBlockState().canSurvive(level, spillPos)) {
+            level.setBlock(spillPos, oilSpill.defaultBlockState(), Block.UPDATE_ALL);
+        }
     }
 
     @Override

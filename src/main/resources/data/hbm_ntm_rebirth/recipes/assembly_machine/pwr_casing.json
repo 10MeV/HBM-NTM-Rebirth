@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:plates/lead"
+      },
+      "legacy_ore": "plateLead"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:any/concrete"
+      },
+      "legacy_ore": "anyConcrete"
+    }
+  ],
+  "internal_name": "ass.pwrcasing",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:pwr_casing"
+    }
+  ],
+  "pools": [],
+  "power": 500,
+  "source_order": 171
+}

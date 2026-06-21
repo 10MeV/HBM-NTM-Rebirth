@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_top",
+  "textures": {
+    "side": "hbm_ntm_rebirth:block/machine_icf_press_side",
+    "top": "hbm_ntm_rebirth:block/machine_icf_press_top"
+  }
+}

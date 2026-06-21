@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:fluid_duct" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:fluid_duct_neo"
+  }
+}

@@ -64,6 +64,20 @@ public final class LegacyUntexturedQuadRenderer {
                     .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true))
                     .createCompositeState(false));
 
+    private static final RenderType LEGACY_ADDITIVE_CULL = RenderType.create(
+            "hbm_legacy_additive_cull",
+            DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS,
+            256,
+            false,
+            true,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeLightningShader))
+                    .setTransparencyState(LIGHTNING_TRANSPARENCY)
+                    .setCullState(new RenderStateShard.CullStateShard(true))
+                    .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, false))
+                    .createCompositeState(false));
+
     private static final RenderType LEGACY_TRANSLUCENT_NO_CULL = RenderType.create(
             "hbm_legacy_translucent_no_cull",
             DefaultVertexFormat.POSITION_COLOR,
@@ -105,7 +119,55 @@ public final class LegacyUntexturedQuadRenderer {
                     .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true))
                     .createCompositeState(false));
 
+    private static final RenderType LEGACY_ADDITIVE_NO_CULL_TRIANGLES = createType(
+            "hbm_legacy_additive_no_cull_triangles",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeLightningShader),
+            LIGHTNING_TRANSPARENCY,
+            false,
+            true,
+            VertexFormat.Mode.TRIANGLES);
+    private static final RenderType LEGACY_ADDITIVE_DEPTH_WRITE_NO_CULL_TRIANGLES = createType(
+            "hbm_legacy_additive_depth_write_no_cull_triangles",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeLightningShader),
+            LIGHTNING_TRANSPARENCY,
+            true,
+            true,
+            VertexFormat.Mode.TRIANGLES);
+    private static final RenderType LEGACY_ADDITIVE_CULL_TRIANGLES = createType(
+            "hbm_legacy_additive_cull_triangles",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeLightningShader),
+            LIGHTNING_TRANSPARENCY,
+            false,
+            true,
+            VertexFormat.Mode.TRIANGLES,
+            true);
+    private static final RenderType LEGACY_TRANSLUCENT_NO_CULL_TRIANGLES = createType(
+            "hbm_legacy_translucent_no_cull_triangles",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader),
+            NORMAL_ALPHA_TRANSPARENCY,
+            false,
+            true,
+            VertexFormat.Mode.TRIANGLES);
+    private static final RenderType LEGACY_TRANSLUCENT_DEPTH_WRITE_NO_CULL_TRIANGLES = createType(
+            "hbm_legacy_translucent_depth_write_no_cull_triangles",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader),
+            NORMAL_ALPHA_TRANSPARENCY,
+            true,
+            true,
+            VertexFormat.Mode.TRIANGLES);
+    private static final RenderType LEGACY_SOLID_NO_CULL_TRIANGLES = createType(
+            "hbm_legacy_solid_no_cull_triangles",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader),
+            null,
+            true,
+            false,
+            VertexFormat.Mode.TRIANGLES);
+
     public static VertexConsumer lightning(MultiBufferSource buffer) {
+        return buffer.getBuffer(LEGACY_ADDITIVE_NO_CULL);
+    }
+
+    public static VertexConsumer additiveNoCull(MultiBufferSource buffer) {
         return buffer.getBuffer(LEGACY_ADDITIVE_NO_CULL);
     }
 
@@ -150,21 +212,52 @@ public final class LegacyUntexturedQuadRenderer {
     }
 
     public static RenderType type(boolean additive, int alpha) {
+        return type(additive, alpha, VertexFormat.Mode.QUADS);
+    }
+
+    public static RenderType type(boolean additive, int alpha, VertexFormat.Mode drawMode) {
+        boolean triangles = drawMode == VertexFormat.Mode.TRIANGLES;
         if (additive) {
-            return LEGACY_ADDITIVE_NO_CULL;
+            return triangles ? LEGACY_ADDITIVE_NO_CULL_TRIANGLES : LEGACY_ADDITIVE_NO_CULL;
         }
-        return alpha < 255 ? LEGACY_TRANSLUCENT_NO_CULL : LEGACY_SOLID_NO_CULL;
+        return triangles ? LEGACY_SOLID_NO_CULL_TRIANGLES : LEGACY_SOLID_NO_CULL;
     }
 
     public static RenderType type(LegacyTexturedRenderMode renderMode, int alpha) {
+        return type(renderMode, alpha, VertexFormat.Mode.QUADS);
+    }
+
+    public static RenderType type(LegacyTexturedRenderMode renderMode, int alpha, VertexFormat.Mode drawMode) {
+        boolean triangles = drawMode == VertexFormat.Mode.TRIANGLES;
         return switch (renderMode.withAlpha(alpha)) {
-            case ADDITIVE_DEPTH_WRITE -> LEGACY_ADDITIVE_DEPTH_WRITE_NO_CULL;
-            case ADDITIVE_NO_DEPTH_WRITE -> LEGACY_ADDITIVE_NO_CULL;
-            case TRANSLUCENT_DEPTH_WRITE -> LEGACY_TRANSLUCENT_DEPTH_WRITE_NO_CULL;
-            case TRANSLUCENT, TRANSLUCENT_NO_DEPTH_WRITE -> LEGACY_TRANSLUCENT_NO_CULL;
-            case CUTOUT_NO_CULL -> alpha < 255 ? LEGACY_TRANSLUCENT_NO_CULL : LEGACY_SOLID_NO_CULL;
-            case GLINT_NO_DEPTH_WRITE, GLINT_EQUAL_DEPTH -> LEGACY_ADDITIVE_NO_CULL;
+            case ADDITIVE_DEPTH_WRITE -> triangles ? LEGACY_ADDITIVE_DEPTH_WRITE_NO_CULL_TRIANGLES : LEGACY_ADDITIVE_DEPTH_WRITE_NO_CULL;
+            case ADDITIVE_CULL_NO_DEPTH_WRITE -> triangles ? LEGACY_ADDITIVE_CULL_TRIANGLES : LEGACY_ADDITIVE_CULL;
+            case ADDITIVE_NO_DEPTH_WRITE -> triangles ? LEGACY_ADDITIVE_NO_CULL_TRIANGLES : LEGACY_ADDITIVE_NO_CULL;
+            case TRANSLUCENT_DEPTH_WRITE -> triangles ? LEGACY_TRANSLUCENT_DEPTH_WRITE_NO_CULL_TRIANGLES : LEGACY_TRANSLUCENT_DEPTH_WRITE_NO_CULL;
+            case TRANSLUCENT, TRANSLUCENT_NO_DEPTH_WRITE -> triangles ? LEGACY_TRANSLUCENT_NO_CULL_TRIANGLES : LEGACY_TRANSLUCENT_NO_CULL;
+            case CUTOUT_NO_CULL, CUTOUT_CULL -> triangles ? LEGACY_SOLID_NO_CULL_TRIANGLES : LEGACY_SOLID_NO_CULL;
+            case GLINT_NO_DEPTH_WRITE, GLINT_EQUAL_DEPTH -> triangles ? LEGACY_ADDITIVE_NO_CULL_TRIANGLES : LEGACY_ADDITIVE_NO_CULL;
         };
+    }
+
+    private static RenderType createType(String name, RenderStateShard.ShaderStateShard shader,
+            RenderStateShard.TransparencyStateShard transparency, boolean depthWrite, boolean sortOnUpload,
+            VertexFormat.Mode drawMode) {
+        return createType(name, shader, transparency, depthWrite, sortOnUpload, drawMode, false);
+    }
+
+    private static RenderType createType(String name, RenderStateShard.ShaderStateShard shader,
+            RenderStateShard.TransparencyStateShard transparency, boolean depthWrite, boolean sortOnUpload,
+            VertexFormat.Mode drawMode, boolean cull) {
+        RenderType.CompositeState.CompositeStateBuilder builder = RenderType.CompositeState.builder()
+                .setShaderState(shader)
+                .setCullState(new RenderStateShard.CullStateShard(cull))
+                .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, depthWrite));
+        if (transparency != null) {
+            builder.setTransparencyState(transparency);
+        }
+        return RenderType.create(name, DefaultVertexFormat.POSITION_COLOR, drawMode, 256, false, sortOnUpload,
+                builder.createCompositeState(false));
     }
 
     public static void vertex(VertexConsumer consumer, PoseStack.Pose pose, double x, double y, double z,

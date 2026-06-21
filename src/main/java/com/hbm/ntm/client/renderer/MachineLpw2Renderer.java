@@ -23,7 +23,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override
@@ -35,7 +35,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
                 : Direction.SOUTH;
         double time = renderTime(blockEntity.getLevel(), partialTick);
         LegacyTileRenderPlans.Lpw2Plan plan = LegacyTileRenderPlans.lpw2Plan(time);
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
+        int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -98,7 +98,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         ObjReactorModels.LPW2.renderPart("Monitor", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         LegacyTileRenderPlans.TextureMatrixPartPlan screen = plan.errorScreen();
-        ObjReactorModels.LPW2.renderPartWithLegacyTextureMatrix("Screen", ObjReactorModels.LPW2_TERM_ERROR_TEXTURE,
+        ObjReactorModels.LPW2.renderPartWithLegacyTextureMatrixCull("Screen", ObjReactorModels.LPW2_TERM_ERROR_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay,
                 screen.color().redByte(), screen.color().greenByte(), screen.color().blueByte(),
                 screen.color().alphaByte(), (float) screen.textureMatrix().scaleU(),

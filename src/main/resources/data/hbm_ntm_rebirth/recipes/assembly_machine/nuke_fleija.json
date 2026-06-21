@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.fleija",
+  "duration": 300,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:shells/aluminium" }, "count": 1, "legacy_ore": "shellAluminium" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:fins_quad_titanium" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_controller" }, "count": 1, "legacy_id": "hbm:circuit", "legacy_meta": 13 },
+    { "ingredient": { "tag": "forge:dyes/white" }, "count": 4, "legacy_ore": "dyeWhite" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:nuke_fleija" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 203
+}

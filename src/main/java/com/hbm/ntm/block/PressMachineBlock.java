@@ -2,7 +2,6 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
-import com.hbm.ntm.multiblock.LegacyProxyMode;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,8 +40,7 @@ public class PressMachineBlock extends LegacyXrMultiblockBlock implements Entity
 
     @Override
     protected LegacyMultiblockLayout getLayout(BlockState state) {
-        return LegacyMultiblockLayout.ofLegacyXrChecked(LEGACY_DIMENSIONS, state.getValue(FACING))
-                .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), LegacyProxyMode.passive().inventoryProxy());
+        return LegacyMultiblockLayout.ofLegacyXrChecked(LEGACY_DIMENSIONS, state.getValue(FACING));
     }
 
     @Nullable

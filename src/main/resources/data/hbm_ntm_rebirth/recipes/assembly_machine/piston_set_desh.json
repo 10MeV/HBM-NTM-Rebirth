@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.pistonsetdesh",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:ingots/desh" }, "count": 24, "legacy_ore": "ingotDesh" },
+    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 12, "legacy_ore": "ingotAnyPlastic" },
+    { "ingredient": { "tag": "forge:plates/copper" }, "count": 24, "legacy_ore": "plateCopper" },
+    { "ingredient": { "tag": "forge:ingots/tungsten" }, "count": 16, "legacy_ore": "ingotTungsten" },
+    { "ingredient": { "tag": "forge:pipes/dura_steel" }, "count": 4, "legacy_ore": "ntmpipeDuraSteel" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:piston_set_desh" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 130
+}

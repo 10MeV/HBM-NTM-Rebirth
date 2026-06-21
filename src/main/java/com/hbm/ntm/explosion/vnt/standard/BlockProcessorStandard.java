@@ -1,5 +1,6 @@
 package com.hbm.ntm.explosion.vnt.standard;
 
+import com.hbm.ntm.explosion.LegacyExplosionFluidCleanup;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.explosion.vnt.interfaces.BlockMutator;
 import com.hbm.ntm.explosion.vnt.interfaces.BlockProcessor;
@@ -16,8 +17,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
@@ -55,35 +56,46 @@ public class BlockProcessorStandard implements BlockProcessor {
         float dropChance = 1.0F / explosion.size();
 
         for (BlockPos pos : orderedPositions) {
+            if (level.isOutsideBuildHeight(pos)) {
+                affectedBlocks.remove(pos);
+                continue;
+            }
             BlockState state = level.getBlockState(pos);
             if (state.isAir()) {
                 affectedBlocks.remove(pos);
                 continue;
             }
-
-            if (chance != null) {
-                dropChance = chance.mutateDropChance(explosion, state, pos, dropChance);
+            if (LegacyExplosionFluidCleanup.isLegacyLiquidBlock(state)) {
+                LegacyExplosionFluidCleanup.clearLegacyLiquidNeighborhood(level, pos, 3);
+                continue;
             }
-            boolean suppressDrops = mutator != null && mutator.suppressDrops(explosion, state, pos);
-            if (!suppressDrops && state.canDropFromExplosion(level, pos, explosion.compat())
-                    && level.random.nextFloat() < dropChance) {
-                BlockEntity blockEntity = state.hasBlockEntity() ? level.getBlockEntity(pos) : null;
-                ItemStack tool = ItemStack.EMPTY;
-                if (fortune != null) {
-                    int dropFortune = fortune.mutateFortune(explosion, state, pos);
-                    if (dropFortune > 0) {
-                        tool = new ItemStack(Items.DIAMOND_PICKAXE);
-                        tool.enchant(Enchantments.BLOCK_FORTUNE, dropFortune);
+
+            if (state.canDropFromExplosion(level, pos, explosion.compat())) {
+                boolean suppressDrops = mutator != null && mutator.suppressDrops(explosion, state, pos);
+                if (!suppressDrops) {
+                    if (chance != null) {
+                        dropChance = chance.mutateDropChance(explosion, state, pos, dropChance);
+                    }
+                    if (level.random.nextFloat() < dropChance) {
+                        BlockEntity blockEntity = state.hasBlockEntity() ? level.getBlockEntity(pos) : null;
+                        ItemStack tool = ItemStack.EMPTY;
+                        if (fortune != null) {
+                            int dropFortune = fortune.mutateFortune(explosion, state, pos);
+                            if (dropFortune > 0) {
+                                tool = new ItemStack(Items.DIAMOND_PICKAXE);
+                                tool.enchant(Enchantments.BLOCK_FORTUNE, dropFortune);
+                            }
+                        }
+                        LootParams.Builder lootParams = new LootParams.Builder(level)
+                                .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
+                                .withParameter(LootContextParams.TOOL, tool)
+                                .withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity)
+                                .withOptionalParameter(LootContextParams.THIS_ENTITY, explosion.exploder());
+
+                        state.spawnAfterBreak(level, pos, ItemStack.EMPTY, causedByPlayer);
+                        state.getDrops(lootParams).forEach(stack -> addBlockDrops(drops, stack, pos.immutable()));
                     }
                 }
-                LootParams.Builder lootParams = new LootParams.Builder(level)
-                        .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
-                        .withParameter(LootContextParams.TOOL, tool)
-                        .withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity)
-                        .withOptionalParameter(LootContextParams.THIS_ENTITY, explosion.exploder());
-
-                state.spawnAfterBreak(level, pos, ItemStack.EMPTY, causedByPlayer);
-                state.getDrops(lootParams).forEach(stack -> addBlockDrops(drops, stack, pos.immutable()));
             }
 
             state.onBlockExploded(level, pos, explosion.compat());
@@ -98,7 +110,7 @@ public class BlockProcessorStandard implements BlockProcessor {
 
         if (mutator != null) {
             for (BlockPos pos : orderedPositions) {
-                if (level.getBlockState(pos).isAir()) {
+                if (!level.isOutsideBuildHeight(pos) && level.getBlockState(pos).isAir()) {
                     mutator.mutatePost(explosion, pos);
                 }
             }
@@ -122,9 +134,12 @@ public class BlockProcessorStandard implements BlockProcessor {
 
     public static void placeFire(Level level, Iterable<BlockPos> affectedBlocks) {
         for (BlockPos pos : affectedBlocks) {
+            if (level.isOutsideBuildHeight(pos) || level.isOutsideBuildHeight(pos.below())) {
+                continue;
+            }
             if (level.random.nextInt(3) == 0 && level.getBlockState(pos).isAir()
                     && level.getBlockState(pos.below()).isSolidRender(level, pos.below())) {
-                level.setBlockAndUpdate(pos, BaseFireBlock.getState(level, pos));
+                level.setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());
             }
         }
     }
