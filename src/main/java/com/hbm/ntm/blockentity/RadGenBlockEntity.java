@@ -352,7 +352,7 @@ public class RadGenBlockEntity extends BlockEntity implements MenuProvider, HbmE
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-1, 0, -1), worldPosition.offset(2, 4, 2));
+        return LegacyMachineRenderBounds.visibleMultiblockOr(this, super.getRenderBoundingBox());
     }
 
     @Override

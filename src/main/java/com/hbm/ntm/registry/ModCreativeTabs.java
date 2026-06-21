@@ -9,6 +9,7 @@ import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.FluidDuctVariantBlockItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
+import com.hbm.ntm.item.ICFPelletItem;
 import com.hbm.ntm.item.FoundryMoldItem;
 import com.hbm.ntm.item.FoundryScrapsItem;
 import com.hbm.ntm.item.GuideBookItem;
@@ -178,6 +179,8 @@ public final class ModCreativeTabs {
             FoundryScrapsItem.addCreativeStacks(output, scraps);
         } else if (item.get() instanceof RBMKPelletItem pellet) {
             RBMKPelletItem.addCreativeStacks(output, pellet);
+        } else if (item.get() instanceof ICFPelletItem) {
+            ICFPelletItem.addCreativeStacks(output);
         } else if (item.get() instanceof SirenCassetteItem cassette) {
             SirenCassetteItem.addCreativeStacks(output, cassette);
             } else if (item.get() instanceof SoyuzRocketItem soyuz) {

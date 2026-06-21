@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "hbm_ntm_rebirth:mud_block"
+    },
+    "title": {
+      "translate": "advancements.hbm_ntm_rebirth.watz_boom.title"
+    },
+    "description": {
+      "translate": "advancements.hbm_ntm_rebirth.watz_boom.description"
+    },
+    "background": "minecraft:textures/gui/advancements/backgrounds/adventure.png",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

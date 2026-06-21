@@ -3,7 +3,11 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.blockentity.WasteDrumBlockEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -50,6 +54,31 @@ public class WasteDrumBlock extends Block implements EntityBlock {
         }
         return (tickLevel, tickPos, tickState, blockEntity) -> WasteDrumBlockEntity.serverTick(
                 tickLevel, tickPos, tickState, (WasteDrumBlockEntity) blockEntity);
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        for (Direction direction : Direction.values()) {
+            if (direction == Direction.DOWN || !level.getFluidState(pos.relative(direction)).is(FluidTags.WATER)) {
+                continue;
+            }
+            double x = pos.getX() + 0.5D + direction.getStepX() + random.nextDouble() - 0.5D;
+            double y = pos.getY() + 0.5D + direction.getStepY() + random.nextDouble() - 0.5D;
+            double z = pos.getZ() + 0.5D + direction.getStepZ() + random.nextDouble() - 0.5D;
+            if (direction.getStepX() != 0) {
+                x = pos.getX() + 0.5D + direction.getStepX() * 0.5D
+                        + random.nextDouble() * 0.125D * direction.getStepX();
+            }
+            if (direction.getStepY() != 0) {
+                y = pos.getY() + 0.5D + direction.getStepY() * 0.5D
+                        + random.nextDouble() * 0.125D * direction.getStepY();
+            }
+            if (direction.getStepZ() != 0) {
+                z = pos.getZ() + 0.5D + direction.getStepZ() * 0.5D
+                        + random.nextDouble() * 0.125D * direction.getStepZ();
+            }
+            level.addParticle(ParticleTypes.BUBBLE, x, y, z, 0.0D, 0.2D, 0.0D);
+        }
     }
 
     @Override

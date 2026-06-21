@@ -18,7 +18,7 @@ public class DiFurnaceExtensionBlockEntity extends BlockEntity {
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-        if (capability == ForgeCapabilities.ITEM_HANDLER && level != null) {
+        if ((capability == ForgeCapabilities.ITEM_HANDLER || capability == ForgeCapabilities.FLUID_HANDLER) && level != null) {
             BlockEntity below = level.getBlockEntity(worldPosition.below());
             if (below != null) {
                 return below.getCapability(capability, side);

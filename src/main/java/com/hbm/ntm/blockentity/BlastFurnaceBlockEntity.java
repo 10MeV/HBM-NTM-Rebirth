@@ -2,6 +2,8 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.FluidReleaseType;
+import com.hbm.ntm.fluid.HbmFluidReleaseEffects;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -309,6 +311,9 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
                 fuel -= FUEL_RATE;
                 flueTank.setFill(flueTank.getFill() + FLUE_GAS);
                 if (flueTank.getFill() > flueTank.getMaxFill()) {
+                    int spill = flueTank.getFill() - flueTank.getMaxFill();
+                    HbmFluidReleaseEffects.applyRelease(level, pos.above(7), flueTank.getTankType(), spill,
+                            FluidReleaseType.SPILL);
                     flueTank.setFill(flueTank.getMaxFill());
                 }
             }

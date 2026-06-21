@@ -3,6 +3,7 @@ package com.hbm.ntm.item;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmTextUtil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -12,6 +13,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -31,6 +33,14 @@ public class ICFPelletItem extends Item {
 
     public ICFPelletItem(Properties properties) {
         super(properties.stacksTo(1));
+    }
+
+    public static void addCreativeStacks(CreativeModeTab.Output output) {
+        output.accept(setup(FuelType.DEUTERIUM, FuelType.TRITIUM, false));
+        output.accept(setup(FuelType.HELIUM3, FuelType.HELIUM4, false));
+        output.accept(setup(FuelType.LITHIUM, FuelType.OXYGEN, false));
+        output.accept(setup(FuelType.SODIUM, FuelType.CHLORINE, true));
+        output.accept(setup(FuelType.BERYLLIUM, FuelType.CALCIUM, true));
     }
 
     public static ItemStack setup(FuelType first, FuelType second, boolean muon) {
@@ -125,13 +135,21 @@ public class ICFPelletItem extends Item {
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         double depleted = getMaxDepletion(stack) <= 0L ? 0.0D : getDepletion(stack) * 100.0D / getMaxDepletion(stack);
         tooltip.add(Component.literal(String.format(Locale.US, "Depletion: %.1f%%", depleted)).withStyle(ChatFormatting.GREEN));
-        tooltip.add(Component.literal("Fuel: " + type(stack, true).display + " / " + type(stack, false).display).withStyle(ChatFormatting.YELLOW));
-        tooltip.add(Component.literal("Heat required: " + getFusingDifficulty(stack) + "TU").withStyle(ChatFormatting.YELLOW));
+        tooltip.add(Component.literal("Fuel: ")
+                .append(Component.translatable(fuelTranslationKey(type(stack, true))))
+                .append(Component.literal(" / "))
+                .append(Component.translatable(fuelTranslationKey(type(stack, false))))
+                .withStyle(ChatFormatting.YELLOW));
+        tooltip.add(Component.literal("Heat required: " + HbmTextUtil.shortNumber(getFusingDifficulty(stack)) + "TU").withStyle(ChatFormatting.YELLOW));
         double multiplier = type(stack, true).reactionMultiplier * type(stack, false).reactionMultiplier;
-        tooltip.add(Component.literal(String.format(Locale.US, "Reactivity multiplier: x%.2f", multiplier)).withStyle(ChatFormatting.YELLOW));
+        tooltip.add(Component.literal("Reactivity multiplier: x" + ((int) (multiplier * 100.0D)) / 100.0D).withStyle(ChatFormatting.YELLOW));
         if (isMuonCatalyzed(stack)) {
             tooltip.add(Component.literal("Muon catalyzed!").withStyle(ChatFormatting.DARK_AQUA));
         }
+    }
+
+    private static String fuelTranslationKey(FuelType type) {
+        return "icffuel." + type.name().toLowerCase(Locale.US);
     }
 
     private static void initMaps() {

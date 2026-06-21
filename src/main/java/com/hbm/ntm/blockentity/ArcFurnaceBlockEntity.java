@@ -212,7 +212,29 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ArcFurnaceBlockEntity furnace) {
-        furnace.previousLid = furnace.lid;
+        float oldLid = furnace.previousLid;
+        float currentLid = furnace.lid;
+        if (currentLid != oldLid && level.getNearestPlayer(pos.getX() + 0.5D, pos.getY() + 4.0D,
+                pos.getZ() + 0.5D, 50.0D, false) != null) {
+            if (currentLid > oldLid && !(oldLid == 0.0F && currentLid == 1.0F)) {
+                double x = pos.getX() + 0.5D + level.random.nextGaussian() * 0.5D;
+                double z = pos.getZ() + 0.5D + level.random.nextGaussian() * 0.5D;
+                int lifetime = 70 + level.random.nextInt(30);
+                float alpha = oldLid / Math.max(currentLid, 0.0001F);
+                for (int i = 0; i < 3; i++) {
+                    ParticleUtil.spawnCoolingTower(level, x, pos.getY() + 4.0D, z,
+                            0.01F, 0.5F, 2.0F, lifetime, true, 0.05F, alpha, 0x000000);
+                }
+            } else if (currentLid < oldLid && currentLid > 0.5F && furnace.hasMaterial
+                    && level.random.nextInt(5) == 0) {
+                double x = pos.getX() + 0.5D + level.random.nextGaussian() * 0.5D;
+                double z = pos.getZ() + 0.5D + level.random.nextGaussian() * 0.5D;
+                for (int i = 0; i < 2; i++) {
+                    ParticleUtil.spawnRbmkFlame(level, x, pos.getY() + 2.75D, z, 50);
+                }
+            }
+        }
+        furnace.previousLid = currentLid;
     }
 
     private void loadIngredients(Level level) {
@@ -629,8 +651,9 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
         progress = tag.getInt(TAG_PROGRESS);
         delay = tag.getInt(TAG_DELAY);
+        float oldLid = lid;
         lid = tag.contains(TAG_LID) ? tag.getFloat(TAG_LID) : 1.0F;
-        previousLid = lid;
+        previousLid = level != null && level.isClientSide ? oldLid : lid;
         liquidMode = tag.getBoolean(TAG_LIQUID_MODE);
         progressing = tag.getBoolean(TAG_IS_PROGRESSING);
         hasMaterial = tag.getBoolean(TAG_HAS_MATERIAL);

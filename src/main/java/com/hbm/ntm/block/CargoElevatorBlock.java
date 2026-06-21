@@ -148,6 +148,45 @@ public class CargoElevatorBlock extends LegacyXrMultiblockBlock implements Entit
     }
 
     @Override
+    protected void onCoreRemoved(Level level, BlockPos pos, BlockState state) {
+        if (!(level.getBlockEntity(pos) instanceof CargoElevatorBlockEntity elevator)) {
+            return;
+        }
+        MultiblockHelper.withClearing(level, pos, () -> {
+            for (int y = pos.getY() + 1; y <= pos.getY() + elevator.getHeight(); y++) {
+                for (BlockPos dummyPos : layerPositions(pos, y)) {
+                    if (isOwnedElevatorDummy(level, pos, dummyPos)) {
+                        level.removeBlock(dummyPos, false);
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public boolean ownsMultiblockDummy(BlockState state, BlockGetter level, BlockPos corePos, BlockPos dummyPos) {
+        return isOwnedElevatorDummy(level, corePos, dummyPos) && isWithinElevatorTower(level, corePos, dummyPos);
+    }
+
+    private static boolean isOwnedElevatorDummy(BlockGetter level, BlockPos corePos, BlockPos dummyPos) {
+        return level.getBlockEntity(dummyPos) instanceof MultiblockDummyBlockEntity dummy
+                && corePos.equals(dummy.getCorePos());
+    }
+
+    private static boolean isWithinElevatorTower(BlockGetter level, BlockPos corePos, BlockPos dummyPos) {
+        BlockPos offset = dummyPos.subtract(corePos);
+        if (offset.getX() < -1 || offset.getX() > 1 || offset.getZ() < -1 || offset.getZ() > 1
+                || offset.getY() < 0) {
+            return false;
+        }
+        int height = 0;
+        if (level.getBlockEntity(corePos) instanceof CargoElevatorBlockEntity elevator) {
+            height = elevator.getHeight();
+        }
+        return offset.getY() <= height;
+    }
+
+    @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return getMultiblockShape(state, level, pos, context);
     }

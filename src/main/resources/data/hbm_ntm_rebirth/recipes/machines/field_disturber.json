@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": {
+      "item": "hbm_ntm_rebirth:gem_alexandrite"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_bismoid"
+    },
+    "I": {
+      "tag": "forge:ingots/starmetal"
+    }
+  },
+  "pattern": [
+    "ICI",
+    "CAC",
+    "ICI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:field_disturber"
+  },
+  "show_notification": true
+}

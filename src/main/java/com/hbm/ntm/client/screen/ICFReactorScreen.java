@@ -65,11 +65,6 @@ public class ICFReactorScreen extends AbstractContainerScreen<ICFReactorMenu> {
             } else if (isHovering(187, 89, 18, 18, mouseX, mouseY)) {
                 graphics.renderComponentTooltip(font, List.of(Component.literal(shortNumber(menu.getHeat()) + " / "
                         + shortNumber(ICFReactorBlockEntity.MAX_HEAT) + "TU")), mouseX, mouseY);
-            } else if (isHovering(44, 106, 84, 18, mouseX, mouseY)) {
-                graphics.renderComponentTooltip(font, List.of(
-                        Component.literal(String.format(Locale.US, "Heating: %,d TU/t", menu.getHeatup())),
-                        Component.literal(String.format(Locale.US, "Coolant: %,d mB/t -> %,d mB/t",
-                                menu.getConsumption(), menu.getOutput()))), mouseX, mouseY);
             }
         }
         renderTooltip(graphics, mouseX, mouseY);

@@ -48,7 +48,7 @@ public class BlastFurnaceMenu extends AbstractContainerMenu {
                 BlastFurnaceBlockEntity.SLOT_OUTPUT_1, 134, 72));
         addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
                 BlastFurnaceBlockEntity.SLOT_OUTPUT_2, 134, 90));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 140, 222);
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 140, 198);
         addDataSlots();
     }
 

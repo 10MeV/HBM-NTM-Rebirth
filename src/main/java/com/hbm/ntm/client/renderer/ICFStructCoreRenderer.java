@@ -33,7 +33,7 @@ public class ICFStructCoreRenderer implements BlockEntityRenderer<ICFStructCoreB
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return 256;
     }
 
     @Override

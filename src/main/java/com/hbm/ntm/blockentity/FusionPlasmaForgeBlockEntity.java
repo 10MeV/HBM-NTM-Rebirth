@@ -66,6 +66,9 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int TANK_CAPACITY = 16_000;
     public static final long DEFAULT_MAX_POWER = 10_000_000L;
     public static final float ARM_ACCELERATION = 0.18F;
+    private static final int[] ACCESSIBLE_SLOTS = {
+            SLOT_BOOSTER, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, SLOT_OUTPUT
+    };
     private static final int[] INPUT_SLOTS = {
             3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
     };
@@ -98,7 +101,7 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_BATTERY -> !stack.isEmpty();
                 case SLOT_BLUEPRINT -> stack.is(ModItems.BLUEPRINTS.get());
                 case SLOT_BOOSTER -> boosterValue(stack) > 0;
                 case SLOT_OUTPUT -> false;
@@ -151,7 +154,7 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static void serverTick(Level level, BlockPos pos, BlockState state, FusionPlasmaForgeBlockEntity forge) {
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, forge);
         boolean changed = forge.tickServer(level);
-        forge.networkPackNT(25);
+        forge.networkPackNT(100);
         if (changed || level.getGameTime() % 20L == 0L) {
             forge.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
@@ -271,8 +274,8 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void receiveFusionPower(long fusionPower, double neutronPower, float r, float g, float b) {
-        plasmaEnergy += Math.max(0L, fusionPower);
-        neutronEnergy += Math.max(0.0D, neutronPower);
+        plasmaEnergy = Math.max(0L, fusionPower);
+        neutronEnergy = Math.max(0.0D, neutronPower);
         plasmaR = r;
         plasmaG = g;
         plasmaB = b;
@@ -287,6 +290,11 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
         return new FusionPlasmaForgeMenu(containerId, inventory, this);
+    }
+
+    @Override
+    public List<HbmFluidTank> getAllTanks() {
+        return List.of(inputTank);
     }
 
     @Override
@@ -358,7 +366,7 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-6, 0, -6), worldPosition.offset(7, 6, 7));
+        return new AABB(worldPosition.offset(-5, 0, -5), worldPosition.offset(5, 6, 6));
     }
 
     @Override
@@ -376,8 +384,10 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "items", items);
-        inputTank.readFromNbt(tag, "i");
-        selectedRecipe = tag.getString(TAG_SELECTED_RECIPE);
+        if (hasTankTag(tag, "i")) {
+            inputTank.readFromNbt(tag, "i");
+        }
+        selectedRecipe = GenericMachineRecipeSelector.normalize(tag.getString(TAG_SELECTED_RECIPE));
         progress = tag.getDouble(TAG_PROGRESS);
         booster = tag.getInt(TAG_BOOSTER);
         maxBooster = tag.getInt(TAG_MAX_BOOSTER);
@@ -410,20 +420,45 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        writeLegacyLoadedTileBinary(data);
+        writeTank(data, inputTank);
+        data.writeFloat(plasmaR);
+        data.writeFloat(plasmaG);
+        data.writeFloat(plasmaB);
+        data.writeLong(plasmaEnergySync);
+        data.writeLong(energy.getPower());
+        data.writeLong(energy.getMaxPower());
+        data.writeBoolean(didProcess);
+        data.writeBoolean(connected);
+        data.writeInt(booster);
+        data.writeInt(maxBooster);
+        data.writeUtf(selectedRecipe);
+        data.writeDouble(progress);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        readLegacyLoadedTileBinary(data);
+        readTank(data, inputTank);
+        plasmaR = data.readFloat();
+        plasmaG = data.readFloat();
+        plasmaB = data.readFloat();
+        plasmaEnergySync = data.readLong();
+        energy.setPower(data.readLong());
+        energy.setMaxPower(data.readLong());
+        energy.setTransferRates(energy.getMaxPower(), 0L);
+        didProcess = data.readBoolean();
+        connected = data.readBoolean();
+        booster = data.readInt();
+        maxBooster = data.readInt();
+        selectedRecipe = GenericMachineRecipeSelector.normalize(data.readUtf());
+        progress = data.readDouble();
     }
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
         return GenericMachineRecipeSelector.isSelectionTag(tag)
+                && hasLegacyUseDistance(player)
                 && GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.PLASMA_FORGE,
                 GenericMachineRecipeSelector.readSelection(tag), items.getStackInSlot(SLOT_BLUEPRINT));
     }
@@ -458,15 +493,16 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     private boolean tickServer(Level level) {
         ensureNodes(level);
         long oldPower = energy.getPower();
+        long oldMaxPower = energy.getMaxPower();
         double oldProgress = progress;
         boolean oldProcess = didProcess;
         int oldBooster = booster;
-        HbmBatteryTransfer.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, getMaxPower());
         plasmaEnergySync = plasmaEnergy;
         plasmaEnergy = 0L;
 
         GenericMachineRecipe recipe = activeRecipe(level);
         updateMaxPower(recipe);
+        HbmBatteryTransfer.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, getMaxPower());
         if (inputTank.getTankType() != HbmFluids.NONE) {
             refreshTrackedReceiverFluidPortsReport(List.of(inputTank), this);
         }
@@ -489,7 +525,7 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         distributePlasma();
         neutronEnergy = 0.0D;
         return result.changed() || oldPower != energy.getPower() || oldProgress != progress
-                || oldProcess != didProcess || oldBooster != booster;
+                || oldProcess != didProcess || oldBooster != booster || oldMaxPower != energy.getMaxPower();
     }
 
     @Nullable
@@ -523,11 +559,12 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private void updateMaxPower(@Nullable GenericMachineRecipe recipe) {
-        long target = DEFAULT_MAX_POWER;
+        long target = energy.getMaxPower() <= 0L ? 1_000_000L : energy.getMaxPower();
         if (recipe != null) {
-            target = Math.max(target, recipe.getPower() * 100L);
+            target = recipe.getPower() * 100L;
         }
         target = Math.max(target, energy.getPower());
+        target = Math.max(target, 100_000L);
         energy.setMaxPower(target);
         energy.setTransferRates(target, 0L);
     }
@@ -581,10 +618,13 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (net == null || net.receiverEntries.isEmpty()) {
             return;
         }
+        connected = true;
         long powerReceived = (long) Math.ceil(plasmaEnergySync * 0.75D);
+        if (powerReceived <= 0L) {
+            return;
+        }
         for (Object receiver : new ArrayList<>(net.receiverEntries.keySet())) {
-            if (receiver instanceof FusionPowerReceiver fusionReceiver && fusionReceiver.receivesFusionPower()) {
-                connected = true;
+            if (receiver instanceof FusionPowerReceiver fusionReceiver) {
                 fusionReceiver.receiveFusionPower(powerReceived, neutronEnergy, plasmaR, plasmaG, plasmaB);
             }
         }
@@ -613,6 +653,11 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         return slot >= SLOT_INPUT_START && slot <= SLOT_INPUT_END;
     }
 
+    private boolean canExtractExternalSlot(int slot) {
+        return slot == SLOT_OUTPUT || GenericMachineRecipeRuntime.isSlotClogged(getSelectedRecipeDefinition(),
+                GenericMachineRecipe.Machine.PLASMA_FORGE, level, items, slot, INPUT_SLOTS);
+    }
+
     private static int boosterValue(ItemStack stack) {
         if (stack.isEmpty()) {
             return 0;
@@ -639,17 +684,59 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         return ModItems.legacyItem(legacyName) != null && item == ModItems.legacyItem(legacyName).get();
     }
 
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
+    }
+
+    private boolean hasLegacyUseDistance(Player player) {
+        return player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D) <= 128.0D;
+    }
+
+    private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
+        data.writeInt(tank.getFill());
+        data.writeInt(tank.getMaxFill());
+        data.writeInt(tank.getTankType().getId());
+        data.writeShort((short) tank.getPressure());
+    }
+
+    private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
+        int fill = data.readInt();
+        int maxFill = data.readInt();
+        FluidType type = HbmFluids.fromId(data.readInt());
+        int pressure = data.readShort();
+        tank.changeTankSize(maxFill);
+        tank.withPressure(pressure);
+        tank.setTankType(type);
+        tank.setFill(fill);
+    }
+
     private final class AccessibleItemHandler implements IItemHandler {
-        @Override public int getSlots() { return SLOT_COUNT; }
-        @Override public @NotNull ItemStack getStackInSlot(int slot) { return items.getStackInSlot(slot); }
+        @Override public int getSlots() { return ACCESSIBLE_SLOTS.length; }
+        @Override public @NotNull ItemStack getStackInSlot(int slot) {
+            int mapped = map(slot);
+            return mapped < 0 ? ItemStack.EMPTY : items.getStackInSlot(mapped);
+        }
         @Override public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return slot == SLOT_OUTPUT ? stack : items.insertItem(slot, stack, simulate);
+            int mapped = map(slot);
+            return mapped >= 0 && mapped != SLOT_OUTPUT ? items.insertItem(mapped, stack, simulate) : stack;
         }
         @Override public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            return slot == SLOT_OUTPUT || slot >= SLOT_BOOSTER ? items.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
+            int mapped = map(slot);
+            return mapped >= 0 && canExtractExternalSlot(mapped) ? items.extractItem(mapped, amount, simulate) : ItemStack.EMPTY;
         }
-        @Override public int getSlotLimit(int slot) { return items.getSlotLimit(slot); }
-        @Override public boolean isItemValid(int slot, @NotNull ItemStack stack) { return items.isItemValid(slot, stack); }
+        @Override public int getSlotLimit(int slot) {
+            int mapped = map(slot);
+            return mapped < 0 ? 0 : items.getSlotLimit(mapped);
+        }
+        @Override public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            int mapped = map(slot);
+            return mapped >= 0 && mapped != SLOT_OUTPUT && items.isItemValid(mapped, stack);
+        }
+
+        private int map(int slot) {
+            return slot >= 0 && slot < ACCESSIBLE_SLOTS.length ? ACCESSIBLE_SLOTS[slot] : -1;
+        }
     }
 
     public static final class ForgeArm {
@@ -846,6 +933,6 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static void playStrikerSound(FusionPlasmaForgeBlockEntity forge, Level level) {
         level.playLocalSound(forge.worldPosition.getX() + 0.5D, forge.worldPosition.getY() + 0.5D,
                 forge.worldPosition.getZ() + 0.5D, ModSounds.ITEM_BOLTGUN.get(), SoundSource.BLOCKS,
-                0.25F, 1.25F, false);
+                forge.getVolume(0.25F), 1.25F, false);
     }
 }

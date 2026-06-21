@@ -47,7 +47,7 @@ public class DieselGeneratorMenu extends AbstractContainerMenu {
                 DieselGeneratorBlockEntity.SLOT_IDENTIFIER, 8, 17));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
                 DieselGeneratorBlockEntity.SLOT_IDENTIFIER_OUTPUT, 8, 53));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 166);
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
         addDataSlots();
     }
 

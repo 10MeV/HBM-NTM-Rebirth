@@ -56,6 +56,11 @@ public class PWRAssembledBlockEntity extends BlockEntity implements RORValueProv
         return port;
     }
 
+    @Nullable
+    public BlockState getOriginalState() {
+        return originalState;
+    }
+
     public void invalidateController() {
         if (level != null && corePos != null
                 && level.getBlockEntity(corePos) instanceof PWRControllerBlockEntity controller) {
@@ -82,6 +87,7 @@ public class PWRAssembledBlockEntity extends BlockEntity implements RORValueProv
         BlockState restored = originalState != null && originalState.is(original)
                 ? originalState
                 : original.defaultBlockState();
+        suppressRestore();
         level.setBlock(worldPosition, restored, Block.UPDATE_ALL);
     }
 

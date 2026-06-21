@@ -20,7 +20,7 @@ public final class ObjMachineModels {
             "chemical_factory", "chemical_plant", "chimney_brick", "chimney_industrial",
             "chungus", "coker", "combustion_engine", "compressor", "condenser",
             "conveyor_press", "cyclotron", "derrick", "dieselgen", "drone",
-            "electric_heater", "electrolyser", "elevator", "exposure_chamber", "fel",
+            "electric_heater", "electrolyser", "elevator", "exposure_chamber", "fan", "fel",
             "fensu", "fensu2", "firebox", "flare_stack", "fracking_tower", "furnace_steel",
             "gascent", "heatex", "heating_oven", "hephaestus", "hydrotreater", "igen",
             "industrial_boiler", "industrial_turbine", "intake", "liquefactor",
@@ -40,7 +40,7 @@ public final class ObjMachineModels {
             "coker", "combination_oven", "combustion_engine", "compressor", "compressor_compact",
             "condenser", "conveyor_press", "crucible_heat", "cyclotron", "derrick", "dieselgen",
             "drain", "drone", "drum_gray", "electric_heater", "electrolyser", "elevator",
-            "exposure_chamber", "fel", "fensu", "fensu2", "firebox",
+            "exposure_chamber", "fan", "fel", "fensu", "fensu2", "firebox",
             "flare_stack", "fracking_tower", "fraction_spacer", "fraction_tower", "furnace_iron",
             "furnace_steel", "gascent", "heater_heatex", "heating_oven", "hephaestus", "igen",
             "hydrotreater", "industrial_boiler", "industrial_turbine", "intake", "liquefactor",
@@ -279,6 +279,7 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel BATTERY_SOCKET_LEGACY = legacyModel("battery", "battery_socket").asVBO();
     public static final LegacyWavefrontModel BATTERY_REDD_LEGACY = legacyModel("fensu2").asVBO();
     public static final LegacyWavefrontModel FENSU_LEGACY = legacyModel("fensu").asVBO();
+    public static final LegacyWavefrontModel FAN_LEGACY = legacyModel("fan").asVBO();
     public static final LegacyWavefrontModel RADAR_BODY_LEGACY = legacyModel("radar_base").noSmooth().asVBO();
     public static final LegacyWavefrontModel RADAR_LEGACY = legacyModel("radar", "radar_base").noSmooth().asVBO();
     public static final LegacyWavefrontModel RADAR_LARGE_LEGACY = legacyModel("radar_large").noSmooth().asVBO();
@@ -389,6 +390,7 @@ public final class ObjMachineModels {
     public static final ResourceLocation EPRESS_HEAD_TEXTURE = machineTexture("epress_head");
     public static final ResourceLocation ELEVATOR_TEXTURE = machineTexture("elevator");
     public static final ResourceLocation FENSU_TEXTURE = machineTexture("fensu");
+    public static final ResourceLocation FAN_TEXTURE = machineTexture("fan");
     public static final ResourceLocation SOLAR_MIRROR_TEXTURE = machineTexture("solar_mirror");
     public static final ResourceLocation TELEX_TEXTURE = machineTexture("telex");
     public static final ResourceLocation AUTOCAL_TEXTURE = machineTexture("autocal");

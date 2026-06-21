@@ -27,6 +27,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.LegacyUpgradeSlotSound;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,8 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            LegacyUpgradeSlotSound.playIfUpgrade(PyroOvenBlockEntity.this, slot, getStackInSlot(slot),
+                    SLOT_UPGRADE_1, SLOT_UPGRADE_2, 0.5D, 1.0F, 1.0F);
         }
 
         @Override

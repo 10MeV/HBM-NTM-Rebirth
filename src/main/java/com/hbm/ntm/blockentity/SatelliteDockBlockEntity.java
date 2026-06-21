@@ -170,7 +170,7 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
         if (customName != null && !customName.isBlank()) {
             return Component.literal(customName);
         }
-        return Component.translatable("container.hbm_ntm_rebirth.sat_dock");
+        return Component.translatable("container.satDock");
     }
 
     @Nullable

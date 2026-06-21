@@ -3,11 +3,11 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
-import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
@@ -54,7 +54,9 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
         controller.energy.setTransferRates(controller.getMaxPower(), 0L);
         controller.networkPackNT(50);
         if (controller.assembled) {
-            HbmEnergyUtil.subscribeReceiverToPorts(level, pos, controller.getEnergyPorts(), controller.energy);
+            if (controller.getMaxPower() > 0L) {
+                HbmEnergyUtil.subscribeReceiverToPorts(level, pos, controller.getEnergyPorts(), controller.energy);
+            }
             if (controller.getPower() > 0L) {
                 controller.fireLaser(level, state);
                 controller.setPower(0L);
@@ -140,8 +142,8 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
 
     @Override
     public long getMaxPower() {
-        return (long) (Math.sqrt(capacitorCount) * CAPACITOR_POWER
-                + Math.sqrt(Math.min(turbochargerCount, capacitorCount)) * TURBO_POWER);
+        return (long) (Math.sqrt(capacitorCount) * HbmCommonConfig.icfLaserCapacitorPower()
+                + Math.sqrt(Math.min(turbochargerCount, capacitorCount)) * HbmCommonConfig.icfLaserTurboPower());
     }
 
     @Override
@@ -316,10 +318,6 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
             laserLength = i;
             BlockPos scan = worldPosition.relative(dir, i);
             BlockState scanState = level.getBlockState(scan);
-            if (MultiblockHelper.resolveCoreBlockEntity(level, scan) instanceof ICFReactorBlockEntity reactor) {
-                reactor.receiveLaser(getPower(), getMaxPower());
-                break;
-            }
             if (scanState.is(ModBlocks.ICF.get())) {
                 BlockPos corePos = scan.relative(dir, 8).below(3);
                 if (level.getBlockEntity(corePos) instanceof ICFReactorBlockEntity reactor) {

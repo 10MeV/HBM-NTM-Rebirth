@@ -39,6 +39,7 @@ import com.hbm.ntm.menu.ExposureChamberMenu;
 import com.hbm.ntm.menu.FluidTankMenu;
 import com.hbm.ntm.menu.FireboxHeaterMenu;
 import com.hbm.ntm.menu.FelMenu;
+import com.hbm.ntm.menu.FileCabinetMenu;
 import com.hbm.ntm.menu.ForceFieldMenu;
 import com.hbm.ntm.menu.FusionBreederMenu;
 import com.hbm.ntm.menu.FusionKlystronMenu;
@@ -358,6 +359,9 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<CrateMenu>> STORAGE_CRATE =
             MENUS.register("storage_crate", () -> IForgeMenuType.create(CrateMenu::new));
+
+    public static final RegistryObject<MenuType<FileCabinetMenu>> FILE_CABINET =
+            MENUS.register("file_cabinet", () -> IForgeMenuType.create(FileCabinetMenu::new));
 
     public static final RegistryObject<MenuType<MassStorageMenu>> MASS_STORAGE =
             MENUS.register("mass_storage", () -> IForgeMenuType.create(MassStorageMenu::new));

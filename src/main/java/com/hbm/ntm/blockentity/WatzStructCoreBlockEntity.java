@@ -119,7 +119,7 @@ public class WatzStructCoreBlockEntity extends BlockEntity {
 
     private static LegacyMultiblockLayout watzLayout() {
         Direction facing = Direction.NORTH;
-        BlockPos center = new BlockPos(facing.getStepX() * 3, 0, facing.getStepZ() * 3);
+        BlockPos center = BlockPos.ZERO;
         return LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 3, 3, 1, 1 }, facing)
                 .withLegacyXrCheckedFill(new int[] { 2, 0, 2, 2, 2, -2 }, facing, center)
                 .withLegacyXrCheckedFill(new int[] { 2, 0, 2, 2, -2, 2 }, facing, center)

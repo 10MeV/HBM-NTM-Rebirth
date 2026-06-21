@@ -29,10 +29,10 @@ public class BrickFurnaceMenu extends AbstractContainerMenu {
     public BrickFurnaceMenu(int containerId, Inventory playerInventory, BrickFurnaceBlockEntity blockEntity) {
         super(ModMenuTypes.BRICK_FURNACE.get(), containerId);
         this.blockEntity = blockEntity;
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 53, 17));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 53, 53));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 2, 125, 35));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 3, 71, 53));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 62, 35));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 35, 17));
+        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 2, 116, 35));
+        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 3, 35, 53));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getBurnTime, value -> burnTime = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getMaxBurnTime, value -> maxBurnTime = value);

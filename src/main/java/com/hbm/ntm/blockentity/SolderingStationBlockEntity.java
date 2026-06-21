@@ -26,6 +26,7 @@ import com.hbm.ntm.recipe.SolderingStationRecipe;
 import com.hbm.ntm.recipe.SolderingStationRecipeRuntime;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.LegacyUpgradeSlotSound;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
@@ -83,6 +84,8 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            LegacyUpgradeSlotSound.playIfUpgrade(SolderingStationBlockEntity.this, slot, getStackInSlot(slot),
+                    SLOT_UPGRADE_0, SLOT_UPGRADE_1, 0.5D, 1.0F, 1.0F);
         }
 
         @Override

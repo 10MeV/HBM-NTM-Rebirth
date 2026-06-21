@@ -36,7 +36,7 @@ public class PWRControllerBlock extends HorizontalMachineBlock implements Entity
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (player.isShiftKeyDown()) {
-            return InteractionResult.SUCCESS;
+            return InteractionResult.PASS;
         }
         if (level.getBlockEntity(pos) instanceof PWRControllerBlockEntity controller) {
             if (controller.isAssembled() && isPwrPrinter(player.getItemInHand(hand))) {

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "key": {
+    "A": {
+      "tag": "forge:ingots/aluminium"
+    },
+    "I": {
+      "tag": "forge:ingots/iron"
+    }
+  },
+  "pattern": [
+    " A ",
+    " IA",
+    "I  "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:mirror_tool"
+  },
+  "show_notification": true
+}

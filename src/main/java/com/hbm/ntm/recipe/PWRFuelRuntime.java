@@ -3,6 +3,8 @@ package com.hbm.ntm.recipe;
 import com.hbm.ntm.registry.ModItems;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -33,6 +35,11 @@ public final class PWRFuelRuntime {
             return Type.MEU;
         }
         return Type.values()[index];
+    }
+
+    public static Optional<Type> typeFor(ItemStack stack) {
+        int index = fuelIndex(stack);
+        return index < 0 ? Optional.empty() : Optional.of(type(index));
     }
 
     public static List<DisplayFuel> displayFuels() {
@@ -116,41 +123,68 @@ public final class PWRFuelRuntime {
 
     public static final class Curve {
         private final Kind kind;
-        private final double a;
+        private final double level;
         private final double div;
+        private final double off;
 
-        private Curve(Kind kind, double a, double div) {
+        private Curve(Kind kind, double level, double div, double off) {
             this.kind = kind;
-            this.a = a;
+            this.level = level;
             this.div = div == 0.0D ? 1.0D : div;
+            this.off = off;
         }
 
-        public static Curve sqrt(double a) {
-            return new Curve(Kind.SQRT, a, 1.0D);
+        public static Curve sqrt(double level) {
+            return new Curve(Kind.SQRT, level, 1.0D, 0.0D);
         }
 
-        public static Curve logarithmic(double a) {
-            return new Curve(Kind.LOGARITHMIC, a, 1.0D);
+        public static Curve logarithmic(double level) {
+            return new Curve(Kind.LOGARITHMIC, level, 1.0D, 1.0D);
         }
 
         public Curve withDiv(double div) {
-            return new Curve(kind, a, div);
+            return new Curve(kind, level, div, off);
         }
 
         public double eval(double flux) {
             double safeFlux = Math.max(0.0D, flux);
-            double value = switch (kind) {
-                case SQRT -> Math.sqrt(safeFlux * a);
-                case LOGARITHMIC -> Math.log1p(safeFlux) * a;
+            return switch (kind) {
+                case SQRT -> squirt(safeFlux / div + off) * level;
+                case LOGARITHMIC -> Math.log10(Math.max(Double.MIN_NORMAL, safeFlux / div + off)) * level;
             };
-            return value / div;
         }
 
         public String fuelLabel() {
             return switch (kind) {
-                case SQRT -> "square root";
-                case LOGARITHMIC -> "logarithmic";
+                case SQRT -> "sqrt(" + xName(false) + ") * " + String.format(Locale.US, "%,.3f", level);
+                case LOGARITHMIC -> "log10(" + xName(false) + ") * " + String.format(Locale.US, "%,.1f", level);
             };
+        }
+
+        public String dangerLabel() {
+            return switch (kind) {
+                case SQRT -> "MEDIUM / SQUARE ROOT";
+                case LOGARITHMIC -> "MEDIUM / LOGARITHMIC";
+            };
+        }
+
+        private String xName(boolean brackets) {
+            String x = "x";
+            boolean modified = false;
+            if (div != 1.0D) {
+                x += " / " + String.format(Locale.US, "%,.1f", div);
+                modified = true;
+            }
+            if (off != 0.0D) {
+                x += " + " + String.format(Locale.US, "%,.1f", off);
+                modified = true;
+            }
+            return modified && brackets ? "(" + x + ")" : x;
+        }
+
+        private static double squirt(double x) {
+            double safeX = Math.max(0.0D, Mth.clamp(x, 0.0D, Double.MAX_VALUE));
+            return Math.sqrt(safeX + 1.0D / ((safeX + 2.0D) * (safeX + 2.0D))) - 1.0D / (safeX + 2.0D);
         }
 
         private enum Kind {

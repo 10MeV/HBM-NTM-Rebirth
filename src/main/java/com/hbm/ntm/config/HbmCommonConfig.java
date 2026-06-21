@@ -11,6 +11,9 @@ public final class HbmCommonConfig {
     public static final ForgeConfigSpec.BooleanValue ENABLE_CRYSTAL_VIRUS_SPREADING;
     public static final ForgeConfigSpec.BooleanValue ENABLE_MOTD;
     public static final ForgeConfigSpec.BooleanValue ENABLE_MACHINE_GRAVITY;
+    public static final ForgeConfigSpec.IntValue ICF_LASER_CAPACITOR_POWER;
+    public static final ForgeConfigSpec.IntValue ICF_LASER_TURBO_POWER;
+    public static final ForgeConfigSpec.LongValue FUSION_MHDT_MINIMUM_PLASMA;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -37,6 +40,22 @@ public final class HbmCommonConfig {
         ENABLE_MACHINE_GRAVITY = builder
                 .comment("Legacy GeneralConfig 1.44_enableMachineGravity: large machines require a proper foundation and tilt when unsupported. The old 528-only companion switch is intentionally not migrated.")
                 .define("enableMachineGravity", false);
+        builder.pop();
+
+        builder.push("machines");
+        builder.push("icfLaser");
+        ICF_LASER_CAPACITOR_POWER = builder
+                .comment("Legacy MachineDynConfig icfLaser I:capacitorPower: laser power contribution per sqrt(valid capacitors).")
+                .defineInRange("capacitorPower", 2_500_000, 0, Integer.MAX_VALUE);
+        ICF_LASER_TURBO_POWER = builder
+                .comment("Legacy MachineDynConfig icfLaser I:turboPower: laser power contribution per sqrt(min(valid turbochargers, valid capacitors)).")
+                .defineInRange("turboPower", 5_000_000, 0, Integer.MAX_VALUE);
+        builder.pop();
+        builder.push("mhd-turbine");
+        FUSION_MHDT_MINIMUM_PLASMA = builder
+                .comment("Legacy MachineDynConfig mhd-turbine L:minimumPlasma: plasma threshold for full MHD turbine output.")
+                .defineInRange("minimumPlasma", 5_000_000L, 0L, Long.MAX_VALUE);
+        builder.pop();
         builder.pop();
 
         NetworkConfig.define(builder);
@@ -83,7 +102,35 @@ public final class HbmCommonConfig {
         return booleanValue(ENABLE_MACHINE_GRAVITY, false);
     }
 
+    public static int icfLaserCapacitorPower() {
+        return intValue(ICF_LASER_CAPACITOR_POWER, 2_500_000);
+    }
+
+    public static int icfLaserTurboPower() {
+        return intValue(ICF_LASER_TURBO_POWER, 5_000_000);
+    }
+
+    public static long fusionMhdtMinimumPlasma() {
+        return longValue(FUSION_MHDT_MINIMUM_PLASMA, 5_000_000L);
+    }
+
     private static boolean booleanValue(ForgeConfigSpec.BooleanValue value, boolean fallback) {
+        try {
+            return value == null ? fallback : value.get();
+        } catch (IllegalStateException ignored) {
+            return fallback;
+        }
+    }
+
+    private static int intValue(ForgeConfigSpec.IntValue value, int fallback) {
+        try {
+            return value == null ? fallback : value.get();
+        } catch (IllegalStateException ignored) {
+            return fallback;
+        }
+    }
+
+    private static long longValue(ForgeConfigSpec.LongValue value, long fallback) {
         try {
             return value == null ? fallback : value.get();
         } catch (IllegalStateException ignored) {

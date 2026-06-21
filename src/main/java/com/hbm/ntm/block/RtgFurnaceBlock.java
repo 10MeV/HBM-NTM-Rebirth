@@ -69,7 +69,7 @@ public class RtgFurnaceBlock extends HorizontalMachineBlock implements EntityBlo
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         if (state.getValue(LIT)) {
-            BrickFurnaceBlock.frontSmokeFlame(state, level, pos, random);
+            BrickFurnaceBlock.frontSmokeFlame(state, level, pos, random, 0.25D);
         }
     }
 

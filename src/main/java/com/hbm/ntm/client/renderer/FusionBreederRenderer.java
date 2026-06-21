@@ -18,7 +18,7 @@ public class FusionBreederRenderer implements BlockEntityRenderer<FusionBreederB
 
     @Override
     public boolean shouldRenderOffScreen(FusionBreederBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
@@ -34,7 +34,8 @@ public class FusionBreederRenderer implements BlockEntityRenderer<FusionBreederB
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
-        ObjFusionModels.BREEDER_BODY.render(new ObjRenderContext(poseStack, buffer, state, light, packedOverlay));
+        ObjFusionModels.BREEDER_LEGACY.renderOnly(ObjFusionModels.BREEDER_TEXTURE,
+                new ObjRenderContext(poseStack, buffer, state, light, packedOverlay), "Breeder");
         poseStack.popPose();
     }
 

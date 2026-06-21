@@ -36,6 +36,7 @@ import com.hbm.ntm.network.packet.PlayerPropertiesPacket;
 import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
 import com.hbm.ntm.network.packet.ServerTileBinaryControlPacket;
 import com.hbm.ntm.network.packet.ServerTileBinaryControlChunkPacket;
+import com.hbm.ntm.network.packet.PWRPrinterSnapshotPacket;
 import com.hbm.ntm.network.packet.ServerEntityActionPacket;
 import com.hbm.ntm.network.packet.ServerTileActionPacket;
 import com.hbm.ntm.network.packet.TileControlPacket;
@@ -1030,6 +1031,10 @@ public final class ModMessages {
                 ExtPropertiesSyncPacket::decode,
                 ExtPropertiesSyncPacket::encode,
                 ExtPropertiesSyncPacket::handle);
+        registerServerToClient(PWRPrinterSnapshotPacket.class,
+                PWRPrinterSnapshotPacket::decode,
+                PWRPrinterSnapshotPacket::encode,
+                PWRPrinterSnapshotPacket::handle);
     }
 
     public static void sendToServer(Object message) {

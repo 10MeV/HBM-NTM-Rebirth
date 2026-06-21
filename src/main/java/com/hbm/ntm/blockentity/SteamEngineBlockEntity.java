@@ -18,13 +18,16 @@ import com.hbm.ntm.fluid.HbmTurbineConversion;
 import com.hbm.ntm.fluid.HbmTurbineConversion.TurbineResult;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
 public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
@@ -34,6 +37,9 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
     private final HbmFluidTank steamTank;
     private final HbmFluidTank spentSteamTank;
     private float rotor;
+    private float lastRotor;
+    private float syncRotor;
+    private int turnProgress;
     private float acceleration;
     private long lastPowerProduced;
 
@@ -71,6 +77,9 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         engine.rotor += engine.acceleration;
         if (engine.rotor >= 360.0F) {
             engine.rotor -= 360.0F;
+            LegacySoundPlayer.playSoundEffect(level, pos.getX(), pos.getY(), pos.getZ(),
+                    "hbm:block.steamEngineOperate", SoundSource.BLOCKS, engine.getVolume(1.0F),
+                    0.5F + engine.acceleration / 80.0F);
         }
 
         if (engine.energy.getPower() > 0L) {
@@ -91,6 +100,20 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         return HbmTurbineConversion.run(steamTank, spentSteamTank, SteamEngineConfig.efficiency(), Integer.MAX_VALUE, false);
     }
 
+    public static void clientTick(Level level, BlockPos pos, BlockState state, SteamEngineBlockEntity engine) {
+        if (!level.isClientSide) {
+            return;
+        }
+        engine.lastRotor = engine.rotor;
+        if (engine.turnProgress > 0) {
+            float delta = Mth.wrapDegrees(engine.syncRotor - engine.rotor);
+            engine.rotor += delta / engine.turnProgress;
+            engine.turnProgress--;
+        } else {
+            engine.rotor = engine.syncRotor;
+        }
+    }
+
     private void normalizeConfigCapacity() {
         steamTank.changeTankSize(SteamEngineConfig.steamCapacity());
         spentSteamTank.changeTankSize(SteamEngineConfig.spentSteamCapacity());
@@ -106,6 +129,10 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public float getRotor() {
         return rotor;
+    }
+
+    public float getLastRotor() {
+        return lastRotor;
     }
 
     public float getAcceleration() {
@@ -219,15 +246,28 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putFloat("rotor", rotor);
+        tag.putFloat("lastRotor", lastRotor);
         tag.putFloat("acceleration", acceleration);
         tag.putLong("lastPowerProduced", lastPowerProduced);
     }
 
     @Override
     public void load(CompoundTag tag) {
+        float previousRotor = rotor;
         super.load(tag);
         normalizeConfigCapacity();
-        rotor = tag.getFloat("rotor");
+        float incomingRotor = tag.getFloat("rotor");
+        if (level != null && level.isClientSide) {
+            rotor = previousRotor;
+            lastRotor = previousRotor;
+            syncRotor = incomingRotor;
+            turnProgress = 3;
+        } else {
+            rotor = incomingRotor;
+            lastRotor = tag.contains("lastRotor") ? tag.getFloat("lastRotor") : rotor;
+            syncRotor = incomingRotor;
+            turnProgress = 0;
+        }
         acceleration = Math.max(0.0F, tag.getFloat("acceleration"));
         lastPowerProduced = Math.max(0L, tag.getLong("lastPowerProduced"));
     }

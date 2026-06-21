@@ -101,21 +101,17 @@ public class PWRScreen extends AbstractContainerScreen<PWRMenu> {
             LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal(percent + "%")), mouseX, mouseY);
         } else if (isHovering(52, 53, 54, 4, mouseX, mouseY)) {
             LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal(
-                    "Control rod level: " + (100 - menu.getRodLevel()) + "%")), mouseX, mouseY);
+                    "Control rod level: " + (100.0D - Math.round(menu.getRodLevelExact() * 100.0D) / 100.0D) + "%")),
+                    mouseX, mouseY);
+        } else if (isHovering(88, 4, 18, 18, mouseX, mouseY)
+                && menu.getTypeLoaded() >= 0 && menu.getAmountLoaded() > 0) {
+            graphics.renderTooltip(font, loadedFuelStack(), mouseX, mouseY);
         } else if (isHovering(8, 5, 16, 52, mouseX, mouseY)) {
             graphics.renderComponentTooltip(font, menu.getCoolantTank().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()),
                     mouseX, mouseY);
         } else if (isHovering(26, 5, 16, 52, mouseX, mouseY)) {
             graphics.renderComponentTooltip(font, menu.getHotCoolantTank().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()),
                     mouseX, mouseY);
-        } else if (isHovering(116, 53, 52, 18, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font, List.of(
-                    Component.literal("Rods: " + menu.getRodCount()),
-                    Component.literal("Heat exchangers: " + menu.getHeatexCount()),
-                    Component.literal("Channels: " + menu.getChannelCount()),
-                    Component.literal("Heatsinks: " + menu.getHeatsinkCount()),
-                    Component.literal("Sources: " + menu.getSourceCount()),
-                    Component.literal(menu.isAssembled() ? "Assembled" : "Not assembled")), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
@@ -123,24 +119,27 @@ public class PWRScreen extends AbstractContainerScreen<PWRMenu> {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (leftPos + 88 <= mouseX && mouseX < leftPos + 106 && topPos + 58 < mouseY && mouseY <= topPos + 76) {
-            sendControl();
-            playClick();
+            if (sendControl()) {
+                playClick();
+            }
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    private void sendControl() {
-        int display = 0;
+    private boolean sendControl() {
+        int display;
         try {
             display = Integer.parseInt(controlField.getValue());
         } catch (NumberFormatException ignored) {
+            return false;
         }
         display = Mth.clamp(display, 0, 100);
         controlField.setValue(Integer.toString(display));
         CompoundTag tag = new CompoundTag();
         tag.putInt("control", 100 - display);
         ModMessages.sendToServer(new TileControlPacket(menu.getBlockEntity().getBlockPos(), tag));
+        return true;
     }
 
     private ItemStack loadedFuelStack() {

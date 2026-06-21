@@ -898,6 +898,15 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('S', Items.STICK)
                 .unlockedBy("has_dura_steel", has(item("ingot_dura_steel")))
                 .save(consumer, id("tools/hand_drill"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.MIRROR_TOOL.get())
+                .pattern(" A ")
+                .pattern(" IA")
+                .pattern("I  ")
+                .define('A', forgeTag("ingots/aluminium"))
+                .define('I', forgeTag("ingots/iron"))
+                .unlockedBy("has_aluminium_ingot", has(forgeTag("ingots/aluminium")))
+                .save(consumer, id("tools/mirror_tool"));
     }
 
     private static void legacyHazmatRecipes(Consumer<FinishedRecipe> consumer) {
@@ -2581,6 +2590,14 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('I', forgeTag("ingots/steel"))
                 .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
                 .save(consumer, id("blocks/crate_steel"));
+
+        shapedLegacyVariantRecipe(consumer, id("blocks/filing_cabinet_steel"), ModBlocks.FILING_CABINET.get(),
+                1, 1, new String[] {" P ", "PIP", " P "},
+                new Object[][] {
+                        {'P', forgeTag("plates/steel")},
+                        {'I', item("plate_polymer")}
+                },
+                item("plate_polymer"), "has_plate_polymer");
 
         ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.REINFORCED_LAMINATE_PANE.get(), 16)
                 .pattern("LLL")
@@ -4920,7 +4937,11 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 JsonObject keyObject = new JsonObject();
                 for (Object[] entry : keys) {
                     JsonObject ingredient = new JsonObject();
-                    ingredient.addProperty("item", HbmRegistryUtil.itemKey(((ItemLike) entry[1]).asItem()).toString());
+                    if (entry[1] instanceof TagKey<?> tagKey && tagKey.isFor(Registries.ITEM)) {
+                        ingredient.addProperty("tag", tagKey.location().toString());
+                    } else {
+                        ingredient.addProperty("item", HbmRegistryUtil.itemKey(((ItemLike) entry[1]).asItem()).toString());
+                    }
                     keyObject.add(String.valueOf((Character) entry[0]), ingredient);
                 }
                 json.add("key", keyObject);
@@ -5198,6 +5219,37 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void legacyMissingMachineAcquisitionRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.TELEANCHOR.get())
+                .pattern("ODO")
+                .pattern("EAE")
+                .pattern("ODO")
+                .define('O', Blocks.OBSIDIAN)
+                .define('D', Items.DIAMOND)
+                .define('E', item("powder_magic"))
+                .define('A', item("gem_alexandrite"))
+                .unlockedBy("has_alexandrite", has(item("gem_alexandrite")))
+                .save(consumer, id("machines/teleanchor"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.FIELD_DISTURBER.get())
+                .pattern("ICI")
+                .pattern("CAC")
+                .pattern("ICI")
+                .define('I', forgeTag("ingots/starmetal"))
+                .define('C', item("circuit_bismoid"))
+                .define('A', item("gem_alexandrite"))
+                .unlockedBy("has_bismoid_circuit", has(item("circuit_bismoid")))
+                .save(consumer, id("machines/field_disturber"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.FAN.get())
+                .pattern("BPB")
+                .pattern("PRP")
+                .pattern("BPB")
+                .define('B', forgeTag("bolts/steel"))
+                .define('P', forgeTag("plates/iron"))
+                .define('R', Items.REDSTONE)
+                .unlockedBy("has_steel_bolt", has(forgeTag("bolts/steel")))
+                .save(consumer, id("machines/fan"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.PRESS_PREHEATER.get())
                 .pattern("CCC")
                 .pattern("SLS")

@@ -10,7 +10,6 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -24,10 +23,6 @@ public class FusionCollectorBlockEntity extends BlockEntity implements FusionPow
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FusionCollectorBlockEntity collector) {
         collector.ensureNode(level);
-        if (level.getGameTime() % 20L == 0L) {
-            collector.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-        }
     }
 
     @Override

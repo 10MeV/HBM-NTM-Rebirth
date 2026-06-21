@@ -28,7 +28,7 @@ public class VendingMachineRenderer implements BlockEntityRenderer<VendingMachin
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return 256;
     }
 
     @Override

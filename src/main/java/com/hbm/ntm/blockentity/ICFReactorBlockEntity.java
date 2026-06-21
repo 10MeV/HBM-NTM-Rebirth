@@ -69,14 +69,13 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
         @Override
         public int getSlotLimit(int slot) {
-            return 1;
+            return 64;
         }
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case 0, 1, 2, 3, 4, SLOT_ACTIVE -> !stack.isEmpty();
-                case SLOT_IDENTIFIER -> stack.getItem() instanceof com.hbm.ntm.api.fluid.IFluidIdentifierItem;
+                case 0, 1, 2, 3, 4 -> stack.is(ModItems.ICF_PELLET.get());
                 default -> false;
             };
         }
@@ -196,6 +195,11 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    public List<HbmFluidTank> getAllTanks() {
+        return List.of(coolantTank, hotCoolantTank, stellarFluxTank);
+    }
+
+    @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of(hotCoolantTank, stellarFluxTank);
     }
@@ -263,7 +267,7 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
                 worldPosition.getY(),
                 worldPosition.getZ() + 0.5D - 8.0D,
                 worldPosition.getX() + 0.5D + 9.0D,
-                worldPosition.getY() + 0.5D + 5.0D,
+                worldPosition.getY() + 5.5D,
                 worldPosition.getZ() + 0.5D + 9.0D);
     }
 
@@ -271,6 +275,9 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "items", items);
+        coolantTank.writeToNbt(tag, "t0");
+        hotCoolantTank.writeToNbt(tag, "t1");
+        stellarFluxTank.writeToNbt(tag, "t2");
         tag.putLong("heat", heat);
     }
 
@@ -278,6 +285,15 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "items", items);
+        if (hasTankTag(tag, "t0")) {
+            coolantTank.readFromNbt(tag, "t0");
+        }
+        if (hasTankTag(tag, "t1")) {
+            hotCoolantTank.readFromNbt(tag, "t1");
+        }
+        if (hasTankTag(tag, "t2")) {
+            stellarFluxTank.readFromNbt(tag, "t2");
+        }
         heat = tag.getLong("heat");
     }
 
@@ -474,6 +490,10 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
         }
         long result = value + addition;
         return result < value ? Long.MAX_VALUE : result;
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
     private class AccessibleItemHandler implements IItemHandler {

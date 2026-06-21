@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " P ",
+    "PIP",
+    " P "
+  ],
+  "key": {
+    "P": {
+      "tag": "forge:plates/steel"
+    },
+    "I": {
+      "item": "hbm_ntm_rebirth:plate_polymer"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:filing_cabinet",
+    "count": 1,
+    "nbt": "{hbmLegacyVariant:1}"
+  },
+  "show_notification": true
+}

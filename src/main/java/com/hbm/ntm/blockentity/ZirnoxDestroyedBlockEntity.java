@@ -90,7 +90,7 @@ public class ZirnoxDestroyedBlockEntity extends BlockEntity {
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-3, 0, -3), worldPosition.offset(4, 3, 4));
+        return new AABB(worldPosition.offset(-4, 0, -4), worldPosition.offset(5, 4, 5));
     }
 
     private void radiate(Level level, BlockPos pos) {

@@ -96,7 +96,7 @@ public class ZirnoxReactorScreen extends AbstractContainerScreen<ZirnoxReactorMe
                     "desc.gui.zirnox.warning1",
                     "\u00a7cError:\u00a7r Water is required for$the reactor to function properly!")),
                     mouseX, mouseY);
-        } else if (menu.getCarbonDioxideTank().fill() <= 4000
+        } else if (menu.getCarbonDioxideTank().fill() < 4000
                 && LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 16, topPos + 84, 16, 16)) {
             LegacyGuiElements.renderTooltip(graphics, font, splitLegacyInfo(Component.translatableWithFallback(
                     "desc.gui.zirnox.warning2",

@@ -19,12 +19,15 @@ public class DiFurnaceRtgScreen extends AbstractContainerScreen<DiFurnaceRtgMenu
     public DiFurnaceRtgScreen(DiFurnaceRtgMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         imageWidth = 176;
-        imageHeight = 185;
+        imageHeight = 166;
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        if (menu.getSpeed() >= 15) {
+            graphics.blit(TEXTURE, leftPos + 58, topPos + 36, 176, 31, 18, 16);
+        }
         int progress = menu.getProgressWidth(24);
         if (progress > 0) {
             graphics.blit(TEXTURE, leftPos + 101, topPos + 35, 176, 14, progress + 1, 17);
@@ -39,7 +42,7 @@ public class DiFurnaceRtgScreen extends AbstractContainerScreen<DiFurnaceRtgMenu
             graphics.renderTooltip(font,
                     Component.literal(menu.getProgress() + " / " + DiFurnaceRtgBlockEntity.PROCESS_TIME),
                     mouseX, mouseY);
-        } else if (isHovering(8, 72, 108, 16, mouseX, mouseY)) {
+        } else if (isHovering(58, 36, 18, 16, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getSpeed() + " heat/t"), mouseX, mouseY);
         } else {
             renderSideTooltip(graphics, mouseX, mouseY);

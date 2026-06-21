@@ -25,7 +25,9 @@ import com.hbm.ntm.neutron.RBMKDebrisPlanner.ZirnoxDebrisType;
 import com.hbm.ntm.recipe.ZirnoxFuelRuntime;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.util.AchievementHandler;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -40,6 +42,7 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -52,6 +55,7 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +71,11 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
     public static final int MAX_HEAT = 100_000;
     public static final int MAX_PRESSURE = 100_000;
     private static final int FLOOR_COUNT = 9;
+    private static final String LEGACY_STEAM_TANK = "steam";
+    private static final String LEGACY_CARBON_DIOXIDE_TANK = "carbondioxide";
+    private static final String LEGACY_WATER_TANK = "water";
+    private static final String METEORITE_SWORD_BRED = "meteorite_sword_bred";
+    private static final String METEORITE_SWORD_IRRADIATED = "meteorite_sword_irradiated";
 
     private static final String TAG_ITEMS = "items";
     private static final String[] ROR = {
@@ -167,10 +176,10 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public void receiveControl(ServerPlayer player, CompoundTag data) {
-        if (data.getBoolean("control")) {
+        if (data.contains("control")) {
             toggle();
         }
-        if (data.getBoolean("vent")) {
+        if (data.contains("vent")) {
             ventCarbonDioxide();
         }
     }
@@ -183,7 +192,7 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     public void ventCarbonDioxide() {
-        carbonDioxideTank.setFill(carbonDioxideTank.getFill() - 1000);
+        carbonDioxideTank.setFill(Math.max(carbonDioxideTank.getFill() - 1000, 0));
         onFluidContentsChanged();
     }
 
@@ -256,7 +265,12 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public List<HbmFluidTank> getReceivingTanks() {
-        return List.of(carbonDioxideTank, waterTank);
+        return List.of(waterTank, carbonDioxideTank);
+    }
+
+    @Override
+    public List<HbmFluidTank> getAllTanks() {
+        return List.of(waterTank, steamTank, carbonDioxideTank);
     }
 
     @Override
@@ -313,7 +327,7 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
-        return List.of(carbonDioxideTank, waterTank);
+        return List.of(waterTank, carbonDioxideTank);
     }
 
     @Override
@@ -335,6 +349,9 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         tag.putBoolean("isOn", on);
         tag.putBoolean("redstonePowered", redstonePowered);
         tag.putInt("output", output);
+        steamTank.writeToNbt(tag, LEGACY_STEAM_TANK);
+        carbonDioxideTank.writeToNbt(tag, LEGACY_CARBON_DIOXIDE_TANK);
+        waterTank.writeToNbt(tag, LEGACY_WATER_TANK);
     }
 
     @Override
@@ -346,6 +363,9 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         on = tag.getBoolean("isOn");
         redstonePowered = tag.getBoolean("redstonePowered");
         output = tag.getInt("output");
+        readLegacyTank(tag, LEGACY_STEAM_TANK, steamTank);
+        readLegacyTank(tag, LEGACY_CARBON_DIOXIDE_TANK, carbonDioxideTank);
+        readLegacyTank(tag, LEGACY_WATER_TANK, waterTank);
     }
 
     @Override
@@ -474,6 +494,8 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
                 ItemStack stack = items.getStackInSlot(slot);
                 if (ZirnoxFuelRuntime.isRod(stack)) {
                     decay(slot, stack);
+                } else {
+                    irradiateMeteoriteSword(slot, stack);
                 }
             }
         }
@@ -587,13 +609,27 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         BlockState destroyed = ModBlocks.ZIRNOX_DESTROYED.get().defaultBlockState()
                 .setValue(HorizontalMachineBlock.FACING, facing);
         level.setBlock(worldPosition, destroyed, Block.UPDATE_ALL);
-        MultiblockHelper.fillLayout(level, worldPosition, ModBlocks.zirnoxLayout(facing));
+        MultiblockHelper.fillLayout(level, worldPosition, ModBlocks.zirnoxDestroyedLayout(facing));
         level.playSound(null, worldPosition.getX(), worldPosition.getY() + 2.0D, worldPosition.getZ(),
                 ModSounds.BLOCK_RBMK_EXPLOSION.get(), SoundSource.BLOCKS, 10.0F, 1.0F);
         level.explode(null, worldPosition.getX(), worldPosition.getY() + 3.0D, worldPosition.getZ(),
                 12.0F, true, Level.ExplosionInteraction.BLOCK);
         spawnZirnoxDebris(level);
         ExplosionNukeGeneric.waste(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), 35);
+        awardZirnoxBoom(level);
+    }
+
+    private void awardZirnoxBoom(Level level) {
+        AABB range = new AABB(
+                worldPosition.getX() + 0.5D,
+                worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D,
+                worldPosition.getX() + 0.5D,
+                worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D).inflate(100.0D);
+        for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, range)) {
+            AchievementHandler.award(player, AchievementHandler.ZIRNOX_BOOM);
+        }
     }
 
     private void spawnZirnoxDebris(Level level) {
@@ -665,6 +701,14 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         }
     }
 
+    private void irradiateMeteoriteSword(int slot, ItemStack stack) {
+        RegistryObject<Item> bred = ModItems.legacyItem(METEORITE_SWORD_BRED);
+        RegistryObject<Item> irradiated = ModItems.legacyItem(METEORITE_SWORD_IRRADIATED);
+        if (bred != null && irradiated != null && stack.is(bred.get())) {
+            items.setStackInSlot(slot, new ItemStack(irradiated.get()));
+        }
+    }
+
     private int neighborFuelCount(int slot) {
         int count = 0;
         for (int neighbor : NEIGHBORS[slot]) {
@@ -703,6 +747,12 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         tank.withPressure(pressure);
         tank.setTankType(type);
         tank.setFill(fill);
+    }
+
+    private static void readLegacyTank(CompoundTag tag, String key, HbmFluidTank tank) {
+        if (tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id")) {
+            tank.readFromNbt(tag, key);
+        }
     }
 
     private static boolean containsFluid(ItemStack stack, FluidType type) {

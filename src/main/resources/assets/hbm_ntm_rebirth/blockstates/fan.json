@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=down": { "model": "hbm_ntm_rebirth:block/empty" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/empty" },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/empty" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/empty" },
+    "facing=up": { "model": "hbm_ntm_rebirth:block/empty" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/empty" }
+  }
+}

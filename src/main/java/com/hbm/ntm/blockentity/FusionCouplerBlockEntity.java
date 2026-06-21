@@ -86,7 +86,7 @@ public class FusionCouplerBlockEntity extends BlockEntity
     }
 
     private void ensureNodes(Level level) {
-        Direction rot = facing().getClockWise();
+        Direction rot = facing().getOpposite().getClockWise();
         BlockPos klystronPos = worldPosition.relative(rot).above(2);
         if (klystronNode == null || klystronNode.isExpired()) {
             KlystronNode existing = KlystronNodespace.getNode(level, klystronPos);

@@ -17,6 +17,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.SlotItemHandler;
 
 public class ZirnoxReactorMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = ZirnoxReactorBlockEntity.SLOT_COUNT;
@@ -50,14 +52,13 @@ public class ZirnoxReactorMenu extends AbstractContainerMenu {
         super(ModMenuTypes.ZIRNOX_REACTOR.get(), containerId);
         this.blockEntity = blockEntity;
         for (int slot = 0; slot < ROD_SLOTS.length; slot++) {
-            addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), slot,
-                    ROD_SLOTS[slot][0], ROD_SLOTS[slot][1]));
+            addSlot(legacyPlainSlot(blockEntity.getItems(), slot, ROD_SLOTS[slot][0], ROD_SLOTS[slot][1]));
         }
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(legacyPlainSlot(blockEntity.getItems(),
                 ZirnoxReactorBlockEntity.SLOT_CO2_INPUT, 143, 124));
         addSlot(HbmInventoryMenuHelper.takeOnlySlot(blockEntity.getItems(),
                 ZirnoxReactorBlockEntity.SLOT_CO2_OUTPUT, 143, 142));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(legacyPlainSlot(blockEntity.getItems(),
                 ZirnoxReactorBlockEntity.SLOT_WATER_INPUT, 179, 124));
         addSlot(HbmInventoryMenuHelper.takeOnlySlot(blockEntity.getItems(),
                 ZirnoxReactorBlockEntity.SLOT_WATER_OUTPUT, 179, 142));
@@ -186,6 +187,25 @@ public class ZirnoxReactorMenu extends AbstractContainerMenu {
                 redstonePowered = value;
             }
         });
+    }
+
+    private static SlotItemHandler legacyPlainSlot(IItemHandler items, int slot, int x, int y) {
+        return new SlotItemHandler(items, slot, x, y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return true;
+            }
+
+            @Override
+            public int getMaxStackSize() {
+                return Math.max(super.getMaxStackSize(), hasItem() ? getItem().getCount() : 1);
+            }
+
+            @Override
+            public int getMaxStackSize(ItemStack stack) {
+                return Math.max(super.getMaxStackSize(stack), hasItem() ? getItem().getCount() : 1);
+            }
+        };
     }
 
     private static ZirnoxReactorBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

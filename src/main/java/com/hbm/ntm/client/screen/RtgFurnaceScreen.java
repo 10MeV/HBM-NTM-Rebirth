@@ -22,9 +22,12 @@ public class RtgFurnaceScreen extends AbstractContainerScreen<RtgFurnaceMenu> {
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        if (menu.getHeat() > 0) {
+            graphics.blit(TEXTURE, leftPos + 55, topPos + 35, 176, 0, 18, 16);
+        }
         int progress = menu.getProgressWidth(24);
         if (progress > 0) {
-            graphics.blit(TEXTURE, leftPos + 101, topPos + 35, 176, 14, progress + 1, 17);
+            graphics.blit(TEXTURE, leftPos + 79, topPos + 34, 176, 16, progress + 1, 17);
         }
     }
 
@@ -32,11 +35,11 @@ public class RtgFurnaceScreen extends AbstractContainerScreen<RtgFurnaceMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(101, 35, 24, 17, mouseX, mouseY)) {
+        if (isHovering(79, 34, 24, 17, mouseX, mouseY)) {
             graphics.renderTooltip(font,
                     Component.literal(menu.getCookTime() + " / " + RtgFurnaceBlockEntity.PROCESS_TIME),
                     mouseX, mouseY);
-        } else if (isHovering(17, 53, 54, 16, mouseX, mouseY)) {
+        } else if (isHovering(55, 35, 18, 16, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getHeat() + " heat/t"), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);

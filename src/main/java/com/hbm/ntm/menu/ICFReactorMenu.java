@@ -3,7 +3,6 @@ package com.hbm.ntm.menu;
 import com.hbm.ntm.blockentity.ICFReactorBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.multiblock.MultiblockHelper;
-import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -40,13 +39,14 @@ public class ICFReactorMenu extends AbstractContainerMenu {
         super(ModMenuTypes.ICF_REACTOR.get(), containerId);
         this.blockEntity = blockEntity;
         for (int i = 0; i < 5; i++) {
-            addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), i, 80 + i * 18, 18));
+            addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), i, 80 + i * 18, 18));
         }
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ICFReactorBlockEntity.SLOT_ACTIVE, 116, 54));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ICFReactorBlockEntity.SLOT_ACTIVE, 116, 54));
         for (int i = 0; i < 5; i++) {
-            addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 6 + i, 80 + i * 18, 90));
+            addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
+                    6 + i, 80 + i * 18, 90));
         }
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ICFReactorBlockEntity.SLOT_IDENTIFIER, 44, 90));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ICFReactorBlockEntity.SLOT_IDENTIFIER, 44, 90));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 44, 140, 198);
         coolantTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getCoolantTank());
         hotCoolantTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getHotCoolantTank());
@@ -100,10 +100,6 @@ public class ICFReactorMenu extends AbstractContainerMenu {
         ItemStack original = stack.copy();
         if (index < MACHINE_SLOT_COUNT) {
             if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_SLOT_END, true)) {
-                return ItemStack.EMPTY;
-            }
-        } else if (stack.is(ModItems.ICF_PELLET.get())) {
-            if (!HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 5, 6, 0, 5)) {
                 return ItemStack.EMPTY;
             }
         } else if (stack.getItem() instanceof com.hbm.ntm.api.fluid.IFluidIdentifierItem) {

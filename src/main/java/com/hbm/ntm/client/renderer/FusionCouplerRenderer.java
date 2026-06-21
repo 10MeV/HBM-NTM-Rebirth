@@ -16,7 +16,7 @@ public class FusionCouplerRenderer implements BlockEntityRenderer<FusionCouplerB
 
     @Override
     public boolean shouldRenderOffScreen(FusionCouplerBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
@@ -33,7 +33,8 @@ public class FusionCouplerRenderer implements BlockEntityRenderer<FusionCouplerB
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
-        ObjFusionModels.COUPLER.render(new ObjRenderContext(poseStack, buffer, state, light, packedOverlay));
+        ObjFusionModels.COUPLER_LEGACY.renderAll(ObjFusionModels.COUPLER_TEXTURE,
+                new ObjRenderContext(poseStack, buffer, state, light, packedOverlay));
         poseStack.popPose();
     }
 }

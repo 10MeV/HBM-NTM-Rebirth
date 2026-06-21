@@ -52,6 +52,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     private boolean vboRequested;
     private LegacyWavefrontModel vboView;
     private int selectionGeneration;
+    private PreparedBatch allPreparedBatch;
 
     public LegacyWavefrontModel(ResourceLocation modelLocation, ResourceLocation textureLocation) {
         this(modelLocation, textureLocation, false);
@@ -399,7 +400,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         if (failed) {
             return;
         }
-        renderGroups(groupOrder, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+        renderPreparedBatch(allPreparedBatch(), textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                 legacyShadow, smoothing, renderMode, uvTransform);
     }
 
@@ -616,7 +617,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         if (failed) {
             return;
         }
-        renderGroups(selection.groups(this), textureLocation, poseStack, buffer, packedLight, packedOverlay,
+        renderPreparedBatch(selection.batch(this), textureLocation, poseStack, buffer, packedLight, packedOverlay,
                 red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
         warnMissingNamedGroups(selection.rawNames());
     }
@@ -683,7 +684,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         if (failed) {
             return;
         }
-        renderGroups(groupOrder, textureLocation, poseStack, buffer, packedLight, packedOverlay,
+        renderPreparedBatch(allPreparedBatch(), textureLocation, poseStack, buffer, packedLight, packedOverlay,
                 255, 255, 255, 255, false, smoothing, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
     }
 
@@ -901,6 +902,36 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
                 emitPreparedVertices(triangleVertices, triangleConsumer, position, normal, packedLight, packedOverlay,
                         red, green, blue, alpha, legacyShadow, smoothing, uvTransform);
             }
+        }
+    }
+
+    private static void renderPreparedBatch(PreparedBatch batch, ResourceLocation textureLocation, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+            boolean legacyShadow, boolean smoothing, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+        if (batch.empty()) {
+            return;
+        }
+        LegacyTexturedRenderMode alphaMode = renderMode.withAlpha(alpha);
+        VertexConsumer quadConsumer = null;
+        VertexConsumer triangleConsumer = null;
+        PoseStack.Pose pose = poseStack.last();
+        Matrix4f position = pose.pose();
+        Matrix3f normal = pose.normal();
+        List<PreparedVertex> quadVertices = batch.quadVertices();
+        if (!quadVertices.isEmpty()) {
+            if (quadConsumer == null) {
+                quadConsumer = buffer.getBuffer(alphaMode.renderType(textureLocation, VertexFormat.Mode.QUADS));
+            }
+            emitPreparedVertices(quadVertices, quadConsumer, position, normal, packedLight, packedOverlay,
+                    red, green, blue, alpha, legacyShadow, smoothing, uvTransform);
+        }
+        List<PreparedVertex> triangleVertices = batch.triangleVertices();
+        if (!triangleVertices.isEmpty()) {
+            if (triangleConsumer == null) {
+                triangleConsumer = buffer.getBuffer(alphaMode.renderType(textureLocation, VertexFormat.Mode.TRIANGLES));
+            }
+            emitPreparedVertices(triangleVertices, triangleConsumer, position, normal, packedLight, packedOverlay,
+                    red, green, blue, alpha, legacyShadow, smoothing, uvTransform);
         }
     }
 
@@ -1291,6 +1322,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         groupsByName.clear();
         groupOrder.clear();
         selectionCache.clear();
+        allPreparedBatch = null;
         missingPartWarnings.clear();
         loaded = false;
         failed = false;
@@ -1470,6 +1502,14 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         for (Group group : groupOrder) {
             group.ensurePrepared();
         }
+        allPreparedBatch = PreparedBatch.from(groupOrder);
+    }
+
+    private PreparedBatch allPreparedBatch() {
+        if (allPreparedBatch == null) {
+            allPreparedBatch = PreparedBatch.from(groupOrder);
+        }
+        return allPreparedBatch;
     }
 
     private List<Group> selectedGroups(SelectionCacheMode mode, String... names) {
@@ -1854,6 +1894,30 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
                                   UV averageUv) {
     }
 
+    private record PreparedBatch(List<PreparedVertex> quadVertices, List<PreparedVertex> triangleVertices) {
+        private static final PreparedBatch EMPTY = new PreparedBatch(List.of(), List.of());
+
+        private static PreparedBatch from(List<Group> groups) {
+            if (groups.isEmpty()) {
+                return EMPTY;
+            }
+            List<PreparedVertex> quads = new ArrayList<>();
+            List<PreparedVertex> triangles = new ArrayList<>();
+            for (Group group : groups) {
+                quads.addAll(group.quadVertices());
+                triangles.addAll(group.triangleVertices());
+            }
+            if (quads.isEmpty() && triangles.isEmpty()) {
+                return EMPTY;
+            }
+            return new PreparedBatch(List.copyOf(quads), List.copyOf(triangles));
+        }
+
+        private boolean empty() {
+            return quadVertices.isEmpty() && triangleVertices.isEmpty();
+        }
+    }
+
     private enum SelectionCacheMode {
         ONLY,
         ALL_EXCEPT,
@@ -1871,6 +1935,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         private LegacyWavefrontModel model;
         private int generation = Integer.MIN_VALUE;
         private List<Group> groups = List.of();
+        private PreparedBatch batch = PreparedBatch.EMPTY;
 
         private SelectionHandle(SelectionCacheMode mode, List<String> requestedNames, List<String> normalizedNames,
                 String[] rawNames) {
@@ -1883,10 +1948,16 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         private List<Group> groups(LegacyWavefrontModel model) {
             if (this.model != model || generation != model.selectionGeneration) {
                 groups = model.createSelectedGroups(new SelectionCacheKey(mode, normalizedNames));
+                batch = PreparedBatch.from(groups);
                 this.model = model;
                 generation = model.selectionGeneration;
             }
             return groups;
+        }
+
+        private PreparedBatch batch(LegacyWavefrontModel model) {
+            groups(model);
+            return batch;
         }
 
         private String[] rawNames() {

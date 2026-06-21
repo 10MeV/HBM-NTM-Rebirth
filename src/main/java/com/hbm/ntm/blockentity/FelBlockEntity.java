@@ -10,7 +10,9 @@ import com.hbm.ntm.item.LaserWavelength;
 import com.hbm.ntm.menu.FelMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmRegistryUtil;
 import java.util.List;
@@ -30,6 +32,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -131,6 +134,12 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
         for (int i = 3; i < range; i++) {
             BlockPos beamPos = worldPosition.relative(facing, i).above();
             BlockState beamState = level.getBlockState(beamPos);
+            if (!beamState.getFluidState().isEmpty() && !beamState.blocksMotion()) {
+                distance = i;
+                LegacySoundPlayer.playSoundEffect(level, beamPos, "random.fizz", 1.0F, 1.0F);
+                level.removeBlock(beamPos, false);
+                break;
+            }
             if (beamState.isAir() || !beamState.blocksMotion()) {
                 continue;
             }
@@ -142,6 +151,16 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
                 continue;
             }
             distance = i;
+            if (beamState.getExplosionResistance(level, beamPos, null) < 75.0F && level.random.nextInt(5) == 0) {
+                LegacySoundPlayer.playSoundEffect(level, beamPos, "random.fizz", 1.0F, 1.0F);
+                BlockState fire = mode == LaserWavelength.DRX
+                        ? ModBlocks.FIRE_DIGAMMA.get().defaultBlockState()
+                        : Blocks.FIRE.defaultBlockState();
+                level.setBlock(beamPos, fire, Block.UPDATE_ALL);
+                if (mode == LaserWavelength.DRX) {
+                    level.setBlock(beamPos.below(), ModBlocks.ASH_DIGAMMA.get().defaultBlockState(), Block.UPDATE_ALL);
+                }
+            }
             break;
         }
         hurtEntities(level, facing, Math.max(0, distance - 1));

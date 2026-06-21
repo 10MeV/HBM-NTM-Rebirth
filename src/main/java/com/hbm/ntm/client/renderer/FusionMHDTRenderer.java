@@ -16,7 +16,7 @@ public class FusionMHDTRenderer implements BlockEntityRenderer<FusionMHDTBlockEn
 
     @Override
     public boolean shouldRenderOffScreen(FusionMHDTBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
@@ -34,14 +34,14 @@ public class FusionMHDTRenderer implements BlockEntityRenderer<FusionMHDTBlockEn
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
-        ObjFusionModels.MHDT_TURBINE.render(context);
+        ObjFusionModels.MHDT_LEGACY.renderOnly(ObjFusionModels.MHDT_TEXTURE, context, "Turbine");
 
         poseStack.pushPose();
         float rotor = blockEntity.getRotor(partialTick) % 15.0F;
         poseStack.translate(0.0D, 1.5D, 0.0D);
         poseStack.mulPose(Axis.XP.rotationDegrees(rotor));
         poseStack.translate(0.0D, -1.5D, 0.0D);
-        ObjFusionModels.MHDT_COILS.render(context);
+        ObjFusionModels.MHDT_LEGACY.renderOnly(ObjFusionModels.MHDT_TEXTURE, context, "Coils");
         poseStack.popPose();
         poseStack.popPose();
     }

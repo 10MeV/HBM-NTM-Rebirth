@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.block.ICFAssembledBlock;
 import com.hbm.ntm.energy.HbmEnergyConnector;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
@@ -8,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -104,23 +106,34 @@ public class ICFAssembledBlockEntity extends BlockEntity implements HbmEnergyCon
             tag.putInt("cY", corePos.getY());
             tag.putInt("cZ", corePos.getZ());
         }
+        int legacyMeta = legacyLaserMeta(originalState != null ? originalState.getBlock() : null);
+        if (legacyMeta >= 0) {
+            tag.putInt("meta", legacyMeta);
+        }
         tag.putBoolean("port", port);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        if (tag.contains("block")) {
+        originalBlockId = null;
+        originalState = null;
+        corePos = null;
+        if (tag.contains("block", Tag.TAG_STRING)) {
             originalBlockId = ResourceLocation.tryParse(tag.getString("block"));
+        } else if (tag.contains("block", Tag.TAG_INT) && tag.getInt("block") != 0) {
+            originalState = legacyLaserComponentState(tag.getInt("meta"));
+            originalBlockId = ForgeRegistries.BLOCKS.getKey(originalState.getBlock());
         }
-        if (tag.contains("state")) {
+        if (tag.contains("state", Tag.TAG_COMPOUND)) {
             originalState = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), tag.getCompound("state"));
             originalBlockId = ForgeRegistries.BLOCKS.getKey(originalState.getBlock());
         }
         if (tag.contains("cX")) {
             corePos = new BlockPos(tag.getInt("cX"), tag.getInt("cY"), tag.getInt("cZ"));
         }
-        port = tag.getBoolean("port");
+        port = tag.contains("port") ? tag.getBoolean("port") : getBlockState().hasProperty(ICFAssembledBlock.PORT)
+                && getBlockState().getValue(ICFAssembledBlock.PORT);
     }
 
     @Override
@@ -143,5 +156,26 @@ public class ICFAssembledBlockEntity extends BlockEntity implements HbmEnergyCon
 
     private boolean hasOriginalBlock() {
         return originalBlockId != null || originalState != null;
+    }
+
+    private static BlockState legacyLaserComponentState(int meta) {
+        return switch (meta) {
+            case 1 -> ModBlocks.ICF_LASER_PORT.get().defaultBlockState();
+            case 2 -> ModBlocks.ICF_LASER_CELL.get().defaultBlockState();
+            case 3 -> ModBlocks.ICF_LASER_EMITTER.get().defaultBlockState();
+            case 4 -> ModBlocks.ICF_LASER_CAPACITOR.get().defaultBlockState();
+            case 5 -> ModBlocks.ICF_LASER_TURBO.get().defaultBlockState();
+            default -> ModBlocks.ICF_LASER_CASING.get().defaultBlockState();
+        };
+    }
+
+    private static int legacyLaserMeta(@Nullable Block block) {
+        if (block == ModBlocks.ICF_LASER_CASING.get()) return 0;
+        if (block == ModBlocks.ICF_LASER_PORT.get()) return 1;
+        if (block == ModBlocks.ICF_LASER_CELL.get()) return 2;
+        if (block == ModBlocks.ICF_LASER_EMITTER.get()) return 3;
+        if (block == ModBlocks.ICF_LASER_CAPACITOR.get()) return 4;
+        if (block == ModBlocks.ICF_LASER_TURBO.get()) return 5;
+        return -1;
     }
 }

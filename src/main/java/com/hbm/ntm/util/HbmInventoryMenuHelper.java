@@ -133,6 +133,10 @@ public final class HbmInventoryMenuHelper {
         return new LegacyMachineSlot(items, slot, x, y);
     }
 
+    public static SlotItemHandler plainMachineSlot(IItemHandler items, int slot, int x, int y) {
+        return new PlainMachineSlot(items, slot, x, y);
+    }
+
     public static Slot legacyContainerSlot(Container items, int slot, int x, int y) {
         return new LegacyContainerSlot(items, slot, x, y);
     }
@@ -944,6 +948,27 @@ public final class HbmInventoryMenuHelper {
         @Override
         public boolean mayPlace(ItemStack stack) {
             return items.isItemValid(itemSlot, stack);
+        }
+
+        @Override
+        public int getMaxStackSize() {
+            return Math.max(super.getMaxStackSize(), hasItem() ? getItem().getCount() : 1);
+        }
+
+        @Override
+        public int getMaxStackSize(ItemStack stack) {
+            return Math.max(super.getMaxStackSize(stack), hasItem() ? getItem().getCount() : 1);
+        }
+    }
+
+    private static class PlainMachineSlot extends SlotItemHandler {
+        private PlainMachineSlot(IItemHandler items, int slot, int x, int y) {
+            super(items, slot, x, y);
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return true;
         }
 
         @Override

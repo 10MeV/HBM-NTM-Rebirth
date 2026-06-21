@@ -21,7 +21,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
 
     @Override
     public boolean shouldRenderOffScreen(FusionPlasmaForgeBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
@@ -41,10 +41,10 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         if (blockEntity.isConnected()) {
             poseStack.pushPose();
             poseStack.translate(-2.0D, 0.0D, 0.0D);
-            ObjFusionModels.TORUS_BOLTS_1.render(context);
+            ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.TORUS_TEXTURE, context, "Bolts1");
             poseStack.popPose();
         }
-        ObjFusionModels.PLASMA_FORGE_BODY.render(context);
+        renderForgePart(context, "Body");
         renderLegacyDormantPlasma(blockEntity, context);
         renderArticulatedParts(blockEntity, poseStack, context, partialTick);
         GenericMachineRecipe recipe = blockEntity.getSelectedRecipeDefinition();
@@ -62,7 +62,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
 
     private static void renderLegacyDormantPlasma(FusionPlasmaForgeBlockEntity blockEntity, ObjRenderContext context) {
         if (blockEntity.getPlasmaEnergySync() <= 0L) {
-            ObjFusionModels.PLASMA_FORGE_PLASMA.render(context.withColor(0x000000));
+            renderForgePart(context.withColor(0x000000), "Plasma");
         }
     }
 
@@ -78,12 +78,14 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         ObjRenderContext plasma = context.fullBright().withAdditiveTranslucency()
                 .withColor(blockEntity.getPlasmaR(), blockEntity.getPlasmaG(), blockEntity.getPlasmaB(), alpha)
                 .withUvScroll(0.0F, mainOffset);
-        ObjFusionModels.PLASMA_FORGE_PLASMA.render(plasma);
+        ObjFusionModels.PLASMA_FORGE_LEGACY.renderOnly(ObjFusionModels.PLASMA_TEXTURE, plasma, "Plasma");
 
         ObjRenderContext glow = context.fullBright().withAdditiveTranslucency()
                 .withColor(blockEntity.getPlasmaR(), blockEntity.getPlasmaG(), blockEntity.getPlasmaB(), 0.55F);
-        ObjFusionModels.PLASMA_FORGE_PLASMA_GLOW.render(glow.withUvScroll(0.0F, glowOffsetA));
-        ObjFusionModels.PLASMA_FORGE_PLASMA_GLOW.render(glow.withUvScroll(0.0F, glowOffsetB));
+        ObjFusionModels.PLASMA_FORGE_LEGACY.renderOnly(ObjFusionModels.PLASMA_GLOW_TEXTURE,
+                glow.withUvScroll(0.0F, glowOffsetA), "Plasma");
+        ObjFusionModels.PLASMA_FORGE_LEGACY.renderOnly(ObjFusionModels.PLASMA_GLOW_TEXTURE,
+                glow.withUvScroll(0.0F, glowOffsetB), "Plasma");
     }
 
     private static void renderArticulatedParts(FusionPlasmaForgeBlockEntity blockEntity, PoseStack poseStack,
@@ -94,44 +96,57 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees((float) rotor));
         poseStack.pushPose();
-        ObjFusionModels.PLASMA_FORGE_SLIDER_STRIKER.render(context);
+        renderForgePart(context, "SliderStriker");
         rotateAtZ(poseStack, -2.75D, 2.5D, 0.0D, -striker[0]);
-        ObjFusionModels.PLASMA_FORGE_ARM_LOWER_STRIKER.render(context);
+        renderForgePart(context, "ArmLowerStriker");
         rotateAtZ(poseStack, -2.75D, 3.75D, 0.0D, -striker[1]);
-        ObjFusionModels.PLASMA_FORGE_ARM_UPPER_STRIKER.render(context);
+        renderForgePart(context, "ArmUpperStriker");
         rotateAtZ(poseStack, -1.5D, 3.75D, 0.0D, -striker[2]);
-        ObjFusionModels.PLASMA_FORGE_STRIKER_MOUNT.render(context);
+        renderForgePart(context, "StrikerMount");
         poseStack.pushPose();
         rotateAtX(poseStack, 0.0D, 3.375D, 0.5D, striker[3]);
-        ObjFusionModels.PLASMA_FORGE_STRIKER_RIGHT.render(context);
+        renderForgePart(context, "StrikerRight");
         poseStack.translate(0.0D, -striker[4], 0.0D);
-        ObjFusionModels.PLASMA_FORGE_PISTON_RIGHT.render(context);
+        renderForgePart(context, "PistonRight");
         poseStack.popPose();
         poseStack.pushPose();
         rotateAtX(poseStack, 0.0D, 3.375D, -0.5D, -striker[3]);
-        ObjFusionModels.PLASMA_FORGE_STRIKER_LEFT.render(context);
+        renderForgePart(context, "StrikerLeft");
         poseStack.translate(0.0D, -striker[5], 0.0D);
-        ObjFusionModels.PLASMA_FORGE_PISTON_LEFT.render(context);
+        renderForgePart(context, "PistonLeft");
         poseStack.popPose();
         poseStack.popPose();
 
         poseStack.pushPose();
-        ObjFusionModels.PLASMA_FORGE_SLIDER_JET.render(context);
+        renderForgePart(context, "SliderJet");
         rotateAtZ(poseStack, 2.75D, 2.5D, 0.0D, jet[0]);
-        ObjFusionModels.PLASMA_FORGE_ARM_LOWER_JET.render(context);
+        renderForgePart(context, "ArmLowerJet");
         rotateAtZ(poseStack, 2.75D, 3.75D, 0.0D, jet[1]);
-        ObjFusionModels.PLASMA_FORGE_ARM_UPPER_JET.render(context);
+        renderForgePart(context, "ArmUpperJet");
         rotateAtZ(poseStack, 1.5D, 3.75D, 0.0D, jet[2]);
-        ObjFusionModels.PLASMA_FORGE_JET.render(context);
-        if (blockEntity.didProcess() && blockEntity.getPlasmaEnergySync() > 0L && blockEntity.isJetStableAwayFromHome()) {
-            renderLegacyJet(blockEntity, context);
-        }
+        renderForgePart(context, "Jet");
         poseStack.popPose();
         poseStack.popPose();
     }
 
+    private static void renderForgePart(ObjRenderContext context, String part) {
+        ObjFusionModels.PLASMA_FORGE_LEGACY.renderOnly(ObjFusionModels.PLASMA_FORGE_TEXTURE, context, part);
+    }
+
     private static void renderArticulatedEffects(FusionPlasmaForgeBlockEntity blockEntity, PoseStack poseStack,
             ObjRenderContext context, float partialTick) {
+        if (!blockEntity.didProcess() || blockEntity.getPlasmaEnergySync() <= 0L || !blockEntity.isJetStableAwayFromHome()) {
+            return;
+        }
+        double[] jet = blockEntity.getJetPositions(partialTick);
+        double rotor = blockEntity.getRotor(partialTick);
+        poseStack.pushPose();
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) rotor));
+        rotateAtZ(poseStack, 2.75D, 2.5D, 0.0D, jet[0]);
+        rotateAtZ(poseStack, 2.75D, 3.75D, 0.0D, jet[1]);
+        rotateAtZ(poseStack, 1.5D, 3.75D, 0.0D, jet[2]);
+        renderLegacyJet(blockEntity, context);
+        poseStack.popPose();
     }
 
     private static void rotateAtZ(PoseStack poseStack, double x, double y, double z, double degrees) {

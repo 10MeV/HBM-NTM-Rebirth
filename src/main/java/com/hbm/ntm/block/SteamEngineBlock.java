@@ -25,11 +25,15 @@ public class SteamEngineBlock extends LegacyVisibleMultiblockMachineBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide || type != ModBlockEntities.STEAM_ENGINE.get()) {
+        if (type != ModBlockEntities.STEAM_ENGINE.get()) {
             return null;
         }
-        return (tickLevel, tickPos, tickState, blockEntity) ->
-                SteamEngineBlockEntity.serverTick(tickLevel, tickPos, tickState,
-                        (SteamEngineBlockEntity) blockEntity);
+        return level.isClientSide
+                ? (tickLevel, tickPos, tickState, blockEntity) ->
+                        SteamEngineBlockEntity.clientTick(tickLevel, tickPos, tickState,
+                                (SteamEngineBlockEntity) blockEntity)
+                : (tickLevel, tickPos, tickState, blockEntity) ->
+                        SteamEngineBlockEntity.serverTick(tickLevel, tickPos, tickState,
+                                (SteamEngineBlockEntity) blockEntity);
     }
 }

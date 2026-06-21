@@ -94,7 +94,8 @@ public class WatzReactorMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 256.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity,
+                WatzReactorBlockEntity.USE_DISTANCE_SQR);
     }
 
     @Override

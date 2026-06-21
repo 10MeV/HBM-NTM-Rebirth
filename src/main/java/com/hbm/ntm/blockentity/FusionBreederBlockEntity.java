@@ -65,7 +65,7 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
 
         @Override
         public int getSlotLimit(int slot) {
-            return slot == SLOT_FLUID_ID ? 1 : 64;
+            return 64;
         }
 
         @Override
@@ -96,8 +96,9 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FusionBreederBlockEntity breeder) {
+        boolean changed = breeder.updateIdentifierTankType();
         HbmFluidNetworkBlockEntity.serverTick(level, pos, state, breeder);
-        boolean changed = breeder.tickServer(level);
+        changed |= breeder.tickServer(level);
         breeder.networkPackNT(25);
         if (changed || level.getGameTime() % 20L == 0L) {
             breeder.setChanged();
@@ -132,6 +133,11 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
         return new FusionBreederMenu(containerId, inventory, this);
+    }
+
+    @Override
+    public List<HbmFluidTank> getAllTanks() {
+        return List.of(inputTank, outputTank);
     }
 
     @Override
@@ -206,8 +212,12 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "items", items);
         progress = tag.getDouble(TAG_PROGRESS);
-        inputTank.readFromNbt(tag, "t0");
-        outputTank.readFromNbt(tag, "t1");
+        if (hasTankTag(tag, "t0")) {
+            inputTank.readFromNbt(tag, "t0");
+        }
+        if (hasTankTag(tag, "t1")) {
+            outputTank.readFromNbt(tag, "t1");
+        }
     }
 
     @Override
@@ -232,15 +242,21 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        writeLegacyLoadedTileBinary(data);
+        data.writeDouble(neutronEnergySync);
+        data.writeDouble(progress);
+        writeTank(data, inputTank);
+        writeTank(data, outputTank);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        readLegacyLoadedTileBinary(data);
+        neutronEnergySync = data.readDouble();
+        neutronEnergy = neutronEnergySync;
+        progress = data.readDouble();
+        readTank(data, inputTank);
+        readTank(data, outputTank);
     }
 
     @Override
@@ -266,8 +282,6 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private boolean tickServer(Level level) {
-        boolean changed = setFluidTankTypeFromIdentifierSlotReport(items, SLOT_FLUID_ID, SLOT_FLUID_ID, inputTank,
-                0, false).changed();
         neutronEnergySync = neutronEnergy;
         ensureNode(level);
         if (inputTank.getTankType() != HbmFluids.NONE) {
@@ -280,7 +294,12 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
             progress = 0.0D;
         }
         neutronEnergy = 0.0D;
-        return changed;
+        return false;
+    }
+
+    private boolean updateIdentifierTankType() {
+        return setFluidTankTypeFromIdentifierSlotReport(items, SLOT_FLUID_ID, SLOT_FLUID_ID, inputTank,
+                0, false).changed();
     }
 
     private void ensureNode(Level level) {
@@ -341,7 +360,7 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
             return null;
         }
         for (OutgasserRecipe recipe : level.getRecipeManager().getAllRecipesFor(ModRecipes.OUTGASSER.type().get())) {
-            if (!recipe.matchesFusion(input)) {
+            if (!recipe.matchesFusionBreeder(input)) {
                 continue;
             }
             if (recipe.fluidOutput().isPresent() && !canFitOutputFluid(recipe.fluidOutput().get())) {
@@ -360,7 +379,7 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
             return false;
         }
         for (OutgasserRecipe recipe : level.getRecipeManager().getAllRecipesFor(ModRecipes.OUTGASSER.type().get())) {
-            if (recipe.matchesFusion(input)) {
+            if (recipe.matchesFusionBreeder(input)) {
                 return true;
             }
         }
@@ -444,16 +463,57 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
                 : Direction.SOUTH;
     }
 
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
+    }
+
     private final class AccessibleItemHandler implements IItemHandler {
-        @Override public int getSlots() { return SLOT_COUNT; }
-        @Override public @NotNull ItemStack getStackInSlot(int slot) { return items.getStackInSlot(slot); }
+        @Override public int getSlots() { return 2; }
+        @Override public @NotNull ItemStack getStackInSlot(int slot) {
+            int mapped = map(slot);
+            return mapped < 0 ? ItemStack.EMPTY : items.getStackInSlot(mapped);
+        }
         @Override public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return slot == SLOT_OUTPUT ? stack : items.insertItem(slot, stack, simulate);
+            int mapped = map(slot);
+            return mapped == SLOT_INPUT ? items.insertItem(mapped, stack, simulate) : stack;
         }
         @Override public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            return slot == SLOT_OUTPUT ? items.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
+            int mapped = map(slot);
+            return mapped == SLOT_OUTPUT ? items.extractItem(mapped, amount, simulate) : ItemStack.EMPTY;
         }
-        @Override public int getSlotLimit(int slot) { return items.getSlotLimit(slot); }
-        @Override public boolean isItemValid(int slot, @NotNull ItemStack stack) { return items.isItemValid(slot, stack); }
+        @Override public int getSlotLimit(int slot) {
+            int mapped = map(slot);
+            return mapped < 0 ? 0 : items.getSlotLimit(mapped);
+        }
+        @Override public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            int mapped = map(slot);
+            return mapped == SLOT_INPUT && items.isItemValid(mapped, stack);
+        }
+
+        private int map(int slot) {
+            return switch (slot) {
+                case 0 -> SLOT_INPUT;
+                case 1 -> SLOT_OUTPUT;
+                default -> -1;
+            };
+        }
+    }
+
+    private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
+        data.writeInt(tank.getFill());
+        data.writeInt(tank.getMaxFill());
+        data.writeInt(tank.getTankType().getId());
+        data.writeShort((short) tank.getPressure());
+    }
+
+    private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
+        int fill = data.readInt();
+        int maxFill = data.readInt();
+        FluidType type = HbmFluids.fromId(data.readInt());
+        int pressure = data.readShort();
+        tank.changeTankSize(maxFill);
+        tank.withPressure(pressure);
+        tank.setTankType(type);
+        tank.setFill(fill);
     }
 }

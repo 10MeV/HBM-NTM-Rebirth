@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "hbm_ntm_rebirth:block/deuterium_extractor_top_water",
+    "east": "hbm_ntm_rebirth:block/deuterium_extractor_side",
+    "north": "hbm_ntm_rebirth:block/deuterium_extractor_side",
+    "particle": "hbm_ntm_rebirth:block/deuterium_extractor_side",
+    "south": "hbm_ntm_rebirth:block/deuterium_extractor_side",
+    "up": "hbm_ntm_rebirth:block/deuterium_extractor_top_water",
+    "west": "hbm_ntm_rebirth:block/deuterium_extractor_side"
+  }
+}

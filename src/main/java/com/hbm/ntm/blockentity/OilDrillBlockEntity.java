@@ -24,6 +24,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.util.HbmBlockStateUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.LegacyUpgradeSlotSound;
 import com.hbm.ntm.world.OilSpot;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -99,6 +100,8 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            LegacyUpgradeSlotSound.playIfUpgrade(OilDrillBlockEntity.this, slot, getStackInSlot(slot),
+                    SLOT_UPGRADE_START, SLOT_UPGRADE_END, 1.5D, 1.0F, 1.0F);
         }
 
         @Override

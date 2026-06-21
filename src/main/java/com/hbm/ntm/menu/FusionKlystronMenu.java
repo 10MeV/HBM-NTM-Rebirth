@@ -16,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class FusionKlystronMenu extends AbstractContainerMenu {
+    private static final double LEGACY_USE_DISTANCE_SQR = 128.0D;
     private static final int MACHINE_SLOT_COUNT = FusionKlystronBlockEntity.SLOT_COUNT;
     private static final int PLAYER_START = MACHINE_SLOT_COUNT;
     private static final int PLAYER_END = PLAYER_START + 36;
@@ -52,7 +53,7 @@ public class FusionKlystronMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 1024.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, LEGACY_USE_DISTANCE_SQR);
     }
 
     @Override
@@ -64,7 +65,9 @@ public class FusionKlystronMenu extends AbstractContainerMenu {
         ItemStack original = stack.copy();
         if (index < MACHINE_SLOT_COUNT) {
             if (!moveItemStackTo(stack, PLAYER_START, PLAYER_END, true)) return ItemStack.EMPTY;
-        } else if (!moveItemStackTo(stack, 0, 1, false)) {
+        } else if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+            if (!moveItemStackTo(stack, 0, 1, false)) return ItemStack.EMPTY;
+        } else {
             return ItemStack.EMPTY;
         }
         HbmInventoryMenuHelper.finishQuickMove(slot, stack);

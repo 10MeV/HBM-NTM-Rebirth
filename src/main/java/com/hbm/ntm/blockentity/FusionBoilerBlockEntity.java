@@ -1,5 +1,8 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
@@ -18,8 +21,10 @@ import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -27,7 +32,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
-        implements HbmStandardFluidTransceiver, FusionPowerReceiver {
+        implements HbmStandardFluidTransceiver, FusionPowerReceiver, LegacyLookOverlayProvider {
     public static final int TANK_CAPACITY = 32_000;
     private static final String TAG_PLASMA_ENERGY_SYNC = "plasmaEnergySync";
 
@@ -59,7 +64,7 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         if (boiler.steamTank.getFill() > 0) {
             boiler.tryProvideFluidToPorts(boiler.steamTank.getTankType(), boiler.steamTank.getPressure(), boiler);
         }
-        boiler.networkPackNT(25);
+        boiler.networkPackNT(50);
         if (level.getGameTime() % 20L == 0L) {
             boiler.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
@@ -69,6 +74,16 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     public HbmFluidTank getWaterTank() { return waterTank; }
     public HbmFluidTank getSteamTank() { return steamTank; }
     public long getPlasmaEnergySync() { return plasmaEnergySync; }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        return LegacyLookOverlay.forBlock(this, List.of(
+                Component.literal("-> ").withStyle(ChatFormatting.GREEN)
+                        .append(LegacyLookOverlayLines.rate(plasmaEnergySync, "TU")
+                                .copy().withStyle(ChatFormatting.RESET)),
+                LegacyLookOverlayLines.tank(true, waterTank),
+                LegacyLookOverlayLines.tank(false, steamTank)));
+    }
 
     @Override
     public boolean receivesFusionPower() {
@@ -102,6 +117,11 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public List<HbmFluidTank> getReceivingTanks() {
         return List.of(waterTank);
+    }
+
+    @Override
+    public List<HbmFluidTank> getAllTanks() {
+        return List.of(waterTank, steamTank);
     }
 
     @Override
@@ -168,8 +188,12 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        waterTank.readFromNbt(tag, "t0");
-        steamTank.readFromNbt(tag, "t1");
+        if (hasTankTag(tag, "t0")) {
+            waterTank.readFromNbt(tag, "t0");
+        }
+        if (hasTankTag(tag, "t1")) {
+            steamTank.readFromNbt(tag, "t1");
+        }
     }
 
     @Override
@@ -233,6 +257,10 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         return state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {

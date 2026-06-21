@@ -46,6 +46,7 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
     private static final String TAG_ITEMS = "Items";
     private static final String TAG_POWER = "power";
     private static final String TAG_PROGRESS = "progress";
+    private static final String TAG_ACTIVE = "active";
 
     public static final long MAX_POWER = 100_000L;
     public static final int SLOT_BATTERY = 0;
@@ -223,6 +224,7 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
         tag.putLong(TAG_POWER, energy.getPower());
         tag.putInt(TAG_PROGRESS, progress);
+        tag.putBoolean(TAG_ACTIVE, active);
     }
 
     @Override
@@ -233,6 +235,7 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
             energy.setPower(tag.getLong(TAG_POWER));
         }
         progress = tag.getInt(TAG_PROGRESS);
+        active = tag.getBoolean(TAG_ACTIVE);
     }
 
     @Override

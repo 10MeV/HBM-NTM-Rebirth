@@ -1,6 +1,9 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
@@ -11,17 +14,20 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fusion.FusionPowerReceiver;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.uninos.networkproviders.PlasmaNetwork;
 import com.hbm.ntm.uninos.networkproviders.PlasmaNode;
 import com.hbm.ntm.uninos.networkproviders.PlasmaNodespace;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -29,7 +35,7 @@ import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
-        implements HbmStandardFluidTransceiver, FusionPowerReceiver {
+        implements HbmStandardFluidTransceiver, FusionPowerReceiver, LegacyLookOverlayProvider {
     public static final int TANK_CAPACITY = 4_000;
     public static final int COOLANT_USE = 50;
     public static final long MINIMUM_PLASMA = 5_000_000L;
@@ -103,7 +109,31 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public boolean hasMinimumPlasma() {
-        return plasmaEnergySync >= MINIMUM_PLASMA;
+        return plasmaEnergySync >= HbmCommonConfig.fusionMhdtMinimumPlasma();
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        boolean hasPlasma = hasMinimumPlasma();
+        boolean cool = isCool();
+        long power = displayedPower();
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.literal("-> ")
+                .withStyle(hasPlasma ? net.minecraft.ChatFormatting.GREEN : net.minecraft.ChatFormatting.GOLD)
+                .append(Component.literal(LegacyLookOverlayLines.shortNumber(plasmaEnergySync)
+                        + "TU/t / " + LegacyLookOverlayLines.shortNumber(HbmCommonConfig.fusionMhdtMinimumPlasma())
+                        + "TU/t")));
+        lines.add(Component.literal("<- ").withStyle(net.minecraft.ChatFormatting.RED)
+                .append(Component.literal(LegacyLookOverlayLines.shortNumber(cool ? power : 0L) + "HE/t")));
+        lines.add(LegacyLookOverlayLines.tank(true, coldTank));
+        lines.add(LegacyLookOverlayLines.tank(false, hotTank));
+        if (plasmaEnergySync > 0L && !hasPlasma) {
+            lines.add(LegacyLookOverlayLines.blinkingWarning("LOW POWER"));
+        }
+        if (!cool) {
+            lines.add(LegacyLookOverlayLines.blinkingWarning("INSUFFICIENT COOLING"));
+        }
+        return LegacyLookOverlay.forBlock(this, lines);
     }
 
     @Override
@@ -114,6 +144,11 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void receiveFusionPower(long fusionPower, double neutronPower, float r, float g, float b) {
         plasmaEnergy = Math.max(0L, fusionPower);
+    }
+
+    @Override
+    public List<HbmFluidTank> getAllTanks() {
+        return List.of(coldTank, hotTank);
     }
 
     @Override
@@ -186,12 +221,13 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-7, 0, -7), worldPosition.offset(8, 4, 8));
+        return new AABB(worldPosition.offset(-7, 0, -7), worldPosition.offset(8, 5, 8));
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        tag.remove("Energy");
         coldTank.writeToNbt(tag, "t0");
         hotTank.writeToNbt(tag, "t1");
     }
@@ -199,8 +235,13 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        coldTank.readFromNbt(tag, "t0");
-        hotTank.readFromNbt(tag, "t1");
+        setPower(0L);
+        if (hasTankTag(tag, "t0")) {
+            coldTank.readFromNbt(tag, "t0");
+        }
+        if (hasTankTag(tag, "t1")) {
+            hotTank.readFromNbt(tag, "t1");
+        }
     }
 
     @Override
@@ -250,11 +291,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         int previousHot = hotTank.getFill();
         plasmaEnergySync = plasmaEnergy;
         if (isCool()) {
-            long generated = (long) Math.floor(plasmaEnergy * PLASMA_EFFICIENCY);
-            if (plasmaEnergy < MINIMUM_PLASMA) {
-                generated /= 2L;
-            }
-            energy.setPower(generated);
+            energy.setPower(displayedPower());
             coldTank.drain(COOLANT_USE, false);
             hotTank.fill(HbmFluids.PERFLUOROMETHYL, COOLANT_USE, hotTank.getPressure(), false);
         } else {
@@ -278,6 +315,14 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         return coldTank.getFill() >= COOLANT_USE && hotTank.getSpaceFor(HbmFluids.PERFLUOROMETHYL) >= COOLANT_USE;
     }
 
+    private long displayedPower() {
+        long generated = (long) Math.floor(plasmaEnergySync * PLASMA_EFFICIENCY);
+        if (!hasMinimumPlasma()) {
+            generated /= 2L;
+        }
+        return generated;
+    }
+
     private void ensureNode(Level level) {
         Direction direction = facing().getOpposite();
         BlockPos nodePos = worldPosition.relative(direction, 6).above(2);
@@ -298,6 +343,10 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         return state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {

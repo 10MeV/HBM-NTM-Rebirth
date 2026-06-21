@@ -54,7 +54,9 @@ public class FusionBreederScreen extends AbstractContainerScreen<FusionBreederMe
                     + (int) Math.ceil(menu.getNeutronEnergy()) + " flux/t")), mouseX, mouseY);
         } else if (isHovering(67, 46, 42, 14, mouseX, mouseY)) {
             LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal(String.format(Locale.US,
-                    "Progress: %.1f%%", menu.getProgress() * 100.0D))), mouseX, mouseY);
+                    "%,d / %,d flux",
+                    (int) Math.ceil(menu.getProgress() * FusionBreederBlockEntity.CAPACITY),
+                    (int) Math.ceil(FusionBreederBlockEntity.CAPACITY)))), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

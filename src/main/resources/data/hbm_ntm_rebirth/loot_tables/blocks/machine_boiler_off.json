@@ -6,7 +6,21 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "hbm_ntm_rebirth:machine_boiler_off"
+          "name": "hbm_ntm_rebirth:scraps",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{mat:30,amount:72}"
+            },
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 3.0,
+                "max": 6.0
+              }
+            }
+          ]
         }
       ],
       "conditions": [

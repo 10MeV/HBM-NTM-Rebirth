@@ -87,7 +87,7 @@ public class FusionKlystronCreativeBlockEntity extends BlockEntity
                 .flatMap(recipe -> recipe.getExtraData().fusion().stream())
                 .mapToLong(GenericMachineRecipeExtraData.Fusion::ignitionTemp)
                 .max()
-                .orElse(MAX_OUTPUT);
+                .orElse(0L);
     }
 
     @Override
@@ -143,10 +143,10 @@ public class FusionKlystronCreativeBlockEntity extends BlockEntity
                     : existing;
         }
         KlystronNetwork network = klystronNode.getKlystronNet();
-        connected = FusionKlystronBlockEntity.provideKyU(network, getCreativeOutput());
         if (network != null) {
             network.addProvider(this);
         }
+        connected = FusionKlystronBlockEntity.provideKyU(network, getCreativeOutput());
     }
 
     private Direction facing() {

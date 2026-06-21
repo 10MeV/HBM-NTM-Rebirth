@@ -17,6 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class FusionBreederMenu extends AbstractContainerMenu {
+    private static final double LEGACY_USE_DISTANCE_SQR = 128.0D;
     private static final int MACHINE_SLOT_COUNT = FusionBreederBlockEntity.SLOT_COUNT;
     private static final int PLAYER_START = MACHINE_SLOT_COUNT;
     private static final int PLAYER_END = PLAYER_START + 36;
@@ -36,7 +37,8 @@ public class FusionBreederMenu extends AbstractContainerMenu {
         this.blockEntity = blockEntity;
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), FusionBreederBlockEntity.SLOT_FLUID_ID, 26, 72));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), FusionBreederBlockEntity.SLOT_INPUT, 48, 45));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), FusionBreederBlockEntity.SLOT_OUTPUT, 112, 45));
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(inventory.player, blockEntity.getItems(),
+                FusionBreederBlockEntity.SLOT_OUTPUT, 112, 45));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 118, 176);
         inputTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getInputTank());
         outputTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getOutputTank());
@@ -54,7 +56,7 @@ public class FusionBreederMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 1024.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, LEGACY_USE_DISTANCE_SQR);
     }
 
     @Override

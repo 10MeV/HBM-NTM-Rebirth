@@ -3,6 +3,7 @@ package com.hbm.ntm.menu;
 import com.hbm.ntm.blockentity.FusionPlasmaForgeBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.multiblock.MultiblockHelper;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -16,6 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class FusionPlasmaForgeMenu extends AbstractContainerMenu {
+    private static final double LEGACY_USE_DISTANCE_SQR = 128.0D;
     private static final int MACHINE_SLOT_COUNT = FusionPlasmaForgeBlockEntity.SLOT_COUNT;
     private static final int PLAYER_START = MACHINE_SLOT_COUNT;
     private static final int PLAYER_END = PLAYER_START + 36;
@@ -44,8 +46,8 @@ public class FusionPlasmaForgeMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
                 FusionPlasmaForgeBlockEntity.SLOT_BOOSTER, 98, 116));
         HbmInventoryMenuHelper.addSlots(this::addSlot, blockEntity.getItems(),
-                FusionPlasmaForgeBlockEntity.SLOT_INPUT_START, 8, 18, 4, 3);
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
+                FusionPlasmaForgeBlockEntity.SLOT_INPUT_START, 8, 18, 3, 4);
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(inventory.player, blockEntity.getItems(),
                 FusionPlasmaForgeBlockEntity.SLOT_OUTPUT, 116, 36));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 162, 220);
         inputTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getInputTank());
@@ -86,7 +88,7 @@ public class FusionPlasmaForgeMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 1024.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, LEGACY_USE_DISTANCE_SQR);
     }
 
     @Override
@@ -101,13 +103,11 @@ public class FusionPlasmaForgeMenu extends AbstractContainerMenu {
         } else if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
             if (!moveItemStackTo(stack, FusionPlasmaForgeBlockEntity.SLOT_BATTERY,
                     FusionPlasmaForgeBlockEntity.SLOT_BATTERY + 1, false)) return ItemStack.EMPTY;
-        } else if (blockEntity.getItems().isItemValid(FusionPlasmaForgeBlockEntity.SLOT_BOOSTER, stack)) {
-            if (!moveItemStackTo(stack, FusionPlasmaForgeBlockEntity.SLOT_BOOSTER,
-                    FusionPlasmaForgeBlockEntity.SLOT_BOOSTER + 1, false)) return ItemStack.EMPTY;
-        } else if (!moveItemStackTo(stack, FusionPlasmaForgeBlockEntity.SLOT_BLUEPRINT,
-                FusionPlasmaForgeBlockEntity.SLOT_BLUEPRINT + 1, false)
-                && !moveItemStackTo(stack, FusionPlasmaForgeBlockEntity.SLOT_INPUT_START,
-                FusionPlasmaForgeBlockEntity.SLOT_INPUT_END + 1, false)) {
+        } else if (stack.is(ModItems.BLUEPRINTS.get())) {
+            if (!moveItemStackTo(stack, FusionPlasmaForgeBlockEntity.SLOT_BLUEPRINT,
+                    FusionPlasmaForgeBlockEntity.SLOT_BLUEPRINT + 1, false)) return ItemStack.EMPTY;
+        } else if (!moveItemStackTo(stack, FusionPlasmaForgeBlockEntity.SLOT_BOOSTER,
+                FusionPlasmaForgeBlockEntity.SLOT_OUTPUT, false)) {
             return ItemStack.EMPTY;
         }
         HbmInventoryMenuHelper.finishQuickMove(slot, stack);

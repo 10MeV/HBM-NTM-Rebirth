@@ -33,6 +33,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("advancements.hbm_ntm_rebirth.manhattan.description", "8:15; August 6th, 1945");
         add("advancements.hbm_ntm_rebirth.rbmk_boom.title", "It is 15,000.");
         add("advancements.hbm_ntm_rebirth.rbmk_boom.description", "What is the cost of lies?");
+        add("advancements.hbm_ntm_rebirth.zirnox_boom.title", "CIRNOX");
+        add("advancements.hbm_ntm_rebirth.zirnox_boom.description", "cope, seethe, mald");
         add("advancements.hbm_ntm_rebirth.rad_poison.title", "Yay, Radiation!");
         add("advancements.hbm_ntm_rebirth.rad_poison.description", "Suffer the effects of radiation poisoning.");
         add("advancements.hbm_ntm_rebirth.rad_death.title", "Ouch, Radiation!");
@@ -914,6 +916,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.rod_zirnox_u235_fuel_depleted", "Depleted ZIRNOX Uranium-235 Fuel Rod");
         add("item.hbm_ntm_rebirth.rod_zirnox_les_fuel_depleted", "Depleted ZIRNOX LES Fuel Rod");
         add("item.hbm_ntm_rebirth.rod_zirnox_zfb_mox_depleted", "Depleted ZIRNOX ZFB MOX Fuel Rod");
+        add("desc.item.zirnoxBreedingRod", "\u00a72[ZIRNOX Breeding Rod]$\u00a7ePlace next to fuel rods to breed$\u00a7eLasts %s ticks");
+        add("desc.item.zirnoxRod", "\u00a7a[ZIRNOX Fuel Rod]$\u00a7eGenerates %1$d heat per tick$\u00a7eLasts %2$s ticks");
         add("item.hbm_ntm_rebirth.pwr_fuel_meu", "MEU PWR Fuel Rod");
         add("item.hbm_ntm_rebirth.pwr_fuel_heu233", "HEU-233 PWR Fuel Rod");
         add("item.hbm_ntm_rebirth.pwr_fuel_heu235", "HEU-235 PWR Fuel Rod");
@@ -1419,6 +1423,16 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.decon", "Player Decontaminator");
         add("block.hbm_ntm_rebirth.machine_armor_table", "Armor Modification Table");
         add("container.armorTable", "Armor Modification Table");
+        add("block.hbm_ntm_rebirth.fan", "Fan");
+        add("block.hbm_ntm_rebirth.fan.desc",
+                "Activates using redstone$Will push entities up to 10 blocks$Right-click with screwdriver to flip$Right-click with hand drill to switch mode");
+        add("block.hbm_ntm_rebirth.fan.falloff_on", "Fan power decreases with distance");
+        add("block.hbm_ntm_rebirth.fan.falloff_off", "Consistent fan power");
+        add("block.hbm_ntm_rebirth.fan.suck_on", "Fan is now sucking");
+        add("block.hbm_ntm_rebirth.fan.suck_off", "Fan is now blowing");
+        add("block.hbm_ntm_rebirth.filing_cabinet.green", "Dusty Filing Cabinet");
+        add("block.hbm_ntm_rebirth.filing_cabinet.steel", "Steel Filing Cabinet");
+        add("container.fileCabinet", "Filing Cabinet");
         add("block.hbm_ntm_rebirth.block_niobium", "Block of Niobium");
         add("block.hbm_ntm_rebirth.red_cable", "Red Copper Cable");
         add("block.hbm_ntm_rebirth.red_cable_box", "Red Copper Boxcable");
@@ -1721,7 +1735,12 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_rotary_furnace", "Rotary Furnace");
         add("block.hbm_ntm_rebirth.machine_steam_engine", "Steam Engine");
         add("block.hbm_ntm_rebirth.machine_solar_boiler", "Solar Tower Boiler");
-        add("block.hbm_ntm_rebirth.solar_mirror", "Solar Mirror");
+        add("block.hbm_ntm_rebirth.solar_mirror", "Heliostat Mirror");
+        add("item.hbm_ntm_rebirth.mirror_tool", "Mirror Adjustment Tool");
+        add("item.hbm_ntm_rebirth.mirror_tool.desc", "Right-click boiler to memorize the position.$Click on mirrors to turn them towards the boiler.");
+        add("item.mirror_tool.linked", "Alignment position set!");
+        add("item.mirror_tool.reach", "Mirror out of range! (max 100m)");
+        add("item.mirror_tool.angle", "Mirror angle too shallow! (min 45°)");
         add("block.hbm_ntm_rebirth.machine_tower_small", "Auxiliary Cooling Tower");
         add("block.hbm_ntm_rebirth.machine_tower_large", "Cooling Tower");
         add("block.hbm_ntm_rebirth.machine_turbofan", "Turbofan");
@@ -1744,7 +1763,12 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_stirling_steel", "Heavy Stirling Engine");
         add("block.hbm_ntm_rebirth.machine_stirling_creative", "Creative Stirling Engine");
         add("block.hbm_ntm_rebirth.machine_deuterium_tower", "Deuterium Extraction Tower");
+        add("block.hbm_ntm_rebirth.machine_deuterium_extractor", "Deuterium Extractor");
         add("block.hbm_ntm_rebirth.fraction_spacer", "Fractioning Tower Separator");
+        add("block.hbm_ntm_rebirth.machine_uf6_tank", "Uranium Hexafluoride Tank");
+        add("block.hbm_ntm_rebirth.machine_puf6_tank", "Plutonium Hexafluoride Tank");
+        add("block.hbm_ntm_rebirth.teleanchor", "Teleportation Anchor");
+        add("block.hbm_ntm_rebirth.field_disturber", "High Energy Field Jammer");
         add("block.hbm_ntm_rebirth.glass_boron", "Boron Glass");
         add("block.hbm_ntm_rebirth.glass_lead", "Lead Glass");
         add("block.hbm_ntm_rebirth.glass_uranium", "Uranium Glass");
@@ -1909,6 +1933,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.frozen_planks", "Frozen Planks");
         add("block.hbm_ntm_rebirth.leaves_layer", "Fallen Leaves");
         add("block.hbm_ntm_rebirth.oil_spill", "Oil Spill");
+        add("block.hbm_ntm_rebirth.barricade", "Sand Bags");
         add("block.hbm_ntm_rebirth.balefire", "Balefire");
         add("block.hbm_ntm_rebirth.sellafield", "Sellafite");
         add("block.hbm_ntm_rebirth.sellafield.1", "Hot Sellafite");
@@ -3351,6 +3376,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.waste_plate_sa326", "Depleted HES-326 Plate Fuel");
         add("item.hbm_ntm_rebirth.waste_plate_u233", "Depleted HEU-233 Plate Fuel");
         add("item.hbm_ntm_rebirth.waste_plate_u235", "Depleted HEU-235 Plate Fuel");
+        add("item.hbm_ntm_rebirth.pwr_printer", "PWR Printer");
         add("item.hbm_ntm_rebirth.waste_plutonium", "Depleted Plutonium Fuel");
         add("item.hbm_ntm_rebirth.waste_schrabidium", "Depleted Schrabidium Fuel");
         add("item.hbm_ntm_rebirth.waste_thorium", "Depleted Thorium Fuel");

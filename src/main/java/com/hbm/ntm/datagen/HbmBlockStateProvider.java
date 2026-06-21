@@ -92,6 +92,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "armor_table_side",
                 "armor_table_side",
                 "armor_table_side");
+        hiddenBerBlockWithItem(ModBlocks.FAN);
+        hiddenBerBlockWithItem(ModBlocks.FILING_CABINET);
         simpleSidedCubeWithItem(ModBlocks.MACHINE_WEAPON_TABLE,
                 "gun_table_bottom",
                 "gun_table_top",
@@ -272,6 +274,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_BAT9000, "machines/bat9000");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_BIGASSTANK, "machines/bigasstank");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_FLUIDTANK, "machines/fluidtank");
+        hiddenBerBlockWithItem(ModBlocks.MACHINE_UF6_TANK);
+        hiddenBerBlockWithItem(ModBlocks.MACHINE_PUF6_TANK);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_WELL, "machines/derrick");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_PUMPJACK, "machines/pumpjack");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_FRACKING_TOWER, "machines/fracking_tower");
@@ -375,7 +379,22 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_STIRLING_STEEL, "machines/stirling");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_STIRLING_CREATIVE, "machines/stirling");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_DEUTERIUM_TOWER, "machines/machine_deuterium_tower");
+        simpleSidedCubeWithItem(ModBlocks.MACHINE_DEUTERIUM_EXTRACTOR,
+                "deuterium_extractor_top_water",
+                "deuterium_extractor_top_water",
+                "deuterium_extractor_side",
+                "deuterium_extractor_side",
+                "deuterium_extractor_side",
+                "deuterium_extractor_side");
         visibleMachineWithItemRenderer(ModBlocks.FRACTION_SPACER, "machines/fraction_spacer");
+        simpleSidedCubeWithItem(ModBlocks.TELEANCHOR,
+                "tele_anchor_side",
+                "tele_anchor_top",
+                "tele_anchor_side",
+                "tele_anchor_side",
+                "tele_anchor_side",
+                "tele_anchor_side");
+        simpleCubeWithItem(ModBlocks.FIELD_DISTURBER, "field_disturber");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_INDUSTRIAL_TURBINE, "machines/industrial_turbine");
         translucentCubeWithItem(ModBlocks.GLASS_BORON, "glass_boron");
         translucentCubeWithItem(ModBlocks.GLASS_LEAD, "glass_lead");
@@ -420,6 +439,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         wasteLogWithItem();
         simpleCubeWithItem(ModBlocks.WASTE_PLANKS, "waste_planks");
         leavesLayerWithItem();
+        simpleCubeWithItem(ModBlocks.BARRICADE, "barricade");
         sellafieldWithItem();
         sellafieldSlakedWithItem(ModBlocks.SELLAFIELD_SLAKED, "sellafield_slaked");
         sellafieldSlakedWithItem(ModBlocks.SELLAFIELD_BEDROCK, "sellafield_bedrock");
@@ -578,6 +598,15 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     private void visibleMachineWithItemRenderer(RegistryObject<Block> block, String modelName) {
         ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
         horizontalBlock(block.get(), model);
+        customBlockItem(block);
+    }
+
+    private void hiddenBerBlockWithItem(RegistryObject<Block> block) {
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/empty"));
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .build());
         customBlockItem(block);
     }
 

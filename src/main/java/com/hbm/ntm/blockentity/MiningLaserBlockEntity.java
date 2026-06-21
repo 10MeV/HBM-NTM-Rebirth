@@ -253,6 +253,7 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
             BlockState targetState = level.getBlockState(target);
             if (isLiquid(targetState)) {
                 level.setBlock(target, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                buildDam(level, target);
                 continue;
             }
             if (beam && canBreak(level, target, targetState)) {
@@ -294,6 +295,7 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
             Block.popResource(level, target, drop);
         }
         suckDrops(level, target);
+        buildDam(level, target);
         if (hasScremUpgrade()) {
             level.playSound(null, target, com.hbm.ntm.registry.ModSounds.BLOCK_SCREM.get(),
                     SoundSource.BLOCKS, 2000.0F, 1.0F);
@@ -301,6 +303,15 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
         level.destroyBlockProgress(-1, target, -1);
         breakProgress = 0.0D;
         clientBreakProgress = 0.0D;
+    }
+
+    private void buildDam(ServerLevel level, BlockPos target) {
+        for (Direction direction : Direction.values()) {
+            BlockPos neighbor = target.relative(direction);
+            if (isLiquid(level.getBlockState(neighbor))) {
+                level.setBlock(neighbor, ModBlocks.BARRICADE.get().defaultBlockState(), Block.UPDATE_ALL);
+            }
+        }
     }
 
     private List<ItemStack> processBlockDrops(ServerLevel level, BlockPos target, BlockState state, int fortune) {

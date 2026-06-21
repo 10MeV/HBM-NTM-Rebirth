@@ -19,7 +19,7 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
 
     @Override
     public boolean shouldRenderOffScreen(FusionTorusBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
@@ -40,17 +40,17 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
             poseStack.mulPose(Axis.ZP.rotationDegrees(10.0F));
             poseStack.mulPose(Axis.YP.rotationDegrees(5.0F));
         }
-        ObjFusionModels.TORUS_BODY.render(context);
+        ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.TORUS_TEXTURE, context, "Torus");
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(blockEntity.getMagnet(partialTick)));
-        ObjFusionModels.TORUS_MAGNET.render(context);
+        ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.TORUS_TEXTURE, context, "Magnet");
         poseStack.popPose();
 
-        if (blockEntity.getConnection(0)) ObjFusionModels.TORUS_BOLTS_2.render(context);
-        if (blockEntity.getConnection(1)) ObjFusionModels.TORUS_BOLTS_4.render(context);
-        if (blockEntity.getConnection(2)) ObjFusionModels.TORUS_BOLTS_3.render(context);
-        if (blockEntity.getConnection(3)) ObjFusionModels.TORUS_BOLTS_1.render(context);
+        if (blockEntity.getConnection(0)) ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.TORUS_TEXTURE, context, "Bolts2");
+        if (blockEntity.getConnection(1)) ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.TORUS_TEXTURE, context, "Bolts4");
+        if (blockEntity.getConnection(2)) ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.TORUS_TEXTURE, context, "Bolts3");
+        if (blockEntity.getConnection(3)) ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.TORUS_TEXTURE, context, "Bolts1");
 
         if (blockEntity.getPlasmaEnergy() > 0L) {
             long time = Util.getMillis() + visualTimeOffset(blockEntity);
@@ -62,16 +62,17 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
             float sparkleOsc = positiveUnit(Math.sin(time / 1000.0D) * 0.5D);
             ObjRenderContext plasma = context.fullBright().withColor(
                     blockEntity.getPlasmaR(), blockEntity.getPlasmaG(), blockEntity.getPlasmaB(), alpha);
-            ObjFusionModels.TORUS_PLASMA.render(plasma.withTranslucencyNoDepthWrite().withUvScroll(0.0F, mainOsc));
+            ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.PLASMA_TEXTURE,
+                    plasma.withTranslucencyNoDepthWrite().withUvScroll(0.0F, mainOsc), "Plasma");
             if (shouldRenderExtraPlasmaLayers(blockEntity)) {
-                ObjFusionModels.TORUS_PLASMA_GLOW.render(plasma.withAdditiveTranslucency()
+                ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.PLASMA_GLOW_TEXTURE, plasma.withAdditiveTranslucency()
                         .withColor(blockEntity.getPlasmaR() * 2.0F, blockEntity.getPlasmaG() * 2.0F,
                                 blockEntity.getPlasmaB() * 2.0F, alpha * 2.0F)
-                        .withUvScroll(0.0F, positiveUnit(glowOsc + glowExtra)));
-                ObjFusionModels.TORUS_PLASMA_SPARKLE.render(plasma.withAdditiveTranslucency()
+                        .withUvScroll(0.0F, positiveUnit(glowOsc + glowExtra)), "Plasma");
+                ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.PLASMA_SPARKLE_TEXTURE, plasma.withAdditiveTranslucency()
                         .withColor(blockEntity.getPlasmaR() * 2.0F, blockEntity.getPlasmaG() * 2.0F,
                                 blockEntity.getPlasmaB() * 2.0F, 0.75F)
-                        .withUvScroll(sparkleSpin, sparkleOsc));
+                        .withUvScroll(sparkleSpin, sparkleOsc), "Plasma");
             }
         }
         poseStack.popPose();

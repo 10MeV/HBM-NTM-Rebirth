@@ -55,7 +55,7 @@ public class RadiolysisMenu extends AbstractContainerMenu {
                 RadiolysisBlockEntity.SLOT_STERILIZE_OUTPUT, 148, 53));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
                 RadiolysisBlockEntity.SLOT_BATTERY, 8, 53));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 166);
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
         addDataSlots();
     }
 

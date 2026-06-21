@@ -63,10 +63,11 @@ public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implemen
     protected LegacyMultiblockLayout getLayout(BlockState state) {
         if (kind == Kind.LAUNCH_TABLE) {
             return LegacyMultiblockLayout.ofLegacyXrChecked(TABLE_DIMENSIONS, state.getValue(FACING))
-                    .withProxyOffsets(squareRingOffsets(4), LegacyProxyMode.combo(true, true, true));
+                    .withProxyOffsets(launchTableProxyOffsets(state.getValue(FACING)),
+                            LegacyProxyMode.combo(true, true, true));
         }
         return LegacyMultiblockLayout.ofLegacyXrChecked(COMPACT_DIMENSIONS, state.getValue(FACING))
-                .withProxyOffsets(squareRingOffsets(1), LegacyProxyMode.combo(true, true, true));
+                .withProxyOffsets(compactLauncherProxyOffsets(), LegacyProxyMode.combo(true, true, true));
     }
 
     @Nullable
@@ -180,9 +181,7 @@ public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implemen
         if (kind == Kind.COMPACT_LAUNCHER) {
             return offset.getX() == 0 || offset.getZ() == 0;
         }
-        Direction facing = state.getValue(FACING);
-        boolean xAxisPlate = facing == Direction.EAST || facing == Direction.WEST;
-        return xAxisPlate ? offset.getX() != 0 && offset.getZ() == 0 : offset.getX() == 0 && offset.getZ() != 0;
+        return isLaunchTablePlateOffset(state.getValue(FACING), offset);
     }
 
     private static List<BlockPos> squareRingOffsets(int radius) {
@@ -195,6 +194,29 @@ public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implemen
             }
         }
         return offsets;
+    }
+
+    private static List<BlockPos> compactLauncherProxyOffsets() {
+        return List.of(
+                new BlockPos(1, 0, 1),
+                new BlockPos(1, 0, -1),
+                new BlockPos(-1, 0, 1),
+                new BlockPos(-1, 0, -1));
+    }
+
+    private static List<BlockPos> launchTableProxyOffsets(Direction facing) {
+        List<BlockPos> offsets = new ArrayList<>();
+        for (BlockPos offset : squareRingOffsets(4)) {
+            if (!isLaunchTablePlateOffset(facing, offset)) {
+                offsets.add(offset);
+            }
+        }
+        return offsets;
+    }
+
+    private static boolean isLaunchTablePlateOffset(Direction facing, BlockPos offset) {
+        boolean xAxisPlate = facing == Direction.EAST || facing == Direction.WEST;
+        return xAxisPlate ? offset.getX() != 0 && offset.getZ() == 0 : offset.getX() == 0 && offset.getZ() != 0;
     }
 
     public enum Kind {

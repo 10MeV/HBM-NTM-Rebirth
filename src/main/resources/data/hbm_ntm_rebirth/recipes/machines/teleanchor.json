@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": {
+      "item": "hbm_ntm_rebirth:gem_alexandrite"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "E": {
+      "item": "hbm_ntm_rebirth:powder_magic"
+    },
+    "O": {
+      "item": "minecraft:obsidian"
+    }
+  },
+  "pattern": [
+    "ODO",
+    "EAE",
+    "ODO"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:teleanchor"
+  },
+  "show_notification": true
+}

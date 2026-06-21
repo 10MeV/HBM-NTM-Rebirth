@@ -28,6 +28,7 @@ import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.LegacyUpgradeSlotSound;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -92,6 +93,8 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            LegacyUpgradeSlotSound.playIfUpgrade(ArcWelderBlockEntity.this, slot, getStackInSlot(slot),
+                    SLOT_UPGRADE_0, SLOT_UPGRADE_1, 0.5D, 1.0F, 1.0F);
         }
 
         @Override

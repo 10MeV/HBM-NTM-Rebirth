@@ -16,7 +16,7 @@ public class FusionCollectorRenderer implements BlockEntityRenderer<FusionCollec
 
     @Override
     public boolean shouldRenderOffScreen(FusionCollectorBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
@@ -32,7 +32,8 @@ public class FusionCollectorRenderer implements BlockEntityRenderer<FusionCollec
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
-        ObjFusionModels.COLLECTOR.render(new ObjRenderContext(poseStack, buffer, state, light, packedOverlay));
+        ObjFusionModels.COLLECTOR_LEGACY.renderAll(ObjFusionModels.COLLECTOR_TEXTURE,
+                new ObjRenderContext(poseStack, buffer, state, light, packedOverlay));
         poseStack.popPose();
     }
 }

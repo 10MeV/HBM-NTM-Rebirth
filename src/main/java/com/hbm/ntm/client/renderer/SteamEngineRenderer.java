@@ -41,7 +41,7 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
         LegacyMachineDefinition definition = block.definition();
         int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
         float rotor = blockEntity.getRotor();
-        float previousRotor = rotor - blockEntity.getAcceleration();
+        float previousRotor = blockEntity.getLastRotor();
         LegacyTileRenderPlans.SteamEnginePlan plan =
                 LegacyTileRenderPlans.steamEnginePlan(previousRotor, rotor, partialTick);
 

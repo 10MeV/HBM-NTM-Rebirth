@@ -1,6 +1,7 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.ZirnoxDestroyedBlockEntity;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
@@ -9,10 +10,12 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
@@ -25,6 +28,11 @@ public class ZirnoxDestroyedBlock extends StaticLegacyMultiblockMachineBlock imp
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new ZirnoxDestroyedBlockEntity(pos, state);
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Nullable
@@ -61,8 +69,8 @@ public class ZirnoxDestroyedBlock extends StaticLegacyMultiblockMachineBlock imp
             if (random.nextInt(10) == 0) {
                 level.setBlock(above, ModBlocks.GAS_MELTDOWN.get().defaultBlockState(), Block.UPDATE_ALL);
             }
-        } else if (aboveState.is(ModBlocks.BLOCK_FOAM.get()) && random.nextInt(25) == 0
-                && level.getBlockEntity(pos) instanceof ZirnoxDestroyedBlockEntity destroyed) {
+        } else if (isFoamExtinguisher(aboveState) && random.nextInt(25) == 0
+                && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof ZirnoxDestroyedBlockEntity destroyed) {
             destroyed.setOnFire(false);
         }
 
@@ -74,5 +82,13 @@ public class ZirnoxDestroyedBlock extends StaticLegacyMultiblockMachineBlock imp
 
     private static void schedule(Level level, BlockPos pos, RandomSource random) {
         level.scheduleTick(pos, level.getBlockState(pos).getBlock(), 100 + random.nextInt(20));
+    }
+
+    private static boolean isFoamExtinguisher(BlockState state) {
+        if (state.is(ModBlocks.BLOCK_FOAM.get())) {
+            return true;
+        }
+        RegistryObject<? extends Block> foamLayer = ModBlocks.legacyBlock("foam_layer");
+        return foamLayer != null && state.is(foamLayer.get());
     }
 }

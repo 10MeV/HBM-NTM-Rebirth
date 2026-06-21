@@ -911,6 +911,10 @@ public final class HazardRegistry {
         ITEM_HAZARDS.put(item, data);
     }
 
+    public static HazardData remove(Item item) {
+        return ITEM_HAZARDS.remove(item);
+    }
+
     public static void register(Item item, HazardEntry... entries) {
         HazardData data = new HazardData();
         for (HazardEntry entry : entries) {
@@ -939,6 +943,10 @@ public final class HazardRegistry {
 
     public static void registerTag(TagKey<Item> tag, HazardData data) {
         TAG_HAZARDS.put(tag, data);
+    }
+
+    public static HazardData removeTag(TagKey<Item> tag) {
+        return TAG_HAZARDS.remove(tag);
     }
 
     public static void registerTag(String namespace, String path, HazardType type, float level) {
@@ -1138,6 +1146,10 @@ public final class HazardRegistry {
 
     public static void blacklist(TagKey<Item> tag) {
         TAG_BLACKLIST.add(tag);
+    }
+
+    public static boolean unblacklist(TagKey<Item> tag) {
+        return TAG_BLACKLIST.remove(tag);
     }
 
     public static void blacklist(ItemStack stack) {

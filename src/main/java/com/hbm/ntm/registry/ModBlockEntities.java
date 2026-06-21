@@ -37,6 +37,7 @@ import com.hbm.ntm.blockentity.CrucibleBlockEntity;
 import com.hbm.ntm.blockentity.CustomNukeBlockEntity;
 import com.hbm.ntm.blockentity.CyclotronBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
+import com.hbm.ntm.blockentity.DeuteriumExtractorBlockEntity;
 import com.hbm.ntm.blockentity.DeuteriumTowerBlockEntity;
 import com.hbm.ntm.blockentity.DiFurnaceBlockEntity;
 import com.hbm.ntm.blockentity.DiFurnaceExtensionBlockEntity;
@@ -80,6 +81,7 @@ import com.hbm.ntm.blockentity.GasCentBlockEntity;
 import com.hbm.ntm.blockentity.GasFlareBlockEntity;
 import com.hbm.ntm.blockentity.HeaterHeatexBlockEntity;
 import com.hbm.ntm.blockentity.HephaestusBlockEntity;
+import com.hbm.ntm.blockentity.HexafluorideTankBlockEntity;
 import com.hbm.ntm.blockentity.HydrotreaterBlockEntity;
 import com.hbm.ntm.blockentity.ICFControllerBlockEntity;
 import com.hbm.ntm.blockentity.ICFAssembledBlockEntity;
@@ -93,6 +95,8 @@ import com.hbm.ntm.blockentity.LargeCoolingTowerBlockEntity;
 import com.hbm.ntm.blockentity.LegacyChargeBlockEntity;
 import com.hbm.ntm.blockentity.LegacyDemonLampBlockEntity;
 import com.hbm.ntm.blockentity.LegacyEmitterBlockEntity;
+import com.hbm.ntm.blockentity.LegacyFanBlockEntity;
+import com.hbm.ntm.blockentity.LegacyFileCabinetBlockEntity;
 import com.hbm.ntm.blockentity.LegacyFurnaceBlockEntity;
 import com.hbm.ntm.blockentity.LegacyGenericSelectorMachineBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLanternBlockEntity;
@@ -234,7 +238,6 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<BoilerBlockEntity>> BOILER =
             BLOCK_ENTITIES.register("boiler", () ->
                     BlockEntityType.Builder.of(BoilerBlockEntity::new,
-                            ModBlocks.MACHINE_BOILER_OFF.get(),
                             ModBlocks.MACHINE_BOILER.get(),
                             ModBlocks.MACHINE_INDUSTRIAL_BOILER.get()).build(null));
 
@@ -703,6 +706,12 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("fluid_tank", () ->
                     BlockEntityType.Builder.of(FluidTankBlockEntity::new, ModBlocks.MACHINE_FLUIDTANK.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<HexafluorideTankBlockEntity>> HEXAFLUORIDE_TANK =
+            BLOCK_ENTITIES.register("hexafluoride_tank", () ->
+                    BlockEntityType.Builder.of(HexafluorideTankBlockEntity::new,
+                            ModBlocks.MACHINE_UF6_TANK.get(),
+                            ModBlocks.MACHINE_PUF6_TANK.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<Bat9000BlockEntity>> BAT9000 =
             BLOCK_ENTITIES.register("bat9000", () ->
                     BlockEntityType.Builder.of(Bat9000BlockEntity::new, ModBlocks.MACHINE_BAT9000.get()).build(null));
@@ -1125,6 +1134,11 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(DeuteriumTowerBlockEntity::new,
                             ModBlocks.MACHINE_DEUTERIUM_TOWER.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<DeuteriumExtractorBlockEntity>> DEUTERIUM_EXTRACTOR =
+            BLOCK_ENTITIES.register("deuterium_extractor", () ->
+                    BlockEntityType.Builder.of(DeuteriumExtractorBlockEntity::new,
+                            ModBlocks.MACHINE_DEUTERIUM_EXTRACTOR.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<GasCentBlockEntity>> GAS_CENT =
             BLOCK_ENTITIES.register("gas_cent", () ->
                     BlockEntityType.Builder.of(GasCentBlockEntity::new,
@@ -1259,6 +1273,18 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(
                             LegacyEmitterBlockEntity::new,
                             ModBlocks.legacyBlock("deco_emitter").get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<LegacyFanBlockEntity>> LEGACY_FAN =
+            BLOCK_ENTITIES.register("legacy_fan", () ->
+                    BlockEntityType.Builder.of(
+                            LegacyFanBlockEntity::new,
+                            ModBlocks.FAN.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<LegacyFileCabinetBlockEntity>> LEGACY_FILE_CABINET =
+            BLOCK_ENTITIES.register("legacy_file_cabinet", () ->
+                    BlockEntityType.Builder.of(
+                            LegacyFileCabinetBlockEntity::new,
+                            ModBlocks.FILING_CABINET.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<LegacyLanternBlockEntity>> LEGACY_LANTERN =
             BLOCK_ENTITIES.register("legacy_lantern", () ->

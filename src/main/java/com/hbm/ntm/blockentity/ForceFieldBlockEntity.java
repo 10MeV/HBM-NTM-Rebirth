@@ -78,7 +78,7 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
                 case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
-                case SLOT_RADIUS, SLOT_HEALTH -> true;
+                case SLOT_RADIUS -> true;
                 default -> false;
             };
         }

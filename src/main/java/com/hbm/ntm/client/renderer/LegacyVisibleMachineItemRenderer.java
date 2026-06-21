@@ -443,7 +443,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         float yaw = 270.0F;
         AABB bounds = transformBounds(ObjRbmkModels.CONSOLE.boundsAll(),
-                point -> rotateY(point, yaw).add(0.5D, 0.0D, 0.5D));
+                point -> rotateY(point.add(0.5D, 0.0D, 0.0D), yaw).add(0.5D, 0.0D, 0.5D));
         BlockState state = com.hbm.ntm.registry.ModBlocks.RBMK_CONSOLE.get().defaultBlockState()
                 .setValue(RBMKConsoleBlock.FACING, Direction.SOUTH);
 
@@ -451,6 +451,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 0.0F);
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
+        poseStack.translate(0.5D, 0.0D, 0.0D);
         ObjRbmkModels.CONSOLE.renderAll(ObjRbmkModels.CONSOLE_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();

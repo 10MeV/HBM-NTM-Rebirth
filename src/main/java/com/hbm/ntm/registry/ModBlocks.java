@@ -37,6 +37,7 @@ import com.hbm.ntm.block.CustomMissileLauncherBlock;
 import com.hbm.ntm.block.CustomNukeBlock;
 import com.hbm.ntm.block.CyclotronBlock;
 import com.hbm.ntm.block.DeconBlock;
+import com.hbm.ntm.block.DeuteriumExtractorBlock;
 import com.hbm.ntm.block.DeuteriumTowerBlock;
 import com.hbm.ntm.block.DiFurnaceBlock;
 import com.hbm.ntm.block.DiFurnaceExtensionBlock;
@@ -48,6 +49,7 @@ import com.hbm.ntm.block.ElectricFurnaceBlock;
 import com.hbm.ntm.block.ElectricPressBlock;
 import com.hbm.ntm.block.ElectrolyserBlock;
 import com.hbm.ntm.block.ExposureChamberBlock;
+import com.hbm.ntm.block.FieldDisturberBlock;
 import com.hbm.ntm.block.FelBlock;
 import com.hbm.ntm.block.ForceFieldBlock;
 import com.hbm.ntm.block.FractionSpacerBlock;
@@ -79,6 +81,7 @@ import com.hbm.ntm.block.GasFlareBlock;
 import com.hbm.ntm.block.HeatBoilerBlock;
 import com.hbm.ntm.block.HeaterHeatexBlock;
 import com.hbm.ntm.block.HephaestusBlock;
+import com.hbm.ntm.block.HexafluorideTankBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.ICFControllerBlock;
 import com.hbm.ntm.block.ICFAssembledBlock;
@@ -95,6 +98,8 @@ import com.hbm.ntm.block.LegacyCrystalVirusBlock;
 import com.hbm.ntm.block.LegacyDemonLampBlock;
 import com.hbm.ntm.block.LegacyDepthBlock;
 import com.hbm.ntm.block.LegacyEmitterBlock;
+import com.hbm.ntm.block.LegacyFanBlock;
+import com.hbm.ntm.block.LegacyFileCabinetBlock;
 import com.hbm.ntm.block.LegacyExplosiveBarrelBlock;
 import com.hbm.ntm.block.LegacyGasMeltdownBlock;
 import com.hbm.ntm.block.LegacyGasRadonBlock;
@@ -106,6 +111,7 @@ import com.hbm.ntm.block.LegacyLargePylonBlock;
 import com.hbm.ntm.block.LegacyMediumPylonBlock;
 import com.hbm.ntm.block.LegacyOreBlock;
 import com.hbm.ntm.block.LegacyOutgasBlock;
+import com.hbm.ntm.block.OldBoilerBlock;
 import com.hbm.ntm.block.LegacyHotBlock;
 import com.hbm.ntm.block.LegacyLeavesLayerBlock;
 import com.hbm.ntm.block.LegacyPlasticExplosiveBlock;
@@ -260,9 +266,13 @@ import com.hbm.ntm.item.FluidDuctVariantBlockItem;
 import com.hbm.ntm.item.FluidPipeStyleBlockItem;
 import com.hbm.ntm.item.BalefireBombBlockItem;
 import com.hbm.ntm.item.BombMultiBlockItem;
+import com.hbm.ntm.item.HexafluorideTankBlockItem;
 import com.hbm.ntm.item.LegacyDemonLampBlockItem;
+import com.hbm.ntm.item.LegacyFanBlockItem;
+import com.hbm.ntm.item.LegacyFileCabinetBlockItem;
 import com.hbm.ntm.item.LegacyFloodlightBlockItem;
 import com.hbm.ntm.item.LegacyLanternBlockItem;
+import com.hbm.ntm.item.LegacyLoreBlockItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.MassStorageBlockItem;
 import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
@@ -356,7 +366,7 @@ public final class ModBlocks {
             "chimney_brick", "chimney_industrial", "chungus", "coker", "combination_oven",
             "combustion_engine", "compressor", "condenser", "crucible", "cyclotron", "derrick",
             "dieselgen", "drain", "electric_heater", "electrolyser", "elevator",
-            "exposure_chamber", "fel", "fensu2", "firebox", "flare_stack", "fracking_tower",
+            "exposure_chamber", "fan", "fel", "fensu2", "firebox", "flare_stack", "fracking_tower",
             "fraction_spacer", "fraction_tower", "furnace_iron", "furnace_steel", "gascent",
             "heatex", "heating_oven", "hephaestus", "hydrotreater", "industrial_boiler",
             "industrial_turbine", "intake", "liquefactor", "machine_deuterium_tower", "mixer",
@@ -373,7 +383,7 @@ public final class ModBlocks {
             "coker", "combination_oven", "combustion_engine", "compressor", "compressor_compact",
             "condenser", "crucible_heat", "cyclotron", "derrick", "dieselgen",
             "drain", "drum_gray", "electric_heater", "electrolyser", "elevator",
-            "exposure_chamber", "fel", "fensu", "fensu2", "firebox",
+            "exposure_chamber", "fan", "fel", "fensu", "fensu2", "firebox",
             "flare_stack", "fracking_tower", "fraction_spacer", "fraction_tower", "furnace_iron",
             "furnace_steel", "gascent", "heater_heatex", "heating_oven", "hephaestus",
             "hydrotreater", "industrial_boiler", "industrial_turbine", "intake", "liquefactor",
@@ -402,6 +412,8 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MACHINE_ARMOR_TABLE = armorTable("machine_armor_table");
     public static final RegistryObject<Block> MACHINE_WEAPON_TABLE = weaponTable("machine_weapon_table");
     public static final RegistryObject<Block> MACHINE_SIREN = siren("machine_siren");
+    public static final RegistryObject<Block> FAN = fan("fan");
+    public static final RegistryObject<Block> FILING_CABINET = filingCabinet("filing_cabinet");
     public static final RegistryObject<Block> ANVIL_IRON = anvil("anvil_iron", NTMAnvilBlock.TIER_IRON);
     public static final RegistryObject<Block> ANVIL_LEAD = anvil("anvil_lead", NTMAnvilBlock.TIER_IRON);
     public static final RegistryObject<Block> ANVIL_STEEL = anvil("anvil_steel", NTMAnvilBlock.TIER_STEEL);
@@ -734,6 +746,10 @@ public final class ModBlocks {
             bigAssTankDefinition());
     public static final RegistryObject<Block> MACHINE_FLUIDTANK = fluidTankMachine("machine_fluidtank",
             fluidTankDefinition());
+    public static final RegistryObject<Block> MACHINE_UF6_TANK =
+            hexafluorideTank("machine_uf6_tank", HexafluorideTankBlock.Kind.UF6);
+    public static final RegistryObject<Block> MACHINE_PUF6_TANK =
+            hexafluorideTank("machine_puf6_tank", HexafluorideTankBlock.Kind.PUF6);
     public static final RegistryObject<Block> MACHINE_WELL = oilDrillMachine("machine_well",
             oilWellDefinition());
     public static final RegistryObject<Block> MACHINE_PUMPJACK = oilDrillMachine("machine_pumpjack",
@@ -888,8 +904,12 @@ public final class ModBlocks {
             stirlingDefinition("stirling_creative"), StirlingBlock.Kind.CREATIVE);
     public static final RegistryObject<Block> MACHINE_DEUTERIUM_TOWER = deuteriumTowerMachine("machine_deuterium_tower",
             deuteriumTowerDefinition());
+    public static final RegistryObject<Block> MACHINE_DEUTERIUM_EXTRACTOR =
+            deuteriumExtractor("machine_deuterium_extractor");
     public static final RegistryObject<Block> FRACTION_SPACER = fractionSpacerMachine("fraction_spacer",
             fractionSpacerDefinition());
+    public static final RegistryObject<Block> TELEANCHOR = teleanchor("teleanchor");
+    public static final RegistryObject<Block> FIELD_DISTURBER = fieldDisturber("field_disturber");
     public static final RegistryObject<Block> GLASS_BORON = legacyGlass("glass_boron");
     public static final RegistryObject<Block> GLASS_LEAD = legacyGlass("glass_lead");
     public static final RegistryObject<Block> GLASS_URANIUM = luminousLegacyGlass("glass_uranium");
@@ -943,6 +963,7 @@ public final class ModBlocks {
             .isSuffocating((state, level, pos) -> false)
             .isViewBlocking((state, level, pos) -> false)));
     public static final RegistryObject<Block> FALLOUT = falloutLayer("fallout");
+    public static final RegistryObject<Block> BARRICADE = barricade("barricade");
     public static final RegistryObject<Block> OIL_SPILL = oilSpill("oil_spill");
     public static final RegistryObject<Block> SELLAFIELD = sellafield("sellafield");
     public static final RegistryObject<Block> SELLAFIELD_SLAKED = sellafieldSlaked("sellafield_slaked");
@@ -1045,6 +1066,8 @@ public final class ModBlocks {
             MACHINE_ARMOR_TABLE,
             MACHINE_WEAPON_TABLE,
             MACHINE_SIREN,
+            FAN,
+            FILING_CABINET,
             ANVIL_IRON,
             ANVIL_LEAD,
             ANVIL_STEEL,
@@ -1123,11 +1146,6 @@ public final class ModBlocks {
             BARREL_ANTIMATTER,
             PNEUMATIC_TUBE,
             CRANE_SPLITTER,
-            MACHINE_BATTERY,
-            MACHINE_BATTERY_POTATO,
-            MACHINE_LITHIUM_BATTERY,
-            MACHINE_SCHRABIDIUM_BATTERY,
-            MACHINE_DINEUTRONIUM_BATTERY,
             MACHINE_BATTERY_REDD,
             MACHINE_BATTERY_SOCKET,
             CRATE_IRON,
@@ -1252,8 +1270,6 @@ public final class ModBlocks {
             MACHINE_MIXER,
             MACHINE_RADIOLYSIS,
             MACHINE_RTG_GREY,
-            MACHINE_MINIRTG,
-            MACHINE_POWERRTG,
             MACHINE_RADGEN,
             MACHINE_ROTARY_FURNACE,
             MACHINE_STEAM_ENGINE,
@@ -1266,7 +1282,6 @@ public final class ModBlocks {
             MACHINE_AMMO_PRESS,
             MACHINE_TRANSFORMER,
             MACHINE_FURNACE_BRICK,
-            MACHINE_RTG_FURNACE,
             MACHINE_DIFURNACE_RTG,
             FURNACE_IRON,
             FURNACE_STEEL,
@@ -1284,7 +1299,9 @@ public final class ModBlocks {
             MACHINE_STIRLING_STEEL,
             MACHINE_STIRLING_CREATIVE,
             MACHINE_DEUTERIUM_TOWER,
+            MACHINE_DEUTERIUM_EXTRACTOR,
             FRACTION_SPACER,
+            TELEANCHOR,
             GAS_RADON,
             GAS_RADON_DENSE,
             GAS_RADON_TOMB,
@@ -1350,7 +1367,19 @@ public final class ModBlocks {
 
     public static final List<RegistryObject<Block>> HIDDEN_MACHINE_BLOCKS = List.of(
             BARREL_CORRODED,
-            MACHINE_FENSU
+            MACHINE_UF6_TANK,
+            MACHINE_PUF6_TANK,
+            MACHINE_FENSU,
+            MACHINE_MINIRTG,
+            MACHINE_POWERRTG,
+            FIELD_DISTURBER,
+            CAPACITOR_BUS,
+            MACHINE_RTG_FURNACE,
+            MACHINE_BATTERY,
+            MACHINE_BATTERY_POTATO,
+            MACHINE_LITHIUM_BATTERY,
+            MACHINE_SCHRABIDIUM_BATTERY,
+            MACHINE_DINEUTRONIUM_BATTERY
     );
 
     public static final List<RegistryObject<Block>> CAP_BLOCKS = List.of(
@@ -1659,6 +1688,42 @@ public final class ModBlocks {
                 .requiresCorrectToolForDrops()));
     }
 
+    private static RegistryObject<Block> hexafluorideTank(String name, HexafluorideTankBlock.Kind kind) {
+        return registerBlockWithItem(
+                name,
+                () -> new HexafluorideTankBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 10.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), kind),
+                block -> new HexafluorideTankBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> deuteriumExtractor(String name) {
+        return registerBlockWithItem(name, () -> new DeuteriumExtractorBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()));
+    }
+
+    private static RegistryObject<Block> teleanchor(String name) {
+        return registerBlockWithItem(name, () -> new Block(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()));
+    }
+
+    private static RegistryObject<Block> fieldDisturber(String name) {
+        return registerBlockWithItem(name, () -> new FieldDisturberBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 200.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()));
+    }
+
     private static RegistryObject<Block> siren(String name) {
         return registerBlockWithItem(name, () -> new SirenBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
@@ -1758,7 +1823,8 @@ public final class ModBlocks {
                 .mapColor(MapColor.METAL)
                 .strength(5.0F, 10.0F)
                 .sound(SoundType.METAL)
-                .requiresCorrectToolForDrops()));
+                .requiresCorrectToolForDrops()),
+                block -> new LegacyLoreBlockItem(block.get(), new Item.Properties()));
     }
 
     private static RegistryObject<Block> nonOccludingMachine(String name) {
@@ -1768,6 +1834,26 @@ public final class ModBlocks {
                 .sound(SoundType.METAL)
                 .requiresCorrectToolForDrops()
                 .noOcclusion(), false));
+    }
+
+    private static RegistryObject<Block> fan(String name) {
+        return registerBlockWithItem(name, () -> new LegacyFanBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion()),
+                block -> new LegacyFanBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> filingCabinet(String name) {
+        return registerBlockWithItem(name, () -> new LegacyFileCabinetBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(10.0F, 15.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion()),
+                block -> new LegacyFileCabinetBlockItem(block.get(), new Item.Properties()));
     }
 
     private static RegistryObject<Block> balefireBomb(String name) {
@@ -1844,7 +1930,7 @@ public final class ModBlocks {
     }
 
     private static RegistryObject<Block> boilerMachine(String name) {
-        return registerBlockWithItem(name, () -> new BoilerBlock(BlockBehaviour.Properties.of()
+        return registerBlockWithItem(name, () -> new OldBoilerBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
                 .strength(5.0F, 10.0F)
                 .sound(SoundType.METAL)
@@ -3658,7 +3744,7 @@ public final class ModBlocks {
                         .withExtraProxyOffsets(rearCornerProxyOffsets(facing), proxyInventoryPowerFluid()))
                 .legacyItemScale(3.0D, 0.5D)
                 .yRotation(facing -> 180.0F)
-                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 11, 3)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-4, -1, -3), pos.offset(3, 11, 3)))
                 .renderProfile(LegacyMachineRenderProfile.REFINERY_DAMAGE_STATE)
                 .build();
     }
@@ -3818,7 +3904,7 @@ public final class ModBlocks {
                 .legacyItemScale(2.75D, 0.75D)
                 .yRotation(ModBlocks::eastZeroRotation)
                 .particleState(legacyBlockParticleState("block_steel_machine"))
-                .renderBoundingBox(pos -> new AABB(pos.offset(-4, 0, -4), pos.offset(4, 3, 4)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-4, -1, -4), pos.offset(5, 4, 5)))
                 .build();
     }
 
@@ -3912,10 +3998,10 @@ public final class ModBlocks {
                 .legacyXrDimensions(2, 0, 1, 1, 2, 2)
                 .legacyOffset(1)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 1, 1, 2, 2 }, facing)
-                        .withExtraProxyOffsets(fluidTankProxyOffsets(facing), proxyFluid()))
+                .withExtraProxyOffsets(fluidTankProxyOffsets(facing), proxyFluid()))
                 .legacyItemScale(3.5D, 0.75D)
                 .yRotation(facing -> (360.0F - facing.toYRot()) % 360.0F)
-                .renderBoundingBox(pos -> new AABB(pos.offset(-6, 0, -6), pos.offset(7, 5, 7)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-6, -1, -6), pos.offset(7, 5, 7)))
                 .build();
     }
 
@@ -3956,7 +4042,7 @@ public final class ModBlocks {
                         .withLegacyXrCheckOnly(new int[] { 1, 0, 1, 1, -2, 3 }, facing, new BlockPos(0, 15, 0)))
                 .legacyItemScale(2.5D, 0.25D)
                 .yRotation(facing -> 180.0F)
-                .renderBoundingBox(pos -> new AABB(pos.offset(-10, -9, -10), pos.offset(11, 19, 11)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-10, -9, -10), pos.offset(11, 26, 11)))
                 .build();
     }
 
@@ -4584,7 +4670,7 @@ public final class ModBlocks {
                 .legacyOffset(2)
                 .layout(ModBlocks::zirnoxLayout)
                 .legacyItemScale(4.0F)
-                .yRotation(ModBlocks::southZeroRotation)
+                .yRotation(ModBlocks::solidifierRotation)
                 .renderBoundingBox(pos -> new AABB(pos.offset(-3, 0, -3), pos.offset(4, 5, 4)))
                 .particleState(legacyBlockParticleState("block_steel"))
                 .build();
@@ -4596,10 +4682,10 @@ public final class ModBlocks {
                         new ResourceLocation(HbmNtm.MOD_ID, "textures/models/zirnox_destroyed.png"))
                 .legacyXrDimensions(1, 0, 2, 2, 2, 2)
                 .legacyOffset(2)
-                .layout(ModBlocks::zirnoxLayout)
+                .layout(ModBlocks::zirnoxDestroyedLayout)
                 .legacyItemScale(4.0F)
-                .yRotation(ModBlocks::southZeroRotation)
-                .renderBoundingBox(pos -> new AABB(pos.offset(-3, 0, -3), pos.offset(4, 3, 4)))
+                .yRotation(ModBlocks::solidifierRotation)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-4, 0, -4), pos.offset(5, 4, 5)))
                 .particleState(legacyBlockParticleState("block_steel"))
                 .build();
     }
@@ -4641,7 +4727,7 @@ public final class ModBlocks {
                 .layout(ICFStructCoreBlockEntity::icfLayout)
                 .legacyItemScale(4.0F)
                 .yRotation(ModBlocks::eastZeroRotation)
-                .renderBoundingBox(pos -> new AABB(pos.offset(-8, 0, -8), pos.offset(9, 5, 9)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-8, 0, -8), pos.offset(9, 7, 9)))
                 .particleState(legacyBlockParticleState("block_steel"))
                 .build();
     }
@@ -4667,7 +4753,7 @@ public final class ModBlocks {
                         .withExtraProxyOffsets(fusionKlystronProxyOffsets(facing), proxyPowerFluid()))
                 .legacyItemScale(4.0F)
                 .yRotation(ModBlocks::southZeroRotation)
-                .renderBoundingBox(pos -> new AABB(pos.offset(-4, 0, -4), pos.offset(5, 4, 5)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-4, 0, -4), pos.offset(5, 5, 5)))
                 .particleState(legacyBlockParticleState("block_steel"))
                 .build();
     }
@@ -4680,7 +4766,7 @@ public final class ModBlocks {
                         .withLegacyXrCheckedFill(new int[] { 4, -3, 4, 3, 1, 1 }, facing))
                 .legacyItemScale(4.0F)
                 .yRotation(ModBlocks::southZeroRotation)
-                .renderBoundingBox(pos -> new AABB(pos.offset(-4, -3, -4), pos.offset(5, 4, 5)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-4, -3, -4), pos.offset(5, 5, 5)))
                 .particleState(legacyBlockParticleState("block_steel"))
                 .build();
     }
@@ -4728,7 +4814,7 @@ public final class ModBlocks {
                 .legacyOffset(0)
                 .legacyItemScale(4.0F)
                 .yRotation(ModBlocks::southZeroRotation)
-                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 3, 3)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 4, 3)))
                 .particleState(legacyBlockParticleState("block_steel"))
                 .build();
     }
@@ -4740,7 +4826,7 @@ public final class ModBlocks {
                 .layout(ModBlocks::fusionMhdtLayout)
                 .legacyItemScale(4.0F)
                 .yRotation(ModBlocks::southZeroRotation)
-                .renderBoundingBox(pos -> new AABB(pos.offset(-7, 0, -7), pos.offset(8, 4, 8)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-7, 0, -7), pos.offset(8, 5, 8)))
                 .particleState(legacyBlockParticleState("block_steel"))
                 .build();
     }
@@ -4936,7 +5022,7 @@ public final class ModBlocks {
                 .legacyItemScale(3.25F)
                 .yRotation(facing -> 0.0F)
                 .renderProfile(LegacyMachineRenderProfile.COMBINATION_OVEN_FIRE)
-                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 4, 3)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 5, 3)))
                 .particleState(legacyBlockParticleState("brick_light_alt"))
                 .build();
     }
@@ -4972,7 +5058,7 @@ public final class ModBlocks {
                 .renderProfile(LegacyMachineRenderProfile.ARC_FURNACE_STATIC_PREVIEW)
                 .legacyItemScale(1.75F)
                 .yRotation(ModBlocks::eastZeroRotation)
-                .renderBoundingBox(pos -> new AABB(pos.offset(-4, -2, -4), pos.offset(7, 6, 5)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-4, -2, -4), pos.offset(7, 9, 5)))
                 .particleState(legacyBlockParticleState("block_steel"))
                 .build();
     }
@@ -5119,7 +5205,7 @@ public final class ModBlocks {
                 .renderMode(LegacyMachinePartRenderMode.CUTOUT_CULL)
                 .legacyItemScale(3.25F)
                 .yRotation(facing -> 0.0F)
-                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 2, 3)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-1, 0, -1), pos.offset(2, 1, 2)))
                 .particleState(legacyBlockParticleState("block_steel"))
                 .build();
     }
@@ -5145,6 +5231,10 @@ public final class ModBlocks {
                         new BlockPos(rot.getStepX() * -2, 3, rot.getStepZ() * -2),
                         new BlockPos(0, 4, 0)),
                         proxyInventoryFluid());
+    }
+
+    public static LegacyMultiblockLayout zirnoxDestroyedLayout(Direction facing) {
+        return LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 0, 2, 2, 2, 2 }, facing);
     }
 
     private static LegacyMultiblockLayout watzLayout(Direction facing) {
@@ -6211,10 +6301,10 @@ public final class ModBlocks {
                 .renderBoundingBox(pos -> new AABB(
                         pos.getX() - 8.0D,
                         pos.getY() - 4.0D,
-                        pos.getZ() - 8.0D,
+                        pos.getZ() - 38.0D,
                         pos.getX() + 8.0D,
-                        pos.getY() + 10.0D,
-                        pos.getZ() + 8.0D))
+                        pos.getY() + 60.0D,
+                        pos.getZ() + 49.0D))
                 .itemFitSize(0.45F)
                 .build();
     }
@@ -6344,6 +6434,13 @@ public final class ModBlocks {
                 .noCollission()
                 .isSuffocating((state, level, pos) -> false)
                 .isViewBlocking((state, level, pos) -> false)));
+    }
+
+    private static RegistryObject<Block> barricade(String name) {
+        return registerBlockWithItem(name, () -> new Block(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.SAND)
+                .strength(1.0F, 2.5F)
+                .sound(SoundType.SAND)));
     }
 
     private static RegistryObject<Block> hiddenBlock(String name, Supplier<Block> blockSupplier) {

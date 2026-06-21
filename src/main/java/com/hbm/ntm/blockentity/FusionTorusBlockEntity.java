@@ -101,13 +101,13 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public int getSlotLimit(int slot) {
-            return slot == SLOT_OUTPUT ? 64 : 1;
+            return 64;
         }
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_BATTERY -> !stack.isEmpty();
                 case SLOT_BLUEPRINT -> stack.is(ModItems.BLUEPRINTS.get());
                 default -> false;
             };
@@ -163,7 +163,7 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static void serverTick(Level level, BlockPos pos, BlockState state, FusionTorusBlockEntity torus) {
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, torus);
         boolean changed = torus.tickServer(level);
-        torus.networkPackNT(25);
+        torus.networkPackNT(150);
         if (changed || level.getGameTime() % 20L == 0L) {
             torus.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
@@ -279,6 +279,11 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    public List<HbmFluidTank> getAllTanks() {
+        return List.of(coolantTank, hotCoolantTank, recipeTanks[0], recipeTanks[1], recipeTanks[2], recipeTanks[3]);
+    }
+
+    @Override
     public List<HbmFluidTank> getReceivingTanks() {
         return List.of(coolantTank, recipeTanks[0], recipeTanks[1], recipeTanks[2]);
     }
@@ -372,6 +377,7 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         coolantTank.writeToNbt(tag, "t0");
         hotCoolantTank.writeToNbt(tag, "t1");
+        tag.putLong("power", getPower());
         tag.putString("recipe0", selectedRecipe);
         tag.putDouble("progress0", progress);
         tag.putDouble("bonus0", bonus);
@@ -383,15 +389,21 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "items", items);
         for (int i = 0; i < recipeTanks.length; i++) {
-            recipeTanks[i].readFromNbt(tag, "ft" + i);
+            String key = "ft" + i;
+            if (hasTankTag(tag, key)) {
+                recipeTanks[i].readFromNbt(tag, key);
+            }
         }
-        if (tag.contains("t0_type") || tag.contains("t0")) {
+        if (hasTankTag(tag, "t0")) {
             coolantTank.readFromNbt(tag, "t0");
         }
-        if (tag.contains("t1_type") || tag.contains("t1")) {
+        if (hasTankTag(tag, "t1")) {
             hotCoolantTank.readFromNbt(tag, "t1");
         }
-        selectedRecipe = tag.getString("recipe0");
+        if (tag.contains("power")) {
+            setPower(tag.getLong("power"));
+        }
+        selectedRecipe = GenericMachineRecipeSelector.normalize(tag.getString("recipe0"));
         progress = tag.getDouble("progress0");
         bonus = tag.getDouble("bonus0");
         if (tag.contains("temperature")) {
@@ -508,6 +520,7 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
         return GenericMachineRecipeSelector.isSelectionTag(tag)
+                && hasLegacyUseDistance(player)
                 && GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.FUSION_REACTOR,
                 GenericMachineRecipeSelector.readSelection(tag), items.getStackInSlot(SLOT_BLUEPRINT));
     }
@@ -793,6 +806,18 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || previousHot != hotCoolantTank.getFill();
     }
 
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
+    }
+
+    private boolean hasLegacyUseDistance(Player player) {
+        if (isRemoved()) {
+            return false;
+        }
+        return player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D) <= 32.0D * 32.0D;
+    }
+
     private boolean isCool() {
         return temperature <= TEMPERATURE_TARGET;
     }
@@ -832,15 +857,17 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private final class AccessibleItemHandler implements IItemHandler {
-        @Override public int getSlots() { return SLOT_COUNT; }
-        @Override public @NotNull ItemStack getStackInSlot(int slot) { return items.getStackInSlot(slot); }
+        @Override public int getSlots() { return 1; }
+        @Override public @NotNull ItemStack getStackInSlot(int slot) {
+            return slot == 0 ? items.getStackInSlot(SLOT_OUTPUT) : ItemStack.EMPTY;
+        }
         @Override public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return slot == SLOT_OUTPUT ? stack : items.insertItem(slot, stack, simulate);
+            return stack;
         }
         @Override public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            return slot == SLOT_OUTPUT ? items.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
+            return slot == 0 ? items.extractItem(SLOT_OUTPUT, amount, simulate) : ItemStack.EMPTY;
         }
-        @Override public int getSlotLimit(int slot) { return items.getSlotLimit(slot); }
-        @Override public boolean isItemValid(int slot, @NotNull ItemStack stack) { return items.isItemValid(slot, stack); }
+        @Override public int getSlotLimit(int slot) { return slot == 0 ? items.getSlotLimit(SLOT_OUTPUT) : 0; }
+        @Override public boolean isItemValid(int slot, @NotNull ItemStack stack) { return false; }
     }
 }

@@ -22,7 +22,7 @@ public class ZirnoxReactorRenderer implements BlockEntityRenderer<ZirnoxReactorB
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return 256;
     }
 
     @Override
@@ -46,10 +46,9 @@ public class ZirnoxReactorRenderer implements BlockEntityRenderer<ZirnoxReactorB
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
         return switch (facing) {
-            case SOUTH -> 0.0F;
-            case EAST -> 90.0F;
-            case NORTH -> 180.0F;
-            case WEST -> 270.0F;
+            case NORTH -> 90.0F;
+            case WEST -> 180.0F;
+            case SOUTH -> 270.0F;
             default -> 0.0F;
         };
     }

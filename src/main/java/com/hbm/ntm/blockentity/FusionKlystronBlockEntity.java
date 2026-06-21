@@ -66,12 +66,12 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public int getSlotLimit(int slot) {
-            return 1;
+            return 64;
         }
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot == SLOT_BATTERY && HbmInventoryMenuHelper.isBatteryLike(stack);
+            return slot == SLOT_BATTERY && !stack.isEmpty();
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
@@ -97,7 +97,7 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static void serverTick(Level level, BlockPos pos, BlockState state, FusionKlystronBlockEntity klystron) {
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, klystron);
         boolean changed = klystron.tickServer(level);
-        klystron.networkPackNT(25);
+        klystron.networkPackNT(100);
         if (changed || level.getGameTime() % 20L == 0L) {
             klystron.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
@@ -145,6 +145,12 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
             setOutputTarget(data.getLong("outputTarget"));
             setChanged();
         }
+    }
+
+    @Override
+    public boolean hasPermission(ServerPlayer player) {
+        return player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 2.5D,
+                worldPosition.getZ() + 0.5D) < 20.0D * 20.0D;
     }
 
     @Override
@@ -224,7 +230,10 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "items", items);
+        tag.putLong("power", getPower());
+        tag.putLong("maxPower", maxPower);
         tag.putLong("outputTarget", outputTarget);
+        airTank.writeToNbt(tag, "t");
         airTank.writeToNbt(tag, "compair");
     }
 
@@ -232,9 +241,22 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "items", items);
-        setOutputTarget(tag.getLong("outputTarget"));
-        airTank.readFromNbt(tag, "compair");
+        if (tag.contains("maxPower")) {
+            maxPower = tag.getLong("maxPower");
+        }
         energy.setMaxPower(maxPower);
+        energy.setTransferRates(maxPower, 0L);
+        if (tag.contains("power")) {
+            setPower(tag.getLong("power"));
+        }
+        setOutputTarget(tag.getLong("outputTarget"));
+        if (hasTankTag(tag, "t")) {
+            airTank.readFromNbt(tag, "t");
+        } else if (hasTankTag(tag, "compair")) {
+            airTank.readFromNbt(tag, "compair");
+        }
+        energy.setMaxPower(maxPower);
+        energy.setTransferRates(maxPower, 0L);
     }
 
     @Override
@@ -281,6 +303,7 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
         setPower(data.readLong());
         maxPower = data.readLong();
         energy.setMaxPower(maxPower);
+        energy.setTransferRates(maxPower, 0L);
         setOutputTarget(data.readLong());
         output = data.readLong();
         readTank(data, airTank);
@@ -313,6 +336,7 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
         long oldMax = maxPower;
         maxPower = Math.max(1_000_000L, outputTarget * 100L);
         energy.setMaxPower(maxPower);
+        energy.setTransferRates(maxPower, 0L);
         HbmBatteryTransfer.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, maxPower);
         output = 0L;
         double powerFactor = FusionTorusBlockEntity.getSpeedScaled(maxPower, energy.getPower());
@@ -353,6 +377,10 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
         return state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
     static boolean provideKyU(KlystronNetwork network, long output) {

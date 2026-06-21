@@ -20,6 +20,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.util.AchievementHandler;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +58,7 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
     public static final int PELLET_SLOT_COUNT = 24;
     public static final int SLOT_COUNT = PELLET_SLOT_COUNT;
     public static final int TANK_CAPACITY = 64_000;
+    public static final double USE_DISTANCE_SQR = 128.0D;
 
     private static final String TAG_ITEMS = "items";
     private static final String TAG_LOCKS = "locks";
@@ -126,8 +128,8 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public boolean hasPermission(ServerPlayer player) {
-        return player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
-                worldPosition.getZ() + 0.5D) < 400.0D;
+        return !isRemoved() && player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D) <= USE_DISTANCE_SQR;
     }
 
     @Override
@@ -218,6 +220,11 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    public List<HbmFluidTank> getAllTanks() {
+        return List.of(coolantTank, hotCoolantTank, mudTank);
+    }
+
+    @Override
     public long transferFluid(FluidType type, int pressure, long amount) {
         long leftover = HbmStandardFluidTransceiver.super.transferFluid(type, pressure, amount);
         if (leftover != amount) {
@@ -284,6 +291,9 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        coolantTank.writeToNbt(tag, "t0");
+        hotCoolantTank.writeToNbt(tag, "t1");
+        mudTank.writeToNbt(tag, "t2");
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
         saveLocks(tag);
         tag.putInt("heat", heat);
@@ -298,6 +308,15 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        if (hasTankTag(tag, "t0")) {
+            coolantTank.readFromNbt(tag, "t0");
+        }
+        if (hasTankTag(tag, "t1")) {
+            hotCoolantTank.readFromNbt(tag, "t1");
+        }
+        if (hasTankTag(tag, "t2")) {
+            mudTank.readFromNbt(tag, "t2");
+        }
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
         loadLocks(tag);
         heat = tag.getInt("heat");
@@ -413,6 +432,16 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
                 worldPosition.getZ() + 0.5D, ModSounds.BLOCK_RBMK_EXPLOSION.get(), SoundSource.BLOCKS, 50.0F, 1.0F);
         ParticleUtil.spawnRbmkMush(level, worldPosition.getX() + 0.5D, worldPosition.getY() + 2.0D,
                 worldPosition.getZ() + 0.5D, 5.0F);
+        awardWatzBoom(level);
+    }
+
+    private void awardWatzBoom(Level level) {
+        AABB area = new AABB(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D, worldPosition.getX() + 0.5D,
+                worldPosition.getY() + 0.5D, worldPosition.getZ() + 0.5D).inflate(50.0D);
+        for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, area)) {
+            AchievementHandler.award(player, AchievementHandler.WATZ_BOOM);
+        }
     }
 
     private void clearAllPellets() {
@@ -734,6 +763,10 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         tank.withPressure(pressure);
         tank.setTankType(type);
         tank.setFill(fill);
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
     private static final class SharedTanks {

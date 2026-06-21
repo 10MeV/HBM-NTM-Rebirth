@@ -13,6 +13,6 @@ public class FractionSpacerBlockEntity extends BlockEntity {
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-2, 0, -2), worldPosition.offset(3, 2, 3));
+        return new AABB(worldPosition.offset(-1, 0, -1), worldPosition.offset(2, 1, 2));
     }
 }

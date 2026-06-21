@@ -50,7 +50,7 @@ public class PWRMenu extends AbstractContainerMenu {
         this.blockEntity = blockEntity;
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
                 PWRControllerBlockEntity.SLOT_FUEL_INPUT, 53, 5));
-        addSlot(HbmInventoryMenuHelper.takeOnlySlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
                 PWRControllerBlockEntity.SLOT_HOT_OUTPUT, 89, 32));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
                 PWRControllerBlockEntity.SLOT_IDENTIFIER, 8, 59));
@@ -98,6 +98,14 @@ public class PWRMenu extends AbstractContainerMenu {
 
     public int getRodTarget() {
         return (int) Math.round(rodTarget);
+    }
+
+    public double getRodLevelExact() {
+        return rodLevel;
+    }
+
+    public double getRodTargetExact() {
+        return rodTarget;
     }
 
     public int getTypeLoaded() {
@@ -158,7 +166,8 @@ public class PWRMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 256.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity,
+                PWRControllerBlockEntity.USE_DISTANCE_SQR);
     }
 
     @Override

@@ -13,6 +13,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -82,13 +83,19 @@ public class VendingMachineBlock extends LegacyXrMultiblockBlock implements Enti
             if (!player.getAbilities().instabuild) {
                 held.shrink(1);
             }
+            BlockPos clickedPos = clickedBlockPos(hit);
             String pool = state.getValue(VARIANT) == 0 ? HbmItemPoolIds.POOL_SODA : HbmItemPoolIds.POOL_SNACKS;
-            ItemStack stack = HbmItemPoolRegistry.getStack(serverLevel, pool, Vec3.atCenterOf(pos));
+            ItemStack stack = HbmItemPoolRegistry.getStack(serverLevel, pool, Vec3.atCenterOf(clickedPos));
             if (!stack.isEmpty()) {
                 Direction facing = state.getValue(FACING);
-                Block.popResource(level, pos.relative(facing), stack);
+                ItemEntity item = new ItemEntity(level,
+                        clickedPos.getX() + 0.5D + facing.getStepX() * 0.75D,
+                        pos.getY() + 0.25D,
+                        clickedPos.getZ() + 0.5D + facing.getStepZ() * 0.75D,
+                        stack);
+                level.addFreshEntity(item);
             }
-            LegacySoundPlayer.playLegacyBoltOpen(level, pos, 1.0F, 0.75F);
+            LegacySoundPlayer.playLegacyBoltOpen(level, clickedPos, 1.0F, 0.75F);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -131,5 +138,15 @@ public class VendingMachineBlock extends LegacyXrMultiblockBlock implements Enti
             return new ItemStack(asItem());
         }
         return ItemStack.EMPTY;
+    }
+
+    private static BlockPos clickedBlockPos(BlockHitResult hit) {
+        Vec3 location = hit.getLocation();
+        Direction direction = hit.getDirection();
+        double epsilon = 1.0E-5D;
+        return BlockPos.containing(
+                location.x - direction.getStepX() * epsilon,
+                location.y - direction.getStepY() * epsilon,
+                location.z - direction.getStepZ() * epsilon);
     }
 }

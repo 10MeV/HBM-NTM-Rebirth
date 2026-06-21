@@ -66,8 +66,8 @@ public class StirlingBlock extends LegacyVisibleMultiblockMachineBlock {
             if (!player.getAbilities().instabuild) {
                 held.shrink(1);
             }
-            LegacySoundPlayer.playSoundEffect(level, stirling.getBlockPos(), "hbm:item.upgradePlug",
-                    SoundSource.BLOCKS, 1.0F, 1.0F);
+            LegacySoundPlayer.playSoundEffect(level, pos, "hbm:item.upgradePlug",
+                    SoundSource.BLOCKS, 1.5F, 0.75F);
             return InteractionResult.CONSUME;
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

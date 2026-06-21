@@ -6,6 +6,8 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait.HeatingType;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -16,6 +18,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +66,17 @@ public class HeatBoilerBlock extends LegacyVisibleMultiblockMachineBlock {
                 : (tickLevel, tickPos, tickState, blockEntity) ->
                         BoilerBlockEntity.serverTick(tickLevel, tickPos, tickState,
                                 (BoilerBlockEntity) blockEntity);
+    }
+
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        if (builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY) instanceof BoilerBlockEntity boiler
+                && boiler.hasExploded()) {
+            return List.of(
+                    new ItemStack(ModItems.STEEL_INGOT.get(), 4),
+                    new ItemStack(ModItems.COPPER_PLATE.get(), 8));
+        }
+        return super.getDrops(state, builder);
     }
 
     private static boolean isBoilerHeatable(FluidType type) {

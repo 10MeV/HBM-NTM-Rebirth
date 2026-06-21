@@ -24,6 +24,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.LegacyUpgradeSlotSound;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -85,6 +86,10 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (kind == Kind.CRYSTALLIZER) {
+                LegacyUpgradeSlotSound.playIfUpgrade(ProcessingMachineBlockEntity.this, slot, getStackInSlot(slot),
+                        5, 6, 0.5D, 1.0F, 1.0F);
+            }
         }
 
         @Override

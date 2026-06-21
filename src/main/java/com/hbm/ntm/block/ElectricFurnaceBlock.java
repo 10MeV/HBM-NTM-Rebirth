@@ -4,6 +4,7 @@ import com.hbm.ntm.blockentity.ElectricFurnaceBlockEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -55,6 +56,13 @@ public class ElectricFurnaceBlock extends HorizontalMachineBlock implements Enti
                 : (tickLevel, tickPos, tickState, blockEntity) ->
                 ElectricFurnaceBlockEntity.serverTick(tickLevel, tickPos, tickState,
                         (ElectricFurnaceBlockEntity) blockEntity);
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (level.getBlockEntity(pos) instanceof ElectricFurnaceBlockEntity furnace && furnace.isActive()) {
+            BrickFurnaceBlock.frontSmokeFlame(state, level, pos, random);
+        }
     }
 
     @Override

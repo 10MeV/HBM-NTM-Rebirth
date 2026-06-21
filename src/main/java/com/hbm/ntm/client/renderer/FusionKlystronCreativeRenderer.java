@@ -16,7 +16,7 @@ public class FusionKlystronCreativeRenderer implements BlockEntityRenderer<Fusio
 
     @Override
     public boolean shouldRenderOffScreen(FusionKlystronCreativeBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
@@ -35,13 +35,13 @@ public class FusionKlystronCreativeRenderer implements BlockEntityRenderer<Fusio
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
         poseStack.translate(-1.0D, 0.0D, 0.0D);
-        ObjFusionModels.KLYSTRON_CREATIVE_BODY.render(context);
+        ObjFusionModels.KLYSTRON_LEGACY.renderOnly(ObjFusionModels.KLYSTRON_CREATIVE_TEXTURE, context, "Klystron");
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 2.5D, 0.0D);
         poseStack.mulPose(Axis.XP.rotationDegrees(blockEntity.getFan(partialTick)));
         poseStack.translate(0.0D, -2.5D, 0.0D);
-        ObjFusionModels.KLYSTRON_CREATIVE_ROTOR.render(context);
+        ObjFusionModels.KLYSTRON_LEGACY.renderOnly(ObjFusionModels.KLYSTRON_CREATIVE_TEXTURE, context, "Rotor");
         poseStack.popPose();
         poseStack.popPose();
     }

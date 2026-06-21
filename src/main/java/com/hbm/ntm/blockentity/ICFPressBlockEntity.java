@@ -1,6 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -51,9 +50,8 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
     public static final int MAX_MUON = 16;
     private static final int[] TOP_BOTTOM_SLOTS = {SLOT_EMPTY, SLOT_OUTPUT, SLOT_MUON, SLOT_MUON_OUT, SLOT_FUEL_1};
     private static final int[] SIDE_SLOTS = {SLOT_EMPTY, SLOT_OUTPUT, SLOT_MUON, SLOT_MUON_OUT, SLOT_FUEL_2};
-    private static final int[] ALL_SLOTS = {
-            SLOT_EMPTY, SLOT_OUTPUT, SLOT_MUON, SLOT_MUON_OUT,
-            SLOT_FUEL_1, SLOT_FUEL_2, SLOT_FLUID_ID_1, SLOT_FLUID_ID_2};
+    private static final int[] UNSIDED_SLOTS = {
+            SLOT_EMPTY, SLOT_OUTPUT, SLOT_MUON, SLOT_MUON_OUT, SLOT_FUEL_1, SLOT_FUEL_2};
 
     private final HbmFluidTank deuteriumTank;
     private final HbmFluidTank tritiumTank;
@@ -74,7 +72,6 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
                 case SLOT_EMPTY -> stack.is(ModItems.ICF_PELLET_EMPTY.get());
                 case SLOT_MUON -> stack.is(ModItems.PARTICLE_MUON.get());
                 case SLOT_FUEL_1, SLOT_FUEL_2 -> !stack.isEmpty();
-                case SLOT_FLUID_ID_1, SLOT_FLUID_ID_2 -> stack.getItem() instanceof IFluidIdentifierItem;
                 default -> false;
             };
         }
@@ -89,7 +86,7 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
     private final LazyOptional<IItemHandler> sideItemHandler =
             LazyOptional.of(() -> new AccessibleItemHandler(SIDE_SLOTS));
     private final LazyOptional<IItemHandler> nullSideItemHandler =
-            LazyOptional.of(() -> new AccessibleItemHandler(ALL_SLOTS));
+            LazyOptional.of(() -> new AccessibleItemHandler(UNSIDED_SLOTS));
     private int muon;
 
     public ICFPressBlockEntity(BlockPos pos, BlockState state) {
@@ -152,6 +149,11 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    public List<HbmFluidTank> getAllTanks() {
+        return List.of(deuteriumTank, tritiumTank);
+    }
+
+    @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of();
     }
@@ -195,6 +197,8 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "items", items);
+        deuteriumTank.writeToNbt(tag, "t0");
+        tritiumTank.writeToNbt(tag, "t1");
         tag.putByte("muon", (byte) muon);
     }
 
@@ -202,6 +206,12 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "items", items);
+        if (hasTankTag(tag, "t0")) {
+            deuteriumTank.readFromNbt(tag, "t0");
+        }
+        if (hasTankTag(tag, "t1")) {
+            tritiumTank.readFromNbt(tag, "t1");
+        }
         muon = tag.getByte("muon");
     }
 
@@ -278,10 +288,12 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
         ItemStack current = items.getStackInSlot(SLOT_MUON_OUT);
         if (!container.isEmpty()) {
             if (current.isEmpty()) {
-                items.setStackInSlot(SLOT_MUON_OUT, container.copy());
-            } else if (ItemStack.isSameItemSameTags(current, container)
-                    && current.getCount() + container.getCount() <= current.getMaxStackSize()) {
-                current.grow(container.getCount());
+                ItemStack stored = container.copy();
+                stored.setCount(1);
+                items.setStackInSlot(SLOT_MUON_OUT, stored);
+            } else if (current.is(container.getItem()) && current.getDamageValue() == container.getDamageValue()
+                    && current.getCount() < current.getMaxStackSize()) {
+                current.grow(1);
             } else {
                 return false;
             }
@@ -347,6 +359,10 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
         tank.withPressure(pressure);
         tank.setTankType(type);
         tank.setFill(fill);
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
     private class AccessibleItemHandler implements IItemHandler {

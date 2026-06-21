@@ -13,7 +13,6 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -45,13 +44,18 @@ public class ICFControllerBlock extends HorizontalMachineBlock implements Entity
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && !player.isShiftKeyDown()
-                && level.getBlockEntity(pos) instanceof ICFControllerBlockEntity controller) {
+        if (player.isShiftKeyDown()) {
+            return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.PASS;
+        }
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+        if (level.getBlockEntity(pos) instanceof ICFControllerBlockEntity controller) {
             if (!controller.isAssembled()) {
                 assemble(level, pos, state, controller, player instanceof ServerPlayer ? (ServerPlayer) player : null);
             }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.CONSUME;
     }
 
     @Nullable
@@ -89,7 +93,6 @@ public class ICFControllerBlock extends HorizontalMachineBlock implements Entity
         } else {
             controller.clearAssembly();
             if (player != null) {
-                player.displayClientMessage(Component.literal(result.error()), true);
                 sendErrorMarker(player, result.errorPos(), result.error());
             }
         }
@@ -128,7 +131,10 @@ public class ICFControllerBlock extends HorizontalMachineBlock implements Entity
         visited.add(pos);
         parts.put(pos.immutable(), new PartState(part, state));
         switch (part) {
-            case PORT -> ports.add(pos);
+            case PORT -> {
+                ports.add(pos);
+                return AssemblyResult.success(parts, ports, cells, emitters, capacitors, turbochargers);
+            }
             case CELL -> cells.add(pos);
             case EMITTER -> emitters.add(pos);
             case CAPACITOR -> capacitors.add(pos);

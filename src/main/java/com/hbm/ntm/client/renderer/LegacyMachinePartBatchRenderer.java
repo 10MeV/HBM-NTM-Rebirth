@@ -3,7 +3,6 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import java.util.List;
-import net.minecraft.resources.ResourceLocation;
 
 final class LegacyMachinePartBatchRenderer {
     private LegacyMachinePartBatchRenderer() {
@@ -21,11 +20,6 @@ final class LegacyMachinePartBatchRenderer {
         List<LegacyMachinePartRenderSelection.Entry> parts = run.entries();
         LegacyMachinePartRenderSelection.Entry first = parts.get(0);
         ObjRenderContext resolved = LegacyMachinePartRenderContexts.apply(context, first.properties());
-        ResourceLocation texture = first.texture();
-        if (parts.size() == 1) {
-            model.renderPart(first.partName(), texture, resolved);
-            return;
-        }
-        model.renderOnlyInCallOrder(texture, resolved, run.selectionHandle(model));
+        model.renderOnlyInCallOrder(first.texture(), resolved, run.selectionHandle(model));
     }
 }

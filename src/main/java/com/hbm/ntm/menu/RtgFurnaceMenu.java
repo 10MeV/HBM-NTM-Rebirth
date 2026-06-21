@@ -28,11 +28,11 @@ public class RtgFurnaceMenu extends AbstractContainerMenu {
     public RtgFurnaceMenu(int containerId, Inventory playerInventory, RtgFurnaceBlockEntity blockEntity) {
         super(ModMenuTypes.RTG_FURNACE.get(), containerId);
         this.blockEntity = blockEntity;
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 53, 17));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 17, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 2, 35, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 3, 53, 53));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 4, 125, 35));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 56, 17));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 38, 53));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 2, 56, 53));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 3, 74, 53));
+        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 4, 116, 35));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getCookTime, value -> cookTime = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getHeat, value -> heat = value);

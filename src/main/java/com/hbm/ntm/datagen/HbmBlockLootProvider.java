@@ -3,6 +3,7 @@ package com.hbm.ntm.datagen;
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
 import com.hbm.ntm.block.FluidDuctBoxBlock;
 import com.hbm.ntm.block.FluidPipeBlock;
+import com.hbm.ntm.block.LegacyFileCabinetBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.RedCableBoxBlock;
 import com.hbm.ntm.item.LegacyStateBlockItem;
@@ -58,6 +59,9 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                         && block != ModBlocks.CRATE_TUNGSTEN
                         && block != ModBlocks.SAFE
                         && block != ModBlocks.MASS_STORAGE)
+                .filter(block -> block != ModBlocks.MACHINE_BOILER_OFF
+                        && block != ModBlocks.FAN
+                        && block != ModBlocks.FILING_CABINET)
                 .filter(block -> block != ModBlocks.VENDING_MACHINE)
                 .filter(block -> block != ModBlocks.RED_CABLE_BOX)
                 .filter(block -> block != ModBlocks.FLUID_DUCT_NEO
@@ -73,10 +77,16 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.MACHINE_FLUIDTANK.get(), noDrop());
         add(ModBlocks.MACHINE_BAT9000.get(), noDrop());
         add(ModBlocks.MACHINE_BIGASSTANK.get(), noDrop());
+        add(ModBlocks.MACHINE_UF6_TANK.get(), noDrop());
+        add(ModBlocks.MACHINE_PUF6_TANK.get(), noDrop());
         add(ModBlocks.MACHINE_REFINERY.get(), noDrop());
         add(ModBlocks.BARREL_PLASTIC.get(), noDrop());
         dropSelf(ModBlocks.BARREL_CORRODED.get());
         dropSelf(ModBlocks.MACHINE_FENSU.get());
+        add(ModBlocks.MACHINE_BOILER_OFF.get(), oldBoilerScrapsDrop());
+        dropSelf(ModBlocks.FAN.get());
+        add(ModBlocks.FILING_CABINET.get(),
+                legacyStateVariantDrop(ModBlocks.FILING_CABINET.get(), LegacyFileCabinetBlock.VARIANT, 2));
         add(ModBlocks.RED_CABLE_BOX.get(),
                 legacyStateVariantDrop(ModBlocks.RED_CABLE_BOX.get(), RedCableBoxBlock.SIZE, 5));
         add(ModBlocks.FLUID_DUCT_NEO.get(),
@@ -93,6 +103,16 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.BARREL_STEEL.get(), noDrop());
         add(ModBlocks.BARREL_TCALLOY.get(), noDrop());
         add(ModBlocks.BARREL_ANTIMATTER.get(), noDrop());
+        dropSelf(ModBlocks.MACHINE_MINIRTG.get());
+        dropSelf(ModBlocks.MACHINE_POWERRTG.get());
+        dropSelf(ModBlocks.FIELD_DISTURBER.get());
+        dropSelf(ModBlocks.CAPACITOR_BUS.get());
+        add(ModBlocks.MACHINE_RTG_FURNACE.get(), noDrop());
+        dropSelf(ModBlocks.MACHINE_BATTERY.get());
+        dropSelf(ModBlocks.MACHINE_BATTERY_POTATO.get());
+        dropSelf(ModBlocks.MACHINE_LITHIUM_BATTERY.get());
+        dropSelf(ModBlocks.MACHINE_SCHRABIDIUM_BATTERY.get());
+        dropSelf(ModBlocks.MACHINE_DINEUTRONIUM_BATTERY.get());
         add(ModBlocks.MACHINE_WELL.get(), noDrop());
         add(ModBlocks.MACHINE_PUMPJACK.get(), noDrop());
         add(ModBlocks.MACHINE_FRACKING_TOWER.get(), noDrop());
@@ -137,6 +157,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         addPileGraphiteDrops();
         add(ModBlocks.WASTE_LEAVES.get(), noDrop());
         add(ModBlocks.LEAVES_LAYER.get(), noDrop());
+        add(ModBlocks.BARRICADE.get(), noDrop());
         add(ModBlocks.OIL_SPILL.get(), noDrop());
         add(ModBlocks.WASTE_LOG.get(), wasteLogDrop());
         add(ModBlocks.MUSH_BLOCK.get(), hugeMushDrop());
@@ -322,6 +343,19 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                         .setRolls(ConstantValue.exactly(1.0F))
                         .add(LootItem.lootTableItem(Items.CHARCOAL)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 4.0F))))
+                        .when(ExplosionCondition.survivesExplosion()));
+    }
+
+    private LootTable.Builder oldBoilerScrapsDrop() {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt("mat", 30);
+        tag.putInt("amount", 72);
+        return LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(ConstantValue.exactly(1.0F))
+                        .add(LootItem.lootTableItem(ModItems.FOUNDRY_SCRAPS.get())
+                                .apply(SetNbtFunction.setTag(tag))
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 6.0F))))
                         .when(ExplosionCondition.survivesExplosion()));
     }
 

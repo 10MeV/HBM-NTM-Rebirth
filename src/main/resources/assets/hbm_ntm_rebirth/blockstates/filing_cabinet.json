@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=east,variant=0": { "model": "hbm_ntm_rebirth:block/empty" },
+    "facing=east,variant=1": { "model": "hbm_ntm_rebirth:block/empty" },
+    "facing=north,variant=0": { "model": "hbm_ntm_rebirth:block/empty" },
+    "facing=north,variant=1": { "model": "hbm_ntm_rebirth:block/empty" },
+    "facing=south,variant=0": { "model": "hbm_ntm_rebirth:block/empty" },
+    "facing=south,variant=1": { "model": "hbm_ntm_rebirth:block/empty" },
+    "facing=west,variant=0": { "model": "hbm_ntm_rebirth:block/empty" },
+    "facing=west,variant=1": { "model": "hbm_ntm_rebirth:block/empty" }
+  }
+}

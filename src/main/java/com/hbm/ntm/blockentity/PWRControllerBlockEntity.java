@@ -65,6 +65,7 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
     public static final int SLOT_COUNT = 3;
     public static final long CORE_HEAT_CAPACITY_BASE = 10_000_000L;
     public static final long HULL_HEAT_CAPACITY_BASE = 10_000_000L;
+    public static final double USE_DISTANCE_SQR = 128.0D;
     private static final int MAX_SIZE = 4096;
     private static final int[] AUTOMATION_SLOTS = {SLOT_FUEL_INPUT, SLOT_HOT_OUTPUT};
     public static final String[] ROR = new String[] {
@@ -158,7 +159,6 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         AssemblyResult result = scanAssembly(level);
         if (!result.ok()) {
             if (player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(Component.literal(result.error()), true);
                 sendAssemblyErrorMarker(serverPlayer, result.error());
             }
             assembled = false;
@@ -285,18 +285,15 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public boolean hasPermission(ServerPlayer player) {
-        return player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
-                worldPosition.getZ() + 0.5D) < 400.0D;
+        return !isRemoved() && player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D) <= USE_DISTANCE_SQR;
     }
 
     @Override
     public void receiveControl(ServerPlayer player, CompoundTag data) {
         if (data.contains("control")) {
-            rodTarget = Math.max(0.0D, Math.min(100.0D, data.getDouble("control")));
+            rodTarget = Math.max(0, Math.min(100, data.getInt("control")));
             setChanged();
-        }
-        if (data.getBoolean("jettison")) {
-            jettisonFuel();
         }
     }
 
@@ -308,6 +305,11 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of(hotCoolantTank);
+    }
+
+    @Override
+    public List<HbmFluidTank> getAllTanks() {
+        return List.of(coolantTank, hotCoolantTank);
     }
 
     @Override
@@ -384,6 +386,8 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        coolantTank.writeToNbt(tag, "t0");
+        hotCoolantTank.writeToNbt(tag, "t1");
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "items", items);
         tag.putBoolean("assembled", assembled);
         tag.putLong("coreHeatL", coreHeat);
@@ -417,6 +421,12 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        if (hasLegacyTankKey(tag, "t0")) {
+            coolantTank.readFromNbt(tag, "t0");
+        }
+        if (hasLegacyTankKey(tag, "t1")) {
+            hotCoolantTank.readFromNbt(tag, "t1");
+        }
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "items", items);
         assembled = tag.getBoolean("assembled");
         coreHeat = Math.max(tag.getInt("coreHeat"), tag.getLong("coreHeatL"));
@@ -1003,6 +1013,10 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         tank.withPressure(pressure);
         tank.setTankType(type);
         tank.setFill(fill);
+    }
+
+    private static boolean hasLegacyTankKey(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
     private record AssemblyResult(boolean ok, String error, Map<BlockPos, BlockState> parts, Set<BlockPos> rods) {

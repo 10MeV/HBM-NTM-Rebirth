@@ -76,9 +76,13 @@ public class BrickFurnaceBlock extends HorizontalMachineBlock implements EntityB
     }
 
     static void frontSmokeFlame(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        frontSmokeFlame(state, level, pos, random, 0.0D);
+    }
+
+    static void frontSmokeFlame(BlockState state, Level level, BlockPos pos, RandomSource random, double yBase) {
         Direction facing = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.SOUTH;
         double x = pos.getX() + 0.5D;
-        double y = pos.getY() + random.nextDouble() * 0.375D;
+        double y = pos.getY() + yBase + random.nextDouble() * 0.375D;
         double z = pos.getZ() + 0.5D;
         double off = 0.52D;
         double var = random.nextDouble() * 0.6D - 0.3D;

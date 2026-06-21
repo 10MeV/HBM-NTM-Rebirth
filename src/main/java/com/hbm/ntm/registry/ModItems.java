@@ -86,6 +86,7 @@ import com.hbm.ntm.item.LegacyWiringItem;
 import com.hbm.ntm.item.LiquidatorArmorItem;
 import com.hbm.ntm.item.LiquidatorMaskArmorItem;
 import com.hbm.ntm.item.MarshmallowItem;
+import com.hbm.ntm.item.MirrorToolItem;
 import com.hbm.ntm.item.MissileLauncherGunItem;
 import com.hbm.ntm.item.MissileDesignatorItem;
 import com.hbm.ntm.item.RangefinderItem;
@@ -98,6 +99,8 @@ import com.hbm.ntm.item.PACoilItem;
 import com.hbm.ntm.item.PollutionDetectorItem;
 import com.hbm.ntm.item.PlanCItem;
 import com.hbm.ntm.item.PlasticScrapItem;
+import com.hbm.ntm.item.PWRFuelItem;
+import com.hbm.ntm.item.PWRPrinterItem;
 import com.hbm.ntm.item.RadawayItem;
 import com.hbm.ntm.item.RadarLinkerItem;
 import com.hbm.ntm.item.PistonSetItem;
@@ -134,6 +137,7 @@ import com.hbm.ntm.bullet.LegacySednaGunConfigs;
 import com.hbm.ntm.bullet.SednaGunConfig;
 import com.hbm.ntm.neutron.RBMKFuelRodRegistry;
 import com.hbm.ntm.recipe.WatzFuelRuntime;
+import com.hbm.ntm.recipe.PWRFuelRuntime;
 import com.hbm.ntm.satellite.LegacySatelliteType;
 import com.hbm.ntm.satellite.SatelliteChipItem;
 import com.hbm.ntm.satellite.SatelliteDesignatorItem;
@@ -1241,6 +1245,8 @@ public final class ModItems {
             () -> new SirenCassetteItem(new Item.Properties()));
     public static final RegistryObject<Item> SETTINGS_TOOL = registerLegacy("settings_tool",
             () -> new SettingsToolItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> MIRROR_TOOL = registerLegacy("mirror_tool",
+            () -> new MirrorToolItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> SCREWDRIVER = registerLegacy("screwdriver",
             () -> new LegacyToolItem(new Item.Properties().stacksTo(1).durability(100), Toolable.ToolType.SCREWDRIVER));
     public static final RegistryObject<Item> HAND_DRILL = registerLegacy("hand_drill",
@@ -2732,22 +2738,7 @@ public final class ModItems {
             zirnoxRod("rod_zirnox_lithium", 20_000, 0, true),
             zirnoxRod("rod_zirnox_zfb_mox", 50_000, 35, false));
 
-    public static final List<RegistryObject<Item>> PWR_FUEL_ITEMS = simpleParts(
-            "pwr_fuel_meu",
-            "pwr_fuel_heu233",
-            "pwr_fuel_heu235",
-            "pwr_fuel_men",
-            "pwr_fuel_hen237",
-            "pwr_fuel_mox",
-            "pwr_fuel_mep",
-            "pwr_fuel_hep239",
-            "pwr_fuel_hep241",
-            "pwr_fuel_mea",
-            "pwr_fuel_hea242",
-            "pwr_fuel_hes326",
-            "pwr_fuel_hes327",
-            "pwr_fuel_bfb_am_mix",
-            "pwr_fuel_bfb_pu241");
+    public static final List<RegistryObject<Item>> PWR_FUEL_ITEMS = pwrFuels();
 
     public static final List<RegistryObject<Item>> PWR_FUEL_HOT_ITEMS = simpleParts(
             "pwr_fuel_hot_meu",
@@ -2782,6 +2773,8 @@ public final class ModItems {
             "pwr_fuel_depleted_hes327",
             "pwr_fuel_depleted_bfb_am_mix",
             "pwr_fuel_depleted_bfb_pu241");
+    public static final RegistryObject<Item> PWR_PRINTER = registerLegacy("pwr_printer",
+            () -> new PWRPrinterItem(new Item.Properties().stacksTo(1)));
 
     public static final List<RegistryObject<Item>> WATZ_PELLET_ITEMS = watzPellets(false);
     public static final List<RegistryObject<Item>> WATZ_PELLET_DEPLETED_ITEMS = watzPellets(true);
@@ -2971,7 +2964,7 @@ public final class ModItems {
             "rod_zirnox_les_fuel_depleted",
             "rod_zirnox_zfb_mox_depleted",
             "crystal_xen"
-    ), ZIRNOX_ROD_ITEMS, PWR_FUEL_ITEMS, PWR_FUEL_HOT_ITEMS, PWR_FUEL_DEPLETED_ITEMS, WATZ_PELLET_ITEMS, WATZ_PELLET_DEPLETED_ITEMS, List.of(ICF_PELLET_EMPTY, ICF_PELLET, ICF_PELLET_DEPLETED, PARTICLE_MUON), List.of(RBMK_LID, RBMK_LID_GLASS, RBMK_FUEL_EMPTY), RBMK_FUEL_ROD_ITEMS, RBMK_PELLET_ITEMS, MACHINE_UPGRADE_ITEMS, LEGACY_TOOL_ITEMS, DRILLBIT_ITEMS, PISTON_SET_ITEMS, ARC_ELECTRODE_ITEMS, PA_COIL_ITEMS, ABILITY_TOOL_ITEMS, List.<RegistryObject<Item>>of(CATALYTIC_CONVERTER, SHREDDER_BLADES_STEEL, SHREDDER_BLADES_TITANIUM, SHREDDER_BLADES_DESH, SIREN_TRACK), SINGULARITY_FAMILY_ITEMS, CONTROL_BATTERY_ITEMS)
+    ), ZIRNOX_ROD_ITEMS, PWR_FUEL_ITEMS, PWR_FUEL_HOT_ITEMS, PWR_FUEL_DEPLETED_ITEMS, List.of(PWR_PRINTER), WATZ_PELLET_ITEMS, WATZ_PELLET_DEPLETED_ITEMS, List.of(ICF_PELLET_EMPTY, ICF_PELLET, ICF_PELLET_DEPLETED, PARTICLE_MUON), List.of(RBMK_LID, RBMK_LID_GLASS, RBMK_FUEL_EMPTY), RBMK_FUEL_ROD_ITEMS, RBMK_PELLET_ITEMS, MACHINE_UPGRADE_ITEMS, LEGACY_TOOL_ITEMS, DRILLBIT_ITEMS, PISTON_SET_ITEMS, ARC_ELECTRODE_ITEMS, PA_COIL_ITEMS, ABILITY_TOOL_ITEMS, List.<RegistryObject<Item>>of(CATALYTIC_CONVERTER, SHREDDER_BLADES_STEEL, SHREDDER_BLADES_TITANIUM, SHREDDER_BLADES_DESH, SIREN_TRACK), SINGULARITY_FAMILY_ITEMS, CONTROL_BATTERY_ITEMS)
             .flatMap(List::stream)
             .toList();
 
@@ -3254,6 +3247,7 @@ public final class ModItems {
             DOSIMETER,
             DIGAMMA_DIAGNOSTIC,
             POLLUTION_DETECTOR,
+            MIRROR_TOOL,
             LINKER,
             AMMO_BAG,
             AMMO_BAG_INFINITE,
@@ -3671,6 +3665,13 @@ public final class ModItems {
 
     private static RegistryObject<Item> zirnoxRod(String name, int maxLife, int heat, boolean breeding) {
         return registerLegacy(name, () -> new ZirnoxRodItem(new Item.Properties().stacksTo(1).durability(maxLife), heat, breeding));
+    }
+
+    private static List<RegistryObject<Item>> pwrFuels() {
+        return Stream.of(PWRFuelRuntime.Type.values())
+                .map(type -> registerLegacy("pwr_fuel_" + type.suffix(),
+                        () -> new PWRFuelItem(new Item.Properties(), type)))
+                .toList();
     }
 
     private static List<RegistryObject<Item>> watzPellets(boolean depleted) {
@@ -4354,9 +4355,26 @@ public final class ModItems {
     }
 
     private static RegistryObject<Item> simpleStackSizeItem(String name, int maxStackSize) {
-        RegistryObject<Item> item = ITEMS.register(name, () -> new Item(new Item.Properties().stacksTo(maxStackSize)));
+        RegistryObject<Item> item = ITEMS.register(name,
+                () -> new Item(simpleStackSizeProperties(name, maxStackSize)));
         ITEMS_BY_LEGACY_NAME.put(name, item);
         return item;
+    }
+
+    private static Item.Properties simpleStackSizeProperties(String name, int maxStackSize) {
+        Item.Properties properties = new Item.Properties().stacksTo(maxStackSize);
+        if (isZirnoxRodProduct(name)) {
+            RegistryObject<Item> emptyRod = legacyItem("rod_zirnox_empty");
+            if (emptyRod != null) {
+                properties.craftRemainder(emptyRod.get());
+            }
+        }
+        return properties;
+    }
+
+    private static boolean isZirnoxRodProduct(String name) {
+        return "rod_zirnox_tritium".equals(name)
+                || name.startsWith("rod_zirnox_") && name.endsWith("_depleted");
     }
 
     private static RegistryObject<Item> sednaGun(SednaGunConfig config) {

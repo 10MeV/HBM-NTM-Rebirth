@@ -16,7 +16,7 @@ public class FusionBoilerRenderer implements BlockEntityRenderer<FusionBoilerBlo
 
     @Override
     public boolean shouldRenderOffScreen(FusionBoilerBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
@@ -32,7 +32,8 @@ public class FusionBoilerRenderer implements BlockEntityRenderer<FusionBoilerBlo
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
-        ObjFusionModels.BOILER.render(new ObjRenderContext(poseStack, buffer, state, light, packedOverlay));
+        ObjFusionModels.BOILER_LEGACY.renderAll(ObjFusionModels.BOILER_TEXTURE,
+                new ObjRenderContext(poseStack, buffer, state, light, packedOverlay));
         poseStack.popPose();
     }
 }

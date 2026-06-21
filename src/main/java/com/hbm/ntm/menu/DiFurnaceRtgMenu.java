@@ -34,10 +34,13 @@ public class DiFurnaceRtgMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 80, 18));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 80, 54));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 2, 134, 36));
-        for (int i = 0; i < 6; i++) {
-            addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 3 + i, 8 + i * 18, 72));
-        }
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 103, 142);
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 3, 22, 18));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 4, 40, 18));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 5, 22, 36));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 6, 40, 36));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 7, 22, 54));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 8, 40, 54));
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getProgress, value -> progress = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getSpeed, value -> speed = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, () -> blockEntity.getSideUpper(), value -> sideUpper = value);

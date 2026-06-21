@@ -28,6 +28,7 @@ public class RBMKConsoleRenderer implements BlockEntityRenderer<RBMKConsoleBlock
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
+        poseStack.translate(0.5D, 0.0D, 0.0D);
         ObjRbmkModels.CONSOLE.renderAll(ObjRbmkModels.CONSOLE_TEXTURE,
                 new ObjRenderContext(poseStack, buffer, state, light, packedOverlay));
         poseStack.popPose();
