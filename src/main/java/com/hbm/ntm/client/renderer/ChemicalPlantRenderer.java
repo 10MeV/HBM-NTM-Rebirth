@@ -29,7 +29,7 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
 
     @Override
     public boolean shouldRenderOffScreen(ChemicalPlantBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

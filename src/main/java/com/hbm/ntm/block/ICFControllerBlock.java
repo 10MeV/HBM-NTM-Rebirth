@@ -107,6 +107,7 @@ public class ICFControllerBlock extends HorizontalMachineBlock implements Entity
         Set<BlockPos> emitters = new HashSet<>();
         Set<BlockPos> capacitors = new HashSet<>();
         Set<BlockPos> turbochargers = new HashSet<>();
+        visited.add(controllerPos.immutable());
         AssemblyResult result = floodFill(level, controllerPos.relative(dir), parts, visited, ports, cells, emitters,
                 capacitors, turbochargers);
         return result.ok()

@@ -85,7 +85,7 @@ public class ElectricFurnaceMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        } else if (ElectricFurnaceBlockEntity.isLegacyBattery(stack)) {
             if (!moveItemStackTo(stack, ElectricFurnaceBlockEntity.SLOT_BATTERY,
                     ElectricFurnaceBlockEntity.SLOT_BATTERY + 1, false)) {
                 return ItemStack.EMPTY;

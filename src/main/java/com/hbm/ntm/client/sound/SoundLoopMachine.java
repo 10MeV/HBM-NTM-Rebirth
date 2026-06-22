@@ -15,9 +15,15 @@ public class SoundLoopMachine extends HbmDynamicSound {
     }
 
     public SoundLoopMachine(ResourceLocation location, BlockEntity blockEntity, SoundSource source) {
+        this(location, blockEntity, source, 0.5D, 0.5D, 0.5D);
+    }
+
+    public SoundLoopMachine(ResourceLocation location, BlockEntity blockEntity, SoundSource source,
+            double offsetX, double offsetY, double offsetZ) {
         super(location, source);
         this.blockEntity = blockEntity;
-        setPosition(blockEntity.getBlockPos().getX() + 0.5D, blockEntity.getBlockPos().getY() + 0.5D, blockEntity.getBlockPos().getZ() + 0.5D);
+        setPosition(blockEntity.getBlockPos().getX() + offsetX, blockEntity.getBlockPos().getY() + offsetY,
+                blockEntity.getBlockPos().getZ() + offsetZ);
     }
 
     @Override

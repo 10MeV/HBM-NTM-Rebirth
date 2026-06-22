@@ -2,13 +2,15 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
+import com.hbm.ntm.block.PWRAssembledBlock;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -111,23 +113,29 @@ public class PWRAssembledBlockEntity extends BlockEntity implements RORValueProv
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        if (tag.contains("block")) {
+        originalBlockId = null;
+        originalState = null;
+        corePos = null;
+        if (tag.contains("block", Tag.TAG_STRING)) {
             originalBlockId = ResourceLocation.tryParse(tag.getString("block"));
+        } else if (tag.contains("block", Tag.TAG_INT) && tag.getInt("block") == 0) {
+            originalBlockId = null;
         }
-        if (tag.contains("state")) {
+        if (tag.contains("state", Tag.TAG_COMPOUND)) {
             originalState = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), tag.getCompound("state"));
             originalBlockId = ForgeRegistries.BLOCKS.getKey(originalState.getBlock());
         }
         if (tag.contains("cX")) {
             corePos = new BlockPos(tag.getInt("cX"), tag.getInt("cY"), tag.getInt("cZ"));
         }
-        port = tag.getBoolean("port");
+        port = tag.contains("port") ? tag.getBoolean("port") : getBlockState().hasProperty(PWRAssembledBlock.PORT)
+                && getBlockState().getValue(PWRAssembledBlock.PORT);
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         PWRControllerBlockEntity core = getLoadedCore();
-        if (port && isPortCapability(capability) && core != null) {
+        if (port && side != null && hasOriginalBlock() && isPortCapability(capability) && core != null) {
             return core.getCapability(capability, side);
         }
         return super.getCapability(capability, side);
@@ -140,7 +148,7 @@ public class PWRAssembledBlockEntity extends BlockEntity implements RORValueProv
 
     @Override
     public String provideRORValue(String name) {
-        if (!port || !hasOriginalBlock()) {
+        if (!port) {
             return "";
         }
         PWRControllerBlockEntity core = getLoadedCore();
@@ -149,7 +157,7 @@ public class PWRAssembledBlockEntity extends BlockEntity implements RORValueProv
 
     @Override
     public String runRORFunction(String name, String[] params) {
-        if (!port || !hasOriginalBlock()) {
+        if (!port) {
             return "";
         }
         PWRControllerBlockEntity core = getLoadedCore();

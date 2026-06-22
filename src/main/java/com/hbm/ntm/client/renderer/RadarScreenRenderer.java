@@ -27,7 +27,7 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
 
     @Override
     public boolean shouldRenderOffScreen(RadarScreenBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

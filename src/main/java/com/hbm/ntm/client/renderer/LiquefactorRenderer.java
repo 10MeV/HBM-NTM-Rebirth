@@ -19,7 +19,7 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
 
     @Override
     public boolean shouldRenderOffScreen(LiquefactorBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

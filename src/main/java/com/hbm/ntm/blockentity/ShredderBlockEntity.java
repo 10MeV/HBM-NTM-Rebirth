@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.energy.IBatteryItem;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -70,7 +71,7 @@ public class ShredderBlockEntity extends HbmEnergyBlockEntity
                         && ItemProcessingRecipeRuntime.find(level, ItemProcessingRecipe.Machine.SHREDDER, stack) != null;
             }
             if (slot == SLOT_BATTERY) {
-                return HbmInventoryMenuHelper.isBatteryLike(stack);
+                return isLegacyBattery(stack);
             }
             if (slot == SLOT_BLADE_LEFT || slot == SLOT_BLADE_RIGHT) {
                 return stack.getItem() instanceof ShredderBladeItem;
@@ -315,6 +316,10 @@ public class ShredderBlockEntity extends HbmEnergyBlockEntity
         if (blade.isDamageableItem()) {
             blade.setDamageValue(Math.min(blade.getMaxDamage(), blade.getDamageValue() + 1));
         }
+    }
+
+    public static boolean isLegacyBattery(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof IBatteryItem;
     }
 
     private final class AccessibleItemHandler implements IItemHandler {

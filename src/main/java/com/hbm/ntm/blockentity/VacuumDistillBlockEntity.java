@@ -14,6 +14,7 @@ import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -43,6 +44,7 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
     private final HbmFluidTank lightOilTank;
     private final HbmFluidTank sourGasTank;
     private boolean isOn;
+    private int audioTime;
     private Object audioLoop;
 
     public VacuumDistillBlockEntity(BlockPos pos, BlockState state) {
@@ -171,19 +173,74 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
         if (level == null || !level.isClientSide) {
             return;
         }
+        if (isOn) {
+            audioTime = 20;
+        }
+        boolean active = audioTime > 0;
+        if (active) {
+            audioTime--;
+        }
         audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.boiler",
-                isOn, 30.0D, 15.0F, 0.25F, 1.0F);
+                active, 30.0D, 15.0F, 0.25F, 1.0F);
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putBoolean(TAG_IS_ON, isOn);
+        tag.putLong("power", energy.getPower());
+        inputTank.writeToNbt(tag, "input");
+        heavyOilTank.writeToNbt(tag, "heavy");
+        reformateTank.writeToNbt(tag, "reformate");
+        lightOilTank.writeToNbt(tag, "light");
+        sourGasTank.writeToNbt(tag, "gas");
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        if (tag.contains("power")) {
+            energy.setPower(tag.getLong("power"));
+        }
+        if (tag.contains("input")) {
+            inputTank.readFromNbt(tag, "input");
+        }
+        if (tag.contains("heavy")) {
+            heavyOilTank.readFromNbt(tag, "heavy");
+        }
+        if (tag.contains("reformate")) {
+            reformateTank.readFromNbt(tag, "reformate");
+        }
+        if (tag.contains("light")) {
+            lightOilTank.readFromNbt(tag, "light");
+        }
+        if (tag.contains("gas")) {
+            sourGasTank.readFromNbt(tag, "gas");
+        }
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putBoolean(TAG_IS_ON, isOn);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
         isOn = tag.getBoolean(TAG_IS_ON);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 }

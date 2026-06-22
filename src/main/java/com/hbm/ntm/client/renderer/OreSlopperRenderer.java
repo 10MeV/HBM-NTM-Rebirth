@@ -31,7 +31,7 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
 
     @Override
     public boolean shouldRenderOffScreen(OreSlopperBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

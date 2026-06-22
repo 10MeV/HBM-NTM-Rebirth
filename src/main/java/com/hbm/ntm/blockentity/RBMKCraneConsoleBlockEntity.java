@@ -30,6 +30,9 @@ import java.util.List;
 
 public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegacyLoadedTile {
     private static final int LAYOUT_REPAIR_INTERVAL = 20;
+    private static final double CRANE_HORIZONTAL_RENDER_PADDING = 4.0D;
+    private static final double CRANE_VERTICAL_RENDER_PADDING = 4.0D;
+    private static final double CRANE_LIFT_EXTENSION = 4.0D;
 
     private static final String TAG_CRANE = "crane";
     private static final String TAG_CRANE_ROTATION = "craneRotationOffset";
@@ -250,7 +253,22 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
 
     @Override
     public AABB getRenderBoundingBox() {
-        return INFINITE_EXTENT_AABB;
+        AABB box = new AABB(worldPosition).inflate(2.0D);
+        if (!setUpCrane) {
+            return box;
+        }
+        double horizontalRadius = Math.max(Math.max(spanF, spanB), Math.max(spanL, spanR))
+                + CRANE_HORIZONTAL_RENDER_PADDING;
+        double minY = centerY - CRANE_LIFT_EXTENSION - CRANE_VERTICAL_RENDER_PADDING;
+        double maxY = centerY + Math.max(height, RBMKCranePlanner.CRANE_HEIGHT) + CRANE_VERTICAL_RENDER_PADDING;
+        AABB craneBox = new AABB(
+                centerX + 0.5D - horizontalRadius,
+                minY,
+                centerZ + 0.5D - horizontalRadius,
+                centerX + 0.5D + horizontalRadius,
+                maxY,
+                centerZ + 0.5D + horizontalRadius);
+        return box.minmax(craneBox);
     }
 
     public double getViewDistance() {

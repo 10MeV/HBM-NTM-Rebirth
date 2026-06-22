@@ -5,6 +5,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
+import com.hbm.ntm.energy.IBatteryItem;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -67,7 +68,7 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_BATTERY -> isLegacyBattery(stack);
                 case SLOT_INPUT -> getSmeltingResult(stack).isPresent();
                 case SLOT_UPGRADE -> stack.getItem() instanceof ItemMachineUpgrade upgrade
                         && (upgrade.getUpgradeType() == UpgradeType.SPEED
@@ -316,6 +317,10 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
             return java.util.Optional.empty();
         }
         return level.getRecipeManager().getRecipeFor(RecipeType.SMELTING, new SimpleContainer(stack), level);
+    }
+
+    public static boolean isLegacyBattery(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof IBatteryItem;
     }
 
     private final class AccessibleItemHandler implements IItemHandler {

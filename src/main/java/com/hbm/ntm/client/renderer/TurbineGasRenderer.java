@@ -22,7 +22,7 @@ public class TurbineGasRenderer implements BlockEntityRenderer<TurbineGasBlockEn
 
     @Override
     public boolean shouldRenderOffScreen(TurbineGasBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

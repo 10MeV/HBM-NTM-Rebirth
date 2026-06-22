@@ -16,7 +16,7 @@ public class ICFControllerRenderer implements BlockEntityRenderer<ICFControllerB
 
     @Override
     public boolean shouldRenderOffScreen(ICFControllerBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
@@ -31,6 +31,10 @@ public class ICFControllerRenderer implements BlockEntityRenderer<ICFControllerB
         if (laserLength <= 0) {
             return;
         }
+        LegacyTileRenderPlans.IcfLaserBeamPlan plan = LegacyTileRenderPlans.icfLaserBeamPlan(laserLength);
+        if (!plan.active()) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
@@ -38,14 +42,12 @@ public class ICFControllerRenderer implements BlockEntityRenderer<ICFControllerB
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         LegacyBeamRenderer.beam(poseStack, buffer, LegacyBeamRenderer.beamPlan(
-                facing.getStepX() * (double) laserLength, 0.0D,
-                facing.getStepZ() * (double) laserLength,
-                LegacyBeamRenderer.WaveType.SPIRAL, LegacyBeamRenderer.BeamType.SOLID,
-                LegacyTileRenderPlans.ICF_LASER_OUTER_COLOR,
-                LegacyTileRenderPlans.ICF_LASER_INNER_COLOR,
-                0, 1, 0.0F,
-                LegacyTileRenderPlans.ICF_LASER_LAYERS,
-                LegacyTileRenderPlans.ICF_LASER_THICKNESS));
+                facing.getStepX() * plan.laserLength(), 0.0D,
+                facing.getStepZ() * plan.laserLength(),
+                plan.beam().wave(), plan.beam().beamType(),
+                plan.beam().outerColor(), plan.beam().innerColor(),
+                plan.beam().start(), plan.beam().segments(), plan.beam().size(),
+                plan.beam().layers(), plan.beam().thickness()));
         poseStack.popPose();
     }
 }

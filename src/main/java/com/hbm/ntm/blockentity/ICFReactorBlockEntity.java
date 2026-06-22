@@ -75,7 +75,8 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case 0, 1, 2, 3, 4 -> stack.is(ModItems.ICF_PELLET.get());
+                case SLOT_INPUT_START, SLOT_INPUT_START + 1, SLOT_INPUT_START + 2, SLOT_INPUT_START + 3,
+                        SLOT_INPUT_START + 4, SLOT_ACTIVE, SLOT_IDENTIFIER -> true;
                 default -> false;
             };
         }
@@ -360,20 +361,23 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
         ItemStack active = items.getStackInSlot(SLOT_ACTIVE);
         if (active.is(ModItems.ICF_PELLET.get()) && ICFPelletItem.getFusingDifficulty(active) <= laser) {
             heatup = ICFPelletItem.react(active, laser);
-            heat = saturatedAdd(heat, heatup);
+            heat += heatup;
             if (ICFPelletItem.getDepletion(active) >= ICFPelletItem.getMaxDepletion(active)) {
                 items.setStackInSlot(SLOT_ACTIVE, new ItemStack(ModItems.ICF_PELLET_DEPLETED.get()));
                 changed = true;
             }
             int fluxAdd = (int) Math.ceil(heat * 10.0D / MAX_HEAT);
-            stellarFluxTank.fill(HbmFluids.STELLAR_FLUX, fluxAdd, stellarFluxTank.getPressure(), false);
+            stellarFluxTank.setFill(stellarFluxTank.getFill() + fluxAdd);
+            if (stellarFluxTank.getFill() > stellarFluxTank.getMaxFill()) {
+                stellarFluxTank.setFill(stellarFluxTank.getMaxFill());
+            }
             CompoundTag data = new CompoundTag();
             data.putString("type", ParticleUtil.TYPE_HADRON);
             ParticleUtil.spawnAux(level, worldPosition.getX() + 0.5D, worldPosition.getY() + 3.5D,
                     worldPosition.getZ() + 0.5D, data, 25.0D);
         }
         if (heatup == 0L) {
-            heat = saturatedAdd(heat, laser / 4L);
+            heat += (long) (laser * 0.25D);
         }
         coolWithLegacyFormula();
         tryProvideFluidToPorts(hotCoolantTank.getTankType(), hotCoolantTank.getPressure(), this);
@@ -436,16 +440,13 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
         }
         hotCoolantTank.setTankType(step.producedType());
         int coolingCycles = coolantTank.getFill() / step.amountRequired();
-        int heatingCycles = hotCoolantTank.getSpaceFor(step.producedType()) / step.amountProduced();
+        int heatingCycles = (hotCoolantTank.getMaxFill() - hotCoolantTank.getFill()) / step.amountProduced();
         int heatCycles = (int) Math.min(heat / 4.0D / step.heatRequired() * trait.getEfficiency(HeatingType.ICF),
                 heat / (double) step.heatRequired());
         int cycles = Math.min(coolingCycles, Math.min(heatingCycles, heatCycles));
-        if (cycles <= 0) {
-            return;
-        }
-        coolantTank.drain(step.amountRequired() * cycles, false);
-        hotCoolantTank.fill(step.producedType(), step.amountProduced() * cycles, hotCoolantTank.getPressure(), false);
-        heat -= (long) step.heatRequired() * cycles;
+        coolantTank.setFill(coolantTank.getFill() - step.amountRequired() * cycles);
+        hotCoolantTank.setFill(hotCoolantTank.getFill() + step.amountProduced() * cycles);
+        heat -= step.heatRequired() * cycles;
         consumption = step.amountRequired() * cycles;
         output = step.amountProduced() * cycles;
     }
@@ -482,14 +483,6 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
         tank.withPressure(pressure);
         tank.setTankType(type);
         tank.setFill(fill);
-    }
-
-    private static long saturatedAdd(long value, long addition) {
-        if (addition <= 0L) {
-            return value;
-        }
-        long result = value + addition;
-        return result < value ? Long.MAX_VALUE : result;
     }
 
     private static boolean hasTankTag(CompoundTag tag, String key) {

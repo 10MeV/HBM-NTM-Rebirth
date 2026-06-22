@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machine_funnel_side",
+    "down": "hbm_ntm_rebirth:block/machine_funnel_bottom",
+    "up": "hbm_ntm_rebirth:block/machine_funnel_top",
+    "north": "hbm_ntm_rebirth:block/machine_funnel_side",
+    "east": "hbm_ntm_rebirth:block/machine_funnel_side",
+    "south": "hbm_ntm_rebirth:block/machine_funnel_side",
+    "west": "hbm_ntm_rebirth:block/machine_funnel_side"
+  }
+}

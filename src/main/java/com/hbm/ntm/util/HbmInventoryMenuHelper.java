@@ -2,6 +2,7 @@ package com.hbm.ntm.util;
 
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.energy.HbmBatteryItem;
+import com.hbm.ntm.energy.IBatteryItem;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
@@ -484,6 +485,10 @@ public final class HbmInventoryMenuHelper {
     public static boolean isBatteryLike(ItemStack stack) {
         return !stack.isEmpty() && (stack.getItem() instanceof HbmBatteryItem
                 || stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent());
+    }
+
+    public static boolean isLegacyBatteryItem(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof IBatteryItem;
     }
 
     public static CompoundTag saveLegacyItems(ItemStackHandler items) {

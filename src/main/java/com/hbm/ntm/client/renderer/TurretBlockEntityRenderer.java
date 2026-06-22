@@ -53,12 +53,12 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
 
     @Override
     public boolean shouldRenderOffScreen(T blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override

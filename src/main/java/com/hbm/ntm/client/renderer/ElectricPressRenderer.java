@@ -21,7 +21,7 @@ public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressB
 
     @Override
     public boolean shouldRenderOffScreen(ElectricPressBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

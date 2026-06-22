@@ -106,16 +106,7 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            if (slot >= 0 && slot < ROD_SLOT_COUNT) {
-                return ZirnoxFuelRuntime.isRod(stack);
-            }
-            if (slot == SLOT_CO2_INPUT) {
-                return containsFluid(stack, HbmFluids.CARBONDIOXIDE);
-            }
-            if (slot == SLOT_WATER_INPUT) {
-                return containsFluid(stack, HbmFluids.WATER);
-            }
-            return false;
+            return slot >= 0 && slot <= SLOT_WATER_INPUT && !stack.isEmpty();
         }
 
         @Override
@@ -170,8 +161,7 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public boolean hasPermission(ServerPlayer player) {
-        return player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
-                worldPosition.getZ() + 0.5D) < 400.0D;
+        return player.distanceToSqr(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ()) < 400.0D;
     }
 
     @Override
@@ -348,7 +338,6 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         tag.putInt("pressure", pressure);
         tag.putBoolean("isOn", on);
         tag.putBoolean("redstonePowered", redstonePowered);
-        tag.putInt("output", output);
         steamTank.writeToNbt(tag, LEGACY_STEAM_TANK);
         carbonDioxideTank.writeToNbt(tag, LEGACY_CARBON_DIOXIDE_TANK);
         waterTank.writeToNbt(tag, LEGACY_WATER_TANK);
@@ -362,7 +351,7 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         pressure = tag.getInt("pressure");
         on = tag.getBoolean("isOn");
         redstonePowered = tag.getBoolean("redstonePowered");
-        output = tag.getInt("output");
+        output = 0;
         readLegacyTank(tag, LEGACY_STEAM_TANK, steamTank);
         readLegacyTank(tag, LEGACY_CARBON_DIOXIDE_TANK, carbonDioxideTank);
         readLegacyTank(tag, LEGACY_WATER_TANK, waterTank);
@@ -438,8 +427,11 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
     public String runRORFunction(String name, String[] params) {
         if ((RORInfo.PREFIX_FUNCTION + "setState").equals(name) && params.length > 0) {
             if (!redstonePowered) {
-                on = RORInteractive.parseInt(params[0], 0, 1) == 1;
-                setChanged();
+                try {
+                    on = Integer.parseInt(params[0]) == 1;
+                    setChanged();
+                } catch (NumberFormatException ignored) {
+                }
             }
             return null;
         }
@@ -506,12 +498,9 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
             if (waterTank.getFill() > 0 && carbonDioxideTank.getFill() > 0
                     && steamTank.getFill() < steamTank.getMaxFill()) {
                 generateSteam();
-                heat -= (int) (heat * pressure / 1_000_000.0F);
+                heat -= (int) ((float) heat * (float) pressure / 1_000_000.0F);
             } else {
                 heat -= 10;
-            }
-            if (heat < 0) {
-                heat = 0;
             }
         }
         if (!isTilted() && steamTank.getFill() > 0) {
@@ -676,12 +665,10 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         }
         int cycle = (int) (((heat - 10_256F) / MAX_HEAT)
                 * Math.min(carbonDioxideTank.getFill() / 14_000F, 1.0F) * 25F * 5F);
-        cycle = Math.min(cycle, waterTank.getFill());
-        cycle = Math.min(cycle, steamTank.getSpace());
         output = cycle;
         if (cycle > 0) {
-            waterTank.setFill(waterTank.getFill() - cycle);
-            steamTank.setFill(steamTank.getFill() + cycle);
+            waterTank.setFill(Math.max(waterTank.getFill() - cycle, 0));
+            steamTank.setFill(Math.min(steamTank.getFill() + cycle, steamTank.getMaxFill()));
         }
     }
 

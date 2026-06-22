@@ -62,7 +62,7 @@ public class MultiblockDummyRenderer implements BlockEntityRenderer<MultiblockDu
 
     @Override
     public boolean shouldRenderOffScreen(MultiblockDummyBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

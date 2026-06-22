@@ -24,7 +24,7 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
 
     @Override
     public boolean shouldRenderOffScreen(ChemicalFactoryBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

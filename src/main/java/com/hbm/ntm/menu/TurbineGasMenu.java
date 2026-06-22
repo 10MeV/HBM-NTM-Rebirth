@@ -18,7 +18,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 
 public class TurbineGasMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = TurbineGasBlockEntity.SLOT_COUNT;
@@ -167,8 +166,7 @@ public class TurbineGasMenu extends AbstractContainerMenu {
         if (stack.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        if (stack.getItem() instanceof HbmBatteryItem
-                || stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent()) {
+        if (stack.getItem() instanceof HbmBatteryItem) {
             return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
                     TurbineGasBlockEntity.SLOT_BATTERY, TurbineGasBlockEntity.SLOT_BATTERY + 1);

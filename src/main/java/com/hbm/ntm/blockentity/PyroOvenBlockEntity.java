@@ -34,6 +34,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -71,6 +72,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_VENTING = "isVenting";
     private static final String TAG_SMOKE = "smoke";
     private static final String TAG_LEGACY_SMOKE = "smoke0";
+    private static final String TAG_LEGACY_POWER = "power";
     private static final long MAX_POWER = 10_000_000L;
     private static final int BASE_CONSUMPTION = 10_000;
     private static final int TANK_CAPACITY = 24_000;
@@ -301,9 +303,10 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        tag.putLong(TAG_LEGACY_POWER, getPower());
         tag.putFloat(TAG_PROGRESS, progress);
-        tag.putBoolean(TAG_PROGRESSING, progressing);
-        tag.putBoolean(TAG_VENTING, venting);
+        inputTank.writeToNbt(tag, "t0");
+        outputTank.writeToNbt(tag, "t1");
         smokeTank.writeToNbt(tag, TAG_SMOKE);
         smokeTank.writeToNbt(tag, TAG_LEGACY_SMOKE);
         tag.putInt("usage", usage);
@@ -319,9 +322,16 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        if (tag.contains(TAG_LEGACY_POWER)) {
+            setPower(tag.getLong(TAG_LEGACY_POWER));
+        }
         progress = tag.getFloat(TAG_PROGRESS);
-        progressing = tag.getBoolean(TAG_PROGRESSING);
-        venting = tag.getBoolean(TAG_VENTING);
+        if (hasTankTag(tag, "t0")) {
+            inputTank.readFromNbt(tag, "t0");
+        }
+        if (hasTankTag(tag, "t1")) {
+            outputTank.readFromNbt(tag, "t1");
+        }
         if (tag.contains(TAG_SMOKE)) {
             smokeTank.readFromNbt(tag, TAG_SMOKE);
         } else if (tag.contains(TAG_LEGACY_SMOKE)) {
@@ -336,7 +346,35 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putBoolean(TAG_PROGRESSING, progressing);
+        tag.putBoolean(TAG_VENTING, venting);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        progressing = tag.getBoolean(TAG_PROGRESSING);
+        venting = tag.getBoolean(TAG_VENTING);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Nullable
@@ -617,6 +655,10 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
         return state.hasProperty(com.hbm.ntm.block.HorizontalMachineBlock.FACING)
                 ? state.getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
     private static void spawnOperatingClouds(Level level, BlockPos pos, Direction dir, Direction rot) {

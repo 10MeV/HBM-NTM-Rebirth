@@ -451,6 +451,14 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "gear_large");
             return;
         }
+        if (path.equals("key_kit")) {
+            generatedItem(path, "key_pair");
+            return;
+        }
+        if (path.equals("key_fake")) {
+            generatedItem(path, "key_gold");
+            return;
+        }
         if (path.equals("reacher")) {
             handheldItem(path, path);
             return;

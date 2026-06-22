@@ -20,7 +20,7 @@ public class BreedingReactorRenderer implements BlockEntityRenderer<BreedingReac
 
     @Override
     public boolean shouldRenderOffScreen(BreedingReactorBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

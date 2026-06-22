@@ -569,6 +569,30 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    public AABB getRenderBoundingBox() {
+        AABB box = super.getRenderBoundingBox().inflate(1.0D);
+        if (!beam) {
+            return box;
+        }
+        return box.minmax(beamRenderBoundingBox(targetX, targetY, targetZ))
+                .minmax(beamRenderBoundingBox(lastTargetX, lastTargetY, lastTargetZ));
+    }
+
+    private AABB beamRenderBoundingBox(int x, int y, int z) {
+        Vec3 vector = new Vec3(
+                x - worldPosition.getX(),
+                y - worldPosition.getY() + 3.0D,
+                z - worldPosition.getZ());
+        Vec3 normal = vector.normalize().scale(1.5D);
+        Vec3 beamVector = vector.subtract(normal);
+        Vec3 start = new Vec3(
+                worldPosition.getX() + 0.5D + normal.x,
+                worldPosition.getY() - 2.0D + normal.y,
+                worldPosition.getZ() + 0.5D + normal.z);
+        return new AABB(start, start.add(beamVector)).inflate(2.0D);
+    }
+
+    @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of(oilTank);
     }

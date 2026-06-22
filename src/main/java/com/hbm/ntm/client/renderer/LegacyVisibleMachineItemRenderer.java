@@ -286,7 +286,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
-                .withRenderMode(LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
+                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
         renderFusionItemParts(kind, definition, model, context, poseStack, System.currentTimeMillis());
         poseStack.popPose();
     }
@@ -351,7 +351,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             }
             case PLASMA_FORGE -> {
                 model.renderAllExcept(definition.textureLocation(), context, "Plasma");
-                model.renderPart("Plasma", definition.textureLocation(), context.withColor(0x000000));
+                model.renderOnlyUntextured(context.withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL)
+                        .withColor(0x000000), "Plasma");
             }
         }
     }
@@ -933,6 +934,10 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             renderTurbofanItem(definition, model, context);
             return true;
         }
+        if (definition.renderProfile() == LegacyMachineRenderProfile.LEGACY_LARGE_TURBINE_ITEM_PREVIEW) {
+            renderLegacyLargeTurbineItem(definition, model, context);
+            return true;
+        }
         if (definition.renderProfile() == LegacyMachineRenderProfile.DIESEL_GENERATOR_RUNNING_PARTS) {
             model.renderPart("Generator", definition.textureLocation(), context);
             model.renderPart("Engine", definition.textureLocation(), context);
@@ -972,6 +977,15 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         model.renderPart("Blades", definition.textureLocation(), context);
         model.renderPart("Afterburner", definition.itemPartTextures().getOrDefault("Afterburner",
                 definition.partTextures().getOrDefault("Afterburner", definition.textureLocation())), context);
+    }
+
+    private static void renderLegacyLargeTurbineItem(LegacyMachineDefinition definition, LegacyWavefrontModel model,
+            ObjRenderContext context) {
+        model.renderPart("Body", definition.textureLocation(), context);
+        model.renderPart("Blades",
+                definition.itemPartTextures().getOrDefault("Blades",
+                        definition.partTextures().getOrDefault("Blades", definition.textureLocation())),
+                context.fullBright());
     }
 
     private static void renderMachineParts(LegacyMachineDefinition definition, LegacyWavefrontModel model,

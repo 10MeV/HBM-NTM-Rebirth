@@ -18,13 +18,7 @@ import java.util.List;
 public class LegacyDemonLampBlockEntity extends BlockEntity {
     private static final float RADIATION = 100_000.0F;
     private static final double RANGE = 25.0D;
-    private static final AABB INFINITE_RENDER_BOX = new AABB(
-            Double.NEGATIVE_INFINITY,
-            Double.NEGATIVE_INFINITY,
-            Double.NEGATIVE_INFINITY,
-            Double.POSITIVE_INFINITY,
-            Double.POSITIVE_INFINITY,
-            Double.POSITIVE_INFINITY);
+    private static final double AURA_RENDER_RADIUS = 15.0D;
 
     public LegacyDemonLampBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.LEGACY_DEMON_LAMP.get(), pos, state);
@@ -71,6 +65,6 @@ public class LegacyDemonLampBlockEntity extends BlockEntity {
 
     @Override
     public AABB getRenderBoundingBox() {
-        return INFINITE_RENDER_BOX;
+        return new AABB(worldPosition).inflate(AURA_RENDER_RADIUS);
     }
 }

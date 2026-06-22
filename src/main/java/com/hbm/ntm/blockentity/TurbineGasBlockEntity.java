@@ -34,6 +34,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -821,7 +822,65 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putLong("power", energy.getPower());
+        tag.putInt("rpm", rpm);
+        tag.putInt("temperature", temp);
+        tag.putInt("state", state);
+        tag.putBoolean("automode", autoMode);
+        tag.putInt("throttle", throttle);
+        tag.putInt("slidPos", sliderPos);
+        if (state != 1) {
+            tag.putInt("counter", counter);
+        } else {
+            tag.putInt("instPwr", instantPowerOutput);
+        }
+        fuelTank.writeToNbt(tag, "gas");
+        lubricantTank.writeToNbt(tag, "lube");
+        waterTank.writeToNbt(tag, "water");
+        steamTank.writeToNbt(tag, "densesteam");
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        if (tag.contains("power")) {
+            energy.setPower(tag.getLong("power"));
+        }
+        rpm = tag.getInt("rpm");
+        temp = tag.contains("temperature") ? tag.getInt("temperature") : 20;
+        state = tag.getInt("state");
+        autoMode = tag.getBoolean("automode");
+        throttle = tag.getInt("throttle");
+        sliderPos = tag.getInt("slidPos");
+        if (state != 1) {
+            counter = tag.getInt("counter");
+        } else {
+            instantPowerOutput = tag.getInt("instPwr");
+        }
+        fuelTank.readFromNbt(tag, "gas");
+        lubricantTank.readFromNbt(tag, "lube");
+        waterTank.readFromNbt(tag, "water");
+        steamTank.readFromNbt(tag, "densesteam");
+        normalizeTankTypes();
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Nullable

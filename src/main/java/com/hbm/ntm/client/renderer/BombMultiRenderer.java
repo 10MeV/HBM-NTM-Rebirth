@@ -63,7 +63,7 @@ public class BombMultiRenderer implements BlockEntityRenderer<BombMultiBlockEnti
 
     @Override
     public boolean shouldRenderOffScreen(BombMultiBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

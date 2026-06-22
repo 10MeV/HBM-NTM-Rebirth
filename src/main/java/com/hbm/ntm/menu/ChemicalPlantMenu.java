@@ -178,7 +178,7 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     ChemicalPlantBlockEntity.SLOT_UPGRADE_START, ChemicalPlantBlockEntity.SLOT_UPGRADE_END + 1);
         }
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     ChemicalPlantBlockEntity.SLOT_BATTERY, ChemicalPlantBlockEntity.SLOT_BATTERY + 1);
         }

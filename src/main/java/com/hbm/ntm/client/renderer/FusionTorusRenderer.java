@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.FusionTorusBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjFusionModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -31,7 +32,8 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
     public void render(FusionTorusBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, blockEntity.getBlockState(), light, packedOverlay);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, blockEntity.getBlockState(), light, packedOverlay)
+                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -63,7 +65,7 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
             ObjRenderContext plasma = context.fullBright().withColor(
                     blockEntity.getPlasmaR(), blockEntity.getPlasmaG(), blockEntity.getPlasmaB(), alpha);
             ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.PLASMA_TEXTURE,
-                    plasma.withTranslucencyNoDepthWrite().withUvScroll(0.0F, mainOsc), "Plasma");
+                    plasma.withAdditiveTranslucency().withUvScroll(0.0F, mainOsc), "Plasma");
             if (shouldRenderExtraPlasmaLayers(blockEntity)) {
                 ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.PLASMA_GLOW_TEXTURE, plasma.withAdditiveTranslucency()
                         .withColor(blockEntity.getPlasmaR() * 2.0F, blockEntity.getPlasmaG() * 2.0F,

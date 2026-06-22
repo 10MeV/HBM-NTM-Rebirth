@@ -6,8 +6,8 @@ import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.menu.FusionTorusMenu;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeExtraData;
+import com.hbm.ntm.util.BobMathUtil;
 import java.util.List;
-import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -35,11 +35,11 @@ public class FusionTorusScreen extends AbstractContainerScreen<FusionTorusMenu> 
         if (power > 0) {
             graphics.blit(TEXTURE, leftPos + 8, topPos + 80 - power, 230, 62 - power, 16, power);
         }
-        int progress = progressWidth(menu.getProgress(), 70);
+        int progress = (int) Math.ceil(70.0D * menu.getProgress());
         if (progress > 0) {
             graphics.blit(TEXTURE, leftPos + 98, topPos + 81, 0, 244, progress, 6);
         }
-        int bonus = progressWidth(menu.getBonus(), 70);
+        int bonus = (int) Math.min(Math.ceil(70.0D * menu.getBonus()), 70.0D);
         if (bonus > 0) {
             graphics.blit(TEXTURE, leftPos + 98, topPos + 91, 0, 250, bonus, 6);
         }
@@ -48,7 +48,8 @@ public class FusionTorusScreen extends AbstractContainerScreen<FusionTorusMenu> 
         if (recipe != null && menu.getPower() >= recipe.getPower()) {
             graphics.blit(TEXTURE, leftPos + 160, topPos + 115, 246, 14, 8, 8);
         }
-        if (menu.getTemperature() <= FusionTorusBlockEntity.TEMPERATURE_TARGET) {
+        int heat = (int) Math.ceil(menu.getTemperature());
+        if (heat <= FusionTorusBlockEntity.TEMPERATURE_TARGET) {
             graphics.blit(TEXTURE, leftPos + 170, topPos + 115, 246, 14, 8, 8);
         }
         if (didProcess) {
@@ -83,8 +84,9 @@ public class FusionTorusScreen extends AbstractContainerScreen<FusionTorusMenu> 
         LegacyGuiElements.drawCenteredLabel(graphics, font, title, 106, 6, 160, 0x404040);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
         graphics.drawString(font, Component.literal("/123K").withStyle(ChatFormatting.AQUA), 190, 32, 0x404040, false);
-        Component heat = Component.literal(menu.getTemperature() + "K")
-                .withStyle(menu.getTemperature() > FusionTorusBlockEntity.TEMPERATURE_TARGET
+        int heatValue = (int) Math.ceil(menu.getTemperature());
+        Component heat = Component.literal(heatValue + "K")
+                .withStyle(heatValue > FusionTorusBlockEntity.TEMPERATURE_TARGET
                         ? ChatFormatting.RED : ChatFormatting.AQUA);
         graphics.drawString(font, heat, 220 - font.width(heat), 22, 0x404040, false);
     }
@@ -121,11 +123,6 @@ public class FusionTorusScreen extends AbstractContainerScreen<FusionTorusMenu> 
                     + shortNumber(menu.getPlasmaEnergy()) + "TU / " + shortNumber(stats.outputTemp()) + "TU")), mouseX, mouseY);
         } else if (isHovering(115, 115, 18, 18, mouseX, mouseY)) {
             LegacyGuiElements.renderTooltip(graphics, font, fuelLines(recipe), mouseX, mouseY);
-        } else if (isHovering(98, 81, 70, 16, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font, List.of(
-                    Component.literal(String.format(Locale.US, "Progress: %.1f%%", menu.getProgress() * 100.0D)),
-                    Component.literal(String.format(Locale.US, "Bonus: %.1f%%", menu.getBonus() * 100.0D))),
-                    mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
@@ -151,10 +148,6 @@ public class FusionTorusScreen extends AbstractContainerScreen<FusionTorusMenu> 
         return menu.getBlockEntity().getSelectedRecipeDefinition();
     }
 
-    private static int progressWidth(double value, int maxWidth) {
-        return (int) Math.ceil(Math.max(0.0D, Math.min(1.0D, value)) * maxWidth);
-    }
-
     private static FusionStats fusionStats(GenericMachineRecipe recipe) {
         if (recipe == null) {
             return FusionStats.EMPTY;
@@ -177,9 +170,7 @@ public class FusionTorusScreen extends AbstractContainerScreen<FusionTorusMenu> 
     }
 
     private static String shortNumber(long value) {
-        if (value >= 1_000_000L) return String.format(Locale.US, "%.1fM", value / 1_000_000.0D);
-        if (value >= 1_000L) return String.format(Locale.US, "%.1fk", value / 1_000.0D);
-        return Long.toString(value);
+        return BobMathUtil.getShortNumber(value);
     }
 
     private record FusionStats(long ignitionTemp, long outputTemp) {

@@ -1,18 +1,18 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machines/assembly_factory",
+      "model": "hbm_ntm_rebirth:block/machine_assembly_factory",
       "y": 90
     },
     "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machines/assembly_factory"
+      "model": "hbm_ntm_rebirth:block/machine_assembly_factory"
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/machines/assembly_factory",
+      "model": "hbm_ntm_rebirth:block/machine_assembly_factory",
       "y": 180
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machines/assembly_factory",
+      "model": "hbm_ntm_rebirth:block/machine_assembly_factory",
       "y": 270
     }
   }

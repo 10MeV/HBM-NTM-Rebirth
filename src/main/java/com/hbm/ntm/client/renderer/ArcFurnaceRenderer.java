@@ -23,7 +23,7 @@ public class ArcFurnaceRenderer implements BlockEntityRenderer<ArcFurnaceBlockEn
 
     @Override
     public boolean shouldRenderOffScreen(ArcFurnaceBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

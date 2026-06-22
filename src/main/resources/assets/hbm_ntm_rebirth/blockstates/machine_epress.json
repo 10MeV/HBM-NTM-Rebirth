@@ -1,8 +1,8 @@
 {
   "variants": {
-    "facing=north": { "model": "hbm_ntm_rebirth:block/machines/epress" },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/machines/epress" },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/machines/epress" },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/machines/epress" }
+    "facing=north": { "model": "hbm_ntm_rebirth:block/machine_epress" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/machine_epress" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/machine_epress" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/machine_epress" }
   }
 }

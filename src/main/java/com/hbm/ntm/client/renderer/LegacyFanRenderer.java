@@ -19,7 +19,7 @@ public class LegacyFanRenderer implements BlockEntityRenderer<LegacyFanBlockEnti
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override

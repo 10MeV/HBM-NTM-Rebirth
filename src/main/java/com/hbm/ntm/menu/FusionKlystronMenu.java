@@ -35,6 +35,7 @@ public class FusionKlystronMenu extends AbstractContainerMenu {
     public FusionKlystronMenu(int containerId, Inventory inventory, FusionKlystronBlockEntity blockEntity) {
         super(ModMenuTypes.FUSION_KLYSTRON.get(), containerId);
         this.blockEntity = blockEntity;
+        this.maxPower = blockEntity.getMaxPower();
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), FusionKlystronBlockEntity.SLOT_BATTERY, 8, 72));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 17, 118, 176);
         airTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getAirTank());

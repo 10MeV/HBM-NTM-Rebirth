@@ -26,7 +26,7 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
 
     @Override
     public boolean shouldRenderOffScreen(OilDrillBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

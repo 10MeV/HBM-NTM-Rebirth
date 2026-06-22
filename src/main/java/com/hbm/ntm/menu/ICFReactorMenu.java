@@ -16,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class ICFReactorMenu extends AbstractContainerMenu {
+    private static final double LEGACY_USE_DISTANCE_SQR = 256.0D;
     private static final int MACHINE_SLOT_COUNT = ICFReactorBlockEntity.SLOT_COUNT;
     private static final int PLAYER_INVENTORY_START = MACHINE_SLOT_COUNT;
     private static final int PLAYER_SLOT_END = PLAYER_INVENTORY_START + 36;
@@ -84,7 +85,7 @@ public class ICFReactorMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 256.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, LEGACY_USE_DISTANCE_SQR);
     }
 
     @Override

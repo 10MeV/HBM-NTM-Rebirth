@@ -47,6 +47,7 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
     public static final int SLOT_COUNT = 6;
 
     private MissileMultipartSnapshot clientMultipart = MissileMultipartSnapshot.EMPTY;
+    private String customName;
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -75,7 +76,7 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
 
         @Override
         public int getSlotLimit(int slot) {
-            return 1;
+            return 64;
         }
 
         @Override
@@ -86,6 +87,13 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
 
     public MissileAssemblyBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MISSILE_ASSEMBLY.get(), pos, state);
+    }
+
+    public static void serverTick(Level level, BlockPos pos, BlockState state, MissileAssemblyBlockEntity assembly) {
+        if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
+            ModMessages.sendToAllAround(ModMessages.missileMultipartPacket(pos, assembly.multipartSnapshot()),
+                    serverLevel, pos, MULTIPART_SYNC_RANGE);
+        }
     }
 
     public ItemStackHandler getItems() {
@@ -263,7 +271,10 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("container.hbm_ntm_rebirth.missileAssembly");
+        if (customName != null && !customName.isEmpty()) {
+            return Component.literal(customName);
+        }
+        return Component.translatable("container.missileAssembly");
     }
 
     @Nullable
@@ -275,18 +286,30 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "items", items);
+        if (customName != null && !customName.isEmpty()) {
+            tag.putString("name", customName);
+        }
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "items", items);
+        if (tag.contains(TAG_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        }
+        customName = tag.getString("name");
     }
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        CompoundTag tag = saveWithoutMetadata();
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "items", items);
+        if (customName != null && !customName.isEmpty()) {
+            tag.putString("name", customName);
+        }
+        return tag;
     }
 
     @Override
@@ -296,7 +319,7 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition).inflate(16.0D);
+        return INFINITE_EXTENT_AABB;
     }
 
     private void syncToClient() {

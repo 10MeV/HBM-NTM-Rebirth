@@ -149,7 +149,8 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, PWRControllerBlockEntity pwr) {
         pwr.audioLoop = LegacyMachineAudioBridge.updateLoop(pwr.audioLoop, pwr,
-                "hbm:block.reactorLoop", pwr.amountLoaded > 0, 10.0D, 10.0F, pwr.getVolume(1.0F), 1.0F);
+                "hbm:block.reactorLoop", pwr.amountLoaded > 0, 10.0D, 10.0F, pwr.getVolume(1.0F), 1.0F,
+                0.0D, 0.0D, 0.0D);
     }
 
     public void assemble(Player player) {
@@ -159,7 +160,7 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         AssemblyResult result = scanAssembly(level);
         if (!result.ok()) {
             if (player instanceof ServerPlayer serverPlayer) {
-                sendAssemblyErrorMarker(serverPlayer, result.error());
+                sendAssemblyErrorMarker(serverPlayer, result.error(), result.errorPos());
             }
             assembled = false;
             setChanged();
@@ -511,7 +512,7 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         if ((RORInfo.PREFIX_VALUE + "hullheat").equals(name)) return "" + hullHeat;
         if ((RORInfo.PREFIX_VALUE + "flux").equals(name)) return "" + (int) flux;
         if ((RORInfo.PREFIX_VALUE + "depletion").equals(name)) {
-            return "" + (processTime <= 0.0D ? 0 : (int) (progress * 100.0D / processTime));
+            return "" + (int) (progress * 100.0D / processTime);
         }
         return null;
     }
@@ -567,16 +568,16 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         }
         loadFuelFromSlot();
         approachRods();
-        double newFlux = sourceCount * 20.0D;
+        int newFlux = sourceCount * 20;
         if (typeLoaded != -1 && amountLoaded > 0 && rodCount > 0) {
             PWRFuelRuntime.Type fuel = PWRFuelRuntime.type(typeLoaded);
             double usedRods = getTotalProcessMultiplier();
             double fluxPerRod = flux / rodCount;
             double outputPerRod = fuel.curve().eval(fluxPerRod);
             double totalOutput = outputPerRod * amountLoaded * usedRods;
-            coreHeat += (long) (totalOutput * fuel.heatEmission());
-            newFlux += totalOutput;
-            processTime = fuel.yield();
+            coreHeat += totalOutput * fuel.heatEmission();
+            newFlux = (int) (newFlux + totalOutput);
+            processTime = (int) fuel.yield();
             progress += totalOutput;
             if (progress >= processTime) {
                 progress -= processTime;
@@ -588,18 +589,18 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         if (amountLoaded <= 0) {
             typeLoaded = -1;
             amountLoaded = 0;
-            progress = 0.0D;
         }
         amountLoaded = Math.min(amountLoaded, rodCount);
         moveCoreHeatToHull();
         updateCoolant();
-        coreHeat = Math.max(0L, (long) (coreHeat * 0.999D));
-        hullHeat = Math.max(0L, (long) (hullHeat * 0.999D));
+        coreHeat *= 0.999D;
+        hullHeat *= 0.999D;
         PwrModeratorFluidTrait moderator = coolantTank.getTankType().getTrait(PwrModeratorFluidTrait.class);
         if (moderator != null && coolantTank.getFill() > 0) {
-            newFlux *= moderator.getMultiplier();
+            flux = newFlux * moderator.getMultiplier();
+        } else {
+            flux = newFlux;
         }
-        flux = newFlux;
         if (hotCoolantTank.getFill() > 0) {
             tryProvideFluidToPorts(hotCoolantTank.getTankType(), hotCoolantTank.getPressure(), this);
         }
@@ -746,7 +747,7 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
                 continue;
             }
             if (parts.size() >= MAX_SIZE) {
-                return AssemblyResult.error("Max size exceeded");
+                return AssemblyResult.error("Max size exceeded", pos.immutable());
             }
             BlockState state = level.getBlockState(pos);
             if (isValidCasing(state)) {
@@ -769,13 +770,13 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
                 }
                 continue;
             }
-            return AssemblyResult.error("Non-reactor block");
+            return AssemblyResult.error("Non-reactor block", pos.immutable());
         }
         if (rods.isEmpty()) {
-            return AssemblyResult.error("Fuel rods required");
+            return AssemblyResult.error("Fuel rods required", worldPosition);
         }
         if (sources.isEmpty()) {
-            return AssemblyResult.error("Neutron sources required");
+            return AssemblyResult.error("Neutron sources required", worldPosition);
         }
         return new AssemblyResult(true, "", parts, rods);
     }
@@ -801,7 +802,7 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         setChanged();
     }
 
-    private void sendAssemblyErrorMarker(ServerPlayer player, String message) {
+    private void sendAssemblyErrorMarker(ServerPlayer player, String message, BlockPos pos) {
         CompoundTag data = new CompoundTag();
         data.putString("type", ParticleUtil.TYPE_MARKER);
         data.putInt("color", 0xff0000);
@@ -810,7 +811,8 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         if (message != null && !message.isBlank()) {
             data.putString("label", message);
         }
-        ModMessages.sendAuxParticle(player, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), data);
+        BlockPos markerPos = pos == null ? worldPosition : pos;
+        ModMessages.sendAuxParticle(player, markerPos.getX(), markerPos.getY(), markerPos.getZ(), data);
     }
 
     private void tryPushHotFuel(int index) {
@@ -818,7 +820,13 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         if (product.isEmpty()) {
             return;
         }
-        items.insertItem(SLOT_HOT_OUTPUT, product, false);
+        ItemStack output = items.getStackInSlot(SLOT_HOT_OUTPUT);
+        if (output.isEmpty()) {
+            items.setStackInSlot(SLOT_HOT_OUTPUT, product.copy());
+        } else if (ItemStack.isSameItem(output, product) && output.getCount() < output.getMaxStackSize()) {
+            output.grow(product.getCount());
+            items.setStackInSlot(SLOT_HOT_OUTPUT, output);
+        }
     }
 
     private void approachRods() {
@@ -832,11 +840,11 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private void moveCoreHeatToHull() {
-        int coolantRods = Math.max(1, getRodCountForCoolant());
-        double coreCoolingApproach = getXOverE(heatexCount * 5.0D / coolantRods, 2.0D) / 2.0D;
+        double coreCoolingApproach = getXOverE((double) heatexCount * 5.0D / (double) getRodCountForCoolant(),
+                2.0D) / 2.0D;
         long average = (coreHeat + hullHeat) / 2L;
-        coreHeat -= (long) ((coreHeat - average) * coreCoolingApproach);
-        hullHeat -= (long) ((hullHeat - average) * coreCoolingApproach);
+        coreHeat -= (coreHeat - average) * coreCoolingApproach;
+        hullHeat -= (hullHeat - average) * coreCoolingApproach;
     }
 
     private void updateCoolant() {
@@ -844,8 +852,10 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         if (trait == null || trait.getEfficiency(HeatingType.PWR) <= 0.0D) {
             return;
         }
-        double coolingEff = channelCount / (double) Math.max(1, getRodCountForCoolant()) * 0.1D;
-        coolingEff = Math.min(coolingEff, 1.0D);
+        double coolingEff = channelCount / (double) getRodCountForCoolant() * 0.1D;
+        if (coolingEff > 1.0D) {
+            coolingEff = 1.0D;
+        }
         int heatToUse = (int) Math.min(Math.min(hullHeat, (long) (hullHeat * coolingEff
                 * trait.getEfficiency(HeatingType.PWR))), 2_000_000_000L);
         HeatingStep step = trait.getFirstStep();
@@ -853,13 +863,10 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
             return;
         }
         int coolCycles = coolantTank.getFill() / step.amountRequired();
-        int hotCycles = hotCoolantTank.getSpaceFor(step.producedType()) / step.amountProduced();
+        int hotCycles = (hotCoolantTank.getMaxFill() - hotCoolantTank.getFill()) / step.amountProduced();
         int heatCycles = heatToUse / step.heatRequired();
         int cycles = Math.min(coolCycles, Math.min(hotCycles, heatCycles));
-        if (cycles <= 0) {
-            return;
-        }
-        hullHeat -= (long) step.heatRequired() * cycles;
+        hullHeat -= step.heatRequired() * cycles;
         coolantTank.setFill(coolantTank.getFill() - step.amountRequired() * cycles);
         hotCoolantTank.setFill(hotCoolantTank.getFill() + step.amountProduced() * cycles);
     }
@@ -1019,9 +1026,14 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
-    private record AssemblyResult(boolean ok, String error, Map<BlockPos, BlockState> parts, Set<BlockPos> rods) {
-        static AssemblyResult error(String message) {
-            return new AssemblyResult(false, message, Map.of(), Set.of());
+    private record AssemblyResult(boolean ok, String error, Map<BlockPos, BlockState> parts, Set<BlockPos> rods,
+            @Nullable BlockPos errorPos) {
+        AssemblyResult(boolean ok, String error, Map<BlockPos, BlockState> parts, Set<BlockPos> rods) {
+            this(ok, error, parts, rods, null);
+        }
+
+        static AssemblyResult error(String message, BlockPos pos) {
+            return new AssemblyResult(false, message, Map.of(), Set.of(), pos);
         }
     }
 

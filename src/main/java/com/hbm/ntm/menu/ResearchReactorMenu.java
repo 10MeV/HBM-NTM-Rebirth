@@ -39,7 +39,7 @@ public class ResearchReactorMenu extends AbstractContainerMenu {
         super(ModMenuTypes.RESEARCH_REACTOR.get(), containerId);
         this.blockEntity = blockEntity;
         for (int slot = 0; slot < ROD_SLOTS.length; slot++) {
-            addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), slot,
+            addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), slot,
                     ROD_SLOTS[slot][0], ROD_SLOTS[slot][1]));
         }
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 140, 198);
@@ -71,16 +71,16 @@ public class ResearchReactorMenu extends AbstractContainerMenu {
     }
 
     public int getLevelPercent() {
-        return (int) Math.round(levelScaled / 100.0D);
+        return (int) (levelScaled / 100.0D);
     }
 
     public int getTargetLevelPercent() {
-        return (int) Math.round(targetLevelScaled / 100.0D);
+        return (int) (targetLevelScaled / 100.0D);
     }
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 128.0D);
     }
 
     @Override

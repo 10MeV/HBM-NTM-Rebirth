@@ -1,7 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.CargoElevatorBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -16,12 +18,12 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
 
     @Override
     public boolean shouldRenderOffScreen(CargoElevatorBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override
@@ -31,30 +33,31 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
                 packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, elevator.getBlockState(),
+                modelLight, packedOverlay).withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
 
         LegacyTileRenderPlans.CargoElevatorPlan plan = LegacyTileRenderPlans.cargoElevatorPlan(
                 elevator.shouldRenderPlatform(), elevator.getPrevExtension(), elevator.getExtension(),
                 partialTick, elevator.getHeight());
         if (plan.renderPlatform()) {
-            ObjMachineModels.ELEVATOR_LEGACY.renderPart("Base", TEXTURE, poseStack, buffer, modelLight, packedOverlay);
-            renderTranslatedParts(plan.platformParts(), poseStack, buffer, modelLight, packedOverlay);
+            ObjMachineModels.ELEVATOR_LEGACY.renderPart("Base", TEXTURE, context);
+            renderTranslatedParts(plan.platformParts(), poseStack, context);
         }
 
-        renderTranslatedParts(plan.guides(), poseStack, buffer, modelLight, packedOverlay);
+        renderTranslatedParts(plan.guides(), poseStack, context);
         poseStack.popPose();
     }
 
     private static void renderTranslatedParts(
             Iterable<LegacyTileRenderPlans.TranslatedModelPartPlan> parts, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+            ObjRenderContext context) {
         for (LegacyTileRenderPlans.TranslatedModelPartPlan part : parts) {
             if (!part.active()) {
                 continue;
             }
             poseStack.pushPose();
             poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-            ObjMachineModels.ELEVATOR_LEGACY.renderPart(part.partName(), TEXTURE, poseStack, buffer,
-                    packedLight, packedOverlay);
+            ObjMachineModels.ELEVATOR_LEGACY.renderPart(part.partName(), TEXTURE, context);
             poseStack.popPose();
         }
     }

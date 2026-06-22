@@ -48,11 +48,11 @@ public class PWRMenu extends AbstractContainerMenu {
     public PWRMenu(int containerId, Inventory playerInventory, PWRControllerBlockEntity blockEntity) {
         super(ModMenuTypes.PWR.get(), containerId);
         this.blockEntity = blockEntity;
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 PWRControllerBlockEntity.SLOT_FUEL_INPUT, 53, 5));
         addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
                 PWRControllerBlockEntity.SLOT_HOT_OUTPUT, 89, 32));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 PWRControllerBlockEntity.SLOT_IDENTIFIER, 8, 59));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 106, 164);
         coolantTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getCoolantTank());
@@ -157,11 +157,11 @@ public class PWRMenu extends AbstractContainerMenu {
     }
 
     public int getProgressScaled(int max) {
-        return processTime <= 0.0D ? 0 : (int) Math.min(max, progress * max / processTime);
+        return (int) (progress * max / processTime);
     }
 
     public int getRodLevelScaled(int max) {
-        return (int) Math.max(0, Math.min(max, rodLevel * max / 100.0D));
+        return (int) (rodLevel * max / 100.0D);
     }
 
     @Override

@@ -71,7 +71,7 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot == SLOT_BATTERY && !stack.isEmpty();
+            return slot == SLOT_BATTERY;
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
@@ -116,7 +116,8 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         float speed = klystron.fanSpeed / 5.0F;
         klystron.audio = LegacyMachineAudioBridge.updateLoop(klystron.audio, klystron, "FEL_LOOP",
-                klystron.fanSpeed > 0.0F, 30.0D, 15.0F, klystron.getVolume(speed), speed);
+                klystron.fanSpeed > 0.0F, 30.0D, 15.0F, klystron.getVolume(speed), speed,
+                0.5D, 2.5D, 0.5D);
     }
 
     public ItemStackHandler getItems() { return items; }
@@ -132,7 +133,6 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
         CompoundTag tag = new CompoundTag();
         long clamped = Math.max(0L, Math.min(MAX_OUTPUT, target));
         tag.putLong("amount", clamped);
-        tag.putLong("outputTarget", clamped);
         return tag;
     }
 
@@ -140,9 +140,6 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void receiveControl(ServerPlayer player, CompoundTag data) {
         if (data.contains("amount")) {
             setOutputTarget(data.getLong("amount"));
-            setChanged();
-        } else if (data.contains("outputTarget")) {
-            setOutputTarget(data.getLong("outputTarget"));
             setChanged();
         }
     }

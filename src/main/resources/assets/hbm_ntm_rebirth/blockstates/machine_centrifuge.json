@@ -1,18 +1,18 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machines/centrifuge",
+      "model": "hbm_ntm_rebirth:block/machine_centrifuge",
       "y": 90
     },
     "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machines/centrifuge"
+      "model": "hbm_ntm_rebirth:block/machine_centrifuge"
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/machines/centrifuge",
+      "model": "hbm_ntm_rebirth:block/machine_centrifuge",
       "y": 180
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machines/centrifuge",
+      "model": "hbm_ntm_rebirth:block/machine_centrifuge",
       "y": 270
     }
   }

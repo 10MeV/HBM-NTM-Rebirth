@@ -60,7 +60,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private FusionMHDTBlockEntity(BlockPos pos, BlockState state, HbmFluidTank coldTank, HbmFluidTank hotTank) {
         super(ModBlockEntities.FUSION_MHDT.get(), pos, state,
-                new HbmEnergyStorage(Long.MAX_VALUE / 4L, 0L, Long.MAX_VALUE / 4L),
+                new HbmEnergyStorage(0L, 0L, 0L),
                 List.of(coldTank, hotTank));
         this.coldTank = coldTank;
         this.hotTank = hotTank;
@@ -77,7 +77,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, FusionMHDTBlockEntity mhdt) {
-        boolean spinning = mhdt.plasmaEnergySync > 0L && mhdt.isCool();
+        boolean spinning = mhdt.displayedPlasmaEnergy() > 0L && mhdt.isCool();
         mhdt.rotorSpeed += spinning ? ROTOR_ACCELERATION : -ROTOR_ACCELERATION;
         mhdt.rotorSpeed = Math.max(0.0F,
                 Math.min(mhdt.hasMinimumPlasma() ? 15.0F : 10.0F, mhdt.rotorSpeed));
@@ -89,7 +89,8 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         float speed = mhdt.rotorSpeed / 15.0F;
         mhdt.audio = LegacyMachineAudioBridge.updateLoop(mhdt.audio, mhdt, "TURBINE_LARGE_LOOP",
-                mhdt.rotorSpeed > 0.0F, 30.0D, 20.0F, mhdt.getVolume(speed), speed);
+                mhdt.rotorSpeed > 0.0F, 30.0D, 20.0F, mhdt.getVolume(speed), speed,
+                0.5D, 1.5D, 0.5D);
     }
 
     public HbmFluidTank getColdTank() {
@@ -101,7 +102,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public long getPlasmaEnergySync() {
-        return plasmaEnergySync;
+        return displayedPlasmaEnergy();
     }
 
     public float getRotor(float partialTick) {
@@ -109,7 +110,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public boolean hasMinimumPlasma() {
-        return plasmaEnergySync >= HbmCommonConfig.fusionMhdtMinimumPlasma();
+        return displayedPlasmaEnergy() >= HbmCommonConfig.fusionMhdtMinimumPlasma();
     }
 
     @Override
@@ -120,14 +121,14 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         List<Component> lines = new ArrayList<>();
         lines.add(Component.literal("-> ")
                 .withStyle(hasPlasma ? net.minecraft.ChatFormatting.GREEN : net.minecraft.ChatFormatting.GOLD)
-                .append(Component.literal(LegacyLookOverlayLines.shortNumber(plasmaEnergySync)
+                .append(Component.literal(LegacyLookOverlayLines.shortNumber(displayedPlasmaEnergy())
                         + "TU/t / " + LegacyLookOverlayLines.shortNumber(HbmCommonConfig.fusionMhdtMinimumPlasma())
                         + "TU/t")));
         lines.add(Component.literal("<- ").withStyle(net.minecraft.ChatFormatting.RED)
                 .append(Component.literal(LegacyLookOverlayLines.shortNumber(cool ? power : 0L) + "HE/t")));
         lines.add(LegacyLookOverlayLines.tank(true, coldTank));
         lines.add(LegacyLookOverlayLines.tank(false, hotTank));
-        if (plasmaEnergySync > 0L && !hasPlasma) {
+        if (displayedPlasmaEnergy() > 0L && !hasPlasma) {
             lines.add(LegacyLookOverlayLines.blinkingWarning("LOW POWER"));
         }
         if (!cool) {
@@ -221,7 +222,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-7, 0, -7), worldPosition.offset(8, 5, 8));
+        return new AABB(worldPosition.offset(-7, 0, -7), worldPosition.offset(8, 4, 8));
     }
 
     @Override
@@ -236,6 +237,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         setPower(0L);
+        syncEnergyCapacityToCurrentPower();
         if (hasTankTag(tag, "t0")) {
             coldTank.readFromNbt(tag, "t0");
         }
@@ -271,8 +273,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         readLegacyLoadedTileBinary(data);
-        plasmaEnergySync = data.readLong();
-        plasmaEnergy = plasmaEnergySync;
+        plasmaEnergy = data.readLong();
         readTank(data, coldTank);
         readTank(data, hotTank);
     }
@@ -291,13 +292,14 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         int previousHot = hotTank.getFill();
         plasmaEnergySync = plasmaEnergy;
         if (isCool()) {
-            energy.setPower(displayedPower());
-            coldTank.drain(COOLANT_USE, false);
-            hotTank.fill(HbmFluids.PERFLUOROMETHYL, COOLANT_USE, hotTank.getPressure(), false);
+            setGeneratedPower(displayedPower());
+            coldTank.setFill(coldTank.getFill() - COOLANT_USE);
+            hotTank.setFill(hotTank.getFill() + COOLANT_USE);
         } else {
-            energy.setPower(0L);
+            syncEnergyCapacityToCurrentPower();
         }
         tryProvideEnergyToPorts();
+        syncEnergyCapacityToCurrentPower();
         if (coldTank.getTankType() != HbmFluids.NONE) {
             refreshTrackedReceiverFluidPortsReport(List.of(coldTank), this);
         }
@@ -311,12 +313,25 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || previousHot != hotTank.getFill();
     }
 
+    private void setGeneratedPower(long power) {
+        long capped = Math.max(0L, power);
+        energy.setMaxPower(capped);
+        energy.setTransferRates(0L, capped);
+        energy.setPower(capped);
+    }
+
+    private void syncEnergyCapacityToCurrentPower() {
+        long currentPower = Math.max(0L, energy.getPower());
+        energy.setMaxPower(currentPower);
+        energy.setTransferRates(0L, currentPower);
+    }
+
     private boolean isCool() {
-        return coldTank.getFill() >= COOLANT_USE && hotTank.getSpaceFor(HbmFluids.PERFLUOROMETHYL) >= COOLANT_USE;
+        return coldTank.getFill() >= COOLANT_USE && hotTank.getFill() + COOLANT_USE <= hotTank.getMaxFill();
     }
 
     private long displayedPower() {
-        long generated = (long) Math.floor(plasmaEnergySync * PLASMA_EFFICIENCY);
+        long generated = (long) Math.floor(displayedPlasmaEnergy() * PLASMA_EFFICIENCY);
         if (!hasMinimumPlasma()) {
             generated /= 2L;
         }
@@ -343,6 +358,10 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         return state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
+    }
+
+    private long displayedPlasmaEnergy() {
+        return level != null && level.isClientSide ? plasmaEnergy : plasmaEnergySync;
     }
 
     private static boolean hasTankTag(CompoundTag tag, String key) {

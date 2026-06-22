@@ -151,7 +151,7 @@ public class AssemblyFactoryMenu extends AbstractContainerMenu {
     }
 
     private boolean movePlayerStackToMachine(ItemStack stack) {
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     AssemblyFactoryBlockEntity.SLOT_BATTERY, AssemblyFactoryBlockEntity.SLOT_BATTERY + 1);
         }

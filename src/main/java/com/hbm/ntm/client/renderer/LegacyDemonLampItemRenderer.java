@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyDemonLampBlock;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjLightModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -35,7 +36,8 @@ public class LegacyDemonLampItemRenderer extends BlockEntityWithoutLevelRenderer
         poseStack.pushPose();
         applyDisplay(displayContext, poseStack);
         ObjLightModels.DEMON_LAMP_LEGACY.renderAll(new ObjRenderContext(poseStack, buffer,
-                Blocks.AIR.defaultBlockState(), packedLight, packedOverlay));
+                Blocks.AIR.defaultBlockState(), packedLight, packedOverlay)
+                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL));
         poseStack.popPose();
     }
 
@@ -50,7 +52,7 @@ public class LegacyDemonLampItemRenderer extends BlockEntityWithoutLevelRenderer
             return;
         }
 
-        poseStack.translate(0.5D, 0.25D, 0.5D);
+        poseStack.translate(0.5D, 0.25D, 0.0D);
         if (displayContext != ItemDisplayContext.THIRD_PERSON_LEFT_HAND
                 && displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
             poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));

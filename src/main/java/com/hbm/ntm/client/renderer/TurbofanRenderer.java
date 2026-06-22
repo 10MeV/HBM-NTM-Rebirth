@@ -25,7 +25,7 @@ public class TurbofanRenderer implements BlockEntityRenderer<TurbofanBlockEntity
 
     @Override
     public boolean shouldRenderOffScreen(TurbofanBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

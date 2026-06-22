@@ -1,5 +1,9 @@
 package com.hbm.ntm.item;
 
+import com.hbm.inventory.material.MaterialShapes;
+import com.hbm.inventory.material.Mats;
+import com.hbm.inventory.material.Mats.MaterialStack;
+import com.hbm.inventory.material.NTMMaterial;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModItems;
@@ -9,10 +13,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -29,7 +31,7 @@ public class ICFPelletItem extends Item {
     private static final long BASE_FUSING_DIFFICULTY = 10_000_000L;
 
     private static final Map<FluidType, FuelType> FLUID_FUELS = new HashMap<>();
-    private static final Map<String, FuelType> ITEM_FUELS = new HashMap<>();
+    private static final Map<NTMMaterial, FuelType> MATERIAL_FUELS = new HashMap<>();
 
     public ICFPelletItem(Properties properties) {
         super(properties.stacksTo(1));
@@ -66,13 +68,15 @@ public class ICFPelletItem extends Item {
     }
 
     public static long getMaxDepletion(ItemStack stack) {
-        double depletion = type(stack, true).depletionSpeed * type(stack, false).depletionSpeed;
-        return (long) (BASE_MAX_DEPLETION / depletion);
+        long base = BASE_MAX_DEPLETION;
+        base /= type(stack, true).depletionSpeed;
+        base /= type(stack, false).depletionSpeed;
+        return base;
     }
 
     public static long getFusingDifficulty(ItemStack stack) {
-        double difficulty = type(stack, true).fusingDifficulty * type(stack, false).fusingDifficulty;
-        long base = (long) (BASE_FUSING_DIFFICULTY * difficulty);
+        long base = BASE_FUSING_DIFFICULTY;
+        base *= type(stack, true).fusingDifficulty * type(stack, false).fusingDifficulty;
         return stack.hasTag() && stack.getTag().getBoolean(TAG_MUON) ? base / 4L : base;
     }
 
@@ -100,8 +104,15 @@ public class ICFPelletItem extends Item {
             return null;
         }
         initMaps();
-        ResourceLocation key = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        return key == null ? null : ITEM_FUELS.get(key.getPath());
+        List<MaterialStack> materials = Mats.getMaterialsFromItem(stack);
+        if (materials == null || materials.size() != 1) {
+            return null;
+        }
+        MaterialStack material = materials.get(0);
+        if (material.amount != MaterialShapes.INGOT.q(1)) {
+            return null;
+        }
+        return MATERIAL_FUELS.get(material.material);
     }
 
     public static int tint(ItemStack stack, int tintIndex) {
@@ -153,7 +164,7 @@ public class ICFPelletItem extends Item {
     }
 
     private static void initMaps() {
-        if (!FLUID_FUELS.isEmpty() && !ITEM_FUELS.isEmpty()) {
+        if (!FLUID_FUELS.isEmpty() && !MATERIAL_FUELS.isEmpty()) {
             return;
         }
         FLUID_FUELS.put(HbmFluids.HYDROGEN, FuelType.HYDROGEN);
@@ -163,13 +174,12 @@ public class ICFPelletItem extends Item {
         FLUID_FUELS.put(HbmFluids.HELIUM4, FuelType.HELIUM4);
         FLUID_FUELS.put(HbmFluids.OXYGEN, FuelType.OXYGEN);
         FLUID_FUELS.put(HbmFluids.CHLORINE, FuelType.CHLORINE);
-        ITEM_FUELS.put("lithium", FuelType.LITHIUM);
-        ITEM_FUELS.put("ingot_lithium", FuelType.LITHIUM);
-        ITEM_FUELS.put("ingot_beryllium", FuelType.BERYLLIUM);
-        ITEM_FUELS.put("ingot_boron", FuelType.BORON);
-        ITEM_FUELS.put("ingot_graphite", FuelType.CARBON);
-        ITEM_FUELS.put("powder_sodium", FuelType.SODIUM);
-        ITEM_FUELS.put("ingot_calcium", FuelType.CALCIUM);
+        MATERIAL_FUELS.put(Mats.MAT_LITHIUM, FuelType.LITHIUM);
+        MATERIAL_FUELS.put(Mats.MAT_BERYLLIUM, FuelType.BERYLLIUM);
+        MATERIAL_FUELS.put(Mats.MAT_BORON, FuelType.BORON);
+        MATERIAL_FUELS.put(Mats.MAT_GRAPHITE, FuelType.CARBON);
+        MATERIAL_FUELS.put(Mats.MAT_SODIUM, FuelType.SODIUM);
+        MATERIAL_FUELS.put(Mats.MAT_CALCIUM, FuelType.CALCIUM);
     }
 
     public enum FuelType {

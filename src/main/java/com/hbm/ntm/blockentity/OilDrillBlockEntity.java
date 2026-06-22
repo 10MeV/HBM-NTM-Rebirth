@@ -34,6 +34,7 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -348,7 +349,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
-        tag.putInt(TAG_INDICATOR, indicator);
+        tag.putLong("power", getPower());
         tag.putInt(TAG_SPEED_LEVEL, speedLevel);
         tag.putInt(TAG_ENERGY_LEVEL, energyLevel);
         tag.putInt(TAG_OVER_LEVEL, overLevel);
@@ -364,7 +365,9 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         super.load(tag);
         normalizeConfigState();
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
-        indicator = tag.getInt(TAG_INDICATOR);
+        if (tag.contains("power")) {
+            setPower(tag.getLong("power"));
+        }
         speedLevel = tag.getInt(TAG_SPEED_LEVEL);
         energyLevel = tag.getInt(TAG_ENERGY_LEVEL);
         overLevel = Math.max(1, tag.contains(TAG_OVER_LEVEL) ? tag.getInt(TAG_OVER_LEVEL) : 1);
@@ -377,7 +380,33 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt(TAG_INDICATOR, indicator);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        indicator = tag.getInt(TAG_INDICATOR);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Nullable

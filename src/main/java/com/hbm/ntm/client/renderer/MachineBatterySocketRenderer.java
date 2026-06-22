@@ -31,7 +31,7 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
 
     @Override
     public boolean shouldRenderOffScreen(MachineBatterySocketBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

@@ -113,7 +113,7 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
 
     @Override
     public boolean shouldRenderOffScreen(NuclearDeviceBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

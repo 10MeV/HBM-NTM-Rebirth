@@ -52,6 +52,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     private static final String TAG_PROGRESS = "progress";
     private static final String TAG_USAGE = "usage";
     private static final String TAG_PROCESS_TIME = "processTime";
+    private static final String TAG_LEGACY_TANK = "tank";
     private static final long MAX_POWER = 100_000L;
     private static final int USAGE_BASE = 250;
     private static final int PROCESS_TIME_BASE = 100;
@@ -263,6 +264,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         tag.putInt(TAG_PROGRESS, progress);
         tag.putInt(TAG_USAGE, usage);
         tag.putInt(TAG_PROCESS_TIME, processTime);
+        tank.writeToNbt(tag, TAG_LEGACY_TANK);
     }
 
     @Override
@@ -272,6 +274,9 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         progress = tag.getInt(TAG_PROGRESS);
         usage = tag.contains(TAG_USAGE) ? tag.getInt(TAG_USAGE) : USAGE_BASE;
         processTime = tag.contains(TAG_PROCESS_TIME) ? tag.getInt(TAG_PROCESS_TIME) : PROCESS_TIME_BASE;
+        if (tag.contains(TAG_LEGACY_TANK)) {
+            tank.readFromNbt(tag, TAG_LEGACY_TANK);
+        }
     }
 
     @Override

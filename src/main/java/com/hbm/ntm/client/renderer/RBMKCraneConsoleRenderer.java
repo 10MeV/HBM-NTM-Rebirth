@@ -48,7 +48,7 @@ public class RBMKCraneConsoleRenderer implements BlockEntityRenderer<RBMKCraneCo
 
     @Override
     public boolean shouldRenderOffScreen(RBMKCraneConsoleBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

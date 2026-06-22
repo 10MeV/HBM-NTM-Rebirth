@@ -8,6 +8,10 @@ public final class SteamTurbineConfig {
     public static final int STEAM_TURBINE_OUTPUT_TANK_SIZE_DEFAULT = 128_000;
     public static final int STEAM_TURBINE_MAX_STEAM_PER_TICK_DEFAULT = 6_000;
     public static final double STEAM_TURBINE_EFFICIENCY_DEFAULT = 0.85D;
+    public static final long LARGE_TURBINE_MAX_POWER_DEFAULT = 100_000_000L;
+    public static final int LARGE_TURBINE_INPUT_TANK_SIZE_DEFAULT = 512_000;
+    public static final int LARGE_TURBINE_OUTPUT_TANK_SIZE_DEFAULT = 10_240_000;
+    public static final double LARGE_TURBINE_EFFICIENCY_DEFAULT = 1.0D;
     public static final int INDUSTRIAL_INPUT_TANK_SIZE_DEFAULT = 750_000;
     public static final int INDUSTRIAL_OUTPUT_TANK_SIZE_DEFAULT = 3_000_000;
     public static final double INDUSTRIAL_EFFICIENCY_DEFAULT = 1.0D;
@@ -17,6 +21,10 @@ public final class SteamTurbineConfig {
     public static ForgeConfigSpec.IntValue STEAM_TURBINE_OUTPUT_TANK_SIZE;
     public static ForgeConfigSpec.IntValue STEAM_TURBINE_MAX_STEAM_PER_TICK;
     public static ForgeConfigSpec.DoubleValue STEAM_TURBINE_EFFICIENCY;
+    public static ForgeConfigSpec.LongValue LARGE_TURBINE_MAX_POWER;
+    public static ForgeConfigSpec.IntValue LARGE_TURBINE_INPUT_TANK_SIZE;
+    public static ForgeConfigSpec.IntValue LARGE_TURBINE_OUTPUT_TANK_SIZE;
+    public static ForgeConfigSpec.DoubleValue LARGE_TURBINE_EFFICIENCY;
     public static ForgeConfigSpec.IntValue INDUSTRIAL_INPUT_TANK_SIZE;
     public static ForgeConfigSpec.IntValue INDUSTRIAL_OUTPUT_TANK_SIZE;
     public static ForgeConfigSpec.DoubleValue INDUSTRIAL_EFFICIENCY;
@@ -37,6 +45,19 @@ public final class SteamTurbineConfig {
                 "Legacy steamturbine I:maxSteamPerTick: maximum steam consumed per tick.");
         STEAM_TURBINE_EFFICIENCY = positiveDouble(builder, "efficiency", STEAM_TURBINE_EFFICIENCY_DEFAULT,
                 "Legacy steamturbine D:efficiency: multiplier applied to turbine power output.");
+        builder.pop();
+
+        builder.push("largeTurbineLegacy");
+        LARGE_TURBINE_MAX_POWER = positiveLong(builder, "maxPower", LARGE_TURBINE_MAX_POWER_DEFAULT,
+                "Legacy machine_large_turbine maxPower: internal HE storage capacity.");
+        LARGE_TURBINE_INPUT_TANK_SIZE = positiveInt(builder, "inputTankSize",
+                LARGE_TURBINE_INPUT_TANK_SIZE_DEFAULT,
+                "Legacy machine_large_turbine inputTankSize: steam input tank capacity in millibuckets.");
+        LARGE_TURBINE_OUTPUT_TANK_SIZE = positiveInt(builder, "outputTankSize",
+                LARGE_TURBINE_OUTPUT_TANK_SIZE_DEFAULT,
+                "Legacy machine_large_turbine outputTankSize: spent steam output tank capacity in millibuckets.");
+        LARGE_TURBINE_EFFICIENCY = positiveDouble(builder, "efficiency", LARGE_TURBINE_EFFICIENCY_DEFAULT,
+                "Legacy machine_large_turbine efficiency: multiplier applied to turbine power output.");
         builder.pop();
 
         builder.push("steamturbineIndustrialMk2");
@@ -68,6 +89,22 @@ public final class SteamTurbineConfig {
 
     public static double steamTurbineEfficiency() {
         return positiveDouble(STEAM_TURBINE_EFFICIENCY, STEAM_TURBINE_EFFICIENCY_DEFAULT);
+    }
+
+    public static long largeTurbineMaxPower() {
+        return positiveLong(LARGE_TURBINE_MAX_POWER, LARGE_TURBINE_MAX_POWER_DEFAULT);
+    }
+
+    public static int largeTurbineInputTankSize() {
+        return positiveInt(LARGE_TURBINE_INPUT_TANK_SIZE, LARGE_TURBINE_INPUT_TANK_SIZE_DEFAULT);
+    }
+
+    public static int largeTurbineOutputTankSize() {
+        return positiveInt(LARGE_TURBINE_OUTPUT_TANK_SIZE, LARGE_TURBINE_OUTPUT_TANK_SIZE_DEFAULT);
+    }
+
+    public static double largeTurbineEfficiency() {
+        return positiveDouble(LARGE_TURBINE_EFFICIENCY, LARGE_TURBINE_EFFICIENCY_DEFAULT);
     }
 
     public static int industrialInputTankSize() {

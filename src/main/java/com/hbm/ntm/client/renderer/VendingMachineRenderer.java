@@ -23,12 +23,12 @@ public class VendingMachineRenderer implements BlockEntityRenderer<VendingMachin
 
     @Override
     public boolean shouldRenderOffScreen(VendingMachineBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override

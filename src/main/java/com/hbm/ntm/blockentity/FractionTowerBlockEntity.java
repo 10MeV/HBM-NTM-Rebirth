@@ -15,6 +15,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -147,5 +148,26 @@ public class FractionTowerBlockEntity extends LegacyRemoteFluidMachineBlockEntit
     @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return FLUID_PORTS;
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        List<HbmFluidTank> tanks = getAllTanks();
+        for (int i = 0; i < tanks.size(); i++) {
+            tanks.get(i).writeToNbt(tag, "tank" + i);
+        }
+    }
+
+    @Override
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        List<HbmFluidTank> tanks = getAllTanks();
+        for (int i = 0; i < tanks.size(); i++) {
+            String key = "tank" + i;
+            if (tag.contains(key)) {
+                tanks.get(i).readFromNbt(tag, key);
+            }
+        }
     }
 }

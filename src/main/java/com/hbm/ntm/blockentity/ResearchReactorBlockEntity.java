@@ -68,12 +68,12 @@ public class ResearchReactorBlockEntity extends BlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot >= 0 && slot < SLOT_COUNT && ResearchReactorFuelRuntime.isFuel(stack);
+            return slot >= 0 && slot < SLOT_COUNT;
         }
 
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
+            return slot >= 0 && slot < SLOT_COUNT ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
@@ -311,7 +311,7 @@ public class ResearchReactorBlockEntity extends BlockEntity
     }
 
     public void setTargetLevel(double targetLevel) {
-        this.targetLevel = Math.max(0.0D, Math.min(1.0D, targetLevel));
+        this.targetLevel = targetLevel;
     }
 
     public List<ItemStack> getDrops() {
@@ -320,8 +320,7 @@ public class ResearchReactorBlockEntity extends BlockEntity
 
     @Override
     public boolean hasPermission(ServerPlayer player) {
-        return player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
-                worldPosition.getZ() + 0.5D) < 400.0D;
+        return player.distanceToSqr(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ()) < 400.0D;
     }
 
     @Override
@@ -449,13 +448,15 @@ public class ResearchReactorBlockEntity extends BlockEntity
 
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return items.insertItem(slot, stack, simulate);
+            return slot == 0 && ResearchReactorFuelRuntime.isFuel(stack)
+                    ? items.insertItem(slot, stack, simulate)
+                    : stack;
         }
 
         @Override
         public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
             ItemStack stack = getStackInSlot(slot);
-            return stack.isEmpty() || ResearchReactorFuelRuntime.isFuel(stack)
+            return stack.isEmpty() || !ResearchReactorFuelRuntime.isWaste(stack)
                     ? ItemStack.EMPTY
                     : items.extractItem(slot, amount, simulate);
         }
@@ -467,7 +468,7 @@ public class ResearchReactorBlockEntity extends BlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot >= 0 && slot < SLOT_COUNT && items.isItemValid(slot, stack);
+            return slot == 0 && ResearchReactorFuelRuntime.isFuel(stack);
         }
     }
 }

@@ -27,7 +27,7 @@ public class RBMKAutoloaderRenderer implements BlockEntityRenderer<RBMKAutoloade
 
     @Override
     public boolean shouldRenderOffScreen(RBMKAutoloaderBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

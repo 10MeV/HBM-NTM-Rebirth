@@ -198,6 +198,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         fluidContainerRecipes(consumer);
         fluidNetworkRecipes(consumer);
         outgasserRecipes(consumer);
+        purexRecipes(consumer);
         liquefactionRecipes(consumer);
         pyroOvenRecipes(consumer);
         pressRecipes(consumer);
@@ -241,6 +242,18 @@ public final class HbmRecipeProvider extends RecipeProvider {
     private static void compatRecipeListenerRecipes(Consumer<FinishedRecipe> consumer) {
         CompatRecipeRegistry.emitRecipeRegisterListeners((recipeId, recipeJson) ->
                 consumer.accept(finishedCompatRecipe(recipeId, recipeJson)));
+    }
+
+    private static void purexRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.purex("purex.icf", 300, 10_000)
+                .inputItem(ModItems.ICF_PELLET_DEPLETED.get(), 1)
+                .outputItem(ModItems.ICF_PELLET_EMPTY.get())
+                .outputItem(item("pellet_charged"))
+                .outputItem(ModItems.IRON_POWDER.get())
+                .outputFluid(HbmFluids.HELIUM4, 1_250)
+                .nameWrapper("purex.recycle")
+                .sourceOrder(0)
+                .save(consumer, id("purex/icf_pellet_recycle"));
     }
 
     private static FinishedRecipe finishedCompatRecipe(ResourceLocation recipeId, JsonObject recipeJson) {

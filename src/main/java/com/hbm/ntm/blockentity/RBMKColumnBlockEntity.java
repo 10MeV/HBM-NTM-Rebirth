@@ -5,6 +5,8 @@ import com.hbm.ntm.block.LegacyCoriumFiniteBlock;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
+import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidNet;
 import com.hbm.ntm.fluid.HbmFluidNode;
@@ -88,6 +90,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
@@ -104,7 +107,7 @@ import java.util.Set;
 public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         implements RBMKNeutronColumn, RBMKAbsorberColumn, RBMKControlColumn, RBMKRodColumn,
         RBMKOutgasserColumn, IRBMKFluxReceiver, IRBMKLoadable, HbmStandardFluidReceiver,
-        HbmStandardFluidSender, RORValueProvider, RORInteractive {
+        HbmStandardFluidSender, HbmEnergyReceiver, RORValueProvider, RORInteractive {
     public static final String TAG_HEAT = "heat";
     public static final String TAG_REASIM_WATER = "reasimWater";
     public static final String TAG_REASIM_STEAM = "reasimSteam";
@@ -251,6 +254,9 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         }
     };
     private final LazyOptional<IItemHandler> rodItemHandler = LazyOptional.of(() -> rodItems);
+    private final LazyOptional<IEnergyStorage> controlEnergyHandler =
+            LazyOptional.of(() -> new ForgeEnergyAdapter(this, true, false));
+    private final IItemHandlerModifiable rodMenuItems = new RodMenuItemHandler();
     private final ItemStackHandler storageItems = new ItemStackHandler(12) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -267,7 +273,7 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> storageItemHandler = LazyOptional.of(() -> storageItems);
+    private final LazyOptional<IItemHandler> storageItemHandler = LazyOptional.of(() -> new StorageAutomationItemHandler());
     private final ItemStackHandler outgasserItems = new ItemStackHandler(2) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -296,8 +302,8 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         }
     };
     private final LazyOptional<IItemHandler> heaterItemHandler = LazyOptional.of(() -> heaterItems);
-    private final IItemHandlerModifiable storageMenuItems = new LayoutGuardedItemHandler(storageItems);
-    private final IItemHandlerModifiable outgasserMenuItems = new LayoutGuardedItemHandler(outgasserItems);
+    private final IItemHandlerModifiable storageMenuItems = new LayoutGuardedMenuItemHandler(storageItems);
+    private final IItemHandlerModifiable outgasserMenuItems = new LayoutGuardedMenuItemHandler(outgasserItems);
     private final IItemHandlerModifiable outgasserAutomationItems = new OutgasserAutomationItemHandler();
     private final LazyOptional<IItemHandler> outgasserAutomationItemHandler =
             LazyOptional.of(() -> outgasserAutomationItems);
@@ -759,6 +765,10 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         return rodItems;
     }
 
+    public IItemHandlerModifiable rodMenuItems() {
+        return rodMenuItems;
+    }
+
     public ItemStackHandler outgasserItems() {
         return outgasserItems;
     }
@@ -1000,6 +1010,43 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         return new RBMKControlRodPlanner.AutoSettings(levelLower, levelUpper, heatLower, heatUpper, function);
     }
 
+    public boolean isPoweredControlRod() {
+        return kind().control() && kind().powered();
+    }
+
+    public boolean controlHasPower() {
+        return kind().control() && controlState.hasPower();
+    }
+
+    @Override
+    public long getPower() {
+        return kind().control() ? controlState.power() : 0L;
+    }
+
+    @Override
+    public void setPower(long power) {
+        if (!kind().control()) {
+            return;
+        }
+        controlState.setPower(power);
+        setChanged();
+    }
+
+    @Override
+    public long getMaxPower() {
+        return isPoweredControlRod() ? RBMKControlState.MAX_POWER : 0L;
+    }
+
+    @Override
+    public long getReceiverSpeed() {
+        return isPoweredControlRod() ? getMaxPower() : 0L;
+    }
+
+    @Override
+    public ConnectionPriority getPriority() {
+        return ConnectionPriority.LOW;
+    }
+
     public void setControlTarget(double targetLevel) {
         if (!hasOperationalLayout()) {
             return;
@@ -1036,7 +1083,7 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        if (!hasOperationalLayout() || tag == null || tag.isEmpty()) {
+        if (!hasOperationalLayout() || !hasLegacyControlPermission(player) || tag == null || tag.isEmpty()) {
             return false;
         }
         RBMKColumnBlock.Kind kind = kind();
@@ -1045,6 +1092,11 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
                 || tag.contains(TAG_HEAT_LOWER) || tag.contains(TAG_HEAT_UPPER)
                 || tag.contains(TAG_FUNCTION)))
                 || (kind == RBMKColumnBlock.Kind.BOILER && tag.getBoolean("compression"));
+    }
+
+    private boolean hasLegacyControlPermission(ServerPlayer player) {
+        return player != null && player.distanceToSqr(worldPosition.getX(), worldPosition.getY(),
+                worldPosition.getZ()) < 400.0D;
     }
 
     @Override
@@ -2464,6 +2516,209 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         }
     }
 
+    private final class LayoutGuardedMenuItemHandler implements IItemHandlerModifiable {
+        private final IItemHandlerModifiable delegate;
+
+        private LayoutGuardedMenuItemHandler(IItemHandlerModifiable delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public int getSlots() {
+            return delegate.getSlots();
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return hasOperationalLayout() ? delegate.getStackInSlot(slot) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            if (!hasOperationalLayout() || stack.isEmpty() || slot < 0 || slot >= delegate.getSlots()) {
+                return stack;
+            }
+            ItemStack existing = delegate.getStackInSlot(slot);
+            int limit = Math.min(delegate.getSlotLimit(slot), stack.getMaxStackSize());
+            if (existing.isEmpty()) {
+                int inserted = Math.min(stack.getCount(), limit);
+                if (!simulate) {
+                    ItemStack copy = stack.copy();
+                    copy.setCount(inserted);
+                    delegate.setStackInSlot(slot, copy);
+                }
+                ItemStack remainder = stack.copy();
+                remainder.shrink(inserted);
+                return remainder;
+            }
+            if (!ItemStack.isSameItemSameTags(existing, stack) || existing.getCount() >= limit) {
+                return stack;
+            }
+            int inserted = Math.min(stack.getCount(), limit - existing.getCount());
+            if (!simulate) {
+                ItemStack copy = existing.copy();
+                copy.grow(inserted);
+                delegate.setStackInSlot(slot, copy);
+            }
+            ItemStack remainder = stack.copy();
+            remainder.shrink(inserted);
+            return remainder;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return hasOperationalLayout() ? delegate.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return hasOperationalLayout() ? delegate.getSlotLimit(slot) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return hasOperationalLayout() && slot >= 0 && slot < delegate.getSlots();
+        }
+
+        @Override
+        public void setStackInSlot(int slot, @NotNull ItemStack stack) {
+            if (hasOperationalLayout() && slot >= 0 && slot < delegate.getSlots()) {
+                delegate.setStackInSlot(slot, stack);
+            }
+        }
+    }
+
+    private final class RodMenuItemHandler implements IItemHandlerModifiable {
+        @Override
+        public int getSlots() {
+            return 1;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return hasOperationalLayout() && slot == 0 ? fuelRod : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            if (!hasOperationalLayout() || slot != 0 || stack.isEmpty()) {
+                return stack;
+            }
+            int limit = Math.min(getSlotLimit(slot), stack.getMaxStackSize());
+            if (!fuelRod.isEmpty()) {
+                if (!ItemStack.isSameItemSameTags(fuelRod, stack) || fuelRod.getCount() >= limit) {
+                    return stack;
+                }
+                int inserted = Math.min(stack.getCount(), limit - fuelRod.getCount());
+                if (!simulate) {
+                    fuelRod.grow(inserted);
+                    setChanged();
+                }
+                ItemStack remainder = stack.copy();
+                remainder.shrink(inserted);
+                return remainder;
+            }
+            int inserted = Math.min(stack.getCount(), limit);
+            if (!simulate) {
+                fuelRod = stack.copy();
+                fuelRod.setCount(inserted);
+                if (fuelRod.getItem() instanceof RBMKFuelRodItem) {
+                    rodFluxState.setHasRod(true);
+                } else {
+                    rodFluxState.clearRodTick();
+                }
+                setChanged();
+            }
+            ItemStack remainder = stack.copy();
+            remainder.shrink(inserted);
+            return remainder;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            if (!hasOperationalLayout() || slot != 0 || amount <= 0 || fuelRod.isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+            int extracted = Math.min(amount, fuelRod.getCount());
+            ItemStack result = fuelRod.copy();
+            result.setCount(extracted);
+            if (!simulate) {
+                fuelRod.shrink(extracted);
+                if (fuelRod.isEmpty()) {
+                    fuelRod = ItemStack.EMPTY;
+                    rodFluxState.clearRodTick();
+                }
+                setChanged();
+            }
+            return result;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return slot == 0 ? 64 : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return hasOperationalLayout() && slot == 0;
+        }
+
+        @Override
+        public void setStackInSlot(int slot, @NotNull ItemStack stack) {
+            if (!hasOperationalLayout() || slot != 0) {
+                return;
+            }
+            fuelRod = stack.copy();
+            if (fuelRod.isEmpty()) {
+                rodFluxState.clearRodTick();
+            } else if (fuelRod.getItem() instanceof RBMKFuelRodItem) {
+                rodFluxState.setHasRod(true);
+            } else {
+                rodFluxState.clearRodTick();
+            }
+            setChanged();
+        }
+    }
+
+    private final class StorageAutomationItemHandler implements IItemHandlerModifiable {
+        @Override
+        public int getSlots() {
+            return storageItems.getSlots();
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return hasOperationalLayout() ? storageItems.getStackInSlot(slot) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return hasOperationalLayout() ? storageItems.insertItem(slot, stack, simulate) : stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return hasOperationalLayout() ? storageItems.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return hasOperationalLayout() ? storageItems.getSlotLimit(slot) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return hasOperationalLayout() && storageItems.isItemValid(slot, stack);
+        }
+
+        @Override
+        public void setStackInSlot(int slot, @NotNull ItemStack stack) {
+            if (hasOperationalLayout()) {
+                storageItems.setStackInSlot(slot, stack);
+            }
+        }
+    }
+
     private final class OutgasserAutomationItemHandler implements IItemHandlerModifiable {
         @Override
         public int getSlots() {
@@ -2552,6 +2807,7 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
     public void invalidateCaps() {
         super.invalidateCaps();
         rodItemHandler.invalidate();
+        controlEnergyHandler.invalidate();
         storageItemHandler.invalidate();
         outgasserAutomationItemHandler.invalidate();
         heaterItemHandler.invalidate();
@@ -2562,6 +2818,9 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         if ((capability == ForgeCapabilities.ITEM_HANDLER || capability == ForgeCapabilities.FLUID_HANDLER)
                 && !hasCompleteLayout()) {
             return LazyOptional.empty();
+        }
+        if (capability == ForgeCapabilities.ENERGY && isPoweredControlRod()) {
+            return side == Direction.DOWN ? controlEnergyHandler.cast() : LazyOptional.empty();
         }
         if (kind().storage() && capability == ForgeCapabilities.ITEM_HANDLER) {
             return storageItemHandler.cast();

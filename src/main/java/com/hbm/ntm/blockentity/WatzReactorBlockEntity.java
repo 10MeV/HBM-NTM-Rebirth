@@ -9,6 +9,7 @@ import com.hbm.ntm.fluid.HbmFluidThermalExchange;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.trait.HeatableFluidTrait;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait.HeatingType;
 import com.hbm.ntm.item.WatzPelletItem;
 import com.hbm.ntm.menu.WatzReactorMenu;
@@ -66,6 +67,9 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
     private final HbmFluidTank coolantTank;
     private final HbmFluidTank hotCoolantTank;
     private final HbmFluidTank mudTank;
+    private final HbmFluidTank coolantDisplayTank;
+    private final HbmFluidTank hotCoolantDisplayTank;
+    private final HbmFluidTank mudDisplayTank;
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -91,12 +95,11 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     private final ItemStack[] locks = new ItemStack[SLOT_COUNT];
     private int heat;
-    private int fluxLastBaseScaled;
-    private int fluxLastReactionScaled;
-    private int fluxDisplayScaled;
+    private double fluxLastBase;
+    private double fluxLastReaction;
+    private double fluxDisplay;
     private boolean on;
     private boolean locked;
-    private boolean mudOverflowDeferred;
     private boolean suppressCoreDropsOnRemoval;
 
     public WatzReactorBlockEntity(BlockPos pos, BlockState state) {
@@ -111,6 +114,12 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         this.coolantTank = coolantTank;
         this.hotCoolantTank = hotCoolantTank;
         this.mudTank = mudTank;
+        this.coolantDisplayTank = new HbmFluidTank(HbmFluids.COOLANT, TANK_CAPACITY);
+        this.hotCoolantDisplayTank = new HbmFluidTank(HbmFluids.COOLANT_HOT, TANK_CAPACITY);
+        this.mudDisplayTank = new HbmFluidTank(HbmFluids.WATZ, TANK_CAPACITY);
+        copyTank(coolantTank, coolantDisplayTank);
+        copyTank(hotCoolantTank, hotCoolantDisplayTank);
+        copyTank(mudTank, mudDisplayTank);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, WatzReactorBlockEntity reactor) {
@@ -119,7 +128,6 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
             return;
         }
         boolean changed = reactor.tickTopSegment(level);
-        reactor.networkPackNT(25);
         if (changed || level.getGameTime() % 20L == 0L) {
             reactor.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
@@ -155,16 +163,28 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         return mudTank;
     }
 
+    public HbmFluidTank getCoolantDisplayTank() {
+        return coolantDisplayTank;
+    }
+
+    public HbmFluidTank getHotCoolantDisplayTank() {
+        return hotCoolantDisplayTank;
+    }
+
+    public HbmFluidTank getMudDisplayTank() {
+        return mudDisplayTank;
+    }
+
     public int getHeat() {
         return heat;
     }
 
     public int getFluxDisplayScaled() {
-        return fluxDisplayScaled;
+        return (int) Math.round(fluxDisplay * 1000.0D);
     }
 
     public double getFluxDisplay() {
-        return fluxDisplayScaled / 1000.0D;
+        return fluxDisplay;
     }
 
     public boolean isOn() {
@@ -173,10 +193,6 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     public boolean isLocked() {
         return locked;
-    }
-
-    public boolean isMudOverflowDeferred() {
-        return mudOverflowDeferred;
     }
 
     public boolean suppressCoreDropsOnRemoval() {
@@ -297,12 +313,9 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
         saveLocks(tag);
         tag.putInt("heat", heat);
-        tag.putInt("lastFluxB", fluxLastBaseScaled);
-        tag.putInt("lastFluxR", fluxLastReactionScaled);
-        tag.putInt("fluxDisplay", fluxDisplayScaled);
-        tag.putBoolean("isOn", on);
+        tag.putDouble("lastFluxB", fluxLastBase);
+        tag.putDouble("lastFluxR", fluxLastReaction);
         tag.putBoolean("isLocked", locked);
-        tag.putBoolean("mudOverflowDeferred", mudOverflowDeferred);
     }
 
     @Override
@@ -320,12 +333,14 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
         loadLocks(tag);
         heat = tag.getInt("heat");
-        fluxLastBaseScaled = tag.getInt("lastFluxB");
-        fluxLastReactionScaled = tag.getInt("lastFluxR");
-        fluxDisplayScaled = tag.getInt("fluxDisplay");
-        on = tag.getBoolean("isOn");
+        fluxLastBase = readSavedFlux(tag, "lastFluxB");
+        fluxLastReaction = readSavedFlux(tag, "lastFluxR");
+        fluxDisplay = fluxLastBase + fluxLastReaction;
+        copyTank(coolantTank, coolantDisplayTank);
+        copyTank(hotCoolantTank, hotCoolantDisplayTank);
+        copyTank(mudTank, mudDisplayTank);
+        on = false;
         locked = tag.getBoolean("isLocked");
-        mudOverflowDeferred = tag.getBoolean("mudOverflowDeferred");
     }
 
     @Override
@@ -339,8 +354,7 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         tag.putInt("heat", heat);
         tag.putBoolean("isOn", on);
         tag.putBoolean("isLocked", locked);
-        tag.putInt("fluxDisplay", fluxDisplayScaled);
-        tag.putBoolean("mudOverflowDeferred", mudOverflowDeferred);
+        tag.putDouble("fluxDisplay", fluxDisplay);
         return tag;
     }
 
@@ -350,8 +364,7 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         heat = tag.getInt("heat");
         on = tag.getBoolean("isOn");
         locked = tag.getBoolean("isLocked");
-        fluxDisplayScaled = tag.getInt("fluxDisplay");
-        mudOverflowDeferred = tag.getBoolean("mudOverflowDeferred");
+        fluxDisplay = tag.getDouble("fluxDisplay");
     }
 
     @Override
@@ -361,9 +374,9 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         data.writeBoolean(on);
         data.writeBoolean(locked);
         data.writeDouble(getFluxDisplay());
-        writeTank(data, coolantTank);
-        writeTank(data, hotCoolantTank);
-        writeTank(data, mudTank);
+        writeTank(data, coolantDisplayTank);
+        writeTank(data, hotCoolantDisplayTank);
+        writeTank(data, mudDisplayTank);
     }
 
     @Override
@@ -372,10 +385,10 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         heat = data.readInt();
         on = data.readBoolean();
         locked = data.readBoolean();
-        fluxDisplayScaled = (int) Math.round(data.readDouble() * 1000.0D);
-        readTank(data, coolantTank);
-        readTank(data, hotCoolantTank);
-        readTank(data, mudTank);
+        fluxDisplay = data.readDouble();
+        readTank(data, coolantDisplayTank);
+        readTank(data, hotCoolantDisplayTank);
+        readTank(data, mudDisplayTank);
     }
 
     @Override
@@ -407,8 +420,9 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         }
         for (WatzReactorBlockEntity segment : segments) {
             segment.on = turnedOn;
-            segment.fluxDisplayScaled = segment.fluxLastBaseScaled + segment.fluxLastReactionScaled;
+            segment.fluxDisplay = segment.fluxLastBase + segment.fluxLastReaction;
             segment.heat = (int) (segment.heat * 0.99D);
+            segment.copySharedTanksForDisplay(shared);
             segment.networkPackNT(25);
         }
         distributeSharedTanks(segments, shared);
@@ -423,7 +437,6 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     private void explodeOnMudOverflow(Level level) {
         on = false;
-        mudOverflowDeferred = false;
         clearAllPellets();
         clearUpperStructure(level);
         disassembleToMud(level);
@@ -591,7 +604,9 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     private void setupCoolant() {
         coolantTank.setTankType(HbmFluids.COOLANT);
-        hotCoolantTank.setTankType(HbmFluids.COOLANT_HOT);
+        HeatableFluidTrait trait = coolantTank.getTankType().getTrait(HeatableFluidTrait.class);
+        HeatableFluidTrait.HeatingStep step = trait == null ? null : trait.getFirstStep();
+        hotCoolantTank.setTankType(step == null ? HbmFluids.COOLANT_HOT : step.producedType());
     }
 
     private void updateCoolant(SharedTanks shared) {
@@ -608,7 +623,7 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
             for (ItemStack stack : pellets) {
                 baseFlux += WatzFuelRuntime.type(stack).passive();
             }
-            double inputFlux = baseFlux + fluxLastReactionScaled / 1000.0D;
+            double inputFlux = baseFlux + fluxLastReaction;
             double addedFlux = 0.0D;
             double addedHeat = 0.0D;
             for (ItemStack stack : pellets) {
@@ -634,11 +649,11 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
                 }
             }
             heat += (int) addedHeat;
-            fluxLastBaseScaled = (int) Math.round(baseFlux * 1000.0D);
-            fluxLastReactionScaled = (int) Math.round(addedFlux * 1000.0D);
+            fluxLastBase = baseFlux;
+            fluxLastReaction = addedFlux;
         } else {
-            fluxLastBaseScaled = 0;
-            fluxLastReactionScaled = 0;
+            fluxLastBase = 0;
+            fluxLastReaction = 0;
         }
         depleteSpentPellets();
         if (above != null) {
@@ -712,7 +727,7 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
             if (stack != null && !stack.isEmpty()) {
                 CompoundTag entry = new CompoundTag();
                 entry.putByte("slot", (byte) slot);
-                entry.put("stack", stack.save(new CompoundTag()));
+                stack.save(entry);
                 list.add(entry);
             }
         }
@@ -728,9 +743,28 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
             CompoundTag entry = list.getCompound(i);
             int slot = entry.getByte("slot");
             if (slot >= 0 && slot < locks.length) {
-                locks[slot] = ItemStack.of(entry.getCompound("stack"));
+                locks[slot] = entry.contains("stack", Tag.TAG_COMPOUND)
+                        ? ItemStack.of(entry.getCompound("stack"))
+                        : ItemStack.of(entry);
             }
         }
+    }
+
+    private void copySharedTanksForDisplay(SharedTanks shared) {
+        copyTank(shared.coolant, coolantDisplayTank);
+        copyTank(shared.hotCoolant, hotCoolantDisplayTank);
+        copyTank(shared.mud, mudDisplayTank);
+    }
+
+    private static void copyTank(HbmFluidTank source, HbmFluidTank target) {
+        target.changeTankSize(source.getMaxFill());
+        target.setTankType(source.getTankType());
+        target.withPressure(source.getPressure());
+        target.setFill(source.getFill());
+    }
+
+    private static double readSavedFlux(CompoundTag tag, String key) {
+        return tag.contains(key, Tag.TAG_INT) ? tag.getInt(key) / 1000.0D : tag.getDouble(key);
     }
 
     private List<FluidPort> fluidPorts() {

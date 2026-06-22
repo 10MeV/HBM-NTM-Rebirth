@@ -4,8 +4,8 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.FusionBreederBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.menu.FusionBreederMenu;
+import com.hbm.ntm.util.BobMathUtil;
 import java.util.List;
-import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -26,7 +26,7 @@ public class FusionBreederScreen extends AbstractContainerScreen<FusionBreederMe
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        int width = (int) Math.ceil(Math.max(0.0D, Math.min(1.0D, menu.getProgress())) * 42.0D);
+        int width = (int) Math.ceil(menu.getProgress() * 42.0D / FusionBreederBlockEntity.CAPACITY);
         if (width > 0) {
             graphics.blit(TEXTURE, leftPos + 67, topPos + 48, 176, 0, width, 10);
         }
@@ -53,10 +53,10 @@ public class FusionBreederScreen extends AbstractContainerScreen<FusionBreederMe
             LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal("-> "
                     + (int) Math.ceil(menu.getNeutronEnergy()) + " flux/t")), mouseX, mouseY);
         } else if (isHovering(67, 46, 42, 14, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal(String.format(Locale.US,
-                    "%,d / %,d flux",
-                    (int) Math.ceil(menu.getProgress() * FusionBreederBlockEntity.CAPACITY),
-                    (int) Math.ceil(FusionBreederBlockEntity.CAPACITY)))), mouseX, mouseY);
+            LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal(
+                    BobMathUtil.format((int) Math.ceil(menu.getProgress())) + " / "
+                            + BobMathUtil.format((int) Math.ceil(FusionBreederBlockEntity.CAPACITY))
+                            + " flux")), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

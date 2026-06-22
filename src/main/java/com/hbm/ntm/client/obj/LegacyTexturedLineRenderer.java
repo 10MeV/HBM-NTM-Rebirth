@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.obj;
 
+import com.hbm.ntm.energy.HbmLegacyWireRenderMath;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
@@ -8,9 +9,9 @@ import java.util.List;
 public final class LegacyTexturedLineRenderer {
     public static final double PYLON_WIRE_GIRTH = 0.03125D;
     public static final double PYLON_WIRE_U_WRAP_PER_BLOCK = 8.0D;
-    public static final int PYLON_HANG_SEGMENTS = 10;
-    public static final double PYLON_MAX_HANG = 2.5D;
-    public static final double PYLON_HANG_DIVISOR = 15.0D;
+    public static final int PYLON_HANG_SEGMENTS = HbmLegacyWireRenderMath.PYLON_HANG_SEGMENTS;
+    public static final double PYLON_MAX_HANG = HbmLegacyWireRenderMath.PYLON_MAX_HANG;
+    public static final double PYLON_HANG_DIVISOR = HbmLegacyWireRenderMath.PYLON_HANG_DIVISOR;
 
     public static void pylonLineSegment(ResourceLocation texture, ObjRenderContext context,
             double x0, double y0, double z0, double x1, double y1, double z1) {
@@ -75,7 +76,7 @@ public final class LegacyTexturedLineRenderer {
         double deltaY = y1 - y0;
         double deltaZ = z1 - z0;
         double length = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-        double hang = Math.min(length / PYLON_HANG_DIVISOR, PYLON_MAX_HANG);
+        double hang = HbmLegacyWireRenderMath.pylonHang(length);
         List<WireSubSegment> segments = new ArrayList<>(safeCount);
         for (int i = 0; i < safeCount; i++) {
             double j = i;
@@ -104,18 +105,12 @@ public final class LegacyTexturedLineRenderer {
 
     public static int pylonSecondMountIndex(int line, int secondMountCount, int lineCount,
             int firstLegacyMetadata, int secondLegacyMetadata) {
-        int safeMountCount = Math.max(1, secondMountCount);
-        int secondIndex = Math.floorMod(line, safeMountCount);
-        if (lineCount == 4 && crossesLegacyFourWirePylons(firstLegacyMetadata, secondLegacyMetadata)) {
-            secondIndex = Math.floorMod(secondIndex + 2, safeMountCount);
-        }
-        return secondIndex;
+        return HbmLegacyWireRenderMath.pylonSecondMountIndex(line, secondMountCount, lineCount,
+                firstLegacyMetadata, secondLegacyMetadata);
     }
 
     public static boolean crossesLegacyFourWirePylons(int firstLegacyMetadata, int secondLegacyMetadata) {
-        int first = firstLegacyMetadata - 10;
-        int second = secondLegacyMetadata - 10;
-        return first == 5 && second == 2 || first == 2 && second == 5;
+        return HbmLegacyWireRenderMath.crossesLegacyFourWirePylons(firstLegacyMetadata, secondLegacyMetadata);
     }
 
     public static void wrappedLineSegment(ResourceLocation texture, ObjRenderContext context,

@@ -43,12 +43,12 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
 
     @Override
     public boolean shouldRenderOffScreen(ForceFieldBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     private static void renderSphere(PoseStack poseStack, MultiBufferSource buffer, int latitudes, int segments,

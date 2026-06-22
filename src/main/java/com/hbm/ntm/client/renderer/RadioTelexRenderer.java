@@ -22,7 +22,7 @@ public class RadioTelexRenderer implements BlockEntityRenderer<RadioTelexBlockEn
 
     @Override
     public boolean shouldRenderOffScreen(RadioTelexBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

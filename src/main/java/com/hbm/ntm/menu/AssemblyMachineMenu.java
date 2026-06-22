@@ -163,7 +163,7 @@ public class AssemblyMachineMenu extends AbstractContainerMenu {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     AssemblyMachineBlockEntity.SLOT_UPGRADE_START, AssemblyMachineBlockEntity.SLOT_UPGRADE_END + 1);
         }
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     AssemblyMachineBlockEntity.SLOT_BATTERY, AssemblyMachineBlockEntity.SLOT_BATTERY + 1);
         }

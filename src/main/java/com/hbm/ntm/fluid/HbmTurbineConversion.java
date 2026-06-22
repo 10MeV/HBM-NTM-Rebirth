@@ -60,9 +60,8 @@ public final class HbmTurbineConversion {
         if (trait == null || trait.getAmountRequired() <= 0) {
             return 0;
         }
-        int inputOperations = input.getFill() / trait.getAmountRequired();
-        int cappedOperations = (int) Math.ceil(inputOperations * consumptionPercent);
-        return Math.max(0, cappedOperations * trait.getAmountRequired());
+        int cappedInput = (int) Math.min(Math.ceil(input.getFill() * consumptionPercent), input.getFill());
+        return Math.max(0, cappedInput);
     }
 
     private HbmTurbineConversion() {

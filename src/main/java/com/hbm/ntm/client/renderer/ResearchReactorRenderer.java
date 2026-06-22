@@ -20,7 +20,7 @@ public class ResearchReactorRenderer implements BlockEntityRenderer<ResearchReac
 
     @Override
     public boolean shouldRenderOffScreen(ResearchReactorBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

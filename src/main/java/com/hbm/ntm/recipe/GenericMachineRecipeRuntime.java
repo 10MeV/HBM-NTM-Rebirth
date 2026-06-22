@@ -14,7 +14,6 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -209,18 +208,18 @@ public final class GenericMachineRecipeRuntime {
             return false;
         }
         List<HbmIngredient> inputs = recipe.getItemInputs();
-        for (HbmIngredient input : inputs) {
-            if (input.test(stack, true)) {
-                return true;
+        for (int i = 0; i < Math.min(inputSlots.length, inputs.size()); i++) {
+            if (inputSlots[i] == slot) {
+                return inputs.get(i).test(stack, true);
             }
         }
-        if (recipe.getAutoSwitchGroup() == null || inputSlots.length == 0) {
+        if (recipe.getAutoSwitchGroup() == null || inputSlots.length == 0 || inputSlots[0] != slot) {
             return false;
         }
         return index(level, machine).recipes().stream()
                 .filter(candidate -> recipe.getAutoSwitchGroup().equals(candidate.getAutoSwitchGroup()))
                 .filter(candidate -> !candidate.getItemInputs().isEmpty())
-                .anyMatch(candidate -> candidate.getItemInputs().stream().anyMatch(input -> input.test(stack, true)));
+                .anyMatch(candidate -> candidate.getItemInputs().get(0).test(stack, true));
     }
 
     public static boolean isSlotClogged(GenericMachineRecipe recipe, GenericMachineRecipe.Machine machine, Level level,
@@ -319,7 +318,7 @@ public final class GenericMachineRecipeRuntime {
             ItemStack current = items.getStackInSlot(outputSlot);
             if (current.isEmpty()) {
                 items.setStackInSlot(outputSlot, output.copy());
-            } else if (ItemStack.isSameItemSameTags(current, output)
+            } else if (ItemStack.isSameItem(current, output)
                     && current.getCount() + output.getCount() <= Math.min(current.getMaxStackSize(), items.getSlotLimit(outputSlot))) {
                 ItemStack merged = current.copy();
                 merged.grow(output.getCount());
@@ -343,43 +342,19 @@ public final class GenericMachineRecipeRuntime {
     @Nullable
     private static ItemInputMatchPlan matchItemInputs(GenericMachineRecipe recipe, ItemStackHandler items, int[] inputSlots) {
         List<HbmIngredient> itemInputs = recipe.getItemInputs();
-        int itemCount = Math.min(itemInputs.size(), inputSlots.length);
         if (itemInputs.size() > inputSlots.length) {
             return null;
         }
+        int itemCount = itemInputs.size();
         int[] matchedSlots = new int[itemCount];
-        Arrays.fill(matchedSlots, -1);
-
-        boolean[] usedSlots = new boolean[inputSlots.length];
-        return matchItemInputsRecursive(itemInputs, items, inputSlots, matchedSlots, usedSlots, 0)
-                ? new ItemInputMatchPlan(matchedSlots)
-                : null;
-    }
-
-    private static boolean matchItemInputsRecursive(List<HbmIngredient> itemInputs, ItemStackHandler items,
-            int[] inputSlots, int[] matchedSlots, boolean[] usedSlots, int inputIndex) {
-        if (inputIndex >= itemInputs.size()) {
-            return true;
+        for (int i = 0; i < itemCount; i++) {
+            int inputSlot = inputSlots[i];
+            if (!itemInputs.get(i).test(items.getStackInSlot(inputSlot))) {
+                return null;
+            }
+            matchedSlots[i] = inputSlot;
         }
-        HbmIngredient input = itemInputs.get(inputIndex);
-        for (int slotIndex = 0; slotIndex < inputSlots.length; slotIndex++) {
-            if (usedSlots[slotIndex]) {
-                continue;
-            }
-            int inputSlot = inputSlots[slotIndex];
-            ItemStack stack = items.getStackInSlot(inputSlot);
-            if (stack.isEmpty() || !input.test(stack)) {
-                continue;
-            }
-            usedSlots[slotIndex] = true;
-            matchedSlots[inputIndex] = inputSlot;
-            if (matchItemInputsRecursive(itemInputs, items, inputSlots, matchedSlots, usedSlots, inputIndex + 1)) {
-                return true;
-            }
-            matchedSlots[inputIndex] = -1;
-            usedSlots[slotIndex] = false;
-        }
-        return false;
+        return new ItemInputMatchPlan(matchedSlots);
     }
 
     private static boolean hasPower(HbmEnergyStorage energy, GenericMachineRecipe recipe, double powerMultiplier) {
@@ -447,7 +422,7 @@ public final class GenericMachineRecipeRuntime {
             if (output.oneOf()) {
                 return false;
             }
-            if (!ItemStack.isSameItemSameTags(current, single)
+            if (!ItemStack.isSameItem(current, single)
                     || current.getCount() + single.getCount() > Math.min(current.getMaxStackSize(), items.getSlotLimit(outputSlot))) {
                 return false;
             }

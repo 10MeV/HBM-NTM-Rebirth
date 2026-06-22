@@ -116,7 +116,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     @Override
     public boolean shouldRenderOffScreen(T blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

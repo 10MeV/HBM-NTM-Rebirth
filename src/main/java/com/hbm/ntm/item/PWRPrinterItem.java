@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -44,14 +43,10 @@ public class PWRPrinterItem extends Item {
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
-        if (!controller.isAssembled() || !(context.getPlayer() instanceof ServerPlayer player)) {
+        if (!(context.getPlayer() instanceof ServerPlayer player)) {
             return InteractionResult.CONSUME;
         }
         Snapshot snapshot = collectSnapshot(level, clicked, controller);
-        if (snapshot == null) {
-            player.displayClientMessage(Component.literal("No PWR structure found").withStyle(ChatFormatting.RED), true);
-            return InteractionResult.CONSUME;
-        }
         ModMessages.sendToPlayer(new PWRPrinterSnapshotPacket(snapshot.min(), snapshot.max(),
                 snapshot.direction(), snapshot.states()), player);
         return InteractionResult.CONSUME;
@@ -62,15 +57,11 @@ public class PWRPrinterItem extends Item {
         tooltip.add(Component.literal("Use on a constructed PWR controller to generate construction diagrams"));
     }
 
-    @Nullable
     private static Snapshot collectSnapshot(Level level, BlockPos controllerPos, PWRControllerBlockEntity controller) {
         Direction direction = controller.getBlockState().hasProperty(HorizontalMachineBlock.FACING)
                 ? controller.getBlockState().getValue(HorizontalMachineBlock.FACING).getOpposite()
                 : Direction.NORTH;
         Set<BlockPos> fill = floodFill(level, controllerPos.relative(direction));
-        if (fill.isEmpty()) {
-            return null;
-        }
         fill.add(controllerPos.immutable());
         BlockPos min = controllerPos;
         BlockPos max = controllerPos;

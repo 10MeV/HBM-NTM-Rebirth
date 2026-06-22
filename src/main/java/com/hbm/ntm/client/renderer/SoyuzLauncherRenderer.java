@@ -16,7 +16,7 @@ public class SoyuzLauncherRenderer implements BlockEntityRenderer<SoyuzLauncherB
 
     @Override
     public boolean shouldRenderOffScreen(SoyuzLauncherBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

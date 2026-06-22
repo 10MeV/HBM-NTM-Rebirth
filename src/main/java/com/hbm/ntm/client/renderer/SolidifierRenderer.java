@@ -19,7 +19,7 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
 
     @Override
     public boolean shouldRenderOffScreen(SolidifierBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

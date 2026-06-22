@@ -1,4 +1,2 @@
-{
-  "parent": "hbm_ntm_rebirth:block/lantern"
-}
+{ "parent": "minecraft:builtin/entity" }
 

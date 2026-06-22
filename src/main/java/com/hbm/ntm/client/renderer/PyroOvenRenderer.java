@@ -23,7 +23,7 @@ public class PyroOvenRenderer implements BlockEntityRenderer<PyroOvenBlockEntity
 
     @Override
     public boolean shouldRenderOffScreen(PyroOvenBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

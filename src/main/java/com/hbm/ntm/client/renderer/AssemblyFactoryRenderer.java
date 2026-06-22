@@ -23,7 +23,7 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
 
     @Override
     public boolean shouldRenderOffScreen(AssemblyFactoryBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

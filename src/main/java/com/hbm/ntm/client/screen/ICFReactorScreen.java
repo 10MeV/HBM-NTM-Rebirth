@@ -4,8 +4,8 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.ICFReactorBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.menu.ICFReactorMenu;
+import com.hbm.ntm.util.BobMathUtil;
 import java.util.List;
-import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -29,7 +29,7 @@ public class ICFReactorScreen extends AbstractContainerScreen<ICFReactorMenu> {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, 114);
         graphics.blit(TEXTURE, leftPos + 36, topPos + 122, 36, 122, 176, 108);
         if (menu.getMaxLaser() > 0L) {
-            int laser = (int) Math.max(0L, Math.min(70L, menu.getLaser() * 70L / menu.getMaxLaser()));
+            int laser = (int) (menu.getLaser() * 70L / menu.getMaxLaser());
             if (laser > 0) {
                 graphics.blit(TEXTURE, leftPos + 8, topPos + 88 - laser, 212, 192 - laser, 16, laser);
             }
@@ -80,9 +80,6 @@ public class ICFReactorScreen extends AbstractContainerScreen<ICFReactorMenu> {
     }
 
     private static String shortNumber(long value) {
-        if (value >= 1_000_000_000L) return String.format(Locale.US, "%.1fG", value / 1_000_000_000.0D);
-        if (value >= 1_000_000L) return String.format(Locale.US, "%.1fM", value / 1_000_000.0D);
-        if (value >= 1_000L) return String.format(Locale.US, "%.1fk", value / 1_000.0D);
-        return Long.toString(value);
+        return BobMathUtil.getShortNumber(value);
     }
 }

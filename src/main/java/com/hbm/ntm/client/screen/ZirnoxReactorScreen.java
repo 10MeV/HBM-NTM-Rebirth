@@ -33,8 +33,8 @@ public class ZirnoxReactorScreen extends AbstractContainerScreen<ZirnoxReactorMe
         drawVerticalGauge(graphics, 160, 108, 18, 12, menu.getSteamTank().scaledFill(6), 238, 0);
         drawVerticalGauge(graphics, 142, 108, 18, 12, menu.getCarbonDioxideTank().scaledFill(6), 238, 0);
         drawVerticalGauge(graphics, 178, 108, 18, 12, menu.getWaterTank().scaledFill(6), 238, 0);
-        drawVerticalGauge(graphics, 160, 33, 18, 17, menu.getHeatScaled(12), 220, 0);
-        drawVerticalGauge(graphics, 178, 33, 18, 17, menu.getPressureScaled(12), 220, 0);
+        drawVerticalGauge(graphics, 160, 33, 18, 17, menu.getHeatScaled(12), 220, 0, 18);
+        drawVerticalGauge(graphics, 178, 33, 18, 17, menu.getPressureScaled(12), 220, 0, 18);
         if (menu.isOn()) {
             for (int x = 0; x < 4; x++) {
                 for (int y = 0; y < 4; y++) {
@@ -72,7 +72,7 @@ public class ZirnoxReactorScreen extends AbstractContainerScreen<ZirnoxReactorMe
         renderTankTooltip(graphics, mouseX, mouseY, menu.getCarbonDioxideTank(), 142, 108, 18, 12);
         renderTankTooltip(graphics, mouseX, mouseY, menu.getWaterTank(), 178, 108, 18, 12);
         if (isHovering(160, 33, 18, 17, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal("Temperature: " + menu.getTemperatureDisplay() + " C"),
+            graphics.renderTooltip(font, Component.literal("Temperature: " + menu.getTemperatureDisplay() + "\u00b0C"),
                     mouseX, mouseY);
         } else if (isHovering(178, 33, 18, 17, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal("Pressure: " + menu.getPressureDisplay() + " bar"),
@@ -127,8 +127,12 @@ public class ZirnoxReactorScreen extends AbstractContainerScreen<ZirnoxReactorMe
 
     private void drawVerticalGauge(GuiGraphics graphics, int x, int y, int width, int height, int scaled,
             int textureX, int textureY) {
-        int clamped = Math.max(0, Math.min(12, scaled));
-        graphics.blit(TEXTURE, leftPos + x, topPos + y, textureX, textureY + height * clamped, width, height);
+        drawVerticalGauge(graphics, x, y, width, height, scaled, textureX, textureY, height);
+    }
+
+    private void drawVerticalGauge(GuiGraphics graphics, int x, int y, int width, int height, int scaled,
+            int textureX, int textureY, int textureStep) {
+        graphics.blit(TEXTURE, leftPos + x, topPos + y, textureX, textureY + textureStep * scaled, width, height);
     }
 
     private void renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY, HbmFluidGuiHelper.TankData tank,

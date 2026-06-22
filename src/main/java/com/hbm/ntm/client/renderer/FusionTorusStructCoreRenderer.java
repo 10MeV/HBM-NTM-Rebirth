@@ -26,12 +26,12 @@ public class FusionTorusStructCoreRenderer implements BlockEntityRenderer<Fusion
 
     @Override
     public boolean shouldRenderOffScreen(FusionTorusStructCoreBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override

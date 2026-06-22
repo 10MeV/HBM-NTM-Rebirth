@@ -103,7 +103,23 @@ public class LegacyEmitterBlockEntity extends BlockEntity {
 
     @Override
     public AABB getRenderBoundingBox() {
-        return INFINITE_EXTENT_AABB;
+        AABB box = new AABB(worldPosition);
+        BlockState state = getBlockState();
+        if (!state.hasProperty(LegacyEmitterBlock.FACING)) {
+            return box.inflate(1.0D);
+        }
+        int renderRange = LegacyEmitterBeamRenderer.range(beam);
+        if (renderRange <= 0) {
+            return box.inflate(1.0D);
+        }
+        Direction direction = state.getValue(LegacyEmitterBlock.FACING);
+        Vec3 start = Vec3.atCenterOf(worldPosition);
+        Vec3 end = start.add(
+                direction.getStepX() * (renderRange + 1.0D),
+                direction.getStepY() * (renderRange + 1.0D),
+                direction.getStepZ() * (renderRange + 1.0D));
+        double pad = Math.max(1.0D, Math.max(girth, girth * 2.25D));
+        return box.minmax(new AABB(start, end).inflate(pad));
     }
 
     @Override

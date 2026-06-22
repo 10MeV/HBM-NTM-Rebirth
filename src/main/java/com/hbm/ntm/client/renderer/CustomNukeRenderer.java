@@ -32,7 +32,7 @@ public class CustomNukeRenderer implements BlockEntityRenderer<CustomNukeBlockEn
 
     @Override
     public boolean shouldRenderOffScreen(CustomNukeBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

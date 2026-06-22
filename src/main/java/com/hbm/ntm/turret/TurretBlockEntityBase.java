@@ -90,6 +90,9 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
     private static final String TAG_INDEX = "Index";
     private static final long DEFAULT_MAX_POWER = 100_000L;
     private static final double LEGACY_SYNC_RANGE = 250.0D;
+    private static final double RENDER_BOUNDS_HORIZONTAL = 6.0D;
+    private static final double RENDER_BOUNDS_HEIGHT = 7.0D;
+    private static final double RENDER_BEAM_PAD = 1.0D;
 
     public static final int SLOT_CHIP = 0;
     public static final int SLOT_AMMO_START = 1;
@@ -166,7 +169,17 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
 
     @Override
     public AABB getRenderBoundingBox() {
-        return INFINITE_EXTENT_AABB;
+        Vec3 pivot = Vec3.atLowerCornerOf(worldPosition).add(getRenderHorizontalOffset());
+        AABB bounds = new AABB(
+                pivot.x - RENDER_BOUNDS_HORIZONTAL, pivot.y, pivot.z - RENDER_BOUNDS_HORIZONTAL,
+                pivot.x + RENDER_BOUNDS_HORIZONTAL, pivot.y + RENDER_BOUNDS_HEIGHT,
+                pivot.z + RENDER_BOUNDS_HORIZONTAL);
+        if (beamTicks > 0 && beamDistance > 0.0D) {
+            Vec3 start = getTurretPos();
+            Vec3 end = start.add(getBarrelHeading().scale(beamDistance));
+            bounds = bounds.minmax(new AABB(start, end).inflate(RENDER_BEAM_PAD));
+        }
+        return bounds;
     }
 
     @Override

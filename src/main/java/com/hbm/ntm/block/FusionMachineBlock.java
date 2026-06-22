@@ -60,13 +60,23 @@ public class FusionMachineBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && !player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer) {
+        if (!hasLegacyGui()) {
+            return InteractionResult.PASS;
+        }
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.CONSUME;
+        }
+        if (player instanceof ServerPlayer serverPlayer) {
             BlockEntity resolved = MultiblockHelper.resolveCoreBlockEntity(level, pos);
             if (resolved instanceof MenuProvider menuProvider) {
                 NetworkHooks.openScreen(serverPlayer, menuProvider, resolved.getBlockPos());
+                return InteractionResult.CONSUME;
             }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.PASS;
     }
 
     @Nullable
@@ -139,6 +149,13 @@ public class FusionMachineBlock extends LegacyVisibleMultiblockMachineBlock {
         } else if (blockEntity instanceof FusionPlasmaForgeBlockEntity forge) {
             for (ItemStack stack : forge.getDrops()) Block.popResource(level, pos, stack);
         }
+    }
+
+    private boolean hasLegacyGui() {
+        return switch (kind) {
+            case TORUS, KLYSTRON, BREEDER, PLASMA_FORGE -> true;
+            case KLYSTRON_CREATIVE, COLLECTOR, BOILER, COUPLER, MHDT -> false;
+        };
     }
 
     public enum Kind {

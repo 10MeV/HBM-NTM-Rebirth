@@ -3,6 +3,7 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.blockentity.RadarBlockEntity;
 import com.hbm.ntm.blockentity.RadarScreenBlockEntity;
 import com.hbm.ntm.api.entity.RadarScreenDisplayProfile;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
@@ -42,7 +43,7 @@ public class RadarScreenBlock extends LegacyVisibleMultiblockMachineBlock {
         }
         if (!level.isClientSide
                 && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof RadarScreenBlockEntity screen) {
+                && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof RadarScreenBlockEntity screen) {
             var radarPos = RadarScreenDisplayProfile.linkedRadarPos(screen.getSnapshot());
             if (radarPos.isPresent()
                     && level.getBlockEntity(radarPos.get()) instanceof RadarBlockEntity radar) {

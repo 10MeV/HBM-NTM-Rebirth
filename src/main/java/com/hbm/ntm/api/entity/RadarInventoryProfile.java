@@ -17,7 +17,8 @@ public final class RadarInventoryProfile {
     }
 
     public static boolean isValidStack(int slot, ItemStack stack) {
-        return (slot >= 0 && slot < COMMAND_LINK_SLOT_COUNT && isCommandLinkItem(stack))
+        return (slot == 0 && HbmInventoryMenuHelper.isBatteryLike(stack))
+                || (slot >= 0 && slot < COMMAND_LINK_SLOT_COUNT && isCommandLinkItem(stack))
                 || (slot == SLOT_LINKER && isRadarLinker(stack))
                 || (slot == SLOT_BATTERY && HbmInventoryMenuHelper.isBatteryLike(stack));
     }

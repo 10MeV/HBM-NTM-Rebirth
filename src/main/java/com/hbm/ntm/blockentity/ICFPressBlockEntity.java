@@ -69,9 +69,7 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_EMPTY -> stack.is(ModItems.ICF_PELLET_EMPTY.get());
-                case SLOT_MUON -> stack.is(ModItems.PARTICLE_MUON.get());
-                case SLOT_FUEL_1, SLOT_FUEL_2 -> !stack.isEmpty();
+                case SLOT_EMPTY, SLOT_MUON, SLOT_FUEL_1, SLOT_FUEL_2, SLOT_FLUID_ID_1, SLOT_FLUID_ID_2 -> true;
                 default -> false;
             };
         }

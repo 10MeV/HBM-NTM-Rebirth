@@ -78,6 +78,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "machine_turbine_base",
                 "machine_turbine_base",
                 "machine_turbine_base");
+        simpleCubeWithItem(ModBlocks.MACHINE_CONDENSER, "machine_condenser");
         simpleSidedCubeWithItem(ModBlocks.DECON,
                 "decon_side",
                 "decon_top",
@@ -255,8 +256,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL_REASIM_AUTO,
                 "rbmk_control_reasim_auto", "rbmk_control_reasim_auto_bottom");
         pileGraphiteBlocksWithItems();
-        existingModelBlockOnly(ModBlocks.MACHINE_ASSEMBLY_MACHINE, "machine_assembly_machine");
-        customBlockItem(ModBlocks.MACHINE_ASSEMBLY_MACHINE);
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_ASSEMBLY_MACHINE, "machines/assembly_machine");
         forceFieldWithItem();
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CHEMICAL_PLANT, "machines/chemical_plant");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_LIQUEFACTOR, "machines/liquefactor");
@@ -396,6 +396,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "tele_anchor_side");
         simpleCubeWithItem(ModBlocks.FIELD_DISTURBER, "field_disturber");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_INDUSTRIAL_TURBINE, "machines/industrial_turbine");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_LARGE_TURBINE, "machines/turbine");
         translucentCubeWithItem(ModBlocks.GLASS_BORON, "glass_boron");
         translucentCubeWithItem(ModBlocks.GLASS_LEAD, "glass_lead");
         translucentCubeWithItem(ModBlocks.GLASS_URANIUM, "glass_uranium");
@@ -590,13 +591,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     }
 
     private void existingModelWithCustomItem(RegistryObject<Block> block, String modelName) {
-        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
+        ModelFile model = particleOnlyModel(block.getId().getPath(), modelName);
         horizontalBlock(block.get(), model);
         customBlockItem(block);
     }
 
     private void visibleMachineWithItemRenderer(RegistryObject<Block> block, String modelName) {
-        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
+        ModelFile model = particleOnlyModel(block.getId().getPath(), modelName);
         horizontalBlock(block.get(), model);
         customBlockItem(block);
     }

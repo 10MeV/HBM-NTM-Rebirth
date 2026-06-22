@@ -34,6 +34,14 @@ public final class ResearchReactorFuelRuntime {
         return fuelFor(stack) != null;
     }
 
+    public static boolean isWaste(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        return FUELS.values().stream()
+                .anyMatch(spec -> ItemStack.isSameItem(stack, spec.waste()));
+    }
+
     public static List<DisplayFuel> displayFuels() {
         return FUELS.entrySet().stream()
                 .map(entry -> new DisplayFuel(new ItemStack(entry.getKey()), entry.getValue()))

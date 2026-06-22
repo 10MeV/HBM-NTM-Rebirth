@@ -18,7 +18,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
 
     @Override
     public boolean shouldRenderOffScreen(MachineLpw2BlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

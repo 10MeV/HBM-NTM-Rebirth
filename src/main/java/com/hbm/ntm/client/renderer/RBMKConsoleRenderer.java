@@ -36,7 +36,7 @@ public class RBMKConsoleRenderer implements BlockEntityRenderer<RBMKConsoleBlock
 
     @Override
     public boolean shouldRenderOffScreen(RBMKConsoleBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

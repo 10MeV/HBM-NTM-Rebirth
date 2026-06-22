@@ -23,7 +23,7 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
 
     @Override
     public boolean shouldRenderOffScreen(PABlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

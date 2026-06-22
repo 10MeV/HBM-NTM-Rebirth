@@ -1,18 +1,7 @@
 {
-  "loader": "forge:obj",
-  "model": "hbm_ntm_rebirth:models/block/nuke/boy.obj",
-  "flip_v": true,
-  "automatic_culling": false,
-  "render_type": "minecraft:cutout",
+  "parent": "minecraft:block/block",
   "textures": {
-    "particle": "hbm_ntm_rebirth:block/nuke/custom_nuke",
-    "default": "hbm_ntm_rebirth:block/nuke/custom_nuke",
-    "texture0": "hbm_ntm_rebirth:block/nuke/custom_nuke"
+    "particle": "hbm_ntm_rebirth:block/nuke_custom"
   },
-  "display": {
-    "gui": { "rotation": [30, 225, 0], "translation": [0, -3, 0], "scale": [0.32, 0.32, 0.32] },
-    "ground": { "translation": [0, 3, 0], "scale": [0.16, 0.16, 0.16] },
-    "thirdperson_righthand": { "rotation": [75, 225, 0], "translation": [0, 1, 0], "scale": [0.32, 0.32, 0.32] },
-    "firstperson_righthand": { "rotation": [0, 135, 0], "translation": [0, 2, 0], "scale": [0.32, 0.32, 0.32] }
-  }
+  "elements": []
 }

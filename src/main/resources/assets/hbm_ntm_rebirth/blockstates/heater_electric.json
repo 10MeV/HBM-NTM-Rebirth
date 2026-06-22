@@ -1,18 +1,18 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machines/electric_heater",
+      "model": "hbm_ntm_rebirth:block/heater_electric",
       "y": 90
     },
     "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machines/electric_heater"
+      "model": "hbm_ntm_rebirth:block/heater_electric"
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/machines/electric_heater",
+      "model": "hbm_ntm_rebirth:block/heater_electric",
       "y": 180
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machines/electric_heater",
+      "model": "hbm_ntm_rebirth:block/heater_electric",
       "y": 270
     }
   }

@@ -27,7 +27,7 @@ public class FusionPlasmaForgeMenu extends AbstractContainerMenu {
     private long power;
     private long maxPower;
     private long plasmaEnergy;
-    private int progressMilli;
+    private double progress;
     private int booster;
     private int maxBooster;
     private int connected;
@@ -56,8 +56,8 @@ public class FusionPlasmaForgeMenu extends AbstractContainerMenu {
                 () -> maxPower, value -> maxPower = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPlasmaEnergySync,
                 () -> plasmaEnergy, value -> plasmaEnergy = value);
-        HbmMenuDataSlots.addInt(this::addDataSlot, () -> (int) Math.round(blockEntity.getProgress() * 1000.0D),
-                value -> progressMilli = value);
+        HbmMenuDataSlots.addDouble(this::addDataSlot, blockEntity::getProgress, () -> progress,
+                value -> progress = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getBooster, value -> booster = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getMaxBooster, value -> maxBooster = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, () -> blockEntity.isConnected() ? 1 : 0,
@@ -69,7 +69,7 @@ public class FusionPlasmaForgeMenu extends AbstractContainerMenu {
     public long getPower() { return power; }
     public long getMaxPower() { return maxPower; }
     public long getPlasmaEnergy() { return plasmaEnergy; }
-    public double getProgress() { return progressMilli / 1000.0D; }
+    public double getProgress() { return progress; }
     public int getBooster() { return booster; }
     public int getMaxBooster() { return maxBooster; }
     public boolean isConnected() { return connected != 0; }
@@ -79,7 +79,7 @@ public class FusionPlasmaForgeMenu extends AbstractContainerMenu {
     }
 
     public int getProgressWidth(int maxWidth) {
-        return (int) Math.round(Math.max(0.0D, Math.min(1.0D, getProgress())) * maxWidth);
+        return (int) Math.ceil(getProgress() * maxWidth);
     }
 
     public int getBoosterHeight(int maxHeight) {

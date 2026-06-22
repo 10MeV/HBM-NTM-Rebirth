@@ -30,6 +30,7 @@ public class Mats {
 
     public static final NTMMaterial MAT_STONE = makeSmeltable(_VS, "Stone", 0x7F7F7F, 0x353535, 0x4D2F23).n();
     public static final NTMMaterial MAT_CARBON = makeAdditive(699, "Carbon", 0x363636, 0x030303, 0x404040).n();
+    public static final NTMMaterial MAT_GRAPHITE = make(620, "Graphite").setConversion(MAT_CARBON, 1, 1).n();
     public static final NTMMaterial MAT_IRON = makeSmeltable(2600, "Iron", 0xFFFFFF, 0x353535, 0xFFA259).m();
     public static final NTMMaterial MAT_GOLD = makeSmeltable(7900, "Gold", 0xFFFF8B, 0xC26E00, 0xE8D754).m();
     public static final NTMMaterial MAT_REDSTONE = makeSmeltable(_VS + 1, "Redstone", 0xE3260C, 0x700E06, 0xFF1000).n();
@@ -63,6 +64,7 @@ public class Mats {
     public static final NTMMaterial MAT_ARSENIC = makeSmeltable(3300, "Arsenic", "As", 0x6CBABA, 0x242525, 0x558080).m();
     public static final NTMMaterial MAT_STRONTIUM = makeSmeltable(3800, "Strontium", "Sr", 0xF1E8BA, 0x271E00, 0xCAC193).m();
     public static final NTMMaterial MAT_CALCIUM = makeSmeltable(2000, "Calcium", "Ca", 0xCFCFA6, 0x747F6E, 0xB7B784).m();
+    public static final NTMMaterial MAT_SODIUM = makeSmeltable(1100, "Sodium", "Na", 0xD3BF9E, 0x3A5A6B, 0x7E9493).m();
     public static final NTMMaterial MAT_CADMIUM = makeSmeltable(4800, "Cadmium", "Cd", 0xFFFADE, 0x350000, 0xA85600).m();
     public static final NTMMaterial MAT_STEEL = makeSmeltable(_AS, "Steel", 0xAFAFAF, 0x0F0F0F, 0x4A4A4A).m();
     public static final NTMMaterial MAT_MINGRADE = makeSmeltable(_AS + 1, "Mingrade", "RedCopper", 0xFFBA7D, 0xAF1700, 0xE44C0F).m();
@@ -92,6 +94,8 @@ public class Mats {
         registerModernPrefix("plate_", PLATE);
         registerModernPrefix("dust_tiny_", DUSTTINY);
         registerModernPrefix("dust_", DUST);
+        registerModernPrefix("powder_tiny_", DUSTTINY);
+        registerModernPrefix("powder_", DUST);
         registerModernPrefix("nugget_", NUGGET);
         registerModernPrefix("bolt_", BOLT);
         registerModernPrefix("wire_dense_", DENSEWIRE);
@@ -99,6 +103,7 @@ public class Mats {
         registerModernPrefix("block_", BLOCK);
 
         registerModernMaterial(MAT_IRON, "iron");
+        registerModernMaterial(MAT_GRAPHITE, "graphite");
         registerModernMaterial(MAT_GOLD, "gold");
         registerModernMaterial(MAT_COPPER, "copper");
         registerModernMaterial(MAT_TITANIUM, "titanium");
@@ -127,6 +132,7 @@ public class Mats {
         registerModernMaterial(MAT_ARSENIC, "arsenic");
         registerModernMaterial(MAT_STRONTIUM, "strontium");
         registerModernMaterial(MAT_CALCIUM, "calcium");
+        registerModernMaterial(MAT_SODIUM, "sodium");
         registerModernMaterial(MAT_CADMIUM, "cadmium");
         registerModernMaterial(MAT_STEEL, "steel");
         registerModernMaterial(MAT_MINGRADE, "mingrade", "red_copper", "redcopper");
@@ -264,14 +270,23 @@ public class Mats {
             }
             return null;
         }
+        NTMMaterial bareIngot = "lithium".equals(path) ? MAT_LITHIUM : null;
+        if (bareIngot != null) {
+            return new MaterialStack(bareIngot, INGOT.q(1));
+        }
+        MaterialStack best = null;
+        int bestPrefixLength = -1;
         for (Map.Entry<String, MaterialShapes> entry : MODERN_PATH_PREFIXES.entrySet()) {
             String prefix = entry.getKey();
             if (path.startsWith(prefix)) {
                 NTMMaterial material = MODERN_PATH_MATERIALS.get(path.substring(prefix.length()));
-                return material == null ? null : new MaterialStack(material, entry.getValue().q(1));
+                if (material != null && prefix.length() > bestPrefixLength) {
+                    best = new MaterialStack(material, entry.getValue().q(1));
+                    bestPrefixLength = prefix.length();
+                }
             }
         }
-        return null;
+        return best;
     }
 
     public static String formatAmount(int amount, boolean showInMb) {

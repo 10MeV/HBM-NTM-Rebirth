@@ -17,6 +17,7 @@ import com.hbm.ntm.registry.ModItems;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -171,5 +172,35 @@ public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockE
     private boolean hasCatalyst() {
         ItemStackHandler items = getItems();
         return items != null && items.getStackInSlot(SLOT_CATALYST).is(ModItems.CATALYTIC_CONVERTER.get());
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.putLong("power", energy.getPower());
+        inputTank.writeToNbt(tag, "input");
+        reformateTank.writeToNbt(tag, "o1");
+        petroleumTank.writeToNbt(tag, "o2");
+        hydrogenTank.writeToNbt(tag, "o3");
+    }
+
+    @Override
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        if (tag.contains("power")) {
+            energy.setPower(tag.getLong("power"));
+        }
+        if (tag.contains("input")) {
+            inputTank.readFromNbt(tag, "input");
+        }
+        if (tag.contains("o1")) {
+            reformateTank.readFromNbt(tag, "o1");
+        }
+        if (tag.contains("o2")) {
+            petroleumTank.readFromNbt(tag, "o2");
+        }
+        if (tag.contains("o3")) {
+            hydrogenTank.readFromNbt(tag, "o3");
+        }
     }
 }

@@ -19,6 +19,7 @@ import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeExtraData;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
 import com.hbm.ntm.recipe.GenericMachineRecipeSelector;
+import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModSounds;
@@ -73,8 +74,12 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
             3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
     };
     private static final int[] OUTPUT_SLOTS = { SLOT_OUTPUT };
-    private static final String TAG_SELECTED_RECIPE = "recipe";
-    private static final String TAG_PROGRESS = "progress";
+    private static final String TAG_POWER = "power";
+    private static final String TAG_MAX_POWER = "maxPower";
+    private static final String TAG_SELECTED_RECIPE = "recipe0";
+    private static final String TAG_PROGRESS = "progress0";
+    private static final String TAG_MODERN_SELECTED_RECIPE = "recipe";
+    private static final String TAG_MODERN_PROGRESS = "progress";
     private static final String TAG_BOOSTER = "booster";
     private static final String TAG_MAX_BOOSTER = "maxBooster";
     private static final String TAG_DID_PROCESS = "didProcess";
@@ -101,11 +106,11 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> !stack.isEmpty();
+                case SLOT_BATTERY -> true;
                 case SLOT_BLUEPRINT -> stack.is(ModItems.BLUEPRINTS.get());
                 case SLOT_BOOSTER -> boosterValue(stack) > 0;
                 case SLOT_OUTPUT -> false;
-                default -> isInputSlot(slot);
+                default -> isRecipeInputValid(slot, stack);
             };
         }
 
@@ -221,6 +226,7 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     public float getPlasmaR() { return plasmaR; }
     public float getPlasmaG() { return plasmaG; }
     public float getPlasmaB() { return plasmaB; }
+    public int getTimeOffset() { return timeOffset; }
     public float getArm(float partialTick) { return prevArm + (arm - prevArm) * partialTick; }
     public double getRotor(float partialTick) { return prevRing + (ring - prevRing) * partialTick; }
     public double[] getStrikerPositions(float partialTick) { return armStriker.getPositions(partialTick); }
@@ -374,6 +380,8 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "items", items);
         inputTank.writeToNbt(tag, "i");
+        tag.putLong(TAG_POWER, energy.getPower());
+        tag.putLong(TAG_MAX_POWER, energy.getMaxPower());
         tag.putString(TAG_SELECTED_RECIPE, selectedRecipe);
         tag.putDouble(TAG_PROGRESS, progress);
         tag.putInt(TAG_BOOSTER, booster);
@@ -387,8 +395,18 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (hasTankTag(tag, "i")) {
             inputTank.readFromNbt(tag, "i");
         }
-        selectedRecipe = GenericMachineRecipeSelector.normalize(tag.getString(TAG_SELECTED_RECIPE));
-        progress = tag.getDouble(TAG_PROGRESS);
+        if (tag.contains(TAG_POWER)) {
+            energy.setPower(tag.getLong(TAG_POWER));
+        }
+        if (tag.contains(TAG_MAX_POWER)) {
+            long maxPower = tag.getLong(TAG_MAX_POWER);
+            energy.setMaxPower(maxPower);
+            energy.setTransferRates(maxPower, 0L);
+        }
+        selectedRecipe = GenericMachineRecipeSelector.normalize(
+                tag.contains(TAG_SELECTED_RECIPE) ? tag.getString(TAG_SELECTED_RECIPE)
+                        : tag.getString(TAG_MODERN_SELECTED_RECIPE));
+        progress = tag.contains(TAG_PROGRESS) ? tag.getDouble(TAG_PROGRESS) : tag.getDouble(TAG_MODERN_PROGRESS);
         booster = tag.getInt(TAG_BOOSTER);
         maxBooster = tag.getInt(TAG_MAX_BOOSTER);
     }
@@ -432,8 +450,8 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         data.writeBoolean(connected);
         data.writeInt(booster);
         data.writeInt(maxBooster);
-        data.writeUtf(selectedRecipe);
         data.writeDouble(progress);
+        data.writeUtf(selectedRecipe);
     }
 
     @Override
@@ -451,8 +469,8 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         connected = data.readBoolean();
         booster = data.readInt();
         maxBooster = data.readInt();
-        selectedRecipe = GenericMachineRecipeSelector.normalize(data.readUtf());
         progress = data.readDouble();
+        selectedRecipe = GenericMachineRecipeSelector.normalize(data.readUtf());
     }
 
     @Override
@@ -651,6 +669,36 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private static boolean isInputSlot(int slot) {
         return slot >= SLOT_INPUT_START && slot <= SLOT_INPUT_END;
+    }
+
+    private boolean isRecipeInputValid(int slot, ItemStack stack) {
+        if (!isInputSlot(slot) || stack.isEmpty() || level == null) {
+            return false;
+        }
+        GenericMachineRecipe recipe = getSelectedRecipeDefinition();
+        if (recipe == null) {
+            return false;
+        }
+        int inputIndex = slot - SLOT_INPUT_START;
+        List<HbmIngredient> inputs = recipe.getItemInputs();
+        if (inputIndex < inputs.size() && inputs.get(inputIndex).test(stack, true)) {
+            return true;
+        }
+        if (inputIndex != 0 || recipe.getAutoSwitchGroup() == null) {
+            return false;
+        }
+        String group = recipe.getAutoSwitchGroup();
+        ItemStack blueprint = items.getStackInSlot(SLOT_BLUEPRINT);
+        for (GenericMachineRecipe candidate : GenericMachineRecipeSelector.recipes(level,
+                GenericMachineRecipe.Machine.PLASMA_FORGE, blueprint)) {
+            if (!group.equals(candidate.getAutoSwitchGroup()) || candidate.getItemInputs().isEmpty()) {
+                continue;
+            }
+            if (candidate.getItemInputs().get(0).test(stack, true)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean canExtractExternalSlot(int slot) {

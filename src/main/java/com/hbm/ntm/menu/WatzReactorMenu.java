@@ -30,7 +30,6 @@ public class WatzReactorMenu extends AbstractContainerMenu {
     private int fluxDisplayScaled;
     private boolean on;
     private boolean locked;
-    private boolean mudOverflowDeferred;
 
     public WatzReactorMenu(int containerId, Inventory playerInventory, FriendlyByteBuf data) {
         this(containerId, playerInventory, getBlockEntity(playerInventory, data.readBlockPos()));
@@ -50,9 +49,9 @@ public class WatzReactorMenu extends AbstractContainerMenu {
             }
         }
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 147, 205);
-        coolantTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getCoolantTank());
-        hotCoolantTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getHotCoolantTank());
-        mudTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getMudTank());
+        coolantTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getCoolantDisplayTank());
+        hotCoolantTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getHotCoolantDisplayTank());
+        mudTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getMudDisplayTank());
         addDataSlots();
     }
 
@@ -86,10 +85,6 @@ public class WatzReactorMenu extends AbstractContainerMenu {
 
     public boolean isLocked() {
         return locked;
-    }
-
-    public boolean isMudOverflowDeferred() {
-        return mudOverflowDeferred;
     }
 
     @Override
@@ -149,17 +144,6 @@ public class WatzReactorMenu extends AbstractContainerMenu {
             @Override
             public void set(int value) {
                 locked = value != 0;
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.isMudOverflowDeferred() ? 1 : 0;
-            }
-
-            @Override
-            public void set(int value) {
-                mudOverflowDeferred = value != 0;
             }
         });
     }

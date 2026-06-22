@@ -29,10 +29,10 @@ public class FusionTorusMenu extends AbstractContainerMenu {
     private long power;
     private long klystronEnergy;
     private long plasmaEnergy;
-    private int progressMilli;
-    private int bonusMilli;
-    private int fuelMilli;
-    private int temperature;
+    private double progress;
+    private double bonus;
+    private double fuelConsumption;
+    private double temperature;
 
     public FusionTorusMenu(int containerId, Inventory inventory, FriendlyByteBuf data) {
         this(containerId, inventory, getBlockEntity(inventory, data.readBlockPos()));
@@ -55,14 +55,14 @@ public class FusionTorusMenu extends AbstractContainerMenu {
                 () -> klystronEnergy, value -> klystronEnergy = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPlasmaEnergy,
                 () -> plasmaEnergy, value -> plasmaEnergy = value);
-        HbmMenuDataSlots.addInt(this::addDataSlot, () -> (int) Math.round(blockEntity.getProgress() * 1000.0D),
-                value -> progressMilli = value);
-        HbmMenuDataSlots.addInt(this::addDataSlot, () -> (int) Math.round(blockEntity.getBonus() * 1000.0D),
-                value -> bonusMilli = value);
-        HbmMenuDataSlots.addInt(this::addDataSlot, () -> (int) Math.round(blockEntity.getFuelConsumption() * 1000.0D),
-                value -> fuelMilli = value);
-        HbmMenuDataSlots.addInt(this::addDataSlot, () -> (int) Math.round(blockEntity.getTemperature()),
-                value -> temperature = value);
+        HbmMenuDataSlots.addDouble(this::addDataSlot, blockEntity::getProgress,
+                () -> progress, value -> progress = value);
+        HbmMenuDataSlots.addDouble(this::addDataSlot, blockEntity::getBonus,
+                () -> bonus, value -> bonus = value);
+        HbmMenuDataSlots.addDouble(this::addDataSlot, blockEntity::getFuelConsumption,
+                () -> fuelConsumption, value -> fuelConsumption = value);
+        HbmMenuDataSlots.addDouble(this::addDataSlot, blockEntity::getTemperature,
+                () -> temperature, value -> temperature = value);
     }
 
     public FusionTorusBlockEntity getBlockEntity() { return blockEntity; }
@@ -72,10 +72,10 @@ public class FusionTorusMenu extends AbstractContainerMenu {
     public long getPower() { return power; }
     public long getKlystronEnergy() { return klystronEnergy; }
     public long getPlasmaEnergy() { return plasmaEnergy; }
-    public double getProgress() { return progressMilli / 1000.0D; }
-    public double getBonus() { return bonusMilli / 1000.0D; }
-    public double getFuelConsumption() { return fuelMilli / 1000.0D; }
-    public int getTemperature() { return temperature; }
+    public double getProgress() { return progress; }
+    public double getBonus() { return bonus; }
+    public double getFuelConsumption() { return fuelConsumption; }
+    public double getTemperature() { return temperature; }
 
     @Override
     public boolean stillValid(Player player) {

@@ -56,7 +56,7 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
 
     @Override
     public boolean shouldRenderOffScreen(RBMKColumnBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

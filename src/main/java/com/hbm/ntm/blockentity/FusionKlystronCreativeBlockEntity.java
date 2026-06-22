@@ -63,7 +63,8 @@ public class FusionKlystronCreativeBlockEntity extends BlockEntity
         }
         float speed = klystron.fanSpeed / 5.0F;
         klystron.audio = LegacyMachineAudioBridge.updateLoop(klystron.audio, klystron, "FEL_LOOP",
-                klystron.fanSpeed > 0.0F, 30.0D, 15.0F, klystron.getVolume(speed), speed);
+                klystron.fanSpeed > 0.0F, 30.0D, 15.0F, klystron.getVolume(speed), speed,
+                0.5D, 2.5D, 0.5D);
     }
 
     public float getFan(float partialTick) {

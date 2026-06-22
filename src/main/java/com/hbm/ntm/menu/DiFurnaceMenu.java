@@ -96,10 +96,8 @@ public class DiFurnaceMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_SLOT_END, true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (!moveItemStackTo(stack, DiFurnaceBlockEntity.SLOT_FUEL,
-                DiFurnaceBlockEntity.SLOT_FUEL + 1, false)
-                && !moveItemStackTo(stack, DiFurnaceBlockEntity.SLOT_UPPER,
-                DiFurnaceBlockEntity.SLOT_LOWER + 1, false)) {
+        } else if (!moveItemStackTo(stack, DiFurnaceBlockEntity.SLOT_UPPER,
+                DiFurnaceBlockEntity.SLOT_FUEL + 1, false)) {
             return ItemStack.EMPTY;
         }
         HbmInventoryMenuHelper.finishQuickMove(slot, stack);

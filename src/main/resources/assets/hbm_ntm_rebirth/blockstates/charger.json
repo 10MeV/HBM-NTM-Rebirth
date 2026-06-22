@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "hbm_ntm_rebirth:block/charger"
+    },
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/charger"
+    },
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/charger"
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/charger"
+    },
+    "facing=up": {
+      "model": "hbm_ntm_rebirth:block/charger"
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/charger"
+    }
+  }
+}

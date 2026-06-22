@@ -25,8 +25,8 @@ public class FusionBreederMenu extends AbstractContainerMenu {
     private final FusionBreederBlockEntity blockEntity;
     private final HbmFluidGuiHelper.TankData inputTank;
     private final HbmFluidGuiHelper.TankData outputTank;
-    private int neutronEnergy;
-    private int progressMilli;
+    private double neutronEnergy;
+    private double progress;
 
     public FusionBreederMenu(int containerId, Inventory inventory, FriendlyByteBuf data) {
         this(containerId, inventory, getBlockEntity(inventory, data.readBlockPos()));
@@ -42,17 +42,17 @@ public class FusionBreederMenu extends AbstractContainerMenu {
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 118, 176);
         inputTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getInputTank());
         outputTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getOutputTank());
-        HbmMenuDataSlots.addInt(this::addDataSlot, () -> (int) Math.round(blockEntity.getNeutronEnergySync()),
-                value -> neutronEnergy = value);
-        HbmMenuDataSlots.addInt(this::addDataSlot, () -> (int) Math.round(blockEntity.getProgress() / FusionBreederBlockEntity.CAPACITY * 1000.0D),
-                value -> progressMilli = value);
+        HbmMenuDataSlots.addDouble(this::addDataSlot, blockEntity::getNeutronEnergySync,
+                () -> neutronEnergy, value -> neutronEnergy = value);
+        HbmMenuDataSlots.addDouble(this::addDataSlot, blockEntity::getProgress,
+                () -> progress, value -> progress = value);
     }
 
     public FusionBreederBlockEntity getBlockEntity() { return blockEntity; }
     public HbmFluidGuiHelper.TankData getInputTank() { return inputTank; }
     public HbmFluidGuiHelper.TankData getOutputTank() { return outputTank; }
-    public int getNeutronEnergy() { return neutronEnergy; }
-    public double getProgress() { return progressMilli / 1000.0D; }
+    public double getNeutronEnergy() { return neutronEnergy; }
+    public double getProgress() { return progress; }
 
     @Override
     public boolean stillValid(Player player) {

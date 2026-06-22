@@ -25,7 +25,7 @@ public class ExposureChamberRenderer implements BlockEntityRenderer<ExposureCham
 
     @Override
     public boolean shouldRenderOffScreen(ExposureChamberBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

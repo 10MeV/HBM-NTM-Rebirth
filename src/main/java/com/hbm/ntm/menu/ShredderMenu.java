@@ -1,11 +1,11 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.ShredderBlockEntity;
-import com.hbm.ntm.item.ShredderBladeItem;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
+import com.hbm.ntm.item.ShredderBladeItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -88,7 +88,7 @@ public class ShredderMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        } else if (ShredderBlockEntity.isLegacyBattery(stack)) {
             if (!moveItemStackTo(stack, ShredderBlockEntity.SLOT_BATTERY,
                     ShredderBlockEntity.SLOT_BATTERY + 1, false)) {
                 return ItemStack.EMPTY;

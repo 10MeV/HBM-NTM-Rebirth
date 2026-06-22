@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class WasteDrumBlockEntity extends BlockEntity implements MenuProvider {
     public static final int SLOT_COUNT = 12;
+    private String customName;
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -103,6 +104,9 @@ public class WasteDrumBlockEntity extends BlockEntity implements MenuProvider {
 
     @Override
     public Component getDisplayName() {
+        if (customName != null && !customName.isEmpty()) {
+            return Component.literal(customName);
+        }
         return Component.translatableWithFallback("container.wasteDrum", "Spent Fuel Pool Drum");
     }
 
@@ -116,12 +120,16 @@ public class WasteDrumBlockEntity extends BlockEntity implements MenuProvider {
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "items", items);
+        if (customName != null && !customName.isEmpty()) {
+            tag.putString("name", customName);
+        }
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "items", items);
+        customName = tag.getString("name");
     }
 
     @Override

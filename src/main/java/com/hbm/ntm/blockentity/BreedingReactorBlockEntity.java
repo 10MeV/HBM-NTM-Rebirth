@@ -124,8 +124,7 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
             return true;
         }
         ItemStack recipeOutput = recipe.output();
-        return ItemStack.isSameItemSameTags(output, recipeOutput)
-                && output.getCount() + recipeOutput.getCount() <= output.getMaxStackSize();
+        return ItemStack.isSameItem(output, recipeOutput) && output.getCount() < output.getMaxStackSize();
     }
 
     private void processItem(BreederRecipe recipe) {
@@ -136,7 +135,7 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
         ItemStack recipeOutput = recipe.output();
         if (output.isEmpty()) {
             items.setStackInSlot(OUTPUT_SLOT, recipeOutput.copy());
-        } else if (ItemStack.isSameItemSameTags(output, recipeOutput)) {
+        } else if (ItemStack.isSameItem(output, recipeOutput)) {
             output.grow(recipeOutput.getCount());
             items.setStackInSlot(OUTPUT_SLOT, output);
         }

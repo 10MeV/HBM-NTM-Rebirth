@@ -17,12 +17,12 @@ public class ICFReactorRenderer implements BlockEntityRenderer<ICFReactorBlockEn
 
     @Override
     public boolean shouldRenderOffScreen(ICFReactorBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override

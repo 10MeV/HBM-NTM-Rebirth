@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.FusionPlasmaForgeBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.ObjFusionModels;
@@ -34,9 +35,11 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = blockEntity.getBlockState();
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, light, packedOverlay);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, light, packedOverlay)
+                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
+        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
         if (blockEntity.isConnected()) {
             poseStack.pushPose();
@@ -62,7 +65,9 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
 
     private static void renderLegacyDormantPlasma(FusionPlasmaForgeBlockEntity blockEntity, ObjRenderContext context) {
         if (blockEntity.getPlasmaEnergySync() <= 0L) {
-            renderForgePart(context.withColor(0x000000), "Plasma");
+            ObjFusionModels.PLASMA_FORGE_LEGACY.renderOnlyUntextured(
+                    context.withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL).withColor(0x000000),
+                    "Plasma");
         }
     }
 
@@ -70,9 +75,9 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         if (blockEntity.getPlasmaEnergySync() <= 0L) {
             return;
         }
-        long time = System.currentTimeMillis();
+        long time = System.currentTimeMillis() + blockEntity.getTimeOffset();
         float alpha = 0.5F + (float) Math.sin(time / 500.0D) * 0.25F;
-        float mainOffset = (float) ((time / 750.0D) % 1.0D);
+        float mainOffset = (float) (sps(time / 750.0D) % 1.0D);
         float glowOffsetA = (float) ((Math.sin(time / 1000.0D) + time / 10000.0D) % 1.0D);
         float glowOffsetB = (float) ((Math.sin(time / 600.0D + 2.0D) + time / 5000.0D) % 1.0D);
         ObjRenderContext plasma = context.fullBright().withAdditiveTranslucency()
@@ -135,7 +140,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
 
     private static void renderArticulatedEffects(FusionPlasmaForgeBlockEntity blockEntity, PoseStack poseStack,
             ObjRenderContext context, float partialTick) {
-        if (!blockEntity.didProcess() || blockEntity.getPlasmaEnergySync() <= 0L || !blockEntity.isJetStableAwayFromHome()) {
+        if (!blockEntity.didProcess() || !blockEntity.isJetStableAwayFromHome()) {
             return;
         }
         double[] jet = blockEntity.getJetPositions(partialTick);
@@ -189,6 +194,10 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         LegacyUntexturedQuadRenderer.quadRgbaF(context,
                 far, y, side, far, y, -side, far - narrow, tipY, -side + narrow, far - narrow, tipY, side - narrow,
                 red, green, blue, 1.0F, 1.0F, 0.0F, 0.0F);
+    }
+
+    private static double sps(double value) {
+        return Math.sin(Math.PI / 2.0D * Math.cos(value));
     }
 
     private static void renderLegacyStellarFluxBeam(GenericMachineRecipe recipe, ObjRenderContext context,

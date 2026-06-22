@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.FusionBoilerBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjFusionModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -33,7 +34,8 @@ public class FusionBoilerRenderer implements BlockEntityRenderer<FusionBoilerBlo
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
         ObjFusionModels.BOILER_LEGACY.renderAll(ObjFusionModels.BOILER_TEXTURE,
-                new ObjRenderContext(poseStack, buffer, state, light, packedOverlay));
+                new ObjRenderContext(poseStack, buffer, state, light, packedOverlay)
+                        .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL));
         poseStack.popPose();
     }
 }

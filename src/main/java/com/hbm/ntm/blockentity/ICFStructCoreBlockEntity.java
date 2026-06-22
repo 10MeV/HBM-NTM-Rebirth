@@ -61,7 +61,23 @@ public class ICFStructCoreBlockEntity extends BlockEntity {
 
     @Override
     public AABB getRenderBoundingBox() {
-        return INFINITE_EXTENT_AABB;
+        Direction facing = getBlockState().hasProperty(HorizontalMachineBlock.FACING)
+                ? getBlockState().getValue(HorizontalMachineBlock.FACING)
+                : Direction.NORTH;
+        Direction rot = facing.getClockWise();
+        RenderBoxBuilder box = new RenderBoxBuilder(new AABB(worldPosition));
+        for (int y = 0; y < PREVIEW_HEIGHT; y++) {
+            for (int width = PREVIEW_WIDTH_MIN; width <= PREVIEW_WIDTH_MAX; width++) {
+                for (int length = PREVIEW_LENGTH_MIN; length <= PREVIEW_LENGTH_MAX; length++) {
+                    if (legacyPreviewComponent(width, y, length) < 0) {
+                        continue;
+                    }
+                    BlockPos origin = relative(worldPosition, facing, rot, width, y, length);
+                    box.include(new AABB(origin));
+                }
+            }
+        }
+        return box.build().inflate(1.0D);
     }
 
     public static int legacyPreviewComponent(int widthwiseOffset, int y, int lengthwiseOffset) {
@@ -171,5 +187,36 @@ public class ICFStructCoreBlockEntity extends BlockEntity {
                 facing.getStepX() * widthwiseOffset + rot.getStepX() * lengthwiseOffset,
                 y,
                 facing.getStepZ() * widthwiseOffset + rot.getStepZ() * lengthwiseOffset);
+    }
+
+    private static final class RenderBoxBuilder {
+        private double minX;
+        private double minY;
+        private double minZ;
+        private double maxX;
+        private double maxY;
+        private double maxZ;
+
+        private RenderBoxBuilder(AABB initial) {
+            this.minX = initial.minX;
+            this.minY = initial.minY;
+            this.minZ = initial.minZ;
+            this.maxX = initial.maxX;
+            this.maxY = initial.maxY;
+            this.maxZ = initial.maxZ;
+        }
+
+        private void include(AABB box) {
+            minX = Math.min(minX, box.minX);
+            minY = Math.min(minY, box.minY);
+            minZ = Math.min(minZ, box.minZ);
+            maxX = Math.max(maxX, box.maxX);
+            maxY = Math.max(maxY, box.maxY);
+            maxZ = Math.max(maxZ, box.maxZ);
+        }
+
+        private AABB build() {
+            return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+        }
     }
 }

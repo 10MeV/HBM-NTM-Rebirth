@@ -20,12 +20,12 @@ public class LegacyEmitterBlockEntityRenderer implements BlockEntityRenderer<Leg
 
     @Override
     public boolean shouldRenderOffScreen(LegacyEmitterBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override

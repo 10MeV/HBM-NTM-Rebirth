@@ -34,11 +34,18 @@ public class ICFReactorBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && !player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.CONSUME;
+        }
+        if (player instanceof ServerPlayer serverPlayer
                 && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof ICFReactorBlockEntity reactor) {
             NetworkHooks.openScreen(serverPlayer, reactor, reactor.getBlockPos());
+            return InteractionResult.CONSUME;
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.PASS;
     }
 
     @Nullable

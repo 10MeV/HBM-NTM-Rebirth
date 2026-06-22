@@ -11,6 +11,7 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.energy.HbmLegacyWireNode;
+import com.hbm.ntm.energy.HbmLegacyWireRenderMath;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.core.BlockPos;
@@ -50,7 +51,7 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
 
     @Override
     public boolean shouldRenderOffScreen(T blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
@@ -166,8 +167,8 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
                         line,
                         remoteMounts.size(),
                         lineCount,
-                        legacyMetadata(pylon.getBlockState()),
-                        legacyMetadata(remote.getBlockState()));
+                        HbmLegacyWireRenderMath.legacyMetadata(pylon.getBlockState()),
+                        HbmLegacyWireRenderMath.legacyMetadata(remote.getBlockState()));
                 Vec3 remoteAbs = remoteMounts.get(remoteIndex);
                 Vec3 start = startAbs.subtract(selfPos.getX(), selfPos.getY(), selfPos.getZ());
                 Vec3 remoteRelative = remoteAbs.subtract(selfPos.getX(), selfPos.getY(), selfPos.getZ());
@@ -231,8 +232,4 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
         };
     }
 
-    private static int legacyMetadata(BlockState state) {
-        Direction facing = getFacing(state);
-        return 10 + facing.ordinal();
-    }
 }

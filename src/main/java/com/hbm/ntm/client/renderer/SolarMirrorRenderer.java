@@ -19,7 +19,7 @@ public class SolarMirrorRenderer implements BlockEntityRenderer<SolarMirrorBlock
 
     @Override
     public boolean shouldRenderOffScreen(SolarMirrorBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

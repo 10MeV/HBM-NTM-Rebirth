@@ -11,7 +11,9 @@ import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.Container;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
@@ -44,11 +46,7 @@ public class RtgFurnaceBlockEntity extends BlockEntity implements MenuProvider {
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return switch (slot) {
-                case 0 -> smeltingResult(stack).isPresent();
-                case 1, 2, 3 -> RtgBlockEntity.isRtgPellet(stack);
-                default -> false;
-            };
+            return slot >= 0 && slot < getSlots();
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
@@ -156,6 +154,30 @@ public class RtgFurnaceBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     @Override
+    public CompoundTag getUpdateTag() {
+        return saveWithoutMetadata();
+    }
+
+    @Nullable
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            load(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        load(tag);
+    }
+
+    @Override
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
@@ -195,7 +217,7 @@ public class RtgFurnaceBlockEntity extends BlockEntity implements MenuProvider {
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
             int target = targetSlot(slot);
-            return target >= 0 && target < 4 ? items.insertItem(target, stack, simulate) : stack;
+            return target >= 0 ? items.insertItem(target, stack, simulate) : stack;
         }
 
         @Override

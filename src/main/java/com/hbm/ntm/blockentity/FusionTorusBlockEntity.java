@@ -107,7 +107,7 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> !stack.isEmpty();
+                case SLOT_BATTERY -> true;
                 case SLOT_BLUEPRINT -> stack.is(ModItems.BLUEPRINTS.get());
                 default -> false;
             };
@@ -182,7 +182,8 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         float speed = torus.magnetSpeed / 30.0F;
         torus.audio = LegacyMachineAudioBridge.updateLoop(torus.audio, torus, "FUSION_REACTOR_LOOP",
-                torus.magnetSpeed > 0.0F, 50.0D, 30.0F, torus.getVolume(speed), speed);
+                torus.magnetSpeed > 0.0F, 50.0D, 30.0F, torus.getVolume(speed), speed,
+                0.5D, 2.5D, 0.5D);
     }
 
     public static double getSpeedScaled(double max, double level) {
@@ -655,7 +656,7 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
             produceRecipeOutputs(recipe);
             progress -= canRunRecipe(recipe, factor) ? 1.0D : progress;
         }
-        if (bonus >= 1.0D && canFitItemOutput(recipe)) {
+        if (bonus >= 1.0D && canFitOutputsOnly(recipe)) {
             produceRecipeOutputs(recipe);
             bonus -= 1.0D;
         }
@@ -719,7 +720,11 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         for (int i = 0; i < recipe.getFluidOutputs().size() && i == 0; i++) {
             HbmFluidStack output = recipe.getFluidOutputs().get(i);
-            if (recipeTanks[3].getSpaceFor(output.type()) < output.amount()) {
+            if (recipeTanks[3].getTankType() != output.type() && recipeTanks[3].getFill() > 0) {
+                return false;
+            }
+            recipeTanks[3].setTankType(output.type());
+            if (recipeTanks[3].getFill() + output.amount() > recipeTanks[3].getMaxFill()) {
                 return false;
             }
         }
@@ -732,14 +737,31 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         ItemStack output = recipe.getItemOutputEntries().get(0).representativeStack();
         ItemStack existing = items.getStackInSlot(SLOT_OUTPUT);
-        return existing.isEmpty() || (ItemStack.isSameItemSameTags(existing, output)
+        return existing.isEmpty() || (ItemStack.isSameItem(existing, output)
                 && existing.getCount() + output.getCount() <= existing.getMaxStackSize());
+    }
+
+    private boolean canFitOutputsOnly(GenericMachineRecipe recipe) {
+        if (!canFitItemOutput(recipe)) {
+            return false;
+        }
+        for (int i = 0; i < recipe.getFluidOutputs().size() && i == 0; i++) {
+            HbmFluidStack output = recipe.getFluidOutputs().get(i);
+            if (recipeTanks[3].getTankType() != output.type() && recipeTanks[3].getFill() > 0) {
+                return false;
+            }
+            recipeTanks[3].setTankType(output.type());
+            if (recipeTanks[3].getFill() + output.amount() > recipeTanks[3].getMaxFill()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void consumeRecipeFluids(GenericMachineRecipe recipe, double factor) {
         for (int i = 0; i < Math.min(3, recipe.getFluidInputs().size()); i++) {
             int amount = (int) Math.ceil(recipe.getFluidInputs().get(i).amount() * factor);
-            recipeTanks[i].drain(amount, false);
+            recipeTanks[i].setFill(Math.max(recipeTanks[i].getFill() - amount, 0));
         }
     }
 
@@ -749,14 +771,14 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
             ItemStack existing = items.getStackInSlot(SLOT_OUTPUT);
             if (existing.isEmpty()) {
                 items.setStackInSlot(SLOT_OUTPUT, output.copy());
-            } else if (ItemStack.isSameItemSameTags(existing, output)) {
+            } else if (ItemStack.isSameItem(existing, output)) {
                 existing.grow(output.getCount());
                 items.setStackInSlot(SLOT_OUTPUT, existing);
             }
         }
         if (!recipe.getFluidOutputs().isEmpty()) {
             HbmFluidStack output = recipe.getFluidOutputs().get(0);
-            recipeTanks[3].fill(output.type(), output.amount(), output.pressure(), false);
+            recipeTanks[3].setFill(recipeTanks[3].getFill() + output.amount());
         }
     }
 
@@ -795,11 +817,11 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         int cyclesCool = coolantTank.getTankType() == HbmFluids.PERFLUOROMETHYL_COLD
                 ? coolantTank.getFill()
                 : 0;
-        int cyclesHot = hotCoolantTank.getSpaceFor(HbmFluids.PERFLUOROMETHYL);
+        int cyclesHot = hotCoolantTank.getMaxFill() - hotCoolantTank.getFill();
         int cycles = Math.min(cyclesTemp, Math.min(cyclesCool, cyclesHot));
         if (cycles > 0) {
-            coolantTank.drain(cycles, false);
-            hotCoolantTank.fill(HbmFluids.PERFLUOROMETHYL, cycles, hotCoolantTank.getPressure(), false);
+            coolantTank.setFill(coolantTank.getFill() - cycles);
+            hotCoolantTank.setFill(hotCoolantTank.getFill() + cycles);
             temperature -= TEMP_CHANGE_PER_MB * cycles;
         }
         return previousTemperature != temperature || previousCold != coolantTank.getFill()

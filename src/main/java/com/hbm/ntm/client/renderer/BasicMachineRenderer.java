@@ -19,7 +19,7 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
 
     @Override
     public boolean shouldRenderOffScreen(BasicMachineBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

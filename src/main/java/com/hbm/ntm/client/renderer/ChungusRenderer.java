@@ -22,7 +22,7 @@ public class ChungusRenderer implements BlockEntityRenderer<ChungusBlockEntity> 
 
     @Override
     public boolean shouldRenderOffScreen(ChungusBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

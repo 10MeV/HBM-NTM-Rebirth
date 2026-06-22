@@ -26,7 +26,7 @@ public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssem
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return 256;
     }
 
     @Override

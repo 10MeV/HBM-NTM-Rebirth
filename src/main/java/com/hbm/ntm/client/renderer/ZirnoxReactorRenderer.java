@@ -17,12 +17,12 @@ public class ZirnoxReactorRenderer implements BlockEntityRenderer<ZirnoxReactorB
 
     @Override
     public boolean shouldRenderOffScreen(ZirnoxReactorBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override

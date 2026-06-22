@@ -1,18 +1,18 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machines/rtg",
+      "model": "hbm_ntm_rebirth:block/machine_rtg_grey",
       "y": 90
     },
     "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machines/rtg"
+      "model": "hbm_ntm_rebirth:block/machine_rtg_grey"
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/machines/rtg",
+      "model": "hbm_ntm_rebirth:block/machine_rtg_grey",
       "y": 180
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machines/rtg",
+      "model": "hbm_ntm_rebirth:block/machine_rtg_grey",
       "y": 270
     }
   }

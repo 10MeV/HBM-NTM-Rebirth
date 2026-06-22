@@ -79,8 +79,6 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     private static final String TAG_PROGRESS = "progress";
     private static final String TAG_RECIPE = "recipe";
     private static final String TAG_DID_PROCESS = "DidProcess";
-    private static final String TAG_ANIM = "Anim";
-    private static final String TAG_FRAME = "Frame";
     private static final long DEFAULT_MAX_POWER = 1_000_000L;
     private static final int RECIPE_TANK_CAPACITY = 24_000;
     private static final int COOLANT_TANK_CAPACITY = 4_000;
@@ -369,12 +367,9 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
         for (int i = 0; i < MODULES; i++) {
             tag.putDouble(TAG_PROGRESS + i, progress[i]);
             tag.putString(TAG_RECIPE + i, selectedRecipes[i]);
-            tag.putBoolean(TAG_DID_PROCESS + i, didProcess[i]);
         }
         water.writeToNbt(tag, TAG_WATER);
         spentSteam.writeToNbt(tag, TAG_SPENT_STEAM);
-        tag.putInt(TAG_ANIM, anim);
-        tag.putBoolean(TAG_FRAME, frame);
     }
 
     @Override
@@ -398,7 +393,6 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
         for (int i = 0; i < MODULES; i++) {
             progress[i] = tag.getDouble(TAG_PROGRESS + i);
             selectedRecipes[i] = GenericMachineRecipeSelector.normalize(tag.getString(TAG_RECIPE + i));
-            didProcess[i] = tag.getBoolean(TAG_DID_PROCESS + i);
         }
         if (tag.contains(TAG_WATER)) {
             water.readFromNbt(tag, TAG_WATER);
@@ -408,37 +402,49 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
         }
         water.setTankType(HbmFluids.WATER);
         spentSteam.setTankType(HbmFluids.SPENTSTEAM);
-        anim = tag.getInt(TAG_ANIM);
-        prevAnim = anim;
-        frame = tag.getBoolean(TAG_FRAME);
         updateDynamicCapacity();
     }
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
     }
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return saveWithoutMetadata();
+        CompoundTag tag = saveWithoutMetadata();
+        writeClientSyncFields(tag);
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
         load(tag);
+        readClientSyncFields(tag);
     }
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(saveWithoutMetadata());
+        data.writeNbt(getClientSyncTag());
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         CompoundTag tag = data.readNbt();
         if (tag != null) {
-            load(tag);
+            handleClientSyncTag(tag);
+        }
+    }
+
+    private void writeClientSyncFields(CompoundTag tag) {
+        for (int i = 0; i < MODULES; i++) {
+            tag.putBoolean(TAG_DID_PROCESS + i, didProcess[i]);
+        }
+    }
+
+    private void readClientSyncFields(CompoundTag tag) {
+        for (int i = 0; i < MODULES; i++) {
+            didProcess[i] = tag.getBoolean(TAG_DID_PROCESS + i);
         }
     }
 

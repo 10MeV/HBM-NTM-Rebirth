@@ -46,6 +46,9 @@ public class RBMKControlAutoScreen extends AbstractContainerScreen<RBMKControlAu
         }
         int function = Mth.clamp(menu.getFunction(), 0, 2);
         graphics.blit(TEXTURE, leftPos + 59, topPos + 27, 184, function * 19, 26, 19);
+        if (menu.isPoweredControlRod()) {
+            graphics.blit(TEXTURE, leftPos + 136, topPos + 21, 210, menu.hasPower() ? 16 : 0, 16, 16);
+        }
     }
 
     @Override
@@ -79,7 +82,40 @@ public class RBMKControlAutoScreen extends AbstractContainerScreen<RBMKControlAu
         if (isHovering(124, 29, 16, 56, mouseX, mouseY)) {
             LegacyGuiElements.renderTextTooltip(graphics, font, mouseX, mouseY, menu.getLevelPercent() + "%");
         }
+        if (menu.isPoweredControlRod()) {
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 136, topPos + 21, 16, 16, menu.getPower(), menu.getMaxPower());
+        }
+        renderLegacyTooltips(graphics, mouseX, mouseY);
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private void renderLegacyTooltips(GuiGraphics graphics, int mouseX, int mouseY) {
+        String function = switch (Mth.clamp(menu.getFunction(), 0, 2)) {
+            case 1 -> "Function: Quadratic";
+            case 2 -> "Function: Inverse Quadratic";
+            default -> "Function: Linear";
+        };
+        LegacyGuiElements.renderInfoTextTooltip(graphics, font, mouseX, mouseY,
+                leftPos + 58, topPos + 26, 28, 19, function);
+        LegacyGuiElements.renderInfoTextTooltip(graphics, font, mouseX, mouseY,
+                leftPos + 61, topPos + 48, 22, 10, "Select linear interpolation");
+        LegacyGuiElements.renderInfoTextTooltip(graphics, font, mouseX, mouseY,
+                leftPos + 61, topPos + 59, 22, 10, "Select quadratic interpolation");
+        LegacyGuiElements.renderInfoTextTooltip(graphics, font, mouseX, mouseY,
+                leftPos + 61, topPos + 70, 22, 10, "Select inverse quadratic interpolation");
+        LegacyGuiElements.renderInfoTextTooltip(graphics, font, mouseX, mouseY,
+                leftPos + 28, topPos + 26, 30, 10, "Level at max heat",
+                "Should be smaller than level at min heat");
+        LegacyGuiElements.renderInfoTextTooltip(graphics, font, mouseX, mouseY,
+                leftPos + 28, topPos + 37, 30, 10, "Level at min heat",
+                "Should be larger than level at max heat");
+        LegacyGuiElements.renderInfoTextTooltip(graphics, font, mouseX, mouseY,
+                leftPos + 28, topPos + 48, 30, 10, "Max heat", "Must be larger than min heat");
+        LegacyGuiElements.renderInfoTextTooltip(graphics, font, mouseX, mouseY,
+                leftPos + 28, topPos + 59, 30, 10, "Min heat", "Must be smaller than max heat");
+        LegacyGuiElements.renderInfoTextTooltip(graphics, font, mouseX, mouseY,
+                leftPos + 28, topPos + 70, 30, 10, "Save parameters");
     }
 
     private void saveFields() {

@@ -6,7 +6,7 @@ import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.menu.FusionKlystronMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.TileControlPacket;
-import java.util.Locale;
+import com.hbm.ntm.util.BobMathUtil;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -55,7 +55,7 @@ public class FusionKlystronScreen extends AbstractContainerScreen<FusionKlystron
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        int power = menu.getMaxPower() <= 0L ? 0 : (int) (menu.getPower() * 52L / menu.getMaxPower());
+        int power = (int) (menu.getPower() * 52L / menu.getMaxPower());
         if (power > 0) {
             graphics.blit(TEXTURE, leftPos + 8, topPos + 70 - power, 194, 52 - power, 16, power);
         }
@@ -122,11 +122,23 @@ public class FusionKlystronScreen extends AbstractContainerScreen<FusionKlystron
     }
 
     private void targetChanged(String value) {
-        if (updatingField || value == null || value.isEmpty()) {
+        if (updatingField || value == null) {
             return;
         }
+        String normalized = value;
+        if (normalized.startsWith("0")) {
+            normalized = normalized.substring(1);
+        }
+        if (normalized.isEmpty()) {
+            normalized = "0";
+        }
+        if (!normalized.equals(value) && targetField != null) {
+            updatingField = true;
+            targetField.setValue(normalized);
+            updatingField = false;
+        }
         try {
-            sendTarget(Long.parseLong(value));
+            sendTarget(Long.parseLong(normalized));
         } catch (NumberFormatException ignored) {
         }
     }
@@ -148,8 +160,6 @@ public class FusionKlystronScreen extends AbstractContainerScreen<FusionKlystron
     }
 
     private static String shortNumber(long value) {
-        if (value >= 1_000_000L) return String.format(Locale.US, "%.1fM", value / 1_000_000.0D);
-        if (value >= 1_000L) return String.format(Locale.US, "%.1fk", value / 1_000.0D);
-        return Long.toString(value);
+        return BobMathUtil.getShortNumber(value);
     }
 }

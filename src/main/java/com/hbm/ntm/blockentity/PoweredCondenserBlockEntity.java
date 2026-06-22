@@ -23,6 +23,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -233,11 +234,9 @@ public class PoweredCondenserBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putInt("age", age);
-        tag.putInt("waterTimer", waterTimer);
-        tag.putInt("throughput", throughput);
-        tag.putFloat("spin", spin);
-        tag.putFloat("lastSpin", lastSpin);
+        tag.putLong("power", energy.getPower());
+        inputTank.writeToNbt(tag, "water");
+        outputTank.writeToNbt(tag, "steam");
     }
 
     @Override
@@ -246,11 +245,69 @@ public class PoweredCondenserBlockEntity extends HbmEnergyAndFluidBlockEntity
         inputTank.setTankType(HbmFluids.SPENTSTEAM);
         outputTank.setTankType(HbmFluids.WATER);
         normalizeConfiguredLimits();
-        age = Math.floorMod(tag.getInt("age"), 2);
-        waterTimer = Math.max(0, tag.getInt("waterTimer"));
-        throughput = Math.max(0, tag.getInt("throughput"));
-        spin = tag.getFloat("spin");
-        lastSpin = tag.getFloat("lastSpin");
+        if (tag.contains("power")) {
+            energy.setPower(tag.getLong("power"));
+        }
+        if (tag.contains("water")) {
+            inputTank.readFromNbt(tag, "water");
+        }
+        if (tag.contains("steam")) {
+            outputTank.readFromNbt(tag, "steam");
+        }
+        readRuntimeSync(tag);
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt("age", age);
+        tag.putInt("waterTimer", waterTimer);
+        tag.putInt("throughput", throughput);
+        tag.putFloat("spin", spin);
+        tag.putFloat("lastSpin", lastSpin);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readRuntimeSync(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return getClientSyncTag();
+    }
+
+    private void readRuntimeSync(CompoundTag tag) {
+        if (tag.contains("age")) {
+            age = Math.floorMod(tag.getInt("age"), 2);
+        }
+        if (tag.contains("waterTimer")) {
+            waterTimer = Math.max(0, tag.getInt("waterTimer"));
+        }
+        if (tag.contains("throughput")) {
+            throughput = Math.max(0, tag.getInt("throughput"));
+        }
+        if (tag.contains("spin")) {
+            spin = tag.getFloat("spin");
+        }
+        if (tag.contains("lastSpin")) {
+            lastSpin = tag.getFloat("lastSpin");
+        }
     }
 
     private Direction facing() {

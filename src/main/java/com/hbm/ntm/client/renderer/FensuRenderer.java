@@ -24,7 +24,7 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
 
     @Override
     public boolean shouldRenderOffScreen(FensuBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

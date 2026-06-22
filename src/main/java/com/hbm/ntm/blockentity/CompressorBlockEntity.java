@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -17,7 +16,6 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
-import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.CompressorMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
@@ -69,6 +67,8 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_PROGRESS = "progress";
     private static final String TAG_INPUT_PRESSURE = "inputPressure";
     private static final String TAG_LEGACY_COMPRESSION = "compression";
+    private static final String TAG_LEGACY_INPUT_TANK = "0";
+    private static final String TAG_LEGACY_OUTPUT_TANK = "1";
     private static final long MAX_POWER = 100_000L;
     private static final int TANK_CAPACITY = 16_000;
     private static final int BASE_POWER_REQUIREMENT = 2_500;
@@ -85,13 +85,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return switch (slot) {
-                case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
-                case SLOT_BATTERY -> stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
-                case SLOT_UPGRADE_SPEED, SLOT_UPGRADE_POWER -> stack.getItem() instanceof ItemMachineUpgrade upgrade
-                        && VALID_UPGRADES.containsKey(upgrade.getUpgradeType());
-                default -> false;
-            };
+            return slot >= 0 && slot < ITEM_COUNT;
         }
 
         @Override
@@ -309,7 +303,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         progress++;
         on = true;
-        energy.usePower(powerRequirement);
+        energy.setPower(energy.getPower() - powerRequirement);
         if (progress < processTime) {
             return true;
         }
@@ -339,7 +333,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private void updateUpgradeAdjustedRecipeState() {
         LegacyMachineUpgradeManager.Levels levels =
-                LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_SPEED, SLOT_UPGRADE_POWER, VALID_UPGRADES);
+                LegacyMachineUpgradeManager.checkSlots(items, SLOT_BATTERY, SLOT_UPGRADE_POWER, VALID_UPGRADES);
         int speedLevel = levels.getLevel(UpgradeType.SPEED);
         int powerLevel = levels.getLevel(UpgradeType.POWER);
         int overLevel = levels.getLevel(UpgradeType.OVERDRIVE);
@@ -519,6 +513,8 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putLong(TAG_LEGACY_POWER, energy.getPower());
         tag.putInt(TAG_PROGRESS, progress);
         tag.putInt(TAG_INPUT_PRESSURE, inputTank.getPressure());
+        inputTank.writeToNbt(tag, TAG_LEGACY_INPUT_TANK);
+        outputTank.writeToNbt(tag, TAG_LEGACY_OUTPUT_TANK);
     }
 
     @Override
@@ -529,6 +525,12 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
             energy.setPower(tag.getLong(TAG_LEGACY_POWER));
         }
         progress = tag.getInt(TAG_PROGRESS);
+        if (tag.contains(TAG_LEGACY_INPUT_TANK)) {
+            inputTank.readFromNbt(tag, TAG_LEGACY_INPUT_TANK);
+        }
+        if (tag.contains(TAG_LEGACY_OUTPUT_TANK)) {
+            outputTank.readFromNbt(tag, TAG_LEGACY_OUTPUT_TANK);
+        }
         if (tag.contains(TAG_INPUT_PRESSURE)) {
             inputTank.withPressure(tag.getInt(TAG_INPUT_PRESSURE));
         }
@@ -555,7 +557,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? itemHandler.cast() : LazyOptional.empty();
         }
         return super.getCapability(capability, side);
     }

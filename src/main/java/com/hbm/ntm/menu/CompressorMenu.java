@@ -19,8 +19,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.items.SlotItemHandler;
 
 public class CompressorMenu extends AbstractContainerMenu implements LegacyUpgradeInfoProvider {
     private static final int MACHINE_SLOT_COUNT = CompressorBlockEntity.ITEM_COUNT;
@@ -46,20 +44,14 @@ public class CompressorMenu extends AbstractContainerMenu implements LegacyUpgra
         super(ModMenuTypes.COMPRESSOR.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), CompressorBlockEntity.SLOT_IDENTIFIER, 17, 72) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() instanceof IFluidIdentifierItem;
-            }
-        });
-        addSlot(new SlotItemHandler(blockEntity.getItems(), CompressorBlockEntity.SLOT_BATTERY, 152, 72) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
-            }
-        });
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), CompressorBlockEntity.SLOT_UPGRADE_SPEED, 52, 72));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), CompressorBlockEntity.SLOT_UPGRADE_POWER, 70, 72));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                CompressorBlockEntity.SLOT_IDENTIFIER, 17, 72));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                CompressorBlockEntity.SLOT_BATTERY, 152, 72));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                CompressorBlockEntity.SLOT_UPGRADE_SPEED, 52, 72));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                CompressorBlockEntity.SLOT_UPGRADE_POWER, 70, 72));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 122, 180);
         addDataSlots();
     }
@@ -123,10 +115,24 @@ public class CompressorMenu extends AbstractContainerMenu implements LegacyUpgra
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
+        if (index < 0 || index >= slots.size()) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack stack = slots.get(index).getItem();
+        if (index >= MACHINE_SLOT_COUNT && !stack.isEmpty()) {
+            if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
+                return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
+                        MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, HOTBAR_END,
+                        CompressorBlockEntity.SLOT_BATTERY, CompressorBlockEntity.SLOT_BATTERY + 1);
+            }
+            if (stack.getItem() instanceof IFluidIdentifierItem) {
+                return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
+                        MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, HOTBAR_END,
+                        CompressorBlockEntity.SLOT_IDENTIFIER, CompressorBlockEntity.SLOT_IDENTIFIER + 1);
+            }
+        }
         return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                 MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, HOTBAR_END,
-                CompressorBlockEntity.SLOT_IDENTIFIER, CompressorBlockEntity.SLOT_IDENTIFIER + 1,
-                CompressorBlockEntity.SLOT_BATTERY, CompressorBlockEntity.SLOT_BATTERY + 1,
                 CompressorBlockEntity.SLOT_UPGRADE_SPEED, CompressorBlockEntity.SLOT_UPGRADE_POWER + 1);
     }
 

@@ -420,7 +420,7 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
 
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            if (!hasCompleteLayout() || piston > 0.0D) {
+            if (!hasCompleteLayout()) {
                 return stack;
             }
             return items.insertItem(slot, stack, simulate);
@@ -428,7 +428,7 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
 
         @Override
         public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            if (!hasCompleteLayout() || piston > 0.0D) {
+            if (!hasCompleteLayout()) {
                 return ItemStack.EMPTY;
             }
             return items.extractItem(slot, amount, simulate);
@@ -441,7 +441,7 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return hasCompleteLayout() && piston <= 0.0D && items.isItemValid(slot, stack);
+            return hasCompleteLayout() && items.isItemValid(slot, stack);
         }
     }
 

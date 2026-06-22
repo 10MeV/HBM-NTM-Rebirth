@@ -13,6 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 public class LegacyChargeBlockEntity extends BlockEntity implements HbmLegacyLoadedTile {
@@ -95,6 +96,11 @@ public class LegacyChargeBlockEntity extends BlockEntity implements HbmLegacyLoa
 
     public String timerDisplay() {
         return minutesDisplay() + ":" + secondsDisplay();
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        return new AABB(worldPosition).inflate(1.0D);
     }
 
     private static String twoDigits(int value) {

@@ -22,7 +22,7 @@ public class RadioAutocalRenderer implements BlockEntityRenderer<RadioAutocalBlo
 
     @Override
     public boolean shouldRenderOffScreen(RadioAutocalBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

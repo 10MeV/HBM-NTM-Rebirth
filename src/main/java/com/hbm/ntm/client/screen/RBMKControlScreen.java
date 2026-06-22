@@ -32,6 +32,9 @@ public class RBMKControlScreen extends AbstractContainerScreen<RBMKControlMenu> 
         if (color >= 0 && color < 5) {
             graphics.blit(TEXTURE, leftPos + 28, topPos + 26 + color * 11, 184, color * 10, 12, 10);
         }
+        if (menu.isPoweredControlRod()) {
+            graphics.blit(TEXTURE, leftPos + 87, topPos + 21, 196, menu.hasPower() ? 16 : 0, 16, 16);
+        }
     }
 
     @Override
@@ -66,6 +69,10 @@ public class RBMKControlScreen extends AbstractContainerScreen<RBMKControlMenu> 
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(71, 29, 16, 56, mouseX, mouseY)) {
             LegacyGuiElements.renderTextTooltip(graphics, font, mouseX, mouseY, menu.getLevelPercent() + "%");
+        }
+        if (menu.isPoweredControlRod()) {
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 87, topPos + 21, 16, 16, menu.getPower(), menu.getMaxPower());
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

@@ -156,7 +156,7 @@ public final class RBMKCranePlanner {
     }
 
     public static RenderContract renderContract() {
-        return new RenderContract(true, MAX_RENDER_DISTANCE_SQ);
+        return new RenderContract(false, MAX_RENDER_DISTANCE_SQ);
     }
 
     public static SetupPlan planSetup(BlockPos targetColumn, int columnHeight, int spanF, int spanB, int spanL,

@@ -1,0 +1,7 @@
+﻿{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/catalytic_cracker"
+  },
+  "elements": []
+}

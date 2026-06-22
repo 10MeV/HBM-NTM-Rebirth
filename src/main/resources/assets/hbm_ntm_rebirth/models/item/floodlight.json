@@ -1,4 +1,2 @@
-{
-  "parent": "hbm_ntm_rebirth:block/floodlight"
-}
+{ "parent": "minecraft:builtin/entity" }
 

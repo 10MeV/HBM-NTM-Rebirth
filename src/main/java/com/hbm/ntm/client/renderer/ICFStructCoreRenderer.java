@@ -28,12 +28,12 @@ public class ICFStructCoreRenderer implements BlockEntityRenderer<ICFStructCoreB
 
     @Override
     public boolean shouldRenderOffScreen(ICFStructCoreBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override

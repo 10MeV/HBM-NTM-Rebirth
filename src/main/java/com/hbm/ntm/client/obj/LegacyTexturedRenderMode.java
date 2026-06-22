@@ -8,12 +8,15 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import org.lwjgl.opengl.GL11;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public enum LegacyTexturedRenderMode {
     CUTOUT_NO_CULL,
+    CUTOUT_DOUBLE_SIDED,
+    CUTOUT_REVERSED_CULL,
     CUTOUT_CULL,
     TRANSLUCENT,
     TRANSLUCENT_NO_DEPTH_WRITE,
@@ -61,6 +64,11 @@ public enum LegacyTexturedRenderMode {
             new RenderStateShard.DepthTestStateShard("hbm_legacy_lequal_depth_test", 515);
     private static final RenderStateShard.DepthTestStateShard EQUAL_DEPTH_TEST =
             new RenderStateShard.DepthTestStateShard("hbm_legacy_equal_depth_test", 514);
+    private static final RenderStateShard.TexturingStateShard FRONT_FACE_CW =
+            new RenderStateShard.TexturingStateShard("hbm_legacy_front_face_cw",
+                    () -> GL11.glFrontFace(GL11.GL_CW),
+                    () -> GL11.glFrontFace(GL11.GL_CCW));
+    private static final int LEGACY_OBJ_BUFFER_SIZE = 1_048_576;
     private static final Map<Key, RenderType> CACHE = new ConcurrentHashMap<>();
 
     public RenderType renderType(ResourceLocation texture) {
@@ -79,13 +87,18 @@ public enum LegacyTexturedRenderMode {
     }
 
     public boolean translucent() {
-        return this != CUTOUT_NO_CULL && this != CUTOUT_CULL;
+        return this != CUTOUT_NO_CULL && this != CUTOUT_DOUBLE_SIDED
+                && this != CUTOUT_REVERSED_CULL && this != CUTOUT_CULL;
     }
 
     public RenderModeStatePlan statePlan() {
         return switch (this) {
             case CUTOUT_NO_CULL -> new RenderModeStatePlan(false, BlendFunction.NONE, true, DepthTest.LEQUAL,
                     false, true, true, true);
+            case CUTOUT_DOUBLE_SIDED -> new RenderModeStatePlan(false, BlendFunction.NONE, true, DepthTest.LEQUAL,
+                    false, true, true, true);
+            case CUTOUT_REVERSED_CULL -> new RenderModeStatePlan(false, BlendFunction.NONE, true, DepthTest.LEQUAL,
+                    false, false, true, true);
             case CUTOUT_CULL -> new RenderModeStatePlan(false, BlendFunction.NONE, true, DepthTest.LEQUAL,
                     false, false, true, true);
             case TRANSLUCENT -> new RenderModeStatePlan(true, BlendFunction.NORMAL_ALPHA, true, DepthTest.LEQUAL,
@@ -125,7 +138,7 @@ public enum LegacyTexturedRenderMode {
     private static RenderType createCustom(String name, ResourceLocation texture,
             RenderStateShard.TransparencyStateShard transparency, boolean depthWrite,
             RenderStateShard.DepthTestStateShard depthTest, boolean cull, VertexFormat.Mode drawMode) {
-        return RenderType.create(name, DefaultVertexFormat.NEW_ENTITY, drawMode, 256,
+        return RenderType.create(name, DefaultVertexFormat.NEW_ENTITY, drawMode, LEGACY_OBJ_BUFFER_SIZE,
                 false, true, RenderType.CompositeState.builder()
                         .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityTranslucentShader))
                         .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
@@ -138,17 +151,21 @@ public enum LegacyTexturedRenderMode {
                         .createCompositeState(false));
     }
 
-    private static RenderType createCutout(String name, ResourceLocation texture, boolean cull, VertexFormat.Mode drawMode) {
-        return RenderType.create(name, DefaultVertexFormat.NEW_ENTITY, drawMode, 256,
-                true, false, RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityCutoutShader))
-                        .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
-                        .setDepthTestState(LEQUAL_DEPTH_TEST)
-                        .setCullState(new RenderStateShard.CullStateShard(cull))
-                        .setLightmapState(new RenderStateShard.LightmapStateShard(true))
-                        .setOverlayState(new RenderStateShard.OverlayStateShard(true))
-                        .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true))
-                        .createCompositeState(false));
+    private static RenderType createCutout(String name, ResourceLocation texture, boolean cull,
+            boolean reversedFrontFace, VertexFormat.Mode drawMode) {
+        RenderType.CompositeState.CompositeStateBuilder builder = RenderType.CompositeState.builder()
+                .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityCutoutShader))
+                .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                .setDepthTestState(LEQUAL_DEPTH_TEST)
+                .setCullState(new RenderStateShard.CullStateShard(cull))
+                .setLightmapState(new RenderStateShard.LightmapStateShard(true))
+                .setOverlayState(new RenderStateShard.OverlayStateShard(true))
+                .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true));
+        if (reversedFrontFace) {
+            builder.setTexturingState(FRONT_FACE_CW);
+        }
+        return RenderType.create(name, DefaultVertexFormat.NEW_ENTITY, drawMode, LEGACY_OBJ_BUFFER_SIZE,
+                true, false, builder.createCompositeState(false));
     }
 
     private record Key(LegacyTexturedRenderMode mode, ResourceLocation texture, VertexFormat.Mode drawMode) {
@@ -156,8 +173,10 @@ public enum LegacyTexturedRenderMode {
             String name = "hbm_legacy_textured_" + mode.name().toLowerCase() + "_" + texture.toString()
                     .replace(':', '_').replace('/', '_').replace('.', '_') + "_" + drawMode.name().toLowerCase();
             return switch (mode) {
-                case CUTOUT_NO_CULL -> createCutout(name, texture, false, drawMode);
-                case CUTOUT_CULL -> createCutout(name, texture, true, drawMode);
+                case CUTOUT_NO_CULL -> createCutout(name, texture, false, false, drawMode);
+                case CUTOUT_DOUBLE_SIDED -> createCutout(name, texture, false, false, drawMode);
+                case CUTOUT_REVERSED_CULL -> createCutout(name, texture, true, true, drawMode);
+                case CUTOUT_CULL -> createCutout(name, texture, true, false, drawMode);
                 case TRANSLUCENT -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode);
                 case TRANSLUCENT_NO_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, false, drawMode);
                 case TRANSLUCENT_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode);

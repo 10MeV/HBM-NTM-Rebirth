@@ -47,8 +47,8 @@ public class MissileAssemblyBlock extends HorizontalMachineBlock implements Enti
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
         return type == ModBlockEntities.MISSILE_ASSEMBLY.get()
-                ? (tickLevel, tickPos, tickState, blockEntity) -> {
-                }
+                ? (tickLevel, tickPos, tickState, blockEntity) -> MissileAssemblyBlockEntity.serverTick(
+                tickLevel, tickPos, tickState, (MissileAssemblyBlockEntity) blockEntity)
                 : null;
     }
 

@@ -26,7 +26,7 @@ public class SolderingStationRenderer implements BlockEntityRenderer<SolderingSt
 
     @Override
     public boolean shouldRenderOffScreen(SolderingStationBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

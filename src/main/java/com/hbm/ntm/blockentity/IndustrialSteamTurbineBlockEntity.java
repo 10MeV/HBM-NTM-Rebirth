@@ -13,7 +13,9 @@ import com.hbm.ntm.fluid.HbmTurbineConversion;
 import com.hbm.ntm.fluid.trait.CoolableFluidTrait;
 import com.hbm.ntm.fluid.trait.CoolableFluidTrait.CoolingType;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import java.util.List;
+import java.util.Random;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -32,11 +34,14 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
     private long lastPowerTarget;
     private long flywheelEnergy;
     private long maxPowerTarget;
+    private Object audioLoop;
+    private final float audioDesync;
     private final RORDispatcher ror;
 
     public IndustrialSteamTurbineBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.INDUSTRIAL_STEAM_TURBINE.get(), pos, state, MAX_STORED_POWER,
                 SteamTurbineConfig.industrialInputTankSize(), SteamTurbineConfig.industrialOutputTankSize());
+        this.audioDesync = new Random(pos.asLong()).nextFloat() * 0.05F;
         this.ror = RORDispatcher.builder()
                 .value("output", () -> Long.toString(lastPowerTarget))
                 .value("flywheel", () -> Integer.toString((int) (spin * 100.0D)))
@@ -55,6 +60,7 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
             turbine.lastRotor -= 360.0D;
             turbine.rotor -= 360.0D;
         }
+        turbine.updateAudioLoop();
     }
 
     @Override
@@ -78,16 +84,39 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
 
     @Override
     protected void normalizeConfigState() {
-        normalizeTankCapacity(SteamTurbineConfig.industrialInputTankSize(),
-                SteamTurbineConfig.industrialOutputTankSize());
+        normalizeTankCapacity(resizedCapacity(SteamTurbineConfig.industrialInputTankSize(), inputTank.getTankType()),
+                resizedCapacity(SteamTurbineConfig.industrialOutputTankSize(), inputTank.getTankType()));
     }
 
     @Override
     protected void afterTurbineTick() {
         spin = Math.max(0.0D, flywheelEnergy / FLYWHEEL_MAX_ENERGY);
-        lastPowerTarget = Math.max(0L, (long) (spin * maxPowerTarget));
-        flywheelEnergy = Math.max(0L, flywheelEnergy - lastPowerTarget);
+        lastPowerTarget = Math.min((long) (Math.max(spin, 0.05D) * maxPowerTarget), flywheelEnergy);
+        flywheelEnergy -= lastPowerTarget;
         energy.setPower(Math.min(energy.getMaxPower(), lastPowerTarget));
+    }
+
+    public void onLeverPull() {
+        FluidType type = inputTank.getTankType();
+        if (type == HbmFluids.STEAM) {
+            inputTank.setTankType(HbmFluids.HOTSTEAM);
+            outputTank.setTankType(HbmFluids.STEAM);
+        } else if (type == HbmFluids.HOTSTEAM) {
+            inputTank.setTankType(HbmFluids.SUPERHOTSTEAM);
+            outputTank.setTankType(HbmFluids.HOTSTEAM);
+        } else if (type == HbmFluids.SUPERHOTSTEAM) {
+            inputTank.setTankType(HbmFluids.ULTRAHOTSTEAM);
+            outputTank.setTankType(HbmFluids.SUPERHOTSTEAM);
+        } else {
+            inputTank.setTankType(HbmFluids.STEAM);
+            outputTank.setTankType(HbmFluids.SPENTSTEAM);
+        }
+        normalizeConfigState();
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
+                    net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+        }
     }
 
     public double getSpin() {
@@ -112,6 +141,32 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
 
     public long getMaxPowerTarget() {
         return maxPowerTarget;
+    }
+
+    private void updateAudioLoop() {
+        double spinNum = Math.min(1.0D, Math.max(0.0D, spin) * 2.0D);
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.largeTurbineRunning",
+                spin > 0.0D, 35.0D, 20.0F,
+                (float) (0.25D + spinNum * 0.75D),
+                (float) (0.5D + spinNum * 0.5D) + audioDesync);
+    }
+
+    private static int resizedCapacity(int baseCapacity, FluidType type) {
+        int divisor = steamCompressionDivisor(type);
+        return Math.max(1, baseCapacity / divisor);
+    }
+
+    private static int steamCompressionDivisor(FluidType type) {
+        if (type == HbmFluids.HOTSTEAM) {
+            return 10;
+        }
+        if (type == HbmFluids.SUPERHOTSTEAM) {
+            return 100;
+        }
+        if (type == HbmFluids.ULTRAHOTSTEAM) {
+            return 1000;
+        }
+        return 1;
     }
 
     @Override

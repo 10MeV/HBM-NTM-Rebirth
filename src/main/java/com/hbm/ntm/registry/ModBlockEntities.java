@@ -6,6 +6,7 @@ import com.hbm.ntm.blockentity.ArcFurnaceBlockEntity;
 import com.hbm.ntm.blockentity.ArcWelderBlockEntity;
 import com.hbm.ntm.blockentity.AmmoPressBlockEntity;
 import com.hbm.ntm.blockentity.AshpitBlockEntity;
+import com.hbm.ntm.blockentity.AutosawBlockEntity;
 import com.hbm.ntm.blockentity.AssemblyFactoryBlockEntity;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.blockentity.Bat9000BlockEntity;
@@ -25,10 +26,12 @@ import com.hbm.ntm.blockentity.CatalyticReformerBlockEntity;
 import com.hbm.ntm.blockentity.ChemicalFactoryBlockEntity;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
 import com.hbm.ntm.blockentity.ChimneyBlockEntity;
+import com.hbm.ntm.blockentity.ChargerBlockEntity;
 import com.hbm.ntm.blockentity.ChungusBlockEntity;
 import com.hbm.ntm.blockentity.CompressorBlockEntity;
 import com.hbm.ntm.blockentity.CombustionEngineBlockEntity;
 import com.hbm.ntm.blockentity.CombinationOvenBlockEntity;
+import com.hbm.ntm.blockentity.CondenserBlockEntity;
 import com.hbm.ntm.blockentity.CompactLauncherBlockEntity;
 import com.hbm.ntm.blockentity.ConnectorBlockEntity;
 import com.hbm.ntm.blockentity.CokerBlockEntity;
@@ -62,6 +65,7 @@ import com.hbm.ntm.blockentity.FluidPumpBlockEntity;
 import com.hbm.ntm.blockentity.FluidCounterValveBlockEntity;
 import com.hbm.ntm.blockentity.FluidTankBlockEntity;
 import com.hbm.ntm.blockentity.FluidValveBlockEntity;
+import com.hbm.ntm.blockentity.FunnelBlockEntity;
 import com.hbm.ntm.blockentity.FensuBlockEntity;
 import com.hbm.ntm.blockentity.FelBlockEntity;
 import com.hbm.ntm.blockentity.ForceFieldBlockEntity;
@@ -90,6 +94,7 @@ import com.hbm.ntm.blockentity.ICFReactorBlockEntity;
 import com.hbm.ntm.blockentity.ICFStructCoreBlockEntity;
 import com.hbm.ntm.blockentity.IndustrialSteamTurbineBlockEntity;
 import com.hbm.ntm.blockentity.IntakeBlockEntity;
+import com.hbm.ntm.blockentity.KeyForgeBlockEntity;
 import com.hbm.ntm.blockentity.LargePylonBlockEntity;
 import com.hbm.ntm.blockentity.LargeCoolingTowerBlockEntity;
 import com.hbm.ntm.blockentity.LegacyChargeBlockEntity;
@@ -100,6 +105,7 @@ import com.hbm.ntm.blockentity.LegacyFileCabinetBlockEntity;
 import com.hbm.ntm.blockentity.LegacyFurnaceBlockEntity;
 import com.hbm.ntm.blockentity.LegacyGenericSelectorMachineBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLanternBlockEntity;
+import com.hbm.ntm.blockentity.LegacyLargeTurbineBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
 import com.hbm.ntm.blockentity.LegacyVolcanoCoreBlockEntity;
 import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
@@ -110,6 +116,7 @@ import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
 import com.hbm.ntm.blockentity.MachineLpw2BlockEntity;
 import com.hbm.ntm.blockentity.MassStorageBlockEntity;
 import com.hbm.ntm.blockentity.MediumPylonBlockEntity;
+import com.hbm.ntm.blockentity.MicrowaveBlockEntity;
 import com.hbm.ntm.blockentity.MiniRtgBlockEntity;
 import com.hbm.ntm.blockentity.MissileAssemblyBlockEntity;
 import com.hbm.ntm.blockentity.MiningLaserBlockEntity;
@@ -241,6 +248,11 @@ public final class ModBlockEntities {
                             ModBlocks.MACHINE_BOILER.get(),
                             ModBlocks.MACHINE_INDUSTRIAL_BOILER.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<CondenserBlockEntity>> CONDENSER =
+            BLOCK_ENTITIES.register("condenser", () ->
+                    BlockEntityType.Builder.of(CondenserBlockEntity::new,
+                            ModBlocks.MACHINE_CONDENSER.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<SteamTurbineBlockEntity>> STEAM_TURBINE =
             BLOCK_ENTITIES.register("steam_turbine", () ->
                     BlockEntityType.Builder.of(SteamTurbineBlockEntity::new, ModBlocks.MACHINE_TURBINE.get()).build(null));
@@ -249,6 +261,11 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("industrial_steam_turbine", () ->
                     BlockEntityType.Builder.of(IndustrialSteamTurbineBlockEntity::new,
                             ModBlocks.MACHINE_INDUSTRIAL_TURBINE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<LegacyLargeTurbineBlockEntity>> LEGACY_LARGE_TURBINE =
+            BLOCK_ENTITIES.register("legacy_large_turbine", () ->
+                    BlockEntityType.Builder.of(LegacyLargeTurbineBlockEntity::new,
+                            ModBlocks.MACHINE_LARGE_TURBINE.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<DeconBlockEntity>> DECON =
             BLOCK_ENTITIES.register("decon", () ->
@@ -1026,6 +1043,31 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("shredder", () ->
                     BlockEntityType.Builder.of(ShredderBlockEntity::new,
                             ModBlocks.MACHINE_SHREDDER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<ChargerBlockEntity>> CHARGER =
+            BLOCK_ENTITIES.register("charger", () ->
+                    BlockEntityType.Builder.of(ChargerBlockEntity::new,
+                            ModBlocks.CHARGER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<MicrowaveBlockEntity>> MICROWAVE =
+            BLOCK_ENTITIES.register("microwave", () ->
+                    BlockEntityType.Builder.of(MicrowaveBlockEntity::new,
+                            ModBlocks.MACHINE_MICROWAVE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FunnelBlockEntity>> FUNNEL =
+            BLOCK_ENTITIES.register("funnel", () ->
+                    BlockEntityType.Builder.of(FunnelBlockEntity::new,
+                            ModBlocks.MACHINE_FUNNEL.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<KeyForgeBlockEntity>> KEY_FORGE =
+            BLOCK_ENTITIES.register("key_forge", () ->
+                    BlockEntityType.Builder.of(KeyForgeBlockEntity::new,
+                            ModBlocks.MACHINE_KEYFORGE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<AutosawBlockEntity>> AUTOSAW =
+            BLOCK_ENTITIES.register("autosaw", () ->
+                    BlockEntityType.Builder.of(AutosawBlockEntity::new,
+                            ModBlocks.MACHINE_AUTOSAW.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<TeleporterBlockEntity>> TELEPORTER =
             BLOCK_ENTITIES.register("teleporter", () ->

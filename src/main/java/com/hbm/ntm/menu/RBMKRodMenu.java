@@ -1,7 +1,6 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.RBMKColumnBlockEntity;
-import com.hbm.ntm.item.RBMKFuelRodItem;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -28,7 +27,7 @@ public class RBMKRodMenu extends AbstractContainerMenu {
     public RBMKRodMenu(int containerId, Inventory inventory, RBMKColumnBlockEntity blockEntity) {
         super(ModMenuTypes.RBMK_ROD.get(), containerId);
         this.blockEntity = blockEntity;
-        addSlot(new FuelRodSlot(blockEntity.rodItems(), 0, 80, 45, blockEntity));
+        addSlot(new FuelRodSlot(blockEntity.rodMenuItems(), 0, 80, 45, blockEntity));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 104, 162);
     }
 
@@ -38,8 +37,7 @@ public class RBMKRodMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D)
-                && MultiblockHelper.isOperationalCoreLayoutComplete(player.level(), blockEntity.getBlockPos());
+        return true;
     }
 
     @Override
@@ -87,12 +85,15 @@ public class RBMKRodMenu extends AbstractContainerMenu {
 
         @Override
         public boolean mayPlace(@NotNull ItemStack stack) {
-            return stack.getItem() instanceof RBMKFuelRodItem && super.mayPlace(stack);
+            return super.mayPlace(stack);
         }
 
         @Override
         public boolean mayPickup(Player player) {
-            return player.getAbilities().instabuild || blockEntity.canManualUnloadFuelRod();
+            ItemStack stack = getItem();
+            return player.getAbilities().instabuild || stack.isEmpty()
+                    || !(stack.getItem() instanceof com.hbm.ntm.item.RBMKFuelRodItem)
+                    || blockEntity.canManualUnloadFuelRod();
         }
     }
 }

@@ -8,7 +8,9 @@ import com.hbm.ntm.blockentity.BigAssTankBlockEntity;
 import com.hbm.ntm.blockentity.FluidTankBlockEntity;
 import com.hbm.ntm.blockentity.OrbusBlockEntity;
 import com.hbm.ntm.client.obj.LegacyBeamRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -23,7 +25,7 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
 
     @Override
     public boolean shouldRenderOffScreen(T blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
@@ -115,7 +117,9 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
             poseStack.popPose();
         }
 
-        ObjModelLibrary.MACHINE_ORBUS.renderAll(poseStack, buffer, packedLight, packedOverlay);
+        ObjModelLibrary.MACHINE_ORBUS.renderAll(new ObjRenderContext(poseStack, buffer,
+                blockEntity.getBlockState(), packedLight, packedOverlay)
+                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL));
 
         if (fill <= 0 || scale <= 0.0D) {
             return;

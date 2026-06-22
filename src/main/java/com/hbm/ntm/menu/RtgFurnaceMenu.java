@@ -70,7 +70,7 @@ public class RtgFurnaceMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, PLAYER_START, PLAYER_END, true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (!moveItemStackTo(stack, 1, 4, false) && !moveItemStackTo(stack, 0, 1, false)) {
+        } else if (!moveItemStackTo(stack, 0, 4, false)) {
             return ItemStack.EMPTY;
         }
         HbmInventoryMenuHelper.finishQuickMove(slot, stack);

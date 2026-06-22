@@ -1,10 +1,12 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.config.SteamTurbineConfig;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -15,24 +17,73 @@ import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.fluid.HbmTurbineConversion;
 import com.hbm.ntm.fluid.HbmTurbineConversion.TurbineResult;
 import com.hbm.ntm.fluid.trait.CoolableFluidTrait;
+import com.hbm.ntm.menu.SteamTurbineMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
-        implements HbmStandardFluidReceiver, HbmStandardFluidSender {
+        implements MenuProvider, HbmStandardFluidReceiver, HbmStandardFluidSender {
     public static final int INPUT_TANK = 0;
     public static final int OUTPUT_TANK = 1;
+    public static final int SLOT_IDENTIFIER = 0;
+    public static final int SLOT_IDENTIFIER_OUTPUT = 1;
+    public static final int SLOT_INPUT_CONTAINER = 2;
+    public static final int SLOT_INPUT_CONTAINER_OUTPUT = 3;
+    public static final int SLOT_BATTERY = 4;
+    public static final int SLOT_OUTPUT_CONTAINER = 5;
+    public static final int SLOT_OUTPUT_CONTAINER_OUTPUT = 6;
+    public static final int SLOT_COUNT = 7;
+    private static final String TAG_ITEMS = "items";
     private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.allAdjacent();
 
     private final HbmFluidTank inputTank;
     private final HbmFluidTank outputTank;
+    private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
+        @Override
+        protected void onContentsChanged(int slot) {
+            setChanged();
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return switch (slot) {
+                case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem identifier
+                        && isValidTurbineInput(identifier.getIdentifiedFluid(level, worldPosition, stack));
+                case SLOT_INPUT_CONTAINER, SLOT_OUTPUT_CONTAINER -> true;
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_IDENTIFIER_OUTPUT, SLOT_INPUT_CONTAINER_OUTPUT, SLOT_OUTPUT_CONTAINER_OUTPUT -> false;
+                default -> false;
+            };
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
+        }
+    };
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
     private int age;
     private int lastInputUsed;
     private int lastOutputProduced;
@@ -59,6 +110,9 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, turbine);
         turbine.normalizeConfigState();
         turbine.age = (turbine.age + 1) % 2;
+        turbine.handleInventoryFluidTransfer();
+        HbmEnergyUtil.chargeItemFromStorage(turbine.items.getStackInSlot(SLOT_BATTERY),
+                turbine.energy, turbine.energy.getProviderSpeed());
         turbine.energy.setPower((long) (turbine.energy.getPower() * 0.95D));
         HbmTurbineConversion.prepareOutputTank(turbine.inputTank, turbine.outputTank);
 
@@ -74,6 +128,8 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (turbine.outputTank.getTankType() != HbmFluids.NONE && turbine.outputTank.getFill() > 0) {
             turbine.tryProvideFluidToPorts(turbine.outputTank.getTankType(), turbine.outputTank.getPressure(), turbine);
         }
+        HbmFluidItemTransfer.unloadTankToSlot(turbine.items, SLOT_OUTPUT_CONTAINER,
+                SLOT_OUTPUT_CONTAINER_OUTPUT, turbine.outputTank);
         turbine.networkPackNT(25);
         if (result.converted() || level.getGameTime() % 20L == 0L) {
             turbine.setChanged();
@@ -92,6 +148,23 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
         energy.setTransferRates(0L, maxPower);
         inputTank.changeTankSize(SteamTurbineConfig.steamTurbineInputTankSize());
         outputTank.changeTankSize(SteamTurbineConfig.steamTurbineOutputTankSize());
+    }
+
+    private void handleInventoryFluidTransfer() {
+        if (level == null) {
+            return;
+        }
+        HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER, SLOT_IDENTIFIER_OUTPUT,
+                inputTank, level, worldPosition);
+        HbmFluidItemTransfer.loadTankFromSlot(items, SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank);
+    }
+
+    public ItemStackHandler getItems() {
+        return items;
+    }
+
+    public List<ItemStack> getDrops() {
+        return HbmInventoryMenuHelper.clearToDrops(items);
     }
 
     public HbmFluidTank getInputTank() {
@@ -194,20 +267,102 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putInt("lastInputUsed", lastInputUsed);
         tag.putInt("lastOutputProduced", lastOutputProduced);
         tag.putLong("lastPowerProduced", lastPowerProduced);
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
+        inputTank.writeToNbt(tag, "water");
+        outputTank.writeToNbt(tag, "steam");
+        tag.putLong("power", energy.getPower());
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         normalizeConfigState();
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        if (tag.contains("water")) {
+            inputTank.readFromNbt(tag, "water");
+        }
+        if (tag.contains("steam")) {
+            outputTank.readFromNbt(tag, "steam");
+        }
+        if (tag.contains("power")) {
+            energy.setPower(tag.getLong("power"));
+        }
         age = Math.floorMod(tag.getInt("age"), 2);
         lastInputUsed = Math.max(0, tag.getInt("lastInputUsed"));
         lastOutputProduced = Math.max(0, tag.getInt("lastOutputProduced"));
         lastPowerProduced = Math.max(0L, tag.getLong("lastPowerProduced"));
     }
 
+    @Override
+    public Component getDisplayName() {
+        return Component.translatableWithFallback("container.machineTurbine", "Steam Turbine");
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
+        return new SteamTurbineMenu(containerId, inventory, this);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return saveWithoutMetadata();
+    }
+
+    @Nullable
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        itemHandler.invalidate();
+    }
+
+    @Override
+    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
+        if (capability == ForgeCapabilities.ITEM_HANDLER) {
+            return itemHandler.cast();
+        }
+        return super.getCapability(capability, side);
+    }
+
     public static boolean isValidTurbineInput(FluidType type) {
         CoolableFluidTrait trait = type == null ? null : type.getTrait(CoolableFluidTrait.class);
         return trait != null && trait.getEfficiency(CoolableFluidTrait.CoolingType.TURBINE) > 0.0D;
+    }
+
+    private final class AccessibleItemHandler implements IItemHandler {
+        @Override
+        public int getSlots() {
+            return SLOT_COUNT;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return slot >= 0 && slot < SLOT_COUNT ? items.getStackInSlot(slot) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return slot == SLOT_BATTERY ? items.insertItem(slot, stack, simulate) : stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return slot >= 0 && slot < SLOT_COUNT ? items.getSlotLimit(slot) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return slot == SLOT_BATTERY && items.isItemValid(slot, stack);
+        }
     }
 }

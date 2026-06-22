@@ -20,7 +20,7 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
 
     @Override
     public boolean shouldRenderOffScreen(AssemblyMachineBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

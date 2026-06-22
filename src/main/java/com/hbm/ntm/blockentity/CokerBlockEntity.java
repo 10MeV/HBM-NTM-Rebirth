@@ -20,6 +20,7 @@ import com.hbm.ntm.util.HbmItemStackUtil;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.Level;
@@ -143,7 +144,8 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putBoolean(TAG_WAS_ON, wasOn);
+        inputTank.writeToNbt(tag, "t0");
+        outputTank.writeToNbt(tag, "t1");
         tag.putInt(TAG_PROGRESS, progress);
         tag.putInt(TAG_HEAT, heat);
     }
@@ -151,9 +153,45 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        wasOn = tag.getBoolean(TAG_WAS_ON);
+        if (hasTankTag(tag, "t0")) {
+            inputTank.readFromNbt(tag, "t0");
+        }
+        if (hasTankTag(tag, "t1")) {
+            outputTank.readFromNbt(tag, "t1");
+        }
         progress = tag.getInt(TAG_PROGRESS);
         heat = tag.getInt(TAG_HEAT);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putBoolean(TAG_WAS_ON, wasOn);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        wasOn = tag.getBoolean(TAG_WAS_ON);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Override
@@ -339,5 +377,9 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
         public boolean isItemValid(int slot, ItemStack stack) {
             return false;
         }
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 }

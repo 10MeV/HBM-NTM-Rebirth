@@ -25,7 +25,7 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
 
     @Override
     public boolean shouldRenderOffScreen(MiningLaserBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

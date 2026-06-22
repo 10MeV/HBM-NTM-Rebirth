@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.FusionMHDTBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjFusionModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -29,7 +30,8 @@ public class FusionMHDTRenderer implements BlockEntityRenderer<FusionMHDTBlockEn
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = blockEntity.getBlockState();
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, light, packedOverlay);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, light, packedOverlay)
+                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);

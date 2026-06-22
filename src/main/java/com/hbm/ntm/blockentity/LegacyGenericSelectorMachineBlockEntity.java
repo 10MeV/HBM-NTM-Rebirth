@@ -74,9 +74,6 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     private static final String TAG_PROGRESS = "progress0";
     private static final String TAG_RECIPE = "recipe0";
     private static final String TAG_DID_PROCESS = "DidProcess";
-    private static final String TAG_FRAME = "Frame";
-    private static final String TAG_RING = "Ring";
-    private static final String TAG_ANIM = "Anim";
     private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(
             UpgradeType.SPEED, 3,
             UpgradeType.POWER, 3,
@@ -620,10 +617,6 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
         writeTanks(tag);
         tag.putDouble(TAG_PROGRESS, progress);
         tag.putString(TAG_RECIPE, selectedRecipe);
-        tag.putBoolean(TAG_DID_PROCESS, didProcess);
-        tag.putBoolean(TAG_FRAME, frame);
-        tag.putDouble(TAG_RING, ring);
-        tag.putInt(TAG_ANIM, anim);
     }
 
     @Override
@@ -639,12 +632,6 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
         readTanks(tag);
         progress = tag.getDouble(TAG_PROGRESS);
         selectedRecipe = GenericMachineRecipeSelector.normalize(tag.getString(TAG_RECIPE));
-        didProcess = tag.getBoolean(TAG_DID_PROCESS);
-        frame = tag.getBoolean(TAG_FRAME);
-        ring = tag.getDouble(TAG_RING);
-        prevRing = ring;
-        anim = tag.getInt(TAG_ANIM);
-        prevAnim = anim;
         updateDynamicCapacity(getSelectedRecipeDefinition());
     }
 
@@ -686,30 +673,41 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
     }
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return saveWithoutMetadata();
+        CompoundTag tag = saveWithoutMetadata();
+        writeClientSyncFields(tag);
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
         load(tag);
+        readClientSyncFields(tag);
     }
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(saveWithoutMetadata());
+        data.writeNbt(getClientSyncTag());
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         CompoundTag tag = data.readNbt();
         if (tag != null) {
-            load(tag);
+            handleClientSyncTag(tag);
         }
+    }
+
+    private void writeClientSyncFields(CompoundTag tag) {
+        tag.putBoolean(TAG_DID_PROCESS, didProcess);
+    }
+
+    private void readClientSyncFields(CompoundTag tag) {
+        didProcess = tag.getBoolean(TAG_DID_PROCESS);
     }
 
     @Nullable

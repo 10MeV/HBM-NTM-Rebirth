@@ -251,7 +251,7 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
     }
 
     private int[] hydrotreaterInsertionRanges(ItemStack stack) {
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return new int[] { HydrotreaterBlockEntity.SLOT_BATTERY, HydrotreaterBlockEntity.SLOT_BATTERY + 1 };
         }
         if (stack.getItem() instanceof IFluidIdentifierItem) {
@@ -268,7 +268,7 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
     }
 
     private int[] catalyticReformerInsertionRanges(ItemStack stack) {
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return new int[] { CatalyticReformerBlockEntity.SLOT_BATTERY, CatalyticReformerBlockEntity.SLOT_BATTERY + 1 };
         }
         if (stack.getItem() instanceof IFluidIdentifierItem) {

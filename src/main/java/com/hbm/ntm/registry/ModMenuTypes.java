@@ -41,6 +41,7 @@ import com.hbm.ntm.menu.FireboxHeaterMenu;
 import com.hbm.ntm.menu.FelMenu;
 import com.hbm.ntm.menu.FileCabinetMenu;
 import com.hbm.ntm.menu.ForceFieldMenu;
+import com.hbm.ntm.menu.FunnelMenu;
 import com.hbm.ntm.menu.FusionBreederMenu;
 import com.hbm.ntm.menu.FusionKlystronMenu;
 import com.hbm.ntm.menu.FusionPlasmaForgeMenu;
@@ -50,13 +51,16 @@ import com.hbm.ntm.menu.GasFlareMenu;
 import com.hbm.ntm.menu.HeaterHeatexMenu;
 import com.hbm.ntm.menu.ICFPressMenu;
 import com.hbm.ntm.menu.ICFReactorMenu;
+import com.hbm.ntm.menu.KeyForgeMenu;
 import com.hbm.ntm.menu.LaunchPadMenu;
 import com.hbm.ntm.menu.LaunchTableMenu;
+import com.hbm.ntm.menu.LegacyLargeTurbineMenu;
 import com.hbm.ntm.menu.LegacyFurnaceMenu;
 import com.hbm.ntm.menu.LiquefactorMenu;
 import com.hbm.ntm.menu.MachineBatteryMenu;
 import com.hbm.ntm.menu.MachineBatterySocketMenu;
 import com.hbm.ntm.menu.MassStorageMenu;
+import com.hbm.ntm.menu.MicrowaveMenu;
 import com.hbm.ntm.menu.MissileAssemblyMenu;
 import com.hbm.ntm.menu.MiningLaserMenu;
 import com.hbm.ntm.menu.MixerMenu;
@@ -103,6 +107,7 @@ import com.hbm.ntm.menu.SolderingStationMenu;
 import com.hbm.ntm.menu.SoyuzCapsuleMenu;
 import com.hbm.ntm.menu.SoyuzLauncherMenu;
 import com.hbm.ntm.menu.StrandCasterMenu;
+import com.hbm.ntm.menu.SteamTurbineMenu;
 import com.hbm.ntm.menu.ToolAbilityMenu;
 import com.hbm.ntm.menu.TurbofanMenu;
 import com.hbm.ntm.menu.TurbineGasMenu;
@@ -183,6 +188,15 @@ public final class ModMenuTypes {
     public static final RegistryObject<MenuType<ShredderMenu>> SHREDDER =
             MENUS.register("shredder", () -> IForgeMenuType.create(ShredderMenu::new));
 
+    public static final RegistryObject<MenuType<MicrowaveMenu>> MICROWAVE =
+            MENUS.register("microwave", () -> IForgeMenuType.create(MicrowaveMenu::new));
+
+    public static final RegistryObject<MenuType<FunnelMenu>> FUNNEL =
+            MENUS.register("funnel", () -> IForgeMenuType.create(FunnelMenu::new));
+
+    public static final RegistryObject<MenuType<KeyForgeMenu>> KEY_FORGE =
+            MENUS.register("key_forge", () -> IForgeMenuType.create(KeyForgeMenu::new));
+
     public static final RegistryObject<MenuType<ElectricFurnaceMenu>> ELECTRIC_FURNACE =
             MENUS.register("electric_furnace", () -> IForgeMenuType.create(ElectricFurnaceMenu::new));
 
@@ -251,6 +265,12 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<TurbineGasMenu>> TURBINE_GAS =
             MENUS.register("turbine_gas", () -> IForgeMenuType.create(TurbineGasMenu::new));
+
+    public static final RegistryObject<MenuType<SteamTurbineMenu>> STEAM_TURBINE =
+            MENUS.register("steam_turbine", () -> IForgeMenuType.create(SteamTurbineMenu::new));
+
+    public static final RegistryObject<MenuType<LegacyLargeTurbineMenu>> LEGACY_LARGE_TURBINE =
+            MENUS.register("legacy_large_turbine", () -> IForgeMenuType.create(LegacyLargeTurbineMenu::new));
 
     public static final RegistryObject<MenuType<CombinationOvenMenu>> COMBINATION_OVEN =
             MENUS.register("combination_oven", () -> IForgeMenuType.create(CombinationOvenMenu::new));

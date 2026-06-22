@@ -302,7 +302,16 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public AABB getRenderBoundingBox() {
-        return INFINITE_EXTENT_AABB;
+        BlockPos pos = getBlockPos();
+        double renderRadius = isOn() && health > 0 && getPower() > 0 && cooldown == 0
+                ? Math.max(0.0D, radius)
+                : 0.0D;
+        double horizontal = Math.max(1.5D, renderRadius + 0.5D);
+        double minY = Math.min(0.0D, 0.5D - renderRadius);
+        double maxY = Math.max(2.0D, 0.5D + renderRadius);
+        return new AABB(
+                pos.getX() + 0.5D - horizontal, pos.getY() + minY, pos.getZ() + 0.5D - horizontal,
+                pos.getX() + 0.5D + horizontal, pos.getY() + maxY, pos.getZ() + 0.5D + horizontal);
     }
 
     @Override

@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 
 public final class LegacyUntexturedQuadRenderer {
+    private static final int LEGACY_EFFECT_BUFFER_SIZE = 262_144;
     private static final RenderStateShard.TransparencyStateShard LIGHTNING_TRANSPARENCY =
             new RenderStateShard.TransparencyStateShard("hbm_legacy_lightning_transparency",
                     () -> {
@@ -40,7 +41,7 @@ public final class LegacyUntexturedQuadRenderer {
             "hbm_legacy_additive_no_cull",
             DefaultVertexFormat.POSITION_COLOR,
             VertexFormat.Mode.QUADS,
-            256,
+            LEGACY_EFFECT_BUFFER_SIZE,
             false,
             true,
             RenderType.CompositeState.builder()
@@ -54,7 +55,7 @@ public final class LegacyUntexturedQuadRenderer {
             "hbm_legacy_additive_depth_write_no_cull",
             DefaultVertexFormat.POSITION_COLOR,
             VertexFormat.Mode.QUADS,
-            256,
+            LEGACY_EFFECT_BUFFER_SIZE,
             false,
             true,
             RenderType.CompositeState.builder()
@@ -68,7 +69,7 @@ public final class LegacyUntexturedQuadRenderer {
             "hbm_legacy_additive_cull",
             DefaultVertexFormat.POSITION_COLOR,
             VertexFormat.Mode.QUADS,
-            256,
+            LEGACY_EFFECT_BUFFER_SIZE,
             false,
             true,
             RenderType.CompositeState.builder()
@@ -82,7 +83,7 @@ public final class LegacyUntexturedQuadRenderer {
             "hbm_legacy_translucent_no_cull",
             DefaultVertexFormat.POSITION_COLOR,
             VertexFormat.Mode.QUADS,
-            256,
+            LEGACY_EFFECT_BUFFER_SIZE,
             false,
             true,
             RenderType.CompositeState.builder()
@@ -96,7 +97,7 @@ public final class LegacyUntexturedQuadRenderer {
             "hbm_legacy_translucent_depth_write_no_cull",
             DefaultVertexFormat.POSITION_COLOR,
             VertexFormat.Mode.QUADS,
-            256,
+            LEGACY_EFFECT_BUFFER_SIZE,
             false,
             true,
             RenderType.CompositeState.builder()
@@ -110,12 +111,25 @@ public final class LegacyUntexturedQuadRenderer {
             "hbm_legacy_solid_no_cull",
             DefaultVertexFormat.POSITION_COLOR,
             VertexFormat.Mode.QUADS,
-            256,
+            LEGACY_EFFECT_BUFFER_SIZE,
             false,
             false,
             RenderType.CompositeState.builder()
                     .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
                     .setCullState(new RenderStateShard.CullStateShard(false))
+                    .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true))
+                    .createCompositeState(false));
+
+    private static final RenderType LEGACY_SOLID_CULL = RenderType.create(
+            "hbm_legacy_solid_cull",
+            DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS,
+            LEGACY_EFFECT_BUFFER_SIZE,
+            false,
+            false,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
+                    .setCullState(new RenderStateShard.CullStateShard(true))
                     .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true))
                     .createCompositeState(false));
 
@@ -162,6 +176,14 @@ public final class LegacyUntexturedQuadRenderer {
             true,
             false,
             VertexFormat.Mode.TRIANGLES);
+    private static final RenderType LEGACY_SOLID_CULL_TRIANGLES = createType(
+            "hbm_legacy_solid_cull_triangles",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader),
+            null,
+            true,
+            false,
+            VertexFormat.Mode.TRIANGLES,
+            true);
 
     public static VertexConsumer lightning(MultiBufferSource buffer) {
         return buffer.getBuffer(LEGACY_ADDITIVE_NO_CULL);
@@ -211,6 +233,10 @@ public final class LegacyUntexturedQuadRenderer {
         return LEGACY_SOLID_NO_CULL;
     }
 
+    public static RenderType solidCullType() {
+        return LEGACY_SOLID_CULL;
+    }
+
     public static RenderType type(boolean additive, int alpha) {
         return type(additive, alpha, VertexFormat.Mode.QUADS);
     }
@@ -235,7 +261,8 @@ public final class LegacyUntexturedQuadRenderer {
             case ADDITIVE_NO_DEPTH_WRITE -> triangles ? LEGACY_ADDITIVE_NO_CULL_TRIANGLES : LEGACY_ADDITIVE_NO_CULL;
             case TRANSLUCENT_DEPTH_WRITE -> triangles ? LEGACY_TRANSLUCENT_DEPTH_WRITE_NO_CULL_TRIANGLES : LEGACY_TRANSLUCENT_DEPTH_WRITE_NO_CULL;
             case TRANSLUCENT, TRANSLUCENT_NO_DEPTH_WRITE -> triangles ? LEGACY_TRANSLUCENT_NO_CULL_TRIANGLES : LEGACY_TRANSLUCENT_NO_CULL;
-            case CUTOUT_NO_CULL, CUTOUT_CULL -> triangles ? LEGACY_SOLID_NO_CULL_TRIANGLES : LEGACY_SOLID_NO_CULL;
+            case CUTOUT_REVERSED_CULL, CUTOUT_CULL -> triangles ? LEGACY_SOLID_CULL_TRIANGLES : LEGACY_SOLID_CULL;
+            case CUTOUT_NO_CULL, CUTOUT_DOUBLE_SIDED -> triangles ? LEGACY_SOLID_NO_CULL_TRIANGLES : LEGACY_SOLID_NO_CULL;
             case GLINT_NO_DEPTH_WRITE, GLINT_EQUAL_DEPTH -> triangles ? LEGACY_ADDITIVE_NO_CULL_TRIANGLES : LEGACY_ADDITIVE_NO_CULL;
         };
     }
@@ -256,7 +283,7 @@ public final class LegacyUntexturedQuadRenderer {
         if (transparency != null) {
             builder.setTransparencyState(transparency);
         }
-        return RenderType.create(name, DefaultVertexFormat.POSITION_COLOR, drawMode, 256, false, sortOnUpload,
+        return RenderType.create(name, DefaultVertexFormat.POSITION_COLOR, drawMode, LEGACY_EFFECT_BUFFER_SIZE, false, sortOnUpload,
                 builder.createCompositeState(false));
     }
 

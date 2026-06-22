@@ -33,6 +33,22 @@ public final class LegacyMachineAudioBridge {
                 active, maxDistance, range, volume, pitch);
     }
 
+    public static Object updateLoop(Object current, BlockEntity blockEntity, ResourceLocation sound,
+            boolean active, double maxDistance, float range, float volume, float pitch,
+            double offsetX, double offsetY, double offsetZ) {
+        return DistExecutor.unsafeCallWhenOn(Dist.CLIENT,
+                () -> () -> com.hbm.ntm.client.sound.LegacyMachineAudio.updateLoop(
+                        current, blockEntity, sound, active, maxDistance, range, volume, pitch,
+                        offsetX, offsetY, offsetZ));
+    }
+
+    public static Object updateLoop(Object current, BlockEntity blockEntity, String sound,
+            boolean active, double maxDistance, float range, float volume, float pitch,
+            double offsetX, double offsetY, double offsetZ) {
+        return updateLoop(current, blockEntity, LegacySoundIds.resolveLocation(sound),
+                active, maxDistance, range, volume, pitch, offsetX, offsetY, offsetZ);
+    }
+
     public static void playLocal(BlockEntity blockEntity, ResourceLocation sound, float volume, float pitch,
             double maxDistance) {
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT,

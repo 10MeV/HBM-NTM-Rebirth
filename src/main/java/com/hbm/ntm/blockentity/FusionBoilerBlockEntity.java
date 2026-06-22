@@ -73,13 +73,13 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
 
     public HbmFluidTank getWaterTank() { return waterTank; }
     public HbmFluidTank getSteamTank() { return steamTank; }
-    public long getPlasmaEnergySync() { return plasmaEnergySync; }
+    public long getPlasmaEnergySync() { return displayedPlasmaEnergy(); }
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         return LegacyLookOverlay.forBlock(this, List.of(
                 Component.literal("-> ").withStyle(ChatFormatting.GREEN)
-                        .append(LegacyLookOverlayLines.rate(plasmaEnergySync, "TU")
+                        .append(LegacyLookOverlayLines.rate(displayedPlasmaEnergy(), "TU")
                                 .copy().withStyle(ChatFormatting.RESET)),
                 LegacyLookOverlayLines.tank(true, waterTank),
                 LegacyLookOverlayLines.tank(false, steamTank)));
@@ -101,15 +101,16 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         if (steamTank.isEmpty()) {
             steamTank.setTankType(HbmFluids.SUPERHOTSTEAM);
         }
-        int waterCycles = Math.min(waterTank.getFill(), steamTank.getSpaceFor(HbmFluids.SUPERHOTSTEAM));
-        int heatCycles = (int) Math.min(fusionPower / Math.max(1.0D, step.heatRequired()), waterCycles);
-        if (heatCycles <= 0) {
+        int waterCycles = Math.min(waterTank.getFill(), steamTank.getMaxFill() - steamTank.getFill());
+        int steamCycles = (int) Math.min(fusionPower / step.heatRequired(), waterCycles);
+        if (steamCycles <= 0) {
             return;
         }
-        waterTank.drain(heatCycles, false);
-        steamTank.fill(HbmFluids.SUPERHOTSTEAM, heatCycles, steamTank.getPressure(), false);
+        waterTank.setFill(waterTank.getFill() - steamCycles);
+        steamTank.setFill(steamTank.getFill() + steamCycles);
         if (level != null && level.random.nextInt(200) == 0) {
-            level.playSound(null, worldPosition, ModSounds.BLOCK_BOILER_GROAN.get(), SoundSource.BLOCKS, 2.5F, 1.0F);
+            level.playSound(null, worldPosition.above(2), ModSounds.BLOCK_BOILER_GROAN.get(), SoundSource.BLOCKS,
+                    2.5F, 1.0F);
         }
         setChanged();
     }
@@ -223,8 +224,7 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         readLegacyLoadedTileBinary(data);
-        plasmaEnergySync = data.readLong();
-        plasmaEnergy = plasmaEnergySync;
+        plasmaEnergy = data.readLong();
         readTank(data, waterTank);
         readTank(data, steamTank);
     }
@@ -257,6 +257,10 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         return state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
+    }
+
+    private long displayedPlasmaEnergy() {
+        return level != null && level.isClientSide ? plasmaEnergy : plasmaEnergySync;
     }
 
     private static boolean hasTankTag(CompoundTag tag, String key) {

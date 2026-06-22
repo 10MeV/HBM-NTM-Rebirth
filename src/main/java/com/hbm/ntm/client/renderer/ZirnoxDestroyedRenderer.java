@@ -17,12 +17,12 @@ public class ZirnoxDestroyedRenderer implements BlockEntityRenderer<ZirnoxDestro
 
     @Override
     public boolean shouldRenderOffScreen(ZirnoxDestroyedBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override

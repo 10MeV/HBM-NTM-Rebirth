@@ -5,7 +5,6 @@ import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.menu.PWRMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.TileControlPacket;
-import com.hbm.ntm.recipe.PWRFuelRuntime;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
@@ -34,7 +33,7 @@ public class PWRScreen extends AbstractContainerScreen<PWRMenu> {
     protected void init() {
         super.init();
         controlField = LegacyGuiElements.createLegacyTextField(font, leftPos + 57, topPos + 63,
-                30, 8, 3, Integer.toString(100 - menu.getRodTarget()));
+                30, 8, 3, Double.toString(100.0D - menu.getRodTargetExact()));
         addRenderableWidget(controlField);
     }
 
@@ -42,7 +41,7 @@ public class PWRScreen extends AbstractContainerScreen<PWRMenu> {
     protected void containerTick() {
         super.containerTick();
         if (controlField != null && !controlField.isFocused()) {
-            controlField.setValue(Integer.toString(100 - menu.getRodTarget()));
+            controlField.setValue(Double.toString(100.0D - menu.getRodTargetExact()));
         }
     }
 
@@ -97,7 +96,7 @@ public class PWRScreen extends AbstractContainerScreen<PWRMenu> {
                             + String.format(Locale.US, "%,d", PWRControllerHeat.HULL_CAPACITY) + " TU")),
                     mouseX, mouseY);
         } else if (isHovering(52, 31, 36, 18, mouseX, mouseY)) {
-            int percent = menu.getProcessTime() <= 0.0D ? 0 : (int) (menu.getProgress() * 100.0D / menu.getProcessTime());
+            int percent = (int) (menu.getProgress() * 100.0D / menu.getProcessTime());
             LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal(percent + "%")), mouseX, mouseY);
         } else if (isHovering(52, 53, 54, 4, mouseX, mouseY)) {
             LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal(
@@ -130,11 +129,10 @@ public class PWRScreen extends AbstractContainerScreen<PWRMenu> {
     private boolean sendControl() {
         int display;
         try {
-            display = Integer.parseInt(controlField.getValue());
+            display = (int) Mth.clamp(Double.parseDouble(controlField.getValue()), 0.0D, 100.0D);
         } catch (NumberFormatException ignored) {
             return false;
         }
-        display = Mth.clamp(display, 0, 100);
         controlField.setValue(Integer.toString(display));
         CompoundTag tag = new CompoundTag();
         tag.putInt("control", 100 - display);

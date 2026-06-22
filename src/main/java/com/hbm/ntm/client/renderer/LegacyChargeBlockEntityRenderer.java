@@ -37,7 +37,7 @@ public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<Lega
 
     @Override
     public boolean shouldRenderOffScreen(LegacyChargeBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

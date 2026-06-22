@@ -25,12 +25,12 @@ public class SoyuzMultiblockGhostRenderer implements BlockEntityRenderer<SoyuzSt
 
     @Override
     public boolean shouldRenderOffScreen(SoyuzStructBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override

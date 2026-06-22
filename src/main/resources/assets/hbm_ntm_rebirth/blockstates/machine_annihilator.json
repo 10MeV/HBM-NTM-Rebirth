@@ -1,18 +1,18 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machines/annihilator",
+      "model": "hbm_ntm_rebirth:block/machine_annihilator",
       "y": 90
     },
     "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machines/annihilator"
+      "model": "hbm_ntm_rebirth:block/machine_annihilator"
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/machines/annihilator",
+      "model": "hbm_ntm_rebirth:block/machine_annihilator",
       "y": 180
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machines/annihilator",
+      "model": "hbm_ntm_rebirth:block/machine_annihilator",
       "y": 270
     }
   }

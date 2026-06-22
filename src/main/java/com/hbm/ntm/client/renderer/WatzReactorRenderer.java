@@ -13,7 +13,7 @@ public class WatzReactorRenderer implements BlockEntityRenderer<WatzReactorBlock
 
     @Override
     public boolean shouldRenderOffScreen(WatzReactorBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

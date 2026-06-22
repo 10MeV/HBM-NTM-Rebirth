@@ -29,7 +29,7 @@ public class CustomMissileLauncherRenderer implements BlockEntityRenderer<Custom
 
     @Override
     public boolean shouldRenderOffScreen(CustomMissileLauncherBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

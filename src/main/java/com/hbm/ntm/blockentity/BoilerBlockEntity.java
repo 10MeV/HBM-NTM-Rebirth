@@ -31,6 +31,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -351,17 +352,62 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putInt("heat", heat);
-        tag.putBoolean("isOn", active);
         tag.putBoolean("exploded", hasExploded);
+        feedTank.writeToNbt(tag, "water");
+        steamTank.writeToNbt(tag, "steam");
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         normalizeConfigState();
+        if (tag.contains("water")) {
+            feedTank.readFromNbt(tag, "water");
+        }
+        if (tag.contains("steam")) {
+            steamTank.readFromNbt(tag, "steam");
+        }
+        prepareOutputTank();
         heat = Math.min(maxHeat(), Math.max(0, tag.getInt("heat")));
-        active = tag.getBoolean("isOn");
         hasExploded = tag.getBoolean("exploded");
+        readRuntimeSync(tag);
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putBoolean("isOn", active);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readRuntimeSync(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return getClientSyncTag();
+    }
+
+    private void readRuntimeSync(CompoundTag tag) {
+        if (tag.contains("isOn")) {
+            active = tag.getBoolean("isOn");
+        }
     }
 
     private int maxHeat() {

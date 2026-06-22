@@ -144,6 +144,7 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
         }
 
         RadarHostEnergyProfile.chargeFromBatterySlot(radar.items.getStackInSlot(SLOT_BATTERY), radar.energy);
+        RadarHostEnergyProfile.chargeFromBatterySlot(radar.items.getStackInSlot(0), radar.energy);
         radar.allocateTargets(serverLevel);
         radar.updateSonarPing(serverLevel);
         boolean mapChanged = radar.updateMapScan(serverLevel);

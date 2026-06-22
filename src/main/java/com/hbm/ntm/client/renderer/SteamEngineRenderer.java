@@ -22,7 +22,7 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
 
     @Override
     public boolean shouldRenderOffScreen(SteamEngineBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

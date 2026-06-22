@@ -92,7 +92,7 @@ public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlo
 
     @Override
     public boolean shouldRenderOffScreen(BalefireBombBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

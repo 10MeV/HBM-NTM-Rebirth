@@ -23,6 +23,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -68,6 +69,7 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         TurbineResult result = engine.runConversion();
         engine.lastPowerProduced = result.powerProduced();
+        engine.energy.setMaxPower(Math.max(MAX_POWER, result.powerProduced()));
         if (result.powerProduced() > 0L) {
             engine.energy.setPower(Math.min(engine.energy.getMaxPower(), engine.energy.getPower() + result.powerProduced()));
             engine.acceleration = Math.min(engine.acceleration + 0.1F, 40.0F);
@@ -245,10 +247,10 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putFloat("rotor", rotor);
-        tag.putFloat("lastRotor", lastRotor);
         tag.putFloat("acceleration", acceleration);
-        tag.putLong("lastPowerProduced", lastPowerProduced);
+        tag.putLong("powerBuffer", energy.getPower());
+        steamTank.writeToNbt(tag, "s");
+        spentSteamTank.writeToNbt(tag, "w");
     }
 
     @Override
@@ -256,7 +258,17 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         float previousRotor = rotor;
         super.load(tag);
         normalizeConfigCapacity();
-        float incomingRotor = tag.getFloat("rotor");
+        if (tag.contains("powerBuffer")) {
+            energy.setMaxPower(Math.max(MAX_POWER, tag.getLong("powerBuffer")));
+            energy.setPower(tag.getLong("powerBuffer"));
+        }
+        if (tag.contains("s")) {
+            steamTank.readFromNbt(tag, "s");
+        }
+        if (tag.contains("w")) {
+            spentSteamTank.readFromNbt(tag, "w");
+        }
+        float incomingRotor = tag.contains("rotor") ? tag.getFloat("rotor") : rotor;
         if (level != null && level.isClientSide) {
             rotor = previousRotor;
             lastRotor = previousRotor;
@@ -269,7 +281,61 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
             turnProgress = 0;
         }
         acceleration = Math.max(0.0F, tag.getFloat("acceleration"));
-        lastPowerProduced = Math.max(0L, tag.getLong("lastPowerProduced"));
+        readRuntimeSync(tag);
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putFloat("rotor", rotor);
+        tag.putFloat("lastRotor", lastRotor);
+        tag.putLong("lastPowerProduced", lastPowerProduced);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        float previousRotor = rotor;
+        super.handleClientSyncTag(tag);
+        if (tag.contains("rotor")) {
+            float incomingRotor = tag.getFloat("rotor");
+            if (level != null && level.isClientSide) {
+                rotor = previousRotor;
+                lastRotor = previousRotor;
+                syncRotor = incomingRotor;
+                turnProgress = 3;
+            } else {
+                rotor = incomingRotor;
+                lastRotor = tag.contains("lastRotor") ? tag.getFloat("lastRotor") : rotor;
+                syncRotor = incomingRotor;
+                turnProgress = 0;
+            }
+        }
+        readRuntimeSync(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return getClientSyncTag();
+    }
+
+    private void readRuntimeSync(CompoundTag tag) {
+        if (tag.contains("lastPowerProduced")) {
+            lastPowerProduced = Math.max(0L, tag.getLong("lastPowerProduced"));
+        }
     }
 
     private Direction facing() {

@@ -879,12 +879,12 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         if (groups.isEmpty()) {
             return;
         }
-        LegacyTexturedRenderMode alphaMode = renderMode.withAlpha(alpha);
         VertexConsumer quadConsumer = null;
         VertexConsumer triangleConsumer = null;
         PoseStack.Pose pose = poseStack.last();
         Matrix4f position = pose.pose();
         Matrix3f normal = pose.normal();
+        LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, normal).withAlpha(alpha);
         for (Group group : groups) {
             List<PreparedVertex> quadVertices = group.quadVertices();
             if (!quadVertices.isEmpty()) {
@@ -911,12 +911,12 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         if (batch.empty()) {
             return;
         }
-        LegacyTexturedRenderMode alphaMode = renderMode.withAlpha(alpha);
         VertexConsumer quadConsumer = null;
         VertexConsumer triangleConsumer = null;
         PoseStack.Pose pose = poseStack.last();
         Matrix4f position = pose.pose();
         Matrix3f normal = pose.normal();
+        LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, normal).withAlpha(alpha);
         List<PreparedVertex> quadVertices = batch.quadVertices();
         if (!quadVertices.isEmpty()) {
             if (quadConsumer == null) {
@@ -939,12 +939,12 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
             MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             boolean legacyShadow, boolean smoothing, LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
             double clipX, double clipY, double clipZ, double clipD) {
-        LegacyTexturedRenderMode alphaMode = renderMode.withAlpha(alpha);
         VertexConsumer quadConsumer = null;
         VertexConsumer triangleConsumer = null;
         PoseStack.Pose pose = poseStack.last();
         Matrix4f position = pose.pose();
         Matrix3f normal = pose.normal();
+        LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, normal).withAlpha(alpha);
         for (Face face : group.faces()) {
             Face clipped = clipFace(face, clipX, clipY, clipZ, clipD);
             if (clipped != null) {
@@ -991,12 +991,12 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         if (groups.isEmpty()) {
             return;
         }
-        LegacyTexturedRenderMode alphaMode = renderMode.withAlpha(alpha);
         VertexConsumer quadConsumer = null;
         VertexConsumer triangleConsumer = null;
         PoseStack.Pose pose = poseStack.last();
         Matrix4f position = pose.pose();
         Matrix3f normal = pose.normal();
+        LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, normal).withAlpha(alpha);
         for (Group group : groups) {
             List<PreparedVertex> quadVertices = group.quadVertices();
             if (!quadVertices.isEmpty()) {
@@ -1033,22 +1033,23 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         if (groups.isEmpty()) {
             return;
         }
-        VertexConsumer quadConsumer = null;
-        VertexConsumer triangleConsumer = null;
         PoseStack.Pose pose = poseStack.last();
         Matrix4f position = pose.pose();
+        LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, pose.normal());
+        VertexConsumer quadConsumer = null;
+        VertexConsumer triangleConsumer = null;
         for (Group group : groups) {
             List<PreparedVertex> quadVertices = group.quadVertices();
             if (!quadVertices.isEmpty()) {
                 if (quadConsumer == null) {
-                    quadConsumer = buffer.getBuffer(LegacyUntexturedQuadRenderer.type(renderMode, alpha, VertexFormat.Mode.QUADS));
+                    quadConsumer = buffer.getBuffer(LegacyUntexturedQuadRenderer.type(resolvedRenderMode, alpha, VertexFormat.Mode.QUADS));
                 }
                 emitPreparedVerticesUntextured(quadVertices, quadConsumer, position, red, green, blue, alpha);
             }
             List<PreparedVertex> triangleVertices = group.triangleVertices();
             if (!triangleVertices.isEmpty()) {
                 if (triangleConsumer == null) {
-                    triangleConsumer = buffer.getBuffer(LegacyUntexturedQuadRenderer.type(renderMode, alpha, VertexFormat.Mode.TRIANGLES));
+                    triangleConsumer = buffer.getBuffer(LegacyUntexturedQuadRenderer.type(resolvedRenderMode, alpha, VertexFormat.Mode.TRIANGLES));
                 }
                 emitPreparedVerticesUntextured(triangleVertices, triangleConsumer, position, red, green, blue, alpha);
             }
@@ -1059,19 +1060,26 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
             Matrix3f normal, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             boolean legacyShadow, boolean smoothing, UvTransform uvTransform) {
         for (PreparedVertex vertex : vertices) {
-            Vector3f vertexNormal = smoothing ? vertex.smoothNormal() : vertex.faceNormal();
-            float shadow = legacyShadow ? legacyShadowFactor(normal, vertexNormal) : 1.0F;
-            UV uv = vertex.uv();
-            UV average = vertex.averageUv();
-            Vector3f point = vertex.position();
-            consumer.vertex(position, point.x(), point.y(), point.z())
-                    .color(clampColor(red * shadow), clampColor(green * shadow), clampColor(blue * shadow), alpha)
-                    .uv(transformU(uv, average, uvTransform), transformV(uv, average, uvTransform))
-                    .overlayCoords(packedOverlay)
-                    .uv2(packedLight)
-                    .normal(normal, vertexNormal.x(), vertexNormal.y(), vertexNormal.z())
-                    .endVertex();
+            emitPreparedVertex(vertex, consumer, position, normal, packedLight, packedOverlay,
+                    red, green, blue, alpha, legacyShadow, smoothing, uvTransform);
         }
+    }
+
+    private static void emitPreparedVertex(PreparedVertex vertex, VertexConsumer consumer, Matrix4f position,
+            Matrix3f normal, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+            boolean legacyShadow, boolean smoothing, UvTransform uvTransform) {
+        Vector3f vertexNormal = smoothing ? vertex.smoothNormal() : vertex.faceNormal();
+        float shadow = legacyShadow ? legacyShadowFactor(normal, vertexNormal) : 1.0F;
+        UV uv = vertex.uv();
+        UV average = vertex.averageUv();
+        Vector3f point = vertex.position();
+        consumer.vertex(position, point.x(), point.y(), point.z())
+                .color(clampColor(red * shadow), clampColor(green * shadow), clampColor(blue * shadow), alpha)
+                .uv(transformU(uv, average, uvTransform), transformV(uv, average, uvTransform))
+                .overlayCoords(packedOverlay)
+                .uv2(packedLight)
+                .normal(normal, vertexNormal.x(), vertexNormal.y(), vertexNormal.z())
+                .endVertex();
     }
 
     private static void emitPreparedVerticesWithSprite(List<PreparedVertex> vertices, TextureAtlasSprite sprite,
@@ -1565,6 +1573,18 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     private static LegacyTexturedRenderMode renderMode(boolean translucent) {
         return translucent ? LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE : LegacyTexturedRenderMode.CUTOUT_NO_CULL;
+    }
+
+    private static LegacyTexturedRenderMode renderModeForPose(LegacyTexturedRenderMode renderMode, Matrix3f normal) {
+        if (normal.determinant() >= 0.0F) {
+            return renderMode;
+        }
+        return switch (renderMode) {
+            case CUTOUT_CULL -> LegacyTexturedRenderMode.CUTOUT_REVERSED_CULL;
+            case CUTOUT_REVERSED_CULL -> LegacyTexturedRenderMode.CUTOUT_CULL;
+            case ADDITIVE_CULL_NO_DEPTH_WRITE -> LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE;
+            default -> renderMode;
+        };
     }
 
     private static UvTransform uvTransform(ObjRenderContext context) {

@@ -1,11 +1,12 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.blockentity.FusionPlasmaForgeBlockEntity;
 import com.hbm.ntm.menu.FusionPlasmaForgeMenu;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeExtraData;
+import com.hbm.ntm.util.BobMathUtil;
 import java.util.List;
-import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -60,7 +61,7 @@ public class FusionPlasmaForgeScreen extends AbstractContainerScreen<FusionPlasm
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, 8, 6, 0x404040, false);
+        graphics.drawString(font, title, 70 - font.width(title) / 2, 6, 0x404040, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -83,16 +84,14 @@ public class FusionPlasmaForgeScreen extends AbstractContainerScreen<FusionPlasm
         } else if (isHovering(152, 18, 16, 62, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 152, topPos + 18, 16, 62, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(62, 81, 70, 16, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, List.of(
-                    Component.literal(String.format(Locale.US, "Progress: %.1f%%", menu.getProgress() * 100.0D)),
-                    Component.literal(shortNumber(menu.getPlasmaEnergy()) + " TU")), mouseX, mouseY);
         } else if (isHovering(25, 115, 18, 18, mouseX, mouseY)) {
             long ignition = selectedRecipe() == null ? 0L : selectedRecipe().getExtraData().plasmaForge()
                     .map(GenericMachineRecipeExtraData.PlasmaForge::ignitionTemp).orElse(0L);
             LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal("-> "
                     + shortNumber(menu.getPlasmaEnergy()) + "TU / " + shortNumber(ignition) + "TU")), mouseX, mouseY);
-        } else if (isHovering(98, 116, 16, 16, mouseX, mouseY)) {
+        } else if (isHovering(98, 116, 16, 16, mouseX, mouseY)
+                && menu.getSlot(FusionPlasmaForgeBlockEntity.SLOT_BOOSTER).getItem().isEmpty()
+                && menu.getCarried().isEmpty()) {
             graphics.renderComponentTooltip(font, List.of(
                     Component.literal("Booster: " + menu.getBooster() + " / " + menu.getMaxBooster()),
                     Component.literal("Co-60, Sr-90, Au-198, I-131, Xe-135, Cs-137, At-209")), mouseX, mouseY);
@@ -111,9 +110,7 @@ public class FusionPlasmaForgeScreen extends AbstractContainerScreen<FusionPlasm
     }
 
     private static String shortNumber(long value) {
-        if (value >= 1_000_000L) return String.format(Locale.US, "%.1fM", value / 1_000_000.0D);
-        if (value >= 1_000L) return String.format(Locale.US, "%.1fk", value / 1_000.0D);
-        return Long.toString(value);
+        return BobMathUtil.getShortNumber(value);
     }
 
     private GenericMachineRecipe selectedRecipe() {

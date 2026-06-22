@@ -72,7 +72,7 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
                 case SLOT_FLUID_ID -> stack.getItem() instanceof IFluidIdentifierItem;
-                case SLOT_INPUT -> level == null || isSpecialMeteoriteSwordInput(stack) || hasFusionSolidRecipe(stack);
+                case SLOT_INPUT -> level == null || hasFusionSolidRecipe(stack);
                 default -> false;
             };
         }
@@ -252,8 +252,7 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         readLegacyLoadedTileBinary(data);
-        neutronEnergySync = data.readDouble();
-        neutronEnergy = neutronEnergySync;
+        neutronEnergy = data.readDouble();
         progress = data.readDouble();
         readTank(data, inputTank);
         readTank(data, outputTank);
@@ -348,7 +347,7 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
             return false;
         }
         items.extractItem(SLOT_INPUT, 1, false);
-        recipe.fluidOutput().ifPresent(output -> outputTank.fill(output.type(), output.amount(), output.pressure(), false));
+        recipe.fluidOutput().ifPresent(output -> outputTank.setFill(outputTank.getFill() + output.amount()));
         recipe.solidOutput().ifPresent(this::mergeOutput);
         return true;
     }
@@ -417,8 +416,8 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
         if (recipe == null) {
             return false;
         }
-        inputTank.drain(recipe.input().amount(), false);
-        outputTank.fill(recipe.output().type(), recipe.output().amount(), recipe.output().pressure(), false);
+        inputTank.setFill(inputTank.getFill() - recipe.input().amount());
+        outputTank.setFill(outputTank.getFill() + recipe.output().amount());
         return true;
     }
 
@@ -437,12 +436,21 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private boolean canFitOutputFluid(HbmFluidStack output) {
-        return outputTank.getSpaceFor(output.type()) >= output.amount();
+        if (outputTank.getTankType() != output.type()) {
+            if (outputTank.getFill() > 0) {
+                return false;
+            }
+            outputTank.setTankType(output.type());
+            outputTank.withPressure(output.pressure());
+        } else if (outputTank.getFill() == 0 && outputTank.getPressure() != output.pressure()) {
+            outputTank.withPressure(output.pressure());
+        }
+        return outputTank.getFill() + output.amount() <= outputTank.getMaxFill();
     }
 
     private boolean canFitOutputItem(ItemStack output) {
         ItemStack existing = items.getStackInSlot(SLOT_OUTPUT);
-        return existing.isEmpty() || (ItemStack.isSameItemSameTags(existing, output)
+        return existing.isEmpty() || (sameLegacyOutputItem(existing, output)
                 && existing.getCount() + output.getCount() <= existing.getMaxStackSize());
     }
 
@@ -450,10 +458,14 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
         ItemStack existing = items.getStackInSlot(SLOT_OUTPUT);
         if (existing.isEmpty()) {
             items.setStackInSlot(SLOT_OUTPUT, output.copy());
-        } else if (ItemStack.isSameItemSameTags(existing, output)) {
+        } else if (sameLegacyOutputItem(existing, output)) {
             existing.grow(output.getCount());
             items.setStackInSlot(SLOT_OUTPUT, existing);
         }
+    }
+
+    private static boolean sameLegacyOutputItem(ItemStack existing, ItemStack output) {
+        return existing.is(output.getItem()) && existing.getDamageValue() == output.getDamageValue();
     }
 
     private Direction facing() {

@@ -29,6 +29,7 @@ import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.LegacyUpgradeSlotSound;
+import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -47,6 +48,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -60,7 +62,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
-        HbmStandardFluidReceiver, HbmLegacyLoadedTile {
+        HbmStandardFluidReceiver, HbmLegacyLoadedTile, LegacyProxyDelegateProvider {
     private static final String TAG_INVENTORY = "items";
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_LEGACY_POWER = "power";
@@ -115,10 +117,14 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     };
     private final HbmEnergyStorage energy = new HbmEnergyStorage(DEFAULT_MAX_POWER, DEFAULT_MAX_POWER, 0L);
     private final HbmFluidTank inputTank = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new ArcWelderAccessibleItemHandler());
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() ->
+            new ArcWelderAccessibleItemHandler(SLOT_INPUT_1, SLOT_OUTPUT));
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
             ForgeRecipeFluidHandlerAdapter.create(List.of(inputTank), List.of(), 0, this::onFluidContentsChanged));
+    private final ICapabilityProvider redProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_0);
+    private final ICapabilityProvider yellowProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_1);
+    private final ICapabilityProvider greenProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_2);
 
     private int progress;
     private int processTime = 1;
@@ -549,10 +555,40 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         return leftover;
     }
 
+    @Nullable
+    @Override
+    public ICapabilityProvider getLegacyProxyDelegate(BlockPos proxyPos) {
+        Direction dir = getBlockState().hasProperty(HorizontalMachineBlock.FACING)
+                ? getBlockState().getValue(HorizontalMachineBlock.FACING)
+                : Direction.SOUTH;
+        Direction rot = dir.getClockWise();
+        BlockPos core = getBlockPos();
+        if (proxyPos.equals(core.relative(rot))
+                || proxyPos.equals(core.relative(rot.getOpposite()).relative(dir.getOpposite()))) {
+            return redProxyDelegate;
+        }
+        if (proxyPos.equals(core.relative(dir.getOpposite()))) {
+            return yellowProxyDelegate;
+        }
+        if (proxyPos.equals(core.relative(rot.getOpposite()))
+                || proxyPos.equals(core.relative(rot).relative(dir.getOpposite()))) {
+            return greenProxyDelegate;
+        }
+        return null;
+    }
+
     private class ArcWelderAccessibleItemHandler implements IItemHandler {
+        private final int inputSlot;
+        private final int outputSlot;
+
+        private ArcWelderAccessibleItemHandler(int inputSlot, int outputSlot) {
+            this.inputSlot = inputSlot;
+            this.outputSlot = outputSlot;
+        }
+
         @Override
         public int getSlots() {
-            return 4;
+            return 2;
         }
 
         @Override
@@ -564,7 +600,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
             int mapped = mapExternalSlot(slot);
-            if (mapped < SLOT_INPUT_0 || mapped > SLOT_INPUT_2) {
+            if (mapped != inputSlot) {
                 return stack;
             }
             return items.insertItem(mapped, stack, simulate);
@@ -573,7 +609,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         @Override
         public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
             int mapped = mapExternalSlot(slot);
-            return mapped == SLOT_OUTPUT ? items.extractItem(mapped, amount, simulate) : ItemStack.EMPTY;
+            return mapped == outputSlot ? items.extractItem(mapped, amount, simulate) : ItemStack.EMPTY;
         }
 
         @Override
@@ -585,17 +621,37 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             int mapped = mapExternalSlot(slot);
-            return mapped >= SLOT_INPUT_0 && mapped <= SLOT_INPUT_2 && items.isItemValid(mapped, stack);
+            return mapped == inputSlot && items.isItemValid(mapped, stack);
         }
 
         private int mapExternalSlot(int slot) {
             return switch (slot) {
-                case 0 -> SLOT_INPUT_0;
-                case 1 -> SLOT_INPUT_1;
-                case 2 -> SLOT_INPUT_2;
-                case 3 -> SLOT_OUTPUT;
+                case 0 -> inputSlot;
+                case 1 -> outputSlot;
                 default -> -1;
             };
+        }
+    }
+
+    private class ProxyCapabilityDelegate implements ICapabilityProvider {
+        private final LazyOptional<IItemHandler> proxyItemHandler;
+
+        private ProxyCapabilityDelegate(int inputSlot) {
+            this.proxyItemHandler = LazyOptional.of(() -> new ArcWelderAccessibleItemHandler(inputSlot, SLOT_OUTPUT));
+        }
+
+        @Override
+        public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
+            if (capability == ForgeCapabilities.ITEM_HANDLER) {
+                return proxyItemHandler.cast();
+            }
+            if (capability == ForgeCapabilities.ENERGY) {
+                return energyHandler.cast();
+            }
+            if (capability == ForgeCapabilities.FLUID_HANDLER) {
+                return fluidHandler.cast();
+            }
+            return LazyOptional.empty();
         }
     }
 

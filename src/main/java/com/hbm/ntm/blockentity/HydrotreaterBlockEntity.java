@@ -13,6 +13,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -119,7 +120,9 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
         ItemStackHandler items = getItems();
         return items != null && processFluidItemTransfers(items, HbmFluidItemTransfer.combineTransfers(
                 HbmFluidItemTransfer.loadTransfers(
-                        SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, 2, inputTank, hydrogenTank),
+                        SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank),
+                HbmFluidItemTransfer.loadTransfers(
+                        SLOT_HYDROGEN_INPUT, SLOT_HYDROGEN_OUTPUT, hydrogenTank),
                 HbmFluidItemTransfer.unloadTransfers(
                         SLOT_OUTPUT_LEFT_CONTAINER, SLOT_OUTPUT_LEFT_CONTAINER_OUTPUT, 2,
                         desulfurizedOilTank, sourGasTank)));
@@ -163,5 +166,35 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
     private boolean hasCatalyst() {
         ItemStackHandler items = getItems();
         return items != null && items.getStackInSlot(SLOT_CATALYST).is(ModItems.CATALYTIC_CONVERTER.get());
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.putLong("power", energy.getPower());
+        inputTank.writeToNbt(tag, "t0");
+        hydrogenTank.writeToNbt(tag, "t1");
+        desulfurizedOilTank.writeToNbt(tag, "t2");
+        sourGasTank.writeToNbt(tag, "t3");
+    }
+
+    @Override
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        if (tag.contains("power")) {
+            energy.setPower(tag.getLong("power"));
+        }
+        if (tag.contains("t0")) {
+            inputTank.readFromNbt(tag, "t0");
+        }
+        if (tag.contains("t1")) {
+            hydrogenTank.readFromNbt(tag, "t1");
+        }
+        if (tag.contains("t2")) {
+            desulfurizedOilTank.readFromNbt(tag, "t2");
+        }
+        if (tag.contains("t3")) {
+            sourGasTank.readFromNbt(tag, "t3");
+        }
     }
 }

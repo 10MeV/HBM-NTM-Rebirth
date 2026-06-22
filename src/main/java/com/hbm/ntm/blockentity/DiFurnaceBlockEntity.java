@@ -66,7 +66,7 @@ public class DiFurnaceBlockEntity extends HbmFluidBlockEntity
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
                 case SLOT_UPPER, SLOT_LOWER -> true;
-                case SLOT_FUEL -> getItemPower(stack) > 0;
+                case SLOT_FUEL -> true;
                 default -> false;
             };
         }

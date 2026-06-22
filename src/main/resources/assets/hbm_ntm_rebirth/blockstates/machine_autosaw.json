@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/machine_autosaw"
+    },
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/machine_autosaw"
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/machine_autosaw"
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/machine_autosaw"
+    }
+  }
+}

@@ -3,6 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyDemonLampBlock;
 import com.hbm.ntm.blockentity.LegacyDemonLampBlockEntity;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.ObjLightModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
@@ -19,7 +20,7 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
 
     @Override
     public boolean shouldRenderOffScreen(LegacyDemonLampBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
@@ -39,7 +40,8 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
         poseStack.translate(0.5D, 0.5D, 0.5D);
         LegacyObjTransforms.applySixFaceAttachmentRotation(poseStack, state.getValue(LegacyDemonLampBlock.FACE));
         poseStack.translate(0.0D, -0.5D, 0.0D);
-        ObjLightModels.DEMON_LAMP_LEGACY.renderAll(new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay));
+        ObjLightModels.DEMON_LAMP_LEGACY.renderAll(new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
+                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL));
         renderAura(poseStack, buffer);
         poseStack.popPose();
     }

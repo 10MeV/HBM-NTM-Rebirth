@@ -34,7 +34,7 @@ public class ResearchReactorScreen extends AbstractContainerScreen<ResearchReact
         levelField = new EditBox(font, leftPos + 8, topPos + 99, 33, 16, Component.empty());
         levelField.setBordered(false);
         levelField.setMaxLength(3);
-        levelField.setValue(Integer.toString(menu.getTargetLevelPercent()));
+        levelField.setValue(Integer.toString(menu.getLevelPercent()));
         addRenderableWidget(levelField);
     }
 
@@ -107,7 +107,10 @@ public class ResearchReactorScreen extends AbstractContainerScreen<ResearchReact
     }
 
     private void sendLevel() {
-        int percent = parseLevelField();
+        Integer percent = parseLevelFieldForSubmit();
+        if (percent == null) {
+            return;
+        }
         levelField.setValue(Integer.toString(percent));
         CompoundTag tag = new CompoundTag();
         tag.putDouble("level", percent * 0.01D);
@@ -123,6 +126,14 @@ public class ResearchReactorScreen extends AbstractContainerScreen<ResearchReact
             return Mth.clamp(Integer.parseInt(levelField.getValue()), 0, 100);
         } catch (NumberFormatException ignored) {
             return 0;
+        }
+    }
+
+    private Integer parseLevelFieldForSubmit() {
+        try {
+            return Mth.clamp((int) Double.parseDouble(levelField.getValue()), 0, 100);
+        } catch (NumberFormatException ignored) {
+            return null;
         }
     }
 

@@ -78,6 +78,7 @@ import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.item.JetpackTankItem;
+import com.hbm.ntm.item.KeyPinItem;
 import com.hbm.ntm.item.LegacyToolItem;
 import com.hbm.ntm.item.LegacyArtilleryAmmoItem;
 import com.hbm.ntm.item.LegacyLoreItem;
@@ -1747,6 +1748,18 @@ public final class ModItems {
     public static final RegistryObject<Item> LAUNCH_CODE_PIECE = simpleStackOneItem("launch_code_piece");
     public static final RegistryObject<Item> LAUNCH_CODE = simpleStackOneItem("launch_code");
     public static final RegistryObject<Item> LAUNCH_KEY = simpleStackOneItem("launch_key");
+    public static final RegistryObject<Item> KEY = registerLegacy("key",
+            () -> new KeyPinItem(new Item.Properties().stacksTo(1), true));
+    public static final RegistryObject<Item> KEY_KIT = registerLegacy("key_kit",
+            () -> new LegacyLoreItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> KEY_FAKE = registerLegacy("key_fake",
+            () -> new KeyPinItem(new Item.Properties().stacksTo(1), false));
+    public static final RegistryObject<Item> PIN = registerLegacy("pin",
+            () -> new LegacyLoreItem(new Item.Properties().stacksTo(8)));
+    public static final RegistryObject<Item> PADLOCK_RUSTY = padlock("padlock_rusty", 1.0D);
+    public static final RegistryObject<Item> PADLOCK = padlock("padlock", 0.1D);
+    public static final RegistryObject<Item> PADLOCK_REINFORCED = padlock("padlock_reinforced", 0.02D);
+    public static final RegistryObject<Item> PADLOCK_UNBREAKABLE = padlock("padlock_unbreakable", 0.0D);
     public static final RegistryObject<Item> MISSILE_SOYUZ = registerLegacy("missile_soyuz",
             () -> new SoyuzRocketItem(new Item.Properties()));
     public static final RegistryObject<Item> MISSILE_SOYUZ_LANDER = simpleStackOneItem("missile_soyuz_lander");
@@ -3521,6 +3534,13 @@ public final class ModItems {
             CONTAINMENT_BOX,
             PLASTIC_BAG,
             TOOLBOX,
+            KEY,
+            KEY_KIT,
+            KEY_FAKE,
+            PIN,
+            PADLOCK_RUSTY,
+            PADLOCK,
+            PADLOCK_REINFORCED,
             SETTINGS_TOOL,
             CONVEYOR_WAND
     ).toList();
@@ -3696,6 +3716,10 @@ public final class ModItems {
                         .filter(entry -> name.equals(entry.legacyPelletId()))
                         .findFirst()
                         .orElseThrow(() -> new IllegalArgumentException("Unknown RBMK pellet: " + name))));
+    }
+
+    private static RegistryObject<Item> padlock(String name, double lockMod) {
+        return registerLegacy(name, () -> new KeyPinItem(new Item.Properties().stacksTo(1), true));
     }
 
     private static RegistryObject<Item> registerLegacy(String name, java.util.function.Supplier<Item> supplier) {

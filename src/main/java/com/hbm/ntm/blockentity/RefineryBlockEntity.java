@@ -37,6 +37,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
@@ -68,6 +69,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_ON_FIRE = "onFire";
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_IS_ON = "isOn";
+    private static final String TAG_LEGACY_POWER = "power";
     private static final int MAX_SULFUR = 10;
     private static final long POWER_PER_OPERATION = 5L;
     private static final int INPUT_PER_OPERATION = 100;
@@ -252,10 +254,10 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        tag.putLong(TAG_LEGACY_POWER, getPower());
         tag.putInt(TAG_SULFUR, sulfur);
         tag.putBoolean(TAG_EXPLODED, exploded);
         tag.putBoolean(TAG_ON_FIRE, onFire);
-        tag.putBoolean(TAG_IS_ON, isOn);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         getAllTanks().get(0).writeToNbt(tag, "input");
         getAllTanks().get(1).writeToNbt(tag, "heavy");
@@ -267,10 +269,12 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        if (tag.contains(TAG_LEGACY_POWER)) {
+            setPower(tag.getLong(TAG_LEGACY_POWER));
+        }
         sulfur = tag.getInt(TAG_SULFUR);
         exploded = tag.getBoolean(TAG_EXPLODED);
         onFire = tag.getBoolean(TAG_ON_FIRE);
-        isOn = tag.getBoolean(TAG_IS_ON);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         getAllTanks().get(0).readFromNbt(tag, "input");
         getAllTanks().get(1).readFromNbt(tag, "heavy");
@@ -281,7 +285,33 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putBoolean(TAG_IS_ON, isOn);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        isOn = tag.getBoolean(TAG_IS_ON);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Nullable

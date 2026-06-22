@@ -24,7 +24,7 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
 
     @Override
     public boolean shouldRenderOffScreen(IndustrialSteamTurbineBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override

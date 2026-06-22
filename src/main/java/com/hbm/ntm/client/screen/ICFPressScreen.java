@@ -11,6 +11,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 
 public class ICFPressScreen extends AbstractContainerScreen<ICFPressMenu> {
     private static final ResourceLocation TEXTURE =
@@ -26,7 +27,7 @@ public class ICFPressScreen extends AbstractContainerScreen<ICFPressMenu> {
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        int muon = Math.max(0, Math.min(52, menu.getMuon() * 52 / ICFPressBlockEntity.MAX_MUON));
+        int muon = menu.getMuon() * 52 / ICFPressBlockEntity.MAX_MUON;
         if (muon > 0) {
             graphics.blit(TEXTURE, leftPos + 28, topPos + 70 - muon, 176, 52 - muon, 4, muon);
         }
@@ -40,18 +41,10 @@ public class ICFPressScreen extends AbstractContainerScreen<ICFPressMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (!renderTankTooltip(graphics, mouseX, mouseY, menu.getDeuteriumTank(), 44, 18, 16, 52)
-                && !renderTankTooltip(graphics, mouseX, mouseY, menu.getTritiumTank(), 152, 18, 16, 52)) {
-            if (LegacyGuiElements.isMouseOverSlot(menu.getSlot(4), leftPos, topPos, mouseX, mouseY)
-                    && !menu.getSlot(4).hasItem()) {
-                graphics.renderComponentTooltip(font, List.of(Component.literal("Item input: Top/Bottom")
-                        .withStyle(ChatFormatting.YELLOW)), mouseX, mouseY);
-            } else if (LegacyGuiElements.isMouseOverSlot(menu.getSlot(5), leftPos, topPos, mouseX, mouseY)
-                    && !menu.getSlot(5).hasItem()) {
-                graphics.renderComponentTooltip(font, List.of(Component.literal("Item input: Sides")
-                        .withStyle(ChatFormatting.YELLOW)), mouseX, mouseY);
-            }
-        }
+        renderTankTooltip(graphics, mouseX, mouseY, menu.getDeuteriumTank(), 44, 18, 16, 52);
+        renderTankTooltip(graphics, mouseX, mouseY, menu.getTritiumTank(), 152, 18, 16, 52);
+        renderEmptySlotHint(graphics, mouseX, mouseY, 4, "Item input: Top/Bottom");
+        renderEmptySlotHint(graphics, mouseX, mouseY, 5, "Item input: Sides");
         renderTooltip(graphics, mouseX, mouseY);
     }
 
@@ -62,5 +55,13 @@ public class ICFPressScreen extends AbstractContainerScreen<ICFPressMenu> {
         }
         graphics.renderComponentTooltip(font, tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         return true;
+    }
+
+    private void renderEmptySlotHint(GuiGraphics graphics, int mouseX, int mouseY, int slotIndex, String text) {
+        Slot slot = menu.getSlot(slotIndex);
+        if (!slot.hasItem() && isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
+            graphics.renderComponentTooltip(font,
+                    List.of(Component.literal(text).withStyle(ChatFormatting.YELLOW)), mouseX, mouseY);
+        }
     }
 }

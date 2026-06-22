@@ -2,6 +2,7 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.RBMKColumnBlockEntity;
 import com.hbm.ntm.multiblock.MultiblockHelper;
+import com.hbm.ntm.neutron.RBMKControlState;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -21,6 +22,9 @@ public class RBMKControlAutoMenu extends AbstractContainerMenu {
     private int heatUpper;
     private int function;
     private int levelPercent;
+    private long power;
+    private boolean powered;
+    private boolean hasPower;
 
     public RBMKControlAutoMenu(int containerId, Inventory inventory, FriendlyByteBuf data) {
         this(containerId, inventory, getBlockEntity(inventory, data.readBlockPos()));
@@ -54,6 +58,10 @@ public class RBMKControlAutoMenu extends AbstractContainerMenu {
                         ? (int) Math.round(blockEntity.controlState().level() * 100.0D)
                         : 0,
                 value -> levelPercent = value);
+        HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isPoweredControlRod,
+                value -> powered = value);
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::controlHasPower, value -> hasPower = value);
     }
 
     public RBMKColumnBlockEntity getBlockEntity() {
@@ -84,10 +92,25 @@ public class RBMKControlAutoMenu extends AbstractContainerMenu {
         return levelPercent;
     }
 
+    public long getPower() {
+        return power;
+    }
+
+    public long getMaxPower() {
+        return RBMKControlState.MAX_POWER;
+    }
+
+    public boolean isPoweredControlRod() {
+        return powered;
+    }
+
+    public boolean hasPower() {
+        return hasPower;
+    }
+
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D)
-                && MultiblockHelper.isOperationalCoreLayoutComplete(player.level(), blockEntity.getBlockPos());
+        return true;
     }
 
     @Override
