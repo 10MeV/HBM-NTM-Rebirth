@@ -1,0 +1,15 @@
+{
+  "handlers": [
+    {
+      "legacy_file": "hbmBreeder.json",
+      "modern_recipe_type": "breeding_reactor",
+      "status": "missing_template"
+    },
+    {
+      "legacy_file": "hbmFuelpool.json",
+      "modern_recipe_type": "fuel_pool",
+      "status": "missing_template"
+    }
+  ],
+  "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes"
+}

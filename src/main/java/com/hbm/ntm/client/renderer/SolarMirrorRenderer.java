@@ -13,6 +13,10 @@ import net.minecraft.world.phys.Vec3;
 
 public class SolarMirrorRenderer implements BlockEntityRenderer<SolarMirrorBlockEntity> {
     private static final LegacyWavefrontModel SOLAR_MIRROR = ObjMachineModels.SOLAR_MIRROR_LEGACY;
+    private static final LegacyWavefrontModel.SelectionHandle BASE =
+            SOLAR_MIRROR.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle MIRROR =
+            SOLAR_MIRROR.prepareRenderOnlyInCallOrder("Mirror");
 
     public SolarMirrorRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -35,12 +39,12 @@ public class SolarMirrorRenderer implements BlockEntityRenderer<SolarMirrorBlock
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        SOLAR_MIRROR.renderPart("Base", context);
+        SOLAR_MIRROR.renderOnlyInCallOrder(context, BASE);
         if (blockEntity.isTargetAbove()) {
             Vec3 delta = Vec3.atLowerCornerOf(blockEntity.getTarget().subtract(blockEntity.getBlockPos()));
             aimAt(delta, poseStack);
         }
-        SOLAR_MIRROR.renderPart("Mirror", context);
+        SOLAR_MIRROR.renderOnlyInCallOrder(context, MIRROR);
         poseStack.popPose();
     }
 

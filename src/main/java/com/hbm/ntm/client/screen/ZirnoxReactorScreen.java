@@ -72,11 +72,13 @@ public class ZirnoxReactorScreen extends AbstractContainerScreen<ZirnoxReactorMe
         renderTankTooltip(graphics, mouseX, mouseY, menu.getCarbonDioxideTank(), 142, 108, 18, 12);
         renderTankTooltip(graphics, mouseX, mouseY, menu.getWaterTank(), 178, 108, 18, 12);
         if (isHovering(160, 33, 18, 17, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal("Temperature: " + menu.getTemperatureDisplay() + "\u00b0C"),
-                    mouseX, mouseY);
+            LegacyGuiElements.renderTooltip(graphics, font, List.of(
+                    Component.literal("Temperature:"),
+                    Component.literal("   " + menu.getTemperatureDisplay() + "\u00b0C")), mouseX, mouseY);
         } else if (isHovering(178, 33, 18, 17, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal("Pressure: " + menu.getPressureDisplay() + " bar"),
-                    mouseX, mouseY);
+            LegacyGuiElements.renderTooltip(graphics, font, List.of(
+                    Component.literal("Pressure:"),
+                    Component.literal("   " + menu.getPressureDisplay() + " bar")), mouseX, mouseY);
         } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 16, topPos + 36, 16, 16)) {
             LegacyGuiElements.renderTooltip(graphics, font, splitLegacyInfo(Component.translatableWithFallback(
                     "desc.gui.zirnox.coolant",

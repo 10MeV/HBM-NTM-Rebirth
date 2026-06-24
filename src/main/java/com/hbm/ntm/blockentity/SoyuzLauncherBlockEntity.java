@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.item.DesignatorItem;
-import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -111,7 +110,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     private int countdown = MAX_COUNTDOWN;
     private String customName;
     private Object audioLoop;
-    private List<BlockPos> launcherPorts;
+    private List<LauncherPort> launcherPorts;
     private List<FluidPort> networkFluidPorts;
     private List<EnergyPort> energyPorts;
 
@@ -146,9 +145,6 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
             return;
         }
         launcher.updateAudioLoop();
-        if (!launcher.starting || launcher.countdown <= 0) {
-            return;
-        }
         if (!level.getEntitiesOfClass(SoyuzEntity.class,
                         new AABB(pos.getX() - 5.0D, pos.getY(), pos.getZ() - 5.0D,
                                 pos.getX() + 5.0D, pos.getY() + 10.0D, pos.getZ() + 5.0D)).isEmpty()) {
@@ -179,7 +175,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
             starting = false;
         } else if (countdown > 0) {
             countdown--;
-            if (countdown % 100 == 0) {
+            if (countdown % 100 == 0 && countdown > 0) {
                 LegacySoundPlayer.playSoundEffect(level, pos.getX(), pos.getY(), pos.getZ(),
                         "hbm:alarm.hatch", SoundSource.RECORDS, 100.0F, 1.1F);
             }
@@ -419,7 +415,9 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected Iterable<FluidPort> getNetworkFluidPorts(FluidType type) {
         if (networkFluidPorts == null) {
-            networkFluidPorts = launcherPorts().stream().map(pos -> new FluidPort(pos, Direction.UP)).toList();
+            networkFluidPorts = launcherPorts().stream()
+                    .map(port -> new FluidPort(port.offset(), port.direction()))
+                    .toList();
         }
         return networkFluidPorts;
     }
@@ -427,7 +425,9 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected Iterable<EnergyPort> getEnergyPorts() {
         if (energyPorts == null) {
-            energyPorts = launcherPorts().stream().map(pos -> new EnergyPort(pos, Direction.UP)).toList();
+            energyPorts = launcherPorts().stream()
+                    .map(port -> new EnergyPort(port.offset(), port.direction()))
+                    .toList();
         }
         return energyPorts;
     }
@@ -456,7 +456,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (hasCustomName()) {
             return Component.literal(customName);
         }
-        return Component.translatableWithFallback("container.hbm_ntm_rebirth.soyuz_launcher",
+        return Component.translatableWithFallback("container.soyuzLauncher",
                 "Soyuz Launch Platform");
     }
 
@@ -539,26 +539,22 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         return customName != null && !customName.isEmpty();
     }
 
-    private List<BlockPos> launcherPorts() {
+    private List<LauncherPort> launcherPorts() {
         if (launcherPorts != null) {
             return launcherPorts;
         }
-        Direction facing = facing();
-        Direction side = LegacyMultiblockOffsets.legacyUpSide(facing);
-        List<BlockPos> ports = new ArrayList<>();
-        for (int i = -6; i <= 6; i++) {
-            ports.add(LegacyMultiblockOffsets.relative(facing, side, 7, i, 0));
-            ports.add(LegacyMultiblockOffsets.relative(facing, side, 7, i, -1));
+        List<LauncherPort> ports = new ArrayList<>();
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            Direction side = LegacyMultiblockOffsets.legacyUpSide(direction);
+            for (int i = -6; i <= 6; i++) {
+                ports.add(new LauncherPort(LegacyMultiblockOffsets.relative(direction, side, 7, i, 0),
+                        direction));
+                ports.add(new LauncherPort(LegacyMultiblockOffsets.relative(direction, side, 7, i, -1),
+                        direction));
+            }
         }
         launcherPorts = List.copyOf(ports);
         return launcherPorts;
-    }
-
-    private Direction facing() {
-        BlockState state = getBlockState();
-        return state.hasProperty(HorizontalMachineBlock.FACING)
-                ? state.getValue(HorizontalMachineBlock.FACING)
-                : Direction.EAST;
     }
 
     private static void appendDropStacks(List<ItemStack> drops, Block block, int count) {
@@ -574,5 +570,8 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static boolean hasLegacyDesignatorCoords(ItemStack stack) {
         CompoundTag tag = stack.getTag();
         return tag != null && tag.contains("xCoord") && tag.contains("zCoord");
+    }
+
+    private record LauncherPort(BlockPos offset, Direction direction) {
     }
 }

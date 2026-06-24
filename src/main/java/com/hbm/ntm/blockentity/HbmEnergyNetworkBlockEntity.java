@@ -210,4 +210,10 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
         removeEnergyNode();
         super.setRemoved();
     }
+
+    @Override
+    public void onChunkUnloaded() {
+        removeEnergyNode();
+        super.onChunkUnloaded();
+    }
 }

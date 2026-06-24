@@ -1,99 +1,83 @@
 package com.hbm.ntm.client.screen;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.RBMKConsoleBlockEntity;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.menu.RBMKConsoleMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.neutron.RBMKConsolePlanner;
-import net.minecraft.ChatFormatting;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 
 public class RBMKConsoleScreen extends AbstractContainerScreen<RBMKConsoleMenu> {
-    private static final int GRID_X = 8;
-    private static final int GRID_Y = 20;
-    private static final int CELL = 8;
+    private static final ResourceLocation TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/reactors/gui_rbmk_console.png");
+    private static final int GRID_X = 86;
+    private static final int GRID_Y = 11;
+    private static final int CELL = 10;
     private static final int GRID_SIZE = RBMKConsolePlanner.CONSOLE_GRID_SIZE;
     private final boolean[] selected = new boolean[GRID_SIZE * GRID_SIZE];
     private EditBox levelBox;
-    private int colorIndex;
+    private boolean az5Lid = true;
+    private long lastAz5Press;
 
     public RBMKConsoleScreen(RBMKConsoleMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        imageWidth = 256;
-        imageHeight = 214;
-        titleLabelX = 8;
-        titleLabelY = 8;
-        inventoryLabelY = 1000;
+        imageWidth = 244;
+        imageHeight = 172;
     }
 
     @Override
     protected void init() {
         super.init();
-        levelBox = LegacyGuiElements.createLegacyTextField(font, leftPos + 150, topPos + 141,
-                34, 14, 4, "0");
+        levelBox = LegacyGuiElements.createLegacyTextField(font, leftPos + 9, topPos + 84,
+                35, 9, 3, "0");
         addRenderableWidget(levelBox);
-        for (int slot = 0; slot < RBMKConsolePlanner.CONSOLE_SCREEN_COUNT; slot++) {
-            int y = topPos + 18 + slot * 18;
-            final int screenSlot = slot;
-            addRenderableWidget(Button.builder(Component.literal("T" + slot),
-                    button -> toggleScreen(screenSlot))
-                    .bounds(leftPos + 150, y, 28, 14)
-                    .build());
-            addRenderableWidget(Button.builder(Component.literal("S" + slot),
-                    button -> bindSelection(screenSlot))
-                    .bounds(leftPos + 182, y, 28, 14)
-                    .build());
-        }
-        addRenderableWidget(Button.builder(Component.literal("L"), button -> applyLevel())
-                .bounds(leftPos + 188, topPos + 141, 18, 14)
-                .build());
-        addRenderableWidget(Button.builder(Component.literal("C"), button -> assignColor())
-                .bounds(leftPos + 210, topPos + 141, 18, 14)
-                .build());
-        addRenderableWidget(Button.builder(Component.literal("B"), button -> cycleCompressor())
-                .bounds(leftPos + 232, topPos + 141, 18, 14)
-                .build());
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
-        graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xff1c1c1c);
-        graphics.fill(leftPos + GRID_X - 1, topPos + GRID_Y - 1,
-                leftPos + GRID_X + GRID_SIZE * CELL + 1, topPos + GRID_Y + GRID_SIZE * CELL + 1, 0xff404040);
-        RBMKConsolePlanner.ColumnSnapshot[] columns = console().columns();
-        for (int index = 0; index < GRID_SIZE * GRID_SIZE; index++) {
-            int x = leftPos + GRID_X + (index % GRID_SIZE) * CELL;
-            int y = topPos + GRID_Y + (index / GRID_SIZE) * CELL;
-            graphics.fill(x, y, x + CELL - 1, y + CELL - 1, columnColor(columnAt(columns, index)));
-            if (selected[index]) {
-                graphics.renderOutline(x, y, CELL - 1, CELL - 1, 0xffffffff);
+        graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        if (az5Lid) {
+            graphics.blit(TEXTURE, leftPos + 30, topPos + 138, 228, 172, 28, 28);
+        }
+        RBMKConsolePlanner.ScreenState[] screens = console().screens();
+        for (int row = 0; row < 3; row++) {
+            for (int column = 0; column < 2; column++) {
+                int id = row * 2 + column;
+                RBMKConsolePlanner.ScreenType type = id < screens.length ? screens[id].type() : RBMKConsolePlanner.ScreenType.NONE;
+                graphics.blit(TEXTURE, leftPos + 6 + 40 * column, topPos + 8 + 21 * row,
+                        type.offset(), 238, 18, 18);
             }
         }
+        renderColumns(graphics, console().columns());
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, titleLabelX, titleLabelY, 0xe0e0e0, false);
-        RBMKConsoleBlockEntity console = console();
-        graphics.drawString(font, Component.literal("Target " + console.target().toShortString()),
-                8, 146, 0xb0b0b0, false);
-        int[] flux = console.fluxBuffer();
-        int lastFlux = flux.length == 0 ? 0 : flux[flux.length - 1];
-        graphics.drawString(font, Component.literal("Flux " + lastFlux), 8, 158, 0xb0b0b0, false);
-
-        RBMKConsolePlanner.ScreenState[] screens = console.screens();
-        for (int slot = 0; slot < Math.min(screens.length, RBMKConsolePlanner.CONSOLE_SCREEN_COUNT); slot++) {
-            RBMKConsolePlanner.ScreenState screen = screens[slot];
-            String display = screen.display() == null ? screen.type().name() : screen.display();
-            graphics.drawString(font, Component.literal(display), 214, 22 + slot * 18, 0xd0d0d0, false);
+        int[] flux = console().fluxBuffer();
+        if (flux.length > 0) {
+            int highest = Integer.MIN_VALUE;
+            int lowest = Integer.MAX_VALUE;
+            for (int value : flux) {
+                highest = Math.max(highest, value);
+                lowest = Math.min(lowest, value);
+            }
+            graphics.pose().pushPose();
+            graphics.pose().scale(0.5F, 0.5F, 1.0F);
+            drawScaledString(graphics, highest + "", 8, 98);
+            drawScaledString(graphics, highest + "", 80 - font.width(highest + "") / 2, 98);
+            drawScaledString(graphics, lowest + "", 8, 128);
+            drawScaledString(graphics, lowest + "", 80 - font.width(lowest + "") / 2, 128);
+            graphics.pose().popPose();
         }
-        graphics.drawString(font, Component.literal("Level").withStyle(ChatFormatting.GRAY),
-                150, 130, 0xa0a0a0, false);
     }
 
     @Override
@@ -112,36 +96,74 @@ public class RBMKConsoleScreen extends AbstractContainerScreen<RBMKConsoleMenu> 
             int x = ((int) mouseX - gridLeft) / CELL;
             int y = ((int) mouseY - gridTop) / CELL;
             int index = y * GRID_SIZE + x;
-            selected[index] = !selected[index];
+            RBMKConsolePlanner.ColumnSnapshot column = columnAt(console().columns(), index);
+            if (column != null) {
+                selected[index] = !selected[index];
+                LegacyGuiElements.playClickSound();
+                return true;
+            }
+        }
+        if (isHovering(72, 70, 10, 10, mouseX, mouseY)) {
+            for (int i = 0; i < selected.length; i++) {
+                selected[i] = false;
+            }
+            LegacyGuiElements.playClickSound();
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    private void toggleScreen(int slot) {
-        CompoundTag tag = new CompoundTag();
-        tag.putByte("toggle", (byte) slot);
-        send(tag);
-    }
-
-    private void bindSelection(int slot) {
-        CompoundTag tag = new CompoundTag();
-        tag.putByte("id", (byte) slot);
-        for (int i = 0; i < selected.length; i++) {
-            tag.putBoolean("s" + i, selected[i]);
+        if (isHovering(61, 70, 10, 10, mouseX, mouseY)) {
+            selectAllManualControlRods();
+            LegacyGuiElements.playClickSound();
+            return true;
         }
-        send(tag);
+        if (isHovering(70, 82, 12, 12, mouseX, mouseY)) {
+            cycleCompressor();
+            return true;
+        }
+        for (int color = 0; color < 5; color++) {
+            if (isHovering(6 + color * 11, 70, 10, 10, mouseX, mouseY)) {
+                if (button == 0) {
+                    selectManualColorGroup(color);
+                } else if (button == 1) {
+                    assignColor(color);
+                }
+                LegacyGuiElements.playClickSound();
+                return true;
+            }
+        }
+        if (isHovering(30, 138, 28, 28, mouseX, mouseY)) {
+            pressAz5();
+            return true;
+        }
+        if (isHovering(48, 82, 12, 12, mouseX, mouseY)) {
+            applyLevel();
+            return true;
+        }
+        for (int row = 0; row < 3; row++) {
+            for (int column = 0; column < 2; column++) {
+                int slot = row * 2 + column;
+                if (isHovering(6 + 40 * column, 8 + 21 * row, 18, 18, mouseX, mouseY)) {
+                    toggleScreen(slot);
+                    return true;
+                }
+                if (isHovering(24 + 40 * column, 8 + 21 * row, 18, 18, mouseX, mouseY)) {
+                    bindSelection(slot);
+                    return true;
+                }
+            }
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     private void applyLevel() {
         CompoundTag tag = selectedIndexTag();
         tag.putDouble("level", parsePercent(levelBox.getValue()));
         send(tag);
+        LegacyGuiElements.playClickSound();
     }
 
-    private void assignColor() {
+    private void assignColor(int color) {
         CompoundTag tag = new CompoundTag();
-        tag.putByte("assignColor", (byte) colorIndex++);
+        tag.putByte("assignColor", (byte) color);
         tag.putIntArray("cols", selectedColumns());
         send(tag);
     }
@@ -180,29 +202,164 @@ public class RBMKConsoleScreen extends AbstractContainerScreen<RBMKConsoleMenu> 
         return columns == null || index < 0 || index >= columns.length ? null : columns[index];
     }
 
-    private static int columnColor(RBMKConsolePlanner.ColumnSnapshot column) {
-        if (column == null || column.type() == null) {
-            return 0xff101010;
-        }
-        return switch (column.type()) {
-            case FUEL, FUEL_SIM -> 0xff4f8f4f;
-            case CONTROL, CONTROL_AUTO -> 0xff4f6f9f;
-            case BOILER, HEATEX, COOLER -> 0xff4f8f9f;
-            case MODERATOR -> 0xff606060;
-            case ABSORBER -> 0xff5f4f7f;
-            case REFLECTOR -> 0xffa0a0a0;
-            case OUTGASSER -> 0xff8f7f4f;
-            case STORAGE -> 0xff7f6f4f;
-            case BREEDER -> 0xff6f8f5f;
-            case BLANK -> 0xff303030;
-        };
-    }
-
     private RBMKConsoleBlockEntity console() {
         return menu.getBlockEntity();
     }
 
     private void send(CompoundTag tag) {
         ModMessages.sendTileControl(console().getBlockPos(), tag);
+    }
+
+    private void toggleScreen(int slot) {
+        CompoundTag tag = new CompoundTag();
+        tag.putByte("toggle", (byte) slot);
+        send(tag);
+        LegacyGuiElements.playClickSound();
+    }
+
+    private void bindSelection(int slot) {
+        CompoundTag tag = new CompoundTag();
+        tag.putByte("id", (byte) slot);
+        for (int i = 0; i < selected.length; i++) {
+            tag.putBoolean("s" + i, selected[i]);
+        }
+        send(tag);
+        LegacyGuiElements.playClickSound();
+    }
+
+    private void pressAz5() {
+        if (az5Lid) {
+            az5Lid = false;
+            LegacySoundPlayer.playSoundClient(console().getBlockPos(), "hbm:block.rbmk_az5_cover", 0.5F, 1.0F);
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (lastAz5Press + 3000L >= now) {
+            return;
+        }
+        lastAz5Press = now;
+        LegacySoundPlayer.playSoundClient(console().getBlockPos(), "hbm:block.shutdown", 1.0F, 1.0F);
+        CompoundTag tag = new CompoundTag();
+        tag.putDouble("level", 0.0D);
+        RBMKConsolePlanner.ColumnSnapshot[] columns = console().columns();
+        for (int i = 0; i < columns.length; i++) {
+            RBMKConsolePlanner.ColumnSnapshot column = columns[i];
+            if (column != null && column.type() == RBMKConsolePlanner.ColumnType.CONTROL) {
+                tag.putInt("sel_" + i, i);
+            }
+        }
+        send(tag);
+        LegacyGuiElements.playClickSound();
+    }
+
+    private void selectAllManualControlRods() {
+        RBMKConsolePlanner.ColumnSnapshot[] columns = console().columns();
+        for (int i = 0; i < selected.length; i++) {
+            RBMKConsolePlanner.ColumnSnapshot column = columnAt(columns, i);
+            selected[i] = column != null && column.type() == RBMKConsolePlanner.ColumnType.CONTROL;
+        }
+    }
+
+    private void selectManualColorGroup(int color) {
+        RBMKConsolePlanner.ColumnSnapshot[] columns = console().columns();
+        for (int i = 0; i < selected.length; i++) {
+            RBMKConsolePlanner.ColumnSnapshot column = columnAt(columns, i);
+            selected[i] = column != null
+                    && column.type() == RBMKConsolePlanner.ColumnType.CONTROL
+                    && column.data().getShort("color") == color;
+        }
+    }
+
+    private void renderColumns(GuiGraphics graphics, RBMKConsolePlanner.ColumnSnapshot[] columns) {
+        for (int i = 0; i < columns.length; i++) {
+            RBMKConsolePlanner.ColumnSnapshot column = columns[i];
+            if (column == null || column.type() == null) {
+                continue;
+            }
+            int x = leftPos + GRID_X + CELL * (i % GRID_SIZE);
+            int y = topPos + GRID_Y + CELL * (i / GRID_SIZE);
+            graphics.blit(TEXTURE, x, y, column.type().offset(), 172, CELL, CELL);
+            renderColumnOverlays(graphics, x, y, column);
+            if (selected[i]) {
+                graphics.blit(TEXTURE, x, y, 0, 192, CELL, CELL);
+            }
+        }
+    }
+
+    private void renderColumnOverlays(GuiGraphics graphics, int x, int y, RBMKConsolePlanner.ColumnSnapshot column) {
+        CompoundTag data = column.data();
+        int heat = Math.min(scaledCeil(data.getDouble("heat") - 20.0D, 10.0D, data.getDouble("maxHeat")), 10);
+        graphics.blit(TEXTURE, x, y + CELL - heat, 0, 192 - heat, 10, heat);
+        switch (column.type()) {
+            case CONTROL -> {
+                int color = data.getShort("color");
+                if (color > -1) {
+                    graphics.blit(TEXTURE, x, y, color * CELL, 202, CELL, CELL);
+                }
+                renderControlLevel(graphics, x, y, data);
+            }
+            case CONTROL_AUTO -> renderControlLevel(graphics, x, y, data);
+            case FUEL, FUEL_SIM -> renderFuelColumn(graphics, x, y, data);
+            case BOILER -> renderBoilerColumn(graphics, x, y, data);
+            case HEATEX -> renderHeaterColumn(graphics, x, y, data);
+            default -> {
+            }
+        }
+    }
+
+    private void renderControlLevel(GuiGraphics graphics, int x, int y, CompoundTag data) {
+        int level = 8 - Mth.ceil(data.getDouble("level") * 8.0D);
+        graphics.blit(TEXTURE, x + 4, y + 1, 24, 183, 2, level);
+    }
+
+    private void renderFuelColumn(GuiGraphics graphics, int x, int y, CompoundTag data) {
+        if (!data.contains("c_heat")) {
+            return;
+        }
+        int skin = Math.min(scaledCeil(data.getDouble("c_heat") - 20.0D, 8.0D, data.getDouble("c_maxHeat")), 8);
+        graphics.blit(TEXTURE, x + 1, y + CELL - skin - 1, 11, 191 - skin, 2, skin);
+        int enrichment = Math.min(Mth.ceil(data.getDouble("enrichment") * 8.0D), 8);
+        graphics.blit(TEXTURE, x + 4, y + CELL - enrichment - 1, 14, 191 - enrichment, 2, enrichment);
+        int xenon = Math.min(Mth.ceil(data.getDouble("xenon") * 8.0D / 100.0D), 8);
+        graphics.blit(TEXTURE, x + 7, y + CELL - xenon - 1, 17, 191 - xenon, 2, xenon);
+    }
+
+    private void renderBoilerColumn(GuiGraphics graphics, int x, int y, CompoundTag data) {
+        int water = scaledCeil(data.getInt("water"), 8.0D, data.getDouble("maxWater"));
+        graphics.blit(TEXTURE, x + 1, y + CELL - water - 1, 41, 191 - water, 3, water);
+        int steam = scaledCeil(data.getInt("steam"), 8.0D, data.getDouble("maxSteam"));
+        graphics.blit(TEXTURE, x + 6, y + CELL - steam - 1, 46, 191 - steam, 3, steam);
+        short type = data.getShort("type");
+        if (type == HbmFluids.STEAM.getId()) {
+            graphics.blit(TEXTURE, x + 4, y + 1, 44, 183, 2, 2);
+        }
+        if (type == HbmFluids.HOTSTEAM.getId()) {
+            graphics.blit(TEXTURE, x + 4, y + 3, 44, 185, 2, 2);
+        }
+        if (type == HbmFluids.SUPERHOTSTEAM.getId()) {
+            graphics.blit(TEXTURE, x + 4, y + 5, 44, 187, 2, 2);
+        }
+        if (type == HbmFluids.ULTRAHOTSTEAM.getId()) {
+            graphics.blit(TEXTURE, x + 4, y + 7, 44, 189, 2, 2);
+        }
+    }
+
+    private void renderHeaterColumn(GuiGraphics graphics, int x, int y, CompoundTag data) {
+        int cold = scaledCeil(data.getInt("water"), 8.0D, data.getDouble("maxWater"));
+        graphics.blit(TEXTURE, x + 1, y + CELL - cold - 1, 131, 191 - cold, 3, cold);
+        int hot = scaledCeil(data.getInt("steam"), 8.0D, data.getDouble("maxSteam"));
+        graphics.blit(TEXTURE, x + 6, y + CELL - hot - 1, 136, 191 - hot, 3, hot);
+    }
+
+    private int scaledCeil(double fill, double scale, double max) {
+        if (max == 0.0D) {
+            return 0;
+        }
+        return Mth.ceil(fill * scale / max);
+    }
+
+    private void drawScaledString(GuiGraphics graphics, String text, int x, int y) {
+        graphics.drawString(font, text, (int) ((leftPos + x) / 0.5F), (int) ((topPos + y) / 0.5F),
+                0x00FF00, false);
     }
 }

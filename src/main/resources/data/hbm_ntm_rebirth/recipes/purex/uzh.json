@@ -1,0 +1,43 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:purex",
+    "internal_name":  "purex.uzh",
+    "duration":  600,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:billet_uranium_fuel"
+                                           }
+                        },
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:billet_zirconium"
+                                           },
+                            "count":  3
+                        }
+                    ],
+    "input_fluids":  [
+                         {
+                             "fluid":  "hbm_ntm_rebirth:nitric_acid",
+                             "amount":  1000
+                         },
+                         {
+                             "fluid":  "hbm_ntm_rebirth:hydrogen",
+                             "amount":  4000
+                         }
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:billet_uzh",
+                             "count":  4
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  43
+}
+

@@ -11,6 +11,7 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.fuel.LegacyBurnTimeModule;
 import com.hbm.ntm.menu.BlastFurnaceMenu;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.recipe.BlastFurnaceRecipe;
 import com.hbm.ntm.recipe.HbmItemOutput;
 import com.hbm.ntm.recipe.ModRecipes;
@@ -24,6 +25,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -59,7 +61,9 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
     public static final int AIRBLAST_CAPACITY = 4_000;
     public static final int FLUE_CAPACITY = 1_000;
 
+    private static final String TAG_ITEMS = "items";
     private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_NAME = "name";
     private static final String TAG_PROGRESS = "progress";
     private static final String TAG_FUEL = "fuel";
     private static final LegacyBurnTimeModule BURN_MODULE = new LegacyBurnTimeModule()
@@ -93,6 +97,8 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
     private float progress;
     private float speed;
     private int fuel;
+    @Nullable
+    private String customName;
 
     public BlastFurnaceBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state,
@@ -130,11 +136,13 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
                     pos.getZ() + 0.25D + level.random.nextDouble() * 0.5D,
                     0.0D, 0.0D, 0.0D);
             if (furnace.flueTank.getFill() >= FLUE_GAS) {
-                level.addParticle(ParticleTypes.SMOKE,
+                ParticleUtil.spawnCoolingTower(level,
                         pos.getX() + 0.5D,
                         pos.getY() + 7.0D,
                         pos.getZ() + 0.5D,
-                        0.0D, 0.08D, 0.0D);
+                        10.0F, 0.25F, 2.5F,
+                        100 + level.random.nextInt(20),
+                        false, 0.075F, 0.25F, 0x202020);
             }
         }
     }
@@ -181,7 +189,9 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.blastFurnace", "Blast Furnace");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatableWithFallback("container.blastFurnace", "Blast Furnace");
     }
 
     @Nullable
@@ -258,7 +268,10 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, TAG_ITEMS, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_NAME, customName);
+        }
         tag.putFloat(TAG_PROGRESS, progress);
         tag.putInt(TAG_FUEL, fuel);
         airblastTank.writeToNbt(tag, "t0");
@@ -268,13 +281,14 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_NAME, Tag.TAG_STRING) ? tag.getString(TAG_NAME) : null;
         progress = tag.getFloat(TAG_PROGRESS);
         fuel = tag.getInt(TAG_FUEL);
-        if (tag.contains("t0") || tag.contains("t0_type")) {
+        if (hasTankTag(tag, "t0")) {
             airblastTank.readFromNbt(tag, "t0");
         }
-        if (tag.contains("t1") || tag.contains("t1_type")) {
+        if (hasTankTag(tag, "t1")) {
             flueTank.readFromNbt(tag, "t1");
         }
     }
@@ -395,6 +409,22 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
         if (items.getStackInSlot(SLOT_FUEL).isEmpty() && !remainder.isEmpty()) {
             items.setStackInSlot(SLOT_FUEL, remainder.copy());
         }
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_ITEMS, Tag.TAG_LIST) || tag.contains(TAG_ITEMS, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+            return;
+        }
+        if (tag.contains(TAG_INVENTORY, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
     private static int getBurnTime(ItemStack stack) {

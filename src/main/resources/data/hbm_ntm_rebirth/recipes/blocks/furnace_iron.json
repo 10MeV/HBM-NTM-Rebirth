@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "III",
+    "IFI",
+    "BBB"
+  ],
+  "key": {
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "F": {
+      "item": "minecraft:furnace"
+    },
+    "B": {
+      "item": "minecraft:stone_bricks"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:furnace_iron"
+  },
+  "show_notification": true
+}

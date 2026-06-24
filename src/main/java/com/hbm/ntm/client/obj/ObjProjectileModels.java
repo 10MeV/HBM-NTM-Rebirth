@@ -53,7 +53,7 @@ public final class ObjProjectileModels {
     public static LegacyWavefrontModel model(String modelName, String textureName) {
         return new LegacyWavefrontModel(
                 modelLocation(modelName),
-                texture(textureName));
+                texture(textureName)).asVBO();
     }
 
     private static ResourceLocation modelLocation(String modelName) {
@@ -74,7 +74,7 @@ public final class ObjProjectileModels {
     public static LegacyWavefrontModel directModel(String modelName, String textureName) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/projectiles/" + modelName + ".obj"),
-                directProjectileTexture(textureName));
+                directProjectileTexture(textureName)).asVBO();
     }
 
     public static ResourceLocation texture(String name) {

@@ -16,6 +16,16 @@ import net.minecraft.world.phys.Vec3;
 
 public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_STEAM_ENGINE;
+    private static final LegacyWavefrontModel.SelectionHandle BASE =
+            MODEL.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle FLYWHEEL =
+            MODEL.prepareRenderOnlyInCallOrder("Flywheel");
+    private static final LegacyWavefrontModel.SelectionHandle SHAFT =
+            MODEL.prepareRenderOnlyInCallOrder("Shaft");
+    private static final LegacyWavefrontModel.SelectionHandle TRANSMISSION =
+            MODEL.prepareRenderOnlyInCallOrder("Transmission");
+    private static final LegacyWavefrontModel.SelectionHandle PISTON =
+            MODEL.prepareRenderOnlyInCallOrder("Piston");
 
     public SteamEngineRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -60,20 +70,21 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
 
     static void renderPlan(LegacyWavefrontModel model, LegacyTileRenderPlans.SteamEnginePlan plan,
             ObjRenderContext context, PoseStack poseStack) {
-        model.renderPart("Base", context);
-        renderRotatingPart(model, plan.flywheel(), context, poseStack);
-        renderRotatingPart(model, plan.shaft(), context, poseStack);
+        model.renderOnlyInCallOrder(context, BASE);
+        renderRotatingPart(model, plan.flywheel(), FLYWHEEL, context, poseStack);
+        renderRotatingPart(model, plan.shaft(), SHAFT, context, poseStack);
         renderTransmission(model, plan.transmission(), context, poseStack);
-        renderTranslatedPart(model, plan.piston(), context, poseStack);
+        renderTranslatedPart(model, plan.piston(), PISTON, context, poseStack);
     }
 
     private static void renderRotatingPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.RotatingModelPartPlan part, ObjRenderContext context, PoseStack poseStack) {
+            LegacyTileRenderPlans.RotatingModelPartPlan part, LegacyWavefrontModel.SelectionHandle handle,
+            ObjRenderContext context, PoseStack poseStack) {
         poseStack.pushPose();
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
         rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        model.renderPart(part.partName(), context);
+        model.renderOnlyInCallOrder(context, handle);
         poseStack.popPose();
     }
 
@@ -85,18 +96,19 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
         poseStack.translate(transmission.pivotX(), transmission.pivotY(), 0.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) -transmission.angleDegrees()));
         poseStack.translate(-transmission.pivotX(), -transmission.pivotY(), 0.0D);
-        model.renderPart("Transmission", context);
+        model.renderOnlyInCallOrder(context, TRANSMISSION);
         poseStack.popPose();
     }
 
     private static void renderTranslatedPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.TranslatedModelPartPlan part, ObjRenderContext context, PoseStack poseStack) {
+            LegacyTileRenderPlans.TranslatedModelPartPlan part, LegacyWavefrontModel.SelectionHandle handle,
+            ObjRenderContext context, PoseStack poseStack) {
         if (!part.active()) {
             return;
         }
         poseStack.pushPose();
         poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-        model.renderPart(part.partName(), context);
+        model.renderOnlyInCallOrder(context, handle);
         poseStack.popPose();
     }
 

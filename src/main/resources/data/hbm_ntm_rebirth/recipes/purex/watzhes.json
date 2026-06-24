@@ -1,0 +1,49 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:purex",
+    "internal_name":  "purex.watzhes",
+    "duration":  60,
+    "power":  10000,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:watz_pellet_depleted_hes"
+                                           }
+                        }
+                    ],
+    "input_fluids":  [
+                         {
+                             "fluid":  "hbm_ntm_rebirth:kerosene",
+                             "amount":  500
+                         },
+                         {
+                             "fluid":  "hbm_ntm_rebirth:nitric_acid",
+                             "amount":  250
+                         }
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:nugget_solinium",
+                             "count":  17
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:nugget_euphemium"
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:nuclear_waste",
+                             "count":  2
+                         }
+                     ],
+    "output_fluids":  [
+                          {
+                              "fluid":  "hbm_ntm_rebirth:watz",
+                              "amount":  1000
+                          }
+                      ],
+    "pools":  [
+
+              ],
+    "auto_switch_group":  "autoswitch.watz",
+    "name_wrapper":  "purex.recycle",
+    "source_order":  372
+}
+

@@ -26,6 +26,18 @@ public final class LegacyFluidTankRenderHelper {
     private static final ResourceLocation TANK_INNER_TEXTURE = ObjMachineModels.LEGACY_FLUIDTANK_INNER_TEXTURE;
     private static final ResourceLocation TANK_NONE_TEXTURE = tankTexture("NONE");
     private static final ResourceLocation TANK_DANGER_TEXTURE = tankTexture("DANGER");
+    private static final LegacyWavefrontModel NORMAL_MODEL = ObjMachineModels.FLUIDTANK;
+    private static final LegacyWavefrontModel EXPLODED_MODEL = ObjMachineModels.FLUIDTANK_EXPLODED;
+    private static final LegacyWavefrontModel.SelectionHandle NORMAL_FRAME =
+            NORMAL_MODEL.prepareRenderOnlyInCallOrder("Frame");
+    private static final LegacyWavefrontModel.SelectionHandle NORMAL_TANK =
+            NORMAL_MODEL.prepareRenderOnlyInCallOrder("Tank");
+    private static final LegacyWavefrontModel.SelectionHandle EXPLODED_FRAME =
+            EXPLODED_MODEL.prepareRenderOnlyInCallOrder("Frame");
+    private static final LegacyWavefrontModel.SelectionHandle EXPLODED_TANK_INNER =
+            EXPLODED_MODEL.prepareRenderOnlyInCallOrder("TankInner");
+    private static final LegacyWavefrontModel.SelectionHandle EXPLODED_TANK =
+            EXPLODED_MODEL.prepareRenderOnlyInCallOrder("Tank");
 
     private LegacyFluidTankRenderHelper() {
     }
@@ -35,11 +47,14 @@ public final class LegacyFluidTankRenderHelper {
             int packedLight, int packedOverlay) {
         FluidType type = tank.getTankType();
         if (exploded) {
-            explodedModel.renderPart("Frame", TANK_FRAME_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
-            explodedModel.renderPart("TankInner", TANK_INNER_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            renderKnownTankPart(explodedModel, EXPLODED_FRAME, "Frame", TANK_FRAME_TEXTURE, poseStack, buffer,
+                    packedLight, packedOverlay, 0xFFFFFF);
+            renderKnownTankPart(explodedModel, EXPLODED_TANK_INNER, "TankInner", TANK_INNER_TEXTURE, poseStack, buffer,
+                    packedLight, packedOverlay, 0xFFFFFF);
             renderTankPart(explodedModel, "Tank", type, poseStack, buffer, packedLight, packedOverlay);
         } else {
-            normalModel.renderPart("Frame", TANK_FRAME_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            renderKnownTankPart(normalModel, NORMAL_FRAME, "Frame", TANK_FRAME_TEXTURE, poseStack, buffer,
+                    packedLight, packedOverlay, 0xFFFFFF);
             renderTankPart(normalModel, "Tank", type, poseStack, buffer, packedLight, packedOverlay);
         }
         renderSmallTankDiamonds(type, poseStack, buffer, packedLight, packedOverlay);
@@ -117,6 +132,23 @@ public final class LegacyFluidTankRenderHelper {
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         int color = tankModelTint(type);
         ResourceLocation texture = tankTextureFor(type);
+        LegacyWavefrontModel.SelectionHandle handle = model == NORMAL_MODEL && "Tank".equals(part)
+                ? NORMAL_TANK
+                : model == EXPLODED_MODEL && "Tank".equals(part) ? EXPLODED_TANK : null;
+        renderKnownTankPart(model, handle, part, texture, poseStack, buffer, packedLight, packedOverlay, color);
+    }
+
+    private static void renderKnownTankPart(LegacyWavefrontModel model, LegacyWavefrontModel.SelectionHandle handle,
+            String part, ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, int color) {
+        if (handle != null) {
+            model.renderOnlyInCallOrder(texture,
+                    new ObjRenderContext(poseStack, buffer,
+                            net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), packedLight, packedOverlay)
+                            .withRgb(color >> 16 & 255, color >> 8 & 255, color & 255),
+                    handle);
+            return;
+        }
         model.renderPart(part, texture, poseStack, buffer, packedLight, packedOverlay,
                 color >> 16 & 255, color >> 8 & 255, color & 255, 255);
     }

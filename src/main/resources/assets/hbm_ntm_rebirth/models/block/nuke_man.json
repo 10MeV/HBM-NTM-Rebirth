@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "hbm_ntm_rebirth:block/nuke_man"
+    "particle": "hbm_ntm_rebirth:block/nuke/man"
   },
   "elements": []
 }

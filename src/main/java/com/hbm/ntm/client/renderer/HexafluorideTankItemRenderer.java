@@ -37,9 +37,9 @@ public class HexafluorideTankItemRenderer extends BlockEntityWithoutLevelRendere
     private static void applyLegacyItemTransform(ItemDisplayContext displayContext, PoseStack poseStack) {
         if (displayContext == ItemDisplayContext.GUI) {
             poseStack.translate(0.5D, 0.625D, 0.0D);
-            poseStack.mulPose(Axis.XP.rotationDegrees(-30.0F));
+            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
             poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
-            poseStack.scale(-0.0625F, -0.0625F, -0.0625F);
+            poseStack.scale(0.0625F, 0.0625F, 0.0625F);
             poseStack.translate(0.0D, -4.0D, 0.0D);
             poseStack.scale(6.0F, 6.0F, 6.0F);
             return;

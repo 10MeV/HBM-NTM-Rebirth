@@ -61,6 +61,10 @@ public final class ModRecipes {
             register("outgasser", OutgasserRecipe.Serializer::new);
     public static final RecipeHolder<FusionFluidBreederRecipe> FUSION_FLUID_BREEDER =
             register("fusion_fluid_breeder", FusionFluidBreederRecipe.Serializer::new);
+    public static final RecipeHolder<BreedingReactorRecipe> BREEDING_REACTOR =
+            register("breeding_reactor", BreedingReactorRecipe.Serializer::new);
+    public static final RecipeHolder<FuelPoolRecipe> FUEL_POOL =
+            register("fuel_pool", FuelPoolRecipe.Serializer::new);
     public static final RecipeHolder<ExposureChamberRecipe> EXPOSURE_CHAMBER =
             register("exposure_chamber", ExposureChamberRecipe.Serializer::new);
     public static final RecipeHolder<SolderingStationRecipe> SOLDERING_STATION =

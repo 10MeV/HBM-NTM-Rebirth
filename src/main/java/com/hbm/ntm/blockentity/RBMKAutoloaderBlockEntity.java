@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.item.RBMKFuelRodItem;
+import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.menu.RBMKAutoloaderMenu;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmTileSyncable;
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvider, HbmTileSyncable {
+public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvider, HbmTileSyncable, CopiableSettings {
     public static final String TAG_ITEMS = "items";
     public static final String TAG_SLOT = "slot";
     public static final String TAG_PISTON = "piston";
@@ -141,6 +142,42 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
 
     public double lastPiston() {
         return hasCompleteLayout() ? lastPiston : 0.0D;
+    }
+
+    @Override
+    public boolean supportsSettingsCopy(Level level, BlockPos pos) {
+        return hasCompleteLayout();
+    }
+
+    @Override
+    public CompoundTag getSettings(Level level, BlockPos pos) {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt(TAG_CYCLE, cycle);
+        return tag;
+    }
+
+    @Override
+    public void pasteSettings(CompoundTag tag, int index, Level level, Player player, BlockPos pos) {
+        if (tag == null || !tag.contains(TAG_CYCLE)) {
+            return;
+        }
+        int pastedCycle = clampCycle(tag.getInt(TAG_CYCLE));
+        if (pastedCycle == cycle) {
+            return;
+        }
+        cycle = pastedCycle;
+        setChanged();
+        if (level != null) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            if (!level.isClientSide) {
+                syncToTracking();
+            }
+        }
+    }
+
+    @Override
+    public List<Component> infoForDisplay(Level level, BlockPos pos) {
+        return List.of(Component.literal("Cycle: " + cycle));
     }
 
     public List<ItemStack> removeItemsForDrop() {

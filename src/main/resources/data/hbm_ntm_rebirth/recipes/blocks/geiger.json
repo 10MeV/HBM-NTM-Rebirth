@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:geiger_counter"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:geiger"
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "type": "minecraft:block",
+  "pools": [{ "rolls": 1, "entries": [{ "type": "minecraft:item", "name": "hbm_ntm_rebirth:crane_boxer" }] }]
+}

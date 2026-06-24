@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/machine_thresher"
+    },
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/machine_thresher"
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/machine_thresher"
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/machine_thresher"
+    }
+  }
+}

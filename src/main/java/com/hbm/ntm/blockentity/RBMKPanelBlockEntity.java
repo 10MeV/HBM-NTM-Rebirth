@@ -14,6 +14,7 @@ import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.util.BufferUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -137,8 +138,12 @@ public class RBMKPanelBlockEntity extends BlockEntity
         };
         if (changed) {
             panel.setChangedAndSync(false);
-            panel.networkPackNT(50);
-        } else if (level.getGameTime() % 20L == 0L) {
+        }
+        if (panel.panelType() == RBMKPanelPlanner.PanelType.DISPLAY) {
+            if (level.getGameTime() % RBMKPanelPlanner.DISPLAY_SCAN_INTERVAL == 0) {
+                panel.networkPackNT(50);
+            }
+        } else {
             panel.networkPackNT(50);
         }
     }
@@ -204,18 +209,13 @@ public class RBMKPanelBlockEntity extends BlockEntity
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
         writeLegacyLoadedTileBinary(data);
-        CompoundTag tag = new CompoundTag();
-        writePanelData(tag);
-        data.writeNbt(tag);
+        writeLegacyPanelPacket(data);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         readLegacyLoadedTileBinary(data);
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            readPanelData(tag);
-        }
+        readLegacyPanelPacket(data);
     }
 
     @Override
@@ -535,6 +535,199 @@ public class RBMKPanelBlockEntity extends BlockEntity
             case NUMITRON -> writeNumitrons(tag);
             case TERMINAL -> writeTerminal(tag);
             case DISPLAY -> writeDisplay(tag);
+        }
+    }
+
+    private void writeLegacyPanelPacket(FriendlyByteBuf data) {
+        switch (panelType()) {
+            case GAUGE -> {
+                for (RBMKPanelPlanner.GaugeUnit unit : gauges) {
+                    data.writeBoolean(unit.active());
+                    data.writeBoolean(unit.polling());
+                    data.writeInt(unit.color());
+                    BufferUtil.writeString(data, unit.label());
+                    BufferUtil.writeString(data, unit.rtty());
+                    data.writeLong(unit.min());
+                    data.writeLong(unit.max());
+                    data.writeLong(unit.value());
+                }
+            }
+            case GRAPH -> {
+                for (RBMKPanelPlanner.GraphUnit unit : graphs) {
+                    data.writeBoolean(unit.active());
+                    data.writeBoolean(unit.polling());
+                    BufferUtil.writeString(data, unit.label());
+                    BufferUtil.writeString(data, unit.rtty());
+                    data.writeBoolean(unit.minBound());
+                    if (unit.minBound()) {
+                        data.writeLong(unit.min());
+                    }
+                    data.writeBoolean(unit.maxBound());
+                    if (unit.maxBound()) {
+                        data.writeLong(unit.max());
+                    }
+                    if (unit.active()) {
+                        for (long value : unit.values()) {
+                            data.writeLong(value);
+                        }
+                    }
+                }
+            }
+            case INDICATOR -> {
+                for (RBMKPanelPlanner.IndicatorUnit unit : indicators) {
+                    data.writeBoolean(unit.active());
+                    data.writeBoolean(unit.polling());
+                    data.writeBoolean(unit.light());
+                    data.writeInt(unit.color());
+                    BufferUtil.writeString(data, unit.label());
+                    BufferUtil.writeString(data, unit.rtty());
+                    data.writeLong(unit.min());
+                    data.writeLong(unit.max());
+                }
+            }
+            case KEYPAD -> {
+                for (RBMKPanelPlanner.KeyUnit unit : keys) {
+                    data.writeBoolean(unit.active());
+                    data.writeBoolean(unit.polling());
+                    data.writeBoolean(unit.isPressed());
+                    data.writeInt(unit.color());
+                    BufferUtil.writeString(data, unit.label());
+                    BufferUtil.writeString(data, unit.rtty());
+                    BufferUtil.writeString(data, unit.command());
+                }
+            }
+            case LEVER -> {
+                for (RBMKPanelPlanner.LeverUnit unit : levers) {
+                    data.writeBoolean(unit.active());
+                    data.writeBoolean(unit.polling());
+                    data.writeFloat(unit.flipProgress());
+                    BufferUtil.writeString(data, unit.label());
+                    BufferUtil.writeString(data, unit.rtty());
+                    BufferUtil.writeString(data, unit.commandOn());
+                    BufferUtil.writeString(data, unit.commandOff());
+                }
+            }
+            case NUMITRON -> {
+                for (RBMKPanelPlanner.NumitronUnit unit : numitrons) {
+                    data.writeBoolean(unit.shortenNumber());
+                    data.writeLong(unit.activeDigits());
+                    data.writeBoolean(unit.leadingZeroes());
+                    data.writeBoolean(unit.active());
+                    data.writeBoolean(unit.polling());
+                    BufferUtil.writeString(data, unit.label());
+                    BufferUtil.writeString(data, unit.rtty());
+                    data.writeLong(unit.value());
+                }
+            }
+            case TERMINAL -> {
+                data.writeBoolean(!terminal.repeatCommand().isEmpty());
+                for (String line : terminal.history()) {
+                    BufferUtil.writeString(data, line);
+                }
+            }
+            case DISPLAY -> {
+                for (RBMKConsolePlanner.ColumnSnapshot column : displayColumns) {
+                    if (column == null || column.type() == null) {
+                        data.writeByte(-1);
+                    } else {
+                        data.writeByte((byte) column.type().ordinal());
+                        BufferUtil.writeNBT(data, column.data());
+                    }
+                }
+            }
+        }
+    }
+
+    private void readLegacyPanelPacket(FriendlyByteBuf data) {
+        switch (panelType()) {
+            case GAUGE -> {
+                for (int i = 0; i < gauges.length; i++) {
+                    RBMKPanelPlanner.GaugeUnit previous = gauges[i];
+                    gauges[i] = new RBMKPanelPlanner.GaugeUnit(data.readBoolean(), data.readBoolean(),
+                            data.readInt(), BufferUtil.readString(data), BufferUtil.readString(data),
+                            data.readLong(), data.readLong(), data.readLong(),
+                            previous.renderValue(), previous.lastRenderValue());
+                }
+            }
+            case GRAPH -> {
+                for (int i = 0; i < graphs.length; i++) {
+                    RBMKPanelPlanner.GraphUnit previous = graphs[i];
+                    boolean active = data.readBoolean();
+                    boolean polling = data.readBoolean();
+                    String label = BufferUtil.readString(data);
+                    String rtty = BufferUtil.readString(data);
+                    boolean minBound = data.readBoolean();
+                    long min = minBound ? data.readLong() : previous.min();
+                    boolean maxBound = data.readBoolean();
+                    long max = maxBound ? data.readLong() : previous.max();
+                    long[] values = previous.values().clone();
+                    if (active) {
+                        for (int valueIndex = 0; valueIndex < values.length; valueIndex++) {
+                            values[valueIndex] = data.readLong();
+                        }
+                    }
+                    graphs[i] = new RBMKPanelPlanner.GraphUnit(active, polling, label, rtty, values,
+                            min, minBound, max, maxBound);
+                }
+            }
+            case INDICATOR -> {
+                for (int i = 0; i < indicators.length; i++) {
+                    indicators[i] = new RBMKPanelPlanner.IndicatorUnit(data.readBoolean(), data.readBoolean(),
+                            data.readBoolean(), data.readInt(), BufferUtil.readString(data),
+                            BufferUtil.readString(data), data.readLong(), data.readLong());
+                }
+            }
+            case KEYPAD -> {
+                for (int i = 0; i < keys.length; i++) {
+                    RBMKPanelPlanner.KeyUnit previous = keys[i];
+                    keys[i] = new RBMKPanelPlanner.KeyUnit(data.readBoolean(), data.readBoolean(),
+                            data.readBoolean(), data.readInt(), BufferUtil.readString(data),
+                            BufferUtil.readString(data), BufferUtil.readString(data), previous.clickTimer());
+                }
+            }
+            case LEVER -> {
+                for (int i = 0; i < levers.length; i++) {
+                    RBMKPanelPlanner.LeverUnit previous = levers[i];
+                    boolean active = data.readBoolean();
+                    boolean polling = data.readBoolean();
+                    float syncProgress = data.readFloat();
+                    levers[i] = new RBMKPanelPlanner.LeverUnit(i, active, polling, BufferUtil.readString(data),
+                            BufferUtil.readString(data), BufferUtil.readString(data), BufferUtil.readString(data),
+                            previous.isTurningOn(), syncProgress, previous.flipProgress());
+                }
+            }
+            case NUMITRON -> {
+                for (int i = 0; i < numitrons.length; i++) {
+                    boolean shortenNumber = data.readBoolean();
+                    long activeDigits = data.readLong();
+                    boolean leadingZeroes = data.readBoolean();
+                    boolean active = data.readBoolean();
+                    boolean polling = data.readBoolean();
+                    numitrons[i] = new RBMKPanelPlanner.NumitronUnit(active, polling, shortenNumber, activeDigits,
+                            leadingZeroes, BufferUtil.readString(data), BufferUtil.readString(data), data.readLong());
+                }
+            }
+            case TERMINAL -> {
+                boolean doesRepeat = data.readBoolean();
+                String[] history = new String[RBMKPanelPlanner.TERMINAL_HISTORY_SIZE];
+                for (int i = 0; i < history.length; i++) {
+                    history[i] = BufferUtil.readString(data);
+                }
+                terminal = new RBMKPanelPlanner.TerminalState(history, terminal.channel(),
+                        doesRepeat ? terminal.repeatCommand() : "", terminal.ocMode());
+            }
+            case DISPLAY -> {
+                RBMKConsolePlanner.ColumnType[] types = RBMKConsolePlanner.ColumnType.values();
+                for (int i = 0; i < displayColumns.length; i++) {
+                    int ordinal = data.readByte();
+                    if (ordinal < 0 || ordinal >= types.length) {
+                        displayColumns[i] = null;
+                    } else {
+                        displayColumns[i] = new RBMKConsolePlanner.ColumnSnapshot(types[ordinal],
+                                BufferUtil.readNBT(data));
+                    }
+                }
+            }
         }
     }
 

@@ -258,7 +258,7 @@ public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public net.minecraft.world.phys.AABB getRenderBoundingBox() {
-        return new net.minecraft.world.phys.AABB(worldPosition).inflate(16.0D);
+        return new net.minecraft.world.phys.AABB(worldPosition.offset(-2, 0, -2), worldPosition.offset(3, 15, 3));
     }
 
     @Override

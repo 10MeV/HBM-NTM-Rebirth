@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.LiquefactorBlockEntity;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.block.LegacyMachineDefinition;
@@ -14,6 +15,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlockEntity> {
+    private static final LegacyWavefrontModel.SelectionHandle MAIN =
+            ObjModelLibrary.MACHINE_LIQUEFACTOR.prepareRenderOnlyInCallOrder("Main");
+    private static final LegacyWavefrontModel.SelectionHandle FLUID =
+            ObjModelLibrary.MACHINE_LIQUEFACTOR.prepareRenderOnlyInCallOrder("Fluid");
+    private static final LegacyWavefrontModel.SelectionHandle GLASS =
+            ObjModelLibrary.MACHINE_LIQUEFACTOR.prepareRenderOnlyInCallOrder("Glass");
+
     public LiquefactorRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -46,7 +54,7 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
-        ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart("Main", context);
+        renderModelPart("Main", context);
         renderFluid(blockEntity, context, poseStack);
         renderTintedPart(LegacyTileRenderPlans.liquefactorGlassPlan(), context);
 
@@ -71,9 +79,9 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
     private static void renderScaledPart(LegacyTileRenderPlans.ScaledModelPartPlan plan, ObjRenderContext context) {
         ObjRenderContext resolved = applyColorBlend(context, plan.color(), plan.blend());
         if (plan.textured()) {
-            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart(plan.partName(), resolved);
+            renderModelPart(plan.partName(), resolved);
         } else {
-            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPartUntextured(plan.partName(), resolved);
+            renderModelPartUntextured(plan.partName(), resolved);
         }
     }
 
@@ -83,10 +91,40 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
         }
         ObjRenderContext resolved = applyColorBlend(context, plan.color(), plan.blend());
         if (plan.textured()) {
-            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart(plan.partName(), resolved);
+            renderModelPart(plan.partName(), resolved);
         } else {
-            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPartUntextured(plan.partName(), resolved);
+            renderModelPartUntextured(plan.partName(), resolved);
         }
+    }
+
+    private static void renderModelPart(String partName, ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(partName);
+        if (handle != null) {
+            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderOnlyInCallOrder(context, handle);
+            return;
+        }
+        ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart(partName, context);
+    }
+
+    private static void renderModelPartUntextured(String partName, ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(partName);
+        if (handle != null) {
+            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderOnlyUntextured(context, handle);
+            return;
+        }
+        ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPartUntextured(partName, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Main" -> MAIN;
+            case "Fluid" -> FLUID;
+            case "Glass" -> GLASS;
+            default -> null;
+        };
     }
 
     private static ObjRenderContext applyColorBlend(ObjRenderContext context, LegacyTileRenderPlans.RgbaPlan color,

@@ -22,7 +22,7 @@ public class FusionKlystronRenderer implements BlockEntityRenderer<FusionKlystro
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     @Override
@@ -37,13 +37,13 @@ public class FusionKlystronRenderer implements BlockEntityRenderer<FusionKlystro
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
         poseStack.translate(-1.0D, 0.0D, 0.0D);
-        ObjFusionModels.KLYSTRON_LEGACY.renderOnly(ObjFusionModels.KLYSTRON_TEXTURE, context, "Klystron");
+        ObjFusionModels.renderKlystronPart(ObjFusionModels.KLYSTRON_TEXTURE, context, "Klystron");
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 2.5D, 0.0D);
         poseStack.mulPose(Axis.XP.rotationDegrees(blockEntity.getFan(partialTick)));
         poseStack.translate(0.0D, -2.5D, 0.0D);
-        ObjFusionModels.KLYSTRON_LEGACY.renderOnly(ObjFusionModels.KLYSTRON_TEXTURE, context, "Rotor");
+        ObjFusionModels.renderKlystronPart(ObjFusionModels.KLYSTRON_TEXTURE, context, "Rotor");
         poseStack.popPose();
         poseStack.popPose();
     }

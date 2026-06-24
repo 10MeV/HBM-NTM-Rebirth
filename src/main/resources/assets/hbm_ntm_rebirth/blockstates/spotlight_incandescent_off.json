@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "face=up,top_bottom_rotated=false": { "model": "hbm_ntm_rebirth:block/spotlight_incandescent" },
+    "face=up,top_bottom_rotated=true": { "model": "hbm_ntm_rebirth:block/spotlight_incandescent" },
+    "face=down,top_bottom_rotated=false": { "model": "hbm_ntm_rebirth:block/spotlight_incandescent" },
+    "face=down,top_bottom_rotated=true": { "model": "hbm_ntm_rebirth:block/spotlight_incandescent" },
+    "face=north,top_bottom_rotated=false": { "model": "hbm_ntm_rebirth:block/spotlight_incandescent" },
+    "face=north,top_bottom_rotated=true": { "model": "hbm_ntm_rebirth:block/spotlight_incandescent" },
+    "face=south,top_bottom_rotated=false": { "model": "hbm_ntm_rebirth:block/spotlight_incandescent" },
+    "face=south,top_bottom_rotated=true": { "model": "hbm_ntm_rebirth:block/spotlight_incandescent" },
+    "face=west,top_bottom_rotated=false": { "model": "hbm_ntm_rebirth:block/spotlight_incandescent" },
+    "face=west,top_bottom_rotated=true": { "model": "hbm_ntm_rebirth:block/spotlight_incandescent" },
+    "face=east,top_bottom_rotated=false": { "model": "hbm_ntm_rebirth:block/spotlight_incandescent" },
+    "face=east,top_bottom_rotated=true": { "model": "hbm_ntm_rebirth:block/spotlight_incandescent" }
+  }
+}

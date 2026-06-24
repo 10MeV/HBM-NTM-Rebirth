@@ -3,6 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.client.obj.LegacyLineRenderer;
 import com.hbm.ntm.client.obj.LegacyRenderColor;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjRbmkModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
@@ -15,6 +16,23 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.util.Mth;
 
 public final class LegacyRbmkPanelRenderer {
+    private static final LegacyWavefrontModel.SelectionHandle GAUGE_BODY =
+            ObjRbmkModels.GAUGE.prepareRenderOnlyInCallOrder("Gauge");
+    private static final LegacyWavefrontModel.SelectionHandle GAUGE_NEEDLE =
+            ObjRbmkModels.GAUGE.prepareRenderOnlyInCallOrder("Needle");
+    private static final LegacyWavefrontModel.SelectionHandle INDICATOR_BASE =
+            ObjRbmkModels.INDICATOR.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle INDICATOR_LIGHT =
+            ObjRbmkModels.INDICATOR.prepareRenderOnlyInCallOrder("Light");
+    private static final LegacyWavefrontModel.SelectionHandle LEVER_BASE =
+            ObjRbmkModels.LEVER.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle LEVER_HANDLE =
+            ObjRbmkModels.LEVER.prepareRenderOnlyInCallOrder("Lever");
+    private static final LegacyWavefrontModel.SelectionHandle KEY_SOCKET =
+            ObjRbmkModels.BUTTON.prepareRenderOnlyInCallOrder("Socket");
+    private static final LegacyWavefrontModel.SelectionHandle KEY_BUTTON =
+            ObjRbmkModels.BUTTON.prepareRenderOnlyInCallOrder("Button");
+
     public static final int GAUGE_COUNT = 4;
     public static final int GRAPH_COUNT = 2;
     public static final int INDICATOR_COUNT = 6;
@@ -118,8 +136,7 @@ public final class LegacyRbmkPanelRenderer {
         PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         translateGaugeSlot(poseStack, index);
-        ObjRbmkModels.GAUGE.renderPart("Gauge", ObjRbmkModels.GAUGE_TEXTURE,
-                poseStack, context.buffer(), context.packedLight(), context.packedOverlay());
+        ObjRbmkModels.GAUGE.renderOnlyInCallOrder(ObjRbmkModels.GAUGE_TEXTURE, context, GAUGE_BODY);
 
         int color = unit == null ? 0xFFFFFF : unit.color();
         double angle = gaugeNeedleAngle(unit, partialTick);
@@ -127,9 +144,10 @@ public final class LegacyRbmkPanelRenderer {
         poseStack.translate(0.0D, GAUGE_PIVOT_Y, GAUGE_PIVOT_Z);
         poseStack.mulPose(Axis.XP.rotationDegrees((float) -angle));
         poseStack.translate(0.0D, -GAUGE_PIVOT_Y, -GAUGE_PIVOT_Z);
-        ObjRbmkModels.GAUGE.renderPart("Needle", ObjRbmkModels.GAUGE_TEXTURE,
-                poseStack, context.buffer(), context.fullBright().packedLight(), context.packedOverlay(),
-                LegacyRenderColor.red(color), LegacyRenderColor.green(color), LegacyRenderColor.blue(color), 255);
+        ObjRbmkModels.GAUGE.renderOnlyInCallOrder(ObjRbmkModels.GAUGE_TEXTURE,
+                context.fullBright().withRgb(LegacyRenderColor.red(color),
+                        LegacyRenderColor.green(color), LegacyRenderColor.blue(color)),
+                GAUGE_NEEDLE);
         poseStack.popPose();
         renderGaugeLimitLabels(context, unit);
         renderCenteredLegacyText(context, unit == null ? "" : unit.label(),
@@ -172,13 +190,13 @@ public final class LegacyRbmkPanelRenderer {
         PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         translateIndicatorSlot(poseStack, index);
-        ObjRbmkModels.INDICATOR.renderPart("Base", ObjRbmkModels.INDICATOR_TEXTURE,
-                poseStack, context.buffer(), context.packedLight(), context.packedOverlay());
+        ObjRbmkModels.INDICATOR.renderOnlyInCallOrder(ObjRbmkModels.INDICATOR_TEXTURE, context, INDICATOR_BASE);
         int color = scaledColor(unit.color(), unit.light() ? 1.0F : INDICATOR_DIM_MULTIPLIER);
         ObjRenderContext lightContext = unit.light() ? context.fullBright() : context;
-        ObjRbmkModels.INDICATOR.renderPart("Light", ObjRbmkModels.INDICATOR_TEXTURE,
-                poseStack, context.buffer(), lightContext.packedLight(), context.packedOverlay(),
-                LegacyRenderColor.red(color), LegacyRenderColor.green(color), LegacyRenderColor.blue(color), 255);
+        ObjRbmkModels.INDICATOR.renderOnlyInCallOrder(ObjRbmkModels.INDICATOR_TEXTURE,
+                lightContext.withRgb(LegacyRenderColor.red(color),
+                        LegacyRenderColor.green(color), LegacyRenderColor.blue(color)),
+                INDICATOR_LIGHT);
         renderCenteredLegacyText(context, unit.label(),
                 INDICATOR_LABEL_X, INDICATOR_LABEL_Y, 0.0D, INDICATOR_LABEL_MAX_WIDTH, 0x000000, false);
         poseStack.popPose();
@@ -202,14 +220,12 @@ public final class LegacyRbmkPanelRenderer {
         PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         translateLeverSlot(poseStack, index);
-        ObjRbmkModels.LEVER.renderPart("Base", ObjRbmkModels.LEVER_TEXTURE,
-                poseStack, context.buffer(), context.packedLight(), context.packedOverlay());
+        ObjRbmkModels.LEVER.renderOnlyInCallOrder(ObjRbmkModels.LEVER_TEXTURE, context, LEVER_BASE);
         poseStack.pushPose();
         poseStack.translate(LEVER_PIVOT_X, LEVER_PIVOT_Y, 0.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees(leverAngle(unit, partialTick)));
         poseStack.translate(-LEVER_PIVOT_X, -LEVER_PIVOT_Y, 0.0D);
-        ObjRbmkModels.LEVER.renderPart("Lever", ObjRbmkModels.LEVER_TEXTURE,
-                poseStack, context.buffer(), context.packedLight(), context.packedOverlay());
+        ObjRbmkModels.LEVER.renderOnlyInCallOrder(ObjRbmkModels.LEVER_TEXTURE, context, LEVER_HANDLE);
         poseStack.popPose();
         renderCenteredLegacyText(context, unit.label(),
                 LEVER_LABEL_X, LEVER_LABEL_Y, 0.0D, LEVER_LABEL_MAX_WIDTH, 0x00FF00, true);
@@ -432,8 +448,7 @@ public final class LegacyRbmkPanelRenderer {
         PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         translateKeySlot(poseStack, index);
-        ObjRbmkModels.BUTTON.renderPart("Socket", ObjRbmkModels.KEYPAD_TEXTURE,
-                poseStack, context.buffer(), context.packedLight(), context.packedOverlay());
+        ObjRbmkModels.BUTTON.renderOnlyInCallOrder(ObjRbmkModels.KEYPAD_TEXTURE, context, KEY_SOCKET);
 
         poseStack.pushPose();
         if (key.isPressed()) {
@@ -441,9 +456,10 @@ public final class LegacyRbmkPanelRenderer {
         }
         int color = scaledColor(key.color(), key.isPressed() ? 1.0F : KEY_DIM_MULTIPLIER);
         ObjRenderContext buttonContext = key.isPressed() ? context.fullBright() : context;
-        ObjRbmkModels.BUTTON.renderPart("Button", ObjRbmkModels.KEYPAD_TEXTURE,
-                poseStack, context.buffer(), buttonContext.packedLight(), context.packedOverlay(),
-                LegacyRenderColor.red(color), LegacyRenderColor.green(color), LegacyRenderColor.blue(color), 255);
+        ObjRbmkModels.BUTTON.renderOnlyInCallOrder(ObjRbmkModels.KEYPAD_TEXTURE,
+                buttonContext.withRgb(LegacyRenderColor.red(color),
+                        LegacyRenderColor.green(color), LegacyRenderColor.blue(color)),
+                KEY_BUTTON);
         poseStack.popPose();
         renderCenteredLegacyText(context, key.label(),
                 KEY_LABEL_X, KEY_LABEL_Y, 0.0D, KEY_LABEL_MAX_WIDTH, 0x00FF00, true);

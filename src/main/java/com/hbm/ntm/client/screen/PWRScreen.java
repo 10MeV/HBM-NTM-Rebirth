@@ -48,15 +48,14 @@ public class PWRScreen extends AbstractContainerScreen<PWRMenu> {
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        if (menu.getHullHeat() > PWRControllerHeat.hullDanger()
-                || menu.getCoreHeat() > menu.getCoreHeatCapacity() * 8L / 10L) {
+        if (menu.getHullHeat() > PWRControllerHeat.HULL_CAPACITY * 0.8D
+                || menu.getCoreHeat() > menu.getCoreHeatCapacity() * 0.8D) {
             graphics.blit(TEXTURE, leftPos + 147, topPos, 176, 14, 26, 26);
         }
         graphics.blit(TEXTURE, leftPos + 54, topPos + 33, 176, 0, menu.getProgressScaled(33), 14);
         graphics.blit(TEXTURE, leftPos + 53, topPos + 54, 176, 40, menu.getRodLevelScaled(52), 2);
         LegacyGuiElements.drawSmoothGauge(graphics, leftPos + 124, topPos + 40,
-                menu.getCoreHeatCapacity() <= 0L ? 0.0D : menu.getCoreHeat() / (double) menu.getCoreHeatCapacity(),
-                5, 2, 1, 0x7F0000);
+                menu.getCoreHeat() / (double) menu.getCoreHeatCapacity(), 5, 2, 1, 0x7F0000);
         LegacyGuiElements.drawSmoothGauge(graphics, leftPos + 160, topPos + 40,
                 menu.getHullHeat() / (double) PWRControllerHeat.HULL_CAPACITY, 5, 2, 1, 0x7F0000);
         LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 8, topPos + 57, 16, 52,
@@ -155,8 +154,5 @@ public class PWRScreen extends AbstractContainerScreen<PWRMenu> {
     private static final class PWRControllerHeat {
         private static final long HULL_CAPACITY = 10_000_000L;
 
-        private static long hullDanger() {
-            return HULL_CAPACITY * 8L / 10L;
-        }
     }
 }

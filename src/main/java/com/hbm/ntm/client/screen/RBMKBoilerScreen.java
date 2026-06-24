@@ -25,8 +25,9 @@ public class RBMKBoilerScreen extends AbstractContainerScreen<RBMKBoilerMenu> {
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 126, topPos + 82, 14, 58,
-                menu.getFeedTank());
+        int feedHeight = menu.getFeedTank().scaledFill(58);
+        graphics.blit(TEXTURE, leftPos + 126, topPos + 82 - feedHeight,
+                176, 58 - feedHeight, 14, feedHeight);
         int steamHeight = menu.getSteamTank().scaledFill(22);
         if (steamHeight > 0) {
             steamHeight++;
@@ -34,19 +35,17 @@ public class RBMKBoilerScreen extends AbstractContainerScreen<RBMKBoilerMenu> {
         if (steamHeight > 22) {
             steamHeight++;
         }
-        if (steamHeight > 0) {
-            graphics.blit(TEXTURE, leftPos + 91, topPos + 65 - steamHeight,
-                    190, 24 - steamHeight, 4, steamHeight);
-        }
-        int compressorU = 194;
-        if (menu.getSteamTank().type() == HbmFluids.HOTSTEAM) {
-            compressorU = 208;
+        graphics.blit(TEXTURE, leftPos + 91, topPos + 65 - steamHeight,
+                190, 24 - steamHeight, 4, steamHeight);
+        if (menu.getSteamTank().type() == HbmFluids.STEAM) {
+            graphics.blit(TEXTURE, leftPos + 36, topPos + 24, 194, 0, 14, 58);
+        } else if (menu.getSteamTank().type() == HbmFluids.HOTSTEAM) {
+            graphics.blit(TEXTURE, leftPos + 36, topPos + 24, 208, 0, 14, 58);
         } else if (menu.getSteamTank().type() == HbmFluids.SUPERHOTSTEAM) {
-            compressorU = 222;
+            graphics.blit(TEXTURE, leftPos + 36, topPos + 24, 222, 0, 14, 58);
         } else if (menu.getSteamTank().type() == HbmFluids.ULTRAHOTSTEAM) {
-            compressorU = 236;
+            graphics.blit(TEXTURE, leftPos + 36, topPos + 24, 236, 0, 14, 58);
         }
-        graphics.blit(TEXTURE, leftPos + 36, topPos + 24, compressorU, 0, 14, 58);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyFileCabinetBlock;
 import com.hbm.ntm.blockentity.LegacyFileCabinetBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.client.obj.ObjUtilityModels;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -16,6 +17,13 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class LegacyFileCabinetRenderer implements BlockEntityRenderer<LegacyFileCabinetBlockEntity> {
     private static final double DRAWER_TRAVEL = 0.6875D;
+    private static final LegacyWavefrontModel MODEL = ObjUtilityModels.FILE_CABINET;
+    private static final LegacyWavefrontModel.SelectionHandle CABINET =
+            MODEL.prepareRenderOnlyInCallOrder("Cabinet");
+    private static final LegacyWavefrontModel.SelectionHandle LOWER_DRAWER =
+            MODEL.prepareRenderOnlyInCallOrder("LowerDrawer");
+    private static final LegacyWavefrontModel.SelectionHandle UPPER_DRAWER =
+            MODEL.prepareRenderOnlyInCallOrder("UpperDrawer");
 
     public LegacyFileCabinetRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -46,16 +54,16 @@ public class LegacyFileCabinetRenderer implements BlockEntityRenderer<LegacyFile
             ResourceLocation texture, int packedLight, int packedOverlay, float lower, float upper) {
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
                 .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
-        ObjUtilityModels.FILE_CABINET.renderPart("Cabinet", texture, context);
+        MODEL.renderOnlyInCallOrder(texture, context, CABINET);
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, DRAWER_TRAVEL * lower);
-        ObjUtilityModels.FILE_CABINET.renderPart("LowerDrawer", texture, context);
+        MODEL.renderOnlyInCallOrder(texture, context, LOWER_DRAWER);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, DRAWER_TRAVEL * upper);
-        ObjUtilityModels.FILE_CABINET.renderPart("UpperDrawer", texture, context);
+        MODEL.renderOnlyInCallOrder(texture, context, UPPER_DRAWER);
         poseStack.popPose();
     }
 

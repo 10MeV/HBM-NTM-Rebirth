@@ -1,0 +1,46 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:purex",
+    "internal_name":  "purex.schrabzirnox",
+    "duration":  200,
+    "power":  50000,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:waste_plutonium"
+                                           }
+                        }
+                    ],
+    "input_fluids":  [
+                         {
+                             "fluid":  "hbm_ntm_rebirth:solvent",
+                             "amount":  4000
+                         },
+                         {
+                             "fluid":  "hbm_ntm_rebirth:schrabidic",
+                             "amount":  250
+                         }
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:powder_schrabidium"
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:nugget_technetium",
+                             "count":  3
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:nuclear_waste_tiny",
+                             "count":  4
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "auto_switch_group":  "autoswitch.schrab",
+    "name_wrapper":  "purex.schrab",
+    "source_order":  512
+}
+

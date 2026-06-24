@@ -30,9 +30,7 @@ public class ICFReactorScreen extends AbstractContainerScreen<ICFReactorMenu> {
         graphics.blit(TEXTURE, leftPos + 36, topPos + 122, 36, 122, 176, 108);
         if (menu.getMaxLaser() > 0L) {
             int laser = (int) (menu.getLaser() * 70L / menu.getMaxLaser());
-            if (laser > 0) {
-                graphics.blit(TEXTURE, leftPos + 8, topPos + 88 - laser, 212, 192 - laser, 16, laser);
-            }
+            graphics.blit(TEXTURE, leftPos + 8, topPos + 88 - laser, 212, 192 - laser, 16, laser);
         }
         LegacyGuiElements.drawSmoothGauge(graphics, leftPos + 196, topPos + 98,
                 menu.getHeat() / (double) ICFReactorBlockEntity.MAX_HEAT, 5, 2, 1, 0xFF00AF);

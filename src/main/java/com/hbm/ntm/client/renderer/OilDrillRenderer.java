@@ -6,6 +6,8 @@ import com.hbm.ntm.blockentity.OilDrillBlockEntity;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
+import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -14,12 +16,24 @@ import java.util.Map;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity> {
     private static final Map<LegacyMachineDefinition, LegacyWavefrontModel> MODELS = new IdentityHashMap<>();
+    private static final String[] FRACKING_PIPE_PARTS = { "pX", "nX", "pZ", "nZ" };
+    private static final LegacyWavefrontModel.SelectionHandle FRACKING_PIPE_HANDLE =
+            ObjBlockModels.PIPE_NEO.prepareRenderOnlyInCallOrder(FRACKING_PIPE_PARTS);
+    private static final LegacyWavefrontModel.SelectionHandle PUMPJACK_BASE =
+            ObjMachineModels.PUMPJACK_LEGACY.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle PUMPJACK_ROTOR =
+            ObjMachineModels.PUMPJACK_LEGACY.prepareRenderOnlyInCallOrder("Rotor");
+    private static final LegacyWavefrontModel.SelectionHandle PUMPJACK_HEAD =
+            ObjMachineModels.PUMPJACK_LEGACY.prepareRenderOnlyInCallOrder("Head");
+    private static final LegacyWavefrontModel.SelectionHandle PUMPJACK_CARRIAGE =
+            ObjMachineModels.PUMPJACK_LEGACY.prepareRenderOnlyInCallOrder("Carriage");
 
     public OilDrillRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -60,30 +74,26 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
             if (definition.renderAll()) {
                 model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
             } else {
+                ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
                 for (String part : definition.renderParts()) {
-                    model.renderPart(part, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+                    renderModelPart(model, part, definition.textureLocation(), context);
                 }
             }
             if (drill.getKind() == OilDrillBlockEntity.Kind.FRACKING_TOWER) {
-                renderFrackingPipes(poseStack, buffer, modelLight, packedOverlay);
+                renderFrackingPipes(state, poseStack, buffer, modelLight, packedOverlay);
             }
         }
 
         poseStack.popPose();
     }
 
-    private static void renderFrackingPipes(PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderFrackingPipes(BlockState state, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.5D, 0.0D);
-        ObjBlockModels.PIPE_NEO.renderPart("pX", ObjBlockModels.PIPE_SILVER_TEXTURE,
-                poseStack, buffer, packedLight, packedOverlay);
-        ObjBlockModels.PIPE_NEO.renderPart("nX", ObjBlockModels.PIPE_SILVER_TEXTURE,
-                poseStack, buffer, packedLight, packedOverlay);
-        ObjBlockModels.PIPE_NEO.renderPart("pZ", ObjBlockModels.PIPE_SILVER_TEXTURE,
-                poseStack, buffer, packedLight, packedOverlay);
-        ObjBlockModels.PIPE_NEO.renderPart("nZ", ObjBlockModels.PIPE_SILVER_TEXTURE,
-                poseStack, buffer, packedLight, packedOverlay);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
+        ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(ObjBlockModels.PIPE_SILVER_TEXTURE, context,
+                FRACKING_PIPE_HANDLE);
         poseStack.popPose();
     }
 
@@ -92,17 +102,18 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
             LegacyWavefrontModel model) {
         float rotation = Mth.lerp(partialTick, drill.getPreviousPumpjackRotation(), drill.getPumpjackRotation());
         LegacyTileRenderPlans.PumpjackPlan plan = LegacyTileRenderPlans.pumpjackPlan(rotation);
-        model.renderPart("Base", definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, drill.getBlockState(), packedLight, packedOverlay);
+        renderModelPart(model, "Base", definition.textureLocation(), context);
 
-        renderRotatingPart(model, plan.rotor(), definition, poseStack, buffer, packedLight, packedOverlay);
-        renderRotatingPart(model, plan.head(), definition, poseStack, buffer, packedLight, packedOverlay);
-        renderTranslatedPart(model, plan.carriage(), definition, poseStack, buffer, packedLight, packedOverlay);
+        renderRotatingPart(model, plan.rotor(), definition.textureLocation(), poseStack, context);
+        renderRotatingPart(model, plan.head(), definition.textureLocation(), poseStack, context);
+        renderTranslatedPart(model, plan.carriage(), definition.textureLocation(), poseStack, context);
         renderPumpjackRods(plan, poseStack, buffer);
     }
 
     private static void renderRotatingPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.RotatingModelPartPlan part, LegacyMachineDefinition definition,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
+            PoseStack poseStack, ObjRenderContext context) {
         poseStack.pushPose();
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
         if (part.axisX() != 0.0F) {
@@ -115,20 +126,48 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
             poseStack.mulPose(Axis.ZP.rotationDegrees((float) (part.angleDegrees() * part.axisZ())));
         }
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        model.renderPart(part.partName(), definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        renderModelPart(model, part.partName(), texture, context);
         poseStack.popPose();
     }
 
     private static void renderTranslatedPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.TranslatedModelPartPlan part, LegacyMachineDefinition definition,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+            LegacyTileRenderPlans.TranslatedModelPartPlan part, ResourceLocation texture,
+            PoseStack poseStack, ObjRenderContext context) {
         if (!part.active()) {
             return;
         }
         poseStack.pushPose();
         poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-        model.renderPart(part.partName(), definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        renderModelPart(model, part.partName(), texture, context);
         poseStack.popPose();
+    }
+
+    public static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = pumpjackHandle(model, partName);
+        if (handle != null) {
+            ObjMachineModels.PUMPJACK_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle pumpjackHandle(LegacyWavefrontModel model, String partName) {
+        if (!isPumpjackModel(model)) {
+            return null;
+        }
+        return switch (partName) {
+            case "Base" -> PUMPJACK_BASE;
+            case "Rotor" -> PUMPJACK_ROTOR;
+            case "Head" -> PUMPJACK_HEAD;
+            case "Carriage" -> PUMPJACK_CARRIAGE;
+            default -> null;
+        };
+    }
+
+    private static boolean isPumpjackModel(LegacyWavefrontModel model) {
+        return model == ObjMachineModels.PUMPJACK_LEGACY
+                || model.modelLocation().equals(ObjMachineModels.PUMPJACK_LEGACY.modelLocation());
     }
 
     private static void renderPumpjackRods(LegacyTileRenderPlans.PumpjackPlan plan, PoseStack poseStack,

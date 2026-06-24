@@ -11,11 +11,19 @@ import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class ChungusRenderer implements BlockEntityRenderer<ChungusBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_CHUNGUS;
+    private static final ResourceLocation TEXTURE = ObjModelLibrary.MACHINE_CHUNGUS_TEXTURE;
+    private static final LegacyWavefrontModel.SelectionHandle BODY =
+            MODEL.prepareRenderOnlyInCallOrder("Body");
+    private static final LegacyWavefrontModel.SelectionHandle LEVER =
+            MODEL.prepareRenderOnlyInCallOrder("Lever");
+    private static final LegacyWavefrontModel.SelectionHandle BLADES =
+            MODEL.prepareRenderOnlyInCallOrder("Blades");
 
     public ChungusRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -49,22 +57,26 @@ public class ChungusRenderer implements BlockEntityRenderer<ChungusBlockEntity> 
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
-        MODEL.renderPart("Body", context);
+        renderPart(BODY, context);
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, 4.5D);
         poseStack.mulPose(Axis.XP.rotationDegrees(blockEntity.getLeverAngle()));
         poseStack.translate(0.0D, 0.0D, -4.5D);
-        MODEL.renderPart("Lever", context);
+        renderPart(LEVER, context);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 2.5D, 0.0D);
         poseStack.mulPose(Axis.ZN.rotationDegrees(blockEntity.getRotor(partialTick)));
         poseStack.translate(0.0D, -2.5D, 0.0D);
-        MODEL.renderPart("Blades", context);
+        renderPart(BLADES, context);
         poseStack.popPose();
 
         poseStack.popPose();
+    }
+
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
+        MODEL.renderOnlyInCallOrder(TEXTURE, context, handle);
     }
 }

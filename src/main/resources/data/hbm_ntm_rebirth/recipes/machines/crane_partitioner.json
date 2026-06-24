@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" M ", "BCB"],
+  "key": {
+    "M": { "item": "hbm_ntm_rebirth:circuit_chip" },
+    "B": { "item": "hbm_ntm_rebirth:conveyor" },
+    "C": { "item": "hbm_ntm_rebirth:crate_steel" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:crane_partitioner" }
+}

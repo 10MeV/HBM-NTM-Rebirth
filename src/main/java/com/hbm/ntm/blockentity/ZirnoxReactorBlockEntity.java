@@ -22,6 +22,7 @@ import com.hbm.ntm.menu.ZirnoxReactorMenu;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmLegacyControlReceiver;
 import com.hbm.ntm.neutron.RBMKDebrisPlanner.ZirnoxDebrisType;
+import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.recipe.ZirnoxFuelRuntime;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
@@ -106,7 +107,10 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot >= 0 && slot <= SLOT_WATER_INPUT && !stack.isEmpty();
+            if (slot >= 0 && slot < ROD_SLOT_COUNT) {
+                return ZirnoxFuelRuntime.isRod(stack);
+            }
+            return (slot == SLOT_CO2_INPUT || slot == SLOT_WATER_INPUT) && !stack.isEmpty();
         }
 
         @Override
@@ -231,11 +235,11 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     public int getHeatScaled() {
-        return Math.round(heat * 10_000.0F / MAX_HEAT);
+        return heat * 10_000 / MAX_HEAT;
     }
 
     public int getPressureScaled() {
-        return Math.round(pressure * 10_000.0F / MAX_PRESSURE);
+        return pressure * 10_000 / MAX_PRESSURE;
     }
 
     public List<ItemStack> getDrops() {
@@ -307,12 +311,12 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return !isTilted() && (type == HbmFluids.WATER || type == HbmFluids.CARBONDIOXIDE);
+        return !isTilted() && (type == waterTank.getTankType() || type == carbonDioxideTank.getTankType());
     }
 
     @Override
     protected boolean shouldSubscribeAsFluidProvider(FluidType type) {
-        return !isTilted() && type == HbmFluids.SUPERHOTSTEAM && steamTank.getFill() > 0;
+        return !isTilted() && type == steamTank.getTankType() && steamTank.getFill() > 0;
     }
 
     @Override
@@ -503,7 +507,7 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
                 heat -= 10;
             }
         }
-        if (!isTilted() && steamTank.getFill() > 0) {
+        if (!isTilted()) {
             tryProvideFluidToPorts(steamTank.getTankType(), steamTank.getPressure(), this);
         }
         if (pressure > MAX_PRESSURE || heat > MAX_HEAT) {
@@ -618,6 +622,7 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
                 worldPosition.getZ() + 0.5D).inflate(100.0D);
         for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, range)) {
             AchievementHandler.award(player, AchievementHandler.ZIRNOX_BOOM);
+            HbmPlayerProperties.markRadiationElementalTarget(player);
         }
     }
 
@@ -666,9 +671,13 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         int cycle = (int) (((heat - 10_256F) / MAX_HEAT)
                 * Math.min(carbonDioxideTank.getFill() / 14_000F, 1.0F) * 25F * 5F);
         output = cycle;
-        if (cycle > 0) {
-            waterTank.setFill(Math.max(waterTank.getFill() - cycle, 0));
-            steamTank.setFill(Math.min(steamTank.getFill() + cycle, steamTank.getMaxFill()));
+        waterTank.setFill(waterTank.getFill() - cycle);
+        steamTank.setFill(steamTank.getFill() + cycle);
+        if (waterTank.getFill() < 0) {
+            waterTank.setFill(0);
+        }
+        if (steamTank.getFill() > steamTank.getMaxFill()) {
+            steamTank.setFill(steamTank.getMaxFill());
         }
     }
 
@@ -719,21 +728,11 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        data.writeInt(tank.getFill());
-        data.writeInt(tank.getMaxFill());
-        data.writeInt(tank.getTankType().getId());
-        data.writeShort((short) tank.getPressure());
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.write(data, tank);
     }
 
     private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        int fill = data.readInt();
-        int maxFill = data.readInt();
-        FluidType type = HbmFluids.fromId(data.readInt());
-        int pressure = data.readShort();
-        tank.changeTankSize(maxFill);
-        tank.withPressure(pressure);
-        tank.setTankType(type);
-        tank.setFill(fill);
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.read(data, tank);
     }
 
     private static void readLegacyTank(CompoundTag tag, String key, HbmFluidTank tank) {

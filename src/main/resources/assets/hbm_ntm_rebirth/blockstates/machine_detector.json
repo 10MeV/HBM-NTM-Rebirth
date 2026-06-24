@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "active=false": {
+      "model": "hbm_ntm_rebirth:block/machine_detector_off"
+    },
+    "active=true": {
+      "model": "hbm_ntm_rebirth:block/machine_detector"
+    }
+  }
+}

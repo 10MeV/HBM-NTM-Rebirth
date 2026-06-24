@@ -24,7 +24,7 @@ public class FusionBreederRenderer implements BlockEntityRenderer<FusionBreederB
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     @Override
@@ -35,7 +35,7 @@ public class FusionBreederRenderer implements BlockEntityRenderer<FusionBreederB
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
-        ObjFusionModels.BREEDER_LEGACY.renderOnly(ObjFusionModels.BREEDER_TEXTURE,
+        ObjFusionModels.renderBreederPart(ObjFusionModels.BREEDER_TEXTURE,
                 new ObjRenderContext(poseStack, buffer, state, light, packedOverlay)
                         .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL), "Breeder");
         poseStack.popPose();

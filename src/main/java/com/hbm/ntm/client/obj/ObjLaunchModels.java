@@ -7,7 +7,10 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class ObjLaunchModels {
     public static final ObjModelPart LAUNCH_TABLE_BASE = part("launch_table_base");
@@ -47,6 +50,16 @@ public final class ObjLaunchModels {
     public static final LegacyWavefrontModel LAUNCH_TABLE_SMALL_SCAFFOLD_BASE_LEGACY = legacyModel("launch_table_small_scaffold_base").asVBO();
     public static final LegacyWavefrontModel LAUNCH_TABLE_SMALL_SCAFFOLD_CONNECTOR_LEGACY = legacyModel("launch_table_small_scaffold_connector").asVBO();
     public static final LegacyWavefrontModel LAUNCH_TABLE_SMALL_SCAFFOLD_EMPTY_LEGACY = legacyModel("launch_table_small_scaffold_empty", "launch_table_small_scaffold_base").asVBO();
+
+    private static final Map<String, LegacyWavefrontModel.SelectionHandle> MISSILE_ERECTOR_HANDLES =
+            missileErectorHandles(
+                    "Pad",
+                    "ABM_Pad", "ABM_Erector", "ABM_Pivot", "ABM_Rope",
+                    "Micro_Pad", "Micro_Erector", "Micro_Pivot", "Micro_Rope",
+                    "V2_Pad", "V2_Erector", "V2_Pivot", "V2_Rope",
+                    "Strong_Pad", "Strong_Erector", "Strong_Pivot", "Strong_Rope",
+                    "Huge_Pad", "Huge_Erector", "Huge_Pivot", "Huge_Rope",
+                    "Atlas_Pad", "Atlas_Erector", "Atlas_Pivot", "Atlas_Rope");
 
     public static final ResourceLocation MISSILE_PAD_TEXTURE = texture("silo");
     public static final ResourceLocation MISSILE_PAD_RUSTED_TEXTURE = texture("silo_rusted");
@@ -137,6 +150,15 @@ public final class ObjLaunchModels {
         return new SoyuzLauncherRenderPlan(rotation, SOYUZ_LAUNCHER_STATE, parts);
     }
 
+    public static void renderMissileErectorPart(String partName, ResourceLocation texture, ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = missileErectorHandle(partName);
+        if (handle != null) {
+            MISSILE_ERECTOR.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        MISSILE_ERECTOR.renderPart(partName, texture, context);
+    }
+
     public static void renderSoyuzLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
         for (SoyuzLauncherPartPlan plan : soyuzLauncherRenderPlan(rotation).parts()) {
@@ -158,6 +180,18 @@ public final class ObjLaunchModels {
     private static SoyuzLauncherPartPlan moving(LegacyWavefrontModel model, ResourceLocation texture, double pivotY,
             double pivotZ, float rotationDegrees, boolean negativeXAxis) {
         return new SoyuzLauncherPartPlan(model, texture, pivotY, pivotZ, rotationDegrees, negativeXAxis);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle missileErectorHandle(String partName) {
+        return MISSILE_ERECTOR_HANDLES.get(partName);
+    }
+
+    private static Map<String, LegacyWavefrontModel.SelectionHandle> missileErectorHandles(String... partNames) {
+        Map<String, LegacyWavefrontModel.SelectionHandle> handles = new HashMap<>();
+        for (String partName : partNames) {
+            handles.put(partName, MISSILE_ERECTOR.prepareRenderOnlyInCallOrder(partName));
+        }
+        return Collections.unmodifiableMap(handles);
     }
 
     private ObjLaunchModels() {

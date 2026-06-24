@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.CargoElevatorBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -12,6 +13,15 @@ import net.minecraft.resources.ResourceLocation;
 
 public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorBlockEntity> {
     public static final ResourceLocation TEXTURE = ObjMachineModels.ELEVATOR_TEXTURE;
+    private static final LegacyWavefrontModel MODEL = ObjMachineModels.ELEVATOR_LEGACY;
+    private static final LegacyWavefrontModel.SelectionHandle BASE =
+            MODEL.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle PLATFORM =
+            MODEL.prepareRenderOnlyInCallOrder("Platform");
+    private static final LegacyWavefrontModel.SelectionHandle PISTON =
+            MODEL.prepareRenderOnlyInCallOrder("Piston");
+    private static final LegacyWavefrontModel.SelectionHandle GUIDES =
+            MODEL.prepareRenderOnlyInCallOrder("Guides");
 
     public CargoElevatorRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -40,7 +50,7 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
                 elevator.shouldRenderPlatform(), elevator.getPrevExtension(), elevator.getExtension(),
                 partialTick, elevator.getHeight());
         if (plan.renderPlatform()) {
-            ObjMachineModels.ELEVATOR_LEGACY.renderPart("Base", TEXTURE, context);
+            renderPart(BASE, context);
             renderTranslatedParts(plan.platformParts(), poseStack, context);
         }
 
@@ -57,8 +67,43 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
             }
             poseStack.pushPose();
             poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-            ObjMachineModels.ELEVATOR_LEGACY.renderPart(part.partName(), TEXTURE, context);
+            renderPart(handle(part), context);
             poseStack.popPose();
         }
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle handle(
+            LegacyTileRenderPlans.TranslatedModelPartPlan part) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(part.partName());
+        if (handle != null) {
+            return handle;
+        }
+        throw new IllegalArgumentException("Unexpected cargo elevator part: " + part.partName());
+    }
+
+    static void renderModelPart(String partName, ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(partName);
+        if (handle != null) {
+            renderPart(handle, context);
+            return;
+        }
+        MODEL.renderPart(partName, TEXTURE, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Base" -> BASE;
+            case "Platform" -> PLATFORM;
+            case "Piston" -> PISTON;
+            case "Guides" -> GUIDES;
+            default -> null;
+        };
+    }
+
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
+        MODEL.renderOnlyInCallOrder(TEXTURE, context, handle);
     }
 }

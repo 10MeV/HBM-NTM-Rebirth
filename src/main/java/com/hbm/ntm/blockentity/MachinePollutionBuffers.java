@@ -6,9 +6,7 @@ import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
-import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionType;
-import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -109,18 +107,6 @@ public final class MachinePollutionBuffers implements IFluidStandardSender {
 
     public FluidTank[] getSmokeTanks() {
         return new FluidTank[] {smoke, smoke_leaded, smoke_poison};
-    }
-
-    public GenericMachineRecipeRuntime.PollutionSink customMachineRecipeSink() {
-        return this::applyCustomMachineRecipePollution;
-    }
-
-    private boolean applyCustomMachineRecipePollution(Level level, BlockPos pos, PollutionType type, float amount) {
-        if (amount > 0.0F) {
-            pollute(level, pos, type, amount);
-            return true;
-        }
-        return PollutionManager.applyPollutionDelta(level, pos, type, amount);
     }
 
     public void writeLegacyNbt(CompoundTag tag) {

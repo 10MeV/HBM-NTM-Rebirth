@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["CCC", "C C", "CBC"],
+  "key": {
+    "C": { "item": "minecraft:stone_bricks" },
+    "B": { "item": "hbm_ntm_rebirth:conveyor" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:crane_inserter" }
+}

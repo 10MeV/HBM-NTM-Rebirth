@@ -1,0 +1,6 @@
+{
+  "parent": "hbm_ntm_rebirth:block/empty",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/tesla"
+  }
+}

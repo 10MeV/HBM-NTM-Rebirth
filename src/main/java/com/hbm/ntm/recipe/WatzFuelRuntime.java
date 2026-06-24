@@ -2,6 +2,7 @@ package com.hbm.ntm.recipe;
 
 import com.hbm.ntm.item.WatzPelletItem;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmMathUtil;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.world.item.Item;
@@ -159,7 +160,7 @@ public final class WatzFuelRuntime {
         }
 
         public static Curve sqrtFalling(double a) {
-            return new Curve(Kind.SQRT_FALLING, a, 0.0D, 1.0D, 0.0D);
+            return new Curve(Kind.SQRT_FALLING, 1.0D / a, 0.0D, 1.0D, a * a);
         }
 
         public static Curve quadratic(double a, double b) {
@@ -167,7 +168,7 @@ public final class WatzFuelRuntime {
         }
 
         public Curve withDiv(double div) {
-            return new Curve(kind, a, b, div == 0.0D ? 1.0D : div, off);
+            return new Curve(kind, a, b, div, off);
         }
 
         public Curve withOff(double off) {
@@ -175,23 +176,48 @@ public final class WatzFuelRuntime {
         }
 
         public double eval(double x) {
-            double shifted = Math.max(0.0D, x + off);
-            double value = switch (kind) {
+            double shifted = x / div + off;
+            return switch (kind) {
                 case LINEAR -> shifted * a;
-                case SQRT -> Math.sqrt(shifted * a);
-                case SQRT_FALLING -> Math.sqrt(shifted / a);
-                case QUADRATIC -> shifted * shifted * a + shifted * b;
+                case SQRT, SQRT_FALLING -> HbmMathUtil.squirt(shifted) * a;
+                case QUADRATIC -> shifted * shifted * a + b;
             };
-            return value / div;
         }
 
         public String fuelLabel() {
+            String x = xName();
             return switch (kind) {
-                case LINEAR -> "linear";
-                case SQRT -> "square root";
-                case SQRT_FALLING -> "falling square root";
-                case QUADRATIC -> "quadratic";
+                case LINEAR -> x + " * " + format(a, 1);
+                case SQRT, SQRT_FALLING -> "sqrt(" + x + ") * " + format(a, 3);
+                case QUADRATIC -> x + "\u00b2 * " + format(a, 1) + (b != 0.0D ? " + " + format(b, 1) : "");
             };
+        }
+
+        public String dangerLabel() {
+            return switch (kind) {
+                case LINEAR -> "DANGEROUS / LINEAR";
+                case SQRT, SQRT_FALLING -> "MEDIUM / SQUARE ROOT";
+                case QUADRATIC -> "DANGEROUS / QUADRATIC";
+            };
+        }
+
+        public boolean dangerous() {
+            return kind == Kind.LINEAR || kind == Kind.QUADRATIC;
+        }
+
+        private String xName() {
+            String x = "x";
+            if (div != 1.0D) {
+                x += " / " + format(div, 1);
+            }
+            if (off != 0.0D) {
+                x += " + " + format(off, 1);
+            }
+            return x;
+        }
+
+        private static String format(double value, int decimals) {
+            return String.format(Locale.US, "%,." + decimals + "f", value);
         }
 
         private enum Kind {

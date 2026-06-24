@@ -1,18 +1,28 @@
 package com.hbm.ntm.fluid;
 
+import com.hbm.ntm.block.HbmFluidNodeBlock;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 public final class HbmFluidUtil {
+    private static final Map<ResourceKey<Level>, Map<VisualPortKey, IdentityHashMap<Object, EnumSet<VisualRole>>>>
+            REMOTE_VISUAL_PORTS = new HashMap<>();
+
     private HbmFluidUtil() {
     }
 
@@ -112,6 +122,7 @@ public final class HbmFluidUtil {
             return false;
         }
         fluidNet.addProvider(provider);
+        rememberRemoteVisualPort(level, connectorPos, connectorSide, type, provider, VisualRole.PROVIDER);
         return true;
     }
 
@@ -122,6 +133,7 @@ public final class HbmFluidUtil {
             return false;
         }
         fluidNet.addReceiver(receiver);
+        rememberRemoteVisualPort(level, connectorPos, connectorSide, type, receiver, VisualRole.RECEIVER);
         return true;
     }
 
@@ -193,6 +205,7 @@ public final class HbmFluidUtil {
 
     public static boolean unsubscribeProviderFromNetwork(Level level, BlockPos connectorPos, Direction connectorSide,
             FluidType type, HbmFluidProvider provider) {
+        forgetRemoteVisualPort(level, connectorPos, connectorSide, type, provider, VisualRole.PROVIDER);
         HbmFluidNet fluidNet = getConnectableFluidNet(level, connectorPos, connectorSide, type);
         if (provider == null || fluidNet == null || !fluidNet.isProvider(provider)) {
             return false;
@@ -203,6 +216,7 @@ public final class HbmFluidUtil {
 
     public static boolean unsubscribeReceiverFromNetwork(Level level, BlockPos connectorPos, Direction connectorSide,
             FluidType type, HbmFluidReceiver receiver) {
+        forgetRemoteVisualPort(level, connectorPos, connectorSide, type, receiver, VisualRole.RECEIVER);
         HbmFluidNet fluidNet = getConnectableFluidNet(level, connectorPos, connectorSide, type);
         if (receiver == null || fluidNet == null || !fluidNet.isSubscribed(receiver)) {
             return false;
@@ -320,6 +334,90 @@ public final class HbmFluidUtil {
         HbmFluidNode node = HbmFluidNodespace.getNode(level, connectorPos, type);
         HbmFluidNet fluidNet = node == null ? null : node.getFluidNet();
         return fluidNet != null && fluidNet.isValid() ? fluidNet : null;
+    }
+
+    public static boolean hasRemoteVisualPortConnection(BlockGetter level, BlockPos pos, FluidType type,
+            Direction side) {
+        if (!(level instanceof Level realLevel) || pos == null || side == null) {
+            return false;
+        }
+        FluidType normalizedType = type == null ? HbmFluids.NONE : type;
+        if (normalizedType == HbmFluids.NONE) {
+            return false;
+        }
+        Map<VisualPortKey, IdentityHashMap<Object, EnumSet<VisualRole>>> worldPorts =
+                REMOTE_VISUAL_PORTS.get(realLevel.dimension());
+        if (worldPorts == null) {
+            return false;
+        }
+        IdentityHashMap<Object, EnumSet<VisualRole>> owners =
+                worldPorts.get(new VisualPortKey(pos, side, normalizedType));
+        return owners != null && !owners.isEmpty();
+    }
+
+    public static void clearRemoteVisualPortConnections(Level level) {
+        if (level != null) {
+            REMOTE_VISUAL_PORTS.remove(level.dimension());
+        }
+    }
+
+    private static void rememberRemoteVisualPort(Level level, BlockPos connectorPos, Direction connectorSide,
+            FluidType type, Object owner, VisualRole role) {
+        if (level == null || connectorPos == null || connectorSide == null || type == null
+                || type == HbmFluids.NONE || owner == null || role == null) {
+            return;
+        }
+        Map<VisualPortKey, IdentityHashMap<Object, EnumSet<VisualRole>>> worldPorts =
+                REMOTE_VISUAL_PORTS.computeIfAbsent(level.dimension(), ignored -> new HashMap<>());
+        VisualPortKey key = new VisualPortKey(connectorPos, connectorSide, type);
+        IdentityHashMap<Object, EnumSet<VisualRole>> owners =
+                worldPorts.computeIfAbsent(key, ignored -> new IdentityHashMap<>());
+        EnumSet<VisualRole> roles = owners.computeIfAbsent(owner, ignored -> EnumSet.noneOf(VisualRole.class));
+        if (roles.add(role)) {
+            refreshRemoteVisualPortBlock(level, connectorPos);
+        }
+    }
+
+    private static void forgetRemoteVisualPort(Level level, BlockPos connectorPos, Direction connectorSide,
+            FluidType type, Object owner, VisualRole role) {
+        if (level == null || connectorPos == null || connectorSide == null || type == null
+                || type == HbmFluids.NONE || owner == null || role == null) {
+            return;
+        }
+        Map<VisualPortKey, IdentityHashMap<Object, EnumSet<VisualRole>>> worldPorts =
+                REMOTE_VISUAL_PORTS.get(level.dimension());
+        if (worldPorts == null) {
+            return;
+        }
+        VisualPortKey key = new VisualPortKey(connectorPos, connectorSide, type);
+        IdentityHashMap<Object, EnumSet<VisualRole>> owners = worldPorts.get(key);
+        if (owners == null) {
+            return;
+        }
+        EnumSet<VisualRole> roles = owners.get(owner);
+        if (roles == null || !roles.remove(role)) {
+            return;
+        }
+        if (roles.isEmpty()) {
+            owners.remove(owner);
+        }
+        if (owners.isEmpty()) {
+            worldPorts.remove(key);
+        }
+        if (worldPorts.isEmpty()) {
+            REMOTE_VISUAL_PORTS.remove(level.dimension());
+        }
+        refreshRemoteVisualPortBlock(level, connectorPos);
+    }
+
+    private static void refreshRemoteVisualPortBlock(Level level, BlockPos connectorPos) {
+        if (level == null || level.isClientSide || connectorPos == null) {
+            return;
+        }
+        Block block = level.getBlockState(connectorPos).getBlock();
+        if (block instanceof HbmFluidNodeBlock nodeBlock) {
+            nodeBlock.updateFluidConnectionGraph(level, connectorPos);
+        }
     }
 
     public static ForgeFluidTransferReport previewProvideToForgeHandler(BlockEntity target, Direction targetSide,
@@ -547,6 +645,20 @@ public final class HbmFluidUtil {
             FluidType normalizedType = type == null ? HbmFluids.NONE : type;
             return new PortSnapshot(connectorPos, connectorSide, normalizedType.getName(),
                     false, false, false, false, 0, 0, 0);
+        }
+    }
+
+    private enum VisualRole {
+        PROVIDER,
+        RECEIVER
+    }
+
+    private record VisualPortKey(BlockPos pos, Direction side, FluidType type) {
+        private VisualPortKey {
+            Objects.requireNonNull(pos, "pos");
+            Objects.requireNonNull(side, "side");
+            Objects.requireNonNull(type, "type");
+            pos = pos.immutable();
         }
     }
 

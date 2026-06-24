@@ -22,6 +22,7 @@ public class WasteDrumScreen extends AbstractContainerScreen<WasteDrumMenu> {
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 16, topPos + 36, 2);
     }
 
     @Override
@@ -34,6 +35,11 @@ public class WasteDrumScreen extends AbstractContainerScreen<WasteDrumMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
+        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
+                leftPos - 16, topPos + 36, 16, 16, leftPos - 8, topPos + 52,
+                "The drum will cool down hot nuclear",
+                "waste when submerged in water. More",
+                "water speeds up the process.");
         renderTooltip(graphics, mouseX, mouseY);
     }
 }

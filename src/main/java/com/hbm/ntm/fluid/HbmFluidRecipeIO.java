@@ -62,9 +62,6 @@ public final class HbmFluidRecipeIO {
         int overflow = 0;
         if (stack == null || stack.isEmpty()) {
             tank.resetTankReport();
-            if (defaultCapacity > 0) {
-                overflow = tank.changeTankSizeReport(Math.max(tank.getFill(), defaultCapacity)).overflowMb();
-            }
             return new TankConformReport(index, stack, defaultCapacity, false, before, tank.snapshot(), overflow, true);
         }
         tank.setTankTypeReport(stack.type());

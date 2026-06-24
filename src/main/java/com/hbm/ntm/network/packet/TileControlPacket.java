@@ -38,7 +38,8 @@ public record TileControlPacket(BlockPos pos, CompoundTag data) {
         if (player == null) {
             return;
         }
-        BlockEntity blockEntity = HbmGuiControlSecurity.validateTileControl(player, packet.pos, "tile control");
+        BlockEntity blockEntity = HbmGuiControlSecurity.validateTileControlWithoutDefaultDistance(player, packet.pos,
+                "tile control");
         if (!(blockEntity instanceof HbmTileSyncable syncable)) {
             return;
         }

@@ -5,6 +5,7 @@ import com.hbm.ntm.api.conveyor.ConveyorMath;
 import com.hbm.ntm.api.conveyor.ConveyorPathType;
 import com.hbm.ntm.api.conveyor.IConveyorBelt;
 import com.hbm.ntm.entity.item.MovingItemEntity;
+import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -89,16 +90,8 @@ public class ConveyorBlock extends Block implements IConveyorBelt, Toolable {
         int metadata = legacyMetadata(state);
         ConveyorPathType path = ConveyorPathType.fromLegacyMetadata(metadata);
         int baseMetadata = ConveyorMath.baseLegacyMetadata(metadata);
-        int newMetadata;
-
-        if (!player.isShiftKeyDown()) {
-            Direction rotated = ConveyorMath.legacyHorizontalDirection(baseMetadata).getClockWise();
-            newMetadata = rotated.get3DDataValue() + path.legacyOffset() * 4;
-        } else {
-            newMetadata = path == ConveyorPathType.RIGHT ? baseMetadata : metadata + 4;
-        }
-
-        level.setBlock(pos, stateFromLegacyMetadata(newMetadata), 3);
+        BlockState nextState = nextScrewdriverState(state, metadata, baseMetadata, path, player.isShiftKeyDown());
+        level.setBlock(pos, nextState, 3);
         return true;
     }
 
@@ -145,6 +138,23 @@ public class ConveyorBlock extends Block implements IConveyorBelt, Toolable {
         Direction facing = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.NORTH;
         ConveyorPathType path = state.hasProperty(PATH) ? state.getValue(PATH) : ConveyorPathType.STRAIGHT;
         return facing.get3DDataValue() + path.legacyOffset() * 4;
+    }
+
+    protected BlockState nextScrewdriverState(BlockState state, int metadata, int baseMetadata,
+            ConveyorPathType path, boolean sneaking) {
+        int newMetadata = nextBendableMetadata(metadata, baseMetadata, path, sneaking);
+        if (sneaking && path == ConveyorPathType.RIGHT) {
+            return ((ConveyorBlock) ModBlocks.CONVEYOR_LIFT.get()).stateFromLegacyMetadata(newMetadata);
+        }
+        return stateFromLegacyMetadata(newMetadata);
+    }
+
+    protected int nextBendableMetadata(int metadata, int baseMetadata, ConveyorPathType path, boolean sneaking) {
+        if (!sneaking) {
+            Direction rotated = ConveyorMath.legacyHorizontalDirection(baseMetadata).getClockWise();
+            return rotated.get3DDataValue() + path.legacyOffset() * 4;
+        }
+        return path == ConveyorPathType.RIGHT ? baseMetadata : metadata + 4;
     }
 
     @Override

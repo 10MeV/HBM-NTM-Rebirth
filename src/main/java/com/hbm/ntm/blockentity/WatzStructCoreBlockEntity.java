@@ -13,6 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -21,6 +22,11 @@ import java.util.Set;
 public class WatzStructCoreBlockEntity extends BlockEntity {
     public WatzStructCoreBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.WATZ_STRUCT_CORE.get(), pos, state);
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        return new AABB(worldPosition.offset(-3, 0, -3), worldPosition.offset(4, 3, 4));
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, WatzStructCoreBlockEntity blockEntity) {

@@ -240,14 +240,20 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
                     : new int[0];
             case HYDROTREATER -> hydrotreaterInsertionRanges(stack);
             case CATALYTIC_REFORMER -> catalyticReformerInsertionRanges(stack);
-            case VACUUM_DISTILL -> new int[] {
-                    VacuumDistillBlockEntity.SLOT_BATTERY, VacuumDistillBlockEntity.SLOT_BATTERY + 1,
-                    VacuumDistillBlockEntity.SLOT_OUTPUT_HEAVY_CONTAINER, VacuumDistillBlockEntity.SLOT_OUTPUT_HEAVY_CONTAINER + 1,
-                    VacuumDistillBlockEntity.SLOT_OUTPUT_REFORMATE_CONTAINER, VacuumDistillBlockEntity.SLOT_OUTPUT_REFORMATE_CONTAINER + 1,
-                    VacuumDistillBlockEntity.SLOT_OUTPUT_LIGHT_CONTAINER, VacuumDistillBlockEntity.SLOT_OUTPUT_LIGHT_CONTAINER + 1,
-                    VacuumDistillBlockEntity.SLOT_OUTPUT_GAS_CONTAINER, VacuumDistillBlockEntity.SLOT_OUTPUT_GAS_CONTAINER + 1 };
+            case VACUUM_DISTILL -> vacuumDistillInsertionRanges(stack);
             default -> new int[0];
         };
+    }
+
+    private int[] vacuumDistillInsertionRanges(ItemStack stack) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
+            return new int[] { VacuumDistillBlockEntity.SLOT_BATTERY, VacuumDistillBlockEntity.SLOT_BATTERY + 1 };
+        }
+        return new int[] {
+                VacuumDistillBlockEntity.SLOT_OUTPUT_HEAVY_CONTAINER, VacuumDistillBlockEntity.SLOT_OUTPUT_HEAVY_CONTAINER + 1,
+                VacuumDistillBlockEntity.SLOT_OUTPUT_REFORMATE_CONTAINER, VacuumDistillBlockEntity.SLOT_OUTPUT_REFORMATE_CONTAINER + 1,
+                VacuumDistillBlockEntity.SLOT_OUTPUT_LIGHT_CONTAINER, VacuumDistillBlockEntity.SLOT_OUTPUT_LIGHT_CONTAINER + 1,
+                VacuumDistillBlockEntity.SLOT_OUTPUT_GAS_CONTAINER, VacuumDistillBlockEntity.SLOT_OUTPUT_GAS_CONTAINER + 1 };
     }
 
     private int[] hydrotreaterInsertionRanges(ItemStack stack) {

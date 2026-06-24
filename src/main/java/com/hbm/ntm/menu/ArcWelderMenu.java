@@ -115,7 +115,7 @@ public class ArcWelderMenu extends AbstractContainerMenu {
     }
 
     private boolean movePlayerStackToMachine(ItemStack stack) {
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     ArcWelderBlockEntity.SLOT_BATTERY, ArcWelderBlockEntity.SLOT_BATTERY + 1);
         }

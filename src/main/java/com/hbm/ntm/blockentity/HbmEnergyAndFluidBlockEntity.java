@@ -140,6 +140,14 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
                 : HbmEnergyUtil.pushForgeEnergyToPorts(level, worldPosition, getEnergyPorts(), energy, maxTransfer);
     }
 
+    protected void clearEnergyPortSubscriptions() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        HbmEnergyUtil.unsubscribeReceiverFromPorts(level, worldPosition, getEnergyPorts(), energy);
+        HbmEnergyUtil.unsubscribeProviderFromPorts(level, worldPosition, getEnergyPorts(), energy);
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
@@ -158,6 +166,18 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
         forgeEnergy.invalidate();
         forgeEnergyInput.invalidate();
         forgeEnergyOutput.invalidate();
+    }
+
+    @Override
+    public void setRemoved() {
+        clearEnergyPortSubscriptions();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        clearEnergyPortSubscriptions();
+        super.onChunkUnloaded();
     }
 
     @Override

@@ -137,6 +137,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         dropSelf(ModBlocks.STRUCT_SCAFFOLD.get());
         dropSelf(ModBlocks.STRUCT_SOYUZ_CORE.get());
         dropSelf(ModBlocks.LAUNCH_PAD.get());
+        dropSelf(ModBlocks.LAUNCH_PAD_LARGE.get());
         dropSelf(ModBlocks.LAUNCH_PAD_RUSTED.get());
         dropSelf(ModBlocks.LAUNCH_TABLE.get());
         dropSelf(ModBlocks.COMPACT_LAUNCHER.get());
@@ -148,6 +149,21 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.CONVEYOR_TRIPLE.get(), conveyorWandDrop("TRIPLE"));
         add(ModBlocks.CONVEYOR_LIFT.get(), conveyorWandDrop("REGULAR"));
         add(ModBlocks.CONVEYOR_CHUTE.get(), conveyorWandDrop("REGULAR"));
+        add(ModBlocks.FLOODLIGHT_BEAM.get(), noDrop());
+        dropSelf(ModBlocks.CRANE_EXTRACTOR.get());
+        dropSelf(ModBlocks.CRANE_INSERTER.get());
+        dropSelf(ModBlocks.CRANE_GRABBER.get());
+        dropSelf(ModBlocks.CRANE_ROUTER.get());
+        dropSelf(ModBlocks.CRANE_BOXER.get());
+        dropSelf(ModBlocks.CRANE_UNBOXER.get());
+        dropSelf(ModBlocks.CRANE_PARTITIONER.get());
+        dropSelf(ModBlocks.FOUNDRY_MOLD.get());
+        dropSelf(ModBlocks.FOUNDRY_BASIN.get());
+        dropSelf(ModBlocks.FOUNDRY_CHANNEL.get());
+        dropSelf(ModBlocks.FOUNDRY_TANK.get());
+        dropSelf(ModBlocks.FOUNDRY_OUTLET.get());
+        dropSelf(ModBlocks.FOUNDRY_SLAGTAP.get());
+        add(ModBlocks.FOUNDRY_SLAG.get(), noDrop());
         ModBlocks.PYLON_BLOCKS.forEach(block -> dropSelf(block.get()));
         ModBlocks.BLOCK_TAB_BLOCKS.stream()
                 .filter(block -> !ModBlocks.CAP_BLOCKS.contains(block))
@@ -168,6 +184,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.FROZEN_PLANKS.get(), block -> singleItemDrop(Items.SNOWBALL));
         add(ModBlocks.FIRE_DIGAMMA.get(), noDrop());
         add(ModBlocks.BALEFIRE.get(), noDrop());
+        add(ModBlocks.CORIUM_BLOCK.get(), noDrop());
         add(ModBlocks.MUD_BLOCK.get(), noDrop());
         add(ModBlocks.TAINT.get(), noDrop());
         ModBlocks.NUKE_TAB_BLOCKS.stream()
@@ -196,6 +213,14 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.DUMMY_BLOCK.get(), noDrop());
         add(ModBlocks.ICF_BLOCK.get(), noDrop());
         add(ModBlocks.PWR_BLOCK.get(), noDrop());
+        add(ModBlocks.ZIRNOX_DESTROYED.get(), zirnoxDestroyedDrop());
+        add(ModBlocks.SPOTLIGHT_BEAM.get(), noDrop());
+        add(ModBlocks.SPOTLIGHT_INCANDESCENT_OFF.get(),
+                block -> createSingleItemTable(ModBlocks.legacyBlock("spotlight_incandescent").get()));
+        add(ModBlocks.SPOTLIGHT_FLUORO_OFF.get(),
+                block -> createSingleItemTable(ModBlocks.legacyBlock("spotlight_fluoro").get()));
+        add(ModBlocks.SPOTLIGHT_HALOGEN_OFF.get(),
+                block -> createSingleItemTable(ModBlocks.legacyBlock("spotlight_halogen").get()));
         add(ModBlocks.BLOCK_SLAG_BROKEN.get(), block -> createSingleItemTable(ModBlocks.legacyBlock("block_slag").get()));
         add(ModBlocks.GLASS_BORON.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_BORON.get()));
         add(ModBlocks.GLASS_LEAD.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_LEAD.get()));
@@ -359,6 +384,16 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                         .when(ExplosionCondition.survivesExplosion()));
     }
 
+    private LootTable.Builder zirnoxDestroyedDrop() {
+        return LootTable.lootTable()
+                .withPool(fixedStackPool(ModBlocks.legacyBlock("concrete_smooth").get(), 6.0F))
+                .withPool(fixedStackPool(ModItems.legacyItem("pipes_steel").get(), 4.0F))
+                .withPool(fixedStackPool(ModBlocks.STEEL_GRATE.get(), 2.0F))
+                .withPool(fixedStackPool(ModItems.legacyItem("debris_metal").get(), 6.0F))
+                .withPool(fixedStackPool(ModItems.legacyItem("debris_graphite").get(), 2.0F))
+                .withPool(fixedStackPool(ModItems.legacyItem("fallout").get(), 4.0F));
+    }
+
     private LootTable.Builder hugeMushDrop() {
         return LootTable.lootTable()
                 .withPool(LootPool.lootPool()
@@ -370,6 +405,14 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                                 LootItem.lootTableItem(ModBlocks.MUSH.get())
                                         .when(LootItemRandomChanceCondition.randomChance(1.0F / 9.0F))))
                         .when(ExplosionCondition.survivesExplosion()));
+    }
+
+    private LootPool.Builder fixedStackPool(net.minecraft.world.level.ItemLike item, float count) {
+        return LootPool.lootPool()
+                .setRolls(ConstantValue.exactly(1.0F))
+                .add(LootItem.lootTableItem(item)
+                        .apply(SetItemCountFunction.setCount(ConstantValue.exactly(count))))
+                .when(ExplosionCondition.survivesExplosion());
     }
 
     private LootTable.Builder singleItemDrop(Item item) {

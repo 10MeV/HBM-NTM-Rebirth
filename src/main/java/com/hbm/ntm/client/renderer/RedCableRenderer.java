@@ -8,6 +8,7 @@ import com.hbm.ntm.block.RedWireCoatedBlock;
 import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -21,9 +22,24 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity> {
     public static final ResourceLocation CABLE_TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/block/legacy_blocks/cable_neo.png");
+    private static final String[] ITEM_PARTS = {"Core", "posX", "negX", "posZ", "negZ"};
+    private static final String[][] WORLD_PARTS_BY_MASK = buildCablePartsByMask(true);
+    private static final String[][] ARM_PARTS_BY_MASK = buildCablePartsByMask(false);
+    private static final LegacyWavefrontModel.SelectionHandle ITEM_HANDLE =
+            ObjBlockModels.CABLE_NEO.prepareRenderOnlyInCallOrder(ITEM_PARTS);
+    private static final LegacyWavefrontModel.SelectionHandle[] WORLD_HANDLES = buildHandles(WORLD_PARTS_BY_MASK);
+    private static final LegacyWavefrontModel.SelectionHandle[] ARM_HANDLES = buildHandles(ARM_PARTS_BY_MASK);
+    private static final BoxCableTextures[] BOX_CABLE_TEXTURES_BY_SIZE = buildBoxCableTextures();
+    private static final BoxCableBounds[] BOX_CABLE_BOUNDS_BY_SIZE = buildBoxCableBounds();
+    private static final TextureAtlasSprite COATED_BASE = sprite("red_wire_coated");
+    private static final TextureAtlasSprite COATED_CT = sprite("red_wire_coated_ct");
+    private static final CtSpriteFragment[] COATED_FRAGMENTS = buildCoatedFragments();
 
     public RedCableRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -52,44 +68,37 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
         boolean posZ = state.getValue(HbmEnergyNodeBlock.SOUTH);
         boolean negZ = state.getValue(HbmEnergyNodeBlock.NORTH);
 
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, light, packedOverlay);
+        renderWorldCable(context, posX, negX, posY, negY, posZ, negZ);
+    }
+
+    static void renderItemCable(ObjRenderContext context) {
+        ObjBlockModels.CABLE_NEO.renderOnlyInCallOrder(CABLE_TEXTURE, context, ITEM_HANDLE);
+    }
+
+    static void renderCableArms(ObjRenderContext context,
+            boolean posX, boolean negX, boolean posY, boolean negY, boolean posZ, boolean negZ) {
+        renderCableSelection(context, ARM_HANDLES[connectionMask(posX, negX, posY, negY, posZ, negZ)]);
+    }
+
+    private static void renderWorldCable(ObjRenderContext context,
+            boolean posX, boolean negX, boolean posY, boolean negY, boolean posZ, boolean negZ) {
+        renderCableSelection(context, WORLD_HANDLES[connectionMask(posX, negX, posY, negY, posZ, negZ)]);
+    }
+
+    private static void renderCableSelection(ObjRenderContext context, LegacyWavefrontModel.SelectionHandle handle) {
+        PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
-
-        if (posX && negX && !posY && !negY && !posZ && !negZ) {
-            ObjBlockModels.CABLE_NEO.renderPart("CX", CABLE_TEXTURE, poseStack, buffer, light, packedOverlay);
-        } else if (!posX && !negX && posY && negY && !posZ && !negZ) {
-            ObjBlockModels.CABLE_NEO.renderPart("CY", CABLE_TEXTURE, poseStack, buffer, light, packedOverlay);
-        } else if (!posX && !negX && !posY && !negY && posZ && negZ) {
-            ObjBlockModels.CABLE_NEO.renderPart("CZ", CABLE_TEXTURE, poseStack, buffer, light, packedOverlay);
-        } else {
-            ObjBlockModels.CABLE_NEO.renderPart("Core", CABLE_TEXTURE, poseStack, buffer, light, packedOverlay);
-            if (posX) {
-                ObjBlockModels.CABLE_NEO.renderPart("posX", CABLE_TEXTURE, poseStack, buffer, light, packedOverlay);
-            }
-            if (negX) {
-                ObjBlockModels.CABLE_NEO.renderPart("negX", CABLE_TEXTURE, poseStack, buffer, light, packedOverlay);
-            }
-            if (posY) {
-                ObjBlockModels.CABLE_NEO.renderPart("posY", CABLE_TEXTURE, poseStack, buffer, light, packedOverlay);
-            }
-            if (negY) {
-                ObjBlockModels.CABLE_NEO.renderPart("negY", CABLE_TEXTURE, poseStack, buffer, light, packedOverlay);
-            }
-            if (negZ) {
-                ObjBlockModels.CABLE_NEO.renderPart("posZ", CABLE_TEXTURE, poseStack, buffer, light, packedOverlay);
-            }
-            if (posZ) {
-                ObjBlockModels.CABLE_NEO.renderPart("negZ", CABLE_TEXTURE, poseStack, buffer, light, packedOverlay);
-            }
-        }
-
+        ObjBlockModels.CABLE_NEO.renderOnlyInCallOrder(CABLE_TEXTURE, context, handle);
         poseStack.popPose();
     }
 
     private static void renderBoxCable(BlockState state, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
         int size = state.hasProperty(RedCableBoxBlock.SIZE) ? state.getValue(RedCableBoxBlock.SIZE) : 0;
-        BoxCableTextures textures = BoxCableTextures.create(size);
+        int clampedSize = clampBoxCableSize(size);
+        BoxCableTextures textures = BOX_CABLE_TEXTURES_BY_SIZE[clampedSize];
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
         boolean north = state.getValue(HbmEnergyNodeBlock.NORTH);
         boolean east = state.getValue(HbmEnergyNodeBlock.EAST);
@@ -97,7 +106,7 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
         boolean west = state.getValue(HbmEnergyNodeBlock.WEST);
         boolean up = state.getValue(HbmEnergyNodeBlock.UP);
         boolean down = state.getValue(HbmEnergyNodeBlock.DOWN);
-        BoxCableBounds bounds = BoxCableBounds.create(size);
+        BoxCableBounds bounds = BOX_CABLE_BOUNDS_BY_SIZE[clampedSize];
         int mask = (east ? 32 : 0)
                 | (west ? 16 : 0)
                 | (up ? 8 : 0)
@@ -368,6 +377,10 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
     }
 
     private static CtSpriteFragment ctSpriteFragment(int type) {
+        return COATED_FRAGMENTS[Math.max(0, Math.min(COATED_FRAGMENTS.length - 1, type))];
+    }
+
+    private static CtSpriteFragment createCtSpriteFragment(int type) {
         boolean base = type < 4;
         TextureAtlasSprite sprite = coatedSprite(type);
         double sub = base ? 2.0D : 4.0D;
@@ -392,18 +405,104 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
     }
 
     private static TextureAtlasSprite coatedSprite(int type) {
-        return sprite(type < 4 ? "red_wire_coated" : "red_wire_coated_ct");
+        return type < 4 ? COATED_BASE : COATED_CT;
     }
 
     private static TextureAtlasSprite sprite(String texture) {
         return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + texture));
     }
 
+    private static int clampBoxCableSize(int size) {
+        return Math.max(0, Math.min(4, size));
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle[] buildHandles(String[][] partsByMask) {
+        LegacyWavefrontModel.SelectionHandle[] handles = new LegacyWavefrontModel.SelectionHandle[partsByMask.length];
+        for (int mask = 0; mask < partsByMask.length; mask++) {
+            handles[mask] = ObjBlockModels.CABLE_NEO.prepareRenderOnlyInCallOrder(partsByMask[mask]);
+        }
+        return handles;
+    }
+
+    private static String[][] buildCablePartsByMask(boolean includeCoreAndStraight) {
+        String[][] parts = new String[64][];
+        for (int mask = 0; mask < parts.length; mask++) {
+            parts[mask] = buildCableParts(mask, includeCoreAndStraight);
+        }
+        return parts;
+    }
+
+    private static String[] buildCableParts(int mask, boolean includeCoreAndStraight) {
+        boolean posX = (mask & 32) != 0;
+        boolean negX = (mask & 16) != 0;
+        boolean posY = (mask & 8) != 0;
+        boolean negY = (mask & 4) != 0;
+        boolean posZ = (mask & 2) != 0;
+        boolean negZ = (mask & 1) != 0;
+
+        if (includeCoreAndStraight) {
+            if (posX && negX && !posY && !negY && !posZ && !negZ) {
+                return new String[]{"CX"};
+            }
+            if (!posX && !negX && posY && negY && !posZ && !negZ) {
+                return new String[]{"CY"};
+            }
+            if (!posX && !negX && !posY && !negY && posZ && negZ) {
+                return new String[]{"CZ"};
+            }
+        }
+
+        List<String> parts = new ArrayList<>(includeCoreAndStraight ? 7 : 6);
+        if (includeCoreAndStraight) {
+            parts.add("Core");
+        }
+        if (posX) parts.add("posX");
+        if (negX) parts.add("negX");
+        if (posY) parts.add("posY");
+        if (negY) parts.add("negY");
+        if (negZ) parts.add("posZ");
+        if (posZ) parts.add("negZ");
+        return parts.toArray(String[]::new);
+    }
+
+    private static int connectionMask(boolean posX, boolean negX, boolean posY, boolean negY, boolean posZ, boolean negZ) {
+        return (posX ? 32 : 0)
+                | (negX ? 16 : 0)
+                | (posY ? 8 : 0)
+                | (negY ? 4 : 0)
+                | (posZ ? 2 : 0)
+                | (negZ ? 1 : 0);
+    }
+
+    private static BoxCableTextures[] buildBoxCableTextures() {
+        BoxCableTextures[] textures = new BoxCableTextures[5];
+        for (int size = 0; size < textures.length; size++) {
+            textures[size] = BoxCableTextures.create(size);
+        }
+        return textures;
+    }
+
+    private static BoxCableBounds[] buildBoxCableBounds() {
+        BoxCableBounds[] bounds = new BoxCableBounds[5];
+        for (int size = 0; size < bounds.length; size++) {
+            bounds[size] = BoxCableBounds.create(size);
+        }
+        return bounds;
+    }
+
+    private static CtSpriteFragment[] buildCoatedFragments() {
+        CtSpriteFragment[] fragments = new CtSpriteFragment[20];
+        for (int type = 0; type < fragments.length; type++) {
+            fragments[type] = createCtSpriteFragment(type);
+        }
+        return fragments;
+    }
+
     private record BoxCableTextures(TextureAtlasSprite straight, TextureAtlasSprite end, TextureAtlasSprite curveTL,
                                     TextureAtlasSprite curveTR, TextureAtlasSprite curveBL,
                                     TextureAtlasSprite curveBR, TextureAtlasSprite junction) {
         static BoxCableTextures create(int size) {
-            int clamped = Math.max(0, Math.min(4, size));
+            int clamped = clampBoxCableSize(size);
             return new BoxCableTextures(
                     sprite("boxduct_cable_straight"),
                     sprite("boxduct_cable_end_" + clamped),
@@ -417,7 +516,7 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
 
     private record BoxCableBounds(double lower, double upper) {
         static BoxCableBounds create(int size) {
-            int clamped = Math.max(0, Math.min(4, size));
+            int clamped = clampBoxCableSize(size);
             double lower = 0.125D + clamped * 0.0625D;
             double upper = 0.875D - clamped * 0.0625D;
             return new BoxCableBounds(lower, upper);

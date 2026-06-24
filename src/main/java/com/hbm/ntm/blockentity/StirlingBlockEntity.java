@@ -18,7 +18,10 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -244,22 +247,80 @@ public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPers
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putLong("powerBuffer", powerBuffer);
-        tag.putInt("heat", heat);
         tag.putBoolean("hasCog", hasCog);
         tag.putInt("overspeed", overspeed);
-        tag.putFloat("spin", spin);
-        tag.putFloat("lastSpin", lastSpin);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         powerBuffer = Math.max(0L, tag.getLong("powerBuffer"));
-        heat = Math.max(0, tag.getInt("heat"));
         hasCog = !tag.contains("hasCog") || tag.getBoolean("hasCog");
         overspeed = Math.max(0, tag.getInt("overspeed"));
-        spin = tag.getFloat("spin");
-        lastSpin = tag.getFloat("lastSpin");
+        readRuntimeSync(tag);
+        refreshEnergyState();
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putLong("powerBuffer", powerBuffer);
+        tag.putInt("heat", heat);
+        tag.putBoolean("hasCog", hasCog);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains("powerBuffer")) {
+            powerBuffer = Math.max(0L, tag.getLong("powerBuffer"));
+        }
+        readRuntimeSync(tag);
+        refreshEnergyState();
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    private void readRuntimeSync(CompoundTag tag) {
+        if (tag.contains("heat")) {
+            heat = Math.max(0, tag.getInt("heat"));
+        }
+        if (tag.contains("hasCog")) {
+            hasCog = tag.getBoolean("hasCog");
+        }
+    }
+
+    private void refreshEnergyState() {
         energy.setMaxPower(powerBuffer);
         energy.setTransferRates(0L, powerBuffer);
         energy.setPower(hasCog ? powerBuffer : 0L);

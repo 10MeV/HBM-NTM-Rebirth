@@ -223,10 +223,6 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.remove("lastInputUsed");
-        tag.remove("lastOutputProduced");
-        tag.remove("lastPowerProduced");
-        tag.remove("operational");
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
         inputTank.writeToNbt(tag, "water");
         outputTank.writeToNbt(tag, "steam");
@@ -269,10 +265,6 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = super.getClientSyncTag();
-        tag.putInt("lastInputUsed", getLastInputUsed());
-        tag.putInt("lastOutputProduced", getLastOutputProduced());
-        tag.putLong("lastPowerProduced", getLastPowerProduced());
-        tag.putBoolean("operational", isOperational());
         tag.putInt("age", age);
         tag.putFloat("rotor", rotor);
         tag.putFloat("lastRotor", lastRotor);

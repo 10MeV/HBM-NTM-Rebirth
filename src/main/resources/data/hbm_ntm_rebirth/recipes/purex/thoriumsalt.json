@@ -1,0 +1,41 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:purex",
+    "internal_name":  "purex.thoriumsalt",
+    "duration":  20,
+    "power":  10000,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:nugget_th232"
+                                           },
+                            "count":  2
+                        }
+                    ],
+    "input_fluids":  [
+                         {
+                             "fluid":  "hbm_ntm_rebirth:thorium_salt_depleted",
+                             "amount":  16000
+                         }
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:nugget_u233",
+                             "chance":  0.5
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:nuclear_waste_tiny",
+                             "chance":  0.25
+                         }
+                     ],
+    "output_fluids":  [
+                          {
+                              "fluid":  "hbm_ntm_rebirth:thorium_salt",
+                              "amount":  16000
+                          }
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  353
+}
+

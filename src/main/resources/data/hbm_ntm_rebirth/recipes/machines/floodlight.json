@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "CSC",
+    "TST",
+    "G G"
+  ],
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_capacitor"
+    },
+    "S": {
+      "tag": "forge:plates/steel"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:coil_tungsten"
+    },
+    "G": {
+      "tag": "forge:glass_panes"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:floodlight",
+    "count": 2
+  }
+}

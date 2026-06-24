@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.launchpad",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:cast_plates/steel" }, "count": 6, "legacy_ore": "plateCastSteel" },
+    { "ingredient": { "tag": "forge:storage_blocks/any_concrete" }, "count": 64, "legacy_ore": "anyConcrete" },
+    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 16, "legacy_ore": "ingotAnyPlastic" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:steel_scaffold" }, "count": 24 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "count": 2, "legacy_id": "hbm:circuit", "legacy_meta": 9 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:launch_pad_large" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 268
+}

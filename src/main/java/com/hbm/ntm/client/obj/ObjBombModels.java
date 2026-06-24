@@ -20,6 +20,10 @@ public final class ObjBombModels {
     public static final LegacyWavefrontModel DUD_CONVENTIONAL = model("dud_conventional", "dud_conventional").asVBO();
     public static final LegacyWavefrontModel DUD_NUKE = model("dud_nuke", "dud_nuke").asVBO();
     public static final LegacyWavefrontModel DUD_SALTED = model("dud_salted", "dud_salted").asVBO();
+    public static final LegacyWavefrontModel.SelectionHandle FSTBMB_BODY_BALEFIRE =
+            FSTBMB.prepareRenderOnlyInCallOrder("Body", "Balefire");
+    public static final LegacyWavefrontModel.SelectionHandle FSTBMB_BALEFIRE =
+            FSTBMB.prepareRenderOnlyInCallOrder("Balefire");
 
     public static final ResourceLocation MINE_AP_GRASS_TEXTURE = texture("mine_ap_grass");
     public static final ResourceLocation MINE_AP_DESERT_TEXTURE = texture("mine_ap_desert");
@@ -49,6 +53,10 @@ public final class ObjBombModels {
 
     public static ResourceLocation rootTexture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + name + ".png");
+    }
+
+    public static void renderFstbmbBody(ObjRenderContext context) {
+        FSTBMB.renderOnlyInCallOrder(texture("fstbmb"), context, FSTBMB_BODY_BALEFIRE);
     }
 
     private ObjBombModels() {

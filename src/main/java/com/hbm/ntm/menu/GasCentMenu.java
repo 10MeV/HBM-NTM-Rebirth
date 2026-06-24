@@ -201,7 +201,7 @@ public class GasCentMenu extends AbstractContainerMenu {
     }
 
     private boolean movePlayerStackToMachine(ItemStack stack) {
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     GasCentBlockEntity.SLOT_BATTERY, GasCentBlockEntity.SLOT_BATTERY + 1);
         }

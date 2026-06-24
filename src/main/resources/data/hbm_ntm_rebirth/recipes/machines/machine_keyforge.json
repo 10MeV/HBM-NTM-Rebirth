@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "PCP",
+    "WSW",
+    "WSW"
+  ],
+  "key": {
+    "P": {
+      "tag": "forge:plates/steel"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:padlock"
+    },
+    "W": {
+      "tag": "minecraft:planks"
+    },
+    "S": {
+      "tag": "forge:ingots/tungsten"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_keyforge"
+  },
+  "show_notification": true
+}

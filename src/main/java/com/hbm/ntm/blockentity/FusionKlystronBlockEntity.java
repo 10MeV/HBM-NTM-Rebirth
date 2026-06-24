@@ -123,7 +123,7 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
     public ItemStackHandler getItems() { return items; }
     public HbmFluidTank getAirTank() { return airTank; }
     public long getOutputTarget() { return outputTarget; }
-    public void setOutputTarget(long outputTarget) { this.outputTarget = Math.max(0L, Math.min(MAX_OUTPUT, outputTarget)); }
+    public void setOutputTarget(long outputTarget) { this.outputTarget = outputTarget; }
     public long getOutput() { return output; }
     @Override public long getMaxPower() { return maxPower; }
     public float getFan(float partialTick) { return prevFan + (fan - prevFan) * partialTick; }
@@ -131,15 +131,14 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public static CompoundTag outputTargetControlTag(long target) {
         CompoundTag tag = new CompoundTag();
-        long clamped = Math.max(0L, Math.min(MAX_OUTPUT, target));
-        tag.putLong("amount", clamped);
+        tag.putLong("amount", target);
         return tag;
     }
 
     @Override
     public void receiveControl(ServerPlayer player, CompoundTag data) {
         if (data.contains("amount")) {
-            setOutputTarget(data.getLong("amount"));
+            setOutputTarget(Math.max(0L, Math.min(MAX_OUTPUT, data.getLong("amount"))));
             setChanged();
         }
     }
@@ -152,7 +151,7 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public long provideKlystronEnergy() {
-        return 0L;
+        return output;
     }
 
     @Override
@@ -205,7 +204,7 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return type == HbmFluids.AIR;
+        return type != HbmFluids.NONE && type == airTank.getTankType();
     }
 
     @Override
@@ -314,10 +313,21 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void setRemoved() {
+        destroyNode();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        destroyNode();
+        super.onChunkUnloaded();
+    }
+
+    private void destroyNode() {
         if (level != null && !level.isClientSide && klystronNode != null) {
             KlystronNodespace.destroyNode(level, klystronNode.getPos());
         }
-        super.setRemoved();
+        klystronNode = null;
     }
 
     @Override
@@ -344,7 +354,7 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (outputTarget > 0L && energy.getPower() >= powerReq && airTank.getFill() >= airReq) {
             output = powerReq;
             energy.setPower(energy.getPower() - powerReq);
-            airTank.drain(airReq, false);
+            airTank.setFill(airTank.getFill() - airReq);
         }
         if (output < outputTarget / 50L) {
             output = 0L;
@@ -381,7 +391,7 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     static boolean provideKyU(KlystronNetwork network, long output) {
-        if (network == null || output <= 0L) {
+        if (network == null) {
             return false;
         }
         for (Object receiver : network.receiverEntries.keySet()) {
@@ -394,20 +404,10 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        data.writeInt(tank.getFill());
-        data.writeInt(tank.getMaxFill());
-        data.writeInt(tank.getTankType().getId());
-        data.writeShort((short) tank.getPressure());
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.write(data, tank);
     }
 
     private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        int fill = data.readInt();
-        int maxFill = data.readInt();
-        FluidType type = HbmFluids.fromId(data.readInt());
-        int pressure = data.readShort();
-        tank.changeTankSize(maxFill);
-        tank.withPressure(pressure);
-        tank.setTankType(type);
-        tank.setFill(fill);
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.read(data, tank);
     }
 }

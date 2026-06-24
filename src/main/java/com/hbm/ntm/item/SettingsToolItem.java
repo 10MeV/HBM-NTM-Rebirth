@@ -195,7 +195,11 @@ public class SettingsToolItem extends Item {
         BlockEntity blockEntity = level.isClientSide
                 ? MultiblockHelper.resolveCoreBlockEntity(level, pos)
                 : MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
-        return blockEntity instanceof CopiableSettings copiable ? Optional.of(copiable) : Optional.empty();
+        if (!(blockEntity instanceof CopiableSettings copiable)) {
+            return Optional.empty();
+        }
+        BlockPos corePos = MultiblockHelper.resolveOperationalCorePos(level, pos);
+        return copiable.supportsSettingsCopy(level, corePos) ? Optional.of(copiable) : Optional.empty();
     }
 
     private static void informCopied(Player player, Component sourceName) {

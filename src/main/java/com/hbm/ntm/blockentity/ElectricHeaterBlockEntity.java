@@ -16,7 +16,11 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -30,6 +34,7 @@ public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
     private static final String TAG_SETTING = "setting";
     private static final String TAG_HEAT = "heatEnergy";
     private static final String TAG_ACTIVE = "isOn";
+    private static final String TAG_POWER = "power";
 
     private int heatEnergy;
     private int setting;
@@ -188,18 +193,69 @@ public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        tag.putLong(TAG_POWER, energy.getPower());
         tag.putInt(TAG_SETTING, setting);
         tag.putInt(TAG_HEAT, heatEnergy);
-        tag.putBoolean(TAG_ACTIVE, active);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        if (tag.contains(TAG_POWER, Tag.TAG_LONG)) {
+            energy.setPower(tag.getLong(TAG_POWER));
+        }
+        setting = Mth.clamp(tag.getInt(TAG_SETTING), 0, 10);
+        heatEnergy = Math.max(0, tag.getInt(TAG_HEAT));
+        updateEnergyLimit();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt(TAG_SETTING, setting);
+        tag.putInt(TAG_HEAT, heatEnergy);
+        tag.putBoolean(TAG_ACTIVE, active);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
         setting = Mth.clamp(tag.getInt(TAG_SETTING), 0, 10);
         heatEnergy = Math.max(0, tag.getInt(TAG_HEAT));
         active = tag.getBoolean(TAG_ACTIVE);
         updateEnergyLimit();
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return getClientSyncTag();
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     private void updateEnergyLimit() {

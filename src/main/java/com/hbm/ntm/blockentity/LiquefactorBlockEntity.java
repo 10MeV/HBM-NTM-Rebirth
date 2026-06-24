@@ -23,6 +23,7 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
@@ -48,7 +49,9 @@ import java.util.List;
 import java.util.Map;
 
 public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity implements MenuProvider, HbmStandardFluidSender {
-    private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_INVENTORY = HbmInventoryMenuHelper.LEGACY_ITEMS_TAG;
+    private static final String TAG_MODERN_INVENTORY = "Inventory";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_PROGRESS = "progress";
     private static final String TAG_USAGE = "usage";
     private static final String TAG_PROCESS_TIME = "processTime";
@@ -106,6 +109,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     private int progress;
     private int usage = USAGE_BASE;
     private int processTime = PROCESS_TIME_BASE;
+    private String customName;
 
     public LiquefactorBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmEnergyStorage(MAX_POWER, MAX_POWER, 0L), new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY));
@@ -260,7 +264,10 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         tag.putInt(TAG_PROGRESS, progress);
         tag.putInt(TAG_USAGE, usage);
         tag.putInt(TAG_PROCESS_TIME, processTime);
@@ -270,11 +277,12 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         progress = tag.getInt(TAG_PROGRESS);
         usage = tag.contains(TAG_USAGE) ? tag.getInt(TAG_USAGE) : USAGE_BASE;
         processTime = tag.contains(TAG_PROCESS_TIME) ? tag.getInt(TAG_PROCESS_TIME) : PROCESS_TIME_BASE;
-        if (tag.contains(TAG_LEGACY_TANK)) {
+        if (hasTankTag(tag, TAG_LEGACY_TANK)) {
             tank.readFromNbt(tag, TAG_LEGACY_TANK);
         }
     }
@@ -292,6 +300,9 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
 
     @Override
     public Component getDisplayName() {
+        if (customName != null && !customName.isBlank()) {
+            return Component.literal(customName);
+        }
         return Component.translatableWithFallback("container.machineLiquefactor", "Liquefactor");
     }
 
@@ -327,6 +338,20 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
             items.extractItem(SLOT_INPUT, 1, false);
         }
         progress = 0;
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_INVENTORY, Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        } else if (tag.contains(TAG_MODERN_INVENTORY, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
     private boolean updateUpgrades() {

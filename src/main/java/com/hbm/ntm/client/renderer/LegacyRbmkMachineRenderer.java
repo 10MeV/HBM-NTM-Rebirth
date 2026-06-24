@@ -151,7 +151,7 @@ public final class LegacyRbmkMachineRenderer {
         PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.translate(plan.translateX(), 0.0D, 0.0D);
-        ObjRbmkModels.CRANE_CONSOLE.renderPart("Console_Coonsole", ObjRbmkModels.CRANE_CONSOLE_TEXTURE, context);
+        ObjRbmkModels.renderCraneConsolePart("Console_Coonsole", context);
         renderCraneJoystick(context, plan.joystick());
         renderCraneMeter(context, plan.meterHeat());
         renderCraneMeter(context, plan.meterEnrichment());
@@ -168,7 +168,7 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) interpolate(lastTiltFront, tiltFront, partialTick)));
         poseStack.mulPose(Axis.XP.rotationDegrees((float) interpolate(lastTiltLeft, tiltLeft, partialTick)));
         poseStack.translate(-CRANE_JOYSTICK_PIVOT_X, CRANE_JOYSTICK_RETURN_Y, 0.0D);
-        ObjRbmkModels.CRANE_CONSOLE.renderPart("Joystick", ObjRbmkModels.CRANE_CONSOLE_TEXTURE, context);
+        ObjRbmkModels.renderCraneConsolePart("Joystick", context);
         poseStack.popPose();
     }
 
@@ -182,7 +182,7 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) plan.tiltFrontDegrees()));
         poseStack.mulPose(Axis.XP.rotationDegrees((float) plan.tiltLeftDegrees()));
         poseStack.translate(-plan.pivotX(), plan.restoreY(), 0.0D);
-        ObjRbmkModels.CRANE_CONSOLE.renderPart("Joystick", ObjRbmkModels.CRANE_CONSOLE_TEXTURE, context);
+        ObjRbmkModels.renderCraneConsolePart("Joystick", context);
         poseStack.popPose();
     }
 
@@ -193,7 +193,7 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.translate(0.0D, CRANE_METER_PIVOT_Y, pivotZ);
         poseStack.mulPose(Axis.XP.rotationDegrees((float) craneMeterAngle(value, currentMillis)));
         poseStack.translate(0.0D, -CRANE_METER_PIVOT_Y, -pivotZ);
-        ObjRbmkModels.CRANE_CONSOLE.renderPart(partName, ObjRbmkModels.CRANE_CONSOLE_TEXTURE, context);
+        ObjRbmkModels.renderCraneConsolePart(partName, context);
         poseStack.popPose();
     }
 
@@ -206,12 +206,12 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.translate(0.0D, plan.pivotY(), plan.pivotZ());
         poseStack.mulPose(Axis.XP.rotationDegrees((float) plan.angleDegrees()));
         poseStack.translate(0.0D, -plan.pivotY(), -plan.pivotZ());
-        ObjRbmkModels.CRANE_CONSOLE.renderPart(plan.partName(), ObjRbmkModels.CRANE_CONSOLE_TEXTURE, context);
+        ObjRbmkModels.renderCraneConsolePart(plan.partName(), context);
         poseStack.popPose();
     }
 
     public static void renderCraneLamp(ObjRenderContext context, String partName, int color) {
-        ObjRbmkModels.CRANE_CONSOLE.renderPartUntextured(partName, context.fullBright().withColor(color));
+        ObjRbmkModels.renderCraneConsolePartUntextured(partName, context.fullBright().withColor(color));
     }
 
     public static void renderCraneLamp(ObjRenderContext context, LegacyTileRenderPlans.ModelPartTintPlan plan) {
@@ -219,7 +219,7 @@ public final class LegacyRbmkMachineRenderer {
             return;
         }
         LegacyTileRenderPlans.RgbaPlan color = plan.color();
-        ObjRbmkModels.CRANE_CONSOLE.renderPartUntextured(plan.partName(),
+        ObjRbmkModels.renderCraneConsolePartUntextured(plan.partName(),
                 context.fullBright().withRgba(color.redByte(), color.greenByte(), color.blueByte(), color.alphaByte()));
     }
 
@@ -253,10 +253,10 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.translate(-posFront, 0.0D, posLeft);
         poseStack.mulPose(Axis.YP.rotationDegrees(normalizedCraneRotation(state.craneRotationOffset())));
         renderCraneGirder(context, state.spans(), posFront, posLeft, state.craneRotationOffset());
-        ObjRbmkModels.CRANE.renderPart("Main", ObjRbmkModels.CRANE_TEXTURE, context);
+        ObjRbmkModels.renderCranePart("Main", context);
         renderCraneTubeAndCarriage(context, craneTubeHeight(state.height()));
         poseStack.translate(0.0D, craneLiftY(progress), 0.0D);
-        ObjRbmkModels.CRANE.renderPart("Lift", ObjRbmkModels.CRANE_TEXTURE, context);
+        ObjRbmkModels.renderCranePart("Lift", context);
         poseStack.popPose();
     }
 
@@ -270,7 +270,7 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.translate(plan.translateX(), 0.0D, plan.translateZ());
         poseStack.mulPose(Axis.YP.rotationDegrees(normalizedCraneRotation(craneRotationOffset)));
         for (int i = 0; i < plan.span(); i++) {
-            ObjRbmkModels.CRANE.renderPart("Girder", ObjRbmkModels.CRANE_TEXTURE, context);
+            ObjRbmkModels.renderCranePart("Girder", context);
             poseStack.translate(-1.0D, 0.0D, 0.0D);
         }
         poseStack.popPose();
@@ -281,11 +281,11 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.pushPose();
         int height = Math.max(0, tubeHeight);
         for (int i = 0; i < height; i++) {
-            ObjRbmkModels.CRANE.renderPart("Tube", ObjRbmkModels.CRANE_TEXTURE, context);
+            ObjRbmkModels.renderCranePart("Tube", context);
             poseStack.translate(0.0D, 1.0D, 0.0D);
         }
         poseStack.translate(0.0D, -1.0D, 0.0D);
-        ObjRbmkModels.CRANE.renderPart("Carriage", ObjRbmkModels.CRANE_TEXTURE, context);
+        ObjRbmkModels.renderCranePart("Carriage", context);
         poseStack.popPose();
     }
 
@@ -314,7 +314,7 @@ public final class LegacyRbmkMachineRenderer {
 
     public static void renderAutoloader(ObjRenderContext context, double lastPiston, double renderPiston,
             float partialTick) {
-        ObjRbmkModels.AUTOLOADER.renderPart("Base", ObjRbmkModels.AUTOLOADER_TEXTURE, context);
+        ObjRbmkModels.renderAutoloaderPart("Base", context);
         renderAutoloaderPiston(context, lastPiston, renderPiston, partialTick);
     }
 
@@ -323,7 +323,7 @@ public final class LegacyRbmkMachineRenderer {
         PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.translate(0.0D, autoloaderPistonY(lastPiston, renderPiston, partialTick), 0.0D);
-        ObjRbmkModels.AUTOLOADER.renderPart("Piston", ObjRbmkModels.AUTOLOADER_TEXTURE, context);
+        ObjRbmkModels.renderAutoloaderPart("Piston", context);
         poseStack.popPose();
     }
 

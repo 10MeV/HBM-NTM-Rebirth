@@ -26,6 +26,63 @@ public final class ObjFusionModels {
     public static final ResourceLocation MHDT_TEXTURE = texture("mhdt");
     public static final ResourceLocation COUPLER_TEXTURE = texture("coupler");
     public static final ResourceLocation PLASMA_FORGE_TEXTURE = texture("plasma_forge");
+    private static final LegacyWavefrontModel.SelectionHandle TORUS_BODY_HANDLE =
+            TORUS_LEGACY.prepareRenderOnlyInCallOrder("Torus");
+    private static final LegacyWavefrontModel.SelectionHandle TORUS_MAGNET_HANDLE =
+            TORUS_LEGACY.prepareRenderOnlyInCallOrder("Magnet");
+    private static final LegacyWavefrontModel.SelectionHandle TORUS_BOLTS_1_HANDLE =
+            TORUS_LEGACY.prepareRenderOnlyInCallOrder("Bolts1");
+    private static final LegacyWavefrontModel.SelectionHandle TORUS_BOLTS_2_HANDLE =
+            TORUS_LEGACY.prepareRenderOnlyInCallOrder("Bolts2");
+    private static final LegacyWavefrontModel.SelectionHandle TORUS_BOLTS_3_HANDLE =
+            TORUS_LEGACY.prepareRenderOnlyInCallOrder("Bolts3");
+    private static final LegacyWavefrontModel.SelectionHandle TORUS_BOLTS_4_HANDLE =
+            TORUS_LEGACY.prepareRenderOnlyInCallOrder("Bolts4");
+    private static final LegacyWavefrontModel.SelectionHandle TORUS_PLASMA_HANDLE =
+            TORUS_LEGACY.prepareRenderOnlyInCallOrder("Plasma");
+    private static final LegacyWavefrontModel.SelectionHandle KLYSTRON_BODY_HANDLE =
+            KLYSTRON_LEGACY.prepareRenderOnlyInCallOrder("Klystron");
+    private static final LegacyWavefrontModel.SelectionHandle KLYSTRON_ROTOR_HANDLE =
+            KLYSTRON_LEGACY.prepareRenderOnlyInCallOrder("Rotor");
+    private static final LegacyWavefrontModel.SelectionHandle BREEDER_BODY_HANDLE =
+            BREEDER_LEGACY.prepareRenderOnlyInCallOrder("Breeder");
+    private static final LegacyWavefrontModel.SelectionHandle MHDT_TURBINE_HANDLE =
+            MHDT_LEGACY.prepareRenderOnlyInCallOrder("Turbine");
+    private static final LegacyWavefrontModel.SelectionHandle MHDT_COILS_HANDLE =
+            MHDT_LEGACY.prepareRenderOnlyInCallOrder("Coils");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_BODY_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("Body");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_PLASMA_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("Plasma");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_SLIDER_STRIKER_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("SliderStriker");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_ARM_LOWER_STRIKER_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("ArmLowerStriker");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_ARM_UPPER_STRIKER_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("ArmUpperStriker");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_STRIKER_MOUNT_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("StrikerMount");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_STRIKER_LEFT_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("StrikerLeft");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_STRIKER_RIGHT_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("StrikerRight");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_PISTON_LEFT_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("PistonLeft");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_PISTON_RIGHT_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("PistonRight");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_SLIDER_JET_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("SliderJet");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_ARM_LOWER_JET_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("ArmLowerJet");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_ARM_UPPER_JET_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("ArmUpperJet");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_JET_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("Jet");
+    private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_ITEM_BODY_HANDLE =
+            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder(
+                    "SliderStriker", "ArmLowerStriker", "ArmUpperStriker", "StrikerMount",
+                    "StrikerLeft", "StrikerRight", "PistonLeft", "PistonRight",
+                    "SliderJet", "ArmLowerJet", "ArmUpperJet", "Jet", "Body");
 
     public static final ObjModelPart TORUS = part("fusion_torus");
     public static final ObjModelPart TORUS_BODY = part("fusion_torus_torus");
@@ -136,6 +193,159 @@ public final class ObjFusionModels {
 
     public static ResourceLocation texture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/fusion/" + name + ".png");
+    }
+
+    public static void renderTorusPart(ResourceLocation texture, ObjRenderContext context, String partName) {
+        renderTorusPart(TORUS_LEGACY, texture, context, partName);
+    }
+
+    public static void renderTorusPart(LegacyWavefrontModel model, ResourceLocation texture, ObjRenderContext context,
+            String partName) {
+        LegacyWavefrontModel.SelectionHandle handle = sameModel(model, TORUS_LEGACY) ? torusHandle(partName) : null;
+        if (handle != null) {
+            TORUS_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    public static void renderKlystronPart(ResourceLocation texture, ObjRenderContext context, String partName) {
+        renderKlystronPart(KLYSTRON_LEGACY, texture, context, partName);
+    }
+
+    public static void renderKlystronPart(LegacyWavefrontModel model, ResourceLocation texture, ObjRenderContext context,
+            String partName) {
+        LegacyWavefrontModel.SelectionHandle handle = sameModel(model, KLYSTRON_LEGACY) ? klystronHandle(partName) : null;
+        if (handle != null) {
+            KLYSTRON_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    public static void renderBreederPart(ResourceLocation texture, ObjRenderContext context, String partName) {
+        renderBreederPart(BREEDER_LEGACY, texture, context, partName);
+    }
+
+    public static void renderBreederPart(LegacyWavefrontModel model, ResourceLocation texture, ObjRenderContext context,
+            String partName) {
+        LegacyWavefrontModel.SelectionHandle handle = sameModel(model, BREEDER_LEGACY) ? breederHandle(partName) : null;
+        if (handle != null) {
+            BREEDER_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    public static void renderMhdtPart(ResourceLocation texture, ObjRenderContext context, String partName) {
+        renderMhdtPart(MHDT_LEGACY, texture, context, partName);
+    }
+
+    public static void renderMhdtPart(LegacyWavefrontModel model, ResourceLocation texture, ObjRenderContext context,
+            String partName) {
+        LegacyWavefrontModel.SelectionHandle handle = sameModel(model, MHDT_LEGACY) ? mhdtHandle(partName) : null;
+        if (handle != null) {
+            MHDT_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    public static void renderPlasmaForgePart(ResourceLocation texture, ObjRenderContext context, String partName) {
+        renderPlasmaForgePart(PLASMA_FORGE_LEGACY, texture, context, partName);
+    }
+
+    public static void renderPlasmaForgeItemBody(ResourceLocation texture, ObjRenderContext context) {
+        PLASMA_FORGE_LEGACY.renderOnlyInCallOrder(texture, context, PLASMA_FORGE_ITEM_BODY_HANDLE);
+    }
+
+    public static void renderPlasmaForgePart(LegacyWavefrontModel model, ResourceLocation texture,
+            ObjRenderContext context, String partName) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, PLASMA_FORGE_LEGACY) ? plasmaForgeHandle(partName) : null;
+        if (handle != null) {
+            PLASMA_FORGE_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    public static void renderPlasmaForgePartUntextured(ObjRenderContext context, String partName) {
+        LegacyWavefrontModel.SelectionHandle handle = plasmaForgeHandle(partName);
+        if (handle != null) {
+            PLASMA_FORGE_LEGACY.renderOnlyUntextured(context, handle);
+            return;
+        }
+        PLASMA_FORGE_LEGACY.renderPartUntextured(partName, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle torusHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Torus" -> TORUS_BODY_HANDLE;
+            case "Magnet" -> TORUS_MAGNET_HANDLE;
+            case "Bolts1" -> TORUS_BOLTS_1_HANDLE;
+            case "Bolts2" -> TORUS_BOLTS_2_HANDLE;
+            case "Bolts3" -> TORUS_BOLTS_3_HANDLE;
+            case "Bolts4" -> TORUS_BOLTS_4_HANDLE;
+            case "Plasma" -> TORUS_PLASMA_HANDLE;
+            default -> null;
+        };
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle klystronHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Klystron" -> KLYSTRON_BODY_HANDLE;
+            case "Rotor" -> KLYSTRON_ROTOR_HANDLE;
+            default -> null;
+        };
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle breederHandle(String partName) {
+        return "Breeder".equals(partName) ? BREEDER_BODY_HANDLE : null;
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle mhdtHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Turbine" -> MHDT_TURBINE_HANDLE;
+            case "Coils" -> MHDT_COILS_HANDLE;
+            default -> null;
+        };
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle plasmaForgeHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Body" -> PLASMA_FORGE_BODY_HANDLE;
+            case "Plasma" -> PLASMA_FORGE_PLASMA_HANDLE;
+            case "SliderStriker" -> PLASMA_FORGE_SLIDER_STRIKER_HANDLE;
+            case "ArmLowerStriker" -> PLASMA_FORGE_ARM_LOWER_STRIKER_HANDLE;
+            case "ArmUpperStriker" -> PLASMA_FORGE_ARM_UPPER_STRIKER_HANDLE;
+            case "StrikerMount" -> PLASMA_FORGE_STRIKER_MOUNT_HANDLE;
+            case "StrikerLeft" -> PLASMA_FORGE_STRIKER_LEFT_HANDLE;
+            case "StrikerRight" -> PLASMA_FORGE_STRIKER_RIGHT_HANDLE;
+            case "PistonLeft" -> PLASMA_FORGE_PISTON_LEFT_HANDLE;
+            case "PistonRight" -> PLASMA_FORGE_PISTON_RIGHT_HANDLE;
+            case "SliderJet" -> PLASMA_FORGE_SLIDER_JET_HANDLE;
+            case "ArmLowerJet" -> PLASMA_FORGE_ARM_LOWER_JET_HANDLE;
+            case "ArmUpperJet" -> PLASMA_FORGE_ARM_UPPER_JET_HANDLE;
+            case "Jet" -> PLASMA_FORGE_JET_HANDLE;
+            default -> null;
+        };
+    }
+
+    private static boolean sameModel(LegacyWavefrontModel model, LegacyWavefrontModel expected) {
+        return model == expected || model.modelLocation().equals(expected.modelLocation());
     }
 
     private ObjFusionModels() {

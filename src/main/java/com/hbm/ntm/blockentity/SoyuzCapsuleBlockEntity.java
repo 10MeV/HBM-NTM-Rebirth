@@ -59,7 +59,7 @@ public class SoyuzCapsuleBlockEntity extends BlockEntity implements MenuProvider
         if (hasCustomName()) {
             return Component.literal(customName);
         }
-        return Component.translatable("container.hbm_ntm_rebirth.soyuz_capsule");
+        return Component.translatableWithFallback("container.soyuzCapsule", "Cargo Landing Capsule");
     }
 
     @Nullable

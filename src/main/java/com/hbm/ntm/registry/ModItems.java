@@ -87,7 +87,9 @@ import com.hbm.ntm.item.LegacyWiringItem;
 import com.hbm.ntm.item.LiquidatorArmorItem;
 import com.hbm.ntm.item.LiquidatorMaskArmorItem;
 import com.hbm.ntm.item.MarshmallowItem;
+import com.hbm.ntm.item.MeteoriteSwordItem;
 import com.hbm.ntm.item.MirrorToolItem;
+import com.hbm.ntm.item.PadlockItem;
 import com.hbm.ntm.item.MissileLauncherGunItem;
 import com.hbm.ntm.item.MissileDesignatorItem;
 import com.hbm.ntm.item.RangefinderItem;
@@ -106,6 +108,7 @@ import com.hbm.ntm.item.RadawayItem;
 import com.hbm.ntm.item.RadarLinkerItem;
 import com.hbm.ntm.item.PistonSetItem;
 import com.hbm.ntm.item.RedPillItem;
+import com.hbm.ntm.item.ReactorSensorItem;
 import com.hbm.ntm.item.RTTYPagerItem;
 import com.hbm.ntm.item.RBMKFuelRodItem;
 import com.hbm.ntm.item.RBMKPelletItem;
@@ -1381,6 +1384,18 @@ public final class ModItems {
     public static final RegistryObject<Item> STARMETAL_SHOVEL = abilityShovel("starmetal_shovel", 7.0F, 0.0D, HbmToolTiers.STARMETAL, false,
             item -> starmetalToolAbilities(item)
                     .addAbility(WeaponAbilities.STUN, 1));
+    public static final RegistryObject<Item> METEORITE_SWORD = meteoriteSword("meteorite_sword", 9.0F, "base");
+    public static final RegistryObject<Item> METEORITE_SWORD_SEARED = meteoriteSword("meteorite_sword_seared", 10.0F, "seared");
+    public static final RegistryObject<Item> METEORITE_SWORD_REFORGED = meteoriteSword("meteorite_sword_reforged", 12.5F, "reforged");
+    public static final RegistryObject<Item> METEORITE_SWORD_HARDENED = meteoriteSword("meteorite_sword_hardened", 15.0F, "hardened");
+    public static final RegistryObject<Item> METEORITE_SWORD_ALLOYED = meteoriteSword("meteorite_sword_alloyed", 17.5F, "alloyed");
+    public static final RegistryObject<Item> METEORITE_SWORD_MACHINED = meteoriteSword("meteorite_sword_machined", 20.0F, "machined");
+    public static final RegistryObject<Item> METEORITE_SWORD_TREATED = meteoriteSword("meteorite_sword_treated", 22.5F, "treated");
+    public static final RegistryObject<Item> METEORITE_SWORD_ETCHED = meteoriteSword("meteorite_sword_etched", 25.0F, "etched");
+    public static final RegistryObject<Item> METEORITE_SWORD_BRED = meteoriteSword("meteorite_sword_bred", 30.0F, "bred");
+    public static final RegistryObject<Item> METEORITE_SWORD_IRRADIATED = meteoriteSword("meteorite_sword_irradiated", 35.0F, "irradiated");
+    public static final RegistryObject<Item> METEORITE_SWORD_FUSED = meteoriteSword("meteorite_sword_fused", 50.0F, "fused");
+    public static final RegistryObject<Item> METEORITE_SWORD_BALEFUL = meteoriteSword("meteorite_sword_baleful", 75.0F, "baleful");
     public static final RegistryObject<Item> CENTRI_STICK = abilityMiner("centri_stick", 3.0F, 0.0D, HbmToolTiers.ELEC, false, 50,
             item -> item.addAbility(ToolHarvestAbilities.CENTRIFUGE, 0));
     public static final RegistryObject<Item> SMASHING_HAMMER = abilityMiner("smashing_hammer", 12.0F, -0.1D, HbmToolTiers.STEEL, false, 2_500,
@@ -1705,6 +1720,8 @@ public final class ModItems {
             () -> new Item(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> RANGEFINDER = registerLegacy("rangefinder",
             () -> new RangefinderItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> REACTOR_SENSOR = registerLegacy("reactor_sensor",
+            () -> new ReactorSensorItem(new Item.Properties().stacksTo(1)));
 
     public static final List<RegistryObject<Item>> HIDDEN_RECIPE_ITEMS = Stream.concat(
             Stream.concat(Stream.concat(STAMP_BOOK_ITEMS.stream(), PAGE_OF_ITEMS.stream()), WEAPON_MOD_TEST_ITEMS.stream()),
@@ -2134,6 +2151,7 @@ public final class ModItems {
             "powder_nitan_mix",
             "powder_chlorophyte",
             "powder_fire",
+            "gem_alexandrite",
             "gem_sodalite",
             "ball_resin",
             "ingot_zirconium",
@@ -2176,6 +2194,7 @@ public final class ModItems {
             "wire_dense_mingrade",
             "wire_dense_bscco",
             "wire_dense_neodymium",
+            "wire_dense_dineutronium",
             "fins_flat",
             "fins_small_steel",
             "fins_big_steel",
@@ -2244,6 +2263,7 @@ public final class ModItems {
             "rag_piss",
             "filter_coal",
             "motor_desh",
+            "motor_bismuth",
             "centrifuge_element",
             "reactor_core",
             "thermo_element",
@@ -2715,6 +2735,18 @@ public final class ModItems {
             STARMETAL_PICKAXE,
             STARMETAL_AXE,
             STARMETAL_SHOVEL,
+            METEORITE_SWORD,
+            METEORITE_SWORD_SEARED,
+            METEORITE_SWORD_REFORGED,
+            METEORITE_SWORD_HARDENED,
+            METEORITE_SWORD_ALLOYED,
+            METEORITE_SWORD_MACHINED,
+            METEORITE_SWORD_TREATED,
+            METEORITE_SWORD_ETCHED,
+            METEORITE_SWORD_BRED,
+            METEORITE_SWORD_IRRADIATED,
+            METEORITE_SWORD_FUSED,
+            METEORITE_SWORD_BALEFUL,
             CENTRI_STICK,
             SMASHING_HAMMER,
             ELEC_SWORD,
@@ -3256,6 +3288,7 @@ public final class ModItems {
 
     public static final List<RegistryObject<Item>> CONSUMABLE_TAB_ITEMS = Stream.of(
             RBMK_TOOL,
+            REACTOR_SENSOR,
             GEIGER_COUNTER,
             DOSIMETER,
             DIGAMMA_DIAGNOSTIC,
@@ -3719,7 +3752,7 @@ public final class ModItems {
     }
 
     private static RegistryObject<Item> padlock(String name, double lockMod) {
-        return registerLegacy(name, () -> new KeyPinItem(new Item.Properties().stacksTo(1), true));
+        return registerLegacy(name, () -> new PadlockItem(new Item.Properties().stacksTo(1), lockMod));
     }
 
     private static RegistryObject<Item> registerLegacy(String name, java.util.function.Supplier<Item> supplier) {
@@ -4073,6 +4106,11 @@ public final class ModItems {
             abilities.accept(item);
             return item;
         });
+    }
+
+    private static RegistryObject<Item> meteoriteSword(String name, float damage, String legacyStageKey) {
+        return registerLegacy(name, () -> new MeteoriteSwordItem(damage, legacyStageKey,
+                toolProperties(HbmToolTiers.METEORITE, false)));
     }
 
     private static RegistryObject<Item> abilityPickaxe(String name, float damage, double movement, HbmToolTiers tier,

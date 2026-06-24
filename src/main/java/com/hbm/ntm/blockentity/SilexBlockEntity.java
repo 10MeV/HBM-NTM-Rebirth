@@ -17,18 +17,21 @@ import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.recipe.SilexRecipeRuntime;
 import com.hbm.ntm.recipe.SilexRecipeRuntime.SilexRecipe;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -61,6 +64,8 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
     private static final String TAG_PROGRESS = "progress";
     private static final String TAG_RECIPE_INDEX = "recipeIndex";
     private static final String TAG_MODE = "mode";
+    private static final String TAG_LEGACY_ITEM = "item";
+    private static final String TAG_LEGACY_META = "meta";
     private static final String TAG_CURRENT_STACK = "currentStack";
     private static final String TAG_CURRENT_FLUID = "currentFluid";
 
@@ -291,7 +296,7 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("container.machineSILEX");
+        return Component.translatableWithFallback("container.machineSILEX", "SILEX");
     }
 
     @Nullable
@@ -339,9 +344,9 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, TAG_ITEMS, items);
         tag.putInt(TAG_FILL, currentFill);
-        tag.putInt(TAG_PROGRESS, progress);
         tag.putInt(TAG_RECIPE_INDEX, recipeIndex);
         tag.putString(TAG_MODE, mode.name());
+        writeCurrentSource(tag);
         tag.putString(TAG_CURRENT_FLUID, currentFluid.getName());
         if (!currentStack.isEmpty()) {
             tag.put(TAG_CURRENT_STACK, currentStack.save(new CompoundTag()));
@@ -351,18 +356,31 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        loadItems(tag);
         currentFill = tag.getInt(TAG_FILL);
-        progress = tag.getInt(TAG_PROGRESS);
         recipeIndex = tag.getInt(TAG_RECIPE_INDEX);
         mode = tag.contains(TAG_MODE) ? LaserWavelength.valueOf(tag.getString(TAG_MODE)) : LaserWavelength.NULL;
         currentFluid = tag.contains(TAG_CURRENT_FLUID) ? HbmFluids.fromName(tag.getString(TAG_CURRENT_FLUID)) : HbmFluids.NONE;
         currentStack = tag.contains(TAG_CURRENT_STACK) ? ItemStack.of(tag.getCompound(TAG_CURRENT_STACK)) : ItemStack.EMPTY;
+        readLegacyCurrentSource(tag);
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt(TAG_PROGRESS, progress);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        progress = tag.getInt(TAG_PROGRESS);
     }
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
     }
 
     @Override
@@ -377,5 +395,45 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
             return itemHandler.cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    private void loadItems(CompoundTag tag) {
+        if (tag.contains(HbmInventoryMenuHelper.LEGACY_ITEMS_TAG, Tag.TAG_LIST)
+                || tag.contains("Items", Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+    }
+
+    private void writeCurrentSource(CompoundTag tag) {
+        if (currentFill <= 0) {
+            return;
+        }
+        if (!currentStack.isEmpty()) {
+            tag.putInt(TAG_LEGACY_ITEM, Item.getId(currentStack.getItem()));
+            tag.putInt(TAG_LEGACY_META, 0);
+        } else if (currentFluid != HbmFluids.NONE) {
+            tag.putInt(TAG_LEGACY_ITEM, Item.getId(ModItems.FLUID_ICON.get()));
+            tag.putInt(TAG_LEGACY_META, currentFluid.getId());
+        }
+    }
+
+    private void readLegacyCurrentSource(CompoundTag tag) {
+        if (currentFill <= 0 || !tag.contains(TAG_LEGACY_ITEM)) {
+            return;
+        }
+        int legacyItem = tag.getInt(TAG_LEGACY_ITEM);
+        int legacyMeta = tag.getInt(TAG_LEGACY_META);
+        if (legacyItem == Item.getId(ModItems.FLUID_ICON.get()) && !tag.contains(TAG_CURRENT_FLUID)) {
+            currentFluid = HbmFluids.fromId(legacyMeta);
+            currentStack = ItemStack.EMPTY;
+            return;
+        }
+        if (!tag.contains(TAG_CURRENT_STACK)) {
+            Item item = Item.byId(legacyItem);
+            currentStack = item == null ? ItemStack.EMPTY : new ItemStack(item);
+            currentFluid = HbmFluids.NONE;
+        }
     }
 }

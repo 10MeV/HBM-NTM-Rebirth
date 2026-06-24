@@ -62,10 +62,6 @@ public class SoyuzEntity extends Entity {
     public void tick() {
         super.tick();
 
-        if (!level().isClientSide && tickCount == 1) {
-            LegacySoundPlayer.playLegacySoyuzTakeoff(this);
-        }
-
         if (getDeltaMovement().y < 2.0D) {
             acceleration += 0.00025D;
             setDeltaMovement(0.0D, getDeltaMovement().y + acceleration, 0.0D);

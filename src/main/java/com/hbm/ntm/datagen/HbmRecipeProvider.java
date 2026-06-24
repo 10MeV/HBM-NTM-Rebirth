@@ -193,11 +193,15 @@ public final class HbmRecipeProvider extends RecipeProvider {
         chemicalBatteryRecipes(consumer);
         assemblyCapacitorRecipes(consumer);
         assemblyMachineBodyRecipes(consumer);
+        reactorAssemblyRecipes(consumer);
         pwrAssemblyRecipes(consumer);
         satelliteRecipes(consumer);
         fluidContainerRecipes(consumer);
         fluidNetworkRecipes(consumer);
         outgasserRecipes(consumer);
+        fusionReactorRecipes(consumer);
+        fusionFluidBreederRecipes(consumer);
+        reactorPlasmaForgeRecipes(consumer);
         purexRecipes(consumer);
         liquefactionRecipes(consumer);
         pyroOvenRecipes(consumer);
@@ -244,7 +248,320 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 consumer.accept(finishedCompatRecipe(recipeId, recipeJson)));
     }
 
+    private static void fusionReactorRecipes(Consumer<FinishedRecipe> consumer) {
+        double breederCapacity = 10_000.0D;
+        fusionRecipe(consumer, "dd", 750_000, 1_000_000, breederCapacity / 200.0D, 1.0F, 0.2F, 0.2F)
+                .inputFluid(HbmFluids.DEUTERIUM, 20)
+                .outputFluid(HbmFluids.HELIUM4, 1_000)
+                .save(consumer, id("fusion_reactor/dd"));
+        fusionRecipe(consumer, "do", 250_000, 1_250_000, breederCapacity / 200.0D, 0.0F, 0.0F, 0.0F)
+                .inputFluid(HbmFluids.DEUTERIUM, 10)
+                .inputFluid(HbmFluids.OXYGEN, 10)
+                .outputItem(item("pellet_charged"))
+                .save(consumer, id("fusion_reactor/do"));
+        fusionRecipe(consumer, "dt", 750_000, 3_750_000, breederCapacity / 100.0D, 0.0F, 0.0F, 0.0F)
+                .inputFluid(HbmFluids.DEUTERIUM, 10)
+                .inputFluid(HbmFluids.TRITIUM, 10)
+                .outputFluid(HbmFluids.HELIUM4, 1_000)
+                .save(consumer, id("fusion_reactor/dt"));
+        fusionRecipe(consumer, "tcl", 2_500_000, 6_250_000, breederCapacity / 20.0D, 0.8F, 0.6F, 0.4F)
+                .inputFluid(HbmFluids.TRITIUM, 10)
+                .inputFluid(HbmFluids.CHLORINE, 10)
+                .outputItem(item("powder_chlorophyte"))
+                .save(consumer, id("fusion_reactor/tcl"));
+        fusionRecipe(consumer, "h3", 500_000, 3_750_000, 0.0D, 0.2F, 0.2F, 1.0F)
+                .inputFluid(HbmFluids.HELIUM3, 20)
+                .outputFluid(HbmFluids.HELIUM4, 1_000)
+                .save(consumer, id("fusion_reactor/h3"));
+        fusionRecipe(consumer, "th4", 875_000, 4_000_000, breederCapacity / 20.0D, 0.2F, 0.2F, 1.0F)
+                .inputFluid(HbmFluids.TRITIUM, 10)
+                .inputFluid(HbmFluids.HELIUM4, 10)
+                .outputItem(item("pellet_charged"))
+                .save(consumer, id("fusion_reactor/th4"));
+        fusionRecipe(consumer, "cl", 3_750_000, 10_000_000, breederCapacity / 10.0D, 1.0F, 0.6F, 0.2F)
+                .inputFluid(HbmFluids.CHLORINE, 20)
+                .outputItem(item("powder_chlorophyte"))
+                .save(consumer, id("fusion_reactor/cl"));
+        fusionRecipe(consumer, "dhc", 10_000_000, 25_000_000, breederCapacity / 5.0D, 0.2F, 0.8F, 0.8F)
+                .inputFluid(HbmFluids.DHC, 20)
+                .outputItem(item("powder_chlorophyte"))
+                .save(consumer, id("fusion_reactor/dhc"));
+        fusionRecipe(consumer, "bf", 1_000_000, 12_500_000, breederCapacity / 5.0D, 0.2F, 1.0F, 0.2F)
+                .inputFluid(HbmFluids.BALEFIRE, 15)
+                .inputFluid(HbmFluids.AMAT, 5)
+                .outputItem(item("powder_balefire"))
+                .save(consumer, id("fusion_reactor/bf"));
+        fusionRecipe(consumer, "stellar", 10_000_000, 50_000_000, breederCapacity, 1.0F, 0.4F, 0.1F)
+                .inputFluid(HbmFluids.STELLAR_FLUX, 10)
+                .outputItem(item("powder_gold"))
+                .save(consumer, id("fusion_reactor/stellar"));
+    }
+
+    private static GenericMachineRecipeBuilder fusionRecipe(Consumer<FinishedRecipe> consumer, String name,
+            long ignitionTemp, long outputTemp, double outputFlux, float r, float g, float b) {
+        return GenericMachineRecipeBuilder.fusionReactor("fus." + name, 100, 25_000)
+                .fusionExtra(ignitionTemp, outputTemp, outputFlux, r, g, b);
+    }
+
+    private static void fusionFluidBreederRecipes(Consumer<FinishedRecipe> consumer) {
+        fusionFluidBreeder(consumer, "gas_to_syngas", HbmFluids.GAS, 1_000, HbmFluids.SYNGAS, 1_000);
+        fusionFluidBreeder(consumer, "lightoil_to_reformgas", HbmFluids.LIGHTOIL, 1_000, HbmFluids.REFORMGAS, 1_000);
+        fusionFluidBreeder(consumer, "lightoil_crack_to_reformgas", HbmFluids.LIGHTOIL_CRACK, 1_000,
+                HbmFluids.REFORMGAS, 1_000);
+    }
+
+    private static void fusionFluidBreeder(Consumer<FinishedRecipe> consumer, String name, FluidType input,
+            int inputAmount, FluidType output, int outputAmount) {
+        consumer.accept(new FinishedRecipe() {
+            @Override
+            public void serializeRecipeData(JsonObject json) {
+                json.add("input", fluidStackJson(input, inputAmount));
+                json.add("output", fluidStackJson(output, outputAmount));
+            }
+
+            @Override
+            public ResourceLocation getId() {
+                return id("fusion_fluid_breeder/" + name);
+            }
+
+            @Override
+            public RecipeSerializer<?> getType() {
+                return ModRecipes.FUSION_FLUID_BREEDER.serializer().get();
+            }
+
+            @Nullable
+            @Override
+            public JsonObject serializeAdvancement() {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public ResourceLocation getAdvancementId() {
+                return null;
+            }
+        });
+    }
+
+    private static void reactorPlasmaForgeRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.plasmaForge("plsm.fusionvessel", 1_200, 2_000_000)
+                .plasmaForgeExtra(3_000_000)
+                .inputLegacyMeta(LegacyMetaItemMappings.FUSION_COMPONENT, 0, 64)
+                .inputLegacyMeta(LegacyMetaItemMappings.FUSION_COMPONENT, 0, 64)
+                .inputLegacyMeta(LegacyMetaItemMappings.FUSION_COMPONENT, 0, 64)
+                .inputLegacyMeta(LegacyMetaItemMappings.FUSION_COMPONENT, 0, 64)
+                .inputLegacyMeta(LegacyMetaItemMappings.FUSION_COMPONENT, 0, 64)
+                .inputLegacyMeta(LegacyMetaItemMappings.FUSION_COMPONENT, 0, 64)
+                .inputLegacyMeta(LegacyMetaItemMappings.FUSION_COMPONENT, 3, 64)
+                .inputLegacyMeta(LegacyMetaItemMappings.FUSION_COMPONENT, 3, 64)
+                .inputLegacyMeta(LegacyMetaItemMappings.FUSION_COMPONENT, 3, 64)
+                .inputLegacyMeta(LegacyMetaItemMappings.FUSION_COMPONENT, 2, 64)
+                .inputLegacyMeta(LegacyMetaItemMappings.FUSION_COMPONENT, 2, 64)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 13, 4)
+                .outputItem(ModBlocks.FUSION_TORUS.get())
+                .sourceOrder(118)
+                .save(consumer, id("plasma_forge/fusion_vessel"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.icfcell", 800, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputItem(item("ingot_cft"), 2)
+                .inputLegacyOre("plateCastAnyBismoidBronze", 4)
+                .inputItem(block("glass_quartz"), 16)
+                .outputItem(ModBlocks.ICF_LASER_CELL.get())
+                .sourceOrder(119)
+                .save(consumer, id("plasma_forge/icf_laser_cell"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.icfemitter", 800, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputLegacyOre("plateWeldedTungsten", 4)
+                .inputLegacyOre("wireDenseMagnetizedTungsten", 16)
+                .inputFluid(HbmFluids.XENON, 16_000)
+                .outputItem(ModBlocks.ICF_LASER_EMITTER.get())
+                .sourceOrder(120)
+                .save(consumer, id("plasma_forge/icf_laser_emitter"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.icfcapacitor", 800, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputLegacyOre("plateWeldedAnyResistantAlloy", 1)
+                .inputLegacyOre("wireDenseNeodymium", 16)
+                .inputLegacyOre("wireDenseSchrabidium", 2)
+                .outputItem(ModBlocks.ICF_LASER_CAPACITOR.get())
+                .sourceOrder(121)
+                .save(consumer, id("plasma_forge/icf_laser_capacitor"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.icfturbo", 800, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputLegacyOre("plateWeldedAnyResistantAlloy", 2)
+                .inputLegacyOre("wireDenseDineutronium", 4)
+                .inputLegacyOre("wireDenseSchrabidium", 4)
+                .outputItem(ModBlocks.ICF_LASER_TURBO.get())
+                .sourceOrder(122)
+                .save(consumer, id("plasma_forge/icf_laser_turbo"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.icfcasing", 800, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputLegacyOre("plateCastAnyBismoidBronze", 4)
+                .inputLegacyOre("plateCastBigMt", 4)
+                .inputLegacyOre("ingotAnyHardplastic", 16)
+                .outputItem(ModBlocks.ICF_LASER_CASING.get())
+                .sourceOrder(123)
+                .save(consumer, id("plasma_forge/icf_laser_casing"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.icfport", 800, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputLegacyOre("plateCastAnyBismoidBronze", 4)
+                .inputLegacyOre("ingotAnyHardplastic", 16)
+                .inputLegacyOre("wireDenseNeodymium", 16)
+                .outputItem(ModBlocks.ICF_LASER_PORT.get())
+                .sourceOrder(124)
+                .save(consumer, id("plasma_forge/icf_laser_port"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.icfcontroller", 800, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputItem(item("ingot_cft"), 16)
+                .inputLegacyOre("plateCastAnyBismoidBronze", 4)
+                .inputLegacyOre("ingotAnyHardplastic", 16)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 12, 16)
+                .outputItem(ModBlocks.ICF_CONTROLLER.get())
+                .sourceOrder(125)
+                .save(consumer, id("plasma_forge/icf_controller"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.icfscaffold", 800, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputLegacyOre("plateWeldedSteel", 4)
+                .inputLegacyOre("plateWeldedTitanium", 2)
+                .outputItem(ModBlocks.ICF_COMPONENT_SCAFFOLD.get())
+                .sourceOrder(126)
+                .save(consumer, id("plasma_forge/icf_component_scaffold"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.icfvessel", 800, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputTag(forgeTag("ingots/cft"), 1)
+                .inputLegacyOre("plateCastCMBSteel", 1)
+                .inputLegacyOre("plateWeldedTungsten", 2)
+                .outputItem(ModBlocks.ICF_COMPONENT_VESSEL.get())
+                .sourceOrder(127)
+                .save(consumer, id("plasma_forge/icf_component_vessel"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.icfstructural", 800, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputLegacyOre("plateWeldedSteel", 2)
+                .inputLegacyOre("plateWeldedCopper", 2)
+                .inputLegacyOre("plateCastAnyBismoidBronze", 1)
+                .outputItem(ModBlocks.ICF_COMPONENT_STRUCTURE.get())
+                .sourceOrder(128)
+                .save(consumer, id("plasma_forge/icf_component_structural"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.icfcore", 3_000, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputLegacyOre("plateWeldedCombineSteel", 16)
+                .inputLegacyOre("plateWeldedAnyResistantAlloy", 16)
+                .inputLegacyOre("plateCastAnyBismoidBronze", 16)
+                .inputLegacyOre("wireDenseSchrabidium", 32)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 12, 32)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 13, 16)
+                .outputItem(ModBlocks.STRUCT_ICF_CORE.get())
+                .sourceOrder(130)
+                .save(consumer, id("plasma_forge/icf_core"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.icfpress", 800, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputLegacyOre("plateCastGold", 8)
+                .inputItem(item("motor"), 4)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 12, 1)
+                .outputItem(ModBlocks.MACHINE_ICF_PRESS.get())
+                .sourceOrder(134)
+                .save(consumer, id("plasma_forge/icf_press"));
+    }
+
     private static void purexRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.purex("purex.uzh", 600, 1_000)
+                .inputItem(item("billet_uranium_fuel"), 1)
+                .inputItem(item("billet_zirconium"), 3)
+                .inputFluid(HbmFluids.NITRIC_ACID, 1_000)
+                .inputFluid(HbmFluids.HYDROGEN, 4_000)
+                .outputItem(new ItemStack(item("billet_uzh"), 4))
+                .sourceOrder(43)
+                .save(consumer, id("purex/uzh"));
+
+        pilePurex(consumer, "pilepu", "pile_rod_plutonium", 51,
+                out("billet_pu_mix", 2), out("billet_uranium", 1), out("plate_iron", 2));
+        pilePurex(consumer, "pilepu239", "pile_rod_pu239", 59,
+                out("billet_pu239", 1), out("billet_pu_mix", 1), out("billet_uranium", 1),
+                out("plate_iron", 2));
+
+        zirnoxPurex(consumer, "zirnoxnu", "waste_natural_uranium", 70,
+                out("nugget_u238", 1), out("nugget_pu_mix", 2), out("nugget_pu239", 1),
+                out("nuclear_waste_tiny", 2));
+        zirnoxPurex(consumer, "zirnoxmeu", "waste_uranium", 79,
+                out("nugget_pu_mix", 1), out("nugget_plutonium", 2), out("nugget_technetium", 1),
+                out("nuclear_waste_tiny", 2));
+        zirnoxPurex(consumer, "zirnoxthmeu", "waste_thorium", 88,
+                out("nugget_u238", 1), out("nugget_th232", 1), out("nugget_u233", 2),
+                out("nuclear_waste_tiny", 2));
+        zirnoxPurex(consumer, "zirnoxmox", "waste_mox", 97,
+                out("nugget_pu_mix", 1), out("nugget_technetium", 1), out("nugget_u238", 1),
+                out("nuclear_waste_tiny", 3));
+        zirnoxPurex(consumer, "zirnoxmep", "waste_plutonium", 106,
+                out("nugget_pu_mix", 2), out("nugget_technetium", 1), out("nuclear_waste_tiny", 3));
+        zirnoxPurex(consumer, "zirnoxheu233", "waste_u233", 114,
+                out("nugget_u235", 1), out("nugget_neptunium", 1), out("nugget_technetium", 1),
+                out("nuclear_waste_tiny", 3));
+        zirnoxPurex(consumer, "zirnoxheu235", "waste_u235", 123,
+                out("nugget_pu238", 1), out("nugget_neptunium", 1), out("nugget_technetium", 1),
+                out("nuclear_waste_tiny", 3));
+        zirnoxPurex(consumer, "zirnoxles", "waste_schrabidium", 132,
+                out("nugget_beryllium", 2), out("nugget_pu239", 1), out("nuclear_waste_tiny", 1),
+                out("nuclear_waste_tiny", 2));
+        zirnoxPurex(consumer, "zirnoxzfbmox", "waste_zfb_mox", 141,
+                out("nugget_zirconium", 3), out("nugget_technetium", 1), out("nugget_pu_mix", 1),
+                out("nuclear_waste_tiny", 1));
+
+        platePurex(consumer, "platemox", "waste_plate_mox", 152,
+                out("powder_sr90_tiny", 1), out("nugget_pu_mix", 3), out("powder_cs137_tiny", 1),
+                out("nuclear_waste_tiny", 4));
+        platePurex(consumer, "platepu238be", "waste_plate_pu238be", 161,
+                out("nugget_beryllium", 1), out("nugget_pu238", 1), out("powder_coal_tiny", 2),
+                out("nugget_lead", 2));
+        platePurex(consumer, "platepu239", "waste_plate_pu239", 170,
+                out("nugget_pu240", 2), out("nugget_technetium", 1), out("powder_cs137_tiny", 1),
+                out("nuclear_waste_tiny", 5));
+        platePurex(consumer, "platera226be", "waste_plate_ra226be", 179,
+                out("nugget_beryllium", 2), out("nugget_polonium", 2), out("powder_coal_tiny", 1),
+                out("nugget_lead", 1));
+        platePurex(consumer, "platesa326", "waste_plate_sa326", 188,
+                out("nugget_solinium", 1), out("powder_neodymium_tiny", 1), out("nugget_tantalium", 1),
+                out("nuclear_waste_tiny", 6));
+        platePurex(consumer, "plateu233", "waste_plate_u233", 197,
+                out("nugget_u235", 1), out("powder_i131_tiny", 1), out("powder_sr90_tiny", 1),
+                out("nuclear_waste_tiny", 6));
+        platePurex(consumer, "plateu235", "waste_plate_u235", 206,
+                out("nugget_neptunium", 1), out("nugget_pu238", 1), out("nugget_technetium", 1),
+                out("nuclear_waste_tiny", 6));
+
+        thoriumSaltPurex(consumer);
+
+        watzPurex(consumer, "watzschrab", 0, 363,
+                out("nugget_solinium", 15), out("nugget_euphemium", 3), out("nuclear_waste", 2));
+        watzPurex(consumer, "watzhes", 1, 372,
+                out("nugget_solinium", 17), out("nugget_euphemium", 1), out("nuclear_waste", 2));
+        watzPurex(consumer, "watzmes", 2, 381,
+                out("nugget_solinium", 12), out("nugget_tantalium", 6), out("nuclear_waste", 2));
+        watzPurex(consumer, "watzles", 3, 390,
+                out("nugget_solinium", 9), out("nugget_tantalium", 9), out("nuclear_waste", 2));
+        watzPurex(consumer, "watzhen", 4, 399,
+                out("nugget_pu239", 12), out("nugget_technetium", 6), out("nuclear_waste", 2));
+        watzPurex(consumer, "watzmeu", 5, 408,
+                out("nugget_pu239", 12), out("nugget_bismuth", 6), out("nuclear_waste", 2));
+        watzPurex(consumer, "watzmep", 6, 417,
+                out("nugget_pu241", 12), out("nugget_bismuth", 6), out("nuclear_waste", 2));
+        watzPurex(consumer, "watzlead", 7, 426,
+                out("nugget_lead", 6), out("nugget_bismuth", 12), out("nuclear_waste", 2));
+        watzPurex(consumer, "watzboron", 8, 435,
+                out("powder_coal_tiny", 12), out("nugget_co60", 6), out("nuclear_waste", 2));
+        watzPurex(consumer, "watzdu", 9, 444,
+                out("nugget_polonium", 12), out("nugget_pu238", 6), out("nuclear_waste", 2));
+
         GenericMachineRecipeBuilder.purex("purex.icf", 300, 10_000)
                 .inputItem(ModItems.ICF_PELLET_DEPLETED.get(), 1)
                 .outputItem(ModItems.ICF_PELLET_EMPTY.get())
@@ -252,8 +569,201 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(ModItems.IRON_POWDER.get())
                 .outputFluid(HbmFluids.HELIUM4, 1_250)
                 .nameWrapper("purex.recycle")
-                .sourceOrder(0)
+                .sourceOrder(479)
                 .save(consumer, id("purex/icf_pellet_recycle"));
+
+        vitrificationPurex(consumer, "vitliquid", HbmFluids.WASTEFLUID, 1, 488);
+        vitrificationPurex(consumer, "vitgaseous", HbmFluids.WASTEGAS, 1, 493);
+        GenericMachineRecipeBuilder.purex("purex.vitsolid", 300, 1_000)
+                .inputItem(ModBlocks.SAND_LEAD.get(), 1)
+                .inputItem(item("nuclear_waste"), 4)
+                .outputItem(new ItemStack(item("nuclear_waste_vitrified"), 4))
+                .sourceOrder(498)
+                .save(consumer, id("purex/vitsolid"));
+
+        GenericMachineRecipeBuilder.purex("purex.schraranium", 200, 1_000)
+                .inputItem(item("ingot_schraranium"), 1)
+                .inputFluid(HbmFluids.KEROSENE, 2_000)
+                .inputFluid(HbmFluids.NITRIC_ACID, 1_000)
+                .outputItem(new ItemStack(item("nugget_schrabidium"), 3))
+                .outputItem(new ItemStack(item("nugget_uranium"), 3))
+                .outputItem(new ItemStack(item("nugget_neptunium"), 2))
+                .nameWrapper("purex.schrab")
+                .sourceOrder(503)
+                .save(consumer, id("purex/schraranium"));
+
+        pwrPurex(consumer, "pwrmeu", 0, 217,
+                out("nugget_u238", 3), out("nugget_plutonium", 4), out("nugget_technetium", 2),
+                out("nuclear_waste_tiny", 3));
+        pwrPurex(consumer, "pwrheu233", 1, 226,
+                out("nugget_u235", 3), out("nugget_pu238", 3), out("nugget_technetium", 1),
+                out("nuclear_waste_tiny", 5));
+        pwrPurex(consumer, "pwrheu235", 2, 235,
+                out("nugget_neptunium", 3), out("nugget_pu238", 3), out("nugget_technetium", 1),
+                out("nuclear_waste_tiny", 5));
+        pwrPurex(consumer, "pwrmen", 3, 244,
+                out("nugget_u238", 3), out("nugget_pu239", 4), out("nugget_technetium", 2),
+                out("nuclear_waste_tiny", 3));
+        pwrPurex(consumer, "pwrhen237", 4, 253,
+                out("nugget_pu238", 2), out("nugget_pu239", 4), out("nugget_technetium", 1),
+                out("nuclear_waste_tiny", 5));
+        pwrPurex(consumer, "pwrmox", 5, 262,
+                out("nugget_u238", 3), out("nugget_pu240", 4), out("nugget_technetium", 2),
+                out("nuclear_waste_tiny", 3));
+        pwrPurex(consumer, "pwrmep", 6, 271,
+                out("nugget_lead", 2), out("nugget_pu_mix", 4), out("nugget_technetium", 2),
+                out("nuclear_waste_tiny", 3));
+        pwrPurex(consumer, "pwrhep239", 7, 280,
+                out("nugget_pu_mix", 2), out("nugget_pu240", 4), out("nugget_technetium", 1),
+                out("nuclear_waste_tiny", 5));
+        pwrPurex(consumer, "pwrhep241", 8, 289,
+                out("nugget_lead", 3), out("nugget_zirconium", 2), out("nugget_technetium", 1),
+                out("nuclear_waste_tiny", 6));
+        pwrPurex(consumer, "pwrmea", 9, 298,
+                out("nugget_lead", 3), out("nugget_zirconium", 2), out("nugget_technetium", 1),
+                out("nuclear_waste_tiny", 6));
+        pwrPurex(consumer, "pwrhea242", 10, 307,
+                out("nugget_lead", 3), out("nugget_zirconium", 2), out("nugget_technetium", 1),
+                out("nuclear_waste_tiny", 6));
+        pwrPurex(consumer, "pwrhes326", 11, 316,
+                out("nugget_solinium", 3), out("nugget_lead", 2), out("nugget_euphemium", 1),
+                out("nuclear_waste_tiny", 6));
+        pwrPurex(consumer, "pwrhes327", 12, 325,
+                out("nugget_australium", 4), out("nugget_lead", 1), out("nugget_euphemium", 1),
+                out("nuclear_waste_tiny", 6));
+        pwrPurex(consumer, "pwrbfbam", 13, 334,
+                out("nugget_am_mix", 9), out("nugget_pu_mix", 2), out("nugget_bismuth", 6),
+                out("nuclear_waste_tiny", 1));
+        pwrPurex(consumer, "pwrbfpu241", 14, 343,
+                out("nugget_pu241", 9), out("nugget_pu_mix", 2), out("nugget_bismuth", 6),
+                out("nuclear_waste_tiny", 1));
+
+        pwrSchrabPurex(consumer, "schrabpwr", 6, 441);
+        pwrSchrabPurex(consumer, "schrabmen", 3, 447);
+        purexSchrab(consumer, "schrabzirnox", item("waste_plutonium"), 512);
+    }
+
+    private static void vitrificationPurex(Consumer<FinishedRecipe> consumer, String name, FluidType wasteFluid,
+            int outputCount, int sourceOrder) {
+        GenericMachineRecipeBuilder.purex("purex." + name, 100, 1_000)
+                .inputItem(ModBlocks.SAND_LEAD.get(), 1)
+                .inputFluid(wasteFluid, 1_000)
+                .outputItem(new ItemStack(item("nuclear_waste_vitrified"), outputCount))
+                .sourceOrder(sourceOrder)
+                .save(consumer, id("purex/" + name));
+    }
+
+    private static void pilePurex(Consumer<FinishedRecipe> consumer, String name, String inputName, int sourceOrder,
+            ItemStack... outputs) {
+        GenericMachineRecipeBuilder builder = GenericMachineRecipeBuilder.purex("purex." + name, 40, 100)
+                .inputItem(item(inputName), 1)
+                .inputFluid(HbmFluids.SULFURIC_ACID, 100)
+                .nameWrapper("purex.recycle")
+                .autoSwitchGroup("autoswitch.pile")
+                .sourceOrder(sourceOrder);
+        for (ItemStack output : outputs) {
+            builder.outputItem(output);
+        }
+        builder.save(consumer, id("purex/" + name));
+    }
+
+    private static void zirnoxPurex(Consumer<FinishedRecipe> consumer, String name, String inputName, int sourceOrder,
+            ItemStack... outputs) {
+        wasteFuelPurex(consumer, name, inputName, 100, 1_000, "autoswitch.zirnox", sourceOrder, outputs);
+    }
+
+    private static void platePurex(Consumer<FinishedRecipe> consumer, String name, String inputName, int sourceOrder,
+            ItemStack... outputs) {
+        wasteFuelPurex(consumer, name, inputName, 100, 1_500, "autoswitch.plate", sourceOrder, outputs);
+    }
+
+    private static void wasteFuelPurex(Consumer<FinishedRecipe> consumer, String name, String inputName, int duration,
+            long power, String autoSwitchGroup, int sourceOrder, ItemStack... outputs) {
+        GenericMachineRecipeBuilder builder = GenericMachineRecipeBuilder.purex("purex." + name, duration, power)
+                .inputItem(item(inputName), 1)
+                .inputFluid(HbmFluids.KEROSENE, 500)
+                .inputFluid(HbmFluids.NITRIC_ACID, 250)
+                .nameWrapper("purex.recycle")
+                .autoSwitchGroup(autoSwitchGroup)
+                .sourceOrder(sourceOrder);
+        for (ItemStack output : outputs) {
+            builder.outputItem(output);
+        }
+        builder.save(consumer, id("purex/" + name));
+    }
+
+    private static void thoriumSaltPurex(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.purex("purex.thoriumsalt", 20, 10_000)
+                .inputFluid(HbmFluids.THORIUM_SALT_DEPLETED, 16_000)
+                .inputItem(item("nugget_th232"), 2)
+                .outputFluid(HbmFluids.THORIUM_SALT, 16_000)
+                .outputChance(item("nugget_u233"), 0.5F)
+                .outputChance(item("nuclear_waste_tiny"), 0.25F)
+                .sourceOrder(353)
+                .save(consumer, id("purex/thoriumsalt"));
+    }
+
+    private static void watzPurex(Consumer<FinishedRecipe> consumer, String name, int depletedIndex, int sourceOrder,
+            ItemStack... outputs) {
+        GenericMachineRecipeBuilder builder = GenericMachineRecipeBuilder.purex("purex." + name, 60, 10_000)
+                .inputItem(ModItems.WATZ_PELLET_DEPLETED_ITEMS.get(depletedIndex).get(), 1)
+                .inputFluid(HbmFluids.KEROSENE, 500)
+                .inputFluid(HbmFluids.NITRIC_ACID, 250)
+                .nameWrapper("purex.recycle")
+                .autoSwitchGroup("autoswitch.watz")
+                .sourceOrder(sourceOrder);
+        for (ItemStack output : outputs) {
+            builder.outputItem(output);
+        }
+        builder.outputFluid(HbmFluids.WATZ, 1_000)
+                .save(consumer, id("purex/" + name));
+    }
+
+    private static void pwrPurex(Consumer<FinishedRecipe> consumer, String name, int depletedIndex, int sourceOrder,
+            ItemStack... outputs) {
+        GenericMachineRecipeBuilder builder = GenericMachineRecipeBuilder.purex("purex." + name, 100, 2_500)
+                .inputItem(ModItems.PWR_FUEL_DEPLETED_ITEMS.get(depletedIndex).get(), 1)
+                .inputFluid(HbmFluids.KEROSENE, 500)
+                .inputFluid(HbmFluids.NITRIC_ACID, 250)
+                .nameWrapper("purex.recycle")
+                .autoSwitchGroup("autoswitch.pwr")
+                .sourceOrder(sourceOrder);
+        for (ItemStack output : outputs) {
+            builder.outputItem(output);
+        }
+        builder.save(consumer, id("purex/" + name));
+    }
+
+    private static void pwrSchrabPurex(Consumer<FinishedRecipe> consumer, String name, int depletedIndex, int sourceOrder) {
+        GenericMachineRecipeBuilder.purex("purex." + name, 200, 50_000)
+                .inputItem(ModItems.PWR_FUEL_DEPLETED_ITEMS.get(depletedIndex).get(), 1)
+                .inputFluid(HbmFluids.SOLVENT, 4_000)
+                .inputFluid(HbmFluids.SCHRABIDIC, 250)
+                .outputItem(item("powder_schrabidium"))
+                .outputItem(new ItemStack(item("nugget_technetium"), 3))
+                .outputItem(new ItemStack(item("nuclear_waste_tiny"), 4))
+                .nameWrapper("purex.schrab")
+                .autoSwitchGroup("autoswitch.schrab")
+                .sourceOrder(sourceOrder)
+                .save(consumer, id("purex/" + name));
+    }
+
+    private static void purexSchrab(Consumer<FinishedRecipe> consumer, String name, ItemLike input, int sourceOrder) {
+        GenericMachineRecipeBuilder.purex("purex." + name, 200, 50_000)
+                .inputItem(input, 1)
+                .inputFluid(HbmFluids.SOLVENT, 4_000)
+                .inputFluid(HbmFluids.SCHRABIDIC, 250)
+                .outputItem(item("powder_schrabidium"))
+                .outputItem(new ItemStack(item("nugget_technetium"), 3))
+                .outputItem(new ItemStack(item("nuclear_waste_tiny"), 4))
+                .nameWrapper("purex.schrab")
+                .autoSwitchGroup("autoswitch.schrab")
+                .sourceOrder(sourceOrder)
+                .save(consumer, id("purex/" + name));
+    }
+
+    private static ItemStack out(String legacyName, int count) {
+        return new ItemStack(item(legacyName), count);
     }
 
     private static FinishedRecipe finishedCompatRecipe(ResourceLocation recipeId, JsonObject recipeJson) {
@@ -3713,6 +4223,169 @@ public final class HbmRecipeProvider extends RecipeProvider {
         return object;
     }
 
+    private static void reactorAssemblyRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.assembly("ass.breedingreactor", 200, 100)
+                .inputItem(item("reactor_core"), 1)
+                .inputLegacyOre("ingotSteel", 12)
+                .inputLegacyOre("plateLead", 16)
+                .inputItem(ModBlocks.REINFORCED_LAMINATE.get(), 4)
+                .inputLegacyOre("ingotAsbestos", 4)
+                .inputLegacyOre("ingotAnyResistantAlloy", 4)
+                .inputItem(item("crt_display"), 1)
+                .outputItem(ModBlocks.MACHINE_REACTOR_BREEDING.get())
+                .sourceOrder(159)
+                .save(consumer, id("assembly_machine/breeding_reactor"));
+
+        GenericMachineRecipeBuilder.assembly("ass.researchreactor", 200, 100)
+                .inputLegacyOre("ingotSteel", 8)
+                .inputLegacyOre("ingotAnyResistantAlloy", 4)
+                .inputItem(item("motor_desh"), 2)
+                .inputLegacyOre("ingotBoron", 5)
+                .inputLegacyOre("plateLead", 8)
+                .inputItem(item("crt_display"), 3)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 4)
+                .outputItem(ModBlocks.REACTOR_RESEARCH.get())
+                .sourceOrder(160)
+                .save(consumer, id("assembly_machine/research_reactor"));
+
+        GenericMachineRecipeBuilder.assembly("ass.cirnox", 600, 100)
+                .inputLegacyOre("shellSteel", 4)
+                .inputLegacyOre("pipeSteel", 8)
+                .inputLegacyOre("ingotBoron", 8)
+                .inputLegacyOre("ingotGraphite", 16)
+                .inputLegacyOre("ingotRubber", 16)
+                .inputLegacyOre("anyConcrete", 16)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 4)
+                .outputItem(ModBlocks.REACTOR_ZIRNOX.get())
+                .sourceOrder(161)
+                .save(consumer, id("assembly_machine/zirnox_reactor"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fusioncore", 600, 100)
+                .inputLegacyOre("plateWeldedAnyResistantAlloy", 8)
+                .inputLegacyOre("ingotAnyHardPlastic", 32)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 12, 8)
+                .outputItem(ModBlocks.STRUCT_TORUS_CORE.get())
+                .sourceOrder(175)
+                .save(consumer, id("assembly_machine/fusion_core_component"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fusionbscco", 100, 100)
+                .inputLegacyOre("wireDenseBSCCO", 1)
+                .inputLegacyOre("pipeCopper", 1)
+                .inputLegacyOre("ingotAnyResistantAlloy", 1)
+                .inputLegacyOre("ingotAnyPlastic", 4)
+                .outputItem(new ItemStack(ModBlocks.FUSION_COMPONENT_BSCCO.get(), 2))
+                .sourceOrder(176)
+                .save(consumer, id("assembly_machine/fusion_bscco_component"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fusionblanket", 100, 100)
+                .inputLegacyOre("plateWeldedTungsten", 1)
+                .inputLegacyOre("plateWeldedSteel", 2)
+                .inputLegacyOre("ingotBeryllium", 4)
+                .outputItem(new ItemStack(ModBlocks.FUSION_COMPONENT_BLANKET.get(), 4))
+                .sourceOrder(177)
+                .save(consumer, id("assembly_machine/fusion_blanket_component"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fusionpipes", 100, 100)
+                .inputLegacyOre("ingotAnyHardPlastic", 4)
+                .inputLegacyOre("pipeCopper", 2)
+                .inputItem(ModItems.MOTOR.get(), 2)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 1)
+                .outputItem(new ItemStack(ModBlocks.FUSION_COMPONENT_MOTOR.get(), 4))
+                .sourceOrder(178)
+                .save(consumer, id("assembly_machine/fusion_pipes_component"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fusionklystron", 300, 100)
+                .inputLegacyOre("plateWeldedTungsten", 4)
+                .inputLegacyOre("plateCastAnyResistantAlloy", 16)
+                .inputLegacyOre("plateCopper", 32)
+                .inputLegacyOre("ingotAnyHardPlastic", 16)
+                .inputLegacyOre("wireDenseBSCCO", 8)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 12, 2)
+                .outputItem(ModBlocks.FUSION_KLYSTRON.get())
+                .sourceOrder(179)
+                .save(consumer, id("assembly_machine/fusion_klystron"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fusioncollector", 300, 100)
+                .inputLegacyOre("plateCastAnyResistantAlloy", 4)
+                .inputLegacyOre("plateSteel", 16)
+                .inputLegacyOre("ingotGraphite", 16)
+                .inputLegacyOre("ingotAnyHardPlastic", 4)
+                .outputItem(ModBlocks.FUSION_COLLECTOR.get())
+                .sourceOrder(180)
+                .save(consumer, id("assembly_machine/fusion_collector"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fusionbreeder", 300, 100)
+                .inputLegacyOre("plateCastAnyResistantAlloy", 4)
+                .inputLegacyOre("pipeSteel", 4)
+                .inputLegacyOre("ingotBoron", 16)
+                .inputLegacyOre("ingotAnyHardPlastic", 16)
+                .outputItem(ModBlocks.FUSION_BREEDER.get())
+                .sourceOrder(181)
+                .save(consumer, id("assembly_machine/fusion_breeder"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fusionboiler", 300, 100)
+                .inputLegacyOre("plateCastAnyResistantAlloy", 16)
+                .inputLegacyOre("shellCopper", 16)
+                .inputLegacyOre("pipeSteel", 8)
+                .inputLegacyOre("ingotAnyHardPlastic", 16)
+                .outputItem(ModBlocks.FUSION_BOILER.get())
+                .sourceOrder(182)
+                .save(consumer, id("assembly_machine/fusion_boiler"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fusionmhdt", 1_200, 100)
+                .inputLegacyOre("plateWeldedAnyResistantAlloy", 16)
+                .inputLegacyOre("plateWeldedCopper", 64)
+                .inputLegacyOre("plateCastAnyBismoidBronze", 16)
+                .inputLegacyOre("wireDenseSchrabidium", 64)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 13, 4)
+                .outputItem(ModBlocks.FUSION_MHDT.get())
+                .sourceOrder(183)
+                .save(consumer, id("assembly_machine/fusion_mhdt"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fusioncoupler", 300, 100)
+                .inputLegacyOre("plateWeldedAnyResistantAlloy", 4)
+                .inputLegacyOre("plateCopper", 32)
+                .inputLegacyOre("wireDenseBSCCO", 16)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 12, 4)
+                .outputItem(ModBlocks.FUSION_COUPLER.get())
+                .sourceOrder(184)
+                .save(consumer, id("assembly_machine/fusion_coupler"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fusionplasmaforge", 1_200, 100)
+                .inputLegacyOre("plateWeldedAnyResistantAlloy", 8)
+                .inputLegacyOre("wireDenseBSCCO", 32)
+                .inputLegacyOre("plateCastAnyBismoidBronze", 16)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 12, 4)
+                .outputItem(ModBlocks.FUSION_PLASMA_FORGE.get())
+                .sourceOrder(185)
+                .save(consumer, id("assembly_machine/fusion_plasma_forge"));
+
+        GenericMachineRecipeBuilder.assembly("ass.watzrod", 200, 100)
+                .inputLegacyOre("plateCastSteel", 2)
+                .inputLegacyOre("ingotZirconium", 2)
+                .inputLegacyOre("ingotBigMt", 2)
+                .inputLegacyOre("ingotAnyHardPlastic", 4)
+                .outputItem(new ItemStack(ModBlocks.WATZ_ELEMENT.get(), 3))
+                .sourceOrder(186)
+                .save(consumer, id("assembly_machine/watz_element"));
+
+        GenericMachineRecipeBuilder.assembly("ass.watzcooler", 200, 100)
+                .inputLegacyOre("plateCastSteel", 2)
+                .inputLegacyOre("plateCastCopper", 4)
+                .inputLegacyOre("ingotRubber", 2)
+                .outputItem(new ItemStack(ModBlocks.WATZ_COOLER.get(), 3))
+                .sourceOrder(187)
+                .save(consumer, id("assembly_machine/watz_cooler"));
+
+        GenericMachineRecipeBuilder.assembly("ass.watzcasing", 100, 100)
+                .inputLegacyOre("plateWeldedAnyResistantAlloy", 1)
+                .inputLegacyOre("ingotBoron", 3)
+                .inputLegacyOre("plateWeldedSteel", 2)
+                .outputItem(new ItemStack(ModBlocks.WATZ_END.get(), 3))
+                .sourceOrder(188)
+                .save(consumer, id("assembly_machine/watz_end"));
+    }
+
     private static void pwrAssemblyRecipes(Consumer<FinishedRecipe> consumer) {
         GenericMachineRecipeBuilder.assembly("ass.pwrfuel", 200, 500)
                 .inputLegacyOre("plateCastLead", 4)
@@ -4234,6 +4907,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(ModBlocks.LAUNCH_PAD.get())
                 .sourceOrder(269)
                 .save(consumer, id("assembly_machine/launch_pad_silo"));
+
+        GenericMachineRecipeBuilder.assembly("ass.launchpad", 200, 100)
+                .inputLegacyOre("plateCastSteel", 6)
+                .inputLegacyOre("anyConcrete", 64)
+                .inputLegacyOre("ingotAnyPlastic", 16)
+                .inputItem(ModBlocks.STEEL_SCAFFOLD.get(), 24)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 2)
+                .outputItem(ModBlocks.LAUNCH_PAD_LARGE.get())
+                .sourceOrder(268)
+                .save(consumer, id("assembly_machine/launch_pad"));
 
         GenericMachineRecipeBuilder.assembly("ass.turbofan", 300, 100)
                 .inputLegacyOre("shellTitanium", 8)
@@ -5296,6 +5979,49 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_piston", has(Blocks.PISTON))
                 .save(consumer, id("machines/ammo_press"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.REFUELER.get())
+                .pattern("SS")
+                .pattern("HC")
+                .pattern("SS")
+                .define('S', forgeTag("plates/titanium"))
+                .define('H', item("part_generic_piston_hydraulic"))
+                .define('C', item("circuit_basic"))
+                .unlockedBy("has_titanium_plate", has(forgeTag("plates/titanium")))
+                .save(consumer, id("machines/refueler"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RADIOBOX.get())
+                .pattern("PLP")
+                .pattern("PSP")
+                .pattern("PLP")
+                .define('P', forgeTag("plates/steel"))
+                .define('L', forgeTag("plates/dura_steel"))
+                .define('S', item("ring_starmetal"))
+                .unlockedBy("has_starmetal_ring", has(item("ring_starmetal")))
+                .save(consumer, id("machines/radiobox"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RADIOREC.get())
+                .pattern("  W")
+                .pattern("PCP")
+                .pattern("PIP")
+                .define('W', item("wire_fine_copper"))
+                .define('P', forgeTag("plates/steel"))
+                .define('C', forgeTag("circuits/vacuum_tube"))
+                .define('I', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_vacuum_tube_circuit", has(forgeTag("circuits/vacuum_tube")))
+                .save(consumer, id("machines/radiorec"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.TESLA.get())
+                .pattern("CCC")
+                .pattern("PIP")
+                .pattern("WTW")
+                .define('C', ModItems.COPPER_COIL.get())
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('I', forgeTag("ingots/iron"))
+                .define('W', vanillaTag("planks"))
+                .define('T', ModBlocks.MACHINE_TRANSFORMER.get())
+                .unlockedBy("has_copper_coil", has(ModItems.COPPER_COIL.get()))
+                .save(consumer, id("machines/tesla"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.MACHINE_MIXER.get())
                 .pattern("PIP")
                 .pattern("GCG")
@@ -5327,6 +6053,26 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('T', item("tank_steel"))
                 .unlockedBy("has_steel_grate", has(ModBlocks.STEEL_GRATE.get()))
                 .save(consumer, id("machines/intake"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.MACHINE_STORAGE_DRUM.get())
+                .pattern("LLL")
+                .pattern("LTL")
+                .pattern("LLL")
+                .define('L', forgeTag("plates/lead"))
+                .define('T', item("tank_steel"))
+                .unlockedBy("has_tank_steel", has(item("tank_steel")))
+                .save(consumer, id("machines/storage_drum"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.MACHINE_AUTOCRAFTER.get())
+                .pattern("SCS")
+                .pattern("MWM")
+                .pattern("SCS")
+                .define('S', forgeTag("plates/steel"))
+                .define('C', forgeTag("circuits/vacuum_tube"))
+                .define('M', ModItems.MOTOR.get())
+                .define('W', net.minecraft.world.level.block.Blocks.CRAFTING_TABLE)
+                .unlockedBy("has_vacuum_tube", has(forgeTag("circuits/vacuum_tube")))
+                .save(consumer, id("machines/autocrafter"));
 
         GenericMachineRecipeBuilder.assembly("ass.precass", 1_200, 100)
                 .inputLegacyOre("plateCastSteel", 8)
@@ -6776,6 +7522,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('D', item("crt_display"))
                 .unlockedBy("has_crt_display", has(item("crt_display")))
                 .save(consumer, id("weapon/turret_sentry"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, block("machine_controller"))
+                .pattern("TDT")
+                .pattern("DCD")
+                .pattern("TDT")
+                .define('T', forgeTag("ingots/any_resistant_alloy"))
+                .define('D', item("crt_display"))
+                .define('C', forgeTag("circuits/advanced"))
+                .unlockedBy("has_crt_display", has(item("crt_display")))
+                .save(consumer, id("machines/machine_controller"));
     }
 
     private static void legacyUpgradeRecipes(Consumer<FinishedRecipe> consumer) {
@@ -7234,6 +7990,13 @@ public final class HbmRecipeProvider extends RecipeProvider {
         return new ResourceLocation(HbmNtm.MOD_ID, path);
     }
 
+    private static JsonObject fluidStackJson(FluidType fluid, int amount) {
+        JsonObject object = new JsonObject();
+        object.addProperty("fluid", id(fluid.toPath()).toString());
+        object.addProperty("amount", amount);
+        return object;
+    }
+
     private static TagKey<Item> forgeTag(String path) {
         return HbmItemTagsProvider.forgeItemTag(path);
     }
@@ -7367,6 +8130,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
         private static GenericMachineRecipeBuilder purex(String internalName, int duration, long power) {
             return new GenericMachineRecipeBuilder(GenericMachineRecipe.Machine.PUREX,
                     id("purex"), internalName, duration, power);
+        }
+
+        private static GenericMachineRecipeBuilder fusionReactor(String internalName, int duration, long power) {
+            return new GenericMachineRecipeBuilder(GenericMachineRecipe.Machine.FUSION_REACTOR,
+                    id("fusion_reactor"), internalName, duration, power);
+        }
+
+        private static GenericMachineRecipeBuilder plasmaForge(String internalName, int duration, long power) {
+            return new GenericMachineRecipeBuilder(GenericMachineRecipe.Machine.PLASMA_FORGE,
+                    id("plasma_forge"), internalName, duration, power);
         }
 
         private static GenericMachineRecipeBuilder precass(String internalName, int duration, long power) {

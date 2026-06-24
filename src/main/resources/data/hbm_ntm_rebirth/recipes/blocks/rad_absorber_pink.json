@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "ICI",
+    "CPC",
+    "ICI"
+  ],
+  "key": {
+    "I": {
+      "tag": "forge:ingots/saturnite"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:powder_nitan_mix"
+    },
+    "P": {
+      "type": "forge:nbt",
+      "item": "hbm_ntm_rebirth:rad_absorber",
+      "nbt": "{hbmLegacyVariant:2}"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rad_absorber",
+    "count": 1,
+    "nbt": "{hbmLegacyVariant:3}"
+  },
+  "show_notification": true
+}

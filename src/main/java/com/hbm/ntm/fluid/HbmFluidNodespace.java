@@ -36,6 +36,7 @@ public final class HbmFluidNodespace {
     }
 
     public static void unloadLevel(Level level) {
+        HbmFluidUtil.clearRemoteVisualPortConnections(level);
         NODESPACE.unloadLevel(level);
     }
 

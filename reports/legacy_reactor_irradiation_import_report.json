@@ -1,0 +1,15 @@
+{
+  "handlers": [
+    {
+      "legacy_file": "hbmIrradiation.json",
+      "modern_recipe_type": "outgasser",
+      "status": "missing_template"
+    },
+    {
+      "legacy_file": "hbmExposureChamber.json",
+      "modern_recipe_type": "exposure_chamber",
+      "status": "missing_template"
+    }
+  ],
+  "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes"
+}

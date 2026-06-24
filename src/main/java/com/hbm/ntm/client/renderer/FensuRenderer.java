@@ -18,6 +18,12 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
     private static final ResourceLocation TEXTURE =
             ObjMachineModels.FENSU_TEXTURE;
     private static final LegacyWavefrontModel MODEL = ObjMachineModels.FENSU_LEGACY;
+    private static final LegacyWavefrontModel.SelectionHandle BASE =
+            MODEL.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle DISC =
+            MODEL.prepareRenderOnlyInCallOrder("Disc");
+    private static final LegacyWavefrontModel.SelectionHandle LIGHTS =
+            MODEL.prepareRenderOnlyInCallOrder("Lights");
 
     public FensuRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -43,17 +49,21 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYRotation(state)));
 
-        MODEL.renderPart("Base", TEXTURE, context);
+        renderPart(BASE, context);
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 2.5D, 0.0D);
         poseStack.mulPose(Axis.XP.rotationDegrees(fensu.getInterpolatedRotation(partialTick)));
         poseStack.translate(0.0D, -2.5D, 0.0D);
-        MODEL.renderPart("Disc", TEXTURE, context);
+        renderPart(DISC, context);
         poseStack.popPose();
 
-        MODEL.renderPart("Lights", TEXTURE, context.fullBright());
+        renderPart(LIGHTS, context.fullBright());
         poseStack.popPose();
+    }
+
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
+        MODEL.renderOnlyInCallOrder(TEXTURE, context, handle);
     }
 
     private static float legacyYRotation(BlockState state) {

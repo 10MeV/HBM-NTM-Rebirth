@@ -19,7 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class CrucibleMenu extends AbstractContainerMenu {
-    private static final int MACHINE_SLOT_COUNT = CrucibleBlockEntity.SLOT_COUNT;
+    private static final int MACHINE_SLOT_COUNT = 9;
     private static final int PLAYER_INVENTORY_START = MACHINE_SLOT_COUNT;
     private static final int PLAYER_SLOT_END = PLAYER_INVENTORY_START + 36;
 
@@ -41,7 +41,8 @@ public class CrucibleMenu extends AbstractContainerMenu {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
-                        col + row * 3, 107 + col * 18, 18 + row * 18));
+                        CrucibleBlockEntity.SLOT_INPUT_START + col + row * 3,
+                        107 + col * 18, 18 + row * 18));
             }
         }
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 132, 190);
@@ -130,8 +131,7 @@ public class CrucibleMenu extends AbstractContainerMenu {
         ItemStack stack = slots.get(index).getItem();
         if (!Mats.getSmeltingMaterialsFromItem(stack).isEmpty()) {
             return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                    MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                    CrucibleBlockEntity.SLOT_INPUT_START, CrucibleBlockEntity.SLOT_INPUT_END);
+                    MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END, 0, MACHINE_SLOT_COUNT);
         }
         return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                 MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END);

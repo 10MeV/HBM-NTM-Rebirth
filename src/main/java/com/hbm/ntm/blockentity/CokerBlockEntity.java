@@ -83,6 +83,11 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
     }
 
     @Override
+    protected String legacyContainerKey() {
+        return "container.machineCoker";
+    }
+
+    @Override
     protected boolean tickLegacyMachine(Level level, BlockPos pos, BlockState state) {
         boolean changed = tryPullHeat(level, pos);
         changed |= setInputTypeFromIdentifier();

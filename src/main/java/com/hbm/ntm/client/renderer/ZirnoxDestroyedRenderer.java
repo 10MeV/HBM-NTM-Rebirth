@@ -22,7 +22,7 @@ public class ZirnoxDestroyedRenderer implements BlockEntityRenderer<ZirnoxDestro
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     @Override

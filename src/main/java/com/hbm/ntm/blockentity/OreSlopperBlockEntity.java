@@ -36,6 +36,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.sounds.SoundSource;
@@ -72,6 +73,7 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int SLOT_COUNT = 11;
 
     private static final String TAG_ITEMS = "items";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final long MAX_POWER = 100_000L;
     private static final long BASE_CONSUMPTION = 200L;
     private static final int WATER_USED = 1_000;
@@ -91,7 +93,7 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
                 case SLOT_INPUT -> stack.is(ModItems.BEDROCK_ORE_BASE.get());
                 case SLOT_UPGRADE_1, SLOT_UPGRADE_2 -> isValidUpgrade(stack);
@@ -119,6 +121,8 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
     private float fan;
     private float prevFan;
     private int delay;
+    @Nullable
+    private String customName;
 
     public OreSlopperBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmFluidTank(HbmFluids.WATER, 16_000),
@@ -483,7 +487,9 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.machineOreSlopper", "Bedrock Ore Processor");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatableWithFallback("container.machineOreSlopper", "Bedrock Ore Processor");
     }
 
     @Nullable
@@ -500,7 +506,10 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         tag.putLong("power", energy.getPower());
         tag.putFloat("progress", progress);
         waterTank.writeToNbt(tag, "water");
@@ -518,13 +527,18 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         if (tag.contains("power")) {
             energy.setPower(tag.getLong("power"));
         }
         progress = tag.getFloat("progress");
-        waterTank.readFromNbt(tag, "water");
-        slopTank.readFromNbt(tag, "slop");
+        if (hasTankTag(tag, "water")) {
+            waterTank.readFromNbt(tag, "water");
+        }
+        if (hasTankTag(tag, "slop")) {
+            slopTank.readFromNbt(tag, "slop");
+        }
         consumption = tag.contains("consumption") ? tag.getLong("consumption") : BASE_CONSUMPTION;
         processing = tag.getBoolean("processing");
         animation = parseAnimation(tag.getString("animation"));
@@ -537,6 +551,20 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
         fan = tag.getFloat("fan");
         prevFan = fan;
         delay = tag.getInt("delay");
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_ITEMS, Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        } else if (tag.contains(TAG_ITEMS, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
     private static SlopperAnimation parseAnimation(String name) {

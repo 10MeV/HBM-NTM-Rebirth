@@ -2,6 +2,7 @@ package com.hbm.ntm.client.particle;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -38,6 +39,14 @@ public class SpentCasingParticle extends Particle {
     private static final ResourceLocation MODEL_LOCATION = new ResourceLocation(HbmNtm.MOD_ID, "models/effect/casings.obj");
     private static final ResourceLocation TEXTURE_LOCATION = new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/casings.png");
     private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, TEXTURE_LOCATION).noSmooth().asVBO();
+    private static final LegacyWavefrontModel.SelectionHandle STRAIGHT =
+            MODEL.prepareRenderOnlyInCallOrder("Straight");
+    private static final LegacyWavefrontModel.SelectionHandle BOTTLENECK =
+            MODEL.prepareRenderOnlyInCallOrder("Bottleneck");
+    private static final LegacyWavefrontModel.SelectionHandle SHOTGUN =
+            MODEL.prepareRenderOnlyInCallOrder("Shotgun");
+    private static final LegacyWavefrontModel.SelectionHandle SHOTGUN_CASE =
+            MODEL.prepareRenderOnlyInCallOrder("ShotgunCase");
     private static final ParticleRenderType RENDER_TYPE = new ParticleRenderType() {
         @Override
         public void begin(BufferBuilder builder, TextureManager textureManager) {
@@ -228,8 +237,7 @@ public class SpentCasingParticle extends Particle {
         String[] parts = this.definition.type().partNames();
         for (int i = 0; i < parts.length; i++) {
             int color = this.definition.color(i);
-            MODEL.renderPart(parts[i], TEXTURE_LOCATION, poseStack, buffer, getLightColor(partialTick), OverlayTexture.NO_OVERLAY,
-                    color >> 16 & 255, color >> 8 & 255, color & 255, 255);
+            renderCasingPart(parts[i], color, poseStack, buffer, getLightColor(partialTick));
         }
         buffer.endBatch();
 
@@ -301,6 +309,33 @@ public class SpentCasingParticle extends Particle {
         this.previousSmokeRenderX = renderX;
         this.previousSmokeRenderY = renderY;
         this.previousSmokeRenderZ = renderZ;
+    }
+
+    private static void renderCasingPart(String partName, int color, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight) {
+        LegacyWavefrontModel.SelectionHandle handle = casingHandle(partName);
+        int red = color >> 16 & 255;
+        int green = color >> 8 & 255;
+        int blue = color & 255;
+        if (handle != null) {
+            MODEL.renderOnlyInCallOrder(TEXTURE_LOCATION,
+                    new ObjRenderContext(poseStack, buffer, null, packedLight, OverlayTexture.NO_OVERLAY)
+                            .withRgba(red, green, blue, 255),
+                    handle);
+            return;
+        }
+        MODEL.renderPart(partName, TEXTURE_LOCATION, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
+                red, green, blue, 255);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle casingHandle(String partName) {
+        return switch (partName) {
+            case "Straight" -> STRAIGHT;
+            case "Bottleneck" -> BOTTLENECK;
+            case "Shotgun" -> SHOTGUN;
+            case "ShotgunCase" -> SHOTGUN_CASE;
+            default -> null;
+        };
     }
 
     @Override

@@ -36,6 +36,7 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -68,7 +69,9 @@ import java.util.Map;
 
 public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
         HbmStandardFluidTransceiver, HbmLegacyLoadedTile, LegacyLookOverlayProvider, LegacyProxyDelegateProvider {
-    private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_INVENTORY = HbmInventoryMenuHelper.LEGACY_ITEMS_TAG;
+    private static final String TAG_MODERN_INVENTORY = "Inventory";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_LEGACY_POWER = "power";
     private static final String TAG_LEGACY_MAX_POWER = "maxPower";
@@ -155,6 +158,8 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     private int anim;
     private boolean frame;
     private Object audioLoop;
+    @Nullable
+    private String customName;
 
     public ChemicalFactoryBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CHEMICAL_FACTORY.get(), pos, state);
@@ -356,7 +361,10 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         writeLegacyLoadedTileNbt(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         tag.put(TAG_ENERGY, energy.serializeNBT());
         tag.putLong(TAG_LEGACY_POWER, energy.getPower());
         tag.putLong(TAG_LEGACY_MAX_POWER, energy.getMaxPower());
@@ -376,7 +384,8 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     public void load(CompoundTag tag) {
         super.load(tag);
         readLegacyLoadedTileNbt(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         if (tag.contains(TAG_ENERGY)) {
             energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
         } else if (tag.contains(TAG_LEGACY_POWER)) {
@@ -462,7 +471,9 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.machineChemicalFactory", "Chemical Factory");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatableWithFallback("container.machineChemicalFactory", "Chemical Factory");
     }
 
     @Override
@@ -636,7 +647,7 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
         for (boolean processing : didProcess) {
             active |= processing;
         }
-        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.chemplantOperate",
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.chemicalPlant",
                 active, 50.0D, 15.0F, 1.0F, 1.0F);
     }
 
@@ -757,6 +768,16 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     private void setSelectedRecipe(int module, String recipe) {
         selectedRecipes[module] = GenericMachineRecipeSelector.normalize(recipe);
         setChanged();
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        } else if (tag.contains(TAG_MODERN_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
     }
 
     private class MappedItemHandler implements IItemHandler {

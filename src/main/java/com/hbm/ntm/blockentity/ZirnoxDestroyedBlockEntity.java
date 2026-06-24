@@ -9,6 +9,8 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmBlockStateUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -41,9 +43,7 @@ public class ZirnoxDestroyedBlockEntity extends BlockEntity {
 
         RandomSource random = serverLevel.random;
         if (core.onFire && random.nextInt(5000) == 0) {
-            core.onFire = false;
-            core.setChanged();
-            serverLevel.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            core.setOnFire(false);
         }
         if (core.onFire && serverLevel.getGameTime() % 50L == 0L) {
             spawnFlame(serverLevel, pos, random);
@@ -69,6 +69,10 @@ public class ZirnoxDestroyedBlockEntity extends BlockEntity {
         if (this.onFire != onFire) {
             this.onFire = onFire;
             setChanged();
+            if (level != null && !level.isClientSide) {
+                BlockState state = getBlockState();
+                level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
+            }
         }
     }
 
@@ -89,8 +93,31 @@ public class ZirnoxDestroyedBlockEntity extends BlockEntity {
     }
 
     @Override
+    public CompoundTag getUpdateTag() {
+        return saveWithoutMetadata();
+    }
+
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            load(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        load(tag);
+    }
+
+    @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-4, 0, -4), worldPosition.offset(5, 4, 5));
+        return new AABB(worldPosition.offset(-3, 0, -3), worldPosition.offset(4, 3, 4));
     }
 
     private void radiate(Level level, BlockPos pos) {

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "IRI",
+    "CTC",
+    "IRI"
+  ],
+  "key": {
+    "I": {
+      "item": "hbm_ntm_rebirth:plate_polymer"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "C": {
+      "tag": "forge:wires/mingrade"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:coil_tungsten"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_detector"
+  },
+  "show_notification": true
+}

@@ -1,5 +1,5 @@
 {
   "variants": {
-    "": { "model": "hbm_ntm_rebirth:block/machines/drum" }
+    "": { "model": "hbm_ntm_rebirth:block/machine_waste_drum" }
   }
 }

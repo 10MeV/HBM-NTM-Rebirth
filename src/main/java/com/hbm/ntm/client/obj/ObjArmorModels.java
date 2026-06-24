@@ -1,6 +1,9 @@
 package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
+import com.mojang.blaze3d.vertex.PoseStack;
+import java.util.Map;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
 public final class ObjArmorModels {
@@ -26,6 +29,40 @@ public final class ObjArmorModels {
     public static final LegacyWavefrontModel ENVSUIT = model("envsuit", "envsuit_chest").asVBO();
     public static final LegacyWavefrontModel TAURUN = model("taurun", "taurun_chest").asVBO();
     public static final LegacyWavefrontModel TRENCHMASTER = model("trenchmaster", "trenchmaster_chest").asVBO();
+    private static final Map<LegacyWavefrontModel, Map<String, LegacyWavefrontModel.SelectionHandle>> SELECTIONS =
+            Map.ofEntries(
+                    entry(BJ, "Jetpack", "Head", "RightArm", "LeftArm", "Body", "RightLeg", "LeftLeg",
+                            "RightFoot", "LeftFoot"),
+                    entry(HEV, "Head", "RightArm", "LeftArm", "Body", "RightLeg", "LeftLeg",
+                            "RightFoot", "LeftFoot"),
+                    entry(AJR, "RocketBox", "Head", "RightArm", "LeftArm", "Body", "RightLeg", "LeftLeg",
+                            "RightBoot", "LeftBoot"),
+                    entry(T51, "Helmet", "Chest", "LeftArm", "RightArm", "LeftLeg", "RightLeg",
+                            "LeftBoot", "RightBoot"),
+                    entry(HAT, "Cube_Cube.001"),
+                    entry(NO9, "Helmet", "Insignia", "Flame"),
+                    entry(GOGGLES, "Cube"),
+                    entry(FAU, "Head", "Body", "LeftArm", "RightArm", "LeftLeg", "RightLeg",
+                            "LeftBoot", "RightBoot", "Cassette"),
+                    entry(DNT, "Head", "Body", "LeftArm", "RightArm", "LeftLeg", "RightLeg",
+                            "LeftBoot", "RightBoot"),
+                    entry(STEAMSUIT, "Head", "Body", "LeftArm", "RightArm", "LeftLeg", "RightLeg",
+                            "LeftBoot", "RightBoot"),
+                    entry(DIESELSUIT, "Head", "Body", "LeftArm", "RightArm", "LeftLeg", "RightLeg",
+                            "LeftBoot", "RightBoot"),
+                    entry(REMNANT, "Head", "Body", "LeftArm", "RightArm", "LeftLeg", "RightLeg",
+                            "LeftBoot", "RightBoot", "Glow", "Fan"),
+                    entry(NCR, "Helmet", "Chest", "LeftArm", "RightArm", "LeftLeg", "RightLeg",
+                            "LeftBoot", "RightBoot", "Eyes"),
+                    entry(BISMUTH, "Head", "Body", "LeftArm", "RightArm", "LeftLeg", "RightLeg",
+                            "LeftFoot", "RightFoot"),
+                    entry(WINGS, "LeftBase", "LeftTip", "RightBase", "RightTip"),
+                    entry(ENVSUIT, "Helmet", "Chest", "LeftArm", "RightArm", "LeftLeg", "RightLeg",
+                            "LeftFoot", "RightFoot", "Lamps", "Tail"),
+                    entry(TAURUN, "Helmet", "Chest", "LeftArm", "RightArm", "LeftLeg", "RightLeg",
+                            "LeftBoot", "RightBoot"),
+                    entry(TRENCHMASTER, "Helmet", "Chest", "LeftArm", "RightArm", "LeftLeg", "RightLeg",
+                            "LeftBoot", "RightBoot", "Light"));
 
     public static final ResourceLocation BJ_EYEPATCH_TEXTURE = texture("bj_eyepatch");
     public static final ResourceLocation BJ_LEG_TEXTURE = texture("bj_leg");
@@ -133,6 +170,95 @@ public final class ObjArmorModels {
 
     public static ResourceLocation playerTexture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/entity/" + name + ".png");
+    }
+
+    public static void renderPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(model, partName);
+        if (handle != null) {
+            model.renderOnlyInCallOrder(texture,
+                    new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay), handle);
+            return;
+        }
+        model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            int red, int green, int blue, int alpha) {
+        renderPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+    }
+
+    public static void renderPartTranslucent(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            int red, int green, int blue, int alpha) {
+        renderPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
+    }
+
+    public static void renderPartAdditive(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            int red, int green, int blue, int alpha) {
+        renderPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
+    }
+
+    public static void renderPartUntextured(LegacyWavefrontModel model, String partName, ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(model, partName);
+        if (handle != null) {
+            model.renderOnlyUntextured(context, handle);
+            return;
+        }
+        model.renderPartUntextured(partName, context);
+    }
+
+    public static void renderPartUntexturedAdditive(LegacyWavefrontModel model, String partName,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(model, partName);
+        ObjRenderContext additive = context.withRenderMode(LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
+        if (handle != null) {
+            model.renderOnlyUntextured(additive, handle);
+            return;
+        }
+        model.renderPartUntexturedAdditive(partName, context);
+    }
+
+    private static void renderPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(model, partName);
+        if (handle != null) {
+            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
+                    .withRgba(red, green, blue, alpha)
+                    .withRenderMode(renderMode);
+            model.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        if (renderMode == LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE) {
+            model.renderPartTranslucent(partName, texture, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha);
+        } else if (renderMode == LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE) {
+            model.renderPartAdditive(partName, texture, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha);
+        } else {
+            model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha);
+        }
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle handle(LegacyWavefrontModel model, String partName) {
+        Map<String, LegacyWavefrontModel.SelectionHandle> selections = SELECTIONS.get(model);
+        return selections == null || partName == null ? null : selections.get(partName);
+    }
+
+    private static Map.Entry<LegacyWavefrontModel, Map<String, LegacyWavefrontModel.SelectionHandle>> entry(
+            LegacyWavefrontModel model, String... partNames) {
+        java.util.LinkedHashMap<String, LegacyWavefrontModel.SelectionHandle> handles = new java.util.LinkedHashMap<>();
+        for (String partName : partNames) {
+            handles.put(partName, model.prepareRenderOnlyInCallOrder(partName));
+        }
+        return Map.entry(model, Map.copyOf(handles));
     }
 
     private ObjArmorModels() {

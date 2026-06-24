@@ -39,6 +39,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -535,10 +536,12 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
     }
 
     @Override
-    public net.minecraft.world.phys.AABB getRenderBoundingBox() {
-        return getBlockState().getBlock() instanceof CustomMissileLauncherBlock block
-                ? block.getMultiblockLayout(getBlockState(), level, worldPosition).renderBoundingBox(worldPosition, 16.0D)
-                : new net.minecraft.world.phys.AABB(worldPosition).inflate(16.0D);
+    public AABB getRenderBoundingBox() {
+        BlockState state = getBlockState();
+        AABB structureBounds = state.getBlock() instanceof CustomMissileLauncherBlock block
+                ? block.getMultiblockLayout(state, level, worldPosition).renderBoundingBox(worldPosition, 0.5D)
+                : new AABB(worldPosition).inflate(0.5D);
+        return structureBounds.minmax(launcherVisibleBounds(state));
     }
 
     @Override
@@ -578,5 +581,80 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
 
     private static int requiredFuel(CustomMissilePartProfile.Assembly assembly) {
         return Math.max(0, Math.round(assembly.fuselage().profile().fuel()));
+    }
+
+    private AABB launcherVisibleBounds(BlockState state) {
+        boolean launchTable = state.getBlock() instanceof CustomMissileLauncherBlock block
+                && block.kind() == CustomMissileLauncherBlock.Kind.LAUNCH_TABLE;
+        int radius = launchTable ? 4 : 2;
+        CustomMissilePartProfile.Assembly assembly = assemblyForPreview();
+        double missileHeight = estimatedMissileHeight(assembly);
+        double missileTop = isValidForPad(assembly, launchTable ? getPadSize() : PartSize.SIZE_10)
+                ? 2.0625D + missileHeight
+                : 1.0D;
+        double top = launchTable
+                ? Math.max(missileTop, Math.max(10.0D, Math.ceil(missileHeight)) + 2.0D)
+                : Math.max(missileTop, 2.0D);
+        return new AABB(
+                worldPosition.getX() - radius,
+                worldPosition.getY(),
+                worldPosition.getZ() - radius,
+                worldPosition.getX() + radius + 1,
+                worldPosition.getY() + top,
+                worldPosition.getZ() + radius + 1);
+    }
+
+    private static boolean isValidForPad(@Nullable CustomMissilePartProfile.Assembly assembly, PartSize padSize) {
+        return assembly != null && assembly.isCompleteForLaunch()
+                && assembly.fuselage() != null
+                && assembly.fuselage().profile().top() == padSize;
+    }
+
+    private static double estimatedMissileHeight(@Nullable CustomMissilePartProfile.Assembly assembly) {
+        if (assembly == null) {
+            return 10.0D;
+        }
+        double height = estimatedPartHeight(assembly.thruster())
+                + estimatedPartHeight(assembly.fuselage())
+                + estimatedPartHeight(assembly.warhead());
+        return height <= 0.0D ? 10.0D : height;
+    }
+
+    private static double estimatedPartHeight(@Nullable CustomMissilePartProfile.ResolvedPart part) {
+        if (part == null || part.profile() == null) {
+            return 0.0D;
+        }
+        CustomMissilePartProfile profile = part.profile();
+        return switch (profile.type()) {
+            case THRUSTER -> switch (profile.top()) {
+                case SIZE_10 -> 1.0D;
+                case SIZE_15, SIZE_20 -> 3.0D;
+                default -> 0.0D;
+            };
+            case FUSELAGE -> estimatedFuselageHeight(part.legacyName(), profile.top(), profile.bottom());
+            case WARHEAD -> switch (profile.bottom()) {
+                case SIZE_10 -> 2.5D;
+                case SIZE_15 -> 3.5D;
+                case SIZE_20 -> 5.0D;
+                default -> 0.0D;
+            };
+            default -> 0.0D;
+        };
+    }
+
+    private static double estimatedFuselageHeight(String legacyName, PartSize top, PartSize bottom) {
+        if (top == PartSize.SIZE_15 && bottom == PartSize.SIZE_20) {
+            return 16.0D;
+        }
+        if (top == PartSize.SIZE_15) {
+            return 10.0D;
+        }
+        if (top == PartSize.SIZE_10 && bottom == PartSize.SIZE_15) {
+            return 9.0D;
+        }
+        if (top == PartSize.SIZE_10 && bottom == PartSize.SIZE_10) {
+            return legacyName != null && legacyName.contains("_long_") ? 7.0D : 4.0D;
+        }
+        return 10.0D;
     }
 }

@@ -18,7 +18,7 @@ public class WatzReactorRenderer implements BlockEntityRenderer<WatzReactorBlock
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     @Override

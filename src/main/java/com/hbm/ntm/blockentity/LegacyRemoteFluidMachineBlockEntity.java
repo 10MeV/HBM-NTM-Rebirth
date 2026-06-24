@@ -24,6 +24,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
@@ -45,13 +46,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFluidBlockEntity
         implements MenuProvider, HbmStandardFluidTransceiver, HbmPersistentBlockState {
-    private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_INVENTORY = "items";
+    private static final String TAG_MODERN_INVENTORY_FALLBACK = "Inventory";
+    private static final String TAG_CUSTOM_NAME = "name";
 
     private final List<HbmFluidTank> receivingTanks;
     private final List<HbmFluidTank> sendingTanks;
     private final boolean rejectsDownConnections;
     @Nullable
     private final ItemStackHandler items;
+    @Nullable
+    private String customName;
 
     protected LegacyRemoteFluidMachineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state,
             long maxPower, List<HbmFluidTank> allTanks, List<HbmFluidTank> receivingTanks,
@@ -157,13 +162,22 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
 
     @Override
     public Component getDisplayName() {
-        return getBlockState().getBlock().getName();
+        if (customName != null && !customName.isBlank()) {
+            return Component.literal(customName);
+        }
+        String key = legacyContainerKey();
+        return key == null || key.isBlank() ? getBlockState().getBlock().getName() : Component.translatable(key);
     }
 
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
         return hasLegacyGui() ? new RemoteFluidMachineMenu(containerId, playerInventory, this) : null;
+    }
+
+    @Nullable
+    protected String legacyContainerKey() {
+        return null;
     }
 
     protected void refreshFluidPorts() {
@@ -357,7 +371,10 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         if (items != null) {
-            HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+            HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, TAG_INVENTORY, items);
+        }
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
         }
     }
 
@@ -365,8 +382,13 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     public void load(CompoundTag tag) {
         super.load(tag);
         if (items != null) {
-            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+            if (tag.contains(TAG_INVENTORY)) {
+                HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+            } else {
+                HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY_FALLBACK, items);
+            }
         }
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
     }
 
     public enum LegacyGuiProfile {

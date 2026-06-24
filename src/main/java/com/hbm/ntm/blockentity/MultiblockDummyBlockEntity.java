@@ -4,6 +4,7 @@ import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.api.tile.HeatSource;
+import com.hbm.ntm.block.HbmFluidNodeBlock;
 import com.hbm.ntm.util.HbmRegistryUtil;
 
 import com.hbm.ntm.energy.HbmEnergyConnector;
@@ -97,12 +98,14 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
     }
 
     public void configure(BlockPos corePos, LegacyProxyMode proxyMode, boolean legacyExtra) {
+        LegacyProxyMode previousProxyMode = this.proxyMode;
         this.corePos = corePos.immutable();
         this.proxyMode = proxyMode == null ? LegacyProxyMode.none() : proxyMode;
         this.legacyExtra = legacyExtra;
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            refreshAdjacentFluidConnections(previousProxyMode);
         }
     }
 
@@ -131,10 +134,12 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
     }
 
     public void setProxyMode(LegacyProxyMode proxyMode) {
+        LegacyProxyMode previousProxyMode = this.proxyMode;
         this.proxyMode = proxyMode == null ? LegacyProxyMode.none() : proxyMode;
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            refreshAdjacentFluidConnections(previousProxyMode);
         }
     }
 
@@ -302,11 +307,32 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
     }
 
     private boolean canProxyFluid() {
-        return proxyMode.isProxy() && (proxyMode.fluid() || proxyMode.moltenMetal() || proxyMode.allCapabilities());
+        return canProxyFluid(proxyMode);
+    }
+
+    private static boolean canProxyFluid(LegacyProxyMode proxyMode) {
+        return proxyMode != null && proxyMode.isProxy()
+                && (proxyMode.fluid() || proxyMode.moltenMetal() || proxyMode.allCapabilities());
     }
 
     private boolean canProxyHeat() {
         return proxyMode.isProxy() && (proxyMode.heat() || proxyMode.allCapabilities());
+    }
+
+    public void refreshAdjacentFluidConnections() {
+        refreshAdjacentFluidConnections(LegacyProxyMode.none());
+    }
+
+    private void refreshAdjacentFluidConnections(LegacyProxyMode previousProxyMode) {
+        if (level == null || level.isClientSide || !canProxyFluid(previousProxyMode) && !canProxyFluid(proxyMode)) {
+            return;
+        }
+        for (Direction direction : Direction.values()) {
+            BlockPos neighborPos = worldPosition.relative(direction);
+            if (level.getBlockState(neighborPos).getBlock() instanceof HbmFluidNodeBlock nodeBlock) {
+                nodeBlock.updateFluidConnectionGraph(level, neighborPos);
+            }
+        }
     }
 
     public InteractionResult forwardUse(ServerPlayer player, InteractionHand hand, BlockHitResult hit) {
@@ -471,6 +497,12 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
     @Override
     public CompoundTag getUpdateTag() {
         return saveWithoutMetadata();
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        refreshAdjacentFluidConnections();
     }
 
     @Nullable

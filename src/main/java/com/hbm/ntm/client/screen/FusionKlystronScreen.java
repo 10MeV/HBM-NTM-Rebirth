@@ -56,9 +56,7 @@ public class FusionKlystronScreen extends AbstractContainerScreen<FusionKlystron
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
         int power = (int) (menu.getPower() * 52L / menu.getMaxPower());
-        if (power > 0) {
-            graphics.blit(TEXTURE, leftPos + 8, topPos + 70 - power, 194, 52 - power, 16, power);
-        }
+        graphics.blit(TEXTURE, leftPos + 8, topPos + 70 - power, 194, 52 - power, 16, power);
         double outputGauge = menu.getOutputTarget() <= 0L ? 0.0D
                 : menu.getOutput() / (double) menu.getOutputTarget();
         double airGauge = menu.getAirTank().capacity() <= 0 ? 0.0D
@@ -80,11 +78,11 @@ public class FusionKlystronScreen extends AbstractContainerScreen<FusionKlystron
             graphics.blit(TEXTURE, leftPos + 180, topPos + 71, 210, 0, 8, 8);
         }
         LegacyGuiElements.drawSmoothGauge(graphics, leftPos + 52, topPos + 80,
-                Math.max(0.0D, Math.min(1.0D, outputGauge)), 5, 2, 1, 0xA00000);
+                outputGauge, 5, 2, 1, 0xA00000);
         LegacyGuiElements.drawSmoothGauge(graphics, leftPos + 88, topPos + 80,
-                Math.max(0.0D, Math.min(1.0D, airGauge)), 5, 2, 1, 0xA00000);
+                airGauge, 5, 2, 1, 0xA00000);
         LegacyGuiElements.drawSmoothGauge(graphics, leftPos + 124, topPos + 80,
-                Math.max(0.0D, Math.min(1.0D, powerGauge)), 5, 2, 1, 0xA00000);
+                powerGauge, 5, 2, 1, 0xA00000);
         LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 76, topPos + 71, 18, 52, menu.getAirTank());
     }
 
@@ -137,16 +135,20 @@ public class FusionKlystronScreen extends AbstractContainerScreen<FusionKlystron
             targetField.setValue(normalized);
             updatingField = false;
         }
-        try {
-            sendTarget(Long.parseLong(normalized));
-        } catch (NumberFormatException ignored) {
-        }
+        sendTarget(parseLegacyLong(normalized));
     }
 
     private void sendTarget(long target) {
-        long clamped = Math.max(0L, Math.min(FusionKlystronBlockEntity.MAX_OUTPUT, target));
         ModMessages.sendToServer(new TileControlPacket(menu.getBlockEntity().getBlockPos(),
-                FusionKlystronBlockEntity.outputTargetControlTag(clamped)));
+                FusionKlystronBlockEntity.outputTargetControlTag(target)));
+    }
+
+    private static long parseLegacyLong(String value) {
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException ignored) {
+            return 0L;
+        }
     }
 
     private static double getSpeedScaled(double max, double level) {

@@ -40,8 +40,8 @@ public class PyroOvenMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), PyroOvenBlockEntity.SLOT_INPUT, 35, 45));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), PyroOvenBlockEntity.SLOT_OUTPUT, 89, 45));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), PyroOvenBlockEntity.SLOT_IDENTIFIER, 8, 72));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), PyroOvenBlockEntity.SLOT_UPGRADE_1, 71, 72));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), PyroOvenBlockEntity.SLOT_UPGRADE_2, 89, 72));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), PyroOvenBlockEntity.SLOT_UPGRADE_1, 71, 72));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), PyroOvenBlockEntity.SLOT_UPGRADE_2, 89, 72));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 122, 180);
         addDataSlots();
     }

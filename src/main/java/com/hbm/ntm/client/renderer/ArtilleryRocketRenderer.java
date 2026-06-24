@@ -31,7 +31,7 @@ public class ArtilleryRocketRenderer extends EntityRenderer<ArtilleryRocketEntit
         poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(partialTick, entity.xRotO, entity.getXRot()) - 90.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
         poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-        ObjTurretModels.HIMARS.renderPart(part, texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        ObjTurretModels.renderPart(ObjTurretModels.HIMARS, part, texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
     }

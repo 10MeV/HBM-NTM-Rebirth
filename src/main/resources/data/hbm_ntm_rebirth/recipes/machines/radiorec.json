@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "  W",
+    "PCP",
+    "PIP"
+  ],
+  "key": {
+    "W": {
+      "item": "hbm_ntm_rebirth:wire_fine_copper"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_vacuum_tube"
+    },
+    "I": {
+      "tag": "forge:ingots/any_plastic"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:radiorec"
+  },
+  "show_notification": true
+}

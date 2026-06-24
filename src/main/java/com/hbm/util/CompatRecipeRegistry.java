@@ -366,6 +366,133 @@ public final class CompatRecipeRegistry {
                 productivity, fluidInput);
     }
 
+    public static JsonObject createBlastFurnace(List<HbmIngredient> inputs, List<HbmItemOutput> outputs,
+            int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createBlastFurnace(inputs, outputs, duration);
+    }
+
+    public static JsonObject createBlastFurnace(HbmIngredient[] inputs, HbmItemOutput[] outputs, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createBlastFurnace(inputs, outputs, duration);
+    }
+
+    public static JsonObject createBlastFurnace(HbmIngredient[] inputs, ItemStack output, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createBlastFurnace(inputs, output, duration);
+    }
+
+    public static JsonObject createBlastFurnace(HbmIngredient firstInput, HbmIngredient secondInput,
+            ItemStack output, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createBlastFurnace(firstInput, secondInput, output,
+                duration);
+    }
+
+    public static JsonObject createBlastFurnace(HbmIngredient firstInput, HbmIngredient secondInput,
+            HbmItemOutput output, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createBlastFurnace(firstInput, secondInput, output,
+                duration);
+    }
+
+    public static ResourceLocation registerBlastFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            List<HbmIngredient> inputs, List<HbmItemOutput> outputs, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerBlastFurnace(sink, id, inputs, outputs, duration);
+    }
+
+    public static ResourceLocation registerBlastFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmIngredient[] inputs, HbmItemOutput[] outputs, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerBlastFurnace(sink, id, inputs, outputs, duration);
+    }
+
+    public static ResourceLocation registerBlastFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmIngredient[] inputs, ItemStack output, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerBlastFurnace(sink, id, inputs, output, duration);
+    }
+
+    public static ResourceLocation registerBlastFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmIngredient firstInput, HbmIngredient secondInput, ItemStack output, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerBlastFurnace(sink, id, firstInput, secondInput,
+                output, duration);
+    }
+
+    public static ResourceLocation registerBlastFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            List<HbmIngredient> inputs, List<HbmItemOutput> outputs, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerBlastFurnace(sink, name, inputs, outputs, duration);
+    }
+
+    public static ResourceLocation registerBlastFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient[] inputs, HbmItemOutput[] outputs, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerBlastFurnace(sink, name, inputs, outputs, duration);
+    }
+
+    public static ResourceLocation registerBlastFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient[] inputs, ItemStack output, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerBlastFurnace(sink, name, inputs, output, duration);
+    }
+
+    public static ResourceLocation registerBlastFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient firstInput, HbmIngredient secondInput, ItemStack output, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerBlastFurnace(sink, name, firstInput, secondInput,
+                output, duration);
+    }
+
+    public static JsonObject createSoldering(ItemStack output, int duration, long power, HbmFluidStack fluid,
+            List<HbmIngredient> toppings, List<HbmIngredient> pcb, List<HbmIngredient> solder, int sourceOrder) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createSoldering(output, duration, power, fluid, toppings,
+                pcb, solder, sourceOrder);
+    }
+
+    public static JsonObject createSoldering(ItemStack output, int duration, long power, HbmFluidStack fluid,
+            HbmIngredient[] toppings, HbmIngredient[] pcb, HbmIngredient[] solder, int sourceOrder) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createSoldering(output, duration, power, fluid, toppings,
+                pcb, solder, sourceOrder);
+    }
+
+    public static JsonObject createSoldering(ItemStack output, int duration, long power, HbmFluidStack fluid,
+            HbmIngredient[] toppings, HbmIngredient[] pcb, HbmIngredient[] solder) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createSoldering(output, duration, power, fluid, toppings,
+                pcb, solder);
+    }
+
+    public static ResourceLocation registerSoldering(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemStack output, int duration, long power, HbmFluidStack fluid, List<HbmIngredient> toppings,
+            List<HbmIngredient> pcb, List<HbmIngredient> solder, int sourceOrder) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerSoldering(sink, id, output, duration, power, fluid,
+                toppings, pcb, solder, sourceOrder);
+    }
+
+    public static ResourceLocation registerSoldering(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemStack output, int duration, long power, HbmFluidStack fluid, HbmIngredient[] toppings,
+            HbmIngredient[] pcb, HbmIngredient[] solder, int sourceOrder) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerSoldering(sink, id, output, duration, power, fluid,
+                toppings, pcb, solder, sourceOrder);
+    }
+
+    public static ResourceLocation registerSoldering(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemStack output, int duration, long power, HbmFluidStack fluid, HbmIngredient[] toppings,
+            HbmIngredient[] pcb, HbmIngredient[] solder) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerSoldering(sink, id, output, duration, power, fluid,
+                toppings, pcb, solder);
+    }
+
+    public static ResourceLocation registerSoldering(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemStack output, int duration, long power, HbmFluidStack fluid, List<HbmIngredient> toppings,
+            List<HbmIngredient> pcb, List<HbmIngredient> solder, int sourceOrder) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerSoldering(sink, name, output, duration, power, fluid,
+                toppings, pcb, solder, sourceOrder);
+    }
+
+    public static ResourceLocation registerSoldering(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemStack output, int duration, long power, HbmFluidStack fluid, HbmIngredient[] toppings,
+            HbmIngredient[] pcb, HbmIngredient[] solder, int sourceOrder) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerSoldering(sink, name, output, duration, power, fluid,
+                toppings, pcb, solder, sourceOrder);
+    }
+
+    public static ResourceLocation registerSoldering(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemStack output, int duration, long power, HbmFluidStack fluid, HbmIngredient[] toppings,
+            HbmIngredient[] pcb, HbmIngredient[] solder) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerSoldering(sink, name, output, duration, power, fluid,
+                toppings, pcb, solder);
+    }
+
     public static JsonObject createArcWelder(String name, ItemStack output, int duration, long power,
             HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
         return com.hbm.ntm.compat.CompatRecipeRegistry.createArcWelder(name, output, duration, power, inputFluid,
@@ -412,6 +539,191 @@ public final class CompatRecipeRegistry {
             List<HbmFluidStack> outputFluids) {
         return com.hbm.ntm.compat.CompatRecipeRegistry.registerGeneric(sink, name, machine, named, icon, duration,
                 power, inputItems, inputFluids, outputItems, outputFluids);
+    }
+
+    public static JsonObject createFusionReactor(String name, int duration, long power, long klystron,
+            long plasma, double neutrons, HbmFluidStack[] inputFluids, ItemStack outputItem,
+            HbmFluidStack outputFluid) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createFusionReactor(name, duration, power, klystron, plasma,
+                neutrons, inputFluids, outputItem, outputFluid);
+    }
+
+    public static JsonObject createFusionReactor(ResourceLocation id, String name, int duration, long power,
+            long klystron, long plasma, double neutrons, HbmFluidStack[] inputFluids, ItemStack outputItem,
+            HbmFluidStack outputFluid) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createFusionReactor(id, name, duration, power, klystron,
+                plasma, neutrons, inputFluids, outputItem, outputFluid);
+    }
+
+    public static ResourceLocation registerFusionReactor(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            String name, int duration, long power, long klystron, long plasma, double neutrons,
+            HbmFluidStack[] inputFluids, ItemStack outputItem, HbmFluidStack outputFluid) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerFusionReactor(sink, id, name, duration, power,
+                klystron, plasma, neutrons, inputFluids, outputItem, outputFluid);
+    }
+
+    public static ResourceLocation registerFusionReactor(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            int duration, long power, long klystron, long plasma, double neutrons, HbmFluidStack[] inputFluids,
+            ItemStack outputItem, HbmFluidStack outputFluid) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerFusionReactor(sink, name, duration, power, klystron,
+                plasma, neutrons, inputFluids, outputItem, outputFluid);
+    }
+
+    public static JsonObject createBreeder(HbmIngredient input, ItemStack output, int flux) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createBreeder(input, output, flux);
+    }
+
+    public static JsonObject createBreeder(ItemLike input, ItemStack output, int flux) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createBreeder(input, output, flux);
+    }
+
+    public static ResourceLocation registerBreeder(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmIngredient input, ItemStack output, int flux) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerBreeder(sink, id, input, output, flux);
+    }
+
+    public static ResourceLocation registerBreeder(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient input, ItemStack output, int flux) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerBreeder(sink, name, input, output, flux);
+    }
+
+    public static ResourceLocation registerBreeder(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemLike input, ItemStack output, int flux) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerBreeder(sink, id, input, output, flux);
+    }
+
+    public static ResourceLocation registerBreeder(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemLike input, ItemStack output, int flux) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerBreeder(sink, name, input, output, flux);
+    }
+
+    public static JsonObject createFuelPool(HbmIngredient input, ItemStack output) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createFuelPool(input, output);
+    }
+
+    public static JsonObject createFuelPool(ItemStack input, ItemStack output) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createFuelPool(input, output);
+    }
+
+    public static JsonObject createFuelPool(ItemLike input, ItemStack output) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createFuelPool(input, output);
+    }
+
+    public static ResourceLocation registerFuelPool(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmIngredient input, ItemStack output) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerFuelPool(sink, id, input, output);
+    }
+
+    public static ResourceLocation registerFuelPool(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient input, ItemStack output) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerFuelPool(sink, name, input, output);
+    }
+
+    public static ResourceLocation registerFuelPool(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemStack input, ItemStack output) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerFuelPool(sink, id, input, output);
+    }
+
+    public static ResourceLocation registerFuelPool(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemStack input, ItemStack output) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerFuelPool(sink, name, input, output);
+    }
+
+    public static ResourceLocation registerFuelPool(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemLike input, ItemStack output) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerFuelPool(sink, id, input, output);
+    }
+
+    public static ResourceLocation registerFuelPool(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemLike input, ItemStack output) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerFuelPool(sink, name, input, output);
+    }
+
+    public static JsonObject createExposureChamber(HbmIngredient particle, HbmIngredient ingredient,
+            ItemStack output, int sourceOrder) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createExposureChamber(particle, ingredient, output,
+                sourceOrder);
+    }
+
+    public static ResourceLocation registerExposureChamber(com.hbm.ntm.api.recipe.RecipeSink sink,
+            ResourceLocation id, HbmIngredient particle, HbmIngredient ingredient, ItemStack output,
+            int sourceOrder) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerExposureChamber(sink, id, particle, ingredient,
+                output, sourceOrder);
+    }
+
+    public static ResourceLocation registerExposureChamber(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient particle, HbmIngredient ingredient, ItemStack output, int sourceOrder) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerExposureChamber(sink, name, particle, ingredient,
+                output, sourceOrder);
+    }
+
+    public static JsonObject createOutgasser(HbmIngredient input, ItemStack solidOutput,
+            HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createOutgasser(input, solidOutput, fluidOutput, fusionOnly);
+    }
+
+    public static JsonObject createOutgasser(HbmIngredient input, ItemStack solidOutput,
+            HbmFluidStack fluidOutput) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createOutgasser(input, solidOutput, fluidOutput);
+    }
+
+    public static JsonObject createOutgasser(ItemLike input, ItemStack solidOutput, HbmFluidStack fluidOutput,
+            boolean fusionOnly) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createOutgasser(input, solidOutput, fluidOutput, fusionOnly);
+    }
+
+    public static JsonObject createOutgasser(TagKey<Item> input, ItemStack solidOutput, HbmFluidStack fluidOutput,
+            boolean fusionOnly) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createOutgasser(input, solidOutput, fluidOutput, fusionOnly);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmIngredient input, ItemStack solidOutput, HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerOutgasser(sink, id, input, solidOutput,
+                fluidOutput, fusionOnly);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            HbmIngredient input, ItemStack solidOutput, HbmFluidStack fluidOutput) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerOutgasser(sink, id, input, solidOutput,
+                fluidOutput);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient input, ItemStack solidOutput, HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerOutgasser(sink, name, input, solidOutput,
+                fluidOutput, fusionOnly);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient input, ItemStack solidOutput, HbmFluidStack fluidOutput) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerOutgasser(sink, name, input, solidOutput,
+                fluidOutput);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemLike input, ItemStack solidOutput, HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerOutgasser(sink, id, input, solidOutput,
+                fluidOutput, fusionOnly);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            TagKey<Item> input, ItemStack solidOutput, HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerOutgasser(sink, id, input, solidOutput,
+                fluidOutput, fusionOnly);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemLike input, ItemStack solidOutput, HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerOutgasser(sink, name, input, solidOutput,
+                fluidOutput, fusionOnly);
+    }
+
+    public static ResourceLocation registerOutgasser(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            TagKey<Item> input, ItemStack solidOutput, HbmFluidStack fluidOutput, boolean fusionOnly) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerOutgasser(sink, name, input, solidOutput,
+                fluidOutput, fusionOnly);
     }
 
     public static JsonObject createAnvilConstruction(List<HbmIngredient> inputs, List<HbmItemOutput> outputs,

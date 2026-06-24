@@ -30,9 +30,7 @@ public class FusionPlasmaForgeScreen extends AbstractContainerScreen<FusionPlasm
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
         int power = menu.getPowerBarHeight(62);
-        if (power > 0) {
-            graphics.blit(TEXTURE, leftPos + 152, topPos + 80 - power, 176, 62 - power, 16, power);
-        }
+        graphics.blit(TEXTURE, leftPos + 152, topPos + 80 - power, 176, 62 - power, 16, power);
         int progress = menu.getProgressWidth(70);
         if (progress > 0) {
             graphics.blit(TEXTURE, leftPos + 62, topPos + 81, 176, 62, progress, 16);

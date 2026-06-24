@@ -90,6 +90,14 @@ public class ExplosionBalefire {
         return n > nlimit;
     }
 
+    public int currentWorldX() {
+        return posX + lastposX;
+    }
+
+    public int currentWorldZ() {
+        return posZ + lastposZ;
+    }
+
     private void breakColumn(int x, int z) {
         int distance = (int) (radius - Math.sqrt(x * x + z * z));
         if (distance <= 0) {

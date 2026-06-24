@@ -1,7 +1,7 @@
 ﻿{
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/crucible"
+    "particle": "hbm_ntm_rebirth:block/machines/crucible_heat"
   },
   "elements": []
 }

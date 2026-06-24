@@ -18,6 +18,8 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -49,8 +51,6 @@ public class FireboxHeaterBlockEntity extends BlockEntity
     private static final String TAG_HEAT = "heatEnergy";
     private static final String TAG_WAS_ON = "wasOn";
     private static final String TAG_PLAYERS_USING = "playersUsing";
-    private static final String TAG_DOOR_ANGLE = "doorAngle";
-    private static final String TAG_PREV_DOOR_ANGLE = "prevDoorAngle";
     private static final LegacyBurnTimeModule BURN_MODULE = new LegacyBurnTimeModule()
             .setLigniteTimeMod(1.25D)
             .setCoalTimeMod(1.25D)
@@ -261,7 +261,31 @@ public class FireboxHeaterBlockEntity extends BlockEntity
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         writeLegacyLoadedTileNbt(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "Inventory", items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        pollution.writeLegacyNbt(tag);
+        tag.putInt(TAG_MAX_BURN_TIME, maxBurnTime);
+        tag.putInt(TAG_BURN_TIME, burnTime);
+        tag.putInt(TAG_BURN_HEAT, burnHeat);
+        tag.putInt(TAG_HEAT, heatEnergy);
+    }
+
+    @Override
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        readLegacyLoadedTileNbt(tag);
+        loadItems(tag);
+        pollution.readLegacyNbt(tag);
+        maxBurnTime = tag.getInt(TAG_MAX_BURN_TIME);
+        burnTime = tag.getInt(TAG_BURN_TIME);
+        burnHeat = tag.getInt(TAG_BURN_HEAT);
+        heatEnergy = Math.max(0, tag.getInt(TAG_HEAT));
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
         pollution.writeLegacyNbt(tag);
         tag.putInt(TAG_MAX_BURN_TIME, maxBurnTime);
         tag.putInt(TAG_BURN_TIME, burnTime);
@@ -269,15 +293,13 @@ public class FireboxHeaterBlockEntity extends BlockEntity
         tag.putInt(TAG_HEAT, heatEnergy);
         tag.putBoolean(TAG_WAS_ON, wasOn);
         tag.putInt(TAG_PLAYERS_USING, playersUsing);
-        tag.putFloat(TAG_DOOR_ANGLE, doorAngle);
-        tag.putFloat(TAG_PREV_DOOR_ANGLE, prevDoorAngle);
+        return tag;
     }
 
     @Override
-    public void load(CompoundTag tag) {
-        super.load(tag);
-        readLegacyLoadedTileNbt(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "Inventory", items);
+    public void handleClientSyncTag(CompoundTag tag) {
+        readLegacyLoadedTileClientTag(tag);
+        loadItems(tag);
         pollution.readLegacyNbt(tag);
         maxBurnTime = tag.getInt(TAG_MAX_BURN_TIME);
         burnTime = tag.getInt(TAG_BURN_TIME);
@@ -285,42 +307,43 @@ public class FireboxHeaterBlockEntity extends BlockEntity
         heatEnergy = Math.max(0, tag.getInt(TAG_HEAT));
         wasOn = tag.getBoolean(TAG_WAS_ON);
         playersUsing = Math.max(0, tag.getInt(TAG_PLAYERS_USING));
-        doorAngle = tag.getFloat(TAG_DOOR_ANGLE);
-        prevDoorAngle = tag.getFloat(TAG_PREV_DOOR_ANGLE);
-    }
-
-    @Override
-    public CompoundTag getClientSyncTag() {
-        return saveWithoutMetadata();
-    }
-
-    @Override
-    public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
     }
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(saveWithoutMetadata());
+        data.writeNbt(getClientSyncTag());
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         CompoundTag tag = data.readNbt();
         if (tag != null) {
-            load(tag);
+            handleClientSyncTag(tag);
         }
     }
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
     }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
     }
 
     @Override
@@ -401,6 +424,15 @@ public class FireboxHeaterBlockEntity extends BlockEntity
             level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
             networkPackNT(50);
         }
+    }
+
+    private void loadItems(CompoundTag tag) {
+        if (tag.contains(HbmInventoryMenuHelper.LEGACY_ITEMS_TAG, Tag.TAG_LIST)
+                || tag.contains("Items", Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "Inventory", items);
     }
 
     public enum Kind {

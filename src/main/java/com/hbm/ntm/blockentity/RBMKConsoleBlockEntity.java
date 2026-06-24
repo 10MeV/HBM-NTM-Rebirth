@@ -7,6 +7,7 @@ import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.neutron.RBMKConsolePlanner;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.BufferUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -179,16 +180,52 @@ public class RBMKConsoleBlockEntity extends BlockEntity implements HbmLegacyLoad
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
         writeLegacyLoadedTileBinary(data);
-        data.writeNbt(getClientSyncTag());
+        RBMKConsolePlanner.ConsolePacketPlan plan = RBMKConsolePlanner.planPacket(
+                level == null ? 0L : level.getGameTime(), columns, fluxBuffer, screens);
+        data.writeBoolean(plan.fullPacket());
+        if (plan.fullPacket()) {
+            writeLegacyColumns(data, plan.columns());
+            BufferUtil.writeIntArray(data, plan.fluxBuffer());
+            for (RBMKConsolePlanner.ScreenState screen : plan.screens()) {
+                BufferUtil.writeString(data, screen.display());
+            }
+            return;
+        }
+        for (RBMKConsolePlanner.ScreenState screen : plan.screens()) {
+            data.writeByte((byte) screen.type().ordinal());
+        }
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         readLegacyLoadedTileBinary(data);
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            readConsoleData(tag);
+        if (data.readBoolean()) {
+            readLegacyColumns(data);
+            int[] loadedFlux = BufferUtil.readIntArray(data);
+            if (loadedFlux.length == fluxBuffer.length) {
+                fluxBuffer = loadedFlux;
+            }
+            RBMKConsolePlanner.ScreenState[] nextScreens = screens.clone();
+            for (int i = 0; i < nextScreens.length; i++) {
+                RBMKConsolePlanner.ScreenState current = nextScreens[i] == null
+                        ? RBMKConsolePlanner.defaultScreen() : nextScreens[i];
+                nextScreens[i] = new RBMKConsolePlanner.ScreenState(
+                        current.type(), current.columns(), BufferUtil.readString(data));
+            }
+            screens = nextScreens;
+            return;
         }
+        RBMKConsolePlanner.ScreenType[] types = RBMKConsolePlanner.ScreenType.values();
+        RBMKConsolePlanner.ScreenState[] nextScreens = screens.clone();
+        for (int i = 0; i < nextScreens.length; i++) {
+            int ordinal = data.readByte();
+            RBMKConsolePlanner.ScreenType type = ordinal >= 0 && ordinal < types.length
+                    ? types[ordinal] : RBMKConsolePlanner.ScreenType.NONE;
+            RBMKConsolePlanner.ScreenState current = nextScreens[i] == null
+                    ? RBMKConsolePlanner.defaultScreen() : nextScreens[i];
+            nextScreens[i] = new RBMKConsolePlanner.ScreenState(type, current.columns(), current.display());
+        }
+        screens = nextScreens;
     }
 
     @Override
@@ -400,6 +437,37 @@ public class RBMKConsoleBlockEntity extends BlockEntity implements HbmLegacyLoad
                         columnTypes[ordinal], tag.getCompound("columnData" + i));
             }
         }
+    }
+
+    private static void writeLegacyColumns(FriendlyByteBuf data, RBMKConsolePlanner.ColumnSnapshot[] columns) {
+        RBMKConsolePlanner.ColumnSnapshot[] safeColumns = columns == null
+                ? new RBMKConsolePlanner.ColumnSnapshot[0] : columns;
+        for (int i = 0; i < RBMKConsolePlanner.CONSOLE_GRID_SIZE * RBMKConsolePlanner.CONSOLE_GRID_SIZE; i++) {
+            RBMKConsolePlanner.ColumnSnapshot column = i < safeColumns.length ? safeColumns[i] : null;
+            if (column == null || column.type() == null) {
+                data.writeByte(-1);
+            } else {
+                data.writeByte((byte) column.type().ordinal());
+                BufferUtil.writeNBT(data, column.data());
+            }
+        }
+    }
+
+    private void readLegacyColumns(FriendlyByteBuf data) {
+        RBMKConsolePlanner.ColumnType[] columnTypes = RBMKConsolePlanner.ColumnType.values();
+        RBMKConsolePlanner.ColumnSnapshot[] nextColumns =
+                new RBMKConsolePlanner.ColumnSnapshot[RBMKConsolePlanner.CONSOLE_GRID_SIZE
+                        * RBMKConsolePlanner.CONSOLE_GRID_SIZE];
+        for (int i = 0; i < nextColumns.length; i++) {
+            int ordinal = data.readByte();
+            if (ordinal < 0 || ordinal >= columnTypes.length) {
+                nextColumns[i] = null;
+            } else {
+                nextColumns[i] = new RBMKConsolePlanner.ColumnSnapshot(
+                        columnTypes[ordinal], BufferUtil.readNBT(data));
+            }
+        }
+        columns = nextColumns;
     }
 
     private void setChangedAndSync() {

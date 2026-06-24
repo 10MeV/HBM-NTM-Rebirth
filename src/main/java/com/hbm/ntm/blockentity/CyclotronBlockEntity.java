@@ -31,6 +31,7 @@ import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -524,7 +525,7 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        loadItems(tag);
         energy.setPower(tag.getLong(TAG_POWER));
         progress = tag.getInt(TAG_PROGRESS);
         plugs = tag.getByte(TAG_PLUGS);
@@ -558,6 +559,15 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
             return energyHandler.cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    private void loadItems(CompoundTag tag) {
+        if (tag.contains(HbmInventoryMenuHelper.LEGACY_ITEMS_TAG, Tag.TAG_LIST)
+                || tag.contains("Items", Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
     }
 
     private class ProxyCapabilityDelegate implements ICapabilityProvider {

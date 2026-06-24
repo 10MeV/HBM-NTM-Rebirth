@@ -25,6 +25,20 @@ import net.minecraft.world.phys.Vec3;
 
 public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_ORE_SLOPPER;
+    private static final LegacyWavefrontModel.SelectionHandle BASE =
+            MODEL.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle SLIDER =
+            MODEL.prepareRenderOnlyInCallOrder("Slider");
+    private static final LegacyWavefrontModel.SelectionHandle HYDRAULICS =
+            MODEL.prepareRenderOnlyInCallOrder("Hydraulics");
+    private static final LegacyWavefrontModel.SelectionHandle BUCKET =
+            MODEL.prepareRenderOnlyInCallOrder("Bucket");
+    private static final LegacyWavefrontModel.SelectionHandle BLADES_LEFT =
+            MODEL.prepareRenderOnlyInCallOrder("BladesLeft");
+    private static final LegacyWavefrontModel.SelectionHandle BLADES_RIGHT =
+            MODEL.prepareRenderOnlyInCallOrder("BladesRight");
+    private static final LegacyWavefrontModel.SelectionHandle FAN =
+            MODEL.prepareRenderOnlyInCallOrder("Fan");
 
     public OreSlopperRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -59,18 +73,18 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
 
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay)
                 .withRenderMode(LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
-        MODEL.renderPart("Base", definition.textureLocation(), context);
+        renderPart(BASE, definition, context);
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, blockEntity.getSlider(partialTick) * -3.0D);
-        MODEL.renderPart("Slider", definition.textureLocation(), context);
+        renderPart(SLIDER, definition, context);
 
         poseStack.pushPose();
         double extend = blockEntity.getBucket(partialTick) * 1.5D;
         poseStack.translate(0.0D, -Mth.clamp(extend - 0.25D, 0.0D, 1.25D), 0.0D);
-        MODEL.renderPart("Hydraulics", definition.textureLocation(), context);
+        renderPart(HYDRAULICS, definition, context);
         poseStack.translate(0.0D, -Mth.clamp(extend, 0.0D, 1.25D), 0.0D);
-        MODEL.renderPart("Bucket", definition.textureLocation(), context);
+        renderPart(BUCKET, definition, context);
         if (blockEntity.getAnimation() == SlopperAnimation.LIFTING) {
             renderBucketOre(blockEntity, poseStack, buffer, packedLight);
         }
@@ -82,24 +96,29 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
         poseStack.translate(0.375D, 2.75D, 0.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) blades));
         poseStack.translate(-0.375D, -2.75D, 0.0D);
-        MODEL.renderPart("BladesLeft", definition.textureLocation(), context);
+        renderPart(BLADES_LEFT, definition, context);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(-0.375D, 2.75D, 0.0D);
         poseStack.mulPose(Axis.ZN.rotationDegrees((float) blades));
         poseStack.translate(0.375D, -2.75D, 0.0D);
-        MODEL.renderPart("BladesRight", definition.textureLocation(), context);
+        renderPart(BLADES_RIGHT, definition, context);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 1.875D, -1.0D);
         poseStack.mulPose(Axis.XN.rotationDegrees((float) blockEntity.getFan(partialTick)));
         poseStack.translate(0.0D, -1.875D, 1.0D);
-        MODEL.renderPart("Fan", definition.textureLocation(), context);
+        renderPart(FAN, definition, context);
         poseStack.popPose();
 
         poseStack.popPose();
+    }
+
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, LegacyMachineDefinition definition,
+            ObjRenderContext context) {
+        MODEL.renderOnlyInCallOrder(definition.textureLocation(), context, handle);
     }
 
     private static void renderBucketOre(OreSlopperBlockEntity blockEntity, PoseStack poseStack,

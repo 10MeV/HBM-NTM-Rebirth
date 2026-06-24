@@ -35,6 +35,7 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -65,7 +66,9 @@ import java.util.List;
 
 public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
         HbmLegacyLoadedTile, HbmStandardFluidTransceiver, LegacyLookOverlayProvider {
-    private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_INVENTORY = HbmInventoryMenuHelper.LEGACY_ITEMS_TAG;
+    private static final String TAG_MODERN_INVENTORY = "Inventory";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_LEGACY_POWER = "power";
     private static final String TAG_LEGACY_MAX_POWER = "maxPower";
@@ -174,6 +177,8 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     private double progress;
     private String selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
     private Object audioLoop;
+    @Nullable
+    private String customName;
 
     public ChemicalPlantBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CHEMICAL_PLANT.get(), pos, state);
@@ -351,7 +356,10 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         writeLegacyLoadedTileNbt(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         tag.put(TAG_ENERGY, energy.serializeNBT());
         tag.putLong(TAG_LEGACY_POWER, energy.getPower());
         tag.putLong(TAG_LEGACY_MAX_POWER, energy.getMaxPower());
@@ -367,7 +375,8 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     public void load(CompoundTag tag) {
         super.load(tag);
         readLegacyLoadedTileNbt(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         if (tag.contains(TAG_ENERGY)) {
             energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
         } else if (tag.contains(TAG_LEGACY_POWER)) {
@@ -442,7 +451,9 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.machineChemicalPlant", "Chemical Plant");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatableWithFallback("container.machineChemicalPlant", "Chemical Plant");
     }
 
     @Override
@@ -613,6 +624,16 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     private boolean isFluidOutputContainerSlotActive(int slot) {
         int index = slot - SLOT_FLUID_OUTPUT_START;
         return index >= 0 && index < outputTanks.length && outputTanks[index].getTankType() != HbmFluids.NONE;
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        } else if (tag.contains(TAG_MODERN_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
     }
 
     private class ChemicalPlantAccessibleItemHandler implements IItemHandler {

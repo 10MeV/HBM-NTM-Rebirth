@@ -1,14 +1,19 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.LegacyFileCabinetBlock;
+import com.hbm.ntm.item.KeyPinItem;
+import com.hbm.ntm.item.PadlockItem;
 import com.hbm.ntm.menu.FileCabinetMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -40,6 +45,10 @@ public class LegacyFileCabinetBlockEntity extends BlockEntity implements MenuPro
     private float upperExtent;
     private float prevUpperExtent;
     private String customName;
+    private int lockPins;
+    private boolean locked;
+    private double lockMod = 0.1D;
+    private boolean cheesable = true;
 
     public LegacyFileCabinetBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.LEGACY_FILE_CABINET.get(), pos, state);
@@ -146,11 +155,66 @@ public class LegacyFileCabinetBlockEntity extends BlockEntity implements MenuPro
         return drops;
     }
 
+    public boolean tryApplyPadlock(Player player, ItemStack stack) {
+        if (!(stack.getItem() instanceof PadlockItem padlock) || locked || KeyPinItem.getPins(stack) == 0) {
+            return false;
+        }
+        lockPins = KeyPinItem.getPins(stack);
+        locked = true;
+        lockMod = padlock.lockMod();
+        setChangedAndUpdate();
+        if (player != null && level != null) {
+            LegacySoundPlayer.playSoundAtPlayer(player, "hbm:block.lockHang", 1.0F, 1.0F);
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+            }
+        }
+        return true;
+    }
+
+    public boolean tryCreateCounterfeitKeys(Player player, InteractionHand hand) {
+        if (!locked || player == null) {
+            return false;
+        }
+        if (!cheesable) {
+            player.displayClientMessage(Component.literal(
+                    "This lock is too elaborate for a counterfeit key to be made"), false);
+            player.displayClientMessage(Component.literal(
+                    "Perhaps there is another way around here to unlock it"), false);
+            return true;
+        }
+        ItemStack first = new ItemStack(ModItems.KEY_FAKE.get());
+        KeyPinItem.setPins(first, lockPins);
+        ItemStack second = first.copy();
+        player.setItemInHand(hand, first);
+        if (!player.getInventory().add(second)) {
+            player.drop(second, false);
+        }
+        player.swing(hand, true);
+        return true;
+    }
+
+    public boolean canAccess(Player player, ItemStack held) {
+        if (!locked) {
+            return true;
+        }
+        if (!held.isEmpty() && (held.is(ModItems.KEY.get()) || held.is(ModItems.KEY_FAKE.get()))
+                && KeyPinItem.getPins(held) == lockPins) {
+            LegacySoundPlayer.playSoundAtPlayer(player, "hbm:block.lockOpen", 1.0F, 1.0F);
+            return true;
+        }
+        return tryPick(player, held);
+    }
+
     public void loadFromPlacedStack(ItemStack stack) {
         CompoundTag tag = stack.getTag();
         if (tag != null) {
             HbmItemStackUtil.loadLegacyOrForgeItems(tag, items);
             customName = tag.contains("name") ? tag.getString("name") : null;
+            lockPins = tag.getInt("lock");
+            locked = tag.getBoolean("isLocked");
+            lockMod = tag.contains("lockMod") ? tag.getDouble("lockMod") : 0.1D;
+            cheesable = !tag.contains("cheesable") || tag.getBoolean("cheesable");
         }
         if (stack.hasCustomHoverName()) {
             customName = stack.getHoverName().getString();
@@ -176,6 +240,10 @@ public class LegacyFileCabinetBlockEntity extends BlockEntity implements MenuPro
         if (customName != null && !customName.isBlank()) {
             tag.putString("name", customName);
         }
+        tag.putInt("lock", lockPins);
+        tag.putBoolean("cheesable", cheesable);
+        tag.putBoolean("isLocked", locked);
+        tag.putDouble("lockMod", lockMod);
         tag.putInt("timer", timer);
         tag.putInt("playersUsing", playersUsing);
         tag.putFloat("lowerExtent", lowerExtent);
@@ -187,6 +255,10 @@ public class LegacyFileCabinetBlockEntity extends BlockEntity implements MenuPro
         super.load(tag);
         HbmItemStackUtil.loadLegacyOrForgeItems(tag, items);
         customName = tag.contains("name") ? tag.getString("name") : null;
+        lockPins = tag.getInt("lock");
+        locked = tag.getBoolean("isLocked");
+        lockMod = tag.contains("lockMod") ? tag.getDouble("lockMod") : 0.1D;
+        cheesable = !tag.contains("cheesable") || tag.getBoolean("cheesable");
         timer = tag.getInt("timer");
         playersUsing = tag.getInt("playersUsing");
         lowerExtent = tag.getFloat("lowerExtent");
@@ -217,6 +289,67 @@ public class LegacyFileCabinetBlockEntity extends BlockEntity implements MenuPro
             BlockState state = getBlockState();
             level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
         }
+    }
+
+    private boolean tryPick(Player player, ItemStack held) {
+        if (player == null || level == null) {
+            return false;
+        }
+        boolean canPick = false;
+        double chanceOfSuccess = lockMod * 100.0D;
+
+        if (!held.isEmpty() && held.is(ModItems.PIN.get()) && hasScrewdriver(player)) {
+            held.shrink(1);
+            canPick = true;
+        } else if (!held.isEmpty() && held.is(ModItems.SCREWDRIVER.get()) && consumeOnePin(player)) {
+            canPick = true;
+        }
+
+        if (!canPick) {
+            return false;
+        }
+
+        if (isWearingLockpickJacket(player)) {
+            chanceOfSuccess *= 100.0D;
+        }
+
+        if (chanceOfSuccess > level.random.nextDouble() * 100.0D) {
+            LegacySoundPlayer.playSoundAtPlayer(player, "hbm:item.pinUnlock", 1.0F, 1.0F);
+            return true;
+        }
+
+        LegacySoundPlayer.playSoundAtPlayer(player, "hbm:item.pinBreak", 1.0F,
+                0.8F + level.random.nextFloat() * 0.2F);
+        return false;
+    }
+
+    private static boolean hasScrewdriver(Player player) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.is(ModItems.SCREWDRIVER.get())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean consumeOnePin(Player player) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.is(ModItems.PIN.get())) {
+                stack.shrink(1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isWearingLockpickJacket(Player player) {
+        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        return chest.is(ModItems.JACKET.get()) || chest.is(ModItems.JACKET2.get());
+    }
+
+    private void setChangedAndUpdate() {
+        setChanged();
+        syncVisualState();
     }
 
     private float randomPitch(float base) {

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "SSS",
+    "PCP"
+  ],
+  "key": {
+    "S": {
+      "tag": "forge:ingots/steel"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:crate_iron"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:sat_dock"
+  },
+  "show_notification": true
+}

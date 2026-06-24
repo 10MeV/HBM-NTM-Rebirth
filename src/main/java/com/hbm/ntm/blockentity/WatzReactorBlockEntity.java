@@ -5,12 +5,12 @@ import com.hbm.ntm.entity.projectile.ShrapnelEntity;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
-import com.hbm.ntm.fluid.HbmFluidThermalExchange;
+import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait;
-import com.hbm.ntm.fluid.trait.HeatableFluidTrait.HeatingType;
+import com.hbm.ntm.fluid.trait.HeatableFluidTrait.HeatingStep;
 import com.hbm.ntm.item.WatzPelletItem;
 import com.hbm.ntm.menu.WatzReactorMenu;
 import com.hbm.ntm.network.HbmLegacyControlReceiver;
@@ -123,10 +123,11 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, WatzReactorBlockEntity reactor) {
-        HbmFluidNetworkBlockEntity.serverTick(level, pos, state, reactor);
         if (reactor.hasWatzAbove(level)) {
+            reactor.removeFluidNode();
             return;
         }
+        HbmFluidNetworkBlockEntity.serverTick(level, pos, state, reactor);
         boolean changed = reactor.tickTopSegment(level);
         if (changed || level.getGameTime() % 20L == 0L) {
             reactor.setChanged();
@@ -279,14 +280,30 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    protected boolean shouldCreateFluidNode() {
+        return level == null || !hasWatzAbove(level);
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return type == HbmFluids.COOLANT;
+        return type == coolantTank.getTankType();
     }
 
     @Override
     protected boolean shouldSubscribeAsFluidProvider(FluidType type) {
-        return (type == HbmFluids.COOLANT_HOT && hotCoolantTank.getFill() > 0)
-                || (type == HbmFluids.WATZ && mudTank.getFill() > 0);
+        return (type == hotCoolantTank.getTankType() && hotCoolantTank.getFill() > 0)
+                || (type == mudTank.getTankType() && mudTank.getFill() > 0);
+    }
+
+    @Override
+    protected Iterable<FluidPort> getNetworkFluidPorts(FluidType type) {
+        if (type == coolantTank.getTankType()) {
+            return topFluidPorts();
+        }
+        if (type == hotCoolantTank.getTankType() || type == mudTank.getTankType()) {
+            return bottomFluidPorts();
+        }
+        return List.of();
     }
 
     @Override
@@ -427,9 +444,13 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         }
         distributeSharedTanks(segments, shared);
         WatzReactorBlockEntity bottom = segments.get(segments.size() - 1);
-        bottom.tryProvideFluidToPorts(HbmFluids.COOLANT_HOT, bottom.hotCoolantTank.getPressure(), bottom);
-        bottom.tryProvideFluidToPorts(HbmFluids.WATZ, bottom.mudTank.getPressure(), bottom);
-        if (shared.mud.getFill() > 0) {
+        if (bottom.hotCoolantTank.getFill() > 0) {
+            bottom.tryProvideFluidToBottomPorts(bottom.hotCoolantTank.getTankType(), bottom.hotCoolantTank.getPressure());
+        }
+        if (bottom.mudTank.getFill() > 0) {
+            bottom.tryProvideFluidToBottomPorts(bottom.mudTank.getTankType(), bottom.mudTank.getPressure());
+        }
+        if (shared.mud.getFill() > 0 || shared.mudOverflow > 0) {
             explodeOnMudOverflow(level);
         }
         return true;
@@ -610,10 +631,16 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private void updateCoolant(SharedTanks shared) {
-        int heatToUse = (int) (heat * 0.2D);
-        HbmFluidThermalExchange.ThermalResult result = HbmFluidThermalExchange.heat(
-                shared.coolant, shared.hotCoolant, HeatingType.HEATEXCHANGER, heatToUse, false);
-        heat -= result.heatUsed();
+        double heatToUse = heat * 0.2D;
+        HeatableFluidTrait trait = shared.coolant.getTankType().getTrait(HeatableFluidTrait.class);
+        HeatingStep step = trait.getFirstStep();
+        int heatCycles = (int) (heatToUse / step.heatRequired());
+        int coolCycles = shared.coolant.getFill() / step.amountRequired();
+        int hotCycles = (shared.hotCoolant.getMaxFill() - shared.hotCoolant.getFill()) / step.amountProduced();
+        int cycles = Math.min(heatCycles, Math.min(hotCycles, coolCycles));
+        heat -= cycles * step.heatRequired();
+        shared.coolant.setFill(shared.coolant.getFill() - cycles * step.amountRequired());
+        shared.hotCoolant.setFill(shared.hotCoolant.getFill() + cycles * step.amountProduced());
     }
 
     private void updateReaction(@Nullable WatzReactorBlockEntity above, SharedTanks shared, boolean turnedOn) {
@@ -631,11 +658,11 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
                 WatzFuelRuntime.Curve burnFunc = type.burnFunc();
                 if (burnFunc != null) {
                     double div = type.heatDiv() != null ? type.heatDiv().eval(heat) : 1.0D;
-                    double burn = burnFunc.eval(inputFlux) / Math.max(div, 1.0E-9D);
+                    double burn = burnFunc.eval(inputFlux) / div;
                     WatzPelletItem.setYield(stack, WatzPelletItem.getYield(stack) - burn);
                     addedFlux += burn;
                     addedHeat += type.heatEmission() * burn;
-                    shared.mud.setFill(shared.mud.getFill() + (int) Math.round(type.mudContent() * burn));
+                    addMud(shared, (int) Math.round(type.mudContent() * burn));
                 }
             }
             for (ItemStack stack : pellets) {
@@ -645,10 +672,10 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
                     double absorb = absorbFunc.eval(inputFlux);
                     addedHeat += absorb;
                     WatzPelletItem.setYield(stack, WatzPelletItem.getYield(stack) - absorb);
-                    shared.mud.setFill(shared.mud.getFill() + (int) Math.round(type.mudContent() * absorb));
+                    addMud(shared, (int) Math.round(type.mudContent() * absorb));
                 }
             }
-            heat += (int) addedHeat;
+            heat += addedHeat;
             fluxLastBase = baseFlux;
             fluxLastReaction = addedFlux;
         } else {
@@ -703,7 +730,9 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
             return true;
         }
         ItemStack lockedStack = locks[slot];
-        return !lockedStack.isEmpty() && lockedStack.getItem() == stack.getItem();
+        return !lockedStack.isEmpty()
+                && lockedStack.getItem() == stack.getItem()
+                && WatzFuelRuntime.type(lockedStack) == WatzFuelRuntime.type(stack);
     }
 
     private void toggleLocks() {
@@ -767,13 +796,33 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         return tag.contains(key, Tag.TAG_INT) ? tag.getInt(key) / 1000.0D : tag.getDouble(key);
     }
 
+    private static void addMud(SharedTanks shared, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        int attempted = shared.mud.getFill() + amount;
+        shared.mudOverflow += Math.max(0, attempted - shared.mud.getMaxFill());
+        shared.mud.setFill(attempted);
+    }
+
     private List<FluidPort> fluidPorts() {
+        List<FluidPort> ports = new ArrayList<>();
+        ports.addAll(topFluidPorts());
+        ports.addAll(bottomFluidPorts());
+        return ports;
+    }
+
+    private List<FluidPort> topFluidPorts() {
         return List.of(
                 FluidPort.of(0, 3, 0, Direction.UP),
                 FluidPort.of(2, 3, 0, Direction.UP),
                 FluidPort.of(-2, 3, 0, Direction.UP),
                 FluidPort.of(0, 3, 2, Direction.UP),
-                FluidPort.of(0, 3, -2, Direction.UP),
+                FluidPort.of(0, 3, -2, Direction.UP));
+    }
+
+    private List<FluidPort> bottomFluidPorts() {
+        return List.of(
                 FluidPort.of(0, -1, 0, Direction.DOWN),
                 FluidPort.of(2, -1, 0, Direction.DOWN),
                 FluidPort.of(-2, -1, 0, Direction.DOWN),
@@ -781,22 +830,19 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
                 FluidPort.of(0, -1, -2, Direction.DOWN));
     }
 
+    private int tryProvideFluidToBottomPorts(FluidType type, int pressure) {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmFluidUtil.tryProvideToPorts(
+                        level, worldPosition, bottomFluidPorts(), type, pressure, this);
+    }
+
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        data.writeInt(tank.getFill());
-        data.writeInt(tank.getMaxFill());
-        data.writeInt(tank.getTankType().getId());
-        data.writeShort((short) tank.getPressure());
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.write(data, tank);
     }
 
     private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        int fill = data.readInt();
-        int maxFill = data.readInt();
-        FluidType type = HbmFluids.fromId(data.readInt());
-        int pressure = data.readShort();
-        tank.changeTankSize(maxFill);
-        tank.withPressure(pressure);
-        tank.setTankType(type);
-        tank.setFill(fill);
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.read(data, tank);
     }
 
     private static boolean hasTankTag(CompoundTag tag, String key) {
@@ -807,6 +853,7 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         private final HbmFluidTank coolant;
         private final HbmFluidTank hotCoolant;
         private final HbmFluidTank mud;
+        private int mudOverflow;
 
         private SharedTanks(int capacity) {
             coolant = new HbmFluidTank(HbmFluids.COOLANT, capacity);

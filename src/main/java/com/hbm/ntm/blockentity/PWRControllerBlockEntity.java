@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
@@ -48,7 +49,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -89,7 +89,8 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_FUEL_INPUT, SLOT_IDENTIFIER -> !stack.isEmpty();
+                case SLOT_FUEL_INPUT -> PWRFuelRuntime.isFuel(stack);
+                case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
                 default -> false;
             };
         }
@@ -296,6 +297,9 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
             rodTarget = Math.max(0, Math.min(100, data.getInt("control")));
             setChanged();
         }
+        if (data.contains("jettison")) {
+            jettisonFuel();
+        }
     }
 
     @Override
@@ -380,11 +384,6 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
-    public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-16, -16, -16), worldPosition.offset(17, 17, 17));
-    }
-
-    @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         coolantTank.writeToNbt(tag, "t0");
@@ -461,7 +460,7 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
-    public void serialize(FriendlyByteBuf data) {
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
         data.writeBoolean(false);
         writeLegacyLoadedTileBinary(data);
         data.writeInt(rodCount);
@@ -480,7 +479,7 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
-    public void deserialize(FriendlyByteBuf data) {
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         if (data.readBoolean()) {
             return;
         }
@@ -557,11 +556,16 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         if (!assembled) {
             return oldInput != coolantTank.getFill() || oldOutput != hotCoolantTank.getFill();
         }
+        if (unloadDelay > 0) {
+            unloadDelay--;
+        }
         if (!surroundingChunksLoaded(level)) {
             unloadDelay = 60;
         }
+        if (hotCoolantTank.getFill() > 0) {
+            tryProvideFluidToPorts(hotCoolantTank.getTankType(), hotCoolantTank.getPressure(), this);
+        }
         if (unloadDelay > 0) {
-            unloadDelay--;
             coreHeat = 0;
             hullHeat = 0;
             return true;
@@ -569,7 +573,7 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         loadFuelFromSlot();
         approachRods();
         int newFlux = sourceCount * 20;
-        if (typeLoaded != -1 && amountLoaded > 0 && rodCount > 0) {
+        if (typeLoaded != -1 && amountLoaded > 0) {
             PWRFuelRuntime.Type fuel = PWRFuelRuntime.type(typeLoaded);
             double usedRods = getTotalProcessMultiplier();
             double fluxPerRod = flux / rodCount;
@@ -588,9 +592,10 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         }
         if (amountLoaded <= 0) {
             typeLoaded = -1;
-            amountLoaded = 0;
         }
-        amountLoaded = Math.min(amountLoaded, rodCount);
+        if (amountLoaded > rodCount) {
+            amountLoaded = rodCount;
+        }
         moveCoreHeatToHull();
         updateCoolant();
         coreHeat *= 0.999D;
@@ -600,9 +605,6 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
             flux = newFlux * moderator.getMultiplier();
         } else {
             flux = newFlux;
-        }
-        if (hotCoolantTank.getFill() > 0) {
-            tryProvideFluidToPorts(hotCoolantTank.getTankType(), hotCoolantTank.getPressure(), this);
         }
         if (coreHeat > coreHeatCapacity) {
             meltDown(level);
@@ -859,9 +861,6 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         int heatToUse = (int) Math.min(Math.min(hullHeat, (long) (hullHeat * coolingEff
                 * trait.getEfficiency(HeatingType.PWR))), 2_000_000_000L);
         HeatingStep step = trait.getFirstStep();
-        if (step == null || step.amountRequired() <= 0 || step.amountProduced() <= 0 || step.heatRequired() <= 0) {
-            return;
-        }
         int coolCycles = coolantTank.getFill() / step.amountRequired();
         int hotCycles = (hotCoolantTank.getMaxFill() - hotCoolantTank.getFill()) / step.amountProduced();
         int heatCycles = heatToUse / step.heatRequired();
@@ -1005,21 +1004,11 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        data.writeInt(tank.getFill());
-        data.writeInt(tank.getMaxFill());
-        data.writeInt(tank.getTankType().getId());
-        data.writeShort((short) tank.getPressure());
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.write(data, tank);
     }
 
     private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        int fill = data.readInt();
-        int maxFill = data.readInt();
-        FluidType type = HbmFluids.fromId(data.readInt());
-        int pressure = data.readShort();
-        tank.changeTankSize(maxFill);
-        tank.withPressure(pressure);
-        tank.setTankType(type);
-        tank.setFill(fill);
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.read(data, tank);
     }
 
     private static boolean hasLegacyTankKey(CompoundTag tag, String key) {

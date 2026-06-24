@@ -1,5 +1,6 @@
 package com.hbm.ntm.recipe;
 
+import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.registry.ModItems;
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +82,11 @@ public final class ResearchReactorFuelRuntime {
         RegistryObject<Item> inputItem = ModItems.legacyItem(input);
         RegistryObject<Item> wasteItem = ModItems.legacyItem(waste);
         if (inputItem != null && wasteItem != null) {
-            FUELS.put(inputItem.get(), new FuelSpec(new ItemStack(wasteItem.get()), lifetime, function, reactivity));
+            FUELS.put(inputItem.get(), new FuelSpec(
+                    DepletedFuelItem.stack(wasteItem.get(), DepletedFuelItem.HOT_DAMAGE),
+                    lifetime,
+                    function,
+                    reactivity));
         }
     }
 

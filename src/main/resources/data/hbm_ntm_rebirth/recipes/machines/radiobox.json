@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "PLP",
+    "PSP",
+    "PLP"
+  ],
+  "key": {
+    "P": {
+      "tag": "forge:plates/steel"
+    },
+    "L": {
+      "tag": "forge:plates/dura_steel"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:ring_starmetal"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:radiobox"
+  },
+  "show_notification": true
+}

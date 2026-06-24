@@ -39,6 +39,7 @@ import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjFusionModels;
+import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.energy.HbmEnergyConnectionUtil;
 import com.hbm.ntm.energy.HbmEnergyConnector;
@@ -75,6 +76,134 @@ import java.util.Map;
 
 public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements BlockEntityRenderer<T> {
     private static final Map<LegacyMachineDefinition, LegacyWavefrontModel> MODELS = new IdentityHashMap<>();
+    private static final LegacyWavefrontModel.SelectionHandle DIESEL_GENERATOR =
+            ObjMachineModels.DIESELGEN_LEGACY.prepareRenderOnlyInCallOrder("Generator");
+    private static final LegacyWavefrontModel.SelectionHandle DIESEL_ENGINE =
+            ObjMachineModels.DIESELGEN_LEGACY.prepareRenderOnlyInCallOrder("Engine");
+    private static final LegacyWavefrontModel.SelectionHandle COMPRESSOR_BODY =
+            ObjMachineModels.COMPRESSOR.prepareRenderOnlyInCallOrder("Compressor");
+    private static final LegacyWavefrontModel.SelectionHandle COMPRESSOR_PUMP =
+            ObjMachineModels.COMPRESSOR.prepareRenderOnlyInCallOrder("Pump");
+    private static final LegacyWavefrontModel.SelectionHandle COMPRESSOR_FAN =
+            ObjMachineModels.COMPRESSOR.prepareRenderOnlyInCallOrder("Fan");
+    private static final LegacyWavefrontModel.SelectionHandle CONDENSER_BODY =
+            ObjMachineModels.CONDENSER.prepareRenderOnlyInCallOrder("Condenser");
+    private static final LegacyWavefrontModel.SelectionHandle CONDENSER_FAN_1 =
+            ObjMachineModels.CONDENSER.prepareRenderOnlyInCallOrder("Fan1");
+    private static final LegacyWavefrontModel.SelectionHandle CONDENSER_FAN_2 =
+            ObjMachineModels.CONDENSER.prepareRenderOnlyInCallOrder("Fan2");
+    private static final LegacyWavefrontModel.SelectionHandle PUMP_BASE =
+            ObjMachineModels.PUMP.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle PUMP_ROTOR =
+            ObjMachineModels.PUMP.prepareRenderOnlyInCallOrder("Rotor");
+    private static final LegacyWavefrontModel.SelectionHandle PUMP_ARMS =
+            ObjMachineModels.PUMP.prepareRenderOnlyInCallOrder("Arms");
+    private static final LegacyWavefrontModel.SelectionHandle PUMP_PISTON =
+            ObjMachineModels.PUMP.prepareRenderOnlyInCallOrder("Piston");
+    private static final LegacyWavefrontModel.SelectionHandle ANNIHILATOR_BODY =
+            ObjMachineModels.ANNIHILATOR.prepareRenderOnlyInCallOrder("Annihilator");
+    private static final LegacyWavefrontModel.SelectionHandle ANNIHILATOR_ROLLER =
+            ObjMachineModels.ANNIHILATOR.prepareRenderOnlyInCallOrder("Roller");
+    private static final LegacyWavefrontModel.SelectionHandle ANNIHILATOR_BELT =
+            ObjMachineModels.ANNIHILATOR.prepareRenderOnlyInCallOrder("Belt");
+    private static final LegacyWavefrontModel.SelectionHandle COMBUSTION_ENGINE_BODY =
+            ObjMachineModels.COMBUSTION_ENGINE.prepareRenderOnlyInCallOrder("Engine");
+    private static final LegacyWavefrontModel.SelectionHandle COMBUSTION_ENGINE_CANISTER =
+            ObjMachineModels.COMBUSTION_ENGINE.prepareRenderOnlyInCallOrder("Canister");
+    private static final LegacyWavefrontModel.SelectionHandle COMBUSTION_ENGINE_HATCH =
+            ObjMachineModels.COMBUSTION_ENGINE.prepareRenderOnlyInCallOrder("Hatch");
+    private static final LegacyWavefrontModel.SelectionHandle FIREBOX_MAIN =
+            ObjMachineModels.FIREBOX_LEGACY.prepareRenderOnlyInCallOrder("Main");
+    private static final LegacyWavefrontModel.SelectionHandle FIREBOX_DOOR =
+            ObjMachineModels.FIREBOX_LEGACY.prepareRenderOnlyInCallOrder("Door");
+    private static final LegacyWavefrontModel.SelectionHandle FIREBOX_INNER_EMPTY =
+            ObjMachineModels.FIREBOX_LEGACY.prepareRenderOnlyInCallOrder("InnerEmpty");
+    private static final LegacyWavefrontModel.SelectionHandle FIREBOX_INNER_BURNING =
+            ObjMachineModels.FIREBOX_LEGACY.prepareRenderOnlyInCallOrder("InnerBurning");
+    private static final LegacyWavefrontModel.SelectionHandle HEATING_OVEN_MAIN =
+            ObjMachineModels.HEATING_OVEN_LEGACY.prepareRenderOnlyInCallOrder("Main");
+    private static final LegacyWavefrontModel.SelectionHandle HEATING_OVEN_DOOR =
+            ObjMachineModels.HEATING_OVEN_LEGACY.prepareRenderOnlyInCallOrder("Door");
+    private static final LegacyWavefrontModel.SelectionHandle HEATING_OVEN_INNER =
+            ObjMachineModels.HEATING_OVEN_LEGACY.prepareRenderOnlyInCallOrder("Inner");
+    private static final LegacyWavefrontModel.SelectionHandle HEATING_OVEN_INNER_BURNING =
+            ObjMachineModels.HEATING_OVEN_LEGACY.prepareRenderOnlyInCallOrder("InnerBurning");
+    private static final LegacyWavefrontModel.SelectionHandle HEPHAESTUS_MAIN =
+            ObjMachineModels.HEPHAESTUS_LEGACY.prepareRenderOnlyInCallOrder("Main");
+    private static final LegacyWavefrontModel.SelectionHandle HEPHAESTUS_ROTOR =
+            ObjMachineModels.HEPHAESTUS_LEGACY.prepareRenderOnlyInCallOrder("Rotor");
+    private static final LegacyWavefrontModel.SelectionHandle HEPHAESTUS_CORE =
+            ObjMachineModels.HEPHAESTUS_LEGACY.prepareRenderOnlyInCallOrder("Core");
+    private static final LegacyWavefrontModel.SelectionHandle MIXER_MAIN =
+            ObjMachineModels.MIXER.prepareRenderOnlyInCallOrder("Main");
+    private static final LegacyWavefrontModel.SelectionHandle MIXER_BLADE =
+            ObjMachineModels.MIXER.prepareRenderOnlyInCallOrder("Mixer");
+    private static final LegacyWavefrontModel.SelectionHandle MIXER_FLUID =
+            ObjMachineModels.MIXER.prepareRenderOnlyInCallOrder("Fluid");
+    private static final LegacyWavefrontModel.SelectionHandle INTAKE_BASE =
+            ObjMachineModels.INTAKE_LEGACY.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle INTAKE_FAN =
+            ObjMachineModels.INTAKE_LEGACY.prepareRenderOnlyInCallOrder("Fan");
+    private static final LegacyWavefrontModel.SelectionHandle CRYSTALLIZER_BODY =
+            ObjMachineModels.ACIDIZER.prepareRenderOnlyInCallOrder("Body");
+    private static final LegacyWavefrontModel.SelectionHandle CRYSTALLIZER_SPINNER =
+            ObjMachineModels.ACIDIZER.prepareRenderOnlyInCallOrder("Spinner");
+    private static final LegacyWavefrontModel.SelectionHandle CRYSTALLIZER_FLUID =
+            ObjMachineModels.ACIDIZER.prepareRenderOnlyInCallOrder("Fluid");
+    private static final LegacyWavefrontModel.SelectionHandle AMMO_PRESS_FRAME =
+            ObjMachineModels.AMMO_PRESS.prepareRenderOnlyInCallOrder("Frame");
+    private static final LegacyWavefrontModel.SelectionHandle AMMO_PRESS_PRESS =
+            ObjMachineModels.AMMO_PRESS.prepareRenderOnlyInCallOrder("Press");
+    private static final LegacyWavefrontModel.SelectionHandle AMMO_PRESS_SHELLS =
+            ObjMachineModels.AMMO_PRESS.prepareRenderOnlyInCallOrder("Shells");
+    private static final LegacyWavefrontModel.SelectionHandle AMMO_PRESS_BULLETS =
+            ObjMachineModels.AMMO_PRESS.prepareRenderOnlyInCallOrder("Bullets");
+    private static final LegacyWavefrontModel.SelectionHandle ROTARY_FURNACE_BODY =
+            ObjMachineModels.ROTARY_FURNACE.prepareRenderOnlyInCallOrder("Furnace");
+    private static final LegacyWavefrontModel.SelectionHandle ROTARY_FURNACE_PISTON =
+            ObjMachineModels.ROTARY_FURNACE.prepareRenderOnlyInCallOrder("Piston");
+    private static final LegacyWavefrontModel.SelectionHandle SAWMILL_MAIN =
+            ObjMachineModels.SAWMILL.prepareRenderOnlyInCallOrder("Main");
+    private static final LegacyWavefrontModel.SelectionHandle SAWMILL_BLADE =
+            ObjMachineModels.SAWMILL.prepareRenderOnlyInCallOrder("Blade");
+    private static final LegacyWavefrontModel.SelectionHandle SAWMILL_GEAR_LEFT =
+            ObjMachineModels.SAWMILL.prepareRenderOnlyInCallOrder("GearLeft");
+    private static final LegacyWavefrontModel.SelectionHandle SAWMILL_GEAR_RIGHT =
+            ObjMachineModels.SAWMILL.prepareRenderOnlyInCallOrder("GearRight");
+    private static final LegacyWavefrontModel.SelectionHandle STIRLING_BASE =
+            ObjMachineModels.STIRLING.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle STIRLING_COG =
+            ObjMachineModels.STIRLING.prepareRenderOnlyInCallOrder("Cog");
+    private static final LegacyWavefrontModel.SelectionHandle STIRLING_COG_SMALL =
+            ObjMachineModels.STIRLING.prepareRenderOnlyInCallOrder("CogSmall");
+    private static final LegacyWavefrontModel.SelectionHandle STIRLING_PISTON =
+            ObjMachineModels.STIRLING.prepareRenderOnlyInCallOrder("Piston");
+    private static final LegacyWavefrontModel.SelectionHandle PUREX_BASE =
+            ObjMachineModels.PUREX.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle PUREX_FRAME =
+            ObjMachineModels.PUREX.prepareRenderOnlyInCallOrder("Frame");
+    private static final LegacyWavefrontModel.SelectionHandle PUREX_FAN =
+            ObjMachineModels.PUREX.prepareRenderOnlyInCallOrder("Fan");
+    private static final LegacyWavefrontModel.SelectionHandle PUREX_PUMP =
+            ObjMachineModels.PUREX.prepareRenderOnlyInCallOrder("Pump");
+    private static final LegacyWavefrontModel.SelectionHandle CYCLOTRON_BODY =
+            ObjMachineModels.CYCLOTRON.prepareRenderOnlyInCallOrder("Body");
+    private static final LegacyWavefrontModel.SelectionHandle CYCLOTRON_PLUG_1 =
+            ObjMachineModels.CYCLOTRON.prepareRenderOnlyInCallOrder("B1");
+    private static final LegacyWavefrontModel.SelectionHandle CYCLOTRON_PLUG_2 =
+            ObjMachineModels.CYCLOTRON.prepareRenderOnlyInCallOrder("B2");
+    private static final LegacyWavefrontModel.SelectionHandle CYCLOTRON_PLUG_3 =
+            ObjMachineModels.CYCLOTRON.prepareRenderOnlyInCallOrder("B3");
+    private static final LegacyWavefrontModel.SelectionHandle CYCLOTRON_PLUG_4 =
+            ObjMachineModels.CYCLOTRON.prepareRenderOnlyInCallOrder("B4");
+    private static final LegacyWavefrontModel.SelectionHandle BATTERY_REDD_BASE =
+            ObjMachineModels.BATTERY_REDD_LEGACY.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle BATTERY_REDD_WHEEL =
+            ObjMachineModels.BATTERY_REDD_LEGACY.prepareRenderOnlyInCallOrder("Wheel");
+    private static final LegacyWavefrontModel.SelectionHandle BATTERY_REDD_LIGHTS =
+            ObjMachineModels.BATTERY_REDD_LEGACY.prepareRenderOnlyInCallOrder("Lights");
+    private static final LegacyWavefrontModel.SelectionHandle BATTERY_REDD_PLASMA =
+            ObjMachineModels.BATTERY_REDD_LEGACY.prepareRenderOnlyInCallOrder("Plasma");
     private static final ResourceLocation BOILER_BURST_MODEL =
             new ResourceLocation(HbmNtm.MOD_ID, "models/machines/boiler_burst.obj");
     private static final ResourceLocation REFINERY_EXPLODED_MODEL =
@@ -277,10 +406,11 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         switch (definition.renderProfile()) {
             case ANNIHILATOR_UV_SCROLL -> {
                 currentMillis = System.currentTimeMillis();
-                model.renderPart("Annihilator", definition.textureLocation(), context);
-                renderRotatingPart(model, LegacyTileRenderPlans.annihilatorRollerPlan(currentMillis), context, poseStack);
+                renderAnnihilatorPart(model, "Annihilator", definition.textureLocation(), context);
+                renderAnnihilatorRotatingPart(model, LegacyTileRenderPlans.annihilatorRollerPlan(currentMillis),
+                        definition.textureLocation(), context, poseStack);
                 LegacyTileRenderPlans.TextureMatrixPartPlan belt = LegacyTileRenderPlans.annihilatorBeltPlan(currentMillis);
-                model.renderPart(belt.partName(), definition.partTextures().getOrDefault(belt.partName(),
+                renderAnnihilatorPart(model, belt.partName(), definition.partTextures().getOrDefault(belt.partName(),
                         definition.textureLocation()), context.withTextureMatrixPlan(belt.textureMatrix()));
                 return true;
             }
@@ -469,17 +599,50 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     private static void renderCyclotron(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             ObjRenderContext context, BlockEntity blockEntity) {
-        model.renderPart("Body", definition.textureLocation(), context);
+        renderCyclotronPart(model, "Body", definition.textureLocation(), context);
         boolean plugged = true;
         for (int index = 0; index < 4; index++) {
             boolean filled = blockEntity instanceof CyclotronBlockEntity cyclotron && cyclotron.getPlug(index);
             plugged &= filled;
             ResourceLocation texture = filled ? CYCLOTRON_FILLED_TEXTURES[index] : CYCLOTRON_EMPTY_TEXTURES[index];
-            model.renderPart("B" + (index + 1), texture, context);
+            renderCyclotronPart(model, "B" + (index + 1), texture, context);
         }
         if (plugged) {
             renderCyclotronGlyphRing(context.poseStack(), context.buffer());
         }
+    }
+
+    static void renderCyclotronItemParts(LegacyMachineDefinition definition, LegacyWavefrontModel model,
+            ObjRenderContext context) {
+        renderCyclotronPart(model, "Body", definition.textureLocation(), context);
+        for (int index = 0; index < 4; index++) {
+            renderCyclotronPart(model, "B" + (index + 1), CYCLOTRON_EMPTY_TEXTURES[index], context);
+        }
+    }
+
+    private static void renderCyclotronPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.CYCLOTRON) ? cyclotronHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.CYCLOTRON.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle cyclotronHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Body" -> CYCLOTRON_BODY;
+            case "B1" -> CYCLOTRON_PLUG_1;
+            case "B2" -> CYCLOTRON_PLUG_2;
+            case "B3" -> CYCLOTRON_PLUG_3;
+            case "B4" -> CYCLOTRON_PLUG_4;
+            default -> null;
+        };
     }
 
     private static void renderCyclotronGlyphRing(PoseStack poseStack, MultiBufferSource buffer) {
@@ -546,12 +709,47 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     private static void renderRotaryFurnace(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             ObjRenderContext context, PoseStack poseStack, BlockEntity blockEntity, float partialTick) {
-        model.renderPart("Furnace", definition.textureLocation(), context);
+        renderRotaryFurnacePart(model, "Furnace", definition.textureLocation(), context);
         float offset = blockEntity instanceof RotaryFurnaceBlockEntity furnace
                 ? furnace.getPistonOffset(partialTick)
                 : 0.0F;
-        renderTranslatedPart(model, new LegacyTileRenderPlans.TranslatedModelPartPlan(
-                "rotary_furnace_piston", "Piston", true, 0.0D, offset, 0.0D), context, poseStack);
+        renderRotaryFurnaceTranslatedPart(model, new LegacyTileRenderPlans.TranslatedModelPartPlan(
+                "rotary_furnace_piston", "Piston", true, 0.0D, offset, 0.0D),
+                definition.textureLocation(), context, poseStack);
+    }
+
+    private static void renderRotaryFurnaceTranslatedPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.TranslatedModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        if (!part.active()) {
+            return;
+        }
+        poseStack.pushPose();
+        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
+        renderRotaryFurnacePart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    private static void renderRotaryFurnacePart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.ROTARY_FURNACE) ? rotaryFurnaceHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.ROTARY_FURNACE.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle rotaryFurnaceHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Furnace" -> ROTARY_FURNACE_BODY;
+            case "Piston" -> ROTARY_FURNACE_PISTON;
+            default -> null;
+        };
     }
 
     private static void renderCrucible(LegacyMachineDefinition definition, LegacyWavefrontModel model,
@@ -592,17 +790,105 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     static void renderCompressorPlan(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             LegacyTileRenderPlans.CompressorPlan plan, ObjRenderContext context, PoseStack poseStack) {
-        model.renderPart(plan.bodyPartName(), definition.textureLocation(), context);
+        renderCompressorPart(model, plan.bodyPartName(), definition.textureLocation(), context);
         LegacyTileRenderPlans.TranslatedModelPartPlan pump = plan.pump();
         if (pump != null && pump.active()) {
             poseStack.pushPose();
             poseStack.translate(pump.translateX(), pump.translateY(), pump.translateZ());
-            model.renderPart(pump.partName(), definition.textureLocation(), context);
+            renderCompressorPart(model, pump.partName(), definition.textureLocation(), context);
             poseStack.popPose();
         }
         for (LegacyTileRenderPlans.RotatingModelPartPlan fan : plan.fans()) {
-            renderRotatingPart(model, fan, context, poseStack);
+            renderCompressorRotatingPart(model, fan, definition.textureLocation(), context, poseStack);
         }
+    }
+
+    private static void renderCompressorRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        renderCompressorPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    static void renderCompressorPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        if (sameModel(model, ObjMachineModels.COMPRESSOR)) {
+            LegacyWavefrontModel.SelectionHandle handle = compressorHandle(partName);
+            if (handle != null) {
+                ObjMachineModels.COMPRESSOR.renderOnlyInCallOrder(texture, context, handle);
+                return;
+            }
+        }
+        if (sameModel(model, ObjMachineModels.CONDENSER)) {
+            LegacyWavefrontModel.SelectionHandle handle = condenserHandle(partName);
+            if (handle != null) {
+                ObjMachineModels.CONDENSER.renderOnlyInCallOrder(texture, context, handle);
+                return;
+            }
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle compressorHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Compressor" -> COMPRESSOR_BODY;
+            case "Pump" -> COMPRESSOR_PUMP;
+            case "Fan" -> COMPRESSOR_FAN;
+            default -> null;
+        };
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle condenserHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Condenser" -> CONDENSER_BODY;
+            case "Fan1" -> CONDENSER_FAN_1;
+            case "Fan2" -> CONDENSER_FAN_2;
+            default -> null;
+        };
+    }
+
+    private static void renderAnnihilatorRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        renderAnnihilatorPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    static void renderAnnihilatorPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.ANNIHILATOR) ? annihilatorHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.ANNIHILATOR.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle annihilatorHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Annihilator" -> ANNIHILATOR_BODY;
+            case "Roller" -> ANNIHILATOR_ROLLER;
+            case "Belt" -> ANNIHILATOR_BELT;
+            default -> null;
+        };
     }
 
     private static void renderWaterPump(LegacyMachineDefinition definition, LegacyWavefrontModel model,
@@ -629,13 +915,13 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         BatteryReddBlockEntity battery = blockEntity instanceof BatteryReddBlockEntity redd ? redd : null;
         float rotation = battery != null ? battery.getInterpolatedRotation(partialTick) : 0.0F;
         float speed = battery != null ? battery.getSpeed() : 0.0F;
-        model.renderPart("Base", definition.textureLocation(), context);
+        renderBatteryReddPart(model, "Base", definition.textureLocation(), context);
         poseStack.pushPose();
         poseStack.translate(0.0D, 5.5D, 0.0D);
         poseStack.mulPose(Axis.XP.rotationDegrees(rotation));
         poseStack.translate(0.0D, -5.5D, 0.0D);
-        model.renderPart("Wheel", definition.textureLocation(), context);
-        renderPlannedPart(model, definition.textureLocation(),
+        renderBatteryReddPart(model, "Wheel", definition.textureLocation(), context);
+        renderPreparedPlannedPart(model, definition.textureLocation(),
                 LegacyTileRenderPlans.batteryReddStaticPlan().parts().get(2), context);
         poseStack.pushPose();
         poseStack.translate(0.0D, 5.5D, 0.0D);
@@ -685,8 +971,32 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                     .withLegacyLightmap(plan.fullbright().lightmapX(), plan.fullbright().lightmapY())
                     .withColor(color.red(), color.green(), color.blue(), color.alpha())
                     .withTextureMatrixPlan(layer.textureMatrix());
-            model.renderPart(layer.partName(), texture, layerContext);
+            renderBatteryReddPart(model, layer.partName(), texture, layerContext);
         }
+    }
+
+    static void renderBatteryReddPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.BATTERY_REDD_LEGACY) ? batteryReddHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.BATTERY_REDD_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle batteryReddHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Base" -> BATTERY_REDD_BASE;
+            case "Wheel" -> BATTERY_REDD_WHEEL;
+            case "Lights" -> BATTERY_REDD_LIGHTS;
+            case "Plasma" -> BATTERY_REDD_PLASMA;
+            default -> null;
+        };
     }
 
     private static boolean isPlayerWithin(BlockEntity blockEntity, double range) {
@@ -715,43 +1025,158 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     static void renderPumpPlan(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             LegacyTileRenderPlans.PumpPlan plan, ObjRenderContext context, PoseStack poseStack) {
-        model.renderPart(plan.basePartName(), definition.textureLocation(), context);
-        renderRotatingPart(model, plan.rotor(), context, poseStack);
-        renderPivotedPart(model, plan.arms(), context, poseStack);
-        renderTranslatedPart(model, plan.piston(), context, poseStack);
+        renderPumpPart(model, plan.basePartName(), definition.textureLocation(), context);
+        renderPumpRotatingPart(model, plan.rotor(), definition.textureLocation(), context, poseStack);
+        renderPumpPivotedPart(model, plan.arms(), definition.textureLocation(), context, poseStack);
+        renderPumpTranslatedPart(model, plan.piston(), definition.textureLocation(), context, poseStack);
+    }
+
+    private static void renderPumpRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        renderPumpPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    private static void renderPumpPivotedPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.PivotedModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        renderPumpPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    private static void renderPumpTranslatedPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.TranslatedModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        if (!part.active()) {
+            return;
+        }
+        poseStack.pushPose();
+        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
+        renderPumpPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    static void renderPumpPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.PUMP) ? pumpHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.PUMP.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle pumpHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Base" -> PUMP_BASE;
+            case "Rotor" -> PUMP_ROTOR;
+            case "Arms" -> PUMP_ARMS;
+            case "Piston" -> PUMP_PISTON;
+            default -> null;
+        };
     }
 
     private static void renderCombustionEngine(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             ObjRenderContext context, PoseStack poseStack, BlockEntity blockEntity, float partialTick) {
-        model.renderPart("Engine", definition.textureLocation(), context);
+        renderCombustionEnginePart(model, "Engine", definition.textureLocation(), context);
         ObjRenderContext canisterContext = context;
         if (blockEntity instanceof CombustionEngineBlockEntity engine) {
             int color = engine.getCanisterColor();
             canisterContext = context.withRgb(color >>> 16 & 255, color >>> 8 & 255, color & 255);
         }
-        model.renderPart("Canister", definition.textureLocation(), canisterContext);
+        renderCombustionEnginePart(model, "Canister", definition.textureLocation(), canisterContext);
         float doorAngle = blockEntity instanceof CombustionEngineBlockEntity engine
                 ? engine.getDoorAngle(partialTick)
                 : 0.0F;
-        renderRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
+        renderCombustionEngineRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
                 "combustion_engine_hatch", "Hatch", 1.0D, 0.0D, -2.6875D, 0.0F, -1.0F, 0.0F,
-                doorAngle), context, poseStack);
+                doorAngle), definition.textureLocation(), context, poseStack);
+    }
+
+    private static void renderCombustionEngineRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        renderCombustionEnginePart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    private static void renderCombustionEnginePart(LegacyWavefrontModel model, String partName,
+            ResourceLocation texture, ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.COMBUSTION_ENGINE) ? combustionEngineHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.COMBUSTION_ENGINE.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle combustionEngineHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Engine" -> COMBUSTION_ENGINE_BODY;
+            case "Canister" -> COMBUSTION_ENGINE_CANISTER;
+            case "Hatch" -> COMBUSTION_ENGINE_HATCH;
+            default -> null;
+        };
     }
 
     private static void renderDieselGenerator(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             ObjRenderContext context, PoseStack poseStack, BlockEntity blockEntity) {
-        model.renderPart("Generator", definition.textureLocation(), context);
+        renderDieselGeneratorPart(model, "Generator", definition.textureLocation(), context);
         if (blockEntity instanceof DieselGeneratorBlockEntity diesel && diesel.isBurning()) {
             long currentMillis = System.currentTimeMillis();
             double swingSide = Math.sin(currentMillis / 50.0D) * 0.005D;
             double swingFront = Math.sin(currentMillis / 25.0D) * 0.005D;
             poseStack.pushPose();
             poseStack.translate(swingFront, 0.0D, swingSide);
-            model.renderPart("Engine", definition.textureLocation(), context);
+            renderDieselGeneratorPart(model, "Engine", definition.textureLocation(), context);
             poseStack.popPose();
             return;
         }
-        model.renderPart("Engine", definition.textureLocation(), context);
+        renderDieselGeneratorPart(model, "Engine", definition.textureLocation(), context);
+    }
+
+    static void renderDieselGeneratorPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.DIESELGEN_LEGACY) ? dieselGeneratorHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.DIESELGEN_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle dieselGeneratorHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Generator" -> DIESEL_GENERATOR;
+            case "Engine" -> DIESEL_ENGINE;
+            default -> null;
+        };
     }
 
     private static void renderHeatBoiler(LegacyMachineDefinition definition, LegacyWavefrontModel model,
@@ -776,13 +1201,13 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     private static void renderHephaestus(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             ObjRenderContext context, PoseStack poseStack, BlockEntity blockEntity, float partialTick) {
-        model.renderPart("Main", definition.textureLocation(), context);
+        renderHephaestusPart(model, "Main", definition.textureLocation(), context);
         float rotor = blockEntity instanceof HephaestusBlockEntity hephaestus ? hephaestus.getRotor(partialTick) : 0.0F;
         boolean active = blockEntity instanceof HephaestusBlockEntity hephaestus && hephaestus.isActive();
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(rotor));
         for (int i = 0; i < 3; i++) {
-            model.renderPart("Rotor", definition.textureLocation(), context);
+            renderHephaestusPart(model, "Rotor", definition.textureLocation(), context);
             poseStack.mulPose(Axis.YP.rotationDegrees(120.0F));
         }
         poseStack.popPose();
@@ -790,8 +1215,31 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         ObjRenderContext coreContext = active
                 ? context.fullBright().withLegacyTextureMatrix(0.5F, 0.5F, 0.0F, rotor / 10.0F)
                 : context.withColor(0x808080).withLegacyTextureMatrix(0.5F, 0.5F, 0.0F, rotor / 10.0F);
-        model.renderPart("Core", active ? HEPHAESTUS_CORE_ACTIVE_TEXTURE : HEPHAESTUS_CORE_IDLE_TEXTURE,
+        renderHephaestusPart(model, "Core", active ? HEPHAESTUS_CORE_ACTIVE_TEXTURE : HEPHAESTUS_CORE_IDLE_TEXTURE,
                 coreContext);
+    }
+
+    private static void renderHephaestusPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.HEPHAESTUS_LEGACY) ? hephaestusHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.HEPHAESTUS_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle hephaestusHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Main" -> HEPHAESTUS_MAIN;
+            case "Rotor" -> HEPHAESTUS_ROTOR;
+            case "Core" -> HEPHAESTUS_CORE;
+            default -> null;
+        };
     }
 
     private static void renderRefinery(LegacyMachineDefinition definition, LegacyWavefrontModel model,
@@ -849,10 +1297,43 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     private static void renderIntake(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             ObjRenderContext context, PoseStack poseStack, BlockEntity blockEntity, float partialTick) {
         float fan = blockEntity instanceof IntakeBlockEntity intake ? intake.getFanSpin(partialTick) : 0.0F;
-        model.renderPart("Base", definition.textureLocation(), context);
-        renderRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
+        renderIntakePart(model, "Base", definition.textureLocation(), context);
+        renderIntakeRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
                 "intake_fan", "Fan", 0.0D, 0.0D, 0.0D, 0.0F, -1.0F, 0.0F,
-                fan), context, poseStack);
+                fan), definition.textureLocation(), context, poseStack);
+    }
+
+    private static void renderIntakeRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        renderIntakePart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    private static void renderIntakePart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.INTAKE_LEGACY) ? intakeHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.INTAKE_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle intakeHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Base" -> INTAKE_BASE;
+            case "Fan" -> INTAKE_FAN;
+            default -> null;
+        };
     }
 
     private static void renderCrystallizer(LegacyMachineDefinition definition, LegacyWavefrontModel model,
@@ -861,14 +1342,48 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         float angle = blockEntity instanceof ProcessingMachineBlockEntity processing
                 ? processing.getAngle(partialTick)
                 : 0.0F;
-        model.renderPart("Body", definition.textureLocation(), context);
-        renderRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
+        renderCrystallizerPart(model, "Body", definition.textureLocation(), context);
+        renderCrystallizerRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
                 "crystallizer_spinner", "Spinner", 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, 0.0F,
-                angle), context, poseStack);
+                angle), definition.textureLocation(), context, poseStack);
         ResourceLocation fluidTexture = blockEntity instanceof ProcessingMachineBlockEntity processing
                 ? processing.getCrystallizerTank().getTankType().getTexture()
                 : definition.textureLocation();
         renderPlannedPart(model, fluidTexture, LegacyTileRenderPlans.crystallizerFluidPlan(on), context);
+    }
+
+    private static void renderCrystallizerRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        renderCrystallizerPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    private static void renderCrystallizerPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.ACIDIZER) ? crystallizerHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.ACIDIZER.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle crystallizerHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Body" -> CRYSTALLIZER_BODY;
+            case "Spinner" -> CRYSTALLIZER_SPINNER;
+            case "Fluid" -> CRYSTALLIZER_FLUID;
+            default -> null;
+        };
     }
 
     private static void renderAshpit(LegacyMachineDefinition definition, LegacyWavefrontModel model,
@@ -912,25 +1427,61 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         float lift = blockEntity instanceof AmmoPressBlockEntity ammoPress ? ammoPress.getLift(partialTick) : 0.0F;
         boolean bullets = blockEntity instanceof AmmoPressBlockEntity ammoPress && ammoPress.shouldRenderBullets();
 
-        model.renderPart("Frame", definition.textureLocation(), context);
-        renderTranslatedPart(model, new LegacyTileRenderPlans.TranslatedModelPartPlan(
+        renderAmmoPressPart(model, "Frame", definition.textureLocation(), context);
+        renderAmmoPressTranslatedPart(model, new LegacyTileRenderPlans.TranslatedModelPartPlan(
                 "ammo_press_press", "Press", true,
-                0.0D, -press * 0.25D, 0.0D), context, poseStack);
-        renderTranslatedPart(model, new LegacyTileRenderPlans.TranslatedModelPartPlan(
+                0.0D, -press * 0.25D, 0.0D), definition.textureLocation(), context, poseStack);
+        renderAmmoPressTranslatedPart(model, new LegacyTileRenderPlans.TranslatedModelPartPlan(
                 "ammo_press_shells", "Shells", true,
-                0.0D, lift * 0.5D - 0.5D, 0.0D), context, poseStack);
-        renderTranslatedPart(model, new LegacyTileRenderPlans.TranslatedModelPartPlan(
+                0.0D, lift * 0.5D - 0.5D, 0.0D), definition.textureLocation(), context, poseStack);
+        renderAmmoPressTranslatedPart(model, new LegacyTileRenderPlans.TranslatedModelPartPlan(
                 "ammo_press_bullets", "Bullets", bullets,
-                0.0D, lift * 0.5D - 0.5D, 0.0D), context, poseStack);
+                0.0D, lift * 0.5D - 0.5D, 0.0D), definition.textureLocation(), context, poseStack);
+    }
+
+    private static void renderAmmoPressTranslatedPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.TranslatedModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        if (!part.active()) {
+            return;
+        }
+        poseStack.pushPose();
+        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
+        renderAmmoPressPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    private static void renderAmmoPressPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.AMMO_PRESS) ? ammoPressHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.AMMO_PRESS.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle ammoPressHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Frame" -> AMMO_PRESS_FRAME;
+            case "Press" -> AMMO_PRESS_PRESS;
+            case "Shells" -> AMMO_PRESS_SHELLS;
+            case "Bullets" -> AMMO_PRESS_BULLETS;
+            default -> null;
+        };
     }
 
     private static void renderMixer(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             ObjRenderContext context, PoseStack poseStack, BlockEntity blockEntity, float partialTick) {
-        model.renderPart("Main", definition.textureLocation(), context);
+        renderMixerPart(model, "Main", definition.textureLocation(), context);
         float rotation = blockEntity instanceof MixerBlockEntity mixer ? mixer.getRotation(partialTick) : 0.0F;
-        renderRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
+        renderMixerRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
                 "mixer_blade", "Mixer", 0.0D, 0.0D, 0.0D, 0.0F, -1.0F, 0.0F,
-                rotation), context, poseStack);
+                rotation), definition.textureLocation(), context, poseStack);
 
         if (!(blockEntity instanceof MixerBlockEntity mixer) || mixer.getTotalFluidFill() <= 0
                 || mixer.getTotalFluidCapacity() <= 0) {
@@ -942,9 +1493,54 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         poseStack.translate(0.0D, 1.0D, 0.0D);
         poseStack.scale(1.0F, (float) scale, 1.0F);
         poseStack.translate(0.0D, -1.0D, 0.0D);
-        model.renderPartUntextured("Fluid", context.withRgba(color >>> 16 & 255, color >>> 8 & 255,
+        renderMixerPartUntextured(model, "Fluid", context.withRgba(color >>> 16 & 255, color >>> 8 & 255,
                 color & 255, 191).withTranslucencyNoDepthWrite());
         poseStack.popPose();
+    }
+
+    private static void renderMixerRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        renderMixerPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    private static void renderMixerPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.MIXER) ? mixerHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.MIXER.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static void renderMixerPartUntextured(LegacyWavefrontModel model, String partName,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.MIXER) ? mixerHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.MIXER.renderOnlyUntextured(context, handle);
+            return;
+        }
+        model.renderPartUntextured(partName, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle mixerHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Main" -> MIXER_MAIN;
+            case "Mixer" -> MIXER_BLADE;
+            case "Fluid" -> MIXER_FLUID;
+            default -> null;
+        };
     }
 
     private static void renderCombinationOven(LegacyMachineDefinition definition, LegacyWavefrontModel model,
@@ -1010,18 +1606,19 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         float rot = blockEntity instanceof StirlingBlockEntity stirling ? stirling.getSpin(partialTick) : 0.0F;
         boolean hasCog = !(blockEntity instanceof StirlingBlockEntity stirling) || stirling.hasCog();
 
-        model.renderPart("Base", definition.textureLocation(), context);
+        renderStirlingPart(model, "Base", definition.textureLocation(), context);
         if (hasCog) {
-            renderRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
+            renderStirlingRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
                     "stirling_cog", "Cog", 0.0D, 1.375D, 0.0D, 0.0F, 0.0F, -1.0F,
-                    rot), context, poseStack);
+                    rot), definition.textureLocation(), context, poseStack);
         }
-        renderRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
+        renderStirlingRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
                 "stirling_cog_small", "CogSmall", 0.0D, 1.375D, 0.25D, 1.0F, 0.0F, 0.0F,
-                rot * 2.0F + 3.0F), context, poseStack);
-        renderTranslatedPart(model, new LegacyTileRenderPlans.TranslatedModelPartPlan(
+                rot * 2.0F + 3.0F), definition.textureLocation(), context, poseStack);
+        renderStirlingTranslatedPart(model, new LegacyTileRenderPlans.TranslatedModelPartPlan(
                 "stirling_piston", "Piston", true,
-                Math.sin(rot * Math.PI / 90.0D) * 0.25D + 0.125D, 0.0D, 0.0D), context, poseStack);
+                Math.sin(rot * Math.PI / 90.0D) * 0.25D + 0.125D, 0.0D, 0.0D),
+                definition.textureLocation(), context, poseStack);
     }
 
     private static void renderSawmill(LegacyMachineDefinition definition, LegacyWavefrontModel model,
@@ -1029,18 +1626,100 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         float rot = blockEntity instanceof SawmillBlockEntity sawmill ? sawmill.getSpin(partialTick) : 0.0F;
         boolean hasBlade = !(blockEntity instanceof SawmillBlockEntity sawmill) || sawmill.hasBlade();
 
-        model.renderPart("Main", definition.textureLocation(), context);
+        renderSawmillPart(model, "Main", definition.textureLocation(), context);
         if (hasBlade) {
-            renderRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
+            renderSawmillRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
                     "sawmill_blade", "Blade", 0.0D, 1.375D, 0.0D, 0.0F, 0.0F, 1.0F,
-                    -rot * 2.0F), context, poseStack);
+                    -rot * 2.0F), definition.textureLocation(), context, poseStack);
         }
-        renderRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
+        renderSawmillRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
                 "sawmill_gear_left", "GearLeft", 0.5625D, 1.375D, 0.0D, 0.0F, 0.0F, 1.0F,
-                rot), context, poseStack);
-        renderRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
+                rot), definition.textureLocation(), context, poseStack);
+        renderSawmillRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
                 "sawmill_gear_right", "GearRight", -0.5625D, 1.375D, 0.0D, 0.0F, 0.0F, 1.0F,
-                -rot), context, poseStack);
+                -rot), definition.textureLocation(), context, poseStack);
+    }
+
+    private static void renderSawmillRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        renderSawmillPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    private static void renderStirlingRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        renderStirlingPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    private static void renderStirlingTranslatedPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.TranslatedModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        if (!part.active()) {
+            return;
+        }
+        poseStack.pushPose();
+        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
+        renderStirlingPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    private static void renderSawmillPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.SAWMILL) ? sawmillHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.SAWMILL.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle sawmillHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Main" -> SAWMILL_MAIN;
+            case "Blade" -> SAWMILL_BLADE;
+            case "GearLeft" -> SAWMILL_GEAR_LEFT;
+            case "GearRight" -> SAWMILL_GEAR_RIGHT;
+            default -> null;
+        };
+    }
+
+    private static void renderStirlingPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.STIRLING) ? stirlingHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.STIRLING.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle stirlingHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Base" -> STIRLING_BASE;
+            case "Cog" -> STIRLING_COG;
+            case "CogSmall" -> STIRLING_COG_SMALL;
+            case "Piston" -> STIRLING_PISTON;
+            default -> null;
+        };
     }
 
     private static void renderPrecass(LegacyMachineDefinition definition, LegacyWavefrontModel model,
@@ -1054,15 +1733,15 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 ? machine.getPrecassArm(partialTick)
                 : new double[] { 45.0D, -30.0D, 45.0D };
 
-        model.renderPart("Base", definition.textureLocation(), context);
+        AssemblyMachineRenderer.renderModelPart(model, "Base", definition.textureLocation(), context);
         if (frame) {
-            model.renderPart("Frame", definition.textureLocation(), context);
+            AssemblyMachineRenderer.renderModelPart(model, "Frame", definition.textureLocation(), context);
         }
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees((float) ring));
-        model.renderPart("Ring", definition.textureLocation(), context);
-        model.renderPart("Ring2", definition.textureLocation(), context);
+        AssemblyMachineRenderer.renderModelPart(model, "Ring", definition.textureLocation(), context);
+        AssemblyMachineRenderer.renderModelPart(model, "Ring2", definition.textureLocation(), context);
         for (int i = 0; i < 4; i++) {
             double striker = blockEntity instanceof LegacyGenericSelectorMachineBlockEntity machine
                     ? machine.getPrecassStriker(i, partialTick)
@@ -1085,19 +1764,19 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         poseStack.translate(0.0D, 1.625D, 0.9375D);
         poseStack.mulPose(Axis.XP.rotationDegrees((float) arm[0]));
         poseStack.translate(0.0D, -1.625D, -0.9375D);
-        model.renderPart("ArmLower1", definition.textureLocation(), context);
+        AssemblyMachineRenderer.renderModelPart(model, "ArmLower1", definition.textureLocation(), context);
 
         poseStack.translate(0.0D, 2.375D, 0.9375D);
         poseStack.mulPose(Axis.XP.rotationDegrees((float) arm[1]));
         poseStack.translate(0.0D, -2.375D, -0.9375D);
-        model.renderPart("ArmUpper1", definition.textureLocation(), context);
+        AssemblyMachineRenderer.renderModelPart(model, "ArmUpper1", definition.textureLocation(), context);
 
         poseStack.translate(0.0D, 2.375D, 0.4375D);
         poseStack.mulPose(Axis.XP.rotationDegrees((float) arm[2]));
         poseStack.translate(0.0D, -2.375D, -0.4375D);
-        model.renderPart("Head1", definition.textureLocation(), context);
+        AssemblyMachineRenderer.renderModelPart(model, "Head1", definition.textureLocation(), context);
         poseStack.translate(0.0D, striker, 0.0D);
-        model.renderPart("Spike1", definition.textureLocation(), context);
+        AssemblyMachineRenderer.renderModelPart(model, "Spike1", definition.textureLocation(), context);
         poseStack.popPose();
     }
 
@@ -1109,16 +1788,63 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 ? machine.getPurexAnim(partialTick)
                 : 0.0F;
 
-        model.renderPart("Base", definition.textureLocation(), context);
+        renderPurexPart(model, "Base", definition.textureLocation(), context);
         if (frame) {
-            model.renderPart("Frame", definition.textureLocation(), context);
+            renderPurexPart(model, "Frame", definition.textureLocation(), context);
         }
-        renderRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
+        renderPurexRotatingPart(model, new LegacyTileRenderPlans.RotatingModelPartPlan(
                 "purex_fan", "Fan", 1.5D, 1.25D, 0.0D, 0.0F, 0.0F, 1.0F,
-                anim * 45.0F), context, poseStack);
-        renderTranslatedPart(model, new LegacyTileRenderPlans.TranslatedModelPartPlan(
+                anim * 45.0F), definition.textureLocation(), context, poseStack);
+        renderPurexTranslatedPart(model, new LegacyTileRenderPlans.TranslatedModelPartPlan(
                 "purex_pump", "Pump", true, BobMathUtil.sps(anim * 0.25D) * 0.5D, 0.0D, 0.0D),
-                context, poseStack);
+                definition.textureLocation(), context, poseStack);
+    }
+
+    private static void renderPurexRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        renderPurexPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    private static void renderPurexTranslatedPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.TranslatedModelPartPlan part, ResourceLocation texture,
+            ObjRenderContext context, PoseStack poseStack) {
+        if (!part.active()) {
+            return;
+        }
+        poseStack.pushPose();
+        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
+        renderPurexPart(model, part.partName(), texture, context);
+        poseStack.popPose();
+    }
+
+    static void renderPurexPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.PUREX) ? purexHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.PUREX.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle purexHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Base" -> PUREX_BASE;
+            case "Frame" -> PUREX_FRAME;
+            case "Fan" -> PUREX_FAN;
+            case "Pump" -> PUREX_PUMP;
+            default -> null;
+        };
     }
 
     private static void renderFireboxHeater(LegacyMachineDefinition definition, LegacyWavefrontModel model,
@@ -1131,15 +1857,16 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 : 0.0F;
         boolean burning = blockEntity instanceof FireboxHeaterBlockEntity firebox && firebox.wasOn();
 
-        model.renderPart("Main", definition.textureLocation(), partContext(definition, "Main", context));
+        renderFireboxHeaterPart(model, "Main", definition.textureLocation(), partContext(definition, "Main", context));
         if (kind == FireboxHeaterBlockEntity.Kind.OVEN) {
             poseStack.pushPose();
             poseStack.translate(0.0D, 0.0D, door * 0.75D / 135.0D);
-            model.renderPart("Door", definition.textureLocation(), partContext(definition, "Door", context));
+            renderFireboxHeaterPart(model, "Door", definition.textureLocation(),
+                    partContext(definition, "Door", context));
             poseStack.popPose();
             String innerPart = burning ? "InnerBurning" : "Inner";
             ObjRenderContext innerContext = partContext(definition, innerPart, context);
-            model.renderPart(innerPart, definition.textureLocation(),
+            renderFireboxHeaterPart(model, innerPart, definition.textureLocation(),
                     burning && innerContext == context ? innerContext.fullBright() : innerContext);
             return;
         }
@@ -1148,12 +1875,58 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         poseStack.translate(1.375D, 0.0D, 0.375D);
         poseStack.mulPose(Axis.YN.rotationDegrees(door));
         poseStack.translate(-1.375D, 0.0D, -0.375D);
-        model.renderPart("Door", definition.textureLocation(), partContext(definition, "Door", context));
+        renderFireboxHeaterPart(model, "Door", definition.textureLocation(),
+                partContext(definition, "Door", context));
         poseStack.popPose();
         String innerPart = burning ? "InnerBurning" : "InnerEmpty";
         ObjRenderContext innerContext = partContext(definition, innerPart, context);
-        model.renderPart(innerPart, definition.textureLocation(),
+        renderFireboxHeaterPart(model, innerPart, definition.textureLocation(),
                 burning && innerContext == context ? innerContext.fullBright() : innerContext);
+    }
+
+    private static void renderFireboxHeaterPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        if (sameModel(model, ObjMachineModels.FIREBOX_LEGACY)) {
+            LegacyWavefrontModel.SelectionHandle handle = fireboxHandle(partName);
+            if (handle != null) {
+                ObjMachineModels.FIREBOX_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+                return;
+            }
+        }
+        if (sameModel(model, ObjMachineModels.HEATING_OVEN_LEGACY)) {
+            LegacyWavefrontModel.SelectionHandle handle = heatingOvenHandle(partName);
+            if (handle != null) {
+                ObjMachineModels.HEATING_OVEN_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+                return;
+            }
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle fireboxHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Main" -> FIREBOX_MAIN;
+            case "Door" -> FIREBOX_DOOR;
+            case "InnerEmpty" -> FIREBOX_INNER_EMPTY;
+            case "InnerBurning" -> FIREBOX_INNER_BURNING;
+            default -> null;
+        };
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle heatingOvenHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Main" -> HEATING_OVEN_MAIN;
+            case "Door" -> HEATING_OVEN_DOOR;
+            case "Inner" -> HEATING_OVEN_INNER;
+            case "InnerBurning" -> HEATING_OVEN_INNER_BURNING;
+            default -> null;
+        };
     }
 
     static void renderVisibleMachineStaticPlan(LegacyMachineDefinition definition, LegacyWavefrontModel model,
@@ -1180,15 +1953,47 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     private static void renderPlannedPart(LegacyWavefrontModel model, net.minecraft.resources.ResourceLocation texture,
             LegacyTileRenderPlans.ModelPartTintPlan plan, ObjRenderContext context) {
+        renderPreparedPlannedPart(model, texture, plan, context);
+    }
+
+    private static void renderPreparedPlannedPart(LegacyWavefrontModel model,
+            net.minecraft.resources.ResourceLocation texture, LegacyTileRenderPlans.ModelPartTintPlan plan,
+            ObjRenderContext context) {
         if (!plan.active()) {
             return;
         }
         ObjRenderContext resolved = applyTintPlan(context, plan);
+        if (tryRenderPreparedPlannedPart(model, texture, plan, resolved)) {
+            return;
+        }
         if (plan.textured()) {
             model.renderPart(plan.partName(), texture, resolved);
         } else {
             model.renderPartUntextured(plan.partName(), resolved);
         }
+    }
+
+    private static boolean tryRenderPreparedPlannedPart(LegacyWavefrontModel model, ResourceLocation texture,
+            LegacyTileRenderPlans.ModelPartTintPlan plan, ObjRenderContext context) {
+        if (plan.textured() && sameModel(model, ObjMachineModels.BATTERY_REDD_LEGACY)) {
+            LegacyWavefrontModel.SelectionHandle handle = batteryReddHandle(plan.partName());
+            if (handle != null) {
+                ObjMachineModels.BATTERY_REDD_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+                return true;
+            }
+        }
+        if (sameModel(model, ObjMachineModels.ACIDIZER)) {
+            LegacyWavefrontModel.SelectionHandle handle = crystallizerHandle(plan.partName());
+            if (handle != null) {
+                if (plan.textured()) {
+                    ObjMachineModels.ACIDIZER.renderOnlyInCallOrder(texture, context, handle);
+                } else {
+                    ObjMachineModels.ACIDIZER.renderOnlyUntextured(context, handle);
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     private static ObjRenderContext applyTintPlan(ObjRenderContext context,
@@ -1237,6 +2042,10 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
         model.renderPart(part.partName(), context);
         poseStack.popPose();
+    }
+
+    private static boolean sameModel(LegacyWavefrontModel model, LegacyWavefrontModel expected) {
+        return model == expected || model.modelLocation().equals(expected.modelLocation());
     }
 
     private static void renderNormalTexturedQuad(ResourceLocation texture,

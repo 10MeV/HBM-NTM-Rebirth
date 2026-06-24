@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "hbm_ntm_rebirth:block/radiorec" },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/radiorec" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/radiorec" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/radiorec" }
+  }
+}

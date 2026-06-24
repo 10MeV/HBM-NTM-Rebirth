@@ -5,6 +5,7 @@ import com.hbm.ntm.block.FluidDuctBoxBlock;
 import com.hbm.ntm.block.FluidDuctExhaustBlock;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -30,6 +31,10 @@ public class FluidDuctItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final String[] PIPE_OVERLAY_TEXTURES = {"pipe_neo_overlay", "pipe_silver_overlay", "pipe_colored_overlay"};
     private static final String[] BOX_MATERIALS = {"silver", "copper", "white"};
     private static final String[] PIPE_INVENTORY_PARTS = {"pX", "nX", "pZ", "nZ"};
+    private static final ResourceLocation[] PIPE_BASE_TEXTURE_LOCATIONS = buildPipeTextures(PIPE_BASE_TEXTURES);
+    private static final ResourceLocation[] PIPE_OVERLAY_TEXTURE_LOCATIONS = buildPipeTextures(PIPE_OVERLAY_TEXTURES);
+    private static final LegacyWavefrontModel.SelectionHandle PIPE_INVENTORY_HANDLE =
+            ObjBlockModels.PIPE_NEO.prepareRenderOnlyInCallOrder(PIPE_INVENTORY_PARTS);
 
     public static final FluidDuctItemRenderer INSTANCE = new FluidDuctItemRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(),
@@ -61,20 +66,13 @@ public class FluidDuctItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.pushPose();
         applyCenteredDisplay(displayContext, poseStack);
         poseStack.scale(1.25F, 1.25F, 1.25F);
-        for (String part : PIPE_INVENTORY_PARTS) {
-            renderPipePart(part, clampedStyle, color, poseStack, buffer, packedLight, packedOverlay);
-        }
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(),
+                packedLight, packedOverlay);
+        ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(PIPE_BASE_TEXTURE_LOCATIONS[clampedStyle], context,
+                PIPE_INVENTORY_HANDLE);
+        ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(PIPE_OVERLAY_TEXTURE_LOCATIONS[clampedStyle],
+                context.withColor(color), PIPE_INVENTORY_HANDLE);
         poseStack.popPose();
-    }
-
-    private static void renderPipePart(String part, int style, int color, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjBlockModels.PIPE_NEO.renderPart(part, ObjBlockModels.texture(PIPE_BASE_TEXTURES[style]),
-                poseStack, buffer, packedLight, packedOverlay,
-                255, 255, 255, 255, true);
-        ObjBlockModels.PIPE_NEO.renderPart(part, ObjBlockModels.texture(PIPE_OVERLAY_TEXTURES[style]),
-                poseStack, buffer, packedLight, packedOverlay,
-                color >> 16 & 255, color >> 8 & 255, color & 255, 255, true);
     }
 
     private static void renderBoxDuctItem(int metadata, boolean exhaust, ItemDisplayContext displayContext,
@@ -120,5 +118,13 @@ public class FluidDuctItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static TextureAtlasSprite sprite(String texture) {
         return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + texture));
+    }
+
+    private static ResourceLocation[] buildPipeTextures(String[] names) {
+        ResourceLocation[] textures = new ResourceLocation[names.length];
+        for (int i = 0; i < names.length; i++) {
+            textures[i] = ObjBlockModels.texture(names[i]);
+        }
+        return textures;
     }
 }

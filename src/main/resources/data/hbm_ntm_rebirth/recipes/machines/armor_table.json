@@ -3,16 +3,16 @@
   "category": "decorations",
   "key": {
     "P": {
-      "item": "hbm_ntm_rebirth:plate_steel"
+      "tag": "forge:plates/steel"
     },
     "T": {
-      "item": "hbm_ntm_rebirth:ingot_tungsten"
+      "tag": "forge:ingots/tungsten"
     },
     "C": {
       "item": "minecraft:crafting_table"
     },
     "S": {
-      "item": "hbm_ntm_rebirth:block_steel"
+      "tag": "forge:storage_blocks/steel"
     }
   },
   "pattern": [

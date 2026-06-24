@@ -53,7 +53,7 @@ public class RBMKCraneConsoleRenderer implements BlockEntityRenderer<RBMKCraneCo
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     private static float legacyYaw(Direction facing) {

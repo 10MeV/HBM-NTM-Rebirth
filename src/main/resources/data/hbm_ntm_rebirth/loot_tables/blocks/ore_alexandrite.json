@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "hbm_ntm_rebirth:ore_alexandrite"
+          "name": "hbm_ntm_rebirth:gem_alexandrite"
         }
       ],
       "conditions": [

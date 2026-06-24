@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "TST",
+    "SSS"
+  ],
+  "key": {
+    "T": {
+      "tag": "forge:ingots/tungsten"
+    },
+    "S": {
+      "tag": "forge:ingots/steel"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:tape_recorder",
+    "count": 4
+  }
+}

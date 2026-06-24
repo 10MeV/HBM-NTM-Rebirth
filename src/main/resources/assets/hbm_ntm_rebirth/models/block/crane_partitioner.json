@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "hbm_ntm_rebirth:block/crane_top_wide",
+    "front": "hbm_ntm_rebirth:block/crane_partitioner_back",
+    "side": "hbm_ntm_rebirth:block/crane_partitioner_side"
+  }
+}

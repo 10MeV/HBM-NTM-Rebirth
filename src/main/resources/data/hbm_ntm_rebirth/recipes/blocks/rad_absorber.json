@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "ICI",
+    "CPC",
+    "ICI"
+  ],
+  "key": {
+    "I": {
+      "tag": "forge:ingots/copper"
+    },
+    "C": {
+      "tag": "forge:dusts/coal"
+    },
+    "P": {
+      "tag": "forge:dusts/lead"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rad_absorber",
+    "count": 1,
+    "nbt": "{hbmLegacyVariant:0}"
+  },
+  "show_notification": true
+}

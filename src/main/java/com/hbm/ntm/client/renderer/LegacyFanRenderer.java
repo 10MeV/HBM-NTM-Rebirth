@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyFanBlock;
 import com.hbm.ntm.blockentity.LegacyFanBlockEntity;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
@@ -14,6 +15,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class LegacyFanRenderer implements BlockEntityRenderer<LegacyFanBlockEntity> {
+    private static final LegacyWavefrontModel.SelectionHandle FRAME =
+            ObjMachineModels.FAN_LEGACY.prepareRenderOnlyInCallOrder("Frame");
+    private static final LegacyWavefrontModel.SelectionHandle BLADES =
+            ObjMachineModels.FAN_LEGACY.prepareRenderOnlyInCallOrder("Blades");
+
     public LegacyFanRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -35,9 +41,9 @@ public class LegacyFanRenderer implements BlockEntityRenderer<LegacyFanBlockEnti
         applyLegacyFacingTransform(poseStack, state.getValue(LegacyFanBlock.FACING));
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
                 .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
-        ObjMachineModels.FAN_LEGACY.renderPart("Frame", ObjMachineModels.FAN_TEXTURE, context);
+        renderPart(FRAME, context);
         poseStack.mulPose(Axis.YN.rotationDegrees(blockEntity.spin(partialTick)));
-        ObjMachineModels.FAN_LEGACY.renderPart("Blades", ObjMachineModels.FAN_TEXTURE, context);
+        renderPart(BLADES, context);
         poseStack.popPose();
     }
 
@@ -60,5 +66,9 @@ public class LegacyFanRenderer implements BlockEntityRenderer<LegacyFanBlockEnti
             }
         }
         poseStack.translate(0.0D, -0.5D, 0.0D);
+    }
+
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
+        ObjMachineModels.FAN_LEGACY.renderOnlyInCallOrder(ObjMachineModels.FAN_TEXTURE, context, handle);
     }
 }

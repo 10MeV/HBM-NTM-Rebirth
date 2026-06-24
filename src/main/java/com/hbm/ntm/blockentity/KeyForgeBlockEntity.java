@@ -79,7 +79,7 @@ public class KeyForgeBlockEntity extends BlockEntity implements MenuProvider {
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.machineKeyForge", "Key Forge");
+        return Component.translatableWithFallback("container.keyForge", "Locksmith Table");
     }
 
     @Nullable

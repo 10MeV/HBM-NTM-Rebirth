@@ -169,7 +169,7 @@ public class OreSlopperMenu extends AbstractContainerMenu {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     OreSlopperBlockEntity.SLOT_IDENTIFIER, OreSlopperBlockEntity.SLOT_IDENTIFIER + 1);
         }
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     OreSlopperBlockEntity.SLOT_BATTERY, OreSlopperBlockEntity.SLOT_BATTERY + 1);
         }

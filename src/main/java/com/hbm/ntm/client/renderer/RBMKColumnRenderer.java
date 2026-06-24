@@ -61,7 +61,7 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     public static void renderStaticSegment(BlockRenderDispatcher blockRenderer, BlockState state, int segment,
@@ -128,8 +128,9 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
             int red = color >> 16 & 255;
             int green = color >> 8 & 255;
             int blue = color & 255;
-            ObjRbmkModels.ELEMENT_RODS_VBO.renderPart(plan.part(), ObjRbmkModels.ELEMENT_FUEL_TEXTURE,
-                    poseStack, buffer, packedLight, packedOverlay, red, green, blue, 255);
+            ObjRbmkModels.renderFuelRodPart(plan.part(), ObjRbmkModels.ELEMENT_FUEL_TEXTURE,
+                    new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
+                            .withRgb(red, green, blue));
         }
         if (plan.cherenkov()) {
             renderCherenkovSegment(new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay),
@@ -156,7 +157,7 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
 
         poseStack.pushPose();
         poseStack.translate(0.5D, plan.lidWorldY() - segmentIndex, 0.5D);
-        ObjRbmkModels.RODS_VBO.renderPart(plan.part(), texture,
+        ObjRbmkModels.renderControlRodPart(plan.part(), texture,
                 new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay));
         poseStack.popPose();
     }

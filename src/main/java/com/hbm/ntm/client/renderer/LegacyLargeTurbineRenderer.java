@@ -12,11 +12,16 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLargeTurbineBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_TURBINE_LEGACY;
+    private static final LegacyWavefrontModel.SelectionHandle BODY =
+            MODEL.prepareRenderOnlyInCallOrder("Body");
+    private static final LegacyWavefrontModel.SelectionHandle BLADES =
+            MODEL.prepareRenderOnlyInCallOrder("Blades");
 
     public LegacyLargeTurbineRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -53,18 +58,43 @@ public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLar
 
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay)
                 .withRenderMode(LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
-        MODEL.renderPart("Body", definition.textureLocation(), context);
+        MODEL.renderOnlyInCallOrder(definition.textureLocation(), context, BODY);
 
         LegacyTileRenderPlans.RotatingModelPartPlan blades = plan.blades();
         poseStack.pushPose();
         poseStack.translate(blades.pivotX(), blades.pivotY(), blades.pivotZ());
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) blades.angleDegrees()));
         poseStack.translate(-blades.pivotX(), -blades.pivotY(), -blades.pivotZ());
-        MODEL.renderPart(blades.partName(),
+        MODEL.renderOnlyInCallOrder(
                 definition.partTextures().getOrDefault(blades.partName(), definition.textureLocation()),
-                context.withPackedLight(LightTexture.FULL_BRIGHT));
+                context.withPackedLight(LightTexture.FULL_BRIGHT), BLADES);
         poseStack.popPose();
 
         poseStack.popPose();
+    }
+
+    static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = sameModel(model) ? handle(partName) : null;
+        if (handle != null) {
+            MODEL.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static boolean sameModel(LegacyWavefrontModel model) {
+        return model == MODEL || model.modelLocation().equals(MODEL.modelLocation());
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Body" -> BODY;
+            case "Blades" -> BLADES;
+            default -> null;
+        };
     }
 }

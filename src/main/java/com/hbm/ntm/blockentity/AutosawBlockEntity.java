@@ -24,7 +24,6 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -262,14 +261,14 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity implements Hb
         Vec3 tip = bladeTip(pos);
         AABB blade = new AABB(tip.x - 1.0D, tip.y - 0.25D, tip.z - 1.0D,
                 tip.x + 1.0D, tip.y + 0.25D, tip.z + 1.0D);
-        for (Entity entity : level.getEntities((Entity) null, blade, entity -> entity instanceof LivingEntity)) {
+        for (LivingEntity living : level.getEntitiesOfClass(LivingEntity.class, blade)) {
             DamageSource source = level.damageSources().generic();
-            if (EntityDamageUtil.attackEntityFromNt(entity, source, 100.0F) && entity instanceof LivingEntity living) {
-                level.playSound(null, entity.blockPosition(), SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR,
+            if (EntityDamageUtil.attackEntityFromNt(living, source, 100.0F)) {
+                level.playSound(null, living.blockPosition(), SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR,
                         SoundSource.HOSTILE, 2.0F, 0.95F + level.random.nextFloat() * 0.2F);
                 int count = Math.min((int) Math.ceil(living.getMaxHealth() / 4.0F), 250);
-                ParticleUtil.spawnVanillaRedstoneBlockDustBurst(level, entity.getX(),
-                        entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ(), count * 4, 0.1D);
+                ParticleUtil.spawnVanillaRedstoneBlockDustBurst(level, living.getX(),
+                        living.getY() + living.getBbHeight() * 0.5D, living.getZ(), count * 4, 0.1D);
             }
         }
 
@@ -618,5 +617,10 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity implements Hb
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        return new AABB(worldPosition.offset(-12, 0, -12), worldPosition.offset(13, 10, 13));
     }
 }

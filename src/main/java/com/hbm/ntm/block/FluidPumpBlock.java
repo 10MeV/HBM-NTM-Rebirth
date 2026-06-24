@@ -32,6 +32,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
@@ -98,6 +99,10 @@ public class FluidPumpBlock extends BaseEntityBlock implements EntityBlock {
         ItemStack held = player.getItemInHand(hand);
         if (!(held.getItem() instanceof IFluidIdentifierItem identifier)
                 || !(level.getBlockEntity(pos) instanceof FluidPumpBlockEntity pump)) {
+            if (!level.isClientSide && level.getBlockEntity(pos) instanceof FluidPumpBlockEntity pump
+                    && player instanceof ServerPlayer serverPlayer) {
+                NetworkHooks.openScreen(serverPlayer, pump, pos);
+            }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         if (!level.isClientSide) {

@@ -81,6 +81,11 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
         return LegacyGuiProfile.VACUUM_DISTILL;
     }
 
+    @Override
+    protected String legacyContainerKey() {
+        return "container.vacuumDistill";
+    }
+
     public static void clientTick(Level level, BlockPos pos, BlockState state, VacuumDistillBlockEntity blockEntity) {
         blockEntity.updateAudioLoop();
     }
@@ -201,19 +206,19 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
         if (tag.contains("power")) {
             energy.setPower(tag.getLong("power"));
         }
-        if (tag.contains("input")) {
+        if (hasTankTag(tag, "input")) {
             inputTank.readFromNbt(tag, "input");
         }
-        if (tag.contains("heavy")) {
+        if (hasTankTag(tag, "heavy")) {
             heavyOilTank.readFromNbt(tag, "heavy");
         }
-        if (tag.contains("reformate")) {
+        if (hasTankTag(tag, "reformate")) {
             reformateTank.readFromNbt(tag, "reformate");
         }
-        if (tag.contains("light")) {
+        if (hasTankTag(tag, "light")) {
             lightOilTank.readFromNbt(tag, "light");
         }
-        if (tag.contains("gas")) {
+        if (hasTankTag(tag, "gas")) {
             sourGasTank.readFromNbt(tag, "gas");
         }
     }
@@ -242,5 +247,9 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
         if (tag != null) {
             handleClientSyncTag(tag);
         }
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 }

@@ -1,7 +1,9 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.MassStorageBlockEntity;
+import com.hbm.ntm.item.PadlockItem;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -71,7 +73,16 @@ public class MassStorageBlock extends HorizontalMachineBlock implements EntityBl
         }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof MassStorageBlockEntity storage) {
-            NetworkHooks.openScreen(serverPlayer, storage, pos);
+            ItemStack held = player.getItemInHand(hand);
+            if (held.getItem() instanceof PadlockItem) {
+                return storage.tryApplyPadlock(player, held) ? InteractionResult.CONSUME : InteractionResult.PASS;
+            }
+            if (held.is(ModItems.KEY_KIT.get())) {
+                return storage.tryCreateCounterfeitKeys(player, hand) ? InteractionResult.CONSUME : InteractionResult.PASS;
+            }
+            if (storage.canAccess(player, held)) {
+                NetworkHooks.openScreen(serverPlayer, storage, pos);
+            }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

@@ -167,9 +167,13 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
         List<HbmFluidTank> tanks = getAllTanks();
         for (int i = 0; i < tanks.size(); i++) {
             String key = "tank" + i;
-            if (tag.contains(key)) {
+            if (hasTankTag(tag, key)) {
                 tanks.get(i).readFromNbt(tag, key);
             }
         }
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 }

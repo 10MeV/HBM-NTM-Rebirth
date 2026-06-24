@@ -2,8 +2,10 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.ChargerBlock;
 import com.hbm.ntm.blockentity.ChargerBlockEntity;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -13,6 +15,17 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> {
+    private static final LegacyWavefrontModel.SelectionHandle BASE =
+            ObjMachineModels.CHARGER.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle LEFT =
+            ObjMachineModels.CHARGER.prepareRenderOnlyInCallOrder("Left");
+    private static final LegacyWavefrontModel.SelectionHandle RIGHT =
+            ObjMachineModels.CHARGER.prepareRenderOnlyInCallOrder("Right");
+    private static final LegacyWavefrontModel.SelectionHandle SLIDE =
+            ObjMachineModels.CHARGER.prepareRenderOnlyInCallOrder("Slide");
+    private static final LegacyWavefrontModel.SelectionHandle LIGHT =
+            ObjMachineModels.CHARGER.prepareRenderOnlyInCallOrder("Light");
+
     public ChargerRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -35,19 +48,48 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
         orient(poseStack, state.hasProperty(ChargerBlock.FACING) ? state.getValue(ChargerBlock.FACING) : Direction.NORTH);
         poseStack.translate(-0.5D, -0.5D, -0.5D);
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        ObjMachineModels.CHARGER.renderPart("Base", ObjMachineModels.CHARGER_TEXTURE, context);
-        ObjMachineModels.CHARGER.renderPart("Left", ObjMachineModels.CHARGER_TEXTURE, context);
-        ObjMachineModels.CHARGER.renderPart("Right", ObjMachineModels.CHARGER_TEXTURE, context);
-        if (charger.getUsingTicks() > 0) {
-            ObjMachineModels.CHARGER.renderPart("Light", ObjMachineModels.CHARGER_TEXTURE, context.fullBright());
-        } else {
-            ObjMachineModels.CHARGER.renderPart("Light", ObjMachineModels.CHARGER_TEXTURE, context);
-        }
+        float time = charger.getSlide(partialTick);
+        double extend = Math.min(1.0D, time * 2.0D);
+        double swivel = Math.max(0.0D, (time - 0.5D) * 2.0D);
+
+        renderPart(BASE, context);
         poseStack.pushPose();
-        poseStack.translate(0.0D, -charger.getSlide(partialTick) * 0.25D, 0.0D);
-        ObjMachineModels.CHARGER.renderPart("Slide", ObjMachineModels.CHARGER_TEXTURE, context);
+        applySlideFrame(poseStack, extend);
+        renderArm(poseStack, context, LEFT, 30.0D * swivel);
+        renderArm(poseStack, context, RIGHT, -30.0D * swivel);
+        poseStack.popPose();
+
+        ObjMachineModels.CHARGER.renderOnlyUntextured(
+                context.fullBright().withRgb(255, 191, 0)
+                        .withRenderMode(LegacyTexturedRenderMode.CUTOUT_NO_CULL),
+                LIGHT);
+
+        poseStack.pushPose();
+        applySlideFrame(poseStack, extend);
+        renderPart(SLIDE, context);
         poseStack.popPose();
         poseStack.popPose();
+    }
+
+    private static void applySlideFrame(PoseStack poseStack, double extend) {
+        poseStack.translate(-0.34375D, 0.25D, 0.0D);
+        poseStack.mulPose(Axis.ZP.rotationDegrees(10.0F));
+        poseStack.translate(0.34375D, -0.25D, 0.0D);
+        poseStack.translate(0.0D, -0.25D * extend, 0.0D);
+    }
+
+    private static void renderArm(PoseStack poseStack, ObjRenderContext context,
+            LegacyWavefrontModel.SelectionHandle part, double angle) {
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.28D, 0.0D);
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) angle));
+        poseStack.translate(0.0D, -0.28D, 0.0D);
+        renderPart(part, context);
+        poseStack.popPose();
+    }
+
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
+        ObjMachineModels.CHARGER.renderOnlyInCallOrder(ObjMachineModels.CHARGER_TEXTURE, context, handle);
     }
 
     private static void orient(PoseStack poseStack, Direction facing) {

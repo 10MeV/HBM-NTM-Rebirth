@@ -2,14 +2,20 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.CrateBlock;
 import api.hbm.block.ILaserable;
+import com.hbm.ntm.item.KeyPinItem;
+import com.hbm.ntm.item.PadlockItem;
 import com.hbm.ntm.menu.CrateMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.monster.CaveSpider;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.Container;
 import net.minecraft.world.MenuProvider;
@@ -34,14 +40,23 @@ import java.util.List;
 
 public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider, ILaserable {
     public static final String LEGACY_NAME_TAG = "name";
+    public static final String LEGACY_LOCK_TAG = "lock";
+    public static final String LEGACY_LOCKED_TAG = "isLocked";
+    public static final String LEGACY_LOCK_MOD_TAG = "lockMod";
+    public static final String LEGACY_CHEESABLE_TAG = "cheesable";
     public static final String LEGACY_SPIDERS_TAG = "spiders";
     public static final String LEGACY_HEAT_TIMER_TAG = "heatTimer";
     private static final int LEGACY_MAX_TOOLTIP_SCAN = 104;
+    private static final int SPIDER_COUNT = 3;
 
     private final Kind kind;
     private final ItemStackHandler items;
     private final LazyOptional<IItemHandler> itemCapability;
     private String customName;
+    private int lockPins;
+    private boolean locked;
+    private double lockMod = 0.1D;
+    private boolean cheesable = true;
     private boolean hasSpiders;
     private int heatTimer;
 
@@ -67,11 +82,17 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
 
             @Override
             public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+                if (locked) {
+                    return stack;
+                }
                 return items.insertItem(slot, stack, simulate);
             }
 
             @Override
             public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+                if (locked) {
+                    return ItemStack.EMPTY;
+                }
                 ItemStack stack = items.getStackInSlot(slot);
                 if (kind == Kind.TUNGSTEN && isProtectedTungstenExtraction(stack)) {
                     return ItemStack.EMPTY;
@@ -105,6 +126,78 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
 
     public boolean isHot() {
         return kind == Kind.TUNGSTEN && heatTimer > 0;
+    }
+
+    public boolean isLocked() {
+        return locked;
+    }
+
+    public boolean tryApplyPadlock(Player player, ItemStack stack) {
+        if (!(stack.getItem() instanceof PadlockItem padlock) || locked || KeyPinItem.getPins(stack) == 0) {
+            return false;
+        }
+        lockPins = KeyPinItem.getPins(stack);
+        locked = true;
+        lockMod = padlock.lockMod();
+        setChangedAndUpdate();
+        if (player != null && level != null) {
+            LegacySoundPlayer.playSoundAtPlayer(player, "hbm:block.lockHang", 1.0F, 1.0F);
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+            }
+        }
+        return true;
+    }
+
+    public boolean tryCreateCounterfeitKeys(Player player, net.minecraft.world.InteractionHand hand) {
+        if (!locked || player == null) {
+            return false;
+        }
+        if (!cheesable) {
+            player.displayClientMessage(Component.literal(
+                    "This lock is too elaborate for a counterfeit key to be made"), false);
+            player.displayClientMessage(Component.literal(
+                    "Perhaps there is another way around here to unlock it"), false);
+            return true;
+        }
+        ItemStack first = new ItemStack(ModItems.KEY_FAKE.get());
+        KeyPinItem.setPins(first, lockPins);
+        ItemStack second = first.copy();
+        player.setItemInHand(hand, first);
+        if (!player.getInventory().add(second)) {
+            player.drop(second, false);
+        }
+        player.swing(hand, true);
+        return true;
+    }
+
+    public boolean canAccess(Player player, ItemStack held) {
+        if (!locked) {
+            return true;
+        }
+        if (!held.isEmpty() && (held.is(ModItems.KEY.get()) || held.is(ModItems.KEY_FAKE.get()))
+                && KeyPinItem.getPins(held) == lockPins) {
+            LegacySoundPlayer.playSoundAtPlayer(player, "hbm:block.lockOpen", 1.0F, 1.0F);
+            return true;
+        }
+        return tryPick(player, held);
+    }
+
+    public void triggerSpiders(Player player) {
+        if (!hasSpiders || !(level instanceof ServerLevel serverLevel) || player == null) {
+            return;
+        }
+        for (int i = 0; i < SPIDER_COUNT; i++) {
+            CaveSpider spider = new CaveSpider(net.minecraft.world.entity.EntityType.CAVE_SPIDER, serverLevel);
+            spider.moveTo(worldPosition.getX() + 0.5D + serverLevel.random.nextGaussian() * 2.0D,
+                    worldPosition.getY() + 1.0D,
+                    worldPosition.getZ() + 0.5D + serverLevel.random.nextGaussian() * 2.0D,
+                    serverLevel.random.nextFloat(), 0.0F);
+            spider.setTarget(player);
+            serverLevel.addFreshEntity(spider);
+        }
+        hasSpiders = false;
+        setChangedAndUpdate();
     }
 
     public void tick() {
@@ -177,6 +270,11 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
             tag.putBoolean(LEGACY_SPIDERS_TAG, true);
             wroteAny = true;
         }
+        if (locked) {
+            tag.putInt(LEGACY_LOCK_TAG, lockPins);
+            tag.putDouble(LEGACY_LOCK_MOD_TAG, lockMod);
+            wroteAny = true;
+        }
         if (!wroteAny && tag.isEmpty()) {
             stack.setTag(null);
         }
@@ -194,6 +292,15 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
             }
             hasSpiders = tag.getBoolean(LEGACY_SPIDERS_TAG);
             heatTimer = tag.getInt(LEGACY_HEAT_TIMER_TAG);
+            if (tag.contains(LEGACY_LOCK_TAG)) {
+                lockPins = tag.getInt(LEGACY_LOCK_TAG);
+                lockMod = tag.contains(LEGACY_LOCK_MOD_TAG) ? tag.getDouble(LEGACY_LOCK_MOD_TAG) : 0.1D;
+                locked = true;
+            } else {
+                lockPins = 0;
+                lockMod = 0.1D;
+                locked = false;
+            }
         }
         if (stack.hasCustomHoverName()) {
             customName = stack.getHoverName().getString();
@@ -283,6 +390,10 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
         super.saveAdditional(tag);
         HbmItemStackUtil.saveLegacyItemsToTag(tag, items);
         tag.putBoolean(LEGACY_SPIDERS_TAG, hasSpiders);
+        tag.putInt(LEGACY_LOCK_TAG, lockPins);
+        tag.putBoolean(LEGACY_LOCKED_TAG, locked);
+        tag.putDouble(LEGACY_LOCK_MOD_TAG, lockMod);
+        tag.putBoolean(LEGACY_CHEESABLE_TAG, cheesable);
         if (heatTimer > 0) {
             tag.putInt(LEGACY_HEAT_TIMER_TAG, heatTimer);
         }
@@ -296,6 +407,10 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
         super.load(tag);
         HbmItemStackUtil.loadLegacyItems(tag, items);
         hasSpiders = tag.getBoolean(LEGACY_SPIDERS_TAG);
+        lockPins = tag.getInt(LEGACY_LOCK_TAG);
+        locked = tag.getBoolean(LEGACY_LOCKED_TAG);
+        lockMod = tag.contains(LEGACY_LOCK_MOD_TAG) ? tag.getDouble(LEGACY_LOCK_MOD_TAG) : 0.1D;
+        cheesable = !tag.contains(LEGACY_CHEESABLE_TAG) || tag.getBoolean(LEGACY_CHEESABLE_TAG);
         heatTimer = tag.getInt(LEGACY_HEAT_TIMER_TAG);
         customName = tag.contains(LEGACY_NAME_TAG) ? tag.getString(LEGACY_NAME_TAG) : null;
     }
@@ -371,6 +486,62 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
         return !stack.isEmpty() && !getSmeltingResult(stack).isEmpty();
     }
 
+    private boolean tryPick(Player player, ItemStack held) {
+        if (player == null || level == null) {
+            return false;
+        }
+        boolean canPick = false;
+        double chanceOfSuccess = lockMod * 100.0D;
+
+        if (!held.isEmpty() && held.is(ModItems.PIN.get()) && hasScrewdriver(player)) {
+            held.shrink(1);
+            canPick = true;
+        } else if (!held.isEmpty() && held.is(ModItems.SCREWDRIVER.get()) && consumeOnePin(player)) {
+            canPick = true;
+        }
+
+        if (!canPick) {
+            return false;
+        }
+
+        if (isWearingLockpickJacket(player)) {
+            chanceOfSuccess *= 100.0D;
+        }
+
+        if (chanceOfSuccess > level.random.nextDouble() * 100.0D) {
+            LegacySoundPlayer.playSoundAtPlayer(player, "hbm:item.pinUnlock", 1.0F, 1.0F);
+            return true;
+        }
+
+        LegacySoundPlayer.playSoundAtPlayer(player, "hbm:item.pinBreak", 1.0F,
+                0.8F + level.random.nextFloat() * 0.2F);
+        return false;
+    }
+
+    private static boolean hasScrewdriver(Player player) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.is(ModItems.SCREWDRIVER.get())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean consumeOnePin(Player player) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.is(ModItems.PIN.get())) {
+                stack.shrink(1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isWearingLockpickJacket(Player player) {
+        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        return chest.is(ModItems.JACKET.get()) || chest.is(ModItems.JACKET2.get());
+    }
+
     private void spawnHeatParticles() {
         if (level == null) {
             return;
@@ -411,8 +582,27 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
             return;
         }
         if (tag.getBoolean(LEGACY_SPIDERS_TAG)) {
+            if (tag.contains(LEGACY_LOCK_TAG)) {
+                tooltip.add(Component.literal("This container is locked.")
+                        .withStyle(net.minecraft.ChatFormatting.RED));
+            }
             tooltip.add(Component.literal("Skittering emanates from within...")
                     .withStyle(net.minecraft.ChatFormatting.GRAY, net.minecraft.ChatFormatting.ITALIC));
+            return;
+        }
+        if (tag.contains(LEGACY_LOCK_TAG)) {
+            tooltip.add(Component.literal("This container is locked.")
+                    .withStyle(net.minecraft.ChatFormatting.RED));
+            boolean heavy = false;
+            for (int i = 0; i < LEGACY_MAX_TOOLTIP_SCAN; i++) {
+                if (tag.contains("slot" + i, net.minecraft.nbt.Tag.TAG_COMPOUND)
+                        && !ItemStack.of(tag.getCompound("slot" + i)).isEmpty()) {
+                    heavy = true;
+                    break;
+                }
+            }
+            tooltip.add(Component.literal(heavy ? "It feels heavy..." : "It feels empty...")
+                    .withStyle(net.minecraft.ChatFormatting.YELLOW));
             return;
         }
         List<Component> contents = new ArrayList<>();

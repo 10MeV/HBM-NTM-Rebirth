@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 1, "ingredient": { "item": "hbm_ntm_rebirth:reactor_core" }, "legacy_id": "hbm:reactor_core" },
+    { "count": 12, "ingredient": { "tag": "forge:ingots/steel" }, "legacy_ore": "ingotSteel" },
+    { "count": 16, "ingredient": { "tag": "forge:plates/lead" }, "legacy_ore": "plateLead" },
+    { "count": 4, "ingredient": { "item": "hbm_ntm_rebirth:reinforced_laminate" }, "legacy_id": "hbm:reinforced_glass" },
+    { "count": 4, "ingredient": { "tag": "forge:ingots/asbestos" }, "legacy_ore": "ingotAsbestos" },
+    { "count": 4, "ingredient": { "tag": "forge:ingots/any_resistant_alloy" }, "legacy_ore": "ingotAnyResistantAlloy" },
+    { "count": 1, "ingredient": { "item": "hbm_ntm_rebirth:crt_display" }, "legacy_id": "hbm:crt_display" }
+  ],
+  "internal_name": "ass.breedingreactor",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:machine_reactor_breeding" }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 159
+}

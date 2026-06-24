@@ -276,26 +276,24 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
         if (level == null || level.isClientSide) {
             return 0;
         }
-        int unsubscribed = 0;
-        for (EnergyPort port : getEnergyPorts()) {
-            if (unsubscribeEnergyProviderFromPort(port)) {
-                unsubscribed++;
-            }
-        }
-        return unsubscribed;
+        return HbmEnergyUtil.unsubscribeProviderFromPorts(level, worldPosition, getEnergyPorts(), energy);
     }
 
     protected int unsubscribeEnergyReceiverFromPorts() {
         if (level == null || level.isClientSide) {
             return 0;
         }
-        int unsubscribed = 0;
-        for (EnergyPort port : getEnergyPorts()) {
-            if (unsubscribeEnergyReceiverFromPort(port)) {
-                unsubscribed++;
-            }
+        return HbmEnergyUtil.unsubscribeReceiverFromPorts(level, worldPosition, getEnergyPorts(), energy);
+    }
+
+    protected void clearEnergySubscriptions() {
+        if (level == null || level.isClientSide) {
+            return;
         }
-        return unsubscribed;
+        unsubscribeEnergyProviderFromAllSides();
+        unsubscribeEnergyReceiverFromAllSides();
+        unsubscribeEnergyProviderFromPorts();
+        unsubscribeEnergyReceiverFromPorts();
     }
 
     @Override
@@ -373,6 +371,18 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
         forgeEnergy.invalidate();
         forgeEnergyInput.invalidate();
         forgeEnergyOutput.invalidate();
+    }
+
+    @Override
+    public void setRemoved() {
+        clearEnergySubscriptions();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        clearEnergySubscriptions();
+        super.onChunkUnloaded();
     }
 
     @Override

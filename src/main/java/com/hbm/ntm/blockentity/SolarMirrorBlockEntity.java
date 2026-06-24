@@ -118,6 +118,6 @@ public class SolarMirrorBlockEntity extends BlockEntity {
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-25, -25, -25), worldPosition.offset(26, 26, 26));
+        return new AABB(worldPosition.offset(-1, 0, -1), worldPosition.offset(2, 2, 2));
     }
 }

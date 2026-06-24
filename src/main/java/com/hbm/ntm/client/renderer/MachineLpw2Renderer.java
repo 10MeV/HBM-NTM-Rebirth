@@ -41,7 +41,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
 
-        ObjReactorModels.LPW2.renderPart("Frame", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("Frame", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, modelLight, packedOverlay);
         renderMainAssembly(plan, poseStack, buffer, modelLight, packedOverlay);
         renderRotating(plan.wireLeft(), poseStack, buffer, modelLight, packedOverlay);
@@ -53,7 +53,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.scale(1.0F, 1.0F,
                 (float) ((3.0D + plan.cover() * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 3.0D));
         poseStack.translate(0.0D, 0.0D, -3.5D);
-        ObjReactorModels.LPW2.renderPart("SuspensionCoverFront", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("SuspensionCoverFront", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
@@ -62,7 +62,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.scale(1.0F, 1.0F,
                 (float) ((1.5D - plan.cover() * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 1.5D));
         poseStack.translate(0.0D, 0.0D, 5.5D);
-        ObjReactorModels.LPW2.renderPart("SuspensionCoverBack", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("SuspensionCoverBack", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
@@ -71,7 +71,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.scale(1.0F, 1.0F,
                 (float) ((1.25D - plan.sway() * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 1.25D));
         poseStack.translate(0.0D, 0.0D, 9.0D);
-        ObjReactorModels.LPW2.renderPart("SuspensionBackOuter", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("SuspensionBackOuter", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
@@ -80,7 +80,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.scale(1.0F, 1.0F,
                 (float) ((1.75D - plan.sway() * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 1.75D));
         poseStack.translate(0.0D, 0.0D, 9.5D);
-        ObjReactorModels.LPW2.renderPart("SuspensionBackCenter", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("SuspensionBackCenter", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
@@ -95,10 +95,10 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         }
         poseStack.pushPose();
         poseStack.translate(plan.monitor().translateX(), plan.monitor().translateY(), plan.monitor().translateZ());
-        ObjReactorModels.LPW2.renderPart("Monitor", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("Monitor", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         LegacyTileRenderPlans.TextureMatrixPartPlan screen = plan.errorScreen();
-        ObjReactorModels.LPW2.renderPartWithLegacyTextureMatrixCull("Screen", ObjReactorModels.LPW2_TERM_ERROR_TEXTURE,
+        ObjReactorModels.renderLpw2PartWithLegacyTextureMatrixCull("Screen", ObjReactorModels.LPW2_TERM_ERROR_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay,
                 screen.color().redByte(), screen.color().greenByte(), screen.color().blueByte(),
                 screen.color().alphaByte(), (float) screen.textureMatrix().scaleU(),
@@ -111,7 +111,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(plan.center().translateX(), plan.center().translateY(), plan.center().translateZ());
-        ObjReactorModels.LPW2.renderPart(plan.center().partName(), ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part(plan.center().partName(), ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
 
         poseStack.pushPose();
@@ -120,21 +120,21 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.pushPose();
         poseStack.mulPose(Axis.ZN.rotationDegrees((float) (plan.rotor() * 360.0D)));
         poseStack.translate(0.0D, -3.5D, 0.0D);
-        ObjReactorModels.LPW2.renderPart("Rotor", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("Rotor", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) (plan.turbine() * 360.0D)));
         poseStack.translate(0.0D, -3.5D, 0.0D);
-        ObjReactorModels.LPW2.renderPart("TurbineFront", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("TurbineFront", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.ZN.rotationDegrees((float) (plan.turbine() * 360.0D)));
         poseStack.translate(0.0D, -3.5D, 0.0D);
-        ObjReactorModels.LPW2.renderPart("TurbineBack", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("TurbineBack", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
 
@@ -157,7 +157,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.mulPose(Axis.XP.rotationDegrees((float) (plan.horizontal() * plan.rotationMagnitude())));
         poseStack.translate(0.0D, -LegacyTileRenderPlans.LPW2_ENGINE_PIVOT_Y,
                 -LegacyTileRenderPlans.LPW2_ENGINE_PIVOT_Z);
-        ObjReactorModels.LPW2.renderPart("Engine", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("Engine", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
@@ -168,7 +168,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         double v = plan.vertical();
         poseStack.pushPose();
         poseStack.translate(0.0D, -h * plan.magnitude(), 0.0D);
-        ObjReactorModels.LPW2.renderPart("ShroudH", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("ShroudH", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         renderFlap(90.0D + 22.5D, plan.flapRotationScale() * v + plan.flapRotationOffset(),
                 poseStack, buffer, packedLight, packedOverlay);
@@ -182,7 +182,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
 
         poseStack.pushPose();
         poseStack.translate(v * plan.magnitude(), 0.0D, 0.0D);
-        ObjReactorModels.LPW2.renderPart("ShroudV", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("ShroudV", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         renderFlap(22.5D, plan.flapRotationScale() * h + plan.flapRotationOffset(),
                 poseStack, buffer, packedLight, packedOverlay);
@@ -199,7 +199,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.translate(-2.625D, 0.0D, 0.0D);
         poseStack.scale((float) ((length + v * plan.magnitude()) / length), 1.0F, 1.0F);
         poseStack.translate(2.625D, 0.0D, 0.0D);
-        ObjReactorModels.LPW2.renderPart("SuspensionLeft", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("SuspensionLeft", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
 
@@ -207,7 +207,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.translate(2.625D, 0.0D, 0.0D);
         poseStack.scale((float) ((length - v * plan.magnitude()) / length), 1.0F, 1.0F);
         poseStack.translate(-2.625D, 0.0D, 0.0D);
-        ObjReactorModels.LPW2.renderPart("SuspensionRight", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("SuspensionRight", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
 
@@ -215,7 +215,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.translate(0.0D, 6.125D, 0.0D);
         poseStack.scale(1.0F, (float) ((length + h * plan.magnitude()) / length), 1.0F);
         poseStack.translate(0.0D, -6.125D, 0.0D);
-        ObjReactorModels.LPW2.renderPart("SuspensionTop", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("SuspensionTop", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
 
@@ -223,7 +223,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.translate(0.0D, 0.875D, 0.0D);
         poseStack.scale(1.0F, (float) ((length - h * plan.magnitude()) / length), 1.0F);
         poseStack.translate(0.0D, -0.875D, 0.0D);
-        ObjReactorModels.LPW2.renderPart("SuspensionBottom", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("SuspensionBottom", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
@@ -239,7 +239,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.mulPose(Axis.XP.rotationDegrees((float) rotation));
         poseStack.translate(0.0D, -LegacyTileRenderPlans.LPW2_FLAP_PIVOT_Y,
                 -LegacyTileRenderPlans.LPW2_FLAP_PIVOT_Z);
-        ObjReactorModels.LPW2.renderPart("Flap", ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part("Flap", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
@@ -248,7 +248,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-        ObjReactorModels.LPW2.renderPart(part.partName(), ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part(part.partName(), ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
@@ -259,7 +259,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
         poseStack.mulPose(Axis.YP.rotationDegrees((float) part.angleDegrees()));
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        ObjReactorModels.LPW2.renderPart(part.partName(), ObjReactorModels.LPW2_TEXTURE,
+        ObjReactorModels.renderLpw2Part(part.partName(), ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }

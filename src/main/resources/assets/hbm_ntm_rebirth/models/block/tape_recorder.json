@@ -1,0 +1,12 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/legacy_blocks/taperecorder.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/legacy_blocks/deco_tape_recorder",
+    "default": "hbm_ntm_rebirth:block/legacy_blocks/deco_tape_recorder",
+    "texture0": "hbm_ntm_rebirth:block/legacy_blocks/deco_tape_recorder"
+  }
+}

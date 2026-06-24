@@ -6,6 +6,7 @@ import com.hbm.ntm.blockentity.RadarBlockEntity;
 import com.hbm.ntm.blockentity.RadarLargeBlockEntity;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -16,6 +17,17 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRenderer<T> {
+    private static final LegacyWavefrontModel SMALL_MODEL = ObjModelLibrary.MACHINE_RADAR_LEGACY;
+    private static final LegacyWavefrontModel.SelectionHandle SMALL_BASE =
+            SMALL_MODEL.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle SMALL_DISH =
+            SMALL_MODEL.prepareRenderOnlyInCallOrder("Dish");
+    private static final LegacyWavefrontModel LARGE_MODEL = ObjModelLibrary.MACHINE_RADAR_LARGE_LEGACY;
+    private static final LegacyWavefrontModel.SelectionHandle LARGE_RADAR =
+            LARGE_MODEL.prepareRenderOnlyInCallOrder("Radar");
+    private static final LegacyWavefrontModel.SelectionHandle LARGE_DISH =
+            LARGE_MODEL.prepareRenderOnlyInCallOrder("Dish");
+
     public RadarRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -42,18 +54,18 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
     private static void renderSmall(RadarBlockEntity radar, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = radar.getBlockState();
-        LegacyWavefrontModel model = ObjModelLibrary.MACHINE_RADAR_LEGACY;
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(radar, packedLight);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        model.renderPart("Base", poseStack, buffer, modelLight, packedOverlay);
+        SMALL_MODEL.renderOnlyInCallOrder(context, SMALL_BASE);
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YN.rotationDegrees(interpolatedRotation(radar, partialTick)));
         poseStack.translate(-0.125D, 0.0D, 0.0D);
-        model.renderPart("Dish", poseStack, buffer, modelLight, packedOverlay);
+        SMALL_MODEL.renderOnlyInCallOrder(context, SMALL_DISH);
         poseStack.popPose();
 
         poseStack.popPose();
@@ -67,8 +79,8 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
         }
 
         LegacyMachineDefinition definition = block.definition();
-        LegacyWavefrontModel model = ObjModelLibrary.MACHINE_RADAR_LARGE_LEGACY;
         int modelLight = LegacyRenderLighting.resolveMachineLight(radar, state, definition, packedLight);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -77,11 +89,11 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        model.renderPart("Radar", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+        LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), context, LARGE_RADAR);
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YN.rotationDegrees(interpolatedRotation(radar, partialTick)));
-        model.renderPart("Dish", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+        LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), context, LARGE_DISH);
         poseStack.popPose();
 
         poseStack.popPose();

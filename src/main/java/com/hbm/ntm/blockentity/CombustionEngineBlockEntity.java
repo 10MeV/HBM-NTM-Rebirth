@@ -33,6 +33,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -62,6 +63,9 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int SLOT_IDENTIFIER = 4;
     public static final int CONTROL_TOGGLE = 0;
     public static final int CONTROL_THROTTLE = 1;
+    private static final String TAG_MODERN_INVENTORY = "Inventory";
+    private static final String TAG_LEGACY_TANK = "tank";
+    private static final String TAG_LEGACY_POWER = "power";
 
     private static final long MAX_POWER = 2_500_000L;
     private static final int TANK_CAPACITY = 24_000;
@@ -515,7 +519,10 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "Inventory", items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_MODERN_INVENTORY, items);
+        tank.writeToNbt(tag, TAG_LEGACY_TANK);
+        tag.putLong(TAG_LEGACY_POWER, energy.getPower());
         tag.putBoolean("isOn", on);
         tag.putBoolean("wasOn", wasOn);
         tag.putInt("setting", throttle);
@@ -531,7 +538,13 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "Inventory", items);
+        loadItems(tag);
+        if (hasLegacyTankTag(tag, TAG_LEGACY_TANK)) {
+            tank.readFromNbt(tag, TAG_LEGACY_TANK);
+        }
+        if (tag.contains(TAG_LEGACY_POWER)) {
+            energy.setPower(tag.getLong(TAG_LEGACY_POWER));
+        }
         on = tag.getBoolean("isOn");
         wasOn = tag.getBoolean("wasOn");
         throttle = Mth.clamp(tag.getInt("setting"), 0, 30);
@@ -572,6 +585,21 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public List<ItemStack> getDrops() {
         return HbmInventoryMenuHelper.clearToDrops(items);
+    }
+
+    private void loadItems(CompoundTag tag) {
+        if (tag.contains(HbmInventoryMenuHelper.LEGACY_ITEMS_TAG, Tag.TAG_LIST)
+                || tag.contains("Items", Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY, items);
+    }
+
+    private static boolean hasLegacyTankTag(CompoundTag tag, String key) {
+        return tag.contains(key)
+                || tag.contains(key + "_type")
+                || tag.contains(key + "_type_id");
     }
 
     private enum EmptyExternalItemHandler implements IItemHandler {

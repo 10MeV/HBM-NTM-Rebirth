@@ -28,9 +28,7 @@ public class ICFPressScreen extends AbstractContainerScreen<ICFPressMenu> {
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
         int muon = menu.getMuon() * 52 / ICFPressBlockEntity.MAX_MUON;
-        if (muon > 0) {
-            graphics.blit(TEXTURE, leftPos + 28, topPos + 70 - muon, 176, 52 - muon, 4, muon);
-        }
+        graphics.blit(TEXTURE, leftPos + 28, topPos + 70 - muon, 176, 52 - muon, 4, muon);
         LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 44, topPos + 70, 16, 52,
                 menu.getDeuteriumTank());
         LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 152, topPos + 70, 16, 52,

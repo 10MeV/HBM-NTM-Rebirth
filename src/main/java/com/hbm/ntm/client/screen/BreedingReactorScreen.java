@@ -2,6 +2,7 @@ package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.BreedingReactorMenu;
+import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -23,9 +24,8 @@ public class BreedingReactorScreen extends AbstractContainerScreen<BreedingReact
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
         int width = menu.getProgressWidth(70);
-        if (width > 0) {
-            graphics.blit(TEXTURE, leftPos + 53, topPos + 32, 176, 0, width, 20);
-        }
+        graphics.blit(TEXTURE, leftPos + 53, topPos + 32, 176, 0, width, 20);
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 16, topPos + 16, 3);
     }
 
     @Override
@@ -41,8 +41,10 @@ public class BreedingReactorScreen extends AbstractContainerScreen<BreedingReact
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(-16, 16, 16, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font,
-                    Component.literal("Adjacent research reactors provide neutron flux."), mouseX, mouseY);
+            graphics.renderComponentTooltip(font, List.of(
+                    Component.literal("The reactor has to recieve"),
+                    Component.literal("neutron flux from adjacent"),
+                    Component.literal("research reactors to breed.")), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

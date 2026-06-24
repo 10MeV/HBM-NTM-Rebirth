@@ -36,6 +36,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -77,7 +78,11 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     protected static final int DEFAULT_TANK_CAPACITY = 256_000;
     private static final long DEFAULT_TRANSFER_SPEED_FLOOR = 500L;
-    private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.squareSidesWithoutCorners(2);
+    private static final String TAG_INVENTORY = HbmInventoryMenuHelper.LEGACY_ITEMS_TAG;
+    private static final String TAG_MODERN_INVENTORY = "Inventory";
+    private static final String TAG_CUSTOM_NAME = "name";
+    private static final String TAG_LEGACY_TANK = "tank";
+    private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.fluidTank();
 
     private final HbmFluidTank tank;
     private final RORDispatcher ror;
@@ -95,6 +100,8 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     private int age;
     private int lastComparatorPower;
     private Explosion lastExplosion;
+    @Nullable
+    private String customName;
 
     public FluidTankBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmFluidTank(HbmFluids.NONE, DEFAULT_TANK_CAPACITY));
@@ -562,13 +569,15 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public boolean canConnectFluid(FluidType type, Direction side) {
-        return !exploded && side != null && type != null && type != HbmFluids.NONE
+        return !exploded && side != null && type != null
                 && (mode == MODE_INPUT || mode == MODE_BUFFER || mode == MODE_OUTPUT);
     }
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("container.fluidtank");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatable("container.fluidtank");
     }
 
     @Nullable
@@ -592,7 +601,11 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "Inventory", items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
+        tank.writeToNbt(tag, TAG_LEGACY_TANK);
         tag.putInt("mode", mode);
         tag.putBoolean("exploded", exploded);
         tag.putBoolean("onFire", onFire);
@@ -603,7 +616,11 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "Inventory", items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
+        if (tag.contains(TAG_LEGACY_TANK)) {
+            tank.readFromNbt(tag, TAG_LEGACY_TANK);
+        }
         mode = Math.max(MODE_INPUT, Math.min(MODE_NONE, tag.getInt("mode")));
         exploded = tag.getBoolean("exploded");
         onFire = tag.getBoolean("onFire");
@@ -679,6 +696,16 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         for (int slot = 0; slot < items.getSlots() && slot < other.items.getSlots(); slot++) {
             items.setStackInSlot(slot, other.items.getStackInSlot(slot).copy());
             other.items.setStackInSlot(slot, ItemStack.EMPTY);
+        }
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        } else if (tag.contains(TAG_MODERN_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
         }
     }
 

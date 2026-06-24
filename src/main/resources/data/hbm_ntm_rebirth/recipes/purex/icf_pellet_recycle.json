@@ -1,34 +1,38 @@
-{
-  "type": "hbm_ntm_rebirth:purex",
-  "internal_name": "purex.icf",
-  "duration": 300,
-  "power": 10000,
-  "input_items": [
-    {
-      "ingredient": {
-        "item": "hbm_ntm_rebirth:icf_pellet_depleted"
-      }
-    }
-  ],
-  "input_fluids": [],
-  "output_items": [
-    {
-      "item": "hbm_ntm_rebirth:icf_pellet_empty"
-    },
-    {
-      "item": "hbm_ntm_rebirth:pellet_charged"
-    },
-    {
-      "item": "hbm_ntm_rebirth:powder_iron"
-    }
-  ],
-  "output_fluids": [
-    {
-      "fluid": "hbm_ntm_rebirth:helium4",
-      "amount": 1250
-    }
-  ],
-  "pools": [],
-  "name_wrapper": "purex.recycle",
-  "source_order": 0
+﻿{
+    "type":  "hbm_ntm_rebirth:purex",
+    "internal_name":  "purex.icf",
+    "duration":  300,
+    "power":  10000,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:icf_pellet_depleted"
+                                           }
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:icf_pellet_empty"
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:pellet_charged"
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:powder_iron"
+                         }
+                     ],
+    "output_fluids":  [
+                          {
+                              "fluid":  "hbm_ntm_rebirth:helium4",
+                              "amount":  1250
+                          }
+                      ],
+    "pools":  [
+
+              ],
+    "name_wrapper":  "purex.recycle",
+    "source_order":  479
 }

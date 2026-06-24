@@ -51,7 +51,6 @@ public class BalefireExplosionEntity extends ExplosionChunkLoadingEntity {
         }
 
         forceCenterChunk();
-        loadChunk((int) Math.floor(getX() / 16.0D), (int) Math.floor(getZ() / 16.0D));
 
         if (!initialized) {
             initializeExplosion(true);
@@ -60,6 +59,7 @@ public class BalefireExplosionEntity extends ExplosionChunkLoadingEntity {
         speed++;
         boolean complete = false;
         for (int i = 0; i < speed && !complete; i++) {
+            loadChunkForCurrentColumn();
             complete = explosion.update();
         }
 
@@ -79,6 +79,10 @@ public class BalefireExplosionEntity extends ExplosionChunkLoadingEntity {
         }
         explosion = new ExplosionBalefire((int) getX(), (int) getY(), (int) getZ(), level(), destructionRange);
         initialized = true;
+    }
+
+    private void loadChunkForCurrentColumn() {
+        loadChunk(Math.floorDiv(explosion.currentWorldX(), 16), Math.floorDiv(explosion.currentWorldZ(), 16));
     }
 
     @Override

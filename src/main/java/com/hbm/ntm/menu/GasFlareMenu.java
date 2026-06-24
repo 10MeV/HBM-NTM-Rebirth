@@ -1,12 +1,14 @@
 package com.hbm.ntm.menu;
 
+import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.GasFlareBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
-import java.util.List;
 import com.hbm.ntm.multiblock.MultiblockHelper;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -94,11 +96,40 @@ public class GasFlareMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                GasFlareBlockEntity.SLOT_IDENTIFIER, GasFlareBlockEntity.SLOT_IDENTIFIER + 1,
-                GasFlareBlockEntity.SLOT_ENERGY_OUTPUT, GasFlareBlockEntity.SLOT_ENERGY_OUTPUT + 1,
-                GasFlareBlockEntity.SLOT_UPGRADE_SPEED, GasFlareBlockEntity.SLOT_UPGRADE_EFFECT + 1,
+        if (index < 0 || index >= slots.size()) {
+            return ItemStack.EMPTY;
+        }
+        var slot = slots.get(index);
+        if (slot == null || !slot.hasItem()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack stack = slot.getItem();
+        ItemStack result = stack.copy();
+        boolean moved = index < MACHINE_SLOT_COUNT
+                ? moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_SLOT_END, true)
+                : movePlayerStackToMachine(stack);
+        if (!moved) {
+            return ItemStack.EMPTY;
+        }
+        HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+        return result;
+    }
+
+    private boolean movePlayerStackToMachine(ItemStack stack) {
+        if (stack.getItem() instanceof IFluidIdentifierItem) {
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    GasFlareBlockEntity.SLOT_IDENTIFIER, GasFlareBlockEntity.SLOT_IDENTIFIER + 1);
+        }
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    GasFlareBlockEntity.SLOT_ENERGY_OUTPUT, GasFlareBlockEntity.SLOT_ENERGY_OUTPUT + 1);
+        }
+        if (stack.getItem() instanceof ItemMachineUpgrade) {
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    GasFlareBlockEntity.SLOT_UPGRADE_SPEED, GasFlareBlockEntity.SLOT_UPGRADE_EFFECT + 1);
+        }
+        return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                 GasFlareBlockEntity.SLOT_FLUID_INPUT, GasFlareBlockEntity.SLOT_FLUID_INPUT + 1);
     }
 

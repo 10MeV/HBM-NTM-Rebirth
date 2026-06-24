@@ -12,7 +12,6 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 
 public class WatzReactorScreen extends AbstractContainerScreen<WatzReactorMenu> {
@@ -44,11 +43,11 @@ public class WatzReactorScreen extends AbstractContainerScreen<WatzReactorMenu> 
             graphics.blit(TEXTURE, leftPos + 142, topPos + 70, 210, 0, 18, 18);
         }
         renderRoundHeatGauge(graphics, 1.0F - color);
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 143, topPos + 112, 4, 43,
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 143, topPos + 69, 4, 43,
                 menu.getCoolantTank());
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 149, topPos + 112, 4, 43,
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 149, topPos + 69, 4, 43,
                 menu.getHotCoolantTank());
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 155, topPos + 112, 4, 43,
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 155, topPos + 69, 4, 43,
                 menu.getMudTank());
     }
 
@@ -114,8 +113,6 @@ public class WatzReactorScreen extends AbstractContainerScreen<WatzReactorMenu> 
     }
 
     private void playClick() {
-        if (minecraft != null && minecraft.player != null) {
-            minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.get(), 0.5F, 1.0F);
-        }
+        LegacyGuiElements.playClickSound();
     }
 }

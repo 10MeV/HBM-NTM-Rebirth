@@ -6,6 +6,7 @@ import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.menu.FusionBreederMenu;
 import com.hbm.ntm.util.BobMathUtil;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -50,8 +51,10 @@ public class FusionBreederScreen extends AbstractContainerScreen<FusionBreederMe
         renderTankTooltip(graphics, mouseX, mouseY, menu.getInputTank(), 26, 18, 16, 52);
         renderTankTooltip(graphics, mouseX, mouseY, menu.getOutputTank(), 134, 18, 16, 52);
         if (isHovering(79, 23, 18, 18, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal("-> "
-                    + (int) Math.ceil(menu.getNeutronEnergy()) + " flux/t")), mouseX, mouseY);
+            LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal("-> ")
+                    .withStyle(ChatFormatting.GREEN)
+                    .append(Component.literal((int) Math.ceil(menu.getNeutronEnergy()) + " flux/t")
+                            .withStyle(ChatFormatting.RESET))), mouseX, mouseY);
         } else if (isHovering(67, 46, 42, 14, mouseX, mouseY)) {
             LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal(
                     BobMathUtil.format((int) Math.ceil(menu.getProgress())) + " / "

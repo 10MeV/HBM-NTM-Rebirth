@@ -22,6 +22,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -47,16 +48,18 @@ import org.jetbrains.annotations.Nullable;
 
 public class CrucibleBlockEntity extends BlockEntity
         implements MenuProvider, ICrucibleAcceptor, LegacyLookOverlayProvider, HbmTileSyncable {
-    public static final int SLOT_INPUT_START = 0;
-    public static final int SLOT_INPUT_END = 9;
-    public static final int SLOT_COUNT = 9;
+    public static final int SLOT_INPUT_START = 1;
+    public static final int SLOT_INPUT_END = 10;
+    public static final int SLOT_COUNT = 10;
     public static final int RECIPE_CAPACITY = MaterialShapes.BLOCK.q(16);
     public static final int WASTE_CAPACITY = MaterialShapes.BLOCK.q(16);
     public static final int PROCESS_TIME = 20_000;
     public static final double DIFFUSION = 0.25D;
     public static final int MAX_HEAT = 100_000;
 
-    private static final String TAG_ITEMS = "Items";
+    private static final String TAG_ITEMS = HbmInventoryMenuHelper.LEGACY_ITEMS_TAG;
+    private static final String TAG_MODERN_ITEMS = "Items";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_RECIPE = "recipe";
     private static final String TAG_REC = "rec";
     private static final String TAG_WAS = "was";
@@ -76,7 +79,7 @@ public class CrucibleBlockEntity extends BlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return isItemSmeltable(stack);
+            return slot >= SLOT_INPUT_START && slot < SLOT_INPUT_END && isItemSmeltable(stack);
         }
 
         @Override
@@ -91,6 +94,8 @@ public class CrucibleBlockEntity extends BlockEntity
     private String recipe = "null";
     private int progress;
     private int heat;
+    @Nullable
+    private String customName;
 
     public CrucibleBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CRUCIBLE.get(), pos, state);
@@ -202,7 +207,9 @@ public class CrucibleBlockEntity extends BlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.machineCrucible", "Crucible");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatableWithFallback("container.machineCrucible", "Crucible");
     }
 
     @Nullable
@@ -281,7 +288,10 @@ public class CrucibleBlockEntity extends BlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         tag.putString(TAG_RECIPE, recipe);
         tag.put(TAG_REC, Mats.writeList(recipeStack));
         tag.put(TAG_WAS, Mats.writeList(wasteStack));
@@ -292,7 +302,8 @@ public class CrucibleBlockEntity extends BlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         recipe = CrucibleRecipeRuntime.normalize(tag.contains(TAG_RECIPE) ? tag.getString(TAG_RECIPE) : "null");
         if (!CrucibleRecipeRuntime.canSelect(recipe)) {
             recipe = CrucibleRecipeRuntime.NULL_RECIPE;
@@ -303,6 +314,29 @@ public class CrucibleBlockEntity extends BlockEntity
         wasteStack.addAll(Mats.readList(tag.getList(TAG_WAS, net.minecraft.nbt.Tag.TAG_COMPOUND)));
         progress = tag.getInt(TAG_PROGRESS);
         heat = tag.getInt(TAG_HEAT);
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_ITEMS, Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+            return;
+        }
+        if (tag.contains(TAG_ITEMS, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+            return;
+        }
+        if (tag.contains(TAG_MODERN_ITEMS, Tag.TAG_COMPOUND)) {
+            for (int slot = 0; slot < SLOT_COUNT; slot++) {
+                items.setStackInSlot(slot, ItemStack.EMPTY);
+            }
+            ItemStackHandler oldModernItems = new ItemStackHandler(SLOT_INPUT_END - SLOT_INPUT_START);
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_ITEMS, oldModernItems);
+            for (int slot = 0; slot < oldModernItems.getSlots(); slot++) {
+                items.setStackInSlot(SLOT_INPUT_START + slot, oldModernItems.getStackInSlot(slot));
+            }
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
     }
 
     @Override
@@ -616,7 +650,8 @@ public class CrucibleBlockEntity extends BlockEntity
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        return GenericMachineRecipeSelector.isSelectionTag(tag)
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, this, 128.0D)
+                && GenericMachineRecipeSelector.isSelectionTag(tag)
                 && CrucibleRecipeRuntime.canSelect(GenericMachineRecipeSelector.readSelection(tag));
     }
 

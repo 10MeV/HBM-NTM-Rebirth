@@ -19,6 +19,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -52,6 +53,8 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
     public static final long MAX_POWER = 20_000_000L;
     public static final int POWER_REQ = 1_250;
     private static final String TAG_ITEMS = "items";
+    private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_NAME = "name";
     private static final String TAG_POWER = "power";
     private static final String TAG_MODE = "mode";
     private static final String TAG_ON = "isOn";
@@ -67,7 +70,7 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 case SLOT_CRYSTAL -> wavelengthFor(stack) != LaserWavelength.NULL;
                 default -> false;
             };
@@ -85,6 +88,8 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
     private int distance;
     private int audioDuration;
     private Object audioLoop;
+    @Nullable
+    private String customName;
 
     public FelBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.FEL.get(), pos, state, new HbmEnergyStorage(MAX_POWER, MAX_POWER, 0L));
@@ -248,13 +253,21 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("container.machineFEL");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatableWithFallback("container.machineFEL", "FEL");
     }
 
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
         return new FelMenu(containerId, inventory, this);
+    }
+
+    @Override
+    public boolean canReceiveLegacyButton(ServerPlayer player, int value, int id) {
+        return id == CONTROL_POWER
+                && player.distanceToSqr(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ()) <= 64.0D;
     }
 
     @Override
@@ -273,6 +286,9 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, TAG_ITEMS, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_NAME, customName);
+        }
         tag.putLong(TAG_POWER, energy.getPower());
         tag.putString(TAG_MODE, mode.name());
         tag.putBoolean(TAG_ON, on);
@@ -283,11 +299,12 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_NAME, Tag.TAG_STRING) ? tag.getString(TAG_NAME) : null;
         if (tag.contains(TAG_POWER)) {
             energy.setPower(tag.getLong(TAG_POWER));
         }
-        mode = tag.contains(TAG_MODE) ? LaserWavelength.valueOf(tag.getString(TAG_MODE)) : LaserWavelength.NULL;
+        mode = tag.contains(TAG_MODE, Tag.TAG_STRING) ? safeWavelength(tag.getString(TAG_MODE)) : LaserWavelength.NULL;
         on = tag.getBoolean(TAG_ON);
         missingValidSilex = tag.getBoolean(TAG_VALID);
         distance = tag.getInt(TAG_DISTANCE);
@@ -296,6 +313,26 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
     @Override
     public CompoundTag getUpdateTag() {
         return saveWithoutMetadata();
+    }
+
+    private static LaserWavelength safeWavelength(String name) {
+        try {
+            return LaserWavelength.valueOf(name);
+        } catch (IllegalArgumentException ignored) {
+            return LaserWavelength.NULL;
+        }
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_ITEMS, Tag.TAG_LIST) || tag.contains(TAG_ITEMS, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+            return;
+        }
+        if (tag.contains(TAG_INVENTORY, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
     }
 
     @Override

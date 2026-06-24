@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.RegistryObject;
 
 public final class BreedingReactorRecipeRuntime {
@@ -32,14 +33,45 @@ public final class BreedingReactorRecipeRuntime {
         return stack.isEmpty() ? null : RECIPES.get(stack.getItem());
     }
 
+    public static BreederRecipe recipeFor(Level level, ItemStack stack) {
+        if (level != null && !stack.isEmpty()) {
+            for (BreedingReactorRecipe recipe : level.getRecipeManager()
+                    .getAllRecipesFor(ModRecipes.BREEDING_REACTOR.type().get())) {
+                if (recipe.matches(stack)) {
+                    return recipe.asRuntimeRecipe();
+                }
+            }
+        }
+        return recipeFor(stack);
+    }
+
     public static boolean isInput(ItemStack stack) {
         return recipeFor(stack) != null;
+    }
+
+    public static boolean isInput(Level level, ItemStack stack) {
+        return recipeFor(level, stack) != null;
     }
 
     public static List<DisplayRecipe> displayRecipes() {
         return RECIPES.entrySet().stream()
                 .map(entry -> new DisplayRecipe(new ItemStack(entry.getKey()), entry.getValue()))
                 .toList();
+    }
+
+    public static List<DisplayRecipe> displayRecipes(Level level) {
+        if (level == null) {
+            return displayRecipes();
+        }
+        List<DisplayRecipe> dynamic = level.getRecipeManager()
+                .getAllRecipesFor(ModRecipes.BREEDING_REACTOR.type().get()).stream()
+                .flatMap(recipe -> recipe.input().displayStacks().stream()
+                        .map(input -> new DisplayRecipe(input, recipe.asRuntimeRecipe())))
+                .toList();
+        if (dynamic.isEmpty()) {
+            return displayRecipes();
+        }
+        return java.util.stream.Stream.concat(dynamic.stream(), displayRecipes().stream()).toList();
     }
 
     private static void rod(String input, String output, int flux) {

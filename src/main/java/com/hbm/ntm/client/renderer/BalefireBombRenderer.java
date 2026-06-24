@@ -40,7 +40,7 @@ public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlo
             ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
             float age = glintAge(blockEntity.getLevel(), partialTick);
             LegacyObjGlintRenderer.renderClassicGlint(ObjBombModels.FSTBMB,
-                    LegacyObjGlintRenderer.BALEFIRE_GLINT_TEXTURE, context, "Balefire",
+                    LegacyObjGlintRenderer.BALEFIRE_GLINT_TEXTURE, context, ObjBombModels.FSTBMB_BALEFIRE,
                     age, 0.0F, 0.8F, 0.15F, 5.0F, 2.0F);
             renderTimer(blockEntity, poseStack, buffer);
         }
@@ -51,7 +51,7 @@ public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlo
     public static void renderModel(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
                 .withRenderMode(LegacyTexturedRenderMode.CUTOUT_NO_CULL);
-        ObjBombModels.FSTBMB.renderOnlyInCallOrder(ObjBombModels.texture("fstbmb"), context, "Body", "Balefire");
+        ObjBombModels.renderFstbmbBody(context);
     }
 
     public static void applyLegacyItemCommon(PoseStack poseStack) {

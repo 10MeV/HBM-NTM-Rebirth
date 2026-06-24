@@ -21,12 +21,12 @@ public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssem
 
     @Override
     public boolean shouldRenderOffScreen(MissileAssemblyBlockEntity blockEntity) {
-        return true;
+        return false;
     }
 
     @Override
     public int getViewDistance() {
-        return 256;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override

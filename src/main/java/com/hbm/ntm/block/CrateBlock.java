@@ -1,6 +1,8 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.StorageCrateBlockEntity;
+import com.hbm.ntm.item.PadlockItem;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -64,7 +66,17 @@ public class CrateBlock extends Block implements EntityBlock {
         }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof StorageCrateBlockEntity crate) {
-            NetworkHooks.openScreen(serverPlayer, crate, pos);
+            ItemStack held = player.getItemInHand(hand);
+            if (held.getItem() instanceof PadlockItem) {
+                return crate.tryApplyPadlock(player, held) ? InteractionResult.CONSUME : InteractionResult.PASS;
+            }
+            if (held.is(ModItems.KEY_KIT.get())) {
+                return crate.tryCreateCounterfeitKeys(player, hand) ? InteractionResult.CONSUME : InteractionResult.PASS;
+            }
+            if (crate.canAccess(player, held)) {
+                NetworkHooks.openScreen(serverPlayer, crate, pos);
+                crate.triggerSpiders(player);
+            }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

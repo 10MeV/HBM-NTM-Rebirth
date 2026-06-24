@@ -24,6 +24,8 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
@@ -263,10 +265,6 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putInt("age", age);
-        tag.putInt("lastInputUsed", lastInputUsed);
-        tag.putInt("lastOutputProduced", lastOutputProduced);
-        tag.putLong("lastPowerProduced", lastPowerProduced);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
         inputTank.writeToNbt(tag, "water");
         outputTank.writeToNbt(tag, "steam");
@@ -287,10 +285,6 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (tag.contains("power")) {
             energy.setPower(tag.getLong("power"));
         }
-        age = Math.floorMod(tag.getInt("age"), 2);
-        lastInputUsed = Math.max(0, tag.getInt("lastInputUsed"));
-        lastOutputProduced = Math.max(0, tag.getInt("lastOutputProduced"));
-        lastPowerProduced = Math.max(0L, tag.getLong("lastPowerProduced"));
     }
 
     @Override
@@ -306,13 +300,55 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt("age", age);
+        tag.putInt("lastInputUsed", lastInputUsed);
+        tag.putInt("lastOutputProduced", lastOutputProduced);
+        tag.putLong("lastPowerProduced", lastPowerProduced);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readRuntimeSync(tag);
     }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Override
@@ -332,6 +368,21 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static boolean isValidTurbineInput(FluidType type) {
         CoolableFluidTrait trait = type == null ? null : type.getTrait(CoolableFluidTrait.class);
         return trait != null && trait.getEfficiency(CoolableFluidTrait.CoolingType.TURBINE) > 0.0D;
+    }
+
+    private void readRuntimeSync(CompoundTag tag) {
+        if (tag.contains("age")) {
+            age = Math.floorMod(tag.getInt("age"), 2);
+        }
+        if (tag.contains("lastInputUsed")) {
+            lastInputUsed = Math.max(0, tag.getInt("lastInputUsed"));
+        }
+        if (tag.contains("lastOutputProduced")) {
+            lastOutputProduced = Math.max(0, tag.getInt("lastOutputProduced"));
+        }
+        if (tag.contains("lastPowerProduced")) {
+            lastPowerProduced = Math.max(0L, tag.getLong("lastPowerProduced"));
+        }
     }
 
     private final class AccessibleItemHandler implements IItemHandler {

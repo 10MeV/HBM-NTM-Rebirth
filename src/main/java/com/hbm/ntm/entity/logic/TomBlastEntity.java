@@ -52,7 +52,6 @@ public class TomBlastEntity extends ExplosionChunkLoadingEntity {
         }
 
         forceCenterChunk();
-        loadChunk((int) Math.floor(getX() / 16.0D), (int) Math.floor(getZ() / 16.0D));
 
         if (!initialized) {
             initializeExplosion(true);
@@ -61,6 +60,7 @@ public class TomBlastEntity extends ExplosionChunkLoadingEntity {
         speed += 1;
         boolean complete = false;
         for (int i = 0; i < speed && !complete; i++) {
+            loadChunkForCurrentColumn();
             complete = explosion.update();
         }
 
@@ -87,6 +87,10 @@ public class TomBlastEntity extends ExplosionChunkLoadingEntity {
         }
         explosion = new ExplosionTom((int) getX(), (int) getY(), (int) getZ(), level(), destructionRange);
         initialized = true;
+    }
+
+    private void loadChunkForCurrentColumn() {
+        loadChunk(Math.floorDiv(explosion.currentWorldX(), 16), Math.floorDiv(explosion.currentWorldZ(), 16));
     }
 
     private void markTomImpact() {

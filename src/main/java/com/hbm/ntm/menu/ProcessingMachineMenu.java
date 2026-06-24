@@ -142,7 +142,7 @@ public class ProcessingMachineMenu extends AbstractContainerMenu {
     }
 
     private boolean movePlayerStackToMachine(ItemStack stack) {
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 1, 2);
         }
         if (stack.getItem() instanceof ItemMachineUpgrade) {

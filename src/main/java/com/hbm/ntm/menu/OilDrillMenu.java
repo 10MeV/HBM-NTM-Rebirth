@@ -103,6 +103,9 @@ public class OilDrillMenu extends AbstractContainerMenu {
         boolean moved;
         if (index < MACHINE_SLOT_COUNT) {
             moved = moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_SLOT_END, true);
+        } else if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
+            moved = moveItemStackTo(stack, OilDrillBlockEntity.SLOT_BATTERY,
+                    OilDrillBlockEntity.SLOT_BATTERY + 1, true);
         } else if (stack.getItem() instanceof ItemMachineUpgrade) {
             moved = moveItemStackTo(stack, OilDrillBlockEntity.SLOT_UPGRADE_START,
                     OilDrillBlockEntity.SLOT_UPGRADE_END + 1, true);

@@ -1,6 +1,8 @@
 package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
 public final class ObjReactorModels {
@@ -13,6 +15,60 @@ public final class ObjReactorModels {
     public static final LegacyWavefrontModel LPW2 = model("lpw2").asVBO();
     public static final LegacyWavefrontModel ZIRNOX = model("zirnox").asVBO();
     public static final LegacyWavefrontModel ZIRNOX_DESTROYED = model("zirnox_destroyed").asVBO();
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_FRAME =
+            LPW2.prepareRenderOnlyInCallOrder("Frame");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_WIRE_LEFT =
+            LPW2.prepareRenderOnlyInCallOrder("WireLeft");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_WIRE_RIGHT =
+            LPW2.prepareRenderOnlyInCallOrder("WireRight");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_COVER =
+            LPW2.prepareRenderOnlyInCallOrder("Cover");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SUSPENSION_COVER_FRONT =
+            LPW2.prepareRenderOnlyInCallOrder("SuspensionCoverFront");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SUSPENSION_COVER_BACK =
+            LPW2.prepareRenderOnlyInCallOrder("SuspensionCoverBack");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SUSPENSION_BACK_OUTER =
+            LPW2.prepareRenderOnlyInCallOrder("SuspensionBackOuter");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SUSPENSION_BACK_CENTER =
+            LPW2.prepareRenderOnlyInCallOrder("SuspensionBackCenter");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SERVER_1 =
+            LPW2.prepareRenderOnlyInCallOrder("Server1");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SERVER_2 =
+            LPW2.prepareRenderOnlyInCallOrder("Server2");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SERVER_3 =
+            LPW2.prepareRenderOnlyInCallOrder("Server3");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SERVER_4 =
+            LPW2.prepareRenderOnlyInCallOrder("Server4");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_MONITOR =
+            LPW2.prepareRenderOnlyInCallOrder("Monitor");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SCREEN =
+            LPW2.prepareRenderOnlyInCallOrder("Screen");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_CENTER =
+            LPW2.prepareRenderOnlyInCallOrder("Center");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_ROTOR =
+            LPW2.prepareRenderOnlyInCallOrder("Rotor");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_TURBINE_FRONT =
+            LPW2.prepareRenderOnlyInCallOrder("TurbineFront");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_TURBINE_BACK =
+            LPW2.prepareRenderOnlyInCallOrder("TurbineBack");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_PISTON =
+            LPW2.prepareRenderOnlyInCallOrder("Piston");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_ENGINE =
+            LPW2.prepareRenderOnlyInCallOrder("Engine");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SHROUD_H =
+            LPW2.prepareRenderOnlyInCallOrder("ShroudH");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SHROUD_V =
+            LPW2.prepareRenderOnlyInCallOrder("ShroudV");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SUSPENSION_LEFT =
+            LPW2.prepareRenderOnlyInCallOrder("SuspensionLeft");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SUSPENSION_RIGHT =
+            LPW2.prepareRenderOnlyInCallOrder("SuspensionRight");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SUSPENSION_TOP =
+            LPW2.prepareRenderOnlyInCallOrder("SuspensionTop");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_SUSPENSION_BOTTOM =
+            LPW2.prepareRenderOnlyInCallOrder("SuspensionBottom");
+    private static final LegacyWavefrontModel.SelectionHandle LPW2_FLAP =
+            LPW2.prepareRenderOnlyInCallOrder("Flap");
 
     public static final ResourceLocation SMALL_BASE_TEXTURE = texture("reactor_small_base");
     public static final ResourceLocation SMALL_RODS_TEXTURE = texture("reactor_small_rods");
@@ -53,6 +109,69 @@ public final class ObjReactorModels {
             case "reactor_small_base", "reactor_small_rods", "zirnox", "zirnox_destroyed" ->
                     new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + name + ".png");
             default -> new ResourceLocation(HbmNtm.MOD_ID, "textures/block/reactors/" + name + ".png");
+        };
+    }
+
+    public static void renderLpw2Part(String partName, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyWavefrontModel.SelectionHandle handle = lpw2Handle(partName);
+        if (handle != null) {
+            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
+            LPW2.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        LPW2.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderLpw2PartWithLegacyTextureMatrixCull(String partName, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green,
+            int blue, int alpha, float uScale, float vScale, float uTranslate, float vTranslate) {
+        LegacyWavefrontModel.SelectionHandle handle = lpw2Handle(partName);
+        if (handle != null) {
+            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
+                    .withRgba(red, green, blue, alpha)
+                    .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL)
+                    .withLegacyTextureMatrix(uScale, vScale, uTranslate, vTranslate);
+            LPW2.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        LPW2.renderPartWithLegacyTextureMatrixCull(partName, texture, poseStack, buffer, packedLight, packedOverlay,
+                red, green, blue, alpha, uScale, vScale, uTranslate, vTranslate);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle lpw2Handle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Frame" -> LPW2_FRAME;
+            case "WireLeft" -> LPW2_WIRE_LEFT;
+            case "WireRight" -> LPW2_WIRE_RIGHT;
+            case "Cover" -> LPW2_COVER;
+            case "SuspensionCoverFront" -> LPW2_SUSPENSION_COVER_FRONT;
+            case "SuspensionCoverBack" -> LPW2_SUSPENSION_COVER_BACK;
+            case "SuspensionBackOuter" -> LPW2_SUSPENSION_BACK_OUTER;
+            case "SuspensionBackCenter" -> LPW2_SUSPENSION_BACK_CENTER;
+            case "Server1" -> LPW2_SERVER_1;
+            case "Server2" -> LPW2_SERVER_2;
+            case "Server3" -> LPW2_SERVER_3;
+            case "Server4" -> LPW2_SERVER_4;
+            case "Monitor" -> LPW2_MONITOR;
+            case "Screen" -> LPW2_SCREEN;
+            case "Center" -> LPW2_CENTER;
+            case "Rotor" -> LPW2_ROTOR;
+            case "TurbineFront" -> LPW2_TURBINE_FRONT;
+            case "TurbineBack" -> LPW2_TURBINE_BACK;
+            case "Piston" -> LPW2_PISTON;
+            case "Engine" -> LPW2_ENGINE;
+            case "ShroudH" -> LPW2_SHROUD_H;
+            case "ShroudV" -> LPW2_SHROUD_V;
+            case "SuspensionLeft" -> LPW2_SUSPENSION_LEFT;
+            case "SuspensionRight" -> LPW2_SUSPENSION_RIGHT;
+            case "SuspensionTop" -> LPW2_SUSPENSION_TOP;
+            case "SuspensionBottom" -> LPW2_SUSPENSION_BOTTOM;
+            case "Flap" -> LPW2_FLAP;
+            default -> null;
         };
     }
 

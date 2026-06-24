@@ -20,6 +20,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 public class ShredderBlockEntity extends HbmEnergyBlockEntity
         implements MenuProvider, LegacyLookOverlayProvider {
     private static final String TAG_ITEMS = "items";
+    private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_POWER = "powerTime";
     private static final String TAG_PROGRESS = "progress";
     private static final String TAG_NAME = "name";
@@ -208,12 +210,12 @@ public class ShredderBlockEntity extends HbmEnergyBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        loadInventory(tag);
         if (tag.contains(TAG_POWER)) {
             energy.setPower(tag.getLong(TAG_POWER));
         }
         progress = tag.getInt(TAG_PROGRESS);
-        customName = tag.getString(TAG_NAME);
+        customName = tag.contains(TAG_NAME, Tag.TAG_STRING) ? tag.getString(TAG_NAME) : null;
     }
 
     @Override
@@ -316,6 +318,18 @@ public class ShredderBlockEntity extends HbmEnergyBlockEntity
         if (blade.isDamageableItem()) {
             blade.setDamageValue(Math.min(blade.getMaxDamage(), blade.getDamageValue() + 1));
         }
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_ITEMS, Tag.TAG_LIST) || tag.contains(TAG_ITEMS, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+            return;
+        }
+        if (tag.contains(TAG_INVENTORY, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
     }
 
     public static boolean isLegacyBattery(ItemStack stack) {

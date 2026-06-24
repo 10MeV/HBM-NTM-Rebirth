@@ -48,7 +48,7 @@ public class WasteDrumBlockEntity extends BlockEntity implements MenuProvider {
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return FuelPoolRecipes.isInput(stack) || stack.getItem() instanceof RBMKFuelRodItem;
+            return FuelPoolRecipes.isInput(level, stack) || stack.getItem() instanceof RBMKFuelRodItem;
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
@@ -76,7 +76,7 @@ public class WasteDrumBlockEntity extends BlockEntity implements MenuProvider {
             if (level.random.nextInt(chance) != 0) {
                 continue;
             }
-            ItemStack output = FuelPoolRecipes.cool(stack);
+            ItemStack output = FuelPoolRecipes.cool(level, stack);
             if (!output.isEmpty()) {
                 drum.items.setStackInSlot(i, output);
                 changed = true;
@@ -181,12 +181,12 @@ public class WasteDrumBlockEntity extends BlockEntity implements MenuProvider {
         return state.coreHeat() != beforeCore || state.hullHeat() != beforeHull;
     }
 
-    private static boolean canExtractFromPool(ItemStack stack) {
+    private boolean canExtractFromPool(ItemStack stack) {
         if (stack.getItem() instanceof RBMKFuelRodItem rod) {
             RBMKFuelRodState state = rod.getState(stack);
             return state.coreHeat() < 50.0D && state.hullHeat() < 50.0D;
         }
-        return FuelPoolRecipes.canExtract(stack);
+        return FuelPoolRecipes.canExtract(level, stack);
     }
 
     private final class AccessibleItemHandler implements IItemHandler {

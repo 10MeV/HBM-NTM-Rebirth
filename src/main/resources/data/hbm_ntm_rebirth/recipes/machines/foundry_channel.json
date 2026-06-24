@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"redstone","pattern":["B B"," S "],"key":{"B":{"item":"hbm_ntm_rebirth:ingot_firebrick"},"S":{"item":"minecraft:stone_slab"}},"result":{"item":"hbm_ntm_rebirth:foundry_channel","count":4},"show_notification":true}

@@ -28,6 +28,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
@@ -57,6 +58,8 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int SLOT_COUNT = 5;
     public static final long MAX_POWER = 50_000L;
     public static final int TANK_CAPACITY = 16_000;
+    private static final String TAG_LEGACY_ITEMS = "items";
+    private static final String TAG_MODERN_INVENTORY = "Inventory";
     private static final Map<CombustibleFluidTrait.FuelGrade, Double> FUEL_EFFICIENCY =
             new EnumMap<>(CombustibleFluidTrait.FuelGrade.class);
     private static final List<EnergyPort> ALL_ENERGY_PORTS = Direction.stream()
@@ -346,11 +349,10 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "Inventory", items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, TAG_LEGACY_ITEMS, items);
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_MODERN_INVENTORY, items);
         tag.putLong("powerTime", energy.getPower());
         tag.putLong("powerCap", powerCap);
-        tag.putBoolean("wasOn", wasOn);
-        tag.putLong("lastPowerProduced", lastPowerProduced);
         tank.writeToNbt(tag, "fuel");
         pollution.writeLegacyNbt(tag);
     }
@@ -358,20 +360,46 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "Inventory", items);
+        if (tag.contains(TAG_LEGACY_ITEMS, Tag.TAG_LIST) || tag.contains("Items", Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY, items);
+        }
         if (tag.contains("powerTime")) {
             energy.setPower(tag.getLong("powerTime"));
         }
         powerCap = tag.contains("powerCap") ? tag.getLong("powerCap") : MAX_POWER;
-        wasOn = tag.getBoolean("wasOn");
-        lastPowerProduced = tag.getLong("lastPowerProduced");
         tank.readFromNbt(tag, "fuel");
         pollution.readLegacyNbt(tag);
+        readRuntimeSync(tag);
     }
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putBoolean("wasOn", wasOn);
+        tag.putLong("lastPowerProduced", lastPowerProduced);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        load(tag);
+        readRuntimeSync(tag);
+    }
+
+    private void readRuntimeSync(CompoundTag tag) {
+        if (tag.contains("wasOn")) {
+            wasOn = tag.getBoolean("wasOn");
+        }
+        if (tag.contains("lastPowerProduced")) {
+            lastPowerProduced = Math.max(0L, tag.getLong("lastPowerProduced"));
+        }
     }
 
     @Nullable

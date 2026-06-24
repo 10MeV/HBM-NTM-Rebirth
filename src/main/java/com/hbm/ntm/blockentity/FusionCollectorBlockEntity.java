@@ -41,10 +41,21 @@ public class FusionCollectorBlockEntity extends BlockEntity implements FusionPow
 
     @Override
     public void setRemoved() {
+        destroyNode();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        destroyNode();
+        super.onChunkUnloaded();
+    }
+
+    private void destroyNode() {
         if (level != null && !level.isClientSide && plasmaNode != null) {
             PlasmaNodespace.destroyNode(level, plasmaNode.getPos());
         }
-        super.setRemoved();
+        plasmaNode = null;
     }
 
     private void ensureNode(Level level) {

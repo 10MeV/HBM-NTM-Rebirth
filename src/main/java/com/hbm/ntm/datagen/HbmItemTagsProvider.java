@@ -487,6 +487,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_mingrade", "Mingrade");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_bscco", "BSCCO");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_neodymium", "Neodymium");
+        addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_dineutronium", "Dineutronium");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_steel", "Steel");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_copper", "Copper");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_rubber", "Rubber");

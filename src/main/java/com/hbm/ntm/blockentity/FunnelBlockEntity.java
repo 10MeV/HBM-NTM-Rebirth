@@ -153,7 +153,7 @@ public class FunnelBlockEntity extends BlockEntity implements MenuProvider, HbmL
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.machineFunnel", "Compression Funnel");
+        return Component.translatableWithFallback("container.machineFunnel", "Combinator Funnel");
     }
 
     @Nullable

@@ -33,6 +33,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -63,6 +64,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int CONTROL_INPUT_PRESSURE = 0;
 
     private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_LEGACY_POWER = "power";
     private static final String TAG_PROGRESS = "progress";
     private static final String TAG_INPUT_PRESSURE = "inputPressure";
@@ -105,6 +107,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     private float prevPiston;
     private boolean pistonDir;
     private float pistonReturnSpeed = 0.1F;
+    private String customName;
 
     public CompressorBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state,
@@ -441,6 +444,9 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public Component getDisplayName() {
+        if (customName != null && !customName.isBlank()) {
+            return Component.literal(customName);
+        }
         return Component.translatable(getBlockState().getBlock().getDescriptionId());
     }
 
@@ -509,7 +515,10 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         tag.putLong(TAG_LEGACY_POWER, energy.getPower());
         tag.putInt(TAG_PROGRESS, progress);
         tag.putInt(TAG_INPUT_PRESSURE, inputTank.getPressure());
@@ -520,7 +529,8 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         if (tag.contains(TAG_LEGACY_POWER)) {
             energy.setPower(tag.getLong(TAG_LEGACY_POWER));
         }
@@ -535,6 +545,14 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
             inputTank.withPressure(tag.getInt(TAG_INPUT_PRESSURE));
         }
         setupOutputTank();
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
     }
 
     @Override

@@ -19,14 +19,10 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class FluidDuctPaintableRenderer<T extends BlockEntity & PaintableDuctBlockEntity>
         implements BlockEntityRenderer<T> {
-    private static final ResourceLocation DUCT_BASE =
-            new ResourceLocation(HbmNtm.MOD_ID, "block/fluid_duct_paintable");
-    private static final ResourceLocation DUCT_EXHAUST_BASE =
-            new ResourceLocation(HbmNtm.MOD_ID, "block/fluid_duct_paintable_block_exhaust");
-    private static final ResourceLocation DUCT_OVERLAY =
-            new ResourceLocation(HbmNtm.MOD_ID, "block/fluid_duct_paintable_overlay");
-    private static final ResourceLocation DUCT_COLOR_OVERLAY =
-            new ResourceLocation(HbmNtm.MOD_ID, "block/fluid_duct_paintable_color");
+    private static final TextureAtlasSprite DUCT_BASE = sprite("fluid_duct_paintable");
+    private static final TextureAtlasSprite DUCT_EXHAUST_BASE = sprite("fluid_duct_paintable_block_exhaust");
+    private static final TextureAtlasSprite DUCT_OVERLAY = sprite("fluid_duct_paintable_overlay");
+    private static final TextureAtlasSprite DUCT_COLOR_OVERLAY = sprite("fluid_duct_paintable_color");
 
     public FluidDuctPaintableRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -52,13 +48,13 @@ public class FluidDuctPaintableRenderer<T extends BlockEntity & PaintableDuctBlo
             HbmClientRenderUtil.renderSingleBlock(Minecraft.getInstance().getBlockRenderer(), painted, poseStack,
                     buffer, modelLight);
             if (overlay) {
-                renderCube(sprite(DUCT_OVERLAY), context);
+                renderCube(DUCT_OVERLAY, context);
             }
         } else {
-            renderCube(sprite(exhaust ? DUCT_EXHAUST_BASE : DUCT_BASE), context);
+            renderCube(exhaust ? DUCT_EXHAUST_BASE : DUCT_BASE, context);
             if (!exhaust) {
                 int color = duct instanceof FluidPipeBlockEntity pipe ? pipe.getFluidType().getColor() : 0xFFFFFF;
-                renderCube(sprite(DUCT_COLOR_OVERLAY), context.withColor(color));
+                renderCube(DUCT_COLOR_OVERLAY, context.withColor(color));
             }
         }
         poseStack.popPose();
@@ -68,7 +64,7 @@ public class FluidDuctPaintableRenderer<T extends BlockEntity & PaintableDuctBlo
         LegacyAtlasCuboidRenderer.croppedCuboid(sprite, context, 0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
     }
 
-    private static TextureAtlasSprite sprite(ResourceLocation texture) {
-        return LegacyTexturedQuadRenderer.blockSprite(texture);
+    private static TextureAtlasSprite sprite(String texture) {
+        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + texture));
     }
 }

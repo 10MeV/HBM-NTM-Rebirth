@@ -32,13 +32,9 @@ public class RBMKRodScreen extends AbstractContainerScreen<RBMKRodMenu> {
             RBMKFuelRodState state = item.getState(stack);
             graphics.blit(TEXTURE, leftPos + 34, topPos + 21, 176, 0, 18, 67);
             int depletion = (int) ((1.0D - state.enrichment(spec)) * 67.0D);
-            if (depletion > 0) {
-                graphics.blit(TEXTURE, leftPos + 34, topPos + 21, 194, 0, 18, Math.min(67, depletion));
-            }
+            graphics.blit(TEXTURE, leftPos + 34, topPos + 21, 194, 0, 18, depletion);
             int xenon = (int) (state.xenonLevel() * 58.0D);
-            if (xenon > 0) {
-                graphics.blit(TEXTURE, leftPos + 126, topPos + 82 - xenon, 212, 58 - xenon, 14, xenon);
-            }
+            graphics.blit(TEXTURE, leftPos + 126, topPos + 82 - xenon, 212, 58 - xenon, 14, xenon);
         }
         if (!menu.getBlockEntity().coldEnoughForAutoloader()) {
             LegacyGuiElements.renderInfoPanel(graphics, leftPos - 16, topPos + 20, 6);

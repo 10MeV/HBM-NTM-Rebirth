@@ -2,7 +2,6 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.blockentity.MiningLaserBlockEntity;
-import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
@@ -22,7 +21,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 
 public class MiningLaserMenu extends AbstractContainerMenu implements LegacyUpgradeInfoProvider {
     private static final int MACHINE_SLOT_COUNT = MiningLaserBlockEntity.SLOT_COUNT;
@@ -131,8 +129,7 @@ public class MiningLaserMenu extends AbstractContainerMenu implements LegacyUpgr
         if (stack.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        if (stack.getItem() instanceof HbmBatteryItem
-                || stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent()) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
                     MiningLaserBlockEntity.SLOT_BATTERY, MiningLaserBlockEntity.SLOT_BATTERY + 1);

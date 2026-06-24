@@ -1,0 +1,48 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:purex",
+    "internal_name":  "purex.plateu233",
+    "duration":  100,
+    "power":  1500,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:waste_plate_u233"
+                                           }
+                        }
+                    ],
+    "input_fluids":  [
+                         {
+                             "fluid":  "hbm_ntm_rebirth:kerosene",
+                             "amount":  500
+                         },
+                         {
+                             "fluid":  "hbm_ntm_rebirth:nitric_acid",
+                             "amount":  250
+                         }
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:nugget_u235"
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:powder_i131_tiny"
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:powder_sr90_tiny"
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:nuclear_waste_tiny",
+                             "count":  6
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "auto_switch_group":  "autoswitch.plate",
+    "name_wrapper":  "purex.recycle",
+    "source_order":  197
+}
+

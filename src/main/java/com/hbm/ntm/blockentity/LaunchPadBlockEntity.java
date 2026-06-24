@@ -68,10 +68,10 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int STATE_LOADING = 1;
     public static final int STATE_READY = 2;
 
-    private static final long MAX_POWER = 100_000L;
-    private static final long LAUNCH_POWER = 75_000L;
-    private static final int TANK_CAPACITY = 24_000;
-    private static final int RELOAD_DELAY = 100;
+    protected static final long MAX_POWER = 100_000L;
+    protected static final long LAUNCH_POWER = 75_000L;
+    protected static final int TANK_CAPACITY = 24_000;
+    protected static final int RELOAD_DELAY = 100;
     private static final String TAG_DELAY = "delay";
     private static final String TAG_STATE = "state";
     private static final String TAG_POWER = "power";
@@ -101,12 +101,12 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
-    private boolean redstonePowered;
-    private boolean prevRedstonePowered;
-    private int delay = RELOAD_DELAY;
-    private int state = STATE_MISSING;
-    private List<FluidPort> networkFluidPorts;
-    private List<EnergyPort> energyPorts;
+    protected boolean redstonePowered;
+    protected boolean prevRedstonePowered;
+    protected int delay = RELOAD_DELAY;
+    protected int state = STATE_MISSING;
+    protected List<FluidPort> networkFluidPorts;
+    protected List<EnergyPort> energyPorts;
 
     public LaunchPadBlockEntity(BlockPos pos, BlockState state) {
         this(ModBlockEntities.LAUNCH_PAD.get(), pos, state);
@@ -149,7 +149,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         ParticleUtil.spawnLaunchPadSmokeBurst(level, pos, facing, true);
     }
 
-    private boolean tickMachine(Level level, BlockPos pos, BlockState blockState) {
+    protected boolean tickMachine(Level level, BlockPos pos, BlockState blockState) {
         long oldPower = energy.getPower();
         int oldFuel = fuelTank().getFill();
         int oldOxidizer = oxidizerTank().getFill();
@@ -191,7 +191,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldRedstone != redstonePowered;
     }
 
-    private boolean isLaunchPadPowered(Level level, BlockPos pos, BlockState blockState) {
+    protected boolean isLaunchPadPowered(Level level, BlockPos pos, BlockState blockState) {
         if (level.hasNeighborSignal(pos)) {
             return true;
         }
@@ -243,7 +243,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         return target != null && launchToEntity(target);
     }
 
-    private boolean canLaunchBase() {
+    protected boolean canLaunchBase() {
         return isMissileValid() && hasFuel() && delay <= 0 && canInstantiateMissile();
     }
 
@@ -260,7 +260,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         return true;
     }
 
-    private Entity instantiateMissile(ServerLevel level, int targetX, int targetZ, @Nullable Entity targetEntity) {
+    protected Entity instantiateMissile(ServerLevel level, int targetX, int targetZ, @Nullable Entity targetEntity) {
         ItemStack stack = items.getStackInSlot(SLOT_MISSILE);
         Entity missile;
         MissileEntity.Variant variant;
@@ -269,7 +269,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
             CustomMissileEntity custom = new CustomMissileEntity(ModEntityTypes.MISSILE_CUSTOM.get(), level);
             custom.configureParts(customAssembly);
             int[] adjustedTarget = adjustedCustomTarget(level, targetX, targetZ, customAssembly);
-            custom.configureLaunch(worldPosition.getX() + 0.5D, worldPosition.getY() + 1.0D,
+            custom.configureLaunch(worldPosition.getX() + 0.5D, worldPosition.getY() + getLaunchOffset(),
                     worldPosition.getZ() + 0.5D, adjustedTarget[0], adjustedTarget[1]);
             return custom;
         }
@@ -353,13 +353,17 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
             return null;
         }
         if (missile instanceof MissileEntity ballistic) {
-            ballistic.configureLaunch(worldPosition.getX() + 0.5D, worldPosition.getY() + 1.0D,
+            ballistic.configureLaunch(worldPosition.getX() + 0.5D, worldPosition.getY() + getLaunchOffset(),
                     worldPosition.getZ() + 0.5D, targetX, targetZ);
         } else if (missile instanceof AntiBallisticMissileEntity abm) {
-            abm.configureLaunch(worldPosition.getX() + 0.5D, worldPosition.getY() + 1.0D,
+            abm.configureLaunch(worldPosition.getX() + 0.5D, worldPosition.getY() + getLaunchOffset(),
                     worldPosition.getZ() + 0.5D);
         }
         return missile;
+    }
+
+    protected double getLaunchOffset() {
+        return 1.0D;
     }
 
     private int[] adjustedCustomTarget(ServerLevel level, int targetX, int targetZ,
@@ -379,7 +383,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         };
     }
 
-    private void finalizeLaunch(ServerLevel level, Entity missile) {
+    protected void finalizeLaunch(ServerLevel level, Entity missile) {
         level.addFreshEntity(missile);
         LegacySoundPlayer.playSoundEffect(level, worldPosition.getX() + 0.5D, worldPosition.getY(),
                 worldPosition.getZ() + 0.5D, "hbm:weapon.missileTakeOff", SoundSource.PLAYERS, 2.0F, 1.0F);
@@ -396,7 +400,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         setChanged();
     }
 
-    private boolean canInstantiateMissile() {
+    protected boolean canInstantiateMissile() {
         ItemStack stack = items.getStackInSlot(SLOT_MISSILE);
         return stack.is(ModItems.MISSILE_GENERIC.get())
                 || stack.is(ModItems.MISSILE_DECOY.get())
@@ -480,7 +484,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         return selected.getFill() >= missile.fuelCap() ? 1 : -1;
     }
 
-    private void updateFuelTankTypes() {
+    protected void updateFuelTankTypes() {
         ItemStack stack = items.getStackInSlot(SLOT_MISSILE);
         if (!(stack.getItem() instanceof MissileItem missile)) {
             CustomMissilePartProfile.Assembly assembly = CustomMissilePartProfile.assemblyFromStack(stack);
@@ -677,7 +681,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public net.minecraft.world.phys.AABB getRenderBoundingBox() {
-        return new net.minecraft.world.phys.AABB(worldPosition).inflate(16.0D);
+        return new net.minecraft.world.phys.AABB(worldPosition.offset(-2, 0, -2), worldPosition.offset(3, 15, 3));
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -69,7 +70,10 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_EMPTY, SLOT_MUON, SLOT_FUEL_1, SLOT_FUEL_2, SLOT_FLUID_ID_1, SLOT_FLUID_ID_2 -> true;
+                case SLOT_EMPTY -> stack.is(ModItems.ICF_PELLET_EMPTY.get());
+                case SLOT_MUON -> stack.is(ModItems.PARTICLE_MUON.get());
+                case SLOT_FUEL_1, SLOT_FUEL_2 -> !stack.isEmpty();
+                case SLOT_FLUID_ID_1, SLOT_FLUID_ID_2 -> stack.getItem() instanceof IFluidIdentifierItem;
                 default -> false;
             };
         }
@@ -332,7 +336,7 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
 
     private void consumeFuel(FuelChoice choice, HbmFluidTank tank, int solidSlot) {
         if (choice.fluid) {
-            tank.drain(1000, false);
+            tank.setFill(tank.getFill() - 1000);
         } else {
             items.extractItem(solidSlot, 1, false);
         }
@@ -342,21 +346,11 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        data.writeInt(tank.getFill());
-        data.writeInt(tank.getMaxFill());
-        data.writeInt(tank.getTankType().getId());
-        data.writeShort((short) tank.getPressure());
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.write(data, tank);
     }
 
     private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        int fill = data.readInt();
-        int maxFill = data.readInt();
-        FluidType type = HbmFluids.fromId(data.readInt());
-        int pressure = data.readShort();
-        tank.changeTankSize(maxFill);
-        tank.withPressure(pressure);
-        tank.setTankType(type);
-        tank.setFill(fill);
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.read(data, tank);
     }
 
     private static boolean hasTankTag(CompoundTag tag, String key) {

@@ -25,7 +25,7 @@ public class BreedingReactorRenderer implements BlockEntityRenderer<BreedingReac
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     @Override
@@ -39,8 +39,8 @@ public class BreedingReactorRenderer implements BlockEntityRenderer<BreedingReac
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
-        ObjReactorModels.BREEDER.renderAll(ObjReactorModels.BREEDER_TEXTURE, poseStack, buffer, light, packedOverlay);
         renderLegacySparks(blockEntity, poseStack, buffer, state, packedOverlay);
+        ObjReactorModels.BREEDER.renderAll(ObjReactorModels.BREEDER_TEXTURE, poseStack, buffer, light, packedOverlay);
         poseStack.popPose();
     }
 

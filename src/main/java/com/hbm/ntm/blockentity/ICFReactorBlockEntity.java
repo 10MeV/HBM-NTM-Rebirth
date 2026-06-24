@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.tile.IInfoProviderEC;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.fluid.FluidType;
@@ -76,7 +77,8 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
                 case SLOT_INPUT_START, SLOT_INPUT_START + 1, SLOT_INPUT_START + 2, SLOT_INPUT_START + 3,
-                        SLOT_INPUT_START + 4, SLOT_ACTIVE, SLOT_IDENTIFIER -> true;
+                        SLOT_INPUT_START + 4 -> stack.is(ModItems.ICF_PELLET.get());
+                case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
                 default -> false;
             };
         }
@@ -122,8 +124,8 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     public void receiveLaser(long power, long maxPower) {
-        laser += Math.max(0L, power);
-        maxLaser += Math.max(0L, maxPower);
+        laser += power;
+        maxLaser += maxPower;
     }
 
     public ItemStackHandler getItems() {
@@ -219,7 +221,7 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
         if (type == hotCoolantTank.getTankType()) {
             return Math.max(1L, hotCoolantTank.getFill());
         }
-        if (type == HbmFluids.STELLAR_FLUX) {
+        if (type == stellarFluxTank.getTankType()) {
             return Math.max(1L, stellarFluxTank.getFill());
         }
         return 1L;
@@ -243,7 +245,7 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected boolean shouldSubscribeAsFluidProvider(FluidType type) {
         return (type == hotCoolantTank.getTankType() && hotCoolantTank.getFill() > 0)
-                || (type == HbmFluids.STELLAR_FLUX && stellarFluxTank.getFill() > 0);
+                || (type == stellarFluxTank.getTankType() && stellarFluxTank.getFill() > 0);
     }
 
     @Override
@@ -381,7 +383,7 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
         }
         coolWithLegacyFormula();
         tryProvideFluidToPorts(hotCoolantTank.getTankType(), hotCoolantTank.getPressure(), this);
-        tryProvideFluidToPorts(HbmFluids.STELLAR_FLUX, stellarFluxTank.getPressure(), this);
+        tryProvideFluidToPorts(stellarFluxTank.getTankType(), stellarFluxTank.getPressure(), this);
         heat = (long) (heat * 0.999D);
         if (heat > MAX_HEAT) {
             heat = MAX_HEAT;
@@ -435,9 +437,6 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
             return;
         }
         HeatingStep step = trait.getFirstStep();
-        if (step == null || step.heatRequired() <= 0) {
-            return;
-        }
         hotCoolantTank.setTankType(step.producedType());
         int coolingCycles = coolantTank.getFill() / step.amountRequired();
         int heatingCycles = (hotCoolantTank.getMaxFill() - hotCoolantTank.getFill()) / step.amountProduced();
@@ -468,21 +467,11 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        data.writeInt(tank.getFill());
-        data.writeInt(tank.getMaxFill());
-        data.writeInt(tank.getTankType().getId());
-        data.writeShort((short) tank.getPressure());
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.write(data, tank);
     }
 
     private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        int fill = data.readInt();
-        int maxFill = data.readInt();
-        FluidType type = HbmFluids.fromId(data.readInt());
-        int pressure = data.readShort();
-        tank.changeTankSize(maxFill);
-        tank.withPressure(pressure);
-        tank.setTankType(type);
-        tank.setFill(fill);
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.read(data, tank);
     }
 
     private static boolean hasTankTag(CompoundTag tag, String key) {

@@ -114,11 +114,11 @@ public class ZirnoxReactorMenu extends AbstractContainerMenu {
     }
 
     public int getHeatScaled(int max) {
-        return heat <= 0 ? 0 : heat * max / ZirnoxReactorBlockEntity.MAX_HEAT;
+        return heat * max / ZirnoxReactorBlockEntity.MAX_HEAT;
     }
 
     public int getPressureScaled(int max) {
-        return pressure <= 0 ? 0 : pressure * max / ZirnoxReactorBlockEntity.MAX_PRESSURE;
+        return pressure * max / ZirnoxReactorBlockEntity.MAX_PRESSURE;
     }
 
     @Override
@@ -193,7 +193,7 @@ public class ZirnoxReactorMenu extends AbstractContainerMenu {
         return new SlotItemHandler(items, slot, x, y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
-                return true;
+                return items.isItemValid(slot, stack);
             }
 
             @Override

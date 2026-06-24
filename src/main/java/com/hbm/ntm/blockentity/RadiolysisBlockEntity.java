@@ -270,7 +270,7 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-2, -1, -2), worldPosition.offset(3, 4, 3));
+        return new AABB(worldPosition.offset(-1, 0, -1), worldPosition.offset(2, 3, 2));
     }
 
     private boolean tickServer(Level level, BlockPos pos, BlockState state) {

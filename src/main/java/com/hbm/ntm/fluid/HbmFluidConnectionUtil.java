@@ -36,6 +36,10 @@ public final class HbmFluidConnectionUtil {
             return connectorBlock.canConnectFluid(level, neighborPos, type, neighborSide);
         }
 
+        if (HbmFluidUtil.hasRemoteVisualPortConnection(level, pos, type, direction)) {
+            return true;
+        }
+
         return false;
     }
 

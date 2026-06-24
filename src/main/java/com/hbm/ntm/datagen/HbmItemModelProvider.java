@@ -154,6 +154,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "holotape_damaged");
             return;
         }
+        if (path.startsWith("meteorite_sword")) {
+            handheldItem(path, "meteorite_sword");
+            return;
+        }
         if (path.equals("nossy_hat")) {
             generatedItem(path, "hat");
             return;

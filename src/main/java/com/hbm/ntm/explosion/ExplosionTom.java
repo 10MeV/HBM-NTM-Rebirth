@@ -83,6 +83,14 @@ public class ExplosionTom {
         return n > nlimit;
     }
 
+    public int currentWorldX() {
+        return posX + lastposX;
+    }
+
+    public int currentWorldZ() {
+        return posZ + lastposZ;
+    }
+
     private void breakColumn(int x, int z) {
         int distanceRemaining = radius2 - (x * x + z * z);
         if (distanceRemaining <= 0) {

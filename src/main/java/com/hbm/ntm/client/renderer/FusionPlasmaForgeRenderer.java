@@ -27,7 +27,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     @Override
@@ -44,7 +44,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         if (blockEntity.isConnected()) {
             poseStack.pushPose();
             poseStack.translate(-2.0D, 0.0D, 0.0D);
-            ObjFusionModels.TORUS_LEGACY.renderOnly(ObjFusionModels.TORUS_TEXTURE, context, "Bolts1");
+            ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_TEXTURE, context, "Bolts1");
             poseStack.popPose();
         }
         renderForgePart(context, "Body");
@@ -65,7 +65,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
 
     private static void renderLegacyDormantPlasma(FusionPlasmaForgeBlockEntity blockEntity, ObjRenderContext context) {
         if (blockEntity.getPlasmaEnergySync() <= 0L) {
-            ObjFusionModels.PLASMA_FORGE_LEGACY.renderOnlyUntextured(
+            ObjFusionModels.renderPlasmaForgePartUntextured(
                     context.withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL).withColor(0x000000),
                     "Plasma");
         }
@@ -80,16 +80,18 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         float mainOffset = (float) (sps(time / 750.0D) % 1.0D);
         float glowOffsetA = (float) ((Math.sin(time / 1000.0D) + time / 10000.0D) % 1.0D);
         float glowOffsetB = (float) ((Math.sin(time / 600.0D + 2.0D) + time / 5000.0D) % 1.0D);
-        ObjRenderContext plasma = context.fullBright().withAdditiveTranslucency()
-                .withColor(blockEntity.getPlasmaR(), blockEntity.getPlasmaG(), blockEntity.getPlasmaB(), alpha)
+        ObjRenderContext plasma = context.fullBright()
+                .withColor(blockEntity.getPlasmaR() * alpha, blockEntity.getPlasmaG() * alpha,
+                        blockEntity.getPlasmaB() * alpha)
                 .withUvScroll(0.0F, mainOffset);
-        ObjFusionModels.PLASMA_FORGE_LEGACY.renderOnly(ObjFusionModels.PLASMA_TEXTURE, plasma, "Plasma");
+        ObjFusionModels.renderPlasmaForgePart(ObjFusionModels.PLASMA_TEXTURE, plasma, "Plasma");
 
         ObjRenderContext glow = context.fullBright().withAdditiveTranslucency()
-                .withColor(blockEntity.getPlasmaR(), blockEntity.getPlasmaG(), blockEntity.getPlasmaB(), 0.55F);
-        ObjFusionModels.PLASMA_FORGE_LEGACY.renderOnly(ObjFusionModels.PLASMA_GLOW_TEXTURE,
+                .withColor(blockEntity.getPlasmaR() * 2.0F, blockEntity.getPlasmaG() * 2.0F,
+                        blockEntity.getPlasmaB() * 2.0F);
+        ObjFusionModels.renderPlasmaForgePart(ObjFusionModels.PLASMA_GLOW_TEXTURE,
                 glow.withUvScroll(0.0F, glowOffsetA), "Plasma");
-        ObjFusionModels.PLASMA_FORGE_LEGACY.renderOnly(ObjFusionModels.PLASMA_GLOW_TEXTURE,
+        ObjFusionModels.renderPlasmaForgePart(ObjFusionModels.PLASMA_GLOW_TEXTURE,
                 glow.withUvScroll(0.0F, glowOffsetB), "Plasma");
     }
 
@@ -135,7 +137,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
     }
 
     private static void renderForgePart(ObjRenderContext context, String part) {
-        ObjFusionModels.PLASMA_FORGE_LEGACY.renderOnly(ObjFusionModels.PLASMA_FORGE_TEXTURE, context, part);
+        ObjFusionModels.renderPlasmaForgePart(ObjFusionModels.PLASMA_FORGE_TEXTURE, context, part);
     }
 
     private static void renderArticulatedEffects(FusionPlasmaForgeBlockEntity blockEntity, PoseStack poseStack,

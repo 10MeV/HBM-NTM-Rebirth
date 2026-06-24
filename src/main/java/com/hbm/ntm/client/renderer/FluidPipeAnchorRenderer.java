@@ -2,7 +2,9 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.FluidPipeAnchorBlock;
 import com.hbm.ntm.blockentity.FluidPipeAnchorBlockEntity;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.util.ColorUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -11,11 +13,20 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 
 public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnchorBlockEntity> {
+    private static final LegacyWavefrontModel MODEL = ObjNetworkModels.PIPE_ANCHOR_LEGACY;
+    private static final LegacyWavefrontModel.SelectionHandle ANCHOR =
+            MODEL.prepareRenderOnlyInCallOrder("Anchor");
+    private static final LegacyWavefrontModel.SelectionHandle PIPE =
+            MODEL.prepareRenderOnlyInCallOrder("Pipe");
+    private static final LegacyWavefrontModel.SelectionHandle RING =
+            MODEL.prepareRenderOnlyInCallOrder("Ring");
+
     public FluidPipeAnchorRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -36,8 +47,7 @@ public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnc
         poseStack.translate(0.5D, 0.5D, 0.5D);
         rotateToFacing(poseStack, facing);
         poseStack.translate(0.0D, -0.5D, 0.0D);
-        ObjNetworkModels.PIPE_ANCHOR_LEGACY.renderPart("Anchor", ObjNetworkModels.texture("pipe_anchor"),
-                poseStack, buffer, modelLight, packedOverlay);
+        renderPart(ANCHOR, new ObjRenderContext(poseStack, buffer, anchor.getBlockState(), modelLight, packedOverlay));
         poseStack.popPose();
 
         renderRemoteConnections(anchor, poseStack, buffer, modelLight, packedOverlay);
@@ -110,14 +120,13 @@ public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnc
         poseStack.pushPose();
         poseStack.scale(1.0F, (float) length, 1.0F);
         poseStack.translate(0.0D, -0.5D, 0.0D);
-        ObjNetworkModels.PIPE_ANCHOR_LEGACY.renderPart("Pipe", ObjNetworkModels.texture("pipe_anchor"),
-                poseStack, buffer, packedLight, packedOverlay, red, green, blue, 255);
+        renderPart(PIPE, new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(), packedLight, packedOverlay)
+                .withColor(red << 16 | green << 8 | blue));
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(0.0D, length / 2.0D - 1.5D, 0.0D);
-        ObjNetworkModels.PIPE_ANCHOR_LEGACY.renderPart("Ring", ObjNetworkModels.texture("pipe_anchor"),
-                poseStack, buffer, packedLight, packedOverlay);
+        renderPart(RING, new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(), packedLight, packedOverlay));
         poseStack.popPose();
 
         poseStack.popPose();
@@ -125,6 +134,10 @@ public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnc
 
     private static Vec3 center(BlockPos pos) {
         return new Vec3(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+    }
+
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
+        MODEL.renderOnlyInCallOrder(ObjNetworkModels.texture("pipe_anchor"), context, handle);
     }
 
     /**

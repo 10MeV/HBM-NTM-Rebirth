@@ -179,7 +179,11 @@ public final class MultiblockHelper {
             return false;
         }
         boolean complete = true;
+        List<BlockPos> fillOffsets = new ArrayList<>();
         for (BlockPos offset : offsets) {
+            fillOffsets.add(offset);
+        }
+        for (BlockPos offset : fillOffsets) {
             if (offset.equals(BlockPos.ZERO)) {
                 continue;
             }
@@ -189,6 +193,7 @@ public final class MultiblockHelper {
                 complete = false;
             }
         }
+        refreshLayoutFluidProxyNeighbors(level, corePos, fillOffsets);
         return complete;
     }
 
@@ -672,6 +677,17 @@ public final class MultiblockHelper {
             return true;
         }
         return false;
+    }
+
+    private static void refreshLayoutFluidProxyNeighbors(Level level, BlockPos corePos, Iterable<BlockPos> offsets) {
+        for (BlockPos offset : offsets) {
+            if (offset.equals(BlockPos.ZERO)) {
+                continue;
+            }
+            if (level.getBlockEntity(corePos.offset(offset)) instanceof MultiblockDummyBlockEntity dummy) {
+                dummy.refreshAdjacentFluidConnections();
+            }
+        }
     }
 
     public static boolean withClearing(Level level, BlockPos corePos, Runnable action) {

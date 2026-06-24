@@ -34,6 +34,7 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -66,8 +67,11 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
             BlockTags.create(new ResourceLocation("forge", "ores/uranium"));
     private static final TagKey<Block> ASBESTOS_ORES =
             BlockTags.create(new ResourceLocation("forge", "ores/asbestos"));
-    private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_INVENTORY = HbmInventoryMenuHelper.LEGACY_ITEMS_TAG;
+    private static final String TAG_MODERN_INVENTORY = "Inventory";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_INDICATOR = "indicator";
+    private static final String TAG_PUMPJACK_SPEED = "pumpjackSpeed";
     private static final String TAG_SPEED_LEVEL = "speedLevel";
     private static final String TAG_ENERGY_LEVEL = "energyLevel";
     private static final String TAG_OVER_LEVEL = "overLevel";
@@ -108,7 +112,8 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY, SLOT_OIL_CONTAINER, SLOT_GAS_CONTAINER,
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
+                case SLOT_OIL_CONTAINER, SLOT_GAS_CONTAINER,
                      SLOT_UPGRADE_START, SLOT_UPGRADE_START + 1, SLOT_UPGRADE_END -> true;
                 default -> false;
             };
@@ -131,6 +136,8 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     private float pumpjackRotation;
     private float previousPumpjackRotation;
     private float pumpjackSpeed;
+    @Nullable
+    private String customName;
 
     public OilDrillBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, Kind.fromState(state));
@@ -348,13 +355,15 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         tag.putLong("power", getPower());
         tag.putInt(TAG_SPEED_LEVEL, speedLevel);
         tag.putInt(TAG_ENERGY_LEVEL, energyLevel);
         tag.putInt(TAG_OVER_LEVEL, overLevel);
         tag.putInt(TAG_AFTERBURN_LEVEL, afterburnLevel);
-        tag.putFloat("pumpjackSpeed", pumpjackSpeed);
         for (int i = 0; i < getAllTanks().size(); i++) {
             getAllTanks().get(i).writeToNbt(tag, "t" + i);
         }
@@ -364,7 +373,8 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         normalizeConfigState();
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         if (tag.contains("power")) {
             setPower(tag.getLong("power"));
         }
@@ -372,7 +382,6 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         energyLevel = tag.getInt(TAG_ENERGY_LEVEL);
         overLevel = Math.max(1, tag.contains(TAG_OVER_LEVEL) ? tag.getInt(TAG_OVER_LEVEL) : 1);
         afterburnLevel = tag.getInt(TAG_AFTERBURN_LEVEL);
-        pumpjackSpeed = tag.getFloat("pumpjackSpeed");
         for (int i = 0; i < getAllTanks().size(); i++) {
             getAllTanks().get(i).readFromNbt(tag, "t" + i);
         }
@@ -387,6 +396,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = super.getClientSyncTag();
         tag.putInt(TAG_INDICATOR, indicator);
+        tag.putFloat(TAG_PUMPJACK_SPEED, pumpjackSpeed);
         return tag;
     }
 
@@ -394,6 +404,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
         indicator = tag.getInt(TAG_INDICATOR);
+        pumpjackSpeed = tag.getFloat(TAG_PUMPJACK_SPEED);
     }
 
     @Override
@@ -482,7 +493,9 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return getBlockState().getBlock().getName();
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatable(kind.containerKey());
     }
 
     @Nullable
@@ -536,6 +549,16 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         changed |= updatePumpjackSpeed();
         return changed;
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        } else if (tag.contains(TAG_MODERN_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
     }
 
     private boolean updateUpgrades() {
@@ -908,6 +931,14 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
                 return FRACKING_TOWER;
             }
             return WELL;
+        }
+
+        private String containerKey() {
+            return switch (this) {
+                case WELL -> "container.oilWell";
+                case PUMPJACK -> "container.pumpjack";
+                case FRACKING_TOWER -> "container.frackingTower";
+            };
         }
     }
 

@@ -45,6 +45,10 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
             ObjNetworkModels.texture("wire");
     public static final ResourceLocation WIRE_GREYSCALE_TEXTURE =
             ObjNetworkModels.texture("wire_greyscale");
+    private static final LegacyWavefrontModel.SelectionHandle MEDIUM_PYLON =
+            ObjNetworkModels.PYLON_MEDIUM_LEGACY.prepareRenderOnlyInCallOrder("Pylon");
+    private static final LegacyWavefrontModel.SelectionHandle MEDIUM_TRANSFORMER =
+            ObjNetworkModels.PYLON_MEDIUM_LEGACY.prepareRenderOnlyInCallOrder("Transformer");
 
     public LegacyPylonRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -93,11 +97,22 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(mediumRotation(facing)));
-        ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderPart("Pylon", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer,
+                net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), packedLight, packedOverlay);
+        ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderOnlyInCallOrder(texture, context, MEDIUM_PYLON);
         if (kind.transformer()) {
-            ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderPart("Transformer", texture, poseStack, buffer, packedLight, packedOverlay);
+            ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderOnlyInCallOrder(texture, context, MEDIUM_TRANSFORMER);
         }
         poseStack.popPose();
+    }
+
+    static void renderMediumPylonPart(String partName, ResourceLocation texture, ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = mediumPylonHandle(partName);
+        if (handle != null) {
+            ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderPart(partName, texture, context);
     }
 
     public static void renderLargePylon(Direction facing, PoseStack poseStack,
@@ -220,6 +235,17 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
             case WEST -> 270.0F;
             case EAST -> 90.0F;
             default -> 0.0F;
+        };
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle mediumPylonHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Pylon" -> MEDIUM_PYLON;
+            case "Transformer" -> MEDIUM_TRANSFORMER;
+            default -> null;
         };
     }
 

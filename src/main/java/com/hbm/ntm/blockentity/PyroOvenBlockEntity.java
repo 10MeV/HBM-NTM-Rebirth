@@ -34,6 +34,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -67,6 +68,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int ITEM_COUNT = 6;
 
     private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_PROGRESS = "prog";
     private static final String TAG_PROGRESSING = "isProgressing";
     private static final String TAG_VENTING = "isVenting";
@@ -121,6 +123,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     private int prevAnim;
     private int anim;
     private Object audioLoop;
+    private String customName;
 
     public PyroOvenBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmEnergyStorage(MAX_POWER, MAX_POWER, 0L),
@@ -302,7 +305,10 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         tag.putLong(TAG_LEGACY_POWER, getPower());
         tag.putFloat(TAG_PROGRESS, progress);
         inputTank.writeToNbt(tag, "t0");
@@ -321,7 +327,8 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         if (tag.contains(TAG_LEGACY_POWER)) {
             setPower(tag.getLong(TAG_LEGACY_POWER));
         }
@@ -385,6 +392,9 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public Component getDisplayName() {
+        if (customName != null && !customName.isBlank()) {
+            return Component.literal(customName);
+        }
         return Component.translatableWithFallback("container.machinePyroOven", "Pyrolysis Oven");
     }
 
@@ -455,6 +465,14 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldVenting != venting
                 || oldPower != energy.getPower();
         return changed;
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
     }
 
     private void tickClient(Level level, BlockPos pos, BlockState state) {

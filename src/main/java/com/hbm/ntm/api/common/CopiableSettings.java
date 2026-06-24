@@ -12,6 +12,10 @@ import net.minecraft.world.level.block.Block;
 import java.util.List;
 
 public interface CopiableSettings {
+    default boolean supportsSettingsCopy(Level level, BlockPos pos) {
+        return true;
+    }
+
     CompoundTag getSettings(Level level, BlockPos pos);
 
     void pasteSettings(CompoundTag tag, int index, Level level, Player player, BlockPos pos);

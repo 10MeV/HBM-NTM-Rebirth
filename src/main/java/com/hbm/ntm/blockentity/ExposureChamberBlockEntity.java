@@ -19,6 +19,9 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
@@ -380,41 +383,79 @@ public class ExposureChamberBlockEntity extends HbmEnergyBlockEntity implements 
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
         tag.putLong("power", energy.getPower());
         tag.putInt("progress", progress);
-        tag.putInt("processTime", processTime);
-        tag.putInt("consumption", consumption);
         tag.putInt("savedParticles", savedParticles);
-        tag.putBoolean("isOn", isOn);
-        tag.putFloat("rotation", rotation);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        loadItems(tag);
         if (tag.contains("power")) {
             energy.setPower(tag.getLong("power"));
         }
+        progress = tag.getInt("progress");
+        savedParticles = tag.getInt("savedParticles");
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt("progress", progress);
+        tag.putInt("processTime", processTime);
+        tag.putInt("consumption", consumption);
+        tag.putInt("savedParticles", savedParticles);
+        tag.putBoolean("isOn", isOn);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
         progress = tag.getInt("progress");
         processTime = tag.contains("processTime") ? Math.max(1, tag.getInt("processTime")) : PROCESS_TIME_BASE;
         consumption = tag.contains("consumption") ? Math.max(1, tag.getInt("consumption")) : CONSUMPTION_BASE;
         savedParticles = tag.getInt("savedParticles");
         isOn = tag.getBoolean("isOn");
-        rotation = tag.getFloat("rotation");
-        prevRotation = rotation;
     }
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
     }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Override
@@ -429,6 +470,15 @@ public class ExposureChamberBlockEntity extends HbmEnergyBlockEntity implements 
             return itemHandler.cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    private void loadItems(CompoundTag tag) {
+        if (tag.contains(HbmInventoryMenuHelper.LEGACY_ITEMS_TAG, Tag.TAG_LIST)
+                || tag.contains("Items", Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
     }
 
     private final class AccessibleItemHandler implements IItemHandler {

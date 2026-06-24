@@ -3,10 +3,12 @@ package com.hbm.ntm.block;
 import java.util.EnumMap;
 import java.util.Map;
 
+import com.hbm.ntm.api.block.Toolable;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -28,10 +30,11 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
-public class LegacyDirectionalShapeBlock extends BaseEntityBlock {
+public class LegacyDirectionalShapeBlock extends BaseEntityBlock implements Toolable {
     public static final DirectionProperty FACE = DirectionProperty.create("face");
     public static final BooleanProperty TOP_BOTTOM_ROTATED = BooleanProperty.create("top_bottom_rotated");
 
@@ -117,6 +120,18 @@ public class LegacyDirectionalShapeBlock extends BaseEntityBlock {
     @Override
     public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
         return Shapes.empty();
+    }
+
+    @Override
+    public boolean onToolUse(Level level, Player player, BlockPos pos, Direction side, Vec3 hit, ToolType tool) {
+        if (kind != Kind.FLOODLIGHT || tool != ToolType.SCREWDRIVER
+                || !(level.getBlockEntity(pos) instanceof LegacyLightBlockEntity blockEntity)) {
+            return false;
+        }
+        if (!level.isClientSide) {
+            blockEntity.setRotationFromPlayer(player.getXRot(), player.getYRot(), level.getBlockState(pos).getValue(FACE));
+        }
+        return true;
     }
 
     @Override

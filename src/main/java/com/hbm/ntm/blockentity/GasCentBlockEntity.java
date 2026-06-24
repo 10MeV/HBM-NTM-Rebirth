@@ -28,6 +28,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
@@ -68,6 +69,7 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final long NORMAL_CONSUMPTION = 200L;
     private static final long SPEED_UPGRADE_CONSUMPTION = 300L;
     private static final String TAG_ITEMS = "items";
+    private static final String TAG_CUSTOM_NAME = "name";
 
     private static final List<FluidPort> PORTS = List.of(
             FluidPort.of(0, -1, 0, Direction.DOWN),
@@ -88,7 +90,7 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
                 case SLOT_UPGRADE -> isSpeedUpgrade(stack);
                 default -> false;
@@ -105,6 +107,8 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
     private boolean isProgressing;
     private int audioDuration;
     private Object audioLoop;
+    @Nullable
+    private String customName;
 
     public GasCentBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.GAS_CENT.get(), pos, state, new HbmEnergyStorage(MAX_POWER, MAX_POWER, 0L),
@@ -451,7 +455,9 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.gasCentrifuge", "Gas Centrifuge");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatableWithFallback("container.gasCentrifuge", "Gas Centrifuge");
     }
 
     @Nullable
@@ -470,7 +476,10 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         tag.putLong("power", energy.getPower());
         tag.putShort("progress", (short) progress);
         tank.writeToNbt(tag, "tank");
@@ -482,7 +491,8 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         if (tag.contains("power")) {
             energy.setPower(tag.getLong("power"));
         }
@@ -493,6 +503,16 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
         inputTank.readFromNbt(tag, "inputTank");
         outputTank.readFromNbt(tag, "outputTank");
         isProgressing = tag.getBoolean("isProgressing");
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_ITEMS, Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        } else if (tag.contains(TAG_ITEMS, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
     }
 
     @Override

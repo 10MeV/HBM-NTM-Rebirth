@@ -33,6 +33,7 @@ import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -64,6 +65,7 @@ import java.util.Map;
 public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
         HbmStandardFluidReceiver, HbmLegacyLoadedTile, LegacyProxyDelegateProvider {
     private static final String TAG_INVENTORY = "items";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_LEGACY_POWER = "power";
     private static final String TAG_LEGACY_MAX_POWER = "maxPower";
@@ -103,8 +105,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
                 case SLOT_INPUT_0, SLOT_INPUT_1, SLOT_INPUT_2 -> true;
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
-                case SLOT_FLUID_IDENTIFIER -> true;
+                case SLOT_BATTERY, SLOT_FLUID_IDENTIFIER -> true;
                 case SLOT_UPGRADE_0, SLOT_UPGRADE_1 -> stack.getItem() instanceof ItemMachineUpgrade;
                 default -> false;
             };
@@ -131,6 +132,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     private long consumption = 100L;
     private boolean didProcess;
     private String selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
+    private String customName;
 
     public ArcWelderBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ARC_WELDER.get(), pos, state);
@@ -406,7 +408,10 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         writeLegacyLoadedTileNbt(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         tag.put(TAG_ENERGY, energy.serializeNBT());
         tag.putLong(TAG_LEGACY_POWER, energy.getPower());
         tag.putLong(TAG_LEGACY_MAX_POWER, energy.getMaxPower());
@@ -421,6 +426,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         super.load(tag);
         readLegacyLoadedTileNbt(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         if (tag.contains(TAG_ENERGY)) {
             energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
         } else if (tag.contains(TAG_LEGACY_POWER)) {
@@ -478,6 +484,9 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
 
     @Override
     public Component getDisplayName() {
+        if (customName != null && !customName.isBlank()) {
+            return Component.literal(customName);
+        }
         return Component.translatableWithFallback("container.machineArcWelder", "Arc Welder");
     }
 

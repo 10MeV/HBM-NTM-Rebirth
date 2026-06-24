@@ -10,6 +10,7 @@ import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidDuctVariantBlockItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
+import com.hbm.ntm.item.ICFPelletItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
 import com.hbm.ntm.item.RBMKFuelRodItem;
@@ -24,6 +25,7 @@ import com.hbm.ntm.recipe.DeuteriumTowerRecipeRuntime;
 import com.hbm.ntm.recipe.ElectrolyserRecipeRuntime;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.ItemProcessingRecipe;
+import com.hbm.ntm.recipe.ICFPelletRecipeRuntime;
 import com.hbm.ntm.recipe.LegacyBlueprintPools;
 import com.hbm.ntm.recipe.LiquefactionRecipe;
 import com.hbm.ntm.recipe.ModRecipes;
@@ -31,9 +33,11 @@ import com.hbm.ntm.recipe.CrucibleRecipeRuntime;
 import com.hbm.ntm.recipe.CyclotronRecipeRuntime;
 import com.hbm.ntm.recipe.ExposureChamberRecipe;
 import com.hbm.ntm.recipe.FusionFluidBreederRecipe;
+import com.hbm.ntm.recipe.FuelPoolRecipes;
 import com.hbm.ntm.recipe.MixerRecipe;
 import com.hbm.ntm.recipe.OreSlopperRecipeRuntime;
 import com.hbm.ntm.recipe.OutgasserRecipe;
+import com.hbm.ntm.recipe.PWRFuelRuntime;
 import com.hbm.ntm.recipe.RadiolysisRecipes;
 import com.hbm.ntm.recipe.RadGenRecipeRuntime;
 import com.hbm.ntm.recipe.ResearchReactorFuelRuntime;
@@ -171,10 +175,16 @@ public final class HbmJeiPlugin implements IModPlugin {
             RecipeType.create(HbmNtm.MOD_ID, "research_reactor", ResearchReactorFuelRuntime.DisplayFuel.class);
     public static final RecipeType<BreedingReactorRecipeRuntime.DisplayRecipe> BREEDING_REACTOR =
             RecipeType.create(HbmNtm.MOD_ID, "breeding_reactor", BreedingReactorRecipeRuntime.DisplayRecipe.class);
+    public static final RecipeType<PWRFuelRuntime.DisplayFuel> PWR =
+            RecipeType.create(HbmNtm.MOD_ID, "pwr", PWRFuelRuntime.DisplayFuel.class);
+    public static final RecipeType<FuelPoolRecipes.DisplayRecipe> FUEL_POOL =
+            RecipeType.create(HbmNtm.MOD_ID, "fuel_pool", FuelPoolRecipes.DisplayRecipe.class);
     public static final RecipeType<ZirnoxFuelRuntime.DisplayRod> ZIRNOX =
             RecipeType.create(HbmNtm.MOD_ID, "zirnox", ZirnoxFuelRuntime.DisplayRod.class);
     public static final RecipeType<WatzFuelRuntime.DisplayPellet> WATZ =
             RecipeType.create(HbmNtm.MOD_ID, "watz", WatzFuelRuntime.DisplayPellet.class);
+    public static final RecipeType<ICFPelletRecipeRuntime.DisplayPellet> ICF_PELLET =
+            RecipeType.create(HbmNtm.MOD_ID, "icf_pellet", ICFPelletRecipeRuntime.DisplayPellet.class);
     public static final RecipeType<AshpitJeiRecipe> ASHPIT =
             RecipeType.create(HbmNtm.MOD_ID, "ashpit", AshpitJeiRecipe.class);
     public static final RecipeType<BoilerRecipeRuntime.DisplayRecipe> BOILER =
@@ -286,8 +296,11 @@ public final class HbmJeiPlugin implements IModPlugin {
                         guiHelper),
                 new BreedingReactorRecipeCategory(BREEDING_REACTOR,
                         ModBlocks.MACHINE_REACTOR_BREEDING.get(), guiHelper),
+                new PWRFuelRecipeCategory(PWR, ModBlocks.PWR_CONTROLLER.get(), guiHelper),
+                new FuelPoolRecipeCategory(FUEL_POOL, ModBlocks.MACHINE_WASTE_DRUM.get(), guiHelper),
                 new ZirnoxFuelRecipeCategory(ZIRNOX, ModBlocks.REACTOR_ZIRNOX.get(), guiHelper),
                 new WatzFuelRecipeCategory(WATZ, ModBlocks.WATZ.get(), guiHelper),
+                new ICFPelletRecipeCategory(ICF_PELLET, ModBlocks.MACHINE_ICF_PRESS.get(), guiHelper),
                 new AshpitRecipeCategory(ASHPIT, ModBlocks.MACHINE_ASHPIT.get(), guiHelper),
                 new BoilerRecipeCategory(BOILER, ModBlocks.MACHINE_BOILER.get(), guiHelper),
                 new OutgasserRecipeCategory(OUTGASSER, ModBlocks.RBMK_OUTGASSER.get(), guiHelper),
@@ -345,9 +358,12 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipes(TURBINE_GAS, TurbineGasRecipeRuntime.displayRecipes());
         registration.addRecipes(RTG, RtgRecipeRuntime.displayRecipes());
         registration.addRecipes(RESEARCH_REACTOR, ResearchReactorFuelRuntime.displayFuels());
-        registration.addRecipes(BREEDING_REACTOR, BreedingReactorRecipeRuntime.displayRecipes());
+        registration.addRecipes(BREEDING_REACTOR, BreedingReactorRecipeRuntime.displayRecipes(Minecraft.getInstance().level));
+        registration.addRecipes(PWR, PWRFuelRuntime.displayFuels());
+        registration.addRecipes(FUEL_POOL, FuelPoolRecipes.displayRecipes(Minecraft.getInstance().level));
         registration.addRecipes(ZIRNOX, ZirnoxFuelRuntime.displayRods());
         registration.addRecipes(WATZ, WatzFuelRuntime.displayPellets());
+        registration.addRecipes(ICF_PELLET, ICFPelletRecipeRuntime.displayPellets());
         registration.addRecipes(ASHPIT, AshpitJeiRecipe.recipes());
         registration.addRecipes(BOILER, BoilerRecipeRuntime.displayRecipes());
         registration.addRecipes(OUTGASSER,
@@ -408,8 +424,13 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_RTG_GREY.get()), RTG);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.REACTOR_RESEARCH.get()), RESEARCH_REACTOR);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_REACTOR_BREEDING.get()), BREEDING_REACTOR);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.PWR_CONTROLLER.get()), PWR);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.PWR_FUEL.get()), PWR);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_WASTE_DRUM.get()), FUEL_POOL);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.REACTOR_ZIRNOX.get()), ZIRNOX);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.WATZ.get()), WATZ);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ICF_PRESS.get()), ICF_PELLET);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.ICF.get()), ICF_PELLET);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ASHPIT.get()), ASHPIT);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_BOILER.get()), BOILER);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_INDUSTRIAL_BOILER.get()), BOILER);
@@ -488,6 +509,8 @@ public final class HbmJeiPlugin implements IModPlugin {
             registration.registerSubtypeInterpreter(item, (stack, context) -> rbmkFuelRodSubtype(rod, stack));
         } else if (item instanceof RBMKPelletItem) {
             registration.registerSubtypeInterpreter(item, (stack, context) -> "damage=" + stack.getDamageValue());
+        } else if (item instanceof ICFPelletItem) {
+            registration.registerSubtypeInterpreter(item, HbmJeiPlugin::icfPelletSubtype);
         } else if (item instanceof FluidIdentifierItem) {
             registration.registerSubtypeInterpreter(item, (stack, context) -> "primary="
                     + FluidIdentifierItem.getType(stack, true).getName());
@@ -526,6 +549,13 @@ public final class HbmJeiPlugin implements IModPlugin {
                 + ";xenon=" + Math.round(state.xenon())
                 + ";core=" + Math.round(state.coreHeat())
                 + ";hull=" + Math.round(state.hullHeat());
+    }
+
+    private static String icfPelletSubtype(ItemStack stack, UidContext context) {
+        return "first=" + ICFPelletItem.type(stack, true).name()
+                + ";second=" + ICFPelletItem.type(stack, false).name()
+                + ";muon=" + ICFPelletItem.isMuonCatalyzed(stack)
+                + ";depletion=" + ICFPelletItem.getDepletion(stack);
     }
 
     private static String conveyorWandSubtype(ItemStack stack, UidContext context) {

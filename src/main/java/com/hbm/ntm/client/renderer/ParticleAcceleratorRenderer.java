@@ -58,14 +58,14 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
     private static void renderBeamline(PABeamlineBlockEntity beamline, float partialTick, LegacyWavefrontModel model,
             ResourceLocation texture, ObjRenderContext context) {
         if (!beamline.hasWindow()) {
-            model.renderPart("Beamline", texture, context);
+            ObjParticleAcceleratorModels.renderBeamlinePart("Beamline", texture, context);
             return;
         }
-        model.renderPart("BeamlineWindow", texture, context);
+        ObjParticleAcceleratorModels.renderBeamlinePart("BeamlineWindow", texture, context);
         float flash = Math.max(0.0F, beamline.getFlash(partialTick));
         if (flash > 0.0F) {
             int color = Math.min(255, (int) (230.0F * flash));
-            model.renderPartUntextured("BeamlineGlass", context.fullBright()
+            ObjParticleAcceleratorModels.renderBeamlinePartUntextured("BeamlineGlass", context.fullBright()
                     .withRenderMode(LegacyTexturedRenderMode.ADDITIVE_CULL_NO_DEPTH_WRITE)
                     .withRgba(color, color, 255, 180));
         }

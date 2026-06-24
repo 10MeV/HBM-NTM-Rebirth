@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "tag": "forge:plates/steel" },
+      "count": 8,
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/iron" },
+      "count": 12,
+      "legacy_ore": "ingotIron"
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/copper" },
+      "count": 2,
+      "legacy_ore": "ingotCopper"
+    },
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:circuit_vacuum_tube" },
+      "count": 1,
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 0
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:machine_thresher"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

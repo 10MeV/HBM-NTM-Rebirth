@@ -5,7 +5,6 @@ import com.hbm.ntm.block.CableDiodeBlock;
 import com.hbm.ntm.blockentity.CableDiodeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
-import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.energy.HbmEnergyConnectionUtil;
 import com.hbm.ntm.energy.HbmEnergyConnectorBlock;
@@ -21,10 +20,8 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class CableDiodeRenderer implements BlockEntityRenderer<CableDiodeBlockEntity> {
-    private static final ResourceLocation PLATE_SPRITE =
-            new ResourceLocation(HbmNtm.MOD_ID, "block/cable_diode");
-    private static final ResourceLocation PAD_SPRITE =
-            new ResourceLocation(HbmNtm.MOD_ID, "block/hadron_coil_alloy");
+    private static final TextureAtlasSprite PLATE_SPRITE = sprite("cable_diode");
+    private static final TextureAtlasSprite PAD_SPRITE = sprite("hadron_coil_alloy");
     private static final double SLAB_THICKNESS = 0.125D;
     private static final double PAD_RADIUS = 0.375D;
 
@@ -50,10 +47,8 @@ public class CableDiodeRenderer implements BlockEntityRenderer<CableDiodeBlockEn
     }
 
     private static void renderBody(BlockState state, ObjRenderContext context, Direction output) {
-        TextureAtlasSprite plate = LegacyTexturedQuadRenderer.blockSprite(PLATE_SPRITE);
-        TextureAtlasSprite pad = LegacyTexturedQuadRenderer.blockSprite(PAD_SPRITE);
-        LegacyAtlasCuboidRenderer.directionalSlab(plate, context, output, SLAB_THICKNESS);
-        LegacyAtlasCuboidRenderer.centeredCube(pad, context, PAD_RADIUS);
+        LegacyAtlasCuboidRenderer.directionalSlab(PLATE_SPRITE, context, output, SLAB_THICKNESS);
+        LegacyAtlasCuboidRenderer.centeredCube(PAD_SPRITE, context, PAD_RADIUS);
     }
 
     private static void renderWorldCableArms(BlockGetter level, BlockPos pos, BlockState state, ObjRenderContext context) {
@@ -73,28 +68,7 @@ public class CableDiodeRenderer implements BlockEntityRenderer<CableDiodeBlockEn
 
     private static void renderCableArms(ObjRenderContext context,
             boolean posX, boolean negX, boolean posY, boolean negY, boolean posZ, boolean negZ) {
-        PoseStack poseStack = context.poseStack();
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.5D, 0.5D);
-        if (posX) {
-            ObjBlockModels.CABLE_NEO.renderPart("posX", RedCableRenderer.CABLE_TEXTURE, context);
-        }
-        if (negX) {
-            ObjBlockModels.CABLE_NEO.renderPart("negX", RedCableRenderer.CABLE_TEXTURE, context);
-        }
-        if (posY) {
-            ObjBlockModels.CABLE_NEO.renderPart("posY", RedCableRenderer.CABLE_TEXTURE, context);
-        }
-        if (negY) {
-            ObjBlockModels.CABLE_NEO.renderPart("negY", RedCableRenderer.CABLE_TEXTURE, context);
-        }
-        if (negZ) {
-            ObjBlockModels.CABLE_NEO.renderPart("posZ", RedCableRenderer.CABLE_TEXTURE, context);
-        }
-        if (posZ) {
-            ObjBlockModels.CABLE_NEO.renderPart("negZ", RedCableRenderer.CABLE_TEXTURE, context);
-        }
-        poseStack.popPose();
+        RedCableRenderer.renderCableArms(context, posX, negX, posY, negY, posZ, negZ);
     }
 
     private static Direction outputDirection(BlockState state) {
@@ -102,5 +76,9 @@ public class CableDiodeRenderer implements BlockEntityRenderer<CableDiodeBlockEn
                 ? state.getValue(CableDiodeBlock.FACING)
                 : Direction.NORTH;
         return facing.getOpposite();
+    }
+
+    private static TextureAtlasSprite sprite(String texture) {
+        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + texture));
     }
 }

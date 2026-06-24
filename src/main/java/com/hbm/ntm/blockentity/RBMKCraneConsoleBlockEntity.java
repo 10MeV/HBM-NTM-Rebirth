@@ -322,7 +322,7 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
     }
 
     @Override
-    public void serialize(FriendlyByteBuf data) {
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
         data.writeBoolean(setUpCrane);
         if (!setUpCrane) {
             return;
@@ -345,7 +345,7 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
     }
 
     @Override
-    public void deserialize(FriendlyByteBuf data) {
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         setUpCrane = data.readBoolean();
         if (!setUpCrane) {
             return;

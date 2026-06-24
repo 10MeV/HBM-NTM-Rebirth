@@ -3,7 +3,6 @@ package com.hbm.ntm.blockentity;
 import com.hbm.inventory.material.MaterialShapes;
 import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.Mats.MaterialStack;
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
@@ -18,7 +17,6 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
-import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.ElectrolyserMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
@@ -29,7 +27,6 @@ import com.hbm.ntm.recipe.ElectrolyserRecipeRuntime.FluidRecipe;
 import com.hbm.ntm.recipe.ElectrolyserRecipeRuntime.MetalRecipe;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.util.CrucibleUtil;
 import java.util.ArrayList;
@@ -44,7 +41,6 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -56,7 +52,6 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,6 +91,7 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_LEFT_AMOUNT = "leftAmount";
     private static final String TAG_RIGHT_TYPE = "rightType";
     private static final String TAG_RIGHT_AMOUNT = "rightAmount";
+    private static final String[] TAG_LEGACY_TANKS = new String[] { "t0", "t1", "t2", "t3" };
     private static final long MAX_POWER = 20_000_000L;
     private static final int TANK_CAPACITY = 16_000;
     private static final int MAX_MATERIAL = MaterialShapes.BLOCK.q(16);
@@ -119,11 +115,9 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
-                case SLOT_UPGRADE_1, SLOT_UPGRADE_2 -> stack.getItem() instanceof ItemMachineUpgrade;
-                case SLOT_FLUID_ID_INPUT -> stack.getItem() instanceof IFluidIdentifierItem;
-                case SLOT_INPUT_CONTAINER, SLOT_OUTPUT1_CONTAINER, SLOT_OUTPUT2_CONTAINER -> true;
-                case SLOT_METAL_INPUT -> ElectrolyserRecipeRuntime.metalForInput(stack) != null;
+                case SLOT_BATTERY, SLOT_UPGRADE_1, SLOT_UPGRADE_2, SLOT_FLUID_ID_INPUT,
+                        SLOT_INPUT_CONTAINER, SLOT_OUTPUT1_CONTAINER, SLOT_OUTPUT2_CONTAINER,
+                        SLOT_METAL_INPUT -> true;
                 default -> false;
             };
         }
@@ -683,6 +677,10 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
             tag.putInt(TAG_RIGHT_TYPE, rightStack.material.id);
             tag.putInt(TAG_RIGHT_AMOUNT, rightStack.amount);
         }
+        inputTank.writeToNbt(tag, TAG_LEGACY_TANKS[0]);
+        outputTank1.writeToNbt(tag, TAG_LEGACY_TANKS[1]);
+        outputTank2.writeToNbt(tag, TAG_LEGACY_TANKS[2]);
+        nitricTank.writeToNbt(tag, TAG_LEGACY_TANKS[3]);
     }
 
     @Override
@@ -699,6 +697,16 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
         lastSelectedGui = tag.getInt(TAG_LAST_SELECTED_GUI);
         leftStack = readMaterialStack(tag, TAG_LEFT_TYPE, TAG_LEFT_AMOUNT);
         rightStack = readMaterialStack(tag, TAG_RIGHT_TYPE, TAG_RIGHT_AMOUNT);
+        readLegacyTank(tag, TAG_LEGACY_TANKS[0], inputTank);
+        readLegacyTank(tag, TAG_LEGACY_TANKS[1], outputTank1);
+        readLegacyTank(tag, TAG_LEGACY_TANKS[2], outputTank2);
+        readLegacyTank(tag, TAG_LEGACY_TANKS[3], nitricTank);
+    }
+
+    private static void readLegacyTank(CompoundTag tag, String key, HbmFluidTank tank) {
+        if (tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id")) {
+            tank.readFromNbt(tag, key);
+        }
     }
 
     @Nullable
@@ -731,7 +739,7 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public @NotNull ItemStack getStackInSlot(int slot) {
-            int mapped = SLOT_FLUID_BYPRODUCT_START + slot;
+            int mapped = mapExternalSlot(slot);
             return mapped >= SLOT_FLUID_BYPRODUCT_START && mapped <= SLOT_METAL_OUTPUT_END
                     ? items.getStackInSlot(mapped)
                     : ItemStack.EMPTY;
@@ -739,28 +747,40 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return stack;
+            int mapped = mapExternalSlot(slot);
+            if (mapped != SLOT_METAL_INPUT || ElectrolyserRecipeRuntime.metalForInput(stack) == null) {
+                return stack;
+            }
+            return items.insertItem(mapped, stack, simulate);
         }
 
         @Override
         public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            int mapped = SLOT_FLUID_BYPRODUCT_START + slot;
+            int mapped = mapExternalSlot(slot);
             return mapped >= SLOT_FLUID_BYPRODUCT_START && mapped <= SLOT_METAL_OUTPUT_END
+                    && mapped != SLOT_METAL_INPUT
                     ? items.extractItem(mapped, amount, simulate)
                     : ItemStack.EMPTY;
         }
 
         @Override
         public int getSlotLimit(int slot) {
-            int mapped = SLOT_FLUID_BYPRODUCT_START + slot;
-            return mapped >= SLOT_FLUID_BYPRODUCT_START && mapped <= SLOT_METAL_OUTPUT_END
+            int mapped = mapExternalSlot(slot);
+            return (mapped >= SLOT_FLUID_BYPRODUCT_START && mapped <= SLOT_METAL_OUTPUT_END)
+                    || mapped == SLOT_METAL_INPUT
                     ? items.getSlotLimit(mapped)
                     : 0;
         }
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return false;
+            return mapExternalSlot(slot) == SLOT_METAL_INPUT
+                    && ElectrolyserRecipeRuntime.metalForInput(stack) != null;
+        }
+
+        private int mapExternalSlot(int slot) {
+            int mapped = SLOT_FLUID_BYPRODUCT_START + slot;
+            return mapped >= SLOT_FLUID_BYPRODUCT_START && mapped <= SLOT_METAL_OUTPUT_END ? mapped : -1;
         }
     }
 

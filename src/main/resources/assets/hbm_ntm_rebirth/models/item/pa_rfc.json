@@ -1,3 +1,3 @@
 {
-  "parent": "hbm_ntm_rebirth:block/pa_rfc"
+  "parent": "minecraft:builtin/entity"
 }

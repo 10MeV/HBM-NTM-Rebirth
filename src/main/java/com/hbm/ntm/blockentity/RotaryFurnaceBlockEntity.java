@@ -29,6 +29,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
@@ -69,7 +70,8 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
     public static final int SMOKE_CAPACITY = 50;
     public static final int MAX_OUTPUT = MaterialShapes.BLOCK.q(16);
 
-    private static final String TAG_ITEMS = "Items";
+    private static final String TAG_ITEMS = "items";
+    private static final String TAG_MODERN_ITEMS_FALLBACK = "Items";
     private static final String TAG_PROGRESS = "prog";
     private static final String TAG_BURN = "burn";
     private static final String TAG_HEAT = "heat";
@@ -104,7 +106,7 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
             return switch (slot) {
                 case SLOT_INPUT_0, SLOT_INPUT_1, SLOT_INPUT_2 -> true;
                 case SLOT_FLUID_ID -> true;
-                case SLOT_FUEL -> ForgeHooks.getBurnTime(stack, RecipeType.SMELTING) > 0;
+                case SLOT_FUEL -> true;
                 default -> false;
             };
         }
@@ -194,23 +196,21 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
         }
         furnace.lastAnim = furnace.anim;
         if (furnace.isProgressing) {
-            furnace.anim++;
+            furnace.anim += Math.max((int) furnace.burnHeat, 1);
         }
         Direction facing = facing(state);
         Direction rot = legacyDownSide(facing);
-        if (furnace.burnTime > 0 && level.random.nextInt(4) == 0) {
+        if (furnace.burnTime > 0) {
             level.addParticle(ParticleTypes.FLAME,
-                    pos.getX() + 0.5D - facing.getStepX() * 0.75D + rot.getStepX() * 0.5D,
-                    pos.getY() + 1.0D + level.random.nextDouble() * 0.5D,
-                    pos.getZ() + 0.5D - facing.getStepZ() * 0.75D + rot.getStepZ() * 0.5D,
+                    pos.getX() + 0.5D + facing.getStepX() * 0.5D + rot.getStepX()
+                            + level.random.nextGaussian() * 0.25D,
+                    pos.getY() + 0.375D,
+                    pos.getZ() + 0.5D + facing.getStepZ() * 0.5D + rot.getStepZ()
+                            + level.random.nextGaussian() * 0.25D,
                     0.0D, 0.0D, 0.0D);
         }
-        if (furnace.isVenting && level.random.nextInt(3) == 0) {
-            level.addParticle(ParticleTypes.SMOKE,
-                    pos.getX() + 0.5D + rot.getStepX(),
-                    pos.getY() + 5.0D,
-                    pos.getZ() + 0.5D + rot.getStepZ(),
-                    0.0D, 0.08D, 0.0D);
+        if (furnace.isVenting && level.getGameTime() % 2L == 0L) {
+            ParticleUtil.spawnRotaryFurnaceVentSmoke(level, pos, rot);
         }
     }
 
@@ -392,7 +392,7 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, TAG_ITEMS, items);
         inputTank.writeToNbt(tag, "t0");
         steamTank.writeToNbt(tag, "t1");
         spentSteamTank.writeToNbt(tag, "t2");
@@ -414,7 +414,11 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        if (tag.contains(TAG_ITEMS, Tag.TAG_LIST) || tag.contains(TAG_ITEMS, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_ITEMS_FALLBACK, items);
+        }
         if (tag.contains("t0") || tag.contains("t0_type")) {
             inputTank.readFromNbt(tag, "t0");
         }
@@ -497,13 +501,13 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
                     progress = 0.0F;
                     process(recipe);
                 }
-                pollute(PollutionType.SOOT, 0.01F * processSpeed);
+                pollute(PollutionType.SOOT, PollutionManager.SOOT_PER_SECOND / 10.0F);
+                if (burnTime > 0) {
+                    burnTime--;
+                }
             }
         } else {
             progress = 0.0F;
-        }
-        if (burnTime > 0) {
-            burnTime--;
         }
 
         return oldInput != inputTank.getFill()

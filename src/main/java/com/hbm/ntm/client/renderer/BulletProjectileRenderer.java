@@ -22,6 +22,7 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjEffectModels;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.obj.ObjWeaponModels;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.item.ChargeThrowerItem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -409,7 +410,8 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         poseStack.scale(0.125F / 1.5F, 0.125F / 1.5F, 0.125F / 1.5F);
         poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
         poseStack.translate(0.0D, -1.0D, 1.0D);
-        FATMAN.renderPart("MiniNuke", texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        ObjWeaponModels.renderPart(FATMAN, "MiniNuke", texture, poseStack, buffer, packedLight,
+                OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
     }
 
@@ -418,7 +420,8 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         poseStack.scale(0.0625F / 1.5F, 0.0625F / 1.5F, 0.0625F / 1.5F);
         poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
         poseStack.translate(0.0D, -1.0D, 1.0D);
-        FATMAN.renderPart("MiniNuke", FATMAN_SUBMUNITION, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        ObjWeaponModels.renderPart(FATMAN, "MiniNuke", FATMAN_SUBMUNITION, poseStack, buffer, packedLight,
+                OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
     }
 
@@ -432,8 +435,8 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         float offset = entity.tickCount + partialTick;
         for (int layer = 0; layer < 3; layer++) {
             float movement = offset * (0.001F + layer * 0.003F) * -6.0F;
-            FATMAN.renderPartGlintWithLegacyTextureMatrix("MiniNuke", BALEFIRE_GLINT, poseStack, buffer,
-                    LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0, 155, 29, 255,
+            ObjWeaponModels.renderPartGlintWithLegacyTextureMatrix(FATMAN, "MiniNuke", BALEFIRE_GLINT, poseStack,
+                    buffer, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0, 155, 29, 255,
                     2.0F, 2.0F, 30.0F - layer * 60.0F, 0.0F, movement);
         }
         poseStack.popPose();
@@ -444,7 +447,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         poseStack.scale(0.125F / 1.5F, 0.125F / 1.5F, 0.125F / 1.5F);
         poseStack.mulPose(Axis.YN.rotationDegrees(90.0F));
         poseStack.translate(0.0D, 0.0D, 3.5D);
-        PANZERSCHRECK_MODEL_OBJ.renderPart("Rocket", PANZERSCHRECK, poseStack, buffer, packedLight,
+        ObjWeaponModels.renderPart(PANZERSCHRECK_MODEL_OBJ, "Rocket", PANZERSCHRECK, poseStack, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
     }
@@ -475,7 +478,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         poseStack.mulPose(Axis.YN.rotationDegrees(90.0F));
         poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
         poseStack.translate(0.0D, 0.0D, -6.0D);
-        CHARGE_THROWER.renderPart("Hook", CHARGE_THROWER_HOOK, poseStack, buffer, packedLight,
+        ObjWeaponModels.renderPart(CHARGE_THROWER, "Hook", CHARGE_THROWER_HOOK, poseStack, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
         renderLegacyChargeHookWire(entity, partialTick, poseStack, buffer);
@@ -574,10 +577,10 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         poseStack.mulPose(Axis.YN.rotationDegrees(90.0F));
         poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
         poseStack.translate(0.0D, 0.0D, -6.0D);
-        CHARGE_THROWER.renderPart("Mortar", CHARGE_THROWER_MORTAR, poseStack, buffer, packedLight,
+        ObjWeaponModels.renderPart(CHARGE_THROWER, "Mortar", CHARGE_THROWER_MORTAR, poseStack, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY);
         if (charge) {
-            CHARGE_THROWER.renderPart("Oomph", CHARGE_THROWER_MORTAR, poseStack, buffer, packedLight,
+            ObjWeaponModels.renderPart(CHARGE_THROWER, "Oomph", CHARGE_THROWER_MORTAR, poseStack, buffer, packedLight,
                     OverlayTexture.NO_OVERLAY);
         }
         poseStack.popPose();

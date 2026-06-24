@@ -17,6 +17,10 @@ public final class ObjNukeModels {
     public static final LegacyWavefrontModel BOMB_MULTI_LEGACY = rootModel("bomb_generic", "bomb_multi_legacy");
     public static final ResourceLocation CUSTOM_NUKE_TEXTURE = directTexture("custom_nuke");
     public static final ResourceLocation GADGET_LEGACY_TEXTURE = texture("gadget_legacy");
+    private static final LegacyWavefrontModel.SelectionHandle GADGET_BODY_HANDLE =
+            GADGET.prepareRenderOnlyInCallOrder("Body");
+    private static final LegacyWavefrontModel.SelectionHandle GADGET_WIRES_HANDLE =
+            GADGET.prepareRenderOnlyInCallOrder("Wires");
 
     public static LegacyWavefrontModel model(String modelName, String textureName) {
         return new LegacyWavefrontModel(
@@ -53,6 +57,26 @@ public final class ObjNukeModels {
 
     private static ResourceLocation directBombTexture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/bombs/" + name + ".png");
+    }
+
+    public static void renderGadgetPart(ResourceLocation texture, ObjRenderContext context, String partName) {
+        LegacyWavefrontModel.SelectionHandle handle = gadgetHandle(partName);
+        if (handle != null) {
+            GADGET.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        GADGET.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle gadgetHandle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Body" -> GADGET_BODY_HANDLE;
+            case "Wires" -> GADGET_WIRES_HANDLE;
+            default -> null;
+        };
     }
 
     private ObjNukeModels() {

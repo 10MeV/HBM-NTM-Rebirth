@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [{ "type": "minecraft:item", "name": "hbm_ntm_rebirth:machine_autocrafter" }],
+      "conditions": [{ "condition": "minecraft:survives_explosion" }]
+    }
+  ]
+}

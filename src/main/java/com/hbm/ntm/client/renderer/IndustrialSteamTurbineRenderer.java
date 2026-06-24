@@ -18,6 +18,12 @@ import net.minecraft.world.phys.Vec3;
 
 public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<IndustrialSteamTurbineBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_INDUSTRIAL_TURBINE;
+    private static final LegacyWavefrontModel.SelectionHandle TURBINE =
+            MODEL.prepareRenderOnlyInCallOrder("Turbine");
+    private static final LegacyWavefrontModel.SelectionHandle GAUGE =
+            MODEL.prepareRenderOnlyInCallOrder("Gauge");
+    private static final LegacyWavefrontModel.SelectionHandle FLYWHEEL =
+            MODEL.prepareRenderOnlyInCallOrder("Flywheel");
 
     public IndustrialSteamTurbineRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -62,9 +68,9 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
 
     static void renderPlan(LegacyWavefrontModel model, LegacyTileRenderPlans.IndustrialTurbinePlan plan,
             ObjRenderContext context, PoseStack poseStack) {
-        model.renderPart("Turbine", context);
-        renderRotatingPart(model, plan.gauge(), context, poseStack);
-        renderRotatingPart(model, plan.flywheel(), context, poseStack);
+        model.renderOnlyInCallOrder(context, TURBINE);
+        renderRotatingPart(model, plan.gauge(), GAUGE, context, poseStack);
+        renderRotatingPart(model, plan.flywheel(), FLYWHEEL, context, poseStack);
     }
 
     private static double gaugeDegrees(FluidType type) {
@@ -81,12 +87,13 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
     }
 
     private static void renderRotatingPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.RotatingModelPartPlan part, ObjRenderContext context, PoseStack poseStack) {
+            LegacyTileRenderPlans.RotatingModelPartPlan part, LegacyWavefrontModel.SelectionHandle handle,
+            ObjRenderContext context, PoseStack poseStack) {
         poseStack.pushPose();
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
         rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        model.renderPart(part.partName(), context);
+        model.renderOnlyInCallOrder(context, handle);
         poseStack.popPose();
     }
 

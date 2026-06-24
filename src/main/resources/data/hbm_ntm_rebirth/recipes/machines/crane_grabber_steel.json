@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["C C", "P P", "CBC"],
+  "key": {
+    "C": { "tag": "forge:ingots/steel" },
+    "P": { "item": "hbm_ntm_rebirth:part_generic_piston_pneumatic" },
+    "B": { "item": "hbm_ntm_rebirth:conveyor" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:crane_grabber", "count": 4 }
+}

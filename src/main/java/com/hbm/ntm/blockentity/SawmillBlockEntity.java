@@ -19,6 +19,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -61,6 +62,7 @@ public class SawmillBlockEntity extends BlockEntity
     public static final int OVERSPEED_LIMIT = 300;
 
     private static final String TAG_INVENTORY = "items";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_HEAT = "heat";
     private static final String TAG_PROGRESS = "progress";
     private static final String TAG_HAS_BLADE = "hasBlade";
@@ -90,6 +92,8 @@ public class SawmillBlockEntity extends BlockEntity
     private int progress;
     private int warnCooldown;
     private int overspeed;
+    @Nullable
+    private String customName;
     private boolean hasBlade = true;
     private float spin;
     private float lastSpin;
@@ -379,7 +383,10 @@ public class SawmillBlockEntity extends BlockEntity
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         writeLegacyLoadedTileNbt(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         tag.putInt(TAG_HEAT, heat);
         tag.putInt(TAG_PROGRESS, progress);
         tag.putBoolean(TAG_HAS_BLADE, hasBlade);
@@ -393,7 +400,8 @@ public class SawmillBlockEntity extends BlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         readLegacyLoadedTileNbt(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         heat = Math.max(0, tag.getInt(TAG_HEAT));
         progress = Math.max(0, tag.getInt(TAG_PROGRESS));
         hasBlade = !tag.contains(TAG_HAS_BLADE) || tag.getBoolean(TAG_HAS_BLADE);
@@ -401,6 +409,16 @@ public class SawmillBlockEntity extends BlockEntity
         overspeed = Math.max(0, tag.getInt(TAG_OVERSPEED));
         spin = tag.getFloat(TAG_SPIN);
         lastSpin = tag.getFloat(TAG_LAST_SPIN);
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_INVENTORY, Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        } else if (tag.contains(TAG_INVENTORY, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
     }
 
     @Override

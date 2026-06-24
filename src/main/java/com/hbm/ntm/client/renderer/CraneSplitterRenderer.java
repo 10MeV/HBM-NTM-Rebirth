@@ -2,6 +2,8 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.CraneSplitterBlock;
 import com.hbm.ntm.blockentity.CraneSplitterBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -9,25 +11,52 @@ import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class CraneSplitterRenderer implements BlockEntityRenderer<CraneSplitterBlockEntity> {
-    private static final ResourceLocation TOP_LEFT = ObjBlockModels.texture("crane_splitter_top_left");
-    private static final ResourceLocation TOP_RIGHT = ObjBlockModels.texture("crane_splitter_top_right");
-    private static final ResourceLocation FRONT_LEFT = ObjBlockModels.texture("crane_splitter_front_left");
-    private static final ResourceLocation FRONT_RIGHT = ObjBlockModels.texture("crane_splitter_front_right");
-    private static final ResourceLocation BACK_LEFT = ObjBlockModels.texture("crane_splitter_back_left");
-    private static final ResourceLocation BACK_RIGHT = ObjBlockModels.texture("crane_splitter_back_right");
-    private static final ResourceLocation LEFT = ObjBlockModels.texture("crane_splitter_left");
-    private static final ResourceLocation RIGHT = ObjBlockModels.texture("crane_splitter_right");
-    private static final ResourceLocation BELT = ObjBlockModels.texture("crane_splitter_belt");
-    private static final ResourceLocation INNER = ObjBlockModels.texture("crane_splitter_inner");
-    private static final ResourceLocation INNER_SIDE = ObjBlockModels.texture("crane_splitter_inner_side");
+    private static final TextureAtlasSprite TOP_LEFT = sprite("crane_splitter_top_left");
+    private static final TextureAtlasSprite TOP_RIGHT = sprite("crane_splitter_top_right");
+    private static final TextureAtlasSprite FRONT_LEFT = sprite("crane_splitter_front_left");
+    private static final TextureAtlasSprite FRONT_RIGHT = sprite("crane_splitter_front_right");
+    private static final TextureAtlasSprite BACK_LEFT = sprite("crane_splitter_back_left");
+    private static final TextureAtlasSprite BACK_RIGHT = sprite("crane_splitter_back_right");
+    private static final TextureAtlasSprite LEFT = sprite("crane_splitter_left");
+    private static final TextureAtlasSprite RIGHT = sprite("crane_splitter_right");
+    private static final TextureAtlasSprite BELT = sprite("crane_splitter_belt");
+    private static final TextureAtlasSprite INNER = sprite("crane_splitter_inner");
+    private static final TextureAtlasSprite INNER_SIDE = sprite("crane_splitter_inner_side");
+    private static final LegacyWavefrontModel.SelectionHandle TOP =
+            ObjBlockModels.SPLITTER.prepareRenderOnlyInCallOrder("Top");
+    private static final LegacyWavefrontModel.SelectionHandle BOTTOM =
+            ObjBlockModels.SPLITTER.prepareRenderOnlyInCallOrder("Bottom");
+    private static final LegacyWavefrontModel.SelectionHandle LEFT_PART =
+            ObjBlockModels.SPLITTER.prepareRenderOnlyInCallOrder("Left");
+    private static final LegacyWavefrontModel.SelectionHandle RIGHT_PART =
+            ObjBlockModels.SPLITTER.prepareRenderOnlyInCallOrder("Right");
+    private static final LegacyWavefrontModel.SelectionHandle BACK =
+            ObjBlockModels.SPLITTER.prepareRenderOnlyInCallOrder("Back");
+    private static final LegacyWavefrontModel.SelectionHandle FRONT =
+            ObjBlockModels.SPLITTER.prepareRenderOnlyInCallOrder("Front");
+    private static final LegacyWavefrontModel.SelectionHandle INNER_PART =
+            ObjBlockModels.SPLITTER.prepareRenderOnlyInCallOrder("Inner");
+    private static final LegacyWavefrontModel.SelectionHandle INNER_LEFT =
+            ObjBlockModels.SPLITTER.prepareRenderOnlyInCallOrder("InnerLeft");
+    private static final LegacyWavefrontModel.SelectionHandle INNER_RIGHT =
+            ObjBlockModels.SPLITTER.prepareRenderOnlyInCallOrder("InnerRight");
+    private static final LegacyWavefrontModel.SelectionHandle INNER_TOP =
+            ObjBlockModels.SPLITTER.prepareRenderOnlyInCallOrder("InnerTop");
+    private static final LegacyWavefrontModel.SelectionHandle INNER_BOTTOM =
+            ObjBlockModels.SPLITTER.prepareRenderOnlyInCallOrder("InnerBottom");
 
     public CraneSplitterRenderer(BlockEntityRendererProvider.Context context) {
+    }
+
+    @Override
+    public boolean shouldRenderOffScreen(CraneSplitterBlockEntity blockEntity) {
+        return false;
     }
 
     @Override
@@ -80,19 +109,28 @@ public class CraneSplitterRenderer implements BlockEntityRenderer<CraneSplitterB
     private static void drawSplitter(BlockState state, boolean left, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        ObjBlockModels.SPLITTER.renderPart("Top", left ? TOP_LEFT : TOP_RIGHT, context);
-        ObjBlockModels.SPLITTER.renderPart("Bottom", left ? TOP_RIGHT : TOP_LEFT, context);
+        renderPart(TOP, left ? TOP_LEFT : TOP_RIGHT, context);
+        renderPart(BOTTOM, left ? TOP_RIGHT : TOP_LEFT, context);
         if (left) {
-            ObjBlockModels.SPLITTER.renderPart("Left", LEFT, context);
+            renderPart(LEFT_PART, LEFT, context);
         } else {
-            ObjBlockModels.SPLITTER.renderPart("Right", RIGHT, context);
+            renderPart(RIGHT_PART, RIGHT, context);
         }
-        ObjBlockModels.SPLITTER.renderPart("Back", left ? BACK_LEFT : BACK_RIGHT, context);
-        ObjBlockModels.SPLITTER.renderPart("Front", left ? FRONT_LEFT : FRONT_RIGHT, context);
-        ObjBlockModels.SPLITTER.renderPart("Inner", INNER, context);
-        ObjBlockModels.SPLITTER.renderPart("InnerLeft", INNER_SIDE, context);
-        ObjBlockModels.SPLITTER.renderPart("InnerRight", INNER_SIDE, context);
-        ObjBlockModels.SPLITTER.renderPart("InnerTop", INNER_SIDE, context);
-        ObjBlockModels.SPLITTER.renderPart("InnerBottom", BELT, context);
+        renderPart(BACK, left ? BACK_LEFT : BACK_RIGHT, context);
+        renderPart(FRONT, left ? FRONT_LEFT : FRONT_RIGHT, context);
+        renderPart(INNER_PART, INNER, context);
+        renderPart(INNER_LEFT, INNER_SIDE, context);
+        renderPart(INNER_RIGHT, INNER_SIDE, context);
+        renderPart(INNER_TOP, INNER_SIDE, context);
+        renderPart(INNER_BOTTOM, BELT, context);
+    }
+
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, TextureAtlasSprite sprite,
+            ObjRenderContext context) {
+        ObjBlockModels.SPLITTER.renderOnlyInCallOrderWithSprite(sprite, context, handle);
+    }
+
+    private static TextureAtlasSprite sprite(String name) {
+        return LegacyTexturedQuadRenderer.blockSprite(ObjBlockModels.texture(name));
     }
 }

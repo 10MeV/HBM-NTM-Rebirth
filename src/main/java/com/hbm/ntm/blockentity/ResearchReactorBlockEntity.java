@@ -4,6 +4,8 @@ import com.hbm.ntm.menu.ResearchReactorMenu;
 import com.hbm.ntm.network.HbmLegacyControlReceiver;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
+import com.hbm.ntm.multiblock.MultiblockHelper;
+import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.api.tile.IInfoProviderEC;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
@@ -11,6 +13,8 @@ import com.hbm.ntm.recipe.ResearchReactorFuelRuntime;
 import com.hbm.ntm.recipe.ResearchReactorFuelRuntime.FuelSpec;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmBufferUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +30,7 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -38,6 +43,7 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +56,8 @@ public class ResearchReactorBlockEntity extends BlockEntity
     private static final String TAG_TARGET_LEVEL = "targetLevel";
     private static final String TAG_SLOT_FLUX = "slotFlux";
     private static final String TAG_TOTAL_FLUX = "totalFlux";
+    private static final String METEORITE_SWORD_BRED = "meteorite_sword_bred";
+    private static final String METEORITE_SWORD_IRRADIATED = "meteorite_sword_irradiated";
     private static final int SLOT_COUNT = 12;
     private static final int MAX_HEAT = 50_000;
     private static final double ROD_SPEED = 0.04D;
@@ -68,12 +76,12 @@ public class ResearchReactorBlockEntity extends BlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot >= 0 && slot < SLOT_COUNT;
+            return slot >= 0 && slot < SLOT_COUNT && ResearchReactorFuelRuntime.isFuel(stack);
         }
 
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return slot >= 0 && slot < SLOT_COUNT ? super.insertItem(slot, stack, simulate) : stack;
+            return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
@@ -134,6 +142,9 @@ public class ResearchReactorBlockEntity extends BlockEntity
             ItemStack stack = items.getStackInSlot(i);
             FuelSpec spec = ResearchReactorFuelRuntime.fuelFor(stack);
             if (spec == null) {
+                if (irradiateMeteoriteSword(i, stack)) {
+                    changed = true;
+                }
                 slotFlux[i] = 0;
                 continue;
             }
@@ -151,6 +162,16 @@ public class ResearchReactorBlockEntity extends BlockEntity
             changed = true;
         }
         return changed;
+    }
+
+    private boolean irradiateMeteoriteSword(int slot, ItemStack stack) {
+        RegistryObject<Item> bred = ModItems.legacyItem(METEORITE_SWORD_BRED);
+        RegistryObject<Item> irradiated = ModItems.legacyItem(METEORITE_SWORD_IRRADIATED);
+        if (bred == null || irradiated == null || !stack.is(bred.get())) {
+            return false;
+        }
+        items.setStackInSlot(slot, new ItemStack(irradiated.get()));
+        return true;
     }
 
     private boolean cool() {
@@ -183,6 +204,20 @@ public class ResearchReactorBlockEntity extends BlockEntity
         level.setBlock(worldPosition.above(2), ModBlocks.legacyBlock("deco_steel").get().defaultBlockState(),
                 Block.UPDATE_ALL);
         ChunkRadiationManager.incrementRadiation(level, worldPosition, 50.0F);
+        markRadiationElementalTargets(level);
+    }
+
+    private void markRadiationElementalTargets(Level level) {
+        AABB range = new AABB(
+                worldPosition.getX() + 0.5D,
+                worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D,
+                worldPosition.getX() + 0.5D,
+                worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D).inflate(100.0D);
+        for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, range)) {
+            HbmPlayerProperties.markRadiationElementalTarget(player);
+        }
     }
 
     private void clearWaterContacts(Level level) {
@@ -247,6 +282,7 @@ public class ResearchReactorBlockEntity extends BlockEntity
             return false;
         }
         BlockState state = level.getBlockState(pos);
+        BlockState coreState = MultiblockHelper.resolveCoreState(level, pos);
         if ((state.is(Blocks.WATER) || state.getFluidState().is(FluidTags.WATER))
                 && state.getFluidState().isSource()) {
             return true;
@@ -254,8 +290,8 @@ public class ResearchReactorBlockEntity extends BlockEntity
         Block block = state.getBlock();
         return block == ModBlocks.legacyBlock("block_lead").get()
                 || block == ModBlocks.legacyBlock("block_desh").get()
-                || block == ModBlocks.REACTOR_RESEARCH.get()
-                || block == ModBlocks.MACHINE_REACTOR_BREEDING.get()
+                || coreState.is(ModBlocks.REACTOR_RESEARCH.get())
+                || coreState.is(ModBlocks.MACHINE_REACTOR_BREEDING.get())
                 || state.getBlock().getExplosionResistance() >= 100.0F;
     }
 
@@ -381,7 +417,7 @@ public class ResearchReactorBlockEntity extends BlockEntity
         data.writeByte(water);
         data.writeDouble(rodLevel);
         data.writeDouble(targetLevel);
-        data.writeVarIntArray(slotFlux);
+        HbmBufferUtil.writeIntArray(data, slotFlux);
         data.writeInt(totalFlux);
     }
 
@@ -393,7 +429,7 @@ public class ResearchReactorBlockEntity extends BlockEntity
         rodLevel = data.readDouble();
         targetLevel = data.readDouble();
         Arrays.fill(slotFlux, 0);
-        int[] packetFlux = data.readVarIntArray();
+        int[] packetFlux = HbmBufferUtil.readIntArray(data);
         System.arraycopy(packetFlux, 0, slotFlux, 0, Math.min(packetFlux.length, slotFlux.length));
         totalFlux = data.readInt();
     }
@@ -406,8 +442,7 @@ public class ResearchReactorBlockEntity extends BlockEntity
 
     @Override
     public AABB getRenderBoundingBox() {
-        return LegacyMachineRenderBounds.visibleMultiblockOr(this,
-                new AABB(worldPosition.offset(-1, -1, -1), worldPosition.offset(2, 5, 2)));
+        return LegacyMachineRenderBounds.visibleMultiblockOr(this, super.getRenderBoundingBox());
     }
 
     @Override

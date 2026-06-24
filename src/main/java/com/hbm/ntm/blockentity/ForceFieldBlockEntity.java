@@ -18,6 +18,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -59,6 +60,7 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
     public static final double COOLDOWN_MODIFIER = 1.0D;
     public static final double HEALTH_REGEN_MODIFIER = 1.0D;
     private static final String TAG_ITEMS = "items";
+    private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_POWER_TIME = "powerTime";
     private static final String TAG_HEALTH = "health";
     private static final String TAG_MAX_HEALTH = "maxHealth";
@@ -77,8 +79,8 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
-                case SLOT_RADIUS -> true;
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
+                case SLOT_RADIUS, SLOT_HEALTH -> true;
                 default -> false;
             };
         }
@@ -333,6 +335,12 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
     }
 
     @Override
+    public boolean canReceiveLegacyButton(ServerPlayer player, int value, int id) {
+        return value == 0 && id == 0
+                && player.distanceToSqr(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ()) <= 64.0D;
+    }
+
+    @Override
     public void handleLegacyButton(ServerPlayer player, int value, int id) {
         if (value == 0 && id == 0) {
             on = !on;
@@ -358,7 +366,7 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, TAG_ITEMS, items);
         tag.putLong(TAG_POWER_TIME, getPower());
         tag.putInt(TAG_HEALTH, health);
         tag.putInt(TAG_MAX_HEALTH, maxHealth);
@@ -374,7 +382,7 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        loadInventory(tag);
         if (tag.contains(TAG_POWER_TIME)) {
             setPower(tag.getLong(TAG_POWER_TIME));
         }
@@ -384,7 +392,19 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
         blink = tag.getInt(TAG_BLINK);
         radius = tag.contains(TAG_RADIUS) ? tag.getFloat(TAG_RADIUS) : BASE_RADIUS;
         on = tag.getBoolean(TAG_ON);
-        customName = tag.contains(TAG_NAME) ? tag.getString(TAG_NAME) : null;
+        customName = tag.contains(TAG_NAME, Tag.TAG_STRING) ? tag.getString(TAG_NAME) : null;
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_ITEMS, Tag.TAG_LIST) || tag.contains(TAG_ITEMS, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+            return;
+        }
+        if (tag.contains(TAG_INVENTORY, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
     }
 
     @Override
@@ -458,7 +478,7 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
 
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return slot == 0 && HbmInventoryMenuHelper.isBatteryLike(stack)
+            return slot == 0 && HbmInventoryMenuHelper.isLegacyBatteryItem(stack)
                     ? items.insertItem(SLOT_BATTERY, stack, simulate)
                     : stack;
         }
@@ -475,7 +495,7 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot == 0 && HbmInventoryMenuHelper.isBatteryLike(stack);
+            return slot == 0 && HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
         }
     }
 }

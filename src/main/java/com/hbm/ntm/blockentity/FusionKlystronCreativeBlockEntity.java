@@ -16,12 +16,15 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import org.jetbrains.annotations.Nullable;
 
 public class FusionKlystronCreativeBlockEntity extends BlockEntity
         implements FusionKlystronProvider, HbmLegacyLoadedTile {
@@ -77,7 +80,7 @@ public class FusionKlystronCreativeBlockEntity extends BlockEntity
 
     @Override
     public long provideKlystronEnergy() {
-        return 0L;
+        return getCreativeOutput();
     }
 
     private long getCreativeOutput() {
@@ -88,12 +91,35 @@ public class FusionKlystronCreativeBlockEntity extends BlockEntity
                 .flatMap(recipe -> recipe.getExtraData().fusion().stream())
                 .mapToLong(GenericMachineRecipeExtraData.Fusion::ignitionTemp)
                 .max()
-                .orElse(0L);
+                .orElse(MAX_OUTPUT);
     }
 
     @Override
     public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
         return legacyLoadedTile;
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
+    }
+
+    @Override
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        readLegacyLoadedTileNbt(tag);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return getClientSyncTag();
+    }
+
+    @Nullable
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
@@ -107,6 +133,19 @@ public class FusionKlystronCreativeBlockEntity extends BlockEntity
     public void handleClientSyncTag(CompoundTag tag) {
         HbmLegacyLoadedTile.super.handleClientSyncTag(tag);
         connected = tag.getBoolean(TAG_CONNECTED);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
     }
 
     @Override
@@ -128,10 +167,21 @@ public class FusionKlystronCreativeBlockEntity extends BlockEntity
 
     @Override
     public void setRemoved() {
+        destroyNode();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        destroyNode();
+        super.onChunkUnloaded();
+    }
+
+    private void destroyNode() {
         if (level != null && !level.isClientSide && klystronNode != null) {
             KlystronNodespace.destroyNode(level, klystronNode.getPos());
+            klystronNode = null;
         }
-        super.setRemoved();
     }
 
     private void ensureNode(Level level) {

@@ -3,6 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.SolidifierBlockEntity;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -14,6 +15,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEntity> {
+    private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_SOLIDIFIER;
+    private static final LegacyWavefrontModel.SelectionHandle MAIN =
+            MODEL.prepareRenderOnlyInCallOrder("Main");
+    private static final LegacyWavefrontModel.SelectionHandle FLUID =
+            MODEL.prepareRenderOnlyInCallOrder("Fluid");
+    private static final LegacyWavefrontModel.SelectionHandle GLASS =
+            MODEL.prepareRenderOnlyInCallOrder("Glass");
+
     public SolidifierRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -46,7 +55,7 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
-        ObjModelLibrary.MACHINE_SOLIDIFIER.renderPart("Main", context);
+        MODEL.renderOnlyInCallOrder(context, MAIN);
         renderFluid(blockEntity, context, poseStack);
         renderTintedPart(LegacyTileRenderPlans.solidifierGlassPlan(), context);
 
@@ -71,9 +80,9 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
     private static void renderScaledPart(LegacyTileRenderPlans.ScaledModelPartPlan plan, ObjRenderContext context) {
         ObjRenderContext resolved = applyColorBlend(context, plan.color(), plan.blend());
         if (plan.textured()) {
-            ObjModelLibrary.MACHINE_SOLIDIFIER.renderPart(plan.partName(), resolved);
+            MODEL.renderOnlyInCallOrder(resolved, FLUID);
         } else {
-            ObjModelLibrary.MACHINE_SOLIDIFIER.renderPartUntextured(plan.partName(), resolved);
+            MODEL.renderOnlyUntextured(resolved, FLUID);
         }
     }
 
@@ -83,9 +92,9 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
         }
         ObjRenderContext resolved = applyColorBlend(context, plan.color(), plan.blend());
         if (plan.textured()) {
-            ObjModelLibrary.MACHINE_SOLIDIFIER.renderPart(plan.partName(), resolved);
+            MODEL.renderOnlyInCallOrder(resolved, GLASS);
         } else {
-            ObjModelLibrary.MACHINE_SOLIDIFIER.renderPartUntextured(plan.partName(), resolved);
+            MODEL.renderOnlyUntextured(resolved, GLASS);
         }
     }
 

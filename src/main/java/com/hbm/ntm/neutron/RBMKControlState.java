@@ -39,6 +39,10 @@ public class RBMKControlState {
         return hasPower;
     }
 
+    public void setHasPower(boolean hasPower) {
+        this.hasPower = hasPower;
+    }
+
     public long power() {
         return power;
     }

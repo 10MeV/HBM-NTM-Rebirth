@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    { "count": 8, "ingredient": { "tag": "forge:ingots/steel" }, "legacy_ore": "ingotSteel" },
+    { "count": 4, "ingredient": { "tag": "forge:ingots/any_resistant_alloy" }, "legacy_ore": "ingotAnyResistantAlloy" },
+    { "count": 2, "ingredient": { "item": "hbm_ntm_rebirth:motor_desh" }, "legacy_id": "hbm:motor_desh" },
+    { "count": 5, "ingredient": { "tag": "forge:ingots/boron" }, "legacy_ore": "ingotBoron" },
+    { "count": 8, "ingredient": { "tag": "forge:plates/lead" }, "legacy_ore": "plateLead" },
+    { "count": 3, "ingredient": { "item": "hbm_ntm_rebirth:crt_display" }, "legacy_id": "hbm:crt_display" },
+    { "count": 4, "ingredient": { "item": "hbm_ntm_rebirth:circuit_basic" }, "legacy_id": "hbm:circuit", "legacy_meta": 8 }
+  ],
+  "internal_name": "ass.researchreactor",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:reactor_research" }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 160
+}

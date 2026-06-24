@@ -763,15 +763,15 @@ public final class ClientForgeEvents {
         poseStack.translate(1.0D, 5.0D, 3.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) rot));
         poseStack.translate(-1.0D, -5.0D, -3.0D);
-        ObjArmorModels.WINGS.renderPart("LeftBase", ObjArmorModels.WINGS_MURK_TEXTURE, poseStack, buffer,
-                packedLight, OverlayTexture.NO_OVERLAY);
+        ObjArmorModels.renderPart(ObjArmorModels.WINGS, "LeftBase", ObjArmorModels.WINGS_MURK_TEXTURE,
+                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
 
         poseStack.translate(16.0D, 5.0D, 2.0D);
         poseStack.mulPose(Axis.YP.rotationDegrees((float) rot2));
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) (rot2 * 0.25D + 5.0D)));
         poseStack.translate(-16.0D, -5.0D, -2.0D);
-        ObjArmorModels.WINGS.renderPart("LeftTip", ObjArmorModels.WINGS_MURK_TEXTURE, poseStack, buffer,
-                packedLight, OverlayTexture.NO_OVERLAY);
+        ObjArmorModels.renderPart(ObjArmorModels.WINGS, "LeftTip", ObjArmorModels.WINGS_MURK_TEXTURE,
+                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
     }
 
@@ -787,15 +787,15 @@ public final class ClientForgeEvents {
         poseStack.translate(-1.0D, 5.0D, 3.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) -rot));
         poseStack.translate(1.0D, -5.0D, -3.0D);
-        ObjArmorModels.WINGS.renderPart("RightBase", ObjArmorModels.WINGS_MURK_TEXTURE, poseStack, buffer,
-                packedLight, OverlayTexture.NO_OVERLAY);
+        ObjArmorModels.renderPart(ObjArmorModels.WINGS, "RightBase", ObjArmorModels.WINGS_MURK_TEXTURE,
+                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
 
         poseStack.translate(-16.0D, 5.0D, 2.0D);
         poseStack.mulPose(Axis.YP.rotationDegrees((float) -rot2));
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) (-rot2 * 0.25D - 5.0D)));
         poseStack.translate(16.0D, -5.0D, -2.0D);
-        ObjArmorModels.WINGS.renderPart("RightTip", ObjArmorModels.WINGS_MURK_TEXTURE, poseStack, buffer,
-                packedLight, OverlayTexture.NO_OVERLAY);
+        ObjArmorModels.renderPart(ObjArmorModels.WINGS, "RightTip", ObjArmorModels.WINGS_MURK_TEXTURE,
+                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
     }
 

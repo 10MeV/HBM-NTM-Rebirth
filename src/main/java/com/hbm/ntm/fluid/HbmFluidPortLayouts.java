@@ -69,6 +69,18 @@ public final class HbmFluidPortLayouts {
         return List.copyOf(ports);
     }
 
+    public static List<FluidPort> fluidTank() {
+        return List.of(
+                FluidPort.of(2, 0, -1, Direction.EAST),
+                FluidPort.of(2, 0, 1, Direction.EAST),
+                FluidPort.of(-2, 0, -1, Direction.WEST),
+                FluidPort.of(-2, 0, 1, Direction.WEST),
+                FluidPort.of(-1, 0, 2, Direction.SOUTH),
+                FluidPort.of(1, 0, 2, Direction.SOUTH),
+                FluidPort.of(-1, 0, -2, Direction.NORTH),
+                FluidPort.of(1, 0, -2, Direction.NORTH));
+    }
+
     public static FluidPort legacy(Direction facing, int forward, int side, Direction portDirection) {
         return legacy(facing, forward, side, 0, portDirection);
     }

@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.item.missile.CustomMissileItem;
 import com.hbm.ntm.item.missile.CustomMissilePartProfile;
 import com.hbm.ntm.item.missile.MissilePartItem;
@@ -14,6 +15,7 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -319,7 +321,19 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public AABB getRenderBoundingBox() {
-        return INFINITE_EXTENT_AABB;
+        BlockState state = getBlockState();
+        Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
+                ? state.getValue(HorizontalMachineBlock.FACING)
+                : Direction.SOUTH;
+        double centerX = worldPosition.getX() + 0.5D;
+        double centerZ = worldPosition.getZ() + 0.5D;
+        double halfLength = 13.5D;
+        double halfWidth = 4.0D;
+        boolean lengthAlongZ = facing.getAxis() == Direction.Axis.X;
+        double halfX = lengthAlongZ ? halfWidth : halfLength;
+        double halfZ = lengthAlongZ ? halfLength : halfWidth;
+        return new AABB(centerX - halfX, worldPosition.getY() - 1.0D, centerZ - halfZ,
+                centerX + halfX, worldPosition.getY() + 5.0D, centerZ + halfZ);
     }
 
     private void syncToClient() {

@@ -29,9 +29,10 @@ public final class LegacyGenericRecipeHandlers {
             "hbmPlasmaForge.json",
             GenericMachineRecipe.Machine.PLASMA_FORGE,
             "plasma_forge");
-    public static final Handler FUSION = unsupported(
+    public static final Handler FUSION = supported(
             "hbmFusion.json",
-            "requires fusion_torus runtime, klystron energy, output flux, colors, and maxInput handling");
+            GenericMachineRecipe.Machine.FUSION_REACTOR,
+            "fusion_reactor");
     public static final Handler CRUCIBLE = unsupported(
             "hbmCrucible.json",
             "uses material-stack crucible format, mold recipes, and smelting helpers instead of GenericRecipe fields");

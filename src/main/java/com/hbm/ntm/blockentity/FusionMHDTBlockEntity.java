@@ -60,15 +60,15 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private FusionMHDTBlockEntity(BlockPos pos, BlockState state, HbmFluidTank coldTank, HbmFluidTank hotTank) {
         super(ModBlockEntities.FUSION_MHDT.get(), pos, state,
-                new HbmEnergyStorage(0L, 0L, 0L),
+                new LegacyGeneratedEnergyStorage(),
                 List.of(coldTank, hotTank));
         this.coldTank = coldTank;
         this.hotTank = hotTank;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FusionMHDTBlockEntity mhdt) {
-        HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, mhdt);
         boolean changed = mhdt.tickServer(level);
+        HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, mhdt);
         mhdt.networkPackNT(150);
         if (changed || level.getGameTime() % 20L == 0L) {
             mhdt.setChanged();
@@ -144,7 +144,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void receiveFusionPower(long fusionPower, double neutronPower, float r, float g, float b) {
-        plasmaEnergy = Math.max(0L, fusionPower);
+        plasmaEnergy = fusionPower;
     }
 
     @Override
@@ -202,7 +202,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return type == coldTank.getTankType();
+        return type != HbmFluids.NONE && type == coldTank.getTankType();
     }
 
     @Override
@@ -257,8 +257,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
         if (tag.contains(TAG_PLASMA_ENERGY_SYNC)) {
-            plasmaEnergySync = tag.getLong(TAG_PLASMA_ENERGY_SYNC);
-            plasmaEnergy = plasmaEnergySync;
+            plasmaEnergy = tag.getLong(TAG_PLASMA_ENERGY_SYNC);
         }
     }
 
@@ -280,10 +279,21 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void setRemoved() {
+        destroyNode();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        destroyNode();
+        super.onChunkUnloaded();
+    }
+
+    private void destroyNode() {
         if (level != null && !level.isClientSide && plasmaNode != null) {
             PlasmaNodespace.destroyNode(level, plasmaNode.getPos());
         }
-        super.setRemoved();
+        plasmaNode = null;
     }
 
     private boolean tickServer(Level level) {
@@ -314,14 +324,13 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private void setGeneratedPower(long power) {
-        long capped = Math.max(0L, power);
-        energy.setMaxPower(capped);
-        energy.setTransferRates(0L, capped);
-        energy.setPower(capped);
+        energy.setMaxPower(power);
+        energy.setTransferRates(0L, power);
+        energy.setPower(power);
     }
 
     private void syncEnergyCapacityToCurrentPower() {
-        long currentPower = Math.max(0L, energy.getPower());
+        long currentPower = energy.getPower();
         energy.setMaxPower(currentPower);
         energy.setTransferRates(0L, currentPower);
     }
@@ -368,21 +377,75 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
+    private static final class LegacyGeneratedEnergyStorage extends HbmEnergyStorage {
+        private long power;
+        private long maxPower;
+        private long maxExtract;
+
+        private LegacyGeneratedEnergyStorage() {
+            super(0L, 0L, 0L);
+        }
+
+        @Override
+        public long getPower() {
+            return power;
+        }
+
+        @Override
+        public void setPower(long power) {
+            this.power = power;
+        }
+
+        @Override
+        public long getMaxPower() {
+            return maxPower;
+        }
+
+        @Override
+        public void setMaxPower(long maxPower) {
+            this.maxPower = maxPower;
+        }
+
+        @Override
+        public void setTransferRates(long maxReceive, long maxExtract) {
+            this.maxExtract = maxExtract;
+        }
+
+        @Override
+        public long getProviderSpeed() {
+            return maxExtract;
+        }
+
+        @Override
+        public long usePower(long power) {
+            if (power <= 0L || this.power <= 0L) {
+                return 0L;
+            }
+            long used = Math.min(power, this.power);
+            if (used > 0L) {
+                this.power -= used;
+            }
+            return used;
+        }
+
+        @Override
+        public CompoundTag serializeNBT() {
+            CompoundTag tag = new CompoundTag();
+            tag.putLong(DEFAULT_POWER_TAG, power);
+            return tag;
+        }
+
+        @Override
+        public void deserializeNBT(CompoundTag tag) {
+            power = tag.getLong(DEFAULT_POWER_TAG);
+        }
+    }
+
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        data.writeInt(tank.getFill());
-        data.writeInt(tank.getMaxFill());
-        data.writeInt(tank.getTankType().getId());
-        data.writeShort((short) tank.getPressure());
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.write(data, tank);
     }
 
     private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        int fill = data.readInt();
-        int maxFill = data.readInt();
-        FluidType type = HbmFluids.fromId(data.readInt());
-        int pressure = data.readShort();
-        tank.changeTankSize(maxFill);
-        tank.withPressure(pressure);
-        tank.setTankType(type);
-        tank.setFill(fill);
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.read(data, tank);
     }
 }

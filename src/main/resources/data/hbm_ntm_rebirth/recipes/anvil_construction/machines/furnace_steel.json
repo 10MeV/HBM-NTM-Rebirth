@@ -1,0 +1,33 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "item": "minecraft:stone_bricks" },
+      "count": 16
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/iron" },
+      "count": 4,
+      "legacy_ore": "ingotIron"
+    },
+    {
+      "ingredient": { "tag": "forge:plates/steel" },
+      "count": 16,
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/copper" },
+      "count": 8,
+      "legacy_ore": "ingotCopper"
+    },
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:steel_grate" },
+      "count": 16
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:furnace_steel"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

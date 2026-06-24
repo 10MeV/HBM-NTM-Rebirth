@@ -105,7 +105,7 @@ public abstract class LegacyBigTankBlockEntity extends FluidTankBlockEntity {
 
     @Override
     public boolean canConnectFluid(FluidType type, Direction side) {
-        return super.canConnectFluid(type, side) && type == getTank().getTankType();
+        return !isExploded() && side != null && type != null && type == getTank().getTankType();
     }
 
     @Override

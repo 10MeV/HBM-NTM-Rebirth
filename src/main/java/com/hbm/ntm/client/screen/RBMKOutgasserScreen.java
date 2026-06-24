@@ -24,16 +24,12 @@ public class RBMKOutgasserScreen extends AbstractContainerScreen<RBMKOutgasserMe
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        int progress = Math.max(0, Math.min(13, menu.getProgress() * 13 / RBMKColumnBlockEntity.OUTGASSER_DURATION));
-        if (progress > 0) {
-            graphics.blit(TEXTURE, leftPos + 82, topPos + 50, 176, 0, progress, 6);
-        }
+        int progress = (int) (menu.getProgress() * 13.0D / RBMKColumnBlockEntity.OUTGASSER_DURATION);
+        graphics.blit(TEXTURE, leftPos + 82, topPos + 50, 176, 0, progress, 6);
         HbmFluidGuiHelper.TankData gas = menu.getGasTank();
         int gasHeight = gas == null ? 0 : gas.scaledFill(42);
-        if (gasHeight > 0) {
-            graphics.blit(TEXTURE, leftPos + 115, topPos + 66 - gasHeight, 188,
-                    42 - gasHeight, 10, gasHeight);
-        }
+        graphics.blit(TEXTURE, leftPos + 115, topPos + 66 - gasHeight, 188,
+                42 - gasHeight, 10, gasHeight);
     }
 
     @Override

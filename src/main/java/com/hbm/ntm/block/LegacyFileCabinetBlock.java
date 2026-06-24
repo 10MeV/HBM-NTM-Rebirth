@@ -2,7 +2,9 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.LegacyFileCabinetBlockEntity;
 import com.hbm.ntm.item.LegacyFileCabinetBlockItem;
+import com.hbm.ntm.item.PadlockItem;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -80,11 +82,24 @@ public class LegacyFileCabinetBlock extends BaseEntityBlock {
         if (player.isShiftKeyDown()) {
             return InteractionResult.PASS;
         }
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof LegacyFileCabinetBlockEntity cabinet) {
-            NetworkHooks.openScreen(serverPlayer, cabinet, pos);
+            ItemStack held = player.getItemInHand(hand);
+            if (held.getItem() instanceof PadlockItem) {
+                return cabinet.tryApplyPadlock(player, held) ? InteractionResult.CONSUME : InteractionResult.PASS;
+            }
+            if (held.is(ModItems.KEY_KIT.get())) {
+                return cabinet.tryCreateCounterfeitKeys(player, hand) ? InteractionResult.CONSUME : InteractionResult.PASS;
+            }
+            if (cabinet.canAccess(player, held)) {
+                NetworkHooks.openScreen(serverPlayer, cabinet, pos);
+                return InteractionResult.CONSUME;
+            }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.PASS;
     }
 
     @Override

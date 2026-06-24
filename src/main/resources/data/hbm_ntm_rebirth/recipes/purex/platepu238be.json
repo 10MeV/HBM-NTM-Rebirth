@@ -1,0 +1,49 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:purex",
+    "internal_name":  "purex.platepu238be",
+    "duration":  100,
+    "power":  1500,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:waste_plate_pu238be"
+                                           }
+                        }
+                    ],
+    "input_fluids":  [
+                         {
+                             "fluid":  "hbm_ntm_rebirth:kerosene",
+                             "amount":  500
+                         },
+                         {
+                             "fluid":  "hbm_ntm_rebirth:nitric_acid",
+                             "amount":  250
+                         }
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:nugget_beryllium"
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:nugget_pu238"
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:powder_coal_tiny",
+                             "count":  2
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:nugget_lead",
+                             "count":  2
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "auto_switch_group":  "autoswitch.plate",
+    "name_wrapper":  "purex.recycle",
+    "source_order":  161
+}
+

@@ -6,8 +6,6 @@ import com.hbm.ntm.client.obj.ObjReactorModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -15,6 +13,10 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.util.Mth;
 
 public class ResearchReactorRenderer implements BlockEntityRenderer<ResearchReactorBlockEntity> {
+    private static final int CHERENKOV_RED = Math.round(0.4F * 255.0F);
+    private static final int CHERENKOV_GREEN = Math.round(0.9F * 255.0F);
+    private static final int CHERENKOV_BLUE = Math.round(1.0F * 255.0F);
+
     public ResearchReactorRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -25,7 +27,7 @@ public class ResearchReactorRenderer implements BlockEntityRenderer<ResearchReac
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     @Override
@@ -53,28 +55,56 @@ public class ResearchReactorRenderer implements BlockEntityRenderer<ResearchReac
         if (totalFlux <= 10 || !blockEntity.isSubmerged()) {
             return;
         }
-        List<Double> randomUnits = new ArrayList<>(smallReactorCherenkovShellCount());
         ThreadLocalRandom random = ThreadLocalRandom.current();
-        for (int i = 0; i < smallReactorCherenkovShellCount(); i++) {
-            randomUnits.add(random.nextDouble());
-        }
-        LegacyTileRenderPlans.CherenkovShellPlan plan =
-                LegacyTileRenderPlans.smallReactorCherenkovPlan(totalFlux, true, randomUnits);
         VertexConsumer consumer = LegacyUntexturedQuadRenderer.additiveNoCull(buffer);
         PoseStack.Pose pose = poseStack.last();
-        for (LegacyTileRenderPlans.UntexturedQuadPlan quad : plan.shells()) {
-            for (LegacyTileRenderPlans.UntexturedVertexPlan vertex : quad.vertices()) {
-                LegacyTileRenderPlans.RgbaPlan color = vertex.color();
-                LegacyUntexturedQuadRenderer.vertexRgbaF(consumer, pose,
-                        vertex.x(), vertex.y(), vertex.z(),
-                        color.red(), color.green(), color.blue(), color.alpha());
-            }
+        for (double d = LegacyTileRenderPlans.SMALL_REACTOR_CHERENKOV_START;
+                d < LegacyTileRenderPlans.SMALL_REACTOR_CHERENKOV_END;
+                d += LegacyTileRenderPlans.SMALL_REACTOR_CHERENKOV_STEP) {
+            float alpha = (float) (0.025D + random.nextDouble() * 0.015D + 0.125D * totalFlux / 1000.0D);
+            int alphaByte = LegacyUntexturedQuadRenderer.alpha(alpha);
+            double bottom = LegacyTileRenderPlans.SMALL_REACTOR_CHERENKOV_CENTER_Y - d;
+            double top = LegacyTileRenderPlans.SMALL_REACTOR_CHERENKOV_CENTER_Y + d;
+            renderCherenkovBox(consumer, pose, d, bottom, top, alphaByte);
         }
     }
 
-    private static int smallReactorCherenkovShellCount() {
-        return (int) Math.ceil((LegacyTileRenderPlans.SMALL_REACTOR_CHERENKOV_END
-                - LegacyTileRenderPlans.SMALL_REACTOR_CHERENKOV_START)
-                / LegacyTileRenderPlans.SMALL_REACTOR_CHERENKOV_STEP);
+    private static void renderCherenkovBox(VertexConsumer consumer, PoseStack.Pose pose,
+            double d, double bottom, double top, int alpha) {
+        vertex(consumer, pose, d, bottom, -d, alpha);
+        vertex(consumer, pose, d, top, -d, alpha);
+        vertex(consumer, pose, d, top, d, alpha);
+        vertex(consumer, pose, d, bottom, d, alpha);
+
+        vertex(consumer, pose, -d, bottom, -d, alpha);
+        vertex(consumer, pose, -d, top, -d, alpha);
+        vertex(consumer, pose, -d, top, d, alpha);
+        vertex(consumer, pose, -d, bottom, d, alpha);
+
+        vertex(consumer, pose, -d, bottom, d, alpha);
+        vertex(consumer, pose, -d, top, d, alpha);
+        vertex(consumer, pose, d, top, d, alpha);
+        vertex(consumer, pose, d, bottom, d, alpha);
+
+        vertex(consumer, pose, -d, bottom, -d, alpha);
+        vertex(consumer, pose, -d, top, -d, alpha);
+        vertex(consumer, pose, d, top, -d, alpha);
+        vertex(consumer, pose, d, bottom, -d, alpha);
+
+        vertex(consumer, pose, -d, top, -d, alpha);
+        vertex(consumer, pose, -d, top, d, alpha);
+        vertex(consumer, pose, d, top, d, alpha);
+        vertex(consumer, pose, d, top, -d, alpha);
+
+        vertex(consumer, pose, -d, bottom, -d, alpha);
+        vertex(consumer, pose, -d, bottom, d, alpha);
+        vertex(consumer, pose, d, bottom, d, alpha);
+        vertex(consumer, pose, d, bottom, -d, alpha);
+    }
+
+    private static void vertex(VertexConsumer consumer, PoseStack.Pose pose,
+            double x, double y, double z, int alpha) {
+        LegacyUntexturedQuadRenderer.vertex(consumer, pose, x, y, z,
+                CHERENKOV_RED, CHERENKOV_GREEN, CHERENKOV_BLUE, alpha);
     }
 }

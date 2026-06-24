@@ -31,6 +31,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -82,6 +83,7 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int BASE_CONSUMPTION = 10_000;
     public static final int OIL_CAPACITY = 64_000;
     private static final String TAG_ITEMS = "items";
+    private static final String TAG_NAME = "name";
     private static final String TAG_POWER = "power";
     private static final String TAG_IS_ON = "isOn";
     private static final String TAG_TARGET_X = "targetX";
@@ -114,7 +116,7 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             if (slot == SLOT_BATTERY) {
-                return HbmInventoryMenuHelper.isBatteryLike(stack);
+                return HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
             }
             if (slot >= SLOT_UPGRADE_START && slot <= SLOT_UPGRADE_END) {
                 return stack.getItem() instanceof ItemMachineUpgrade || stack.is(ModItems.UPGRADE_SCREM.get());
@@ -150,6 +152,8 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
     private boolean shredderUpgrade;
     private boolean centrifugeUpgrade;
     private boolean crystallizerUpgrade;
+    @Nullable
+    private String customName;
 
     public MiningLaserBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmEnergyStorage(MAX_POWER, MAX_POWER, 0L),
@@ -632,7 +636,9 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.miningLaser", "Mining Laser");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatableWithFallback("container.miningLaser", "Mining Laser");
     }
 
     @Nullable
@@ -644,7 +650,7 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public boolean canReceiveLegacyButton(ServerPlayer player, int value, int id) {
         return id == CONTROL_TOGGLE
-                && player.distanceToSqr(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ()) <= 256.0D;
+                && player.distanceToSqr(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ()) <= 64.0D;
     }
 
     @Override
@@ -658,9 +664,13 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, TAG_ITEMS, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_NAME, customName);
+        }
         tag.putLong(TAG_POWER, energy.getPower());
         tag.putBoolean(TAG_IS_ON, isOn);
+        oilTank.writeToNbt(tag, "oil");
         tag.putInt(TAG_TARGET_X, targetX);
         tag.putInt(TAG_TARGET_Y, targetY);
         tag.putInt(TAG_TARGET_Z, targetZ);
@@ -674,9 +684,13 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_NAME, Tag.TAG_STRING) ? tag.getString(TAG_NAME) : null;
         if (tag.contains(TAG_POWER)) {
             energy.setPower(tag.getLong(TAG_POWER));
+        }
+        if (hasTankTag(tag, "oil")) {
+            oilTank.readFromNbt(tag, "oil");
         }
         isOn = tag.getBoolean(TAG_IS_ON);
         targetX = tag.contains(TAG_TARGET_X) ? tag.getInt(TAG_TARGET_X) : worldPosition.getX();
@@ -742,5 +756,19 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
         private int map(int slot) {
             return slot >= 0 && slot < 21 ? SLOT_OUTPUT_START + slot : -1;
         }
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_ITEMS, Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        } else if (tag.contains(TAG_ITEMS, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 }

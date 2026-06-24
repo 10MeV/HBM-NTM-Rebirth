@@ -70,12 +70,12 @@ public final class LegacyGuiElements {
         double sin = Math.sin(angle);
         double cos = Math.cos(angle);
 
-        double tipX = -tipLength * sin;
+        double tipX = tipLength * sin;
         double tipY = tipLength * cos;
-        double leftX = backSide * cos + backLength * sin;
-        double leftY = backSide * sin - backLength * cos;
-        double rightX = -backSide * cos + backLength * sin;
-        double rightY = -backSide * sin - backLength * cos;
+        double leftX = backSide * cos - backLength * sin;
+        double leftY = -backLength * cos - backSide * sin;
+        double rightX = -backSide * cos - backLength * sin;
+        double rightY = -backLength * cos + backSide * sin;
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();

@@ -31,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class PoweredCondenserBlockEntity extends HbmEnergyAndFluidBlockEntity
         implements HbmStandardFluidReceiver, HbmStandardFluidSender {
+    private static final int LEGACY_POWER_GATE_HE_PER_MB = 10;
+
     private final HbmFluidTank inputTank;
     private final HbmFluidTank outputTank;
     private int age;
@@ -74,7 +76,7 @@ public class PoweredCondenserBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         int convert = Math.min(condenser.inputTank.getFill(), condenser.outputTank.getSpace());
         condenser.throughput = convert;
-        if (convert > 0 && condenser.energy.getPower() >= (long) convert * PoweredCondenserConfig.powerConsumption()) {
+        if (convert > 0 && condenser.energy.getPower() >= (long) convert * LEGACY_POWER_GATE_HE_PER_MB) {
             condenser.inputTank.drain(convert, false);
             condenser.outputTank.fill(HbmFluids.WATER, convert, 0, false);
             condenser.energy.setPower(Math.max(0L,

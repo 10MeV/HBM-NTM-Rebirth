@@ -13,12 +13,19 @@ import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_MINING_LASER;
+    private static final LegacyWavefrontModel.SelectionHandle BASE =
+            MODEL.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle PIVOT =
+            MODEL.prepareRenderOnlyInCallOrder("Pivot");
+    private static final LegacyWavefrontModel.SelectionHandle LASER =
+            MODEL.prepareRenderOnlyInCallOrder("Laser");
 
     public MiningLaserRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -58,11 +65,11 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
 
         poseStack.pushPose();
         poseStack.translate(0.5D, -1.0D, 0.5D);
-        MODEL.renderPart("Base", ObjMachineModels.MINING_LASER_BASE_TEXTURE, context);
+        renderModelPart("Base", ObjMachineModels.MINING_LASER_BASE_TEXTURE, context);
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees((float) yaw));
-        MODEL.renderPart("Pivot", ObjMachineModels.MINING_LASER_PIVOT_TEXTURE, context);
+        renderModelPart("Pivot", ObjMachineModels.MINING_LASER_PIVOT_TEXTURE, context);
         poseStack.popPose();
 
         poseStack.pushPose();
@@ -70,7 +77,7 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
         poseStack.translate(0.0D, -1.0D, 0.0D);
         poseStack.mulPose(Axis.XN.rotationDegrees((float) pitch + 90.0F));
         poseStack.translate(0.0D, 1.0D, 0.0D);
-        MODEL.renderPart("Laser", ObjMachineModels.MINING_LASER_LASER_TEXTURE, context);
+        renderModelPart("Laser", ObjMachineModels.MINING_LASER_LASER_TEXTURE, context);
         poseStack.popPose();
 
         if (blockEntity.hasBeam()) {
@@ -87,5 +94,40 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
             }
         }
         poseStack.popPose();
+    }
+
+    static void renderModelPart(String partName, ResourceLocation texture, ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(partName);
+        if (handle != null) {
+            MODEL.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        MODEL.renderPart(partName, texture, context);
+    }
+
+    static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = sameModel(model) ? handle(partName) : null;
+        if (handle != null) {
+            MODEL.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static boolean sameModel(LegacyWavefrontModel model) {
+        return model == MODEL || model.modelLocation().equals(MODEL.modelLocation());
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Base" -> BASE;
+            case "Pivot" -> PIVOT;
+            case "Laser" -> LASER;
+            default -> null;
+        };
     }
 }

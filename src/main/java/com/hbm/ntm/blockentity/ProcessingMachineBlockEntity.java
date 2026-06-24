@@ -28,6 +28,7 @@ import com.hbm.ntm.util.LegacyUpgradeSlotSound;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -57,6 +58,7 @@ import java.util.Map;
 public class ProcessingMachineBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
         HbmStandardFluidReceiver, HbmLegacyLoadedTile {
     private static final String TAG_INVENTORY = "items";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_LEGACY_POWER = "power";
     private static final String TAG_PROGRESS = "progress";
@@ -97,13 +99,13 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
             return switch (kind) {
                 case CENTRIFUGE -> switch (slot) {
                     case 0 -> true;
-                    case 1 -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                    case 1 -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                     case 6, 7 -> stack.getItem() instanceof ItemMachineUpgrade;
                     default -> false;
                 };
                 case CRYSTALLIZER -> switch (slot) {
                     case 0 -> true;
-                    case 1 -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                    case 1 -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                     case 3, 4, 7 -> true;
                     case 5, 6 -> stack.getItem() instanceof ItemMachineUpgrade;
                     default -> false;
@@ -133,6 +135,8 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     private Object audioLoop;
     private float angle;
     private float prevAngle;
+    @Nullable
+    private String customName;
 
     public ProcessingMachineBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, inferKind(state));
@@ -461,7 +465,10 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
         super.saveAdditional(tag);
         writeLegacyLoadedTileNbt(tag);
         tag.putString("kind", kind.name());
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         tag.put(TAG_ENERGY, energy.serializeNBT());
         tag.putLong(TAG_LEGACY_POWER, energy.getPower());
         tag.putInt(TAG_PROGRESS, progress);
@@ -476,7 +483,8 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     public void load(CompoundTag tag) {
         super.load(tag);
         readLegacyLoadedTileNbt(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         if (tag.contains(TAG_ENERGY)) {
             energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
         } else if (tag.contains(TAG_LEGACY_POWER)) {
@@ -536,9 +544,20 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
 
     @Override
     public Component getDisplayName() {
+        if (customName != null && !customName.isBlank()) {
+            return Component.literal(customName);
+        }
         return kind == Kind.CRYSTALLIZER
                 ? Component.translatableWithFallback("container.crystallizer", "Ore Acidizer")
                 : Component.translatableWithFallback("container.centrifuge", "Centrifuge");
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
     }
 
     @Nullable

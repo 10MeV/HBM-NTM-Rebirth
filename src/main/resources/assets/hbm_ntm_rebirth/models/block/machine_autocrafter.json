@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machine_autocrafter_side",
+    "down": "hbm_ntm_rebirth:block/machine_autocrafter_bottom",
+    "up": "hbm_ntm_rebirth:block/machine_autocrafter_top",
+    "north": "hbm_ntm_rebirth:block/machine_autocrafter_side",
+    "south": "hbm_ntm_rebirth:block/machine_autocrafter_side",
+    "east": "hbm_ntm_rebirth:block/machine_autocrafter_side",
+    "west": "hbm_ntm_rebirth:block/machine_autocrafter_side"
+  }
+}

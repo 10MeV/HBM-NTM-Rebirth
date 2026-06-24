@@ -54,9 +54,9 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FusionBoilerBlockEntity boiler) {
-        HbmFluidNetworkBlockEntity.serverTick(level, pos, state, boiler);
         boiler.plasmaEnergySync = boiler.plasmaEnergy;
         boiler.plasmaEnergy = 0L;
+        HbmFluidNetworkBlockEntity.serverTick(level, pos, state, boiler);
         boiler.ensureNode(level);
         if (boiler.waterTank.getTankType() != HbmFluids.NONE) {
             boiler.refreshTrackedReceiverFluidPortsReport(List.of(boiler.waterTank), boiler);
@@ -93,26 +93,20 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void receiveFusionPower(long fusionPower, double neutronPower, float r, float g, float b) {
         plasmaEnergy = fusionPower;
-        HeatableFluidTrait trait = waterTank.getTankType().getTrait(HeatableFluidTrait.class);
-        if (trait == null || trait.getFirstStep() == null) {
-            return;
-        }
-        HeatableFluidTrait.HeatingStep step = trait.getFirstStep();
-        if (steamTank.isEmpty()) {
-            steamTank.setTankType(HbmFluids.SUPERHOTSTEAM);
-        }
+        HeatableFluidTrait.HeatingStep step = waterTank.getTankType()
+                .getTrait(HeatableFluidTrait.class)
+                .getFirstStep();
         int waterCycles = Math.min(waterTank.getFill(), steamTank.getMaxFill() - steamTank.getFill());
         int steamCycles = (int) Math.min(fusionPower / step.heatRequired(), waterCycles);
-        if (steamCycles <= 0) {
-            return;
+        if (steamCycles > 0) {
+            waterTank.setFill(waterTank.getFill() - steamCycles);
+            steamTank.setFill(steamTank.getFill() + steamCycles);
+            if (level != null && level.random.nextInt(200) == 0) {
+                level.playSound(null, worldPosition.above(2), ModSounds.BLOCK_BOILER_GROAN.get(), SoundSource.BLOCKS,
+                        2.5F, 1.0F);
+            }
+            setChanged();
         }
-        waterTank.setFill(waterTank.getFill() - steamCycles);
-        steamTank.setFill(steamTank.getFill() + steamCycles);
-        if (level != null && level.random.nextInt(200) == 0) {
-            level.playSound(null, worldPosition.above(2), ModSounds.BLOCK_BOILER_GROAN.get(), SoundSource.BLOCKS,
-                    2.5F, 1.0F);
-        }
-        setChanged();
     }
 
     @Override
@@ -161,7 +155,7 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return type == waterTank.getTankType();
+        return type != HbmFluids.NONE && type == waterTank.getTankType();
     }
 
     @Override
@@ -208,8 +202,7 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
         if (tag.contains(TAG_PLASMA_ENERGY_SYNC)) {
-            plasmaEnergySync = tag.getLong(TAG_PLASMA_ENERGY_SYNC);
-            plasmaEnergy = plasmaEnergySync;
+            plasmaEnergy = tag.getLong(TAG_PLASMA_ENERGY_SYNC);
         }
     }
 
@@ -231,10 +224,21 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public void setRemoved() {
+        destroyNode();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        destroyNode();
+        super.onChunkUnloaded();
+    }
+
+    private void destroyNode() {
         if (level != null && !level.isClientSide && plasmaNode != null) {
             PlasmaNodespace.destroyNode(level, plasmaNode.getPos());
         }
-        super.setRemoved();
+        plasmaNode = null;
     }
 
     private void ensureNode(Level level) {
@@ -268,20 +272,10 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        data.writeInt(tank.getFill());
-        data.writeInt(tank.getMaxFill());
-        data.writeInt(tank.getTankType().getId());
-        data.writeShort((short) tank.getPressure());
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.write(data, tank);
     }
 
     private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        int fill = data.readInt();
-        int maxFill = data.readInt();
-        FluidType type = HbmFluids.fromId(data.readInt());
-        int pressure = data.readShort();
-        tank.changeTankSize(maxFill);
-        tank.withPressure(pressure);
-        tank.setTankType(type);
-        tank.setFill(fill);
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.read(data, tank);
     }
 }

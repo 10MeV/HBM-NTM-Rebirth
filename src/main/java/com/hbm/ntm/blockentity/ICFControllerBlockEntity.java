@@ -8,6 +8,7 @@ import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
@@ -43,10 +44,12 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
     private int emitterCount;
     private int capacitorCount;
     private int turbochargerCount;
+    private long power;
     private boolean assembled;
 
     public ICFControllerBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.ICF_CONTROLLER.get(), pos, state, new HbmEnergyStorage(0L, Long.MAX_VALUE, 0L));
+        super(ModBlockEntities.ICF_CONTROLLER.get(), pos, state, new LegacyICFEnergyStorage());
+        ((LegacyICFEnergyStorage) energy).bind(this);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ICFControllerBlockEntity controller) {
@@ -57,7 +60,7 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
             if (controller.getMaxPower() > 0L) {
                 HbmEnergyUtil.subscribeReceiverToPorts(level, pos, controller.getEnergyPorts(), controller.energy);
             }
-            if (controller.getPower() > 0L) {
+            if (controller.legacySyncedPower() > 0L) {
                 controller.fireLaser(level, state);
                 controller.setPower(0L);
             } else {
@@ -148,7 +151,12 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
 
     @Override
     public long getPower() {
-        return Math.min(super.getPower(), getMaxPower());
+        return Math.min(power, getMaxPower());
+    }
+
+    @Override
+    public void setPower(long power) {
+        this.power = power;
     }
 
     public int getLaserLength() {
@@ -318,6 +326,10 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
             laserLength = i;
             BlockPos scan = worldPosition.relative(dir, i);
             BlockState scanState = level.getBlockState(scan);
+            if (MultiblockHelper.resolveCoreBlockEntity(level, scan) instanceof ICFReactorBlockEntity reactor) {
+                reactor.receiveLaser(getPower(), getMaxPower());
+                break;
+            }
             if (scanState.is(ModBlocks.ICF.get())) {
                 BlockPos corePos = scan.relative(dir, 8).below(3);
                 if (level.getBlockEntity(corePos) instanceof ICFReactorBlockEntity reactor) {
@@ -348,7 +360,55 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
     }
 
     private long legacySyncedPower() {
-        return super.getPower();
+        return power;
+    }
+
+    private static final class LegacyICFEnergyStorage extends HbmEnergyStorage {
+        private ICFControllerBlockEntity owner;
+
+        private LegacyICFEnergyStorage() {
+            super(0L, Long.MAX_VALUE, 0L);
+        }
+
+        private void bind(ICFControllerBlockEntity owner) {
+            this.owner = owner;
+        }
+
+        @Override
+        public long getPower() {
+            return owner == null ? super.getPower() : owner.getPower();
+        }
+
+        @Override
+        public void setPower(long power) {
+            if (owner == null) {
+                super.setPower(power);
+            } else {
+                owner.setPower(power);
+            }
+        }
+
+        @Override
+        public long getMaxPower() {
+            return owner == null ? super.getMaxPower() : owner.getMaxPower();
+        }
+
+        @Override
+        public void setMaxPower(long maxPower) {
+            // Legacy TileEntityICFController keeps raw power even when assembled capacity changes.
+        }
+
+        @Override
+        public CompoundTag serializeNBT() {
+            CompoundTag tag = new CompoundTag();
+            tag.putLong(DEFAULT_POWER_TAG, owner == null ? super.getPower() : owner.legacySyncedPower());
+            return tag;
+        }
+
+        @Override
+        public void deserializeNBT(CompoundTag tag) {
+            setPower(tag.getLong(DEFAULT_POWER_TAG));
+        }
     }
 
     private static boolean touchesAny(BlockPos pos, Set<BlockPos> valid) {

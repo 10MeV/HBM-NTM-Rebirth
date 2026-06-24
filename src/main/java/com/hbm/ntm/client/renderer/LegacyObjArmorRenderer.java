@@ -142,7 +142,8 @@ public final class LegacyObjArmorRenderer {
                 LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE,
                 LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE);
         for (String part : parts) {
-            spec.model().renderPart(part, texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+            ObjArmorModels.renderPart(spec.model(), part, texture, poseStack, buffer, packedLight,
+                    OverlayTexture.NO_OVERLAY);
         }
         poseStack.popPose();
     }
@@ -156,7 +157,7 @@ public final class LegacyObjArmorRenderer {
                 LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE,
                 LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE);
         for (String part : parts) {
-            spec.model().renderPartTranslucent(part, texture, poseStack, buffer, packedLight,
+            ObjArmorModels.renderPartTranslucent(spec.model(), part, texture, poseStack, buffer, packedLight,
                     OverlayTexture.NO_OVERLAY, 255, 255, 255, 255);
         }
         poseStack.popPose();
@@ -199,18 +200,18 @@ public final class LegacyObjArmorRenderer {
                     .withColor((extra.red() << 16) | (extra.green() << 8) | extra.blue())
                     .withAlpha(extra.alpha());
             if (extra.additive()) {
-                spec.model().renderPartUntexturedAdditive(extra.part(), context);
+                ObjArmorModels.renderPartUntexturedAdditive(spec.model(), extra.part(), context);
             } else {
-                spec.model().renderPartUntextured(extra.part(), context);
+                ObjArmorModels.renderPartUntextured(spec.model(), extra.part(), context);
             }
         } else if (extra.additive()) {
-            spec.model().renderPartAdditive(extra.part(), extra.texture(), poseStack, buffer, FULL_BRIGHT,
+            ObjArmorModels.renderPartAdditive(spec.model(), extra.part(), extra.texture(), poseStack, buffer, FULL_BRIGHT,
                     packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());
         } else if (extra.translucent()) {
-            spec.model().renderPartTranslucent(extra.part(), extra.texture(), poseStack, buffer, light,
+            ObjArmorModels.renderPartTranslucent(spec.model(), extra.part(), extra.texture(), poseStack, buffer, light,
                     packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());
         } else {
-            spec.model().renderPart(extra.part(), extra.texture(), poseStack, buffer, light,
+            ObjArmorModels.renderPart(spec.model(), extra.part(), extra.texture(), poseStack, buffer, light,
                     packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());
         }
     }
@@ -522,7 +523,7 @@ public final class LegacyObjArmorRenderer {
                 if (part == null || part.isBlank()) {
                     continue;
                 }
-                spec.model().renderPart(part, texture, poseStack, buffer, packedLight, packedOverlay);
+                ObjArmorModels.renderPart(spec.model(), part, texture, poseStack, buffer, packedLight, packedOverlay);
             }
         }
 
@@ -532,7 +533,8 @@ public final class LegacyObjArmorRenderer {
                 return;
             }
             for (String part : parts) {
-                spec.model().renderPartTranslucent(part, texture, poseStack, buffer, packedLight, packedOverlay,
+                ObjArmorModels.renderPartTranslucent(spec.model(), part, texture, poseStack, buffer,
+                        packedLight, packedOverlay,
                         255, 255, 255, 255);
             }
         }

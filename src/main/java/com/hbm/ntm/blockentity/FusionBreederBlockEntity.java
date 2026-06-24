@@ -97,8 +97,8 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FusionBreederBlockEntity breeder) {
         boolean changed = breeder.updateIdentifierTankType();
-        HbmFluidNetworkBlockEntity.serverTick(level, pos, state, breeder);
         changed |= breeder.tickServer(level);
+        HbmFluidNetworkBlockEntity.serverTick(level, pos, state, breeder);
         breeder.networkPackNT(25);
         if (changed || level.getGameTime() % 20L == 0L) {
             breeder.setChanged();
@@ -109,7 +109,7 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
     public ItemStackHandler getItems() { return items; }
     public HbmFluidTank getInputTank() { return inputTank; }
     public HbmFluidTank getOutputTank() { return outputTank; }
-    public double getNeutronEnergySync() { return neutronEnergySync; }
+    public double getNeutronEnergySync() { return displayedNeutronEnergy(); }
     public double getProgress() { return progress; }
     public List<ItemStack> getDrops() { return HbmInventoryMenuHelper.clearToDrops(items); }
 
@@ -232,8 +232,7 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
         if (tag.contains(TAG_NEUTRON_ENERGY_SYNC)) {
-            neutronEnergySync = tag.getDouble(TAG_NEUTRON_ENERGY_SYNC);
-            neutronEnergy = neutronEnergySync;
+            neutronEnergy = tag.getDouble(TAG_NEUTRON_ENERGY_SYNC);
         }
         if (tag.contains(TAG_PROGRESS)) {
             progress = tag.getDouble(TAG_PROGRESS);
@@ -266,10 +265,21 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public void setRemoved() {
+        destroyNode();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        destroyNode();
+        super.onChunkUnloaded();
+    }
+
+    private void destroyNode() {
         if (level != null && !level.isClientSide && plasmaNode != null) {
             PlasmaNodespace.destroyNode(level, plasmaNode.getPos());
         }
-        super.setRemoved();
+        plasmaNode = null;
     }
 
     @Override
@@ -281,6 +291,9 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private boolean tickServer(Level level) {
+        if (!canProcessSolid() && !canProcessLiquid()) {
+            progress = 0.0D;
+        }
         neutronEnergySync = neutronEnergy;
         ensureNode(level);
         if (inputTank.getTankType() != HbmFluids.NONE) {
@@ -288,9 +301,6 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
         }
         if (outputTank.getFill() > 0) {
             tryProvideFluidToPorts(outputTank.getTankType(), outputTank.getPressure(), this);
-        }
-        if (!canProcessSolid() && !canProcessLiquid()) {
-            progress = 0.0D;
         }
         neutronEnergy = 0.0D;
         return false;
@@ -332,6 +342,10 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
         } else {
             progress = 0.0D;
         }
+    }
+
+    private double displayedNeutronEnergy() {
+        return level != null && level.isClientSide ? neutronEnergy : neutronEnergySync;
     }
 
     private boolean canProcessSolid() {
@@ -512,20 +526,10 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        data.writeInt(tank.getFill());
-        data.writeInt(tank.getMaxFill());
-        data.writeInt(tank.getTankType().getId());
-        data.writeShort((short) tank.getPressure());
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.write(data, tank);
     }
 
     private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        int fill = data.readInt();
-        int maxFill = data.readInt();
-        FluidType type = HbmFluids.fromId(data.readInt());
-        int pressure = data.readShort();
-        tank.changeTankSize(maxFill);
-        tank.withPressure(pressure);
-        tank.setTankType(type);
-        tank.setFill(fill);
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.read(data, tank);
     }
 }

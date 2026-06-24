@@ -72,6 +72,11 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
     }
 
     @Override
+    protected String legacyContainerKey() {
+        return "container.hydrotreater";
+    }
+
+    @Override
     protected boolean tickLegacyMachine(Level level, BlockPos pos, BlockState state) {
         boolean changed = setInputTypeFromIdentifier();
         changed |= processFluidContainers();

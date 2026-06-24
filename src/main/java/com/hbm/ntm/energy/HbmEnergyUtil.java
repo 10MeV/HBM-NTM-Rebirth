@@ -353,6 +353,32 @@ public final class HbmEnergyUtil {
         return unsubscribeReceiverFromNetwork(level, port, receiver);
     }
 
+    public static int unsubscribeProviderFromPorts(Level level, BlockPos origin, Iterable<EnergyPort> ports, HbmEnergyProvider provider) {
+        if (ports == null) {
+            return 0;
+        }
+        int unsubscribed = 0;
+        for (EnergyPort port : ports) {
+            if (unsubscribeProviderFromPort(level, origin, port, provider)) {
+                unsubscribed++;
+            }
+        }
+        return unsubscribed;
+    }
+
+    public static int unsubscribeReceiverFromPorts(Level level, BlockPos origin, Iterable<EnergyPort> ports, HbmEnergyReceiver receiver) {
+        if (ports == null) {
+            return 0;
+        }
+        int unsubscribed = 0;
+        for (EnergyPort port : ports) {
+            if (unsubscribeReceiverFromPort(level, origin, port, receiver)) {
+                unsubscribed++;
+            }
+        }
+        return unsubscribed;
+    }
+
     public static int unsubscribeProviderFromDirPosPorts(Level level, Iterable<DirPos> ports, HbmEnergyProvider provider) {
         if (ports == null) {
             return 0;

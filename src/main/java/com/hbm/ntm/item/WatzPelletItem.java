@@ -48,16 +48,20 @@ public class WatzPelletItem extends Item {
                     .withStyle(ChatFormatting.GOLD));
         }
         if (type.burnFunc() != null) {
-            tooltip.add(Component.literal("Reaction function: " + type.burnFunc().fuelLabel())
-                    .withStyle(ChatFormatting.GOLD));
+            tooltip.add(Component.literal("Reaction function: ").withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal(type.burnFunc().fuelLabel()).withStyle(ChatFormatting.RESET)));
+            tooltip.add(Component.literal("Fuel type: ").withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal(type.burnFunc().dangerLabel())
+                            .withStyle(type.burnFunc().dangerous() ? ChatFormatting.RED : ChatFormatting.YELLOW)));
         }
         if (type.heatDiv() != null) {
-            tooltip.add(Component.literal("Thermal multiplier: " + type.heatDiv().fuelLabel() + " TU^-1")
-                    .withStyle(ChatFormatting.GOLD));
+            tooltip.add(Component.literal("Thermal multiplier: ").withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal(type.heatDiv().fuelLabel() + " TU\u207b\u00b9")
+                            .withStyle(ChatFormatting.RESET)));
         }
         if (type.absorbFunc() != null) {
-            tooltip.add(Component.literal("Flux capture: " + type.absorbFunc().fuelLabel())
-                    .withStyle(ChatFormatting.GOLD));
+            tooltip.add(Component.literal("Flux capture: ").withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal(type.absorbFunc().fuelLabel()).withStyle(ChatFormatting.RESET)));
         }
     }
 

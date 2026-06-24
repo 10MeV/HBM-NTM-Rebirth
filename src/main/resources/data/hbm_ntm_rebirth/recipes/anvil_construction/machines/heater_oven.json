@@ -1,0 +1,24 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:ingot_firebrick" },
+      "count": 16
+    },
+    {
+      "ingredient": { "tag": "forge:plates/steel" },
+      "count": 4,
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/copper" },
+      "count": 8,
+      "legacy_ore": "ingotCopper"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:heater_oven"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

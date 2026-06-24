@@ -28,6 +28,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -59,10 +60,11 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
 
     private static final NumberFormat NUMBER_FORMAT = NumberFormat.getIntegerInstance(Locale.US);
     private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.cardinal(2);
-    private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_IS_ON = "isOn";
     private static final String TAG_HEAT = "heatEnergy";
     private static final String TAG_SETTING = "setting";
+    private static final String TAG_TANK = "tank";
+    private static final String TAG_INVENTORY = "Inventory";
 
     private final MachinePollutionBuffers pollution = new MachinePollutionBuffers(100);
     private final HbmFluidTank tank;
@@ -391,30 +393,45 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        tank.writeToNbt(tag, TAG_TANK);
         pollution.writeLegacyNbt(tag);
         tag.putBoolean(TAG_IS_ON, on);
         tag.putInt(TAG_HEAT, heatEnergy);
         tag.putByte(TAG_SETTING, (byte) setting);
-        tag.putInt("lastBurned", lastBurned);
-        tag.putInt("lastHeatProduced", lastHeatProduced);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadItems(tag);
+        if (hasLegacyTankTag(tag, TAG_TANK)) {
+            tank.readFromNbt(tag, TAG_TANK);
+        }
         pollution.readLegacyNbt(tag);
         on = tag.getBoolean(TAG_IS_ON);
         heatEnergy = Math.max(0, tag.getInt(TAG_HEAT));
         setting = Math.max(1, Math.min(10, tag.contains(TAG_SETTING) ? tag.getByte(TAG_SETTING) : 1));
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt("lastBurned", lastBurned);
+        tag.putInt("lastHeatProduced", lastHeatProduced);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
         lastBurned = Math.max(0, tag.getInt("lastBurned"));
         lastHeatProduced = Math.max(0, tag.getInt("lastHeatProduced"));
     }
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
     }
 
     @Nullable
@@ -435,5 +452,20 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
             return itemHandler.cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    private void loadItems(CompoundTag tag) {
+        if (tag.contains(HbmInventoryMenuHelper.LEGACY_ITEMS_TAG, Tag.TAG_LIST)
+                || tag.contains("Items", Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+    }
+
+    private static boolean hasLegacyTankTag(CompoundTag tag, String key) {
+        return tag.contains(key)
+                || tag.contains(key + "_type")
+                || tag.contains(key + "_type_id");
     }
 }

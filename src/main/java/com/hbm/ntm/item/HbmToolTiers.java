@@ -21,6 +21,7 @@ public enum HbmToolTiers implements Tier {
     BISMUTH(4, 0, 50.0F, 0.0F, 200, () -> Ingredient.of(ModItems.legacyItem("ingot_bismuth").get())),
     VOLCANIC(4, 0, 50.0F, 0.0F, 200, () -> Ingredient.of(ModItems.legacyItem("ingot_bismuth").get())),
     CHLOROPHYTE(4, 0, 75.0F, 0.0F, 200, () -> legacyIngredient("powder_chlorophyte")),
+    METEORITE(4, 0, 50.0F, 0.0F, 200, () -> legacyIngredient("plate_paa")),
     MESE(4, 0, 100.0F, 0.0F, 200, () -> legacyIngredient("plate_paa")),
     MESE_GAVEL(4, 0, 50.0F, 0.0F, 200, () -> legacyIngredient("plate_paa")),
     DWARVEN(2, 0, 4.0F, 0.0F, 10, () -> Ingredient.of(ModItems.COPPER_INGOT.get()));

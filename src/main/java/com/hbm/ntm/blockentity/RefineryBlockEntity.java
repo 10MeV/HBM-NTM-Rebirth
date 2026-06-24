@@ -37,6 +37,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -67,7 +68,9 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_SULFUR = "sulfur";
     private static final String TAG_EXPLODED = "exploded";
     private static final String TAG_ON_FIRE = "onFire";
-    private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_INVENTORY = HbmInventoryMenuHelper.LEGACY_ITEMS_TAG;
+    private static final String TAG_MODERN_INVENTORY = "Inventory";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_IS_ON = "isOn";
     private static final String TAG_LEGACY_POWER = "power";
     private static final int MAX_SULFUR = 10;
@@ -93,8 +96,11 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     private boolean onFire;
     private boolean isOn;
     private int sulfur;
+    private int audioTime;
     private Explosion lastExplosion;
     private Object audioLoop;
+    @Nullable
+    private String customName;
     private final ItemStackHandler items = new ItemStackHandler(ITEM_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -258,7 +264,10 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putInt(TAG_SULFUR, sulfur);
         tag.putBoolean(TAG_EXPLODED, exploded);
         tag.putBoolean(TAG_ON_FIRE, onFire);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
         getAllTanks().get(0).writeToNbt(tag, "input");
         getAllTanks().get(1).writeToNbt(tag, "heavy");
         getAllTanks().get(2).writeToNbt(tag, "naphtha");
@@ -275,7 +284,8 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         sulfur = tag.getInt(TAG_SULFUR);
         exploded = tag.getBoolean(TAG_EXPLODED);
         onFire = tag.getBoolean(TAG_ON_FIRE);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         getAllTanks().get(0).readFromNbt(tag, "input");
         getAllTanks().get(1).readFromNbt(tag, "heavy");
         getAllTanks().get(2).readFromNbt(tag, "naphtha");
@@ -299,6 +309,9 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
         isOn = tag.getBoolean(TAG_IS_ON);
+        if (isOn) {
+            audioTime = 20;
+        }
     }
 
     @Override
@@ -355,7 +368,9 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.machineRefinery", "Refinery");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatableWithFallback("container.machineRefinery", "Refinery");
     }
 
     @Nullable
@@ -518,12 +533,25 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (level == null || !level.isClientSide) {
             return;
         }
+        if (audioTime > 0) {
+            audioTime--;
+        }
         audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.boiler",
-                isOn, 30.0D, 15.0F, 0.25F, 1.0F);
+                audioTime > 0, 30.0D, 15.0F, 0.25F, 1.0F);
     }
 
     private boolean setInputTypeFromIdentifier() {
         return setFluidTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER, inputTank());
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        } else if (tag.contains(TAG_MODERN_INVENTORY)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
     }
 
     private boolean refine() {

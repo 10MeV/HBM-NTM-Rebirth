@@ -193,7 +193,7 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.machineMicrowave", "Microwave");
+        return Component.translatableWithFallback("container.microwave", "Microwave");
     }
 
     @Nullable

@@ -4,16 +4,42 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMachineBlockEntity> {
     static final LegacyWavefrontModel MODEL = ObjMachineModels.ASSEMBLY_MACHINE_LEGACY;
+    private static final LegacyWavefrontModel.SelectionHandle BASE =
+            MODEL.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle FRAME =
+            MODEL.prepareRenderOnlyInCallOrder("Frame");
+    private static final LegacyWavefrontModel.SelectionHandle RING =
+            MODEL.prepareRenderOnlyInCallOrder("Ring");
+    private static final LegacyWavefrontModel.SelectionHandle RING_2 =
+            MODEL.prepareRenderOnlyInCallOrder("Ring2");
+    private static final LegacyWavefrontModel.SelectionHandle ARM_LOWER_1 =
+            MODEL.prepareRenderOnlyInCallOrder("ArmLower1");
+    private static final LegacyWavefrontModel.SelectionHandle ARM_LOWER_2 =
+            MODEL.prepareRenderOnlyInCallOrder("ArmLower2");
+    private static final LegacyWavefrontModel.SelectionHandle ARM_UPPER_1 =
+            MODEL.prepareRenderOnlyInCallOrder("ArmUpper1");
+    private static final LegacyWavefrontModel.SelectionHandle ARM_UPPER_2 =
+            MODEL.prepareRenderOnlyInCallOrder("ArmUpper2");
+    private static final LegacyWavefrontModel.SelectionHandle HEAD_1 =
+            MODEL.prepareRenderOnlyInCallOrder("Head1");
+    private static final LegacyWavefrontModel.SelectionHandle HEAD_2 =
+            MODEL.prepareRenderOnlyInCallOrder("Head2");
+    private static final LegacyWavefrontModel.SelectionHandle SPIKE_1 =
+            MODEL.prepareRenderOnlyInCallOrder("Spike1");
+    private static final LegacyWavefrontModel.SelectionHandle SPIKE_2 =
+            MODEL.prepareRenderOnlyInCallOrder("Spike2");
 
     public AssemblyMachineRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -37,10 +63,11 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F + blockstateModelYRotation(state)));
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
 
-        MODEL.renderPart("Base", poseStack, buffer, modelLight, packedOverlay);
+        renderModelPart("Base", context);
         if (assembler.shouldRenderFrame()) {
-            MODEL.renderPart("Frame", poseStack, buffer, modelLight, packedOverlay);
+            renderModelPart("Frame", context);
         }
 
         poseStack.pushPose();
@@ -49,9 +76,9 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
                 assembler.getArm(0).getPositions(partialTick),
                 assembler.getArm(1).getPositions(partialTick));
         poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.ringDegrees()));
-        MODEL.renderPart("Ring", poseStack, buffer, modelLight, packedOverlay);
+        renderModelPart("Ring", context);
         for (LegacyTileRenderPlans.AssemblyArmPlan arm : plan.arms()) {
-            renderArmPlan(poseStack, buffer, modelLight, packedOverlay, arm);
+            renderArmPlan(poseStack, context, arm);
         }
         poseStack.popPose();
 
@@ -63,17 +90,17 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
         poseStack.popPose();
     }
 
-    private static void renderArmPlan(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-            int packedOverlay, LegacyTileRenderPlans.AssemblyArmPlan arm) {
+    private static void renderArmPlan(PoseStack poseStack, ObjRenderContext context,
+            LegacyTileRenderPlans.AssemblyArmPlan arm) {
         poseStack.pushPose();
         for (LegacyTileRenderPlans.PivotedModelPartPlan part : arm.rotations()) {
             applyPivot(poseStack, part);
-            MODEL.renderPart(part.partName(), poseStack, buffer, packedLight, packedOverlay);
+            renderModelPart(part.partName(), context);
         }
         LegacyTileRenderPlans.TranslatedModelPartPlan tool = arm.tool();
         if (tool != null && tool.active()) {
             poseStack.translate(tool.translateX(), tool.translateY(), tool.translateZ());
-            MODEL.renderPart(tool.partName(), poseStack, buffer, packedLight, packedOverlay);
+            renderModelPart(tool.partName(), context);
         }
         poseStack.popPose();
     }
@@ -83,6 +110,45 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
         poseStack.mulPose(Axis.XP.rotationDegrees((float) part.angleDegrees()));
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+    }
+
+    static void renderModelPart(String partName, ObjRenderContext context) {
+        renderModelPart(MODEL, partName, ObjMachineModels.ASSEMBLY_MACHINE_TEXTURE, context);
+    }
+
+    static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = sameModel(model) ? handle(partName) : null;
+        if (handle != null) {
+            MODEL.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static boolean sameModel(LegacyWavefrontModel model) {
+        return model == MODEL || model.modelLocation().equals(MODEL.modelLocation());
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Base" -> BASE;
+            case "Frame" -> FRAME;
+            case "Ring" -> RING;
+            case "Ring2" -> RING_2;
+            case "ArmLower1" -> ARM_LOWER_1;
+            case "ArmLower2" -> ARM_LOWER_2;
+            case "ArmUpper1" -> ARM_UPPER_1;
+            case "ArmUpper2" -> ARM_UPPER_2;
+            case "Head1" -> HEAD_1;
+            case "Head2" -> HEAD_2;
+            case "Spike1" -> SPIKE_1;
+            case "Spike2" -> SPIKE_2;
+            default -> null;
+        };
     }
 
     private static float blockstateModelYRotation(BlockState state) {

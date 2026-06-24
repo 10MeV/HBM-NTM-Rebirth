@@ -8,6 +8,7 @@ import com.hbm.ntm.bullet.SednaMagazineConfig;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
 import com.hbm.ntm.client.obj.ObjTrinketModels;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjWeaponModels;
 import com.hbm.ntm.client.sound.LegacyClientSoundPlayer;
 import com.hbm.ntm.item.Ni4NiGunItem;
 import com.hbm.ntm.item.SednaGunItem;
@@ -432,14 +433,17 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             applyTeslaFirstPersonBodyAnimation(stack, poseStack);
         }
 
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Extension", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Extension", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
 
         poseStack.pushPose();
         if (firstPerson) {
             rotateTeslaCog(poseStack, cogAngle);
         }
-        model.renderPart("Cog", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Cog", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         poseStack.popPose();
 
         poseStack.pushPose();
@@ -448,7 +452,8 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         int capacitors = firstPerson ? teslaFirstPersonVisibleCapacitors(stack) : 10;
         for (int i = 0; i < capacitors; i++) {
-            model.renderPart("Capacitor", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Capacitor", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
             if (i < 4) {
                 poseStack.translate(0.0D, -1.625D, 0.0D);
                 poseStack.mulPose(Axis.ZP.rotationDegrees(-22.5F));
@@ -621,24 +626,30 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderFatman(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Launcher", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Handle", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Gauge", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Lid", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Launcher", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Handle", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gauge", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Lid", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
 
         boolean loaded = isMagazineLoaded(stack);
         poseStack.pushPose();
         if (!loaded) {
             poseStack.translate(0.0D, 0.0D, 3.0D);
         }
-        model.renderPart("Piston", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Piston", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         poseStack.popPose();
 
         if (loaded) {
             ResourceLocation nukeTexture = "nuke_balefire".equals(loadedMagazineType(stack))
                     ? FATMAN_BALEFIRE_TEXTURE
                     : FATMAN_MININUKE_TEXTURE;
-            model.renderPart("MiniNuke", nukeTexture, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "MiniNuke", nukeTexture, poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
@@ -709,11 +720,16 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             return;
         }
 
-        model.renderPart("Cannon", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Shell", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Breech", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Cog", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Cannon", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Shell", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Breech", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Cog", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         renderFollyAimingText(stack, poseStack, buffer);
     }
 
@@ -895,14 +911,18 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         } else if (displayContext != ItemDisplayContext.GUI) {
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
         }
-        model.renderPart("MainBody", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("PumpGrip", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "MainBody", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "PumpGrip", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
     }
 
     private static void renderTau(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Body", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Rotor", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Body", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Rotor", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
     }
 
     private static void renderGreasegun(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
@@ -916,39 +936,53 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static void renderMaresleg(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean shortened = isMareslegShortened(stack, spec);
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Lever", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Lever", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (!shortened) {
-            model.renderPart("Stock", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-            model.renderPart("Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Stock", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
     private static void renderCarbine(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean scoped = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE);
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Slide", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Magazine", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Slide", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (scoped) {
-            model.renderPart("Scope", CARBINE_SCOPE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Scope", CARBINE_SCOPE_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
         } else {
-            model.renderPart("IronSight", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "IronSight", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
         if (hasUpgrade(stack, SednaWeaponModEvaluator.ID_CARBINE_BAYONET)) {
-            model.renderPart("Bayonet", CARBINE_BAYONET_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Bayonet", CARBINE_BAYONET_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
     private static void renderAm180(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean silenced = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SILENCER);
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (silenced) {
-            model.renderPart("Silencer", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Silencer", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
-        model.renderPart("Trigger", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Bolt", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Trigger", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Bolt", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
 
         poseStack.pushPose();
         if (displayContext.firstPerson()) {
@@ -956,10 +990,12 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.mulPose(Axis.YN.rotationDegrees((float) (primaryMagazineAmount(stack) / 59.0D * 360.0D)));
             poseStack.translate(0.0D, 0.0D, -1.5D);
         }
-        model.renderPart("Mag", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Mag", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         poseStack.popPose();
 
-        model.renderPart("MagPlate", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "MagPlate", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
     }
 
     private static void renderUzi(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
@@ -972,13 +1008,13 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         ResourceLocation texture = hasUpgrade(stack, SednaWeaponModEvaluator.ID_UZI_SATURN)
                 ? UZI_SATURNITE_TEXTURE
                 : spec.textureLocation();
-        model.renderPart("Gun", texture, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("StockBack", texture, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("StockFront", texture, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Slide", texture, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Magazine", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "StockBack", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "StockFront", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Slide", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Magazine", texture, poseStack, buffer, packedLight, packedOverlay);
         if (silenced) {
-            model.renderPart("Silencer", texture, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Silencer", texture, poseStack, buffer, packedLight, packedOverlay);
         }
     }
 
@@ -989,15 +1025,19 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.scale(0.625F, 0.625F, 0.625F);
             poseStack.translate(0.0D, 0.0D, -6.0D);
         }
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Slide", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Mag", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Hammer", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Slide", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Mag", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (silenced) {
             poseStack.pushPose();
             poseStack.translate(0.0D, 2.375D, -0.25D);
-            extraModel("uzi", "uzi", "uzi").renderPart("Silencer", new ResourceLocation(HbmNtm.MOD_ID,
-                    "textures/models/weapons/uzi.png"), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(extraModel("uzi", "uzi", "uzi"), "Silencer", UZI_TEXTURE, poseStack, buffer,
+                    packedLight, packedOverlay);
             poseStack.popPose();
         }
     }
@@ -1011,62 +1051,77 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 || hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE);
         ResourceLocation texture = g3Texture(stack, spec);
 
-        model.renderPart("Rifle", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Rifle", texture, poseStack, buffer, packedLight, packedOverlay);
         if (stock) {
-            model.renderPart("Stock", texture, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Stock", texture, poseStack, buffer, packedLight, packedOverlay);
         }
-        model.renderPart("Magazine", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Magazine", texture, poseStack, buffer, packedLight, packedOverlay);
         if (!silenced) {
-            model.renderPart("Flash_Hider", texture, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Flash_Hider", texture, poseStack, buffer, packedLight, packedOverlay);
         }
-        model.renderPart("Guide_And_Bolt", texture, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Handle", texture, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Trigger", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Guide_And_Bolt", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Handle", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Trigger", texture, poseStack, buffer, packedLight, packedOverlay);
 
         poseStack.pushPose();
         poseStack.translate(0.0D, -0.875D, -3.5D);
         poseStack.mulPose(Axis.XP.rotationDegrees(-30.0F));
         poseStack.translate(0.0D, 0.875D, 3.5D);
-        model.renderPart("Selector", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Selector", texture, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
 
         if (silenced) {
-            model.renderPart("Silencer", G3_ATTACHMENTS_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Silencer", G3_ATTACHMENTS_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
         }
         if (scoped) {
-            model.renderPart("Scope", G3_ATTACHMENTS_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Scope", G3_ATTACHMENTS_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
     private static void renderAmat(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Bolt", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Magazine", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("BipodLeft", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("BipodHingeLeft", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("BipodRight", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("BipodHingeRight", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Scope", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Bolt", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "BipodLeft", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "BipodHingeLeft", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "BipodRight", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "BipodHingeRight", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Scope", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
 
         if (isAmatSilenced(stack)) {
             poseStack.pushPose();
             poseStack.translate(0.0D, 0.625D, -4.3125D);
             poseStack.scale(1.25F, 1.25F, 1.25F);
-            extraModel("g3", "g3", "g3").renderPart("Silencer", G3_ATTACHMENTS_TEXTURE, poseStack, buffer,
-                    packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(extraModel("g3", "g3", "g3"), "Silencer", G3_ATTACHMENTS_TEXTURE, poseStack,
+                    buffer, packedLight, packedOverlay);
             poseStack.popPose();
         } else {
-            model.renderPart("MuzzleBrake", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "MuzzleBrake", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
     private static void renderMk108(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Lid", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Drum", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Lid", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Drum", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
 
         double[][] shells = mk108LoadedShellPositions();
         int shellAmount = displayContext.firstPerson() ? primaryMagazineAmount(stack) : Integer.MAX_VALUE;
@@ -1110,22 +1165,29 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.pushPose();
         poseStack.translate(x, y, 0.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) rot));
-        model.renderPart("Belt", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Belt", texture, poseStack, buffer, packedLight, packedOverlay);
         if (shell) {
-            model.renderPart("Grenade", texture, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Grenade", texture, poseStack, buffer, packedLight, packedOverlay);
         }
         poseStack.popPose();
     }
 
     private static void renderSexy(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("RecoilSpring", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Hood", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Lever", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("LockSpring", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Magazine", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "RecoilSpring", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Hood", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Lever", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "LockSpring", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
 
         double p = 0.0625D;
         double[][] shells = {
@@ -1151,9 +1213,9 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.translate(x, 0.375D + y, 0.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) rot));
         poseStack.translate(0.0D, -0.375D, 0.0D);
-        model.renderPart("Belt", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Belt", texture, poseStack, buffer, packedLight, packedOverlay);
         if (shell) {
-            model.renderPart("Shell", texture, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Shell", texture, poseStack, buffer, packedLight, packedOverlay);
         }
         poseStack.popPose();
     }
@@ -1162,11 +1224,15 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean scoped = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE);
         boolean bayonet = hasUpgrade(stack, SednaWeaponModEvaluator.ID_MAS_BAYONET);
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Stock", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Bolt", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Stock", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Bolt", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (scoped) {
-            model.renderPart("Scope", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Scope", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
         if (bayonet) {
             if (!displayContext.firstPerson()
@@ -1174,7 +1240,8 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                     && displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
                 poseStack.translate(0.0D, -1.0D, -6.0D);
             }
-            model.renderPart("Bayonet", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Bayonet", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
@@ -1182,9 +1249,12 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
         if (displayContext.firstPerson()) {
-            model.renderPart("Body", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-            model.renderPart("Mag", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-            model.renderPart("Bullet", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Body", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Mag", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Bullet", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
             renderBolterAmmoText(stack, poseStack, buffer);
         } else {
             model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
@@ -1205,39 +1275,54 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderStg77(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Lever", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Magazine", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Safety", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Handle", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Breech", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Lever", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Safety", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Handle", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Breech", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
     }
 
     private static void renderLaserPistol(ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Latch", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Latch", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (spec.visibleParts().contains("Capacitors")) {
-            model.renderPart("Capacitors", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Capacitors", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
         if (spec.visibleParts().contains("Tape")) {
-            model.renderPart("Tape", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Tape", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
         if (displayContext.firstPerson()) {
-            model.renderPart("Battery", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Battery", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
     private static void renderPanzerschreck(ItemStack stack, ItemDisplayContext displayContext,
             LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        model.renderPart("Tube", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Tube", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (!SednaWeaponModEvaluator.hasUpgrade(stack, 0, SednaWeaponModEvaluator.ID_NO_SHIELD)) {
-            model.renderPart("Shield", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Shield", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
         if (displayContext.firstPerson()) {
-            model.renderPart("Rocket", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Rocket", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
@@ -1254,8 +1339,8 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
             poseStack.pushPose();
             poseStack.translate(0.0D, 3.5D, -3.0D);
-            extraModel("panzerschreck", "panzerschreck", "panzerschreck")
-                    .renderPart("Rocket", PANZERSCHRECK_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(extraModel("panzerschreck", "panzerschreck", "panzerschreck"),
+                    "Rocket", PANZERSCHRECK_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
             renderStingerNotAccurateText(poseStack, buffer);
             poseStack.popPose();
         } else {
@@ -1278,20 +1363,26 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderQuadro(ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Launcher", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Launcher", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (displayContext.firstPerson()) {
-            model.renderPart("Rockets", QUADRO_ROCKET_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Rockets", QUADRO_ROCKET_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
     private static void renderMissileLauncher(ItemStack stack, ItemDisplayContext displayContext,
             LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        model.renderPart("Launcher", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Front", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Launcher", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Front", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (displayContext.firstPerson() || isMagazineLoaded(stack)) {
-            model.renderPart("Missile", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Missile", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
@@ -1301,48 +1392,67 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         boolean capacitor = SednaWeaponModEvaluator.hasUpgrade(stack, 0, SednaWeaponModEvaluator.ID_LAS_CAPACITOR);
         boolean scope = !SednaWeaponModEvaluator.hasUpgrade(stack, 0, SednaWeaponModEvaluator.ID_LAS_AUTO);
 
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Stock", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Stock", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (scope) {
-            model.renderPart("Scope", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Scope", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
-        model.renderPart("Lever", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Battery", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Lever", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Battery", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (!shotgun) {
-            model.renderPart("Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
         LegacyWavefrontModel mods = extraModel("lasrifle_mods", "lasrifle_mods", "lasrifle_mods");
         if (shotgun) {
-            mods.renderPart("BarrelShotgun", LASRIFLE_MODS_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(mods, "BarrelShotgun", LASRIFLE_MODS_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
         }
         if (capacitor) {
-            mods.renderPart("UnderBarrel", LASRIFLE_MODS_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(mods, "UnderBarrel", LASRIFLE_MODS_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
     private static void renderAberrator(ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Hammer", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Magazine", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (displayContext.firstPerson()) {
-            model.renderPart("Bullet", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Bullet", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
-        model.renderPart("Slide", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Sight", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Slide", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Sight", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
     }
 
     private static void renderLag(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        model.renderPart("Grip", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Slide", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Hammer", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Grip", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Slide", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (displayContext.firstPerson()) {
             if (primaryMagazineAmount(stack) > 0) {
-                model.renderPart("Bullet", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+                ObjWeaponModels.renderPart(model, "Bullet", spec.textureLocation(), poseStack, buffer, packedLight,
+                        packedOverlay);
             }
-            model.renderPart("Magazine", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
@@ -1366,53 +1476,74 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderChargeThrower(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE)) {
-            model.renderPart("Scope", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Scope", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
         String loadedType = loadedMagazineType(stack);
         if ("ct_hook".equals(loadedType)) {
-            model.renderPart("Hook", CHARGE_THROWER_HOOK_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Hook", CHARGE_THROWER_HOOK_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
         } else if ("ct_mortar".equals(loadedType)) {
-            model.renderPart("Mortar", CHARGE_THROWER_MORTAR_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Mortar", CHARGE_THROWER_MORTAR_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
         } else if ("ct_mortar_charge".equals(loadedType)) {
-            model.renderPart("Mortar", CHARGE_THROWER_MORTAR_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
-            model.renderPart("Oomph", CHARGE_THROWER_MORTAR_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Mortar", CHARGE_THROWER_MORTAR_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Oomph", CHARGE_THROWER_MORTAR_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
     private static void renderDoubleBarrel(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean sawedOff = isDoubleBarrelSawedOff(stack);
-        model.renderPart("Stock", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("BarrelShort", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Stock", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "BarrelShort", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (!sawedOff) {
-            model.renderPart("Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
-        model.renderPart("Buckle", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Lever", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Shells", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Buckle", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Lever", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Shells", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
     }
 
     private static void renderHeavyRevolver(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean scoped = isHeavyRevolverScoped(stack);
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Cylinder", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Bullets", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Casings", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Pivot", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Hammer", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Cylinder", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Bullets", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Casings", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Pivot", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         if (scoped) {
-            model.renderPart("Scope", LILMAC_SCOPE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Scope", LILMAC_SCOPE_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
     private static void renderFlamer(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Tank", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Tank", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
 
         poseStack.pushPose();
         if (displayContext.firstPerson()) {
@@ -1421,11 +1552,13 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.mulPose(Axis.ZP.rotationDegrees((float) (-135.0D + fill * 270.0D)));
             poseStack.translate(-1.25D, -1.25D, 0.0D);
         }
-        model.renderPart("Gauge", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gauge", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         poseStack.popPose();
 
         if (spec.visibleParts().contains("HeatShield")) {
-            model.renderPart("HeatShield", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "HeatShield", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
         }
     }
 
@@ -1435,9 +1568,12 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         if (!displayContext.firstPerson()) {
             poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
         }
-        model.renderPart("Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Hose", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Nozzle", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Hose", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Nozzle", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
 
         poseStack.pushPose();
         if (displayContext.firstPerson()) {
@@ -1454,13 +1590,15 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.mulPose(Axis.XP.rotationDegrees((float) (135.0D - fill * 270.0D)));
             poseStack.translate(0.0D, -0.875D, -1.75D);
         }
-        model.renderPart("Gauge", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gauge", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         poseStack.popPose();
     }
 
     private static void renderDrill(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Base", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Base", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
 
         poseStack.pushPose();
         if (displayContext.firstPerson()) {
@@ -1479,14 +1617,20 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.mulPose(Axis.XP.rotationDegrees(-45.0F));
             poseStack.translate(-1.0D, -2.0625D, 1.75D);
         }
-        model.renderPart("Gauge", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gauge", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
         poseStack.popPose();
 
-        model.renderPart("Piston1", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Piston2", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Piston3", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("DrillBack", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("DrillFront", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Piston1", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Piston2", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Piston3", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "DrillBack", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "DrillFront", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
     }
 
     private static void renderNi4Ni(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
@@ -1502,8 +1646,8 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         renderTintedPart(model, "Grip", texture, poseStack, buffer, packedLight, packedOverlay, grip);
         renderTintedPart(model, "FrameLight", texture, poseStack, buffer, packedLight, packedOverlay, light);
         renderTintedPart(model, "Cylinder", texture, poseStack, buffer, packedLight, packedOverlay, light);
-        model.renderPart("CylinderHighlights", texture, poseStack, buffer, 0xF000F0, packedOverlay);
-        model.renderPart("Barrel", texture, poseStack, buffer, 0xF000F0, packedOverlay);
+        ObjWeaponModels.renderPart(model, "CylinderHighlights", texture, poseStack, buffer, 0xF000F0, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Barrel", texture, poseStack, buffer, 0xF000F0, packedOverlay);
 
         int coinCount = displayContext == ItemDisplayContext.GUI ? 4 : Ni4NiGunItem.getCoinCount(stack);
         renderNi4NiCoin(model, "Coin1", coinCount, 4, 8, poseStack, buffer, 0xF000F0, packedOverlay);
@@ -1514,7 +1658,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderTintedPart(LegacyWavefrontModel model, String part, ResourceLocation texture,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, int color) {
-        model.renderPart(part, texture, poseStack, buffer, packedLight, packedOverlay,
+        ObjWeaponModels.renderPart(model, part, texture, poseStack, buffer, packedLight, packedOverlay,
                 (color >> 16) & 255, (color >> 8) & 255, color & 255, 255);
     }
 
@@ -1524,7 +1668,8 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             return;
         }
         int red = coinCount >= redThreshold ? 255 : 0;
-        model.renderPart(part, specCoinTexture(), poseStack, buffer, packedLight, packedOverlay, red, 255, 0, 255);
+        ObjWeaponModels.renderPart(model, part, specCoinTexture(), poseStack, buffer, packedLight, packedOverlay,
+                red, 255, 0, 255);
     }
 
     private static ResourceLocation specCoinTexture() {
@@ -1656,7 +1801,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 renderStarFAkimboParts(stack, model, 0, poseStack, buffer, packedLight, packedOverlay);
                 poseStack.popPose();
             }
-            case MINIGUN_DUAL -> model.renderOnly(spec.textureLocation(), poseStack, buffer, packedLight,
+            case MINIGUN_DUAL -> ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay, "Gun", "Barrels");
             default -> renderAkimboThirdPerson(stack, model, spec, false, poseStack, buffer, packedLight,
                     packedOverlay);
@@ -1668,23 +1813,23 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             double leftX, double rightX, String... parts) {
         poseStack.pushPose();
         poseStack.translate(leftX, 1.0D, 0.0D);
-        model.renderOnly(texture, poseStack, buffer, packedLight, packedOverlay, parts);
+        ObjWeaponModels.renderOnly(model, texture, poseStack, buffer, packedLight, packedOverlay, parts);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(rightX, 1.0D, 0.0D);
-        model.renderOnly(texture, poseStack, buffer, packedLight, packedOverlay, parts);
+        ObjWeaponModels.renderOnly(model, texture, poseStack, buffer, packedLight, packedOverlay, parts);
         poseStack.popPose();
     }
 
     private static void renderAkimboThirdPerson(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
             boolean leftHand, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         switch (spec.specialRender()) {
-            case MARESLEG_AKIMBO -> model.renderOnly(spec.textureLocation(), poseStack, buffer, packedLight,
+            case MARESLEG_AKIMBO -> ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay, "Gun", "Lever");
-            case MINIGUN_DUAL -> model.renderOnly(spec.textureLocation(), poseStack, buffer, packedLight,
+            case MINIGUN_DUAL -> ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay, leftHand ? "GunDual" : "Gun", "Barrels");
-            case EOTT -> model.renderOnly(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
+            case EOTT -> ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
                     "Gun", "Hammer", "Magazine", "Slide", "Sight");
             case DANI -> model.renderAll(leftHand ? DANI_CELESTIAL_TEXTURE : DANI_LUNAR_TEXTURE,
                     poseStack, buffer, packedLight, packedOverlay);
@@ -1713,13 +1858,14 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             case MINIGUN_DUAL -> {
                 poseStack.pushPose();
                 applyLegacyMinigunDualLeftInventoryRotations(poseStack);
-                model.renderOnly(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
+                ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
                         "GunDual", "Barrels");
                 poseStack.popPose();
                 poseStack.pushPose();
                 poseStack.translate(0.0D, 0.0D, 8.0D);
                 applyLegacyAkimboRightInventoryRotations(poseStack, false);
-                model.renderOnly(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay, "Gun", "Barrels");
+                ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
+                        "Gun", "Barrels");
                 poseStack.popPose();
             }
             case EOTT -> {
@@ -1809,14 +1955,14 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.pushPose();
         applyLegacyAkimboLeftInventoryRotations(poseStack);
         poseStack.translate(leftX, leftY, 0.0D);
-        model.renderOnly(texture, poseStack, buffer, packedLight, packedOverlay, parts);
+        ObjWeaponModels.renderOnly(model, texture, poseStack, buffer, packedLight, packedOverlay, parts);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, secondZ);
         applyLegacyAkimboRightInventoryRotations(poseStack, true);
         poseStack.translate(rightX, leftY, 0.0D);
-        model.renderOnly(texture, poseStack, buffer, packedLight, packedOverlay, parts);
+        ObjWeaponModels.renderOnly(model, texture, poseStack, buffer, packedLight, packedOverlay, parts);
         poseStack.popPose();
     }
 
@@ -1825,27 +1971,32 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         ResourceLocation texture = hasUpgrade(stack, configIndex, SednaWeaponModEvaluator.ID_UZI_SATURN)
                 ? UZI_SATURNITE_TEXTURE
                 : UZI_TEXTURE;
-        model.renderPart(mirror ? "GunMirror" : "Gun", texture, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("StockBack", texture, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("StockFront", texture, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Slide", texture, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Magazine", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, mirror ? "GunMirror" : "Gun", texture, poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "StockBack", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "StockFront", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Slide", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Magazine", texture, poseStack, buffer, packedLight, packedOverlay);
         if (hasUpgrade(stack, configIndex, SednaWeaponModEvaluator.ID_SILENCER)) {
-            model.renderPart("Silencer", texture, poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Silencer", texture, poseStack, buffer, packedLight, packedOverlay);
         }
     }
 
     private static void renderStarFAkimboParts(ItemStack stack, LegacyWavefrontModel model, int configIndex,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        model.renderPart("Gun", STAR_F_ELITE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Slide", STAR_F_ELITE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Mag", STAR_F_ELITE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
-        model.renderPart("Hammer", STAR_F_ELITE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Gun", STAR_F_ELITE_TEXTURE, poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Slide", STAR_F_ELITE_TEXTURE, poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Mag", STAR_F_ELITE_TEXTURE, poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Hammer", STAR_F_ELITE_TEXTURE, poseStack, buffer, packedLight,
+                packedOverlay);
         if (hasUpgrade(stack, configIndex, SednaWeaponModEvaluator.ID_SILENCER)) {
             poseStack.pushPose();
             poseStack.translate(0.0D, 2.375D, -0.25D);
-            extraModel("uzi", "uzi", "uzi").renderPart("Silencer", UZI_TEXTURE,
-                    poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(extraModel("uzi", "uzi", "uzi"), "Silencer", UZI_TEXTURE, poseStack, buffer,
+                    packedLight, packedOverlay);
             poseStack.popPose();
         }
     }
@@ -1903,11 +2054,11 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             int side, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean mirror = side == -1;
         switch (spec.specialRender()) {
-            case MARESLEG_AKIMBO -> model.renderOnly(spec.textureLocation(), poseStack, buffer, packedLight,
+            case MARESLEG_AKIMBO -> ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay, "Gun", "Lever");
-            case MINIGUN_DUAL -> model.renderOnly(spec.textureLocation(), poseStack, buffer, packedLight,
+            case MINIGUN_DUAL -> ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay, mirror ? "GunDual" : "Gun", "Barrels");
-            case EOTT -> model.renderOnly(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
+            case EOTT -> ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
                     "Gun", "Hammer", "Magazine", "Bullet", "Slide", "Sight");
             case DANI -> model.renderAll(mirror ? DANI_CELESTIAL_TEXTURE : DANI_LUNAR_TEXTURE,
                     poseStack, buffer, packedLight, packedOverlay);

@@ -32,9 +32,7 @@ public class FusionTorusScreen extends AbstractContainerScreen<FusionTorusMenu> 
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
         int power = FusionTorusBlockEntity.MAX_POWER <= 0L ? 0
                 : (int) (menu.getPower() * 62L / FusionTorusBlockEntity.MAX_POWER);
-        if (power > 0) {
-            graphics.blit(TEXTURE, leftPos + 8, topPos + 80 - power, 230, 62 - power, 16, power);
-        }
+        graphics.blit(TEXTURE, leftPos + 8, topPos + 80 - power, 230, 62 - power, 16, power);
         int progress = (int) Math.ceil(70.0D * menu.getProgress());
         if (progress > 0) {
             graphics.blit(TEXTURE, leftPos + 98, topPos + 81, 0, 244, progress, 6);
@@ -68,7 +66,7 @@ public class FusionTorusScreen extends AbstractContainerScreen<FusionTorusMenu> 
                 stats.outputTemp() <= 0L ? 0.0D : Math.min(menu.getPlasmaEnergy() / (double) stats.outputTemp(), 1.0D),
                 5, 2, 1, 0xA00000);
         LegacyGuiElements.drawSmoothGauge(graphics, leftPos + 124, topPos + 124,
-                Math.max(0.0D, Math.min(1.0D, menu.getFuelConsumption())), 5, 2, 1, 0xA00000);
+                menu.getFuelConsumption(), 5, 2, 1, 0xA00000);
         graphics.renderItem(recipe == null ? LegacyGuiElements.templateFolderStack() : recipe.getIcon(),
                 leftPos + 44, topPos + 81);
         LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 44, topPos + 70, 16, 52, menu.getRecipeTank(0));

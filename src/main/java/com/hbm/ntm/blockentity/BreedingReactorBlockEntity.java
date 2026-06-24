@@ -9,7 +9,6 @@ import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.recipe.BreedingReactorRecipeRuntime;
 import com.hbm.ntm.recipe.BreedingReactorRecipeRuntime.BreederRecipe;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -53,7 +52,7 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot == INPUT_SLOT && BreedingReactorRecipeRuntime.isInput(stack);
+            return slot == INPUT_SLOT && !stack.isEmpty();
         }
 
         @Override
@@ -77,7 +76,7 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, BreedingReactorBlockEntity breeder) {
         breeder.flux = breeder.collectFlux(level, pos);
-        boolean changed = breeder.processTick();
+        boolean changed = breeder.processTick(level);
         breeder.networkPackNT(20);
         if (changed || level.getGameTime() % 20L == 0L) {
             breeder.setChanged();
@@ -89,9 +88,6 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
         int collected = 0;
         for (Direction direction : Direction.Plane.HORIZONTAL) {
             BlockPos side = pos.relative(direction);
-            if (!level.getBlockState(side).is(ModBlocks.REACTOR_RESEARCH.get())) {
-                continue;
-            }
             if (MultiblockHelper.resolveCoreBlockEntity(level, side) instanceof ResearchReactorBlockEntity reactor) {
                 collected += reactor.getTotalFlux();
             }
@@ -99,23 +95,23 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
         return collected;
     }
 
-    private boolean processTick() {
-        if (!canProcess()) {
+    private boolean processTick(Level level) {
+        if (!canProcess(level)) {
             boolean changed = progress != 0.0F;
             progress = 0.0F;
             return changed;
         }
-        BreederRecipe recipe = BreedingReactorRecipeRuntime.recipeFor(items.getStackInSlot(INPUT_SLOT));
+        BreederRecipe recipe = BreedingReactorRecipeRuntime.recipeFor(level, items.getStackInSlot(INPUT_SLOT));
         progress += 0.0025F * (flux / (float) recipe.flux());
         if (progress >= 1.0F) {
             progress = 0.0F;
-            processItem(recipe);
+            processItem(level, recipe);
         }
         return true;
     }
 
-    private boolean canProcess() {
-        BreederRecipe recipe = BreedingReactorRecipeRuntime.recipeFor(items.getStackInSlot(INPUT_SLOT));
+    private boolean canProcess(Level level) {
+        BreederRecipe recipe = BreedingReactorRecipeRuntime.recipeFor(level, items.getStackInSlot(INPUT_SLOT));
         if (recipe == null || flux < recipe.flux()) {
             return false;
         }
@@ -127,8 +123,8 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
         return ItemStack.isSameItem(output, recipeOutput) && output.getCount() < output.getMaxStackSize();
     }
 
-    private void processItem(BreederRecipe recipe) {
-        if (!canProcess()) {
+    private void processItem(Level level, BreederRecipe recipe) {
+        if (!canProcess(level)) {
             return;
         }
         ItemStack output = items.getStackInSlot(OUTPUT_SLOT);
@@ -155,7 +151,7 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
     }
 
     public int getProgressScaled() {
-        return Math.round(progress * 10_000.0F);
+        return (int) (progress * 10_000.0F);
     }
 
     public int getProgressWidth(int width) {
@@ -226,8 +222,7 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public AABB getRenderBoundingBox() {
-        return LegacyMachineRenderBounds.visibleMultiblockOr(this,
-                new AABB(worldPosition.offset(-1, 0, -1), worldPosition.offset(2, 4, 2)));
+        return new AABB(worldPosition, worldPosition.offset(1, 3, 1));
     }
 
     @Override
@@ -283,7 +278,7 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot == INPUT_SLOT && items.isItemValid(slot, stack);
+            return slot == INPUT_SLOT && !stack.isEmpty();
         }
     }
 }

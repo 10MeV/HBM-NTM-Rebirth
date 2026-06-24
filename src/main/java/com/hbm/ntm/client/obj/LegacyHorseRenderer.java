@@ -30,6 +30,32 @@ public final class LegacyHorseRenderer {
     private static final ResourceLocation HORSE_MODEL =
             new ResourceLocation(HbmNtm.MOD_ID, "models/mobs/horse.obj");
     private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(HORSE_MODEL, HORSE_DEMO_TEXTURE).asVBO();
+    private static final LegacyWavefrontModel.SelectionHandle BODY =
+            MODEL.prepareRenderOnlyInCallOrder("Body");
+    private static final LegacyWavefrontModel.SelectionHandle HEAD =
+            MODEL.prepareRenderOnlyInCallOrder("Head");
+    private static final LegacyWavefrontModel.SelectionHandle MANE =
+            MODEL.prepareRenderOnlyInCallOrder("Mane");
+    private static final LegacyWavefrontModel.SelectionHandle NOSE_MALE =
+            MODEL.prepareRenderOnlyInCallOrder("NoseMale");
+    private static final LegacyWavefrontModel.SelectionHandle NOSE_FEMALE =
+            MODEL.prepareRenderOnlyInCallOrder("NoseFemale");
+    private static final LegacyWavefrontModel.SelectionHandle HORN_POINTY =
+            MODEL.prepareRenderOnlyInCallOrder("HornPointy");
+    private static final LegacyWavefrontModel.SelectionHandle LEFT_FRONT_LEG =
+            MODEL.prepareRenderOnlyInCallOrder("LeftFrontLeg");
+    private static final LegacyWavefrontModel.SelectionHandle RIGHT_FRONT_LEG =
+            MODEL.prepareRenderOnlyInCallOrder("RightFrontLeg");
+    private static final LegacyWavefrontModel.SelectionHandle LEFT_BACK_LEG =
+            MODEL.prepareRenderOnlyInCallOrder("LeftBackLeg");
+    private static final LegacyWavefrontModel.SelectionHandle RIGHT_BACK_LEG =
+            MODEL.prepareRenderOnlyInCallOrder("RightBackLeg");
+    private static final LegacyWavefrontModel.SelectionHandle TAIL =
+            MODEL.prepareRenderOnlyInCallOrder("Tail");
+    private static final LegacyWavefrontModel.SelectionHandle LEFT_WING =
+            MODEL.prepareRenderOnlyInCallOrder("LeftWing");
+    private static final LegacyWavefrontModel.SelectionHandle RIGHT_WING =
+            MODEL.prepareRenderOnlyInCallOrder("RightWing");
     private static final double[][] OFFSETS = new double[][] {
             { 0.0D, 1.125D, 0.375D },
             { 0.125D, 0.75D, 0.3125D },
@@ -97,13 +123,13 @@ public final class LegacyHorseRenderer {
             int packedLight, int packedOverlay) {
         poseStack.pushPose();
         applyTransform(poseStack, ID_BODY);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
         for (HorsePartPlan plan : renderPartPlan()) {
             if (plan.pushPartTransform()) {
-                renderWithTransform(poseStack, buffer, texture, packedLight, packedOverlay,
-                        plan.poseId(), plan.parts().toArray(String[]::new));
+                renderWithTransform(poseStack, context, texture, plan.poseId(), plan.parts().toArray(String[]::new));
             } else {
                 for (String part : plan.parts()) {
-                    MODEL.renderPart(part, texture, poseStack, buffer, packedLight, packedOverlay);
+                    renderPart(part, texture, context);
                 }
             }
         }
@@ -150,14 +176,45 @@ public final class LegacyHorseRenderer {
         return new HorsePoseTransform(id, offset[0], offset[1], offset[2], yaw, pitch, roll);
     }
 
-    private void renderWithTransform(PoseStack poseStack, MultiBufferSource buffer, ResourceLocation texture,
-            int packedLight, int packedOverlay, int id, String... parts) {
+    private void renderWithTransform(PoseStack poseStack, ObjRenderContext context, ResourceLocation texture,
+            int id, String... parts) {
         poseStack.pushPose();
         applyTransform(poseStack, id);
         for (String part : parts) {
-            MODEL.renderPart(part, texture, poseStack, buffer, packedLight, packedOverlay);
+            renderPart(part, texture, context);
         }
         poseStack.popPose();
+    }
+
+    private static void renderPart(String partName, ResourceLocation texture, ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(partName);
+        if (handle != null) {
+            MODEL.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        MODEL.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Body" -> BODY;
+            case "Head" -> HEAD;
+            case "Mane" -> MANE;
+            case "NoseMale" -> NOSE_MALE;
+            case "NoseFemale" -> NOSE_FEMALE;
+            case "HornPointy" -> HORN_POINTY;
+            case "LeftFrontLeg" -> LEFT_FRONT_LEG;
+            case "RightFrontLeg" -> RIGHT_FRONT_LEG;
+            case "LeftBackLeg" -> LEFT_BACK_LEG;
+            case "RightBackLeg" -> RIGHT_BACK_LEG;
+            case "Tail" -> TAIL;
+            case "LeftWing" -> LEFT_WING;
+            case "RightWing" -> RIGHT_WING;
+            default -> null;
+        };
     }
 
     private void applyTransform(PoseStack poseStack, int id) {

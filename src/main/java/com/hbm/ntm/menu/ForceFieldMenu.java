@@ -95,13 +95,14 @@ public class ForceFieldMenu extends AbstractContainerMenu {
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END);
         }
         ItemStack stack = slots.get(index).getItem();
+        ItemStack original = stack.copy();
         if (!HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                 ForceFieldBlockEntity.SLOT_RADIUS, ForceFieldBlockEntity.SLOT_HEALTH + 1,
                 ForceFieldBlockEntity.SLOT_BATTERY, ForceFieldBlockEntity.SLOT_BATTERY + 1)) {
             return ItemStack.EMPTY;
         }
         HbmInventoryMenuHelper.finishQuickMove(slots.get(index), stack);
-        return ItemStack.EMPTY;
+        return original;
     }
 
     private void addDataSlots() {

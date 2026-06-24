@@ -6,6 +6,7 @@ import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyHorseRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
 import com.hbm.ntm.registry.ModItems;
@@ -24,6 +25,14 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
     static final ResourceLocation SOCKET_TEXTURE = ObjMachineModels.BATTERY_SOCKET_TEXTURE;
     private static final ResourceLocation SELF_CHARGING_TEXTURE = ObjMachineModels.BATTERY_SC_TEXTURE;
     static final LegacyWavefrontModel MODEL = ObjMachineModels.BATTERY_SOCKET_LEGACY;
+    private static final LegacyWavefrontModel.SelectionHandle SOCKET =
+            MODEL.prepareRenderOnlyInCallOrder("Socket");
+    private static final LegacyWavefrontModel.SelectionHandle SUPPORTS =
+            MODEL.prepareRenderOnlyInCallOrder("Supports");
+    private static final LegacyWavefrontModel.SelectionHandle BATTERY =
+            MODEL.prepareRenderOnlyInCallOrder("Battery");
+    private static final LegacyWavefrontModel.SelectionHandle CAPACITOR =
+            MODEL.prepareRenderOnlyInCallOrder("Capacitor");
     private static final LegacyHorseRenderer CREATIVE_HORSE = new LegacyHorseRenderer();
 
     public MachineBatterySocketRenderer(BlockEntityRendererProvider.Context context) {
@@ -44,20 +53,21 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(socket, packedLight);
         poseStack.pushPose();
-        applyLegacySocketTransform(socket.getBlockState(), poseStack);
+        BlockState state = socket.getBlockState();
+        applyLegacySocketTransform(state, poseStack);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
 
-        MODEL.renderPart("Socket", SOCKET_TEXTURE, poseStack, buffer, modelLight, packedOverlay);
+        MODEL.renderOnlyInCallOrder(SOCKET_TEXTURE, context, SOCKET);
         if (socket.hasFrame()) {
-            MODEL.renderPart("Supports", SOCKET_TEXTURE, poseStack, buffer, modelLight, packedOverlay);
+            MODEL.renderOnlyInCallOrder(SOCKET_TEXTURE, context, SUPPORTS);
         }
 
         ItemStack stack = socket.getBatteryStack();
         if (stack.getItem() instanceof HbmBatteryPackItem pack) {
             ResourceLocation texture = ObjMachineModels.machineTexture(pack.getLegacyTextureName());
-            String part = pack.isCapacitor() ? "Capacitor" : "Battery";
-            MODEL.renderPart(part, texture, poseStack, buffer, modelLight, packedOverlay);
+            MODEL.renderOnlyInCallOrder(texture, context, pack.isCapacitor() ? CAPACITOR : BATTERY);
         } else if (stack.getItem() instanceof HbmSelfChargingBatteryItem) {
-            MODEL.renderPart("Battery", SELF_CHARGING_TEXTURE, poseStack, buffer, modelLight, packedOverlay);
+            MODEL.renderOnlyInCallOrder(SELF_CHARGING_TEXTURE, context, BATTERY);
         } else if (stack.is(ModItems.BATTERY_CREATIVE.get())) {
             renderCreativeBatteryEffect(socket, partialTick, poseStack, buffer, modelLight, packedOverlay);
         }
@@ -100,5 +110,27 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(270.0F - facing.toYRot()));
         poseStack.translate(-0.5D, 0.0D, 0.5D);
+    }
+
+    static void renderModelPart(String partName, ResourceLocation texture, ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(partName);
+        if (handle != null) {
+            MODEL.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        MODEL.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Socket" -> SOCKET;
+            case "Supports" -> SUPPORTS;
+            case "Battery" -> BATTERY;
+            case "Capacitor" -> CAPACITOR;
+            default -> null;
+        };
     }
 }

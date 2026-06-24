@@ -1,10 +1,10 @@
 package com.hbm.ntm.recipe;
 
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmMathUtil;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -147,10 +147,10 @@ public final class PWRFuelRuntime {
         }
 
         public double eval(double flux) {
-            double safeFlux = Math.max(0.0D, flux);
+            double x = flux / div + off;
             return switch (kind) {
-                case SQRT -> squirt(safeFlux / div + off) * level;
-                case LOGARITHMIC -> Math.log10(Math.max(Double.MIN_NORMAL, safeFlux / div + off)) * level;
+                case SQRT -> HbmMathUtil.squirt(x) * level;
+                case LOGARITHMIC -> Math.log10(x) * level;
             };
         }
 
@@ -180,11 +180,6 @@ public final class PWRFuelRuntime {
                 modified = true;
             }
             return modified && brackets ? "(" + x + ")" : x;
-        }
-
-        private static double squirt(double x) {
-            double safeX = Math.max(0.0D, Mth.clamp(x, 0.0D, Double.MAX_VALUE));
-            return Math.sqrt(safeX + 1.0D / ((safeX + 2.0D) * (safeX + 2.0D))) - 1.0D / (safeX + 2.0D);
         }
 
         private enum Kind {

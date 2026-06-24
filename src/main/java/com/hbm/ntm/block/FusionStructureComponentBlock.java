@@ -1,6 +1,9 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayBlockProvider;
 import com.hbm.ntm.api.block.Toolable;
+import com.hbm.ntm.block.LegacyToolConversionOverlay.ItemCost;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -15,12 +18,14 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-public class FusionStructureComponentBlock extends Block implements Toolable {
+public class FusionStructureComponentBlock extends Block implements Toolable, LegacyLookOverlayBlockProvider {
     private static final TagKey<Item> STEEL_CAST_PLATES =
             ItemTags.create(new ResourceLocation("forge", "cast_plates/steel"));
 
@@ -45,6 +50,21 @@ public class FusionStructureComponentBlock extends Block implements Toolable {
         level.setBlock(pos, conversion.result().get().defaultBlockState(), Block.UPDATE_ALL);
         level.playSound(null, pos, conversion.sound(), SoundSource.BLOCKS, 0.8F, conversion.pitch());
         return true;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos, BlockState viewedState) {
+        return null;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, Player player, BlockPos viewedPos, BlockState viewedState) {
+        if (!viewedState.is(this)) {
+            return null;
+        }
+        return LegacyToolConversionOverlay.forTool(viewedState, player, conversion.tool(), conversion.costs().stream()
+                .map(cost -> new ItemCost(cost.tag(), cost.count()))
+                .collect(Collectors.toList()));
     }
 
     private static boolean consumeMaterials(Player player, List<Cost> costs) {

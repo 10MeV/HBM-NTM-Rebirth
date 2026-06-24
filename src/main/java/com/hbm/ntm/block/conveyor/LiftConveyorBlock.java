@@ -1,6 +1,8 @@
 package com.hbm.ntm.block.conveyor;
 
 import com.hbm.ntm.api.conveyor.ConveyorMath;
+import com.hbm.ntm.api.conveyor.ConveyorPathType;
+import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -36,5 +38,14 @@ public class LiftConveyorBlock extends ConveyorBlock {
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return ConveyorMath.isLiftTop(level, pos) ? TOP_SHAPE : FULL_SHAPE;
+    }
+
+    @Override
+    protected BlockState nextScrewdriverState(BlockState state, int metadata, int baseMetadata,
+            ConveyorPathType path, boolean sneaking) {
+        if (sneaking) {
+            return ((ConveyorBlock) ModBlocks.CONVEYOR_CHUTE.get()).stateFromLegacyMetadata(baseMetadata);
+        }
+        return stateFromLegacyMetadata(nextBendableMetadata(metadata, baseMetadata, path, false));
     }
 }

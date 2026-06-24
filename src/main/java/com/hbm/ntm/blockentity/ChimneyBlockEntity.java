@@ -29,9 +29,13 @@ import net.minecraft.world.phys.AABB;
 public class ChimneyBlockEntity extends BlockEntity
         implements HbmFluidConnector, HbmFluidReceiver, LegacyLookOverlayProvider, HbmLegacyLoadedTile {
     private static final String TAG_ON_TICKS = "onTicks";
+    private static final String TAG_ASH_TICK = "ashTick";
+    private static final String TAG_SOOT_TICK = "sootTick";
     private static final List<FluidPort> SMOKE_PORTS = HbmFluidPortLayouts.cardinal(2);
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private int onTicks;
+    private long ashTick;
+    private long sootTick;
 
     public ChimneyBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CHIMNEY.get(), pos, state);
@@ -44,6 +48,7 @@ public class ChimneyBlockEntity extends BlockEntity
         if (level.getGameTime() % 20L == 0L) {
             chimney.refreshSubscriptions();
         }
+        chimney.flushCapturedAsh();
         chimney.networkPackNT(150);
         if (chimney.onTicks > 0) {
             chimney.onTicks--;
@@ -88,7 +93,10 @@ public class ChimneyBlockEntity extends BlockEntity
             return amount;
         }
         onTicks = 20;
-        captureAshpitProducts(amount);
+        ashTick = addClamped(ashTick, amount);
+        if (getBlockState().is(ModBlocks.CHIMNEY_INDUSTRIAL.get())) {
+            sootTick = addClamped(sootTick, amount);
+        }
         SmokeExhaustPollution.pollute(level, worldPosition, type, amount, pollutionMultiplier());
         return 0L;
     }
@@ -105,7 +113,9 @@ public class ChimneyBlockEntity extends BlockEntity
 
     @Override
     public AABB getRenderBoundingBox() {
-        return LegacyMachineRenderBounds.visibleMultiblockOr(this, super.getRenderBoundingBox());
+        int height = getBlockState().is(ModBlocks.CHIMNEY_INDUSTRIAL.get()) ? 23 : 13;
+        return new AABB(worldPosition.getX() - 1.0D, worldPosition.getY(), worldPosition.getZ() - 1.0D,
+                worldPosition.getX() + 2.0D, worldPosition.getY() + height, worldPosition.getZ() + 2.0D);
     }
 
     private void refreshSubscriptions() {
@@ -124,12 +134,18 @@ public class ChimneyBlockEntity extends BlockEntity
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         writeLegacyLoadedTileNbt(tag);
+        tag.putInt(TAG_ON_TICKS, onTicks);
+        tag.putLong(TAG_ASH_TICK, ashTick);
+        tag.putLong(TAG_SOOT_TICK, sootTick);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         readLegacyLoadedTileNbt(tag);
+        onTicks = Math.max(0, tag.getInt(TAG_ON_TICKS));
+        ashTick = Math.max(0L, tag.getLong(TAG_ASH_TICK));
+        sootTick = Math.max(0L, tag.getLong(TAG_SOOT_TICK));
     }
 
     @Override
@@ -161,15 +177,28 @@ public class ChimneyBlockEntity extends BlockEntity
         }
     }
 
-    private void captureAshpitProducts(long amount) {
-        if (level == null || amount <= 0L) {
+    private void flushCapturedAsh() {
+        if (level == null || (ashTick <= 0L && sootTick <= 0L)) {
             return;
         }
         if (level.getBlockEntity(worldPosition.below()) instanceof AshpitBlockEntity ashpit) {
-            ashpit.addFlyAsh(amount);
-            if (getBlockState().is(ModBlocks.CHIMNEY_INDUSTRIAL.get())) {
-                ashpit.addSoot(amount);
+            if (ashTick > 0L) {
+                ashpit.addFlyAsh(ashTick);
+            }
+            if (sootTick > 0L) {
+                ashpit.addSoot(sootTick);
             }
         }
+        ashTick = 0L;
+        sootTick = 0L;
+        setChanged();
+    }
+
+    private static long addClamped(long current, long amount) {
+        if (amount <= 0L) {
+            return current;
+        }
+        long result = current + amount;
+        return result < 0L ? Long.MAX_VALUE : result;
     }
 }

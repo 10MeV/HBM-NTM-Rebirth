@@ -28,6 +28,9 @@ public final class HbmDataGenerators {
         generator.addProvider(event.includeServer(), new HbmFluidTagsProvider(output, event.getLookupProvider(), HbmNtm.MOD_ID, existingFileHelper));
         generator.addProvider(event.includeServer(), new HbmRecipeProvider(output));
         generator.addProvider(event.includeServer(), new LegacyGenericRecipeImportProvider(output, projectRoot()));
+        generator.addProvider(event.includeServer(), new LegacyReactorRecipeImportProvider(output, projectRoot()));
+        generator.addProvider(event.includeServer(), new LegacyReactorIrradiationImportProvider(output, projectRoot()));
+        generator.addProvider(event.includeServer(), new LegacyFusionFluidBreederImportProvider(output, projectRoot()));
         generator.addProvider(event.includeServer(), new LegacyJavaRecipeCoverageProvider(output, projectRoot()));
         generator.addProvider(event.includeServer(), (DataProvider.Factory<LootTableProvider>) lootOutput -> new LootTableProvider(
                 lootOutput,

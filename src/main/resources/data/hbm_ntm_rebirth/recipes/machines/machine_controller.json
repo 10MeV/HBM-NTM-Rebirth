@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "TDT",
+    "DCD",
+    "TDT"
+  ],
+  "key": {
+    "T": {
+      "tag": "forge:ingots/any_resistant_alloy"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:crt_display"
+    },
+    "C": {
+      "tag": "forge:circuits/advanced"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_controller"
+  },
+  "show_notification": true
+}

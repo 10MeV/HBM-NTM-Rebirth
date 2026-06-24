@@ -42,10 +42,10 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
                 .withRenderMode(renderMode(kind));
         if (kind == NuclearDeviceBlock.Kind.GADGET) {
-            LegacyWavefrontModel model = model(kind);
-            model.renderOnly(texture(kind), context, "Body");
+            ResourceLocation gadgetTexture = texture(kind);
+            ObjNukeModels.renderGadgetPart(gadgetTexture, context, "Body");
             if (fancyGraphics()) {
-                model.renderOnly(texture(kind), context, "Wires");
+                ObjNukeModels.renderGadgetPart(gadgetTexture, context, "Wires");
             }
             return;
         }

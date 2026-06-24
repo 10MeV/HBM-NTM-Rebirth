@@ -106,6 +106,9 @@ public class RBMKPanelBlock extends BaseEntityBlock implements Toolable {
                         hit.getLocation().x - panelPos.getX(), hit.getLocation().y - panelPos.getY(),
                         hit.getLocation().z - panelPos.getZ(), player.isShiftKeyDown());
                 if (plan.hitButton()) {
+                    if (!panel.keys()[plan.keyIndex()].active()) {
+                        return InteractionResult.PASS;
+                    }
                     panel.clickKey(plan.keyIndex());
                     return InteractionResult.CONSUME;
                 }
@@ -115,6 +118,9 @@ public class RBMKPanelBlock extends BaseEntityBlock implements Toolable {
                         hit.getLocation().x - panelPos.getX(), hit.getLocation().z - panelPos.getZ(),
                         player.isShiftKeyDown());
                 if (plan.hitLever()) {
+                    if (!panel.levers()[plan.leverIndex()].active()) {
+                        return InteractionResult.PASS;
+                    }
                     panel.clickLever(plan.leverIndex());
                     return InteractionResult.CONSUME;
                 }

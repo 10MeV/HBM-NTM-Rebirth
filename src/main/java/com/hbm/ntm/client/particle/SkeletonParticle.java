@@ -1,7 +1,9 @@
 package com.hbm.ntm.client.particle;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -32,6 +34,14 @@ public class SkeletonParticle extends Particle {
     private static final ResourceLocation SKOILET_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/skoilet.png");
     private static final ResourceLocation SKOILET_BLOOD_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/skoilet_blood.png");
     private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, SKELETON_TEXTURE).noSmooth().asVBO();
+    private static final LegacyWavefrontModel.SelectionHandle SKULL =
+            MODEL.prepareRenderOnlyInCallOrder("Skull");
+    private static final LegacyWavefrontModel.SelectionHandle TORSO =
+            MODEL.prepareRenderOnlyInCallOrder("Torso");
+    private static final LegacyWavefrontModel.SelectionHandle LIMB =
+            MODEL.prepareRenderOnlyInCallOrder("Limb");
+    private static final LegacyWavefrontModel.SelectionHandle SKULL_VILLAGER =
+            MODEL.prepareRenderOnlyInCallOrder("SkullVillager");
     private static final ParticleRenderType RENDER_TYPE = new ParticleRenderType() {
         @Override
         public void begin(BufferBuilder builder, TextureManager textureManager) {
@@ -151,9 +161,34 @@ public class SkeletonParticle extends Particle {
         poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
 
         MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
-        MODEL.renderPartTranslucent(this.type.partName, textureLocation(), poseStack, buffer, getLightColor(partialTick), OverlayTexture.NO_OVERLAY,
+        renderSkeletonPart(this.type.partName, textureLocation(), poseStack, buffer, getLightColor(partialTick),
                 color(this.rCol), color(this.gCol), color(this.bCol), color(this.alpha));
         buffer.endBatch();
+    }
+
+    private static void renderSkeletonPart(String partName, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int red, int green, int blue, int alpha) {
+        LegacyWavefrontModel.SelectionHandle handle = skeletonHandle(partName);
+        if (handle != null) {
+            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight,
+                    OverlayTexture.NO_OVERLAY)
+                    .withRgba(red, green, blue, alpha)
+                    .withRenderMode(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
+            MODEL.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        MODEL.renderPartTranslucent(partName, texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
+                red, green, blue, alpha);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle skeletonHandle(String partName) {
+        return switch (partName) {
+            case "Skull" -> SKULL;
+            case "Torso" -> TORSO;
+            case "Limb" -> LIMB;
+            case "SkullVillager" -> SKULL_VILLAGER;
+            default -> null;
+        };
     }
 
     @Override

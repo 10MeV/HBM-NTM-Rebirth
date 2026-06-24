@@ -46,6 +46,7 @@ public final class HbmPlayerProperties {
     public static final String KEY_ENABLE_HUD = "enableHUD";
     public static final String KEY_REPUTATION = "reputation";
     public static final String KEY_IS_ON_LADDER = "isOnLadder";
+    public static final String KEY_RAD_MARK = "radMark";
     public static final String KEY_DASH_COUNT = "dashCount";
     public static final String KEY_STAMINA = "stamina";
     public static final String KEY_DASH_COOLDOWN = "dashCooldown";
@@ -240,6 +241,22 @@ public final class HbmPlayerProperties {
 
     public static void markOnLadder(Player player) {
         setOnLadder(player, true);
+    }
+
+    public static boolean isRadiationElementalTarget(Player player) {
+        return getTag(player).getBoolean(KEY_RAD_MARK);
+    }
+
+    public static void setRadiationElementalTarget(Player player, boolean marked) {
+        setBoolean(player, KEY_RAD_MARK, marked);
+    }
+
+    public static void markRadiationElementalTarget(Player player) {
+        setRadiationElementalTarget(player, true);
+    }
+
+    public static void clearRadiationElementalTarget(Player player) {
+        setRadiationElementalTarget(player, false);
     }
 
     public static boolean getKeyPressed(Player player, HbmKeybind keybind) {
@@ -836,6 +853,7 @@ public final class HbmPlayerProperties {
         copy.putInt(KEY_REPUTATION, getReputation(original));
         copy.putBoolean(KEY_IS_ON_LADDER, isOnLadder(original));
         copy.putBoolean(KEY_ENABLE_MAGNET, isMagnetEnabled(original));
+        copy.putBoolean(KEY_RAD_MARK, isRadiationElementalTarget(original));
         replacement.getPersistentData().put(TAG_ROOT, copy);
     }
 

@@ -22,6 +22,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityRenderer<T> {
     private static final String[] MATERIALS = {"silver", "copper", "white"};
+    private static final TextureSet[] BOX_TEXTURES_BY_METADATA = buildBoxTextures(false);
+    private static final TextureSet[] EXHAUST_TEXTURES_BY_METADATA = buildBoxTextures(true);
 
     public FluidDuctBoxRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -42,14 +44,14 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
         int metadata = state.hasProperty(FluidDuctBoxBlock.LEGACY_METADATA)
                 ? state.getValue(FluidDuctBoxBlock.LEGACY_METADATA)
                 : 0;
-        String prefix = state.getBlock() instanceof FluidDuctExhaustBlock
-                ? "boxduct_exhaust"
-                : "boxduct_" + MATERIALS[FluidDuctBoxBlock.rectifyLegacyMaterial(metadata)];
-        TextureSet textures = TextureSet.create(prefix, metadata);
+        int clampedMetadata = FluidDuctBoxBlock.clampLegacyMetadata(metadata);
+        boolean exhaust = state.getBlock() instanceof FluidDuctExhaustBlock;
+        TextureSet textures = exhaust ? EXHAUST_TEXTURES_BY_METADATA[clampedMetadata]
+                : BOX_TEXTURES_BY_METADATA[clampedMetadata];
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state,
                 LegacyRenderLighting.resolveMultiblockLight(duct, packedLight), packedOverlay);
-        if (!(state.getBlock() instanceof FluidDuctExhaustBlock)
-                && FluidDuctBoxBlock.rectifyLegacyMaterial(metadata) == 2
+        if (!exhaust
+                && FluidDuctBoxBlock.rectifyLegacyMaterial(clampedMetadata) == 2
                 && duct instanceof FluidPipeBlockEntity pipe
                 && pipe.getFluidType() != HbmFluids.NONE) {
             context = context.withColor(ColorUtil.lightenColor(pipe.getFluidType().getColor(), 0.25D));
@@ -61,7 +63,7 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
         boolean west = state.getValue(HbmFluidNodeBlock.WEST);
         boolean up = state.getValue(HbmFluidNodeBlock.UP);
         boolean down = state.getValue(HbmFluidNodeBlock.DOWN);
-        FluidDuctBoxBlock.DuctBounds bounds = FluidDuctBoxBlock.boundsFor(metadata);
+        FluidDuctBoxBlock.DuctBounds bounds = FluidDuctBoxBlock.boundsFor(clampedMetadata);
         int mask = (east ? 32 : 0)
                 | (west ? 16 : 0)
                 | (up ? 8 : 0)
@@ -196,8 +198,7 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
     private record TextureSet(TextureAtlasSprite straight, TextureAtlasSprite end, TextureAtlasSprite curveTL,
                               TextureAtlasSprite curveTR, TextureAtlasSprite curveBL, TextureAtlasSprite curveBR,
                               TextureAtlasSprite junction) {
-        static TextureSet create(String prefix, int metadata) {
-            int junction = FluidDuctBoxBlock.legacySizeStep(metadata);
+        static TextureSet create(String prefix, int junction) {
             return new TextureSet(
                     sprite(prefix + "_straight"),
                     sprite(prefix + "_end"),
@@ -207,6 +208,16 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
                     sprite(prefix + "_curve_br"),
                     sprite(prefix + "_junction_" + junction));
         }
+    }
+
+    private static TextureSet[] buildBoxTextures(boolean exhaust) {
+        TextureSet[] textures = new TextureSet[FluidDuctBoxBlock.LEGACY_METADATA_COUNT];
+        for (int metadata = 0; metadata < textures.length; metadata++) {
+            String prefix = exhaust ? "boxduct_exhaust"
+                    : "boxduct_" + MATERIALS[FluidDuctBoxBlock.rectifyLegacyMaterial(metadata)];
+            textures[metadata] = TextureSet.create(prefix, FluidDuctBoxBlock.legacySizeStep(metadata));
+        }
+        return textures;
     }
 
     private static TextureAtlasSprite sprite(String texture) {

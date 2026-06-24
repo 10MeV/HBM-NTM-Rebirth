@@ -121,7 +121,7 @@ public class CraneSplitterBlockEntity extends BlockEntity {
     @Override
     public AABB getRenderBoundingBox() {
         BlockPos side = worldPosition.relative(CraneSplitterBlock.sideOffset(getBlockState()));
-        return new AABB(worldPosition).minmax(new AABB(side)).inflate(1.0D);
+        return new AABB(worldPosition).minmax(new AABB(side)).inflate(0.0625D);
     }
 
     private void markChangedAndSync() {

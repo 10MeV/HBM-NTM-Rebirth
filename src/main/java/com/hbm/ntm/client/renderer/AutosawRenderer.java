@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.AutosawBlockEntity;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -14,6 +15,21 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> {
+    private static final LegacyWavefrontModel.SelectionHandle BASE =
+            ObjMachineModels.AUTOSAW.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle MAIN =
+            ObjMachineModels.AUTOSAW.prepareRenderOnlyInCallOrder("Main");
+    private static final LegacyWavefrontModel.SelectionHandle ENGINE =
+            ObjMachineModels.AUTOSAW.prepareRenderOnlyInCallOrder("Engine");
+    private static final LegacyWavefrontModel.SelectionHandle ARM_UPPER =
+            ObjMachineModels.AUTOSAW.prepareRenderOnlyInCallOrder("ArmUpper");
+    private static final LegacyWavefrontModel.SelectionHandle ARM_LOWER =
+            ObjMachineModels.AUTOSAW.prepareRenderOnlyInCallOrder("ArmLower");
+    private static final LegacyWavefrontModel.SelectionHandle ARM_TIP =
+            ObjMachineModels.AUTOSAW.prepareRenderOnlyInCallOrder("ArmTip");
+    private static final LegacyWavefrontModel.SelectionHandle SAWBLADE =
+            ObjMachineModels.AUTOSAW.prepareRenderOnlyInCallOrder("Sawblade");
+
     public AutosawRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -40,21 +56,21 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
                 autosaw.getLastPitch(), autosaw.getPitch(),
                 autosaw.getLastSpin(), autosaw.getSpin(),
                 autosaw.isOn(), worldTime(autosaw), partialTick);
-        ObjMachineModels.AUTOSAW.renderPart("Base", ObjMachineModels.AUTOSAW_TEXTURE, context);
+        renderPart(BASE, context);
         poseStack.mulPose(Axis.YN.rotationDegrees((float) plan.turnDegrees()));
-        ObjMachineModels.AUTOSAW.renderPart("Main", ObjMachineModels.AUTOSAW_TEXTURE, context);
+        renderPart(MAIN, context);
         poseStack.translate(0.0D, plan.engineTranslateY(), 0.0D);
-        ObjMachineModels.AUTOSAW.renderPart("Engine", ObjMachineModels.AUTOSAW_TEXTURE, context);
+        renderPart(ENGINE, context);
         poseStack.translate(0.0D, -plan.engineTranslateY(), 0.0D);
-        renderPart(plan.armUpper(), context, poseStack);
-        renderPart(plan.armLower(), context, poseStack);
-        renderPart(plan.armTip(), context, poseStack);
-        renderPart(plan.sawBlade(), context, poseStack);
+        renderPart(plan.armUpper(), ARM_UPPER, context, poseStack);
+        renderPart(plan.armLower(), ARM_LOWER, context, poseStack);
+        renderPart(plan.armTip(), ARM_TIP, context, poseStack);
+        renderPart(plan.sawBlade(), SAWBLADE, context, poseStack);
         poseStack.popPose();
     }
 
     private static void renderPart(LegacyTileRenderPlans.PivotedModelPartPlan part,
-            ObjRenderContext context, PoseStack poseStack) {
+            LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context, PoseStack poseStack) {
         poseStack.pushPose();
         poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
@@ -68,8 +84,37 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
             poseStack.mulPose(Axis.ZP.rotationDegrees((float) (part.angleDegrees() * part.axisZ())));
         }
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        ObjMachineModels.AUTOSAW.renderPart(part.partName(), ObjMachineModels.AUTOSAW_TEXTURE, context);
+        renderPart(handle, context);
         poseStack.popPose();
+    }
+
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
+        ObjMachineModels.AUTOSAW.renderOnlyInCallOrder(ObjMachineModels.AUTOSAW_TEXTURE, context, handle);
+    }
+
+    static void renderModelPart(String partName, ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(partName);
+        if (handle != null) {
+            renderPart(handle, context);
+            return;
+        }
+        ObjMachineModels.AUTOSAW.renderPart(partName, ObjMachineModels.AUTOSAW_TEXTURE, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Base" -> BASE;
+            case "Main" -> MAIN;
+            case "Engine" -> ENGINE;
+            case "ArmUpper" -> ARM_UPPER;
+            case "ArmLower" -> ARM_LOWER;
+            case "ArmTip" -> ARM_TIP;
+            case "Sawblade" -> SAWBLADE;
+            default -> null;
+        };
     }
 
     private static float rotation(BlockState state) {

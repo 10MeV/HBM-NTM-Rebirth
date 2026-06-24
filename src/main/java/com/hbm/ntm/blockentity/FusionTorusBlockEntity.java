@@ -222,10 +222,8 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
     public List<ItemStack> getDrops() { return HbmInventoryMenuHelper.clearToDrops(items); }
 
     public void addKlystronEnergy(long amount) {
-        if (amount > 0L) {
-            klystronEnergy += amount;
-            setChanged();
-        }
+        klystronEnergy += amount;
+        setChanged();
     }
 
     public String getSelectedRecipeName() {
@@ -346,7 +344,7 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return getReceivingTanks().stream().anyMatch(tank -> tank.getTankType() == type);
+        return type != HbmFluids.NONE && getReceivingTanks().stream().anyMatch(tank -> tank.getTankType() == type);
     }
 
     @Override
@@ -511,6 +509,12 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    public void onChunkUnloaded() {
+        destroyNodes();
+        super.onChunkUnloaded();
+    }
+
+    @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
             return itemHandler.cast();
@@ -577,8 +581,12 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         GenericMachineRecipe recipe = findActiveRecipe(level);
         changed |= processRecipe(level, recipe, collectors, receiverCount);
-        tryProvideFluidToPorts(hotCoolantTank.getTankType(), hotCoolantTank.getPressure(), this);
-        tryProvideFluidToPorts(recipeTanks[3].getTankType(), recipeTanks[3].getPressure(), this);
+        if (hotCoolantTank.getFill() > 0) {
+            tryProvideFluidToPorts(hotCoolantTank.getTankType(), hotCoolantTank.getPressure(), this);
+        }
+        if (recipeTanks[3].getFill() > 0) {
+            tryProvideFluidToPorts(recipeTanks[3].getTankType(), recipeTanks[3].getPressure(), this);
+        }
         klystronEnergy = 0L;
         return changed;
     }
@@ -646,10 +654,10 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
             progress = 0.0D;
             return false;
         }
-        long powerUse = (long) Math.ceil(recipe.getPower() * factor);
+        long powerUse = requiredPower(recipe, factor);
         energy.setPower(energy.getPower() - powerUse);
         consumeRecipeFluids(recipe, factor);
-        double step = Math.min(factor / Math.max(1, recipe.getDuration()), 1.0D);
+        double step = Math.min(1.0D / recipe.getDuration() * factor, 1.0D);
         progress += step;
         bonus = Math.min(1.5D, bonus + step * collectors * 0.5D);
         if (progress >= 1.0D) {
@@ -705,13 +713,12 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (recipe.getExtraData().fusion().isEmpty()) {
             return false;
         }
-        long powerUse = (long) Math.ceil(recipe.getPower() * Math.max(0.0D, factor));
-        if (energy.getPower() < powerUse) {
+        if (energy.getPower() < recipe.getPower()) {
             return false;
         }
         for (int i = 0; i < Math.min(3, recipe.getFluidInputs().size()); i++) {
-            int need = (int) Math.ceil(recipe.getFluidInputs().get(i).amount() * Math.max(0.0D, factor));
-            if (recipeTanks[i].getFill() < need) {
+            int need = (int) Math.ceil(recipe.getFluidInputs().get(i).amount() * factor);
+            if (recipeTanks[i].getFill() > 0 && recipeTanks[i].getFill() < need) {
                 return false;
             }
         }
@@ -765,6 +772,10 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
     }
 
+    private static long requiredPower(GenericMachineRecipe recipe, double factor) {
+        return (long) Math.ceil(recipe.getPower() * factor);
+    }
+
     private void produceRecipeOutputs(GenericMachineRecipe recipe) {
         if (!recipe.getItemOutputEntries().isEmpty()) {
             ItemStack output = recipe.getItemOutputEntries().get(0).representativeStack();
@@ -814,9 +825,7 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         int cyclesTemp = (int) Math.ceil(Math.min(temperature - TEMPERATURE_TARGET, TEMP_CHANGE_MAX)
                 / TEMP_CHANGE_PER_MB);
-        int cyclesCool = coolantTank.getTankType() == HbmFluids.PERFLUOROMETHYL_COLD
-                ? coolantTank.getFill()
-                : 0;
+        int cyclesCool = coolantTank.getFill();
         int cyclesHot = hotCoolantTank.getMaxFill() - hotCoolantTank.getFill();
         int cycles = Math.min(cyclesTemp, Math.min(cyclesCool, cyclesHot));
         if (cycles > 0) {
@@ -845,21 +854,11 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        data.writeInt(tank.getFill());
-        data.writeInt(tank.getMaxFill());
-        data.writeInt(tank.getTankType().getId());
-        data.writeShort((short) tank.getPressure());
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.write(data, tank);
     }
 
     private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        int fill = data.readInt();
-        int maxFill = data.readInt();
-        FluidType type = HbmFluids.fromId(data.readInt());
-        int pressure = data.readShort();
-        tank.changeTankSize(maxFill);
-        tank.withPressure(pressure);
-        tank.setTankType(type);
-        tank.setFill(fill);
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.read(data, tank);
     }
 
     private void destroyNodes() {
@@ -876,6 +875,8 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
                 PlasmaNodespace.destroyNode(level, node.getPos());
             }
         }
+        java.util.Arrays.fill(klystronNodes, null);
+        java.util.Arrays.fill(plasmaNodes, null);
     }
 
     private final class AccessibleItemHandler implements IItemHandler {

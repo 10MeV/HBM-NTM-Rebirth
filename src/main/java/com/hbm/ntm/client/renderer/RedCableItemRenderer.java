@@ -1,6 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.client.obj.ObjBlockModels;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
 
 public class RedCableItemRenderer extends BlockEntityWithoutLevelRenderer {
     public static final RedCableItemRenderer INSTANCE = new RedCableItemRenderer(
@@ -25,11 +26,8 @@ public class RedCableItemRenderer extends BlockEntityWithoutLevelRenderer {
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         applyDisplay(displayContext, poseStack);
-        ObjBlockModels.CABLE_NEO.renderPart("Core", RedCableRenderer.CABLE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
-        ObjBlockModels.CABLE_NEO.renderPart("posX", RedCableRenderer.CABLE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
-        ObjBlockModels.CABLE_NEO.renderPart("negX", RedCableRenderer.CABLE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
-        ObjBlockModels.CABLE_NEO.renderPart("posZ", RedCableRenderer.CABLE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
-        ObjBlockModels.CABLE_NEO.renderPart("negZ", RedCableRenderer.CABLE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+        RedCableRenderer.renderItemCable(new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(),
+                packedLight, packedOverlay));
         poseStack.popPose();
     }
 

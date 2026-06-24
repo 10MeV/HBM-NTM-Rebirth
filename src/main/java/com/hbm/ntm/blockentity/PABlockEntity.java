@@ -345,7 +345,16 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition).inflate(6.0D, 3.0D, 6.0D);
+        return switch (variant) {
+            case SOURCE, RFC -> renderBox(-5, -1, -5, 6, 3, 6);
+            case QUADRUPOLE, DIPOLE -> renderBox(-2, -1, -2, 3, 3, 3);
+            case DETECTOR -> renderBox(-5, -2, -5, 6, 4, 6);
+            case BEAMLINE -> renderBox(-1, 0, -1, 2, 1, 2);
+        };
+    }
+
+    private AABB renderBox(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        return new AABB(worldPosition.offset(minX, minY, minZ), worldPosition.offset(maxX, maxY, maxZ));
     }
 
     protected boolean isLoaded(BlockPos pos) {

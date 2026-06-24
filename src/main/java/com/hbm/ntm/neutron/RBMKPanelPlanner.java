@@ -418,7 +418,8 @@ public final class RBMKPanelPlanner {
         if (!safe.active()) {
             return new LeverClickPlan(safe, false);
         }
-        return new LeverClickPlan(safe.withTurningOn(!safe.isTurningOn()), true);
+        boolean startSound = safe.flipProgress() <= 0.0F || safe.flipProgress() >= 1.0F;
+        return new LeverClickPlan(safe.withTurningOn(!safe.isTurningOn()), startSound);
     }
 
     public static LeverTickPlan tickLever(LeverUnit unit) {

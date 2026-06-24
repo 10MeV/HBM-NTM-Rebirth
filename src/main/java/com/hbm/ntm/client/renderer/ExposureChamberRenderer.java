@@ -19,6 +19,12 @@ import net.minecraft.world.phys.Vec3;
 
 public class ExposureChamberRenderer implements BlockEntityRenderer<ExposureChamberBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_EXPOSURE_CHAMBER;
+    private static final LegacyWavefrontModel.SelectionHandle CHAMBER =
+            MODEL.prepareRenderOnlyInCallOrder("Chamber");
+    private static final LegacyWavefrontModel.SelectionHandle MAGNETS =
+            MODEL.prepareRenderOnlyInCallOrder("Magnets");
+    private static final LegacyWavefrontModel.SelectionHandle CORE =
+            MODEL.prepareRenderOnlyInCallOrder("Core");
 
     public ExposureChamberRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -57,11 +63,11 @@ public class ExposureChamberRenderer implements BlockEntityRenderer<ExposureCham
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
-        MODEL.renderPart("Chamber", definition.textureLocation(), context);
+        MODEL.renderOnlyInCallOrder(definition.textureLocation(), context, CHAMBER);
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.rotationDegrees()));
-        MODEL.renderPart("Magnets", definition.textureLocation(), context);
+        MODEL.renderOnlyInCallOrder(definition.textureLocation(), context, MAGNETS);
         poseStack.popPose();
 
         if (plan.on()) {
@@ -70,7 +76,7 @@ public class ExposureChamberRenderer implements BlockEntityRenderer<ExposureCham
             poseStack.translate(0.0D, plan.coreBobY(), 0.0D);
             ObjRenderContext fullbrightContext = new ObjRenderContext(poseStack, buffer, state,
                     LightTexture.FULL_BRIGHT, packedOverlay);
-            MODEL.renderPart("Core", definition.textureLocation(), fullbrightContext);
+            MODEL.renderOnlyInCallOrder(definition.textureLocation(), fullbrightContext, CORE);
             poseStack.popPose();
 
             for (LegacyTileRenderPlans.TranslatedBeamPlan beam : plan.beams()) {

@@ -57,15 +57,15 @@ public class LegacyComplexShapeBlock extends Block {
     }
 
     public static Block spotlightIncandescent(BlockBehaviour.Properties properties) {
-        return new LegacyDirectionalShapeBlock(properties, LegacyDirectionalShapeBlock.Kind.SPOTLIGHT_INCANDESCENT, false);
+        return LegacySpotlightBlock.incandescent(properties, true);
     }
 
     public static Block spotlightFluoro(BlockBehaviour.Properties properties) {
-        return new LegacyDirectionalShapeBlock(properties, LegacyDirectionalShapeBlock.Kind.SPOTLIGHT_FLUORO, false);
+        return LegacySpotlightBlock.fluoro(properties, true);
     }
 
     public static Block spotlightHalogen(BlockBehaviour.Properties properties) {
-        return new LegacyDirectionalShapeBlock(properties, LegacyDirectionalShapeBlock.Kind.SPOTLIGHT_HALOGEN, false);
+        return LegacySpotlightBlock.halogen(properties, true);
     }
 
     public static Block floodlight(BlockBehaviour.Properties properties) {

@@ -1,0 +1,48 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:purex",
+    "internal_name":  "purex.zirnoxzfbmox",
+    "duration":  100,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:waste_zfb_mox"
+                                           }
+                        }
+                    ],
+    "input_fluids":  [
+                         {
+                             "fluid":  "hbm_ntm_rebirth:kerosene",
+                             "amount":  500
+                         },
+                         {
+                             "fluid":  "hbm_ntm_rebirth:nitric_acid",
+                             "amount":  250
+                         }
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:nugget_zirconium",
+                             "count":  3
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:nugget_technetium"
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:nugget_pu_mix"
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:nuclear_waste_tiny"
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "auto_switch_group":  "autoswitch.zirnox",
+    "name_wrapper":  "purex.recycle",
+    "source_order":  141
+}
+

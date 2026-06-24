@@ -21,7 +21,7 @@ public class RBMKOutgasserMenu extends AbstractContainerMenu {
     private static final int TILE_SLOTS = 2;
     private final RBMKColumnBlockEntity blockEntity;
     private final HbmFluidGuiHelper.TankData gasTank;
-    private int progress;
+    private double progress;
 
     public RBMKOutgasserMenu(int containerId, Inventory inventory, FriendlyByteBuf data) {
         this(containerId, inventory, getBlockEntity(inventory, data.readBlockPos()));
@@ -34,8 +34,9 @@ public class RBMKOutgasserMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.craftingOutputSlot(inventory.player, blockEntity.outgasserMenuItems(),
                 1, 112, 69));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 104, 162);
-        HbmMenuDataSlots.addInt(this::addDataSlot,
-                () -> (int) Math.round(blockEntity.outgasserProgress()),
+        HbmMenuDataSlots.addDouble(this::addDataSlot,
+                blockEntity::outgasserProgress,
+                () -> progress,
                 value -> progress = value);
         gasTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.outgasserGasTank(),
                 blockEntity::hasOperationalLayout);
@@ -45,7 +46,7 @@ public class RBMKOutgasserMenu extends AbstractContainerMenu {
         return blockEntity;
     }
 
-    public int getProgress() {
+    public double getProgress() {
         return progress;
     }
 

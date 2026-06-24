@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "SCS",
+    "MWM",
+    "SCS"
+  ],
+  "key": {
+    "S": { "tag": "forge:plates/steel" },
+    "C": { "tag": "forge:circuits/vacuum_tube" },
+    "M": { "item": "hbm_ntm_rebirth:motor" },
+    "W": { "item": "minecraft:crafting_table" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_autocrafter"
+  },
+  "show_notification": true
+}

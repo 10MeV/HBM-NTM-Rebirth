@@ -20,6 +20,7 @@ import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.block.LegacyNtmGlassPaneBlock;
 import com.hbm.ntm.block.MassStorageBlock;
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
+import com.hbm.ntm.block.PowerDetectorBlock;
 import com.hbm.ntm.block.PoweredRedCableBlock;
 import com.hbm.ntm.block.RBMKColumnBlock;
 import com.hbm.ntm.block.RedCableBoxBlock;
@@ -48,7 +49,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     protected void registerStatesAndModels() {
         existingModelWithItemNoRotation(ModBlocks.MACHINE_PRESS, "machine_press");
         cubeWithItem(ModBlocks.PRESS_PREHEATER, "press_preheater");
-        visibleMachineWithItemRenderer(ModBlocks.MACHINE_EPRESS, "machines/epress");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_EPRESS, "machine_epress");
         difurnaceWithItem(ModBlocks.MACHINE_DIFURNACE_OFF);
         sidedCubeWithItem(ModBlocks.MACHINE_ELECTRIC_FURNACE_OFF,
                 "machine_electric_furnace_bottom",
@@ -64,6 +65,11 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "machine_boiler_front",
                 "machine_boiler_side",
                 "machine_boiler_side");
+        powerDetectorWithItem();
+        hiddenBerBlockWithItem(ModBlocks.REFUELER);
+        hiddenBerBlockWithItem(ModBlocks.RADIOBOX);
+        hiddenBerBlockWithItem(ModBlocks.RADIOREC);
+        hiddenBerBlockWithItem(ModBlocks.TESLA);
         horizontalBlockNoRotationWithItem(ModBlocks.MACHINE_SHREDDER,
                 "machine_shredder_bottom_alt",
                 "machine_shredder_top_alt",
@@ -71,6 +77,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "machine_shredder_front_alt",
                 "machine_shredder_side_alt",
                 "machine_shredder_side_alt");
+        simpleSidedCubeWithItem(ModBlocks.MACHINE_AUTOCRAFTER,
+                "machine_autocrafter_bottom",
+                "machine_autocrafter_top",
+                "machine_autocrafter_side",
+                "machine_autocrafter_side",
+                "machine_autocrafter_side",
+                "machine_autocrafter_side");
         sidedCubeWithItem(ModBlocks.MACHINE_TURBINE,
                 "machine_turbine_top",
                 "machine_turbine_top",
@@ -212,6 +225,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "machine_transformer_iron",
                 "machine_transformer_iron",
                 "machine_transformer_iron");
+        sidedCubeWithItem(ModBlocks.MACHINE_CONTROLLER,
+                "machine_controller_top",
+                "machine_controller_top",
+                "machine_controller",
+                "machine_controller_back",
+                "machine_controller_side",
+                "machine_controller_side");
         visibleMachineWithItemRenderer(ModBlocks.SAT_DOCK, "utility/sat_dock");
         soyuzCapsuleWithItem();
         visibleMachineWithItemRenderer(ModBlocks.SOYUZ_LAUNCHER, "launch_table/soyuz_launcher_table");
@@ -219,6 +239,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.STRUCT_SCAFFOLD, "struct_scaffold");
         simpleCubeWithItem(ModBlocks.STRUCT_SOYUZ_CORE, "struct_soyuz_core");
         existingModelWithItem(ModBlocks.LAUNCH_PAD, "launch_pad");
+        existingModelWithCustomItem(ModBlocks.LAUNCH_PAD_LARGE, "launch_pad");
         existingModelWithCustomItem(ModBlocks.LAUNCH_PAD_RUSTED, "launch_pad");
         existingModelWithCustomItem(ModBlocks.LAUNCH_TABLE, "launch_table/launch_table_base");
         existingModelWithCustomItem(ModBlocks.COMPACT_LAUNCHER, "launch_table/compact_launcher");
@@ -276,6 +297,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_FLUIDTANK, "machines/fluidtank");
         hiddenBerBlockWithItem(ModBlocks.MACHINE_UF6_TANK);
         hiddenBerBlockWithItem(ModBlocks.MACHINE_PUF6_TANK);
+        hiddenBerBlockWithItem(ModBlocks.MACHINE_STORAGE_DRUM);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_WELL, "machines/derrick");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_PUMPJACK, "machines/pumpjack");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_FRACKING_TOWER, "machines/fracking_tower");
@@ -283,7 +305,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_GASCENT, "machines/gascent");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_ORE_SLOPPER, "machines/ore_slopper");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SAWMILL, "machines/sawmill");
-        visibleMachineWithItemRenderer(ModBlocks.MACHINE_CRUCIBLE, "machines/crucible");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_CRUCIBLE, "machines/crucible_heat");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_GASFLARE, "machines/flare_stack");
         visibleMachineWithItemRenderer(ModBlocks.CHIMNEY_BRICK, "machines/chimney_brick");
         visibleMachineWithItemRenderer(ModBlocks.CHIMNEY_INDUSTRIAL, "machines/chimney_industrial");
@@ -591,7 +613,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     }
 
     private void existingModelWithCustomItem(RegistryObject<Block> block, String modelName) {
-        ModelFile model = particleOnlyModel(block.getId().getPath(), modelName);
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
         horizontalBlock(block.get(), model);
         customBlockItem(block);
     }
@@ -675,11 +697,26 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     private void watzPillarWithItem(RegistryObject<Block> block, String textureBase) {
         ResourceLocation side = modLoc("block/legacy_blocks/" + textureBase + "_side");
         ResourceLocation end = modLoc("block/legacy_blocks/" + textureBase + "_top");
-        axisBlock((net.minecraft.world.level.block.RotatedPillarBlock) block.get(), side, end);
-        simpleBlockItem(block.get(), models().withExistingParent(block.getId().getPath(), mcLoc("block/cube_column"))
+        ModelFile vertical = models().withExistingParent(block.getId().getPath(), mcLoc("block/cube_column"))
                 .texture("particle", side)
                 .texture("side", side)
-                .texture("end", end));
+                .texture("end", end);
+        ModelFile horizontal = models().withExistingParent(block.getId().getPath() + "_horizontal",
+                        mcLoc("block/cube_column_horizontal"))
+                .texture("particle", side)
+                .texture("side", side)
+                .texture("end", end);
+        getVariantBuilder(block.get())
+                .forAllStates(state -> {
+                    ConfiguredModel.Builder<?> builder = ConfiguredModel.builder();
+                    switch (state.getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS)) {
+                        case X -> builder.modelFile(horizontal).rotationX(90).rotationY(90);
+                        case Z -> builder.modelFile(horizontal).rotationX(90);
+                        case Y -> builder.modelFile(vertical);
+                    }
+                    return builder.build();
+                });
+        simpleBlockItem(block.get(), vertical);
     }
 
     private void watzEndWithItem() {
@@ -925,7 +962,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     private void cubeWithItem(RegistryObject<Block> block, String textureName) {
         String blockName = block.getId().getPath();
         ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
-        horizontalBlock(block.get(), model);
+        simpleBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
     }
 
@@ -934,6 +971,19 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
         simpleBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
+    }
+
+    private void powerDetectorWithItem() {
+        ModelFile off = models().cubeAll("machine_detector_off",
+                new ResourceLocation(HbmNtm.MOD_ID, "block/machine_detector_off"));
+        ModelFile on = models().cubeAll("machine_detector",
+                new ResourceLocation(HbmNtm.MOD_ID, "block/machine_detector"));
+        getVariantBuilder(ModBlocks.MACHINE_DETECTOR.get())
+                .partialState().with(PowerDetectorBlock.ACTIVE, false)
+                .setModels(new ConfiguredModel(off))
+                .partialState().with(PowerDetectorBlock.ACTIVE, true)
+                .setModels(new ConfiguredModel(on));
+        simpleBlockItem(ModBlocks.MACHINE_DETECTOR.get(), off);
     }
 
     private void icfAssembledBlock() {

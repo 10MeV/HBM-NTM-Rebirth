@@ -1,7 +1,7 @@
 {
   "variants": {
     "axis=x": {
-      "model": "hbm_ntm_rebirth:block/watz_element",
+      "model": "hbm_ntm_rebirth:block/watz_element_horizontal",
       "x": 90,
       "y": 90
     },
@@ -9,7 +9,7 @@
       "model": "hbm_ntm_rebirth:block/watz_element"
     },
     "axis=z": {
-      "model": "hbm_ntm_rebirth:block/watz_element",
+      "model": "hbm_ntm_rebirth:block/watz_element_horizontal",
       "x": 90
     }
   }

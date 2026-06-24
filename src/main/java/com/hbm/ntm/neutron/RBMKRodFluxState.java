@@ -40,6 +40,13 @@ public class RBMKRodFluxState {
         return lastFluxRatio;
     }
 
+    public void setLegacyClientFlux(double fluxQuantity, double fluxFastRatio) {
+        this.fluxQuantity = Math.max(0.0D, fluxQuantity);
+        this.fluxFastRatio = clamp01(fluxFastRatio);
+        this.lastFluxQuantity = this.fluxQuantity;
+        this.lastFluxRatio = this.fluxFastRatio;
+    }
+
     public boolean hasRod() {
         return hasRod;
     }

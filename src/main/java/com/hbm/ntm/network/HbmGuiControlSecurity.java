@@ -19,6 +19,20 @@ public final class HbmGuiControlSecurity {
     @Nullable
     public static <T extends BlockEntity> T validateTileControl(ServerPlayer player, BlockPos pos, Class<T> blockEntityType,
             @Nullable Class<? extends AbstractContainerMenu> requiredMenu, String packetName) {
+        return validateTileControl(player, pos, blockEntityType, requiredMenu, packetName, true);
+    }
+
+    @Nullable
+    public static <T extends BlockEntity> T validateTileControlWithoutDefaultDistance(ServerPlayer player, BlockPos pos,
+            Class<T> blockEntityType, @Nullable Class<? extends AbstractContainerMenu> requiredMenu,
+            String packetName) {
+        return validateTileControl(player, pos, blockEntityType, requiredMenu, packetName, false);
+    }
+
+    @Nullable
+    private static <T extends BlockEntity> T validateTileControl(ServerPlayer player, BlockPos pos,
+            Class<T> blockEntityType, @Nullable Class<? extends AbstractContainerMenu> requiredMenu,
+            String packetName, boolean enforceDefaultDistance) {
         if (player == null || pos == null) {
             return null;
         }
@@ -28,7 +42,7 @@ public final class HbmGuiControlSecurity {
         }
         BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
         BlockPos receiverPos = blockEntity == null ? pos : blockEntity.getBlockPos();
-        if (player.distanceToSqr(receiverPos.getX() + 0.5D, receiverPos.getY() + 0.5D,
+        if (enforceDefaultDistance && player.distanceToSqr(receiverPos.getX() + 0.5D, receiverPos.getY() + 0.5D,
                 receiverPos.getZ() + 0.5D) > DEFAULT_MAX_DISTANCE_SQ) {
             HbmNtm.LOGGER.warn("Blocked remote {} from {} at {} resolved to {}: too far",
                     packetName, player.getGameProfile().getName(), pos, receiverPos);
@@ -58,6 +72,12 @@ public final class HbmGuiControlSecurity {
     @Nullable
     public static BlockEntity validateTileControl(ServerPlayer player, BlockPos pos, String packetName) {
         return validateTileControl(player, pos, BlockEntity.class, null, packetName);
+    }
+
+    @Nullable
+    public static BlockEntity validateTileControlWithoutDefaultDistance(ServerPlayer player, BlockPos pos,
+            String packetName) {
+        return validateTileControlWithoutDefaultDistance(player, pos, BlockEntity.class, null, packetName);
     }
 
     public static void markChangedAndUpdate(BlockEntity blockEntity) {

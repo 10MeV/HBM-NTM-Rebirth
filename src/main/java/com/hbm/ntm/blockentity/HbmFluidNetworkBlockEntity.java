@@ -393,8 +393,14 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
     }
 
     @Override
+    public void onChunkUnloaded() {
+        removeFluidNode();
+        super.onChunkUnloaded();
+    }
+
+    @Override
     public boolean canConnectFluid(FluidType type, Direction side) {
-        return side != null && type != null && getFluidNodeTypes().contains(type);
+        return side != null && type != null && type != HbmFluids.NONE;
     }
 
     protected record NetworkFluidSubscriptionDetachReport(

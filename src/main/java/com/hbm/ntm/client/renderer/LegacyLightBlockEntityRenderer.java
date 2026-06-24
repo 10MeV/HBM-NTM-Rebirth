@@ -1,8 +1,10 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyDirectionalShapeBlock;
+import com.hbm.ntm.block.LegacySpotlightBlock;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjLightModels;
 import com.hbm.ntm.client.obj.ObjModelPart;
 import com.hbm.ntm.client.obj.ObjRenderContext;
@@ -15,6 +17,13 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<LegacyLightBlockEntity> {
+    private static final LegacyWavefrontModel.SelectionHandle FLOODLIGHT_BASE =
+            ObjLightModels.FLOODLIGHT_LEGACY.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle FLOODLIGHT_LIGHTS =
+            ObjLightModels.FLOODLIGHT_LEGACY.prepareRenderOnlyInCallOrder("Lights");
+    private static final LegacyWavefrontModel.SelectionHandle FLOODLIGHT_LAMPS =
+            ObjLightModels.FLOODLIGHT_LEGACY.prepareRenderOnlyInCallOrder("Lamps");
+
     public LegacyLightBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -49,7 +58,11 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
                 0.5D - face.getStepZ() * 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(LegacyObjTransforms.yawDegrees(face)));
         poseStack.mulPose(Axis.ZP.rotationDegrees(-LegacyObjTransforms.pitchDegrees(face)));
-        model.render(new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay));
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
+        if (state.getBlock() instanceof LegacySpotlightBlock spotlight && !spotlight.isActive()) {
+            context = context.withColor(0x404040);
+        }
+        model.render(context);
         poseStack.popPose();
     }
 
@@ -65,7 +78,7 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         }
 
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        ObjLightModels.FLOODLIGHT_LEGACY.renderPart("Base", context);
+        renderFloodlightPart(FLOODLIGHT_BASE, context);
 
         float rotation = blockEntity.rotation();
         if (face == Direction.DOWN) {
@@ -80,13 +93,18 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
         poseStack.translate(0.0D, -0.5D, 0.0D);
         ObjRenderContext angledContext = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        ObjLightModels.FLOODLIGHT_LEGACY.renderPart("Lights", angledContext);
-        ObjLightModels.FLOODLIGHT_LEGACY.renderPart("Lamps", blockEntity.isOn()
+        renderFloodlightPart(FLOODLIGHT_LIGHTS, angledContext);
+        renderFloodlightPart(FLOODLIGHT_LAMPS, blockEntity.isOn()
                 ? angledContext.fullBright()
                 : angledContext.withColor(0x404040));
         poseStack.popPose();
 
         poseStack.popPose();
+    }
+
+    private static void renderFloodlightPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
+        ObjLightModels.FLOODLIGHT_LEGACY.renderOnlyInCallOrder(ObjLightModels.FLOODLIGHT_LEGACY.textureLocation(),
+                context, handle);
     }
 
     private static void applyFloodlightBaseRotation(PoseStack poseStack, Direction face) {

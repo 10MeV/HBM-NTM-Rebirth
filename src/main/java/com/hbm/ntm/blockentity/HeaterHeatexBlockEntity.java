@@ -28,6 +28,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -54,10 +55,10 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
     public static final int SLOT_COUNT = 1;
     public static final int TANK_CAPACITY = 24_000;
 
-    private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_HEAT = "heatEnergy";
     private static final String TAG_TO_COOL = "toCool";
     private static final String TAG_DELAY = "delay";
+    private static final String TAG_INVENTORY = "Inventory";
 
     private final HbmFluidTank inputTank;
     private final HbmFluidTank outputTank;
@@ -402,20 +403,18 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
         inputTank.writeToNbt(tag, "0");
         outputTank.writeToNbt(tag, "1");
         tag.putInt(TAG_HEAT, heatEnergy);
         tag.putInt(TAG_TO_COOL, amountToCool);
         tag.putInt(TAG_DELAY, tickDelay);
-        tag.putInt("lastInputUsed", lastInputUsed);
-        tag.putInt("lastOutputProduced", lastOutputProduced);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadItems(tag);
         if (tag.contains("0_type") || tag.contains("0_type_id") || tag.contains("0")) {
             inputTank.readFromNbt(tag, "0");
         }
@@ -426,6 +425,19 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
         amountToCool = Mth.clamp(tag.contains(TAG_TO_COOL) ? tag.getInt(TAG_TO_COOL) : TANK_CAPACITY,
                 1, inputTank.getMaxFill());
         tickDelay = Math.max(tag.contains(TAG_DELAY) ? tag.getInt(TAG_DELAY) : 1, 1);
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt("lastInputUsed", lastInputUsed);
+        tag.putInt("lastOutputProduced", lastOutputProduced);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
         lastInputUsed = Math.max(0, tag.getInt("lastInputUsed"));
         lastOutputProduced = Math.max(0, tag.getInt("lastOutputProduced"));
     }
@@ -457,5 +469,14 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
         return state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
+    }
+
+    private void loadItems(CompoundTag tag) {
+        if (tag.contains(HbmInventoryMenuHelper.LEGACY_ITEMS_TAG, Tag.TAG_LIST)
+                || tag.contains("Items", Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
     }
 }

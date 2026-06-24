@@ -67,9 +67,9 @@ public class ElectrolyserMenu extends AbstractContainerMenu {
     private void addFluidSlots() {
         addSlot(activeLegacyMachineSlot(blockEntity.getItems(),
                 ElectrolyserBlockEntity.SLOT_BATTERY, 186, 109, () -> true));
-        addSlot(activeUpgradeSlot(blockEntity.getItems(),
+        addSlot(activeLegacyMachineSlot(blockEntity.getItems(),
                 ElectrolyserBlockEntity.SLOT_UPGRADE_1, 186, 140, () -> true));
-        addSlot(activeUpgradeSlot(blockEntity.getItems(),
+        addSlot(activeLegacyMachineSlot(blockEntity.getItems(),
                 ElectrolyserBlockEntity.SLOT_UPGRADE_2, 186, 158, () -> true));
         addSlot(activeLegacyMachineSlot(blockEntity.getItems(),
                 ElectrolyserBlockEntity.SLOT_FLUID_ID_INPUT, 6, 18, () -> !isMetalMode()));

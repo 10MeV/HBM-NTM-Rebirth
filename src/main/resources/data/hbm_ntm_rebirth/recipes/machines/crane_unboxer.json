@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["WWW", "WPW", "CCC"],
+  "key": {
+    "W": { "item": "minecraft:stick" },
+    "P": { "item": "minecraft:shears" },
+    "C": { "item": "hbm_ntm_rebirth:conveyor" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:crane_unboxer" }
+}

@@ -101,6 +101,14 @@ public final class LegacyOverheadRenderer {
         markerBox(consumer, pose, pos, 0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D, color, 255);
     }
 
+    public static void markerBoxRelative(VertexConsumer consumer, PoseStack.Pose pose, BlockPos pos,
+            Vec3 origin, int color, int alpha) {
+        LegacyLineRenderer.boxPositionColor(consumer, pose,
+                pos.getX() - origin.x, pos.getY() - origin.y, pos.getZ() - origin.z,
+                pos.getX() + 1.0D - origin.x, pos.getY() + 1.0D - origin.y, pos.getZ() + 1.0D - origin.z,
+                color & 0xFFFFFF, alpha);
+    }
+
     public static void markerBox(VertexConsumer consumer, PoseStack.Pose pose, BlockPos pos,
             MarkerBounds bounds, int color, int alpha) {
         MarkerBounds safeBounds = bounds == null ? MarkerBounds.UNIT : bounds;

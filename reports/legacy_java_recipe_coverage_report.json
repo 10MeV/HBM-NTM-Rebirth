@@ -1,6 +1,10 @@
 {
   "machines": [
     {
+      "blocked": [],
+      "blocked_count": 0,
+      "excluded": [],
+      "excluded_count": 0,
       "legacy_count": 74,
       "legacy_file": "ChemicalPlantRecipes.java",
       "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/ChemicalPlantRecipes.java",
@@ -458,182 +462,139 @@
       "status": "checked"
     },
     {
-      "legacy_count": 335,
-      "legacy_file": "AssemblyMachineRecipes.java",
-      "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/AssemblyMachineRecipes.java",
-      "machine": "assembly_machine",
-      "missing": [
-        {
-          "internal_name": "ass.sealframe",
-          "source_order": 52
-        },
-        {
-          "internal_name": "ass.sealcontroller",
-          "source_order": 53
-        },
-        {
-          "internal_name": "ass.vaultdoor",
-          "source_order": 56
-        },
-        {
-          "internal_name": "ass.blastdoor",
-          "source_order": 57
-        },
-        {
-          "internal_name": "ass.firedoor",
-          "source_order": 58
-        },
-        {
-          "internal_name": "ass.seal",
-          "source_order": 59
-        },
-        {
-          "internal_name": "ass.slidingdoor",
-          "source_order": 60
-        },
-        {
-          "internal_name": "ass.vehicledoor",
-          "source_order": 61
-        },
-        {
-          "internal_name": "ass.waterdoor",
-          "source_order": 62
-        },
-        {
-          "internal_name": "ass.qedoor",
-          "source_order": 63
-        },
-        {
-          "internal_name": "ass.queslidingdoor",
-          "source_order": 64
-        },
-        {
-          "internal_name": "ass.roundairlock",
-          "source_order": 65
-        },
-        {
-          "internal_name": "ass.secureaccess",
-          "source_order": 66
-        },
-        {
-          "internal_name": "ass.slidingseal",
-          "source_order": 67
-        },
-        {
-          "internal_name": "ass.silohatch",
-          "source_order": 68
-        },
-        {
-          "internal_name": "ass.silohatchlarge",
-          "source_order": 69
-        },
+      "blocked": [
         {
           "internal_name": "ass.excavator",
+          "reason": "output machine_excavator is not registered in the clean port; requires the excavator machine BE/UI/renderer/runtime slice",
           "source_order": 106
         },
         {
-          "internal_name": "ass.breedingreactor",
-          "source_order": 159
-        },
-        {
-          "internal_name": "ass.researchreactor",
-          "source_order": 160
-        },
-        {
-          "internal_name": "ass.cirnox",
-          "source_order": 161
-        },
-        {
-          "internal_name": "ass.fusioncore",
-          "source_order": 175
-        },
-        {
-          "internal_name": "ass.fusionbscco",
-          "source_order": 176
-        },
-        {
-          "internal_name": "ass.fusionblanket",
-          "source_order": 177
-        },
-        {
-          "internal_name": "ass.fusionpipes",
-          "source_order": 178
-        },
-        {
-          "internal_name": "ass.fusionklystron",
-          "source_order": 179
-        },
-        {
-          "internal_name": "ass.fusioncollector",
-          "source_order": 180
-        },
-        {
-          "internal_name": "ass.fusionbreeder",
-          "source_order": 181
-        },
-        {
-          "internal_name": "ass.fusionboiler",
-          "source_order": 182
-        },
-        {
-          "internal_name": "ass.fusionmhdt",
-          "source_order": 183
-        },
-        {
-          "internal_name": "ass.fusioncoupler",
-          "source_order": 184
-        },
-        {
-          "internal_name": "ass.fusionplasmaforge",
-          "source_order": 185
-        },
-        {
-          "internal_name": "ass.watzrod",
-          "source_order": 186
-        },
-        {
-          "internal_name": "ass.watzcooler",
-          "source_order": 187
-        },
-        {
-          "internal_name": "ass.watzcasing",
-          "source_order": 188
-        },
-        {
           "internal_name": "ass.chopper",
+          "reason": "output spawn_chopper and the Hunter Chopper spawn/entity item chain are not registered in the clean port",
           "source_order": 192
         },
         {
           "internal_name": "ass.ballsotron",
+          "reason": "output spawn_worm and the mechanical worm spawn/entity item chain are not registered in the clean port",
           "source_order": 193
         },
         {
           "internal_name": "ass.minenaval",
+          "reason": "output mine_naval block/runtime is not registered in the clean port",
           "source_order": 196
         },
         {
           "internal_name": "ass.levibomb",
+          "reason": "output float_bomb block/runtime is not registered in the clean port",
           "source_order": 208
         },
         {
           "internal_name": "ass.endobomb",
+          "reason": "output therm_endo block/runtime is not registered in the clean port",
           "source_order": 209
         },
         {
           "internal_name": "ass.exobomb",
+          "reason": "output therm_exo block/runtime is not registered in the clean port",
           "source_order": 210
         },
         {
-          "internal_name": "ass.launchpad",
-          "source_order": 268
-        },
-        {
           "internal_name": "ass.digimemer",
+          "reason": "legacy recipe is conditional Mekanism integration outputting external Mekanism:MachineBlock meta 4; no modern HBM output anchor",
           "source_order": 334
         }
       ],
-      "missing_count": 42,
-      "modern_count": 566,
+      "blocked_count": 8,
+      "excluded": [
+        {
+          "internal_name": "ass.sealframe",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 52
+        },
+        {
+          "internal_name": "ass.sealcontroller",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 53
+        },
+        {
+          "internal_name": "ass.vaultdoor",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 56
+        },
+        {
+          "internal_name": "ass.blastdoor",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 57
+        },
+        {
+          "internal_name": "ass.firedoor",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 58
+        },
+        {
+          "internal_name": "ass.seal",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 59
+        },
+        {
+          "internal_name": "ass.slidingdoor",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 60
+        },
+        {
+          "internal_name": "ass.vehicledoor",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 61
+        },
+        {
+          "internal_name": "ass.waterdoor",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 62
+        },
+        {
+          "internal_name": "ass.qedoor",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 63
+        },
+        {
+          "internal_name": "ass.queslidingdoor",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 64
+        },
+        {
+          "internal_name": "ass.roundairlock",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 65
+        },
+        {
+          "internal_name": "ass.secureaccess",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 66
+        },
+        {
+          "internal_name": "ass.slidingseal",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 67
+        },
+        {
+          "internal_name": "ass.silohatch",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 68
+        },
+        {
+          "internal_name": "ass.silohatchlarge",
+          "reason": "old door/seal-door recipes are decorative/deferred by project rule",
+          "source_order": 69
+        }
+      ],
+      "excluded_count": 16,
+      "legacy_count": 335,
+      "legacy_file": "AssemblyMachineRecipes.java",
+      "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/AssemblyMachineRecipes.java",
+      "machine": "assembly_machine",
+      "missing": [],
+      "missing_count": 0,
+      "modern_count": 584,
       "present": [
         {
           "internal_name": "ass.plateiron",
@@ -1488,6 +1449,24 @@
           "source_order": 158
         },
         {
+          "internal_name": "ass.breedingreactor",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/breeding_reactor",
+          "modern_source_order": 159,
+          "source_order": 159
+        },
+        {
+          "internal_name": "ass.researchreactor",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/research_reactor",
+          "modern_source_order": 160,
+          "source_order": 160
+        },
+        {
+          "internal_name": "ass.cirnox",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/zirnox_reactor",
+          "modern_source_order": 161,
+          "source_order": 161
+        },
+        {
           "internal_name": "ass.rbmk",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/rbmk_blank",
           "modern_source_order": 162,
@@ -1564,6 +1543,90 @@
           "modern_id": "hbm_ntm_rebirth:assembly_machine/pwr_neutron_source",
           "modern_source_order": 174,
           "source_order": 174
+        },
+        {
+          "internal_name": "ass.fusioncore",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fusion_core_component",
+          "modern_source_order": 175,
+          "source_order": 175
+        },
+        {
+          "internal_name": "ass.fusionbscco",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fusion_bscco_component",
+          "modern_source_order": 176,
+          "source_order": 176
+        },
+        {
+          "internal_name": "ass.fusionblanket",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fusion_blanket_component",
+          "modern_source_order": 177,
+          "source_order": 177
+        },
+        {
+          "internal_name": "ass.fusionpipes",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fusion_pipes_component",
+          "modern_source_order": 178,
+          "source_order": 178
+        },
+        {
+          "internal_name": "ass.fusionklystron",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fusion_klystron",
+          "modern_source_order": 179,
+          "source_order": 179
+        },
+        {
+          "internal_name": "ass.fusioncollector",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fusion_collector",
+          "modern_source_order": 180,
+          "source_order": 180
+        },
+        {
+          "internal_name": "ass.fusionbreeder",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fusion_breeder",
+          "modern_source_order": 181,
+          "source_order": 181
+        },
+        {
+          "internal_name": "ass.fusionboiler",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fusion_boiler",
+          "modern_source_order": 182,
+          "source_order": 182
+        },
+        {
+          "internal_name": "ass.fusionmhdt",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fusion_mhdt",
+          "modern_source_order": 183,
+          "source_order": 183
+        },
+        {
+          "internal_name": "ass.fusioncoupler",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fusion_coupler",
+          "modern_source_order": 184,
+          "source_order": 184
+        },
+        {
+          "internal_name": "ass.fusionplasmaforge",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fusion_plasma_forge",
+          "modern_source_order": 185,
+          "source_order": 185
+        },
+        {
+          "internal_name": "ass.watzrod",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/watz_element",
+          "modern_source_order": 186,
+          "source_order": 186
+        },
+        {
+          "internal_name": "ass.watzcooler",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/watz_cooler",
+          "modern_source_order": 187,
+          "source_order": 187
+        },
+        {
+          "internal_name": "ass.watzcasing",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/watz_end",
+          "modern_source_order": 188,
+          "source_order": 188
         },
         {
           "internal_name": "ass.overdrive1",
@@ -2004,6 +2067,12 @@
           "source_order": 267
         },
         {
+          "internal_name": "ass.launchpad",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/launch_pad",
+          "modern_source_order": 268,
+          "source_order": 268
+        },
+        {
           "internal_name": "ass.launchpadsilo",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/launch_pad_silo",
           "modern_source_order": 269,
@@ -2394,7 +2463,430 @@
           "source_order": 333
         }
       ],
-      "present_count": 293,
+      "present_count": 311,
+      "status": "checked"
+    },
+    {
+      "blocked": [
+        {
+          "internal_name": "purex.watznaqadah",
+          "reason": "legacy PUREX recipe is conditional on OreDictionary nuggetNaquadria; the clean port has no source-backed Naquadah/Naquadria nugget output anchor",
+          "source_order": 45
+        },
+        {
+          "internal_name": "purex.watznaqadria",
+          "reason": "legacy PUREX recipe is conditional on OreDictionary nuggetNaquadria; the clean port has no source-backed Naquadah/Naquadria nugget output anchor",
+          "source_order": 46
+        }
+      ],
+      "blocked_count": 2,
+      "excluded": [],
+      "excluded_count": 0,
+      "legacy_count": 55,
+      "legacy_file": "PUREXRecipes.java",
+      "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/PUREXRecipes.java",
+      "machine": "purex",
+      "missing": [],
+      "missing_count": 0,
+      "modern_count": 53,
+      "present": [
+        {
+          "internal_name": "purex.uzh",
+          "modern_id": "hbm_ntm_rebirth:purex/uzh",
+          "modern_source_order": 43,
+          "source_order": 0
+        },
+        {
+          "internal_name": "purex.pilepu",
+          "modern_id": "hbm_ntm_rebirth:purex/pilepu",
+          "modern_source_order": 51,
+          "source_order": 1
+        },
+        {
+          "internal_name": "purex.pilepu239",
+          "modern_id": "hbm_ntm_rebirth:purex/pilepu239",
+          "modern_source_order": 59,
+          "source_order": 2
+        },
+        {
+          "internal_name": "purex.zirnoxnu",
+          "modern_id": "hbm_ntm_rebirth:purex/zirnoxnu",
+          "modern_source_order": 70,
+          "source_order": 3
+        },
+        {
+          "internal_name": "purex.zirnoxmeu",
+          "modern_id": "hbm_ntm_rebirth:purex/zirnoxmeu",
+          "modern_source_order": 79,
+          "source_order": 4
+        },
+        {
+          "internal_name": "purex.zirnoxthmeu",
+          "modern_id": "hbm_ntm_rebirth:purex/zirnoxthmeu",
+          "modern_source_order": 88,
+          "source_order": 5
+        },
+        {
+          "internal_name": "purex.zirnoxmox",
+          "modern_id": "hbm_ntm_rebirth:purex/zirnoxmox",
+          "modern_source_order": 97,
+          "source_order": 6
+        },
+        {
+          "internal_name": "purex.zirnoxmep",
+          "modern_id": "hbm_ntm_rebirth:purex/zirnoxmep",
+          "modern_source_order": 106,
+          "source_order": 7
+        },
+        {
+          "internal_name": "purex.zirnoxheu233",
+          "modern_id": "hbm_ntm_rebirth:purex/zirnoxheu233",
+          "modern_source_order": 114,
+          "source_order": 8
+        },
+        {
+          "internal_name": "purex.zirnoxheu235",
+          "modern_id": "hbm_ntm_rebirth:purex/zirnoxheu235",
+          "modern_source_order": 123,
+          "source_order": 9
+        },
+        {
+          "internal_name": "purex.zirnoxles",
+          "modern_id": "hbm_ntm_rebirth:purex/zirnoxles",
+          "modern_source_order": 132,
+          "source_order": 10
+        },
+        {
+          "internal_name": "purex.zirnoxzfbmox",
+          "modern_id": "hbm_ntm_rebirth:purex/zirnoxzfbmox",
+          "modern_source_order": 141,
+          "source_order": 11
+        },
+        {
+          "internal_name": "purex.platemox",
+          "modern_id": "hbm_ntm_rebirth:purex/platemox",
+          "modern_source_order": 152,
+          "source_order": 12
+        },
+        {
+          "internal_name": "purex.platepu238be",
+          "modern_id": "hbm_ntm_rebirth:purex/platepu238be",
+          "modern_source_order": 161,
+          "source_order": 13
+        },
+        {
+          "internal_name": "purex.platepu239",
+          "modern_id": "hbm_ntm_rebirth:purex/platepu239",
+          "modern_source_order": 170,
+          "source_order": 14
+        },
+        {
+          "internal_name": "purex.platera226be",
+          "modern_id": "hbm_ntm_rebirth:purex/platera226be",
+          "modern_source_order": 179,
+          "source_order": 15
+        },
+        {
+          "internal_name": "purex.platesa326",
+          "modern_id": "hbm_ntm_rebirth:purex/platesa326",
+          "modern_source_order": 188,
+          "source_order": 16
+        },
+        {
+          "internal_name": "purex.plateu233",
+          "modern_id": "hbm_ntm_rebirth:purex/plateu233",
+          "modern_source_order": 197,
+          "source_order": 17
+        },
+        {
+          "internal_name": "purex.plateu235",
+          "modern_id": "hbm_ntm_rebirth:purex/plateu235",
+          "modern_source_order": 206,
+          "source_order": 18
+        },
+        {
+          "internal_name": "purex.pwrmeu",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrmeu",
+          "modern_source_order": 217,
+          "source_order": 19
+        },
+        {
+          "internal_name": "purex.pwrheu233",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrheu233",
+          "modern_source_order": 226,
+          "source_order": 20
+        },
+        {
+          "internal_name": "purex.pwrheu235",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrheu235",
+          "modern_source_order": 235,
+          "source_order": 21
+        },
+        {
+          "internal_name": "purex.pwrmen",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrmen",
+          "modern_source_order": 244,
+          "source_order": 22
+        },
+        {
+          "internal_name": "purex.pwrhen237",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrhen237",
+          "modern_source_order": 253,
+          "source_order": 23
+        },
+        {
+          "internal_name": "purex.pwrmox",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrmox",
+          "modern_source_order": 262,
+          "source_order": 24
+        },
+        {
+          "internal_name": "purex.pwrmep",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrmep",
+          "modern_source_order": 271,
+          "source_order": 25
+        },
+        {
+          "internal_name": "purex.pwrhep239",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrhep239",
+          "modern_source_order": 280,
+          "source_order": 26
+        },
+        {
+          "internal_name": "purex.pwrhep241",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrhep241",
+          "modern_source_order": 289,
+          "source_order": 27
+        },
+        {
+          "internal_name": "purex.pwrmea",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrmea",
+          "modern_source_order": 298,
+          "source_order": 28
+        },
+        {
+          "internal_name": "purex.pwrhea242",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrhea242",
+          "modern_source_order": 307,
+          "source_order": 29
+        },
+        {
+          "internal_name": "purex.pwrhes326",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrhes326",
+          "modern_source_order": 316,
+          "source_order": 30
+        },
+        {
+          "internal_name": "purex.pwrhes327",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrhes327",
+          "modern_source_order": 325,
+          "source_order": 31
+        },
+        {
+          "internal_name": "purex.pwrbfbam",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrbfbam",
+          "modern_source_order": 334,
+          "source_order": 32
+        },
+        {
+          "internal_name": "purex.pwrbfpu241",
+          "modern_id": "hbm_ntm_rebirth:purex/pwrbfpu241",
+          "modern_source_order": 343,
+          "source_order": 33
+        },
+        {
+          "internal_name": "purex.thoriumsalt",
+          "modern_id": "hbm_ntm_rebirth:purex/thoriumsalt",
+          "modern_source_order": 353,
+          "source_order": 34
+        },
+        {
+          "internal_name": "purex.watzschrab",
+          "modern_id": "hbm_ntm_rebirth:purex/watzschrab",
+          "modern_source_order": 363,
+          "source_order": 35
+        },
+        {
+          "internal_name": "purex.watzhes",
+          "modern_id": "hbm_ntm_rebirth:purex/watzhes",
+          "modern_source_order": 372,
+          "source_order": 36
+        },
+        {
+          "internal_name": "purex.watzmes",
+          "modern_id": "hbm_ntm_rebirth:purex/watzmes",
+          "modern_source_order": 381,
+          "source_order": 37
+        },
+        {
+          "internal_name": "purex.watzles",
+          "modern_id": "hbm_ntm_rebirth:purex/watzles",
+          "modern_source_order": 390,
+          "source_order": 38
+        },
+        {
+          "internal_name": "purex.watzhen",
+          "modern_id": "hbm_ntm_rebirth:purex/watzhen",
+          "modern_source_order": 399,
+          "source_order": 39
+        },
+        {
+          "internal_name": "purex.watzmeu",
+          "modern_id": "hbm_ntm_rebirth:purex/watzmeu",
+          "modern_source_order": 408,
+          "source_order": 40
+        },
+        {
+          "internal_name": "purex.watzmep",
+          "modern_id": "hbm_ntm_rebirth:purex/watzmep",
+          "modern_source_order": 417,
+          "source_order": 41
+        },
+        {
+          "internal_name": "purex.watzlead",
+          "modern_id": "hbm_ntm_rebirth:purex/watzlead",
+          "modern_source_order": 426,
+          "source_order": 42
+        },
+        {
+          "internal_name": "purex.watzboron",
+          "modern_id": "hbm_ntm_rebirth:purex/watzboron",
+          "modern_source_order": 435,
+          "source_order": 43
+        },
+        {
+          "internal_name": "purex.watzdu",
+          "modern_id": "hbm_ntm_rebirth:purex/watzdu",
+          "modern_source_order": 444,
+          "source_order": 44
+        },
+        {
+          "internal_name": "purex.icf",
+          "modern_id": "hbm_ntm_rebirth:purex/icf_pellet_recycle",
+          "modern_source_order": 479,
+          "source_order": 47
+        },
+        {
+          "internal_name": "purex.vitliquid",
+          "modern_id": "hbm_ntm_rebirth:purex/vitliquid",
+          "modern_source_order": 488,
+          "source_order": 48
+        },
+        {
+          "internal_name": "purex.vitgaseous",
+          "modern_id": "hbm_ntm_rebirth:purex/vitgaseous",
+          "modern_source_order": 493,
+          "source_order": 49
+        },
+        {
+          "internal_name": "purex.vitsolid",
+          "modern_id": "hbm_ntm_rebirth:purex/vitsolid",
+          "modern_source_order": 498,
+          "source_order": 50
+        },
+        {
+          "internal_name": "purex.schraranium",
+          "modern_id": "hbm_ntm_rebirth:purex/schraranium",
+          "modern_source_order": 503,
+          "source_order": 51
+        },
+        {
+          "internal_name": "purex.schrabzirnox",
+          "modern_id": "hbm_ntm_rebirth:purex/schrabzirnox",
+          "modern_source_order": 512,
+          "source_order": 52
+        },
+        {
+          "internal_name": "purex.schrabpwr",
+          "modern_id": "hbm_ntm_rebirth:purex/schrabpwr",
+          "modern_source_order": 441,
+          "source_order": 53
+        },
+        {
+          "internal_name": "purex.schrabmen",
+          "modern_id": "hbm_ntm_rebirth:purex/schrabmen",
+          "modern_source_order": 447,
+          "source_order": 54
+        }
+      ],
+      "present_count": 53,
+      "status": "checked"
+    },
+    {
+      "blocked": [],
+      "blocked_count": 0,
+      "excluded": [],
+      "excluded_count": 0,
+      "legacy_count": 10,
+      "legacy_file": "FusionRecipes.java",
+      "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/FusionRecipes.java",
+      "machine": "fusion_reactor",
+      "missing": [],
+      "missing_count": 0,
+      "modern_count": 10,
+      "present": [
+        {
+          "internal_name": "fus.dd",
+          "modern_id": "hbm_ntm_rebirth:fusion_reactor/dd",
+          "modern_source_order": 2147483647,
+          "source_order": 0
+        },
+        {
+          "internal_name": "fus.do",
+          "modern_id": "hbm_ntm_rebirth:fusion_reactor/do",
+          "modern_source_order": 2147483647,
+          "source_order": 1
+        },
+        {
+          "internal_name": "fus.dt",
+          "modern_id": "hbm_ntm_rebirth:fusion_reactor/dt",
+          "modern_source_order": 2147483647,
+          "source_order": 2
+        },
+        {
+          "internal_name": "fus.tcl",
+          "modern_id": "hbm_ntm_rebirth:fusion_reactor/tcl",
+          "modern_source_order": 2147483647,
+          "source_order": 3
+        },
+        {
+          "internal_name": "fus.h3",
+          "modern_id": "hbm_ntm_rebirth:fusion_reactor/h3",
+          "modern_source_order": 2147483647,
+          "source_order": 4
+        },
+        {
+          "internal_name": "fus.th4",
+          "modern_id": "hbm_ntm_rebirth:fusion_reactor/th4",
+          "modern_source_order": 2147483647,
+          "source_order": 5
+        },
+        {
+          "internal_name": "fus.cl",
+          "modern_id": "hbm_ntm_rebirth:fusion_reactor/cl",
+          "modern_source_order": 2147483647,
+          "source_order": 6
+        },
+        {
+          "internal_name": "fus.dhc",
+          "modern_id": "hbm_ntm_rebirth:fusion_reactor/dhc",
+          "modern_source_order": 2147483647,
+          "source_order": 7
+        },
+        {
+          "internal_name": "fus.bf",
+          "modern_id": "hbm_ntm_rebirth:fusion_reactor/bf",
+          "modern_source_order": 2147483647,
+          "source_order": 8
+        },
+        {
+          "internal_name": "fus.stellar",
+          "modern_id": "hbm_ntm_rebirth:fusion_reactor/stellar",
+          "modern_source_order": 2147483647,
+          "source_order": 9
+        }
+      ],
+      "present_count": 10,
       "status": "checked"
     }
   ],

@@ -1,0 +1,42 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:purex",
+    "internal_name":  "purex.pilepu",
+    "duration":  40,
+    "power":  100,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:pile_rod_plutonium"
+                                           }
+                        }
+                    ],
+    "input_fluids":  [
+                         {
+                             "fluid":  "hbm_ntm_rebirth:sulfuric_acid",
+                             "amount":  100
+                         }
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:billet_pu_mix",
+                             "count":  2
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:billet_uranium"
+                         },
+                         {
+                             "item":  "hbm_ntm_rebirth:plate_iron",
+                             "count":  2
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "auto_switch_group":  "autoswitch.pile",
+    "name_wrapper":  "purex.recycle",
+    "source_order":  51
+}
+

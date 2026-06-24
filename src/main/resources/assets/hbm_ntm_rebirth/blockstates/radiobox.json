@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "active=false,facing=east": { "model": "hbm_ntm_rebirth:block/radiobox" },
+    "active=false,facing=north": { "model": "hbm_ntm_rebirth:block/radiobox" },
+    "active=false,facing=south": { "model": "hbm_ntm_rebirth:block/radiobox" },
+    "active=false,facing=west": { "model": "hbm_ntm_rebirth:block/radiobox" },
+    "active=true,facing=east": { "model": "hbm_ntm_rebirth:block/radiobox" },
+    "active=true,facing=north": { "model": "hbm_ntm_rebirth:block/radiobox" },
+    "active=true,facing=south": { "model": "hbm_ntm_rebirth:block/radiobox" },
+    "active=true,facing=west": { "model": "hbm_ntm_rebirth:block/radiobox" }
+  }
+}

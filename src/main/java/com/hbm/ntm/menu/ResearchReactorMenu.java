@@ -39,7 +39,7 @@ public class ResearchReactorMenu extends AbstractContainerMenu {
         super(ModMenuTypes.RESEARCH_REACTOR.get(), containerId);
         this.blockEntity = blockEntity;
         for (int slot = 0; slot < ROD_SLOTS.length; slot++) {
-            addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), slot,
+            addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), slot,
                     ROD_SLOTS[slot][0], ROD_SLOTS[slot][1]));
         }
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 140, 198);

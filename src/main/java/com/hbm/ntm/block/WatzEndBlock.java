@@ -1,6 +1,9 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayBlockProvider;
 import com.hbm.ntm.api.block.Toolable;
+import com.hbm.ntm.block.LegacyToolConversionOverlay.ItemCost;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -21,7 +24,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-public class WatzEndBlock extends Block implements Toolable {
+public class WatzEndBlock extends Block implements Toolable, LegacyLookOverlayBlockProvider {
     public static final BooleanProperty RIVETED = BooleanProperty.create("riveted");
     private static final TagKey<Item> DURA_BOLTS = ItemTags.create(new ResourceLocation("forge", "bolts/dura_steel"));
     private static final int BOLT_COST = 4;
@@ -46,6 +49,20 @@ public class WatzEndBlock extends Block implements Toolable {
         level.setBlock(pos, state.setValue(RIVETED, true), Block.UPDATE_ALL);
         level.playSound(null, pos, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.8F, 1.25F);
         return true;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos, BlockState viewedState) {
+        return null;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, Player player, BlockPos viewedPos, BlockState viewedState) {
+        if (!viewedState.is(this) || viewedState.getValue(RIVETED)) {
+            return null;
+        }
+        return LegacyToolConversionOverlay.forTool(viewedState, player, ToolType.BOLT,
+                List.of(new ItemCost(DURA_BOLTS, BOLT_COST)));
     }
 
     private static boolean consumeBolts(Player player) {

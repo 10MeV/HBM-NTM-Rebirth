@@ -27,11 +27,12 @@ import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -70,6 +71,9 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final int TANK_CAPACITY = 64_000;
     private static final int BASE_MAX_VENT = 50;
     private static final int BASE_MAX_BURN = 10;
+    private static final String TAG_INVENTORY = HbmInventoryMenuHelper.LEGACY_ITEMS_TAG;
+    private static final String TAG_MODERN_INVENTORY = "Inventory";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(
             UpgradeType.SPEED, 3,
             UpgradeType.EFFECT, 3);
@@ -110,6 +114,8 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     private int lastOutput;
     private int speedLevel;
     private int effectLevel;
+    @Nullable
+    private String customName;
 
     public GasFlareBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmEnergyStorage(MAX_POWER, 0L, MAX_POWER), new HbmFluidTank(HbmFluids.GAS, TANK_CAPACITY));
@@ -330,7 +336,9 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public Component getDisplayName() {
-        return Component.translatable("container.gasFlare");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatable("container.gasFlare");
     }
 
     @Nullable
@@ -341,7 +349,8 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public boolean canReceiveLegacyButton(ServerPlayer player, int value, int id) {
-        return id == CONTROL_VALVE || id == CONTROL_BURN;
+        return (id == CONTROL_VALVE || id == CONTROL_BURN)
+                && player.distanceToSqr(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ()) <= 256.0D;
     }
 
     @Override
@@ -444,7 +453,12 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "Inventory", items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
+        tag.putLong("powerTime", energy.getPower());
+        tank.writeToNbt(tag, "gas");
         tag.putBoolean("isOn", on);
         tag.putBoolean("doesBurn", burn);
         tag.putInt("fluidUsed", fluidUsed);
@@ -459,10 +473,11 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (!tag.contains("Energy") && tag.contains("powerTime")) {
             energy.setPower(tag.getLong("powerTime"));
         }
-        if (!tag.contains("hbm_fluids") && (tag.contains("gas") || tag.contains("gas_type"))) {
+        if (!tag.contains("hbm_fluids") && hasTankTag(tag, "gas")) {
             tank.readFromNbt(tag, "gas");
         }
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "Inventory", items);
+        loadInventory(tag);
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         on = tag.getBoolean("isOn");
         burn = tag.getBoolean("doesBurn");
         fluidUsed = tag.getInt("fluidUsed");
@@ -499,6 +514,22 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public List<ItemStack> getDrops() {
         return HbmInventoryMenuHelper.clearToDrops(items);
+    }
+
+    private void loadInventory(CompoundTag tag) {
+        if (tag.contains(TAG_INVENTORY, Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        } else if (tag.contains(TAG_INVENTORY, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        } else if (tag.contains(TAG_MODERN_INVENTORY, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_MODERN_INVENTORY, items);
+        } else {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        }
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 
     private static final class EmptyExternalItemHandler implements IItemHandler {

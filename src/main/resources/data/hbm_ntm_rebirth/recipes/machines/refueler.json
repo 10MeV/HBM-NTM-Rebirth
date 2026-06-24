@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "SS",
+    "HC",
+    "SS"
+  ],
+  "key": {
+    "S": {
+      "tag": "forge:plates/titanium"
+    },
+    "H": {
+      "item": "hbm_ntm_rebirth:part_generic_piston_hydraulic"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:refueler"
+  },
+  "show_notification": true
+}

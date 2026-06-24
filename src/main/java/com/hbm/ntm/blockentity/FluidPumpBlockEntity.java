@@ -12,20 +12,30 @@ import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
+import com.hbm.ntm.menu.FluidPumpMenu;
+import com.hbm.ntm.network.HbmLegacyControlReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity implements HbmStandardFluidTransceiver {
+public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity
+        implements MenuProvider, HbmStandardFluidTransceiver, HbmLegacyControlReceiver {
     private static final int DEFAULT_BUFFER_SIZE = 100;
     private static final int MAX_BUFFER_SIZE = 10_000;
+    private static final String TAG_TANK = "t";
     private static final String TAG_PRIORITY = "p";
     private static final String TAG_BUFFER = "buffer";
     private static final String TAG_REDSTONE = "redstone";
@@ -73,6 +83,14 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity implements 
 
     public int getBufferSize() {
         return bufferSize;
+    }
+
+    public int getPressure() {
+        return tank.getPressure();
+    }
+
+    public HbmEnergyReceiver.ConnectionPriority getPriority() {
+        return priority;
     }
 
     public boolean isRedstoneBlocked() {
@@ -124,6 +142,41 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity implements 
         if (this.priority != next) {
             this.priority = next;
             setChanged();
+        }
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable(getBlockState().getBlock().getDescriptionId());
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
+        return new FluidPumpMenu(containerId, inventory, this);
+    }
+
+    @Override
+    public boolean hasPermission(ServerPlayer player) {
+        return player.distanceToSqr(worldPosition.getX() + 0.5D,
+                worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D) <= 128.0D;
+    }
+
+    @Override
+    public void receiveControl(CompoundTag data) {
+        if (data.contains("capacity")) {
+            setBufferSize(data.getInt("capacity"));
+        }
+        if (data.contains("pressure")) {
+            setPressure(HbmFluidTank.clampPressure(data.getByte("pressure")));
+        }
+        if (data.contains("priority")) {
+            HbmEnergyReceiver.ConnectionPriority[] values = HbmEnergyReceiver.ConnectionPriority.values();
+            int ordinal = data.getByte("priority");
+            setPriority(ordinal >= 0 && ordinal < values.length
+                    ? values[ordinal]
+                    : HbmEnergyReceiver.ConnectionPriority.NORMAL);
         }
     }
 
@@ -209,6 +262,7 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity implements 
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        tank.writeToNbt(tag, TAG_TANK);
         tag.putByte(TAG_PRIORITY, (byte) priority.ordinal());
         tag.putInt(TAG_BUFFER, bufferSize);
         tag.putBoolean(TAG_REDSTONE, redstone);
@@ -217,6 +271,9 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity implements 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        if (hasTankTag(tag, TAG_TANK)) {
+            tank.readFromNbt(tag, TAG_TANK);
+        }
         if (tag.contains(TAG_PRIORITY)) {
             HbmEnergyReceiver.ConnectionPriority[] values = HbmEnergyReceiver.ConnectionPriority.values();
             int ordinal = tag.getByte(TAG_PRIORITY);
@@ -281,5 +338,9 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity implements 
         return state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
+    }
+
+    private static boolean hasTankTag(CompoundTag tag, String key) {
+        return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
     }
 }

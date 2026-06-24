@@ -40,14 +40,14 @@ public class ICFReactorMenu extends AbstractContainerMenu {
         super(ModMenuTypes.ICF_REACTOR.get(), containerId);
         this.blockEntity = blockEntity;
         for (int i = 0; i < 5; i++) {
-            addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), i, 80 + i * 18, 18));
+            addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), i, 80 + i * 18, 18));
         }
-        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ICFReactorBlockEntity.SLOT_ACTIVE, 116, 54));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ICFReactorBlockEntity.SLOT_ACTIVE, 116, 54));
         for (int i = 0; i < 5; i++) {
             addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
                     6 + i, 80 + i * 18, 90));
         }
-        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ICFReactorBlockEntity.SLOT_IDENTIFIER, 44, 90));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ICFReactorBlockEntity.SLOT_IDENTIFIER, 44, 90));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 44, 140, 198);
         coolantTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getCoolantTank());
         hotCoolantTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getHotCoolantTank());

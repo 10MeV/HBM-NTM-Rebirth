@@ -1,9 +1,12 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.MassStorageBlock;
+import com.hbm.ntm.item.KeyPinItem;
+import com.hbm.ntm.item.PadlockItem;
 import com.hbm.ntm.menu.MassStorageMenu;
 import com.hbm.ntm.network.HbmLegacyControlReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
@@ -11,6 +14,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -37,6 +42,10 @@ public class MassStorageBlockEntity extends BlockEntity implements MenuProvider,
     public static final String LEGACY_OUTPUT_TAG = "output";
     public static final String LEGACY_CAPACITY_TAG = "capacity";
     public static final String LEGACY_REDSTONE_TAG = "redstone";
+    public static final String LEGACY_LOCK_TAG = "lock";
+    public static final String LEGACY_LOCKED_TAG = "isLocked";
+    public static final String LEGACY_LOCK_MOD_TAG = "lockMod";
+    public static final String LEGACY_CHEESABLE_TAG = "cheesable";
 
     private final ItemStackHandler items = new ItemStackHandler(3) {
         @Override
@@ -65,11 +74,17 @@ public class MassStorageBlockEntity extends BlockEntity implements MenuProvider,
 
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            if (locked) {
+                return stack;
+            }
             return slot == 0 ? items.insertItem(SLOT_INPUT, stack, simulate) : stack;
         }
 
         @Override
         public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            if (locked) {
+                return ItemStack.EMPTY;
+            }
             return slot == 1 ? items.extractItem(SLOT_OUTPUT, amount, simulate) : ItemStack.EMPTY;
         }
 
@@ -80,7 +95,7 @@ public class MassStorageBlockEntity extends BlockEntity implements MenuProvider,
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot == 0 && items.isItemValid(SLOT_INPUT, stack);
+            return !locked && slot == 0 && items.isItemValid(SLOT_INPUT, stack);
         }
     });
 
@@ -88,6 +103,10 @@ public class MassStorageBlockEntity extends BlockEntity implements MenuProvider,
     private boolean output;
     private int capacity;
     private int redstone;
+    private int lockPins;
+    private boolean locked;
+    private double lockMod = 0.1D;
+    private boolean cheesable = true;
 
     public MassStorageBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MASS_STORAGE.get(), pos, state);
@@ -113,6 +132,10 @@ public class MassStorageBlockEntity extends BlockEntity implements MenuProvider,
 
     public int redstone() {
         return redstone;
+    }
+
+    public boolean isLocked() {
+        return locked;
     }
 
     public ItemStack type() {
@@ -293,6 +316,57 @@ public class MassStorageBlockEntity extends BlockEntity implements MenuProvider,
         items.setStackInSlot(SLOT_FILTER, stack.isEmpty() ? ItemStack.EMPTY : stack.copyWithCount(1));
     }
 
+    public boolean tryApplyPadlock(Player player, ItemStack stack) {
+        if (!(stack.getItem() instanceof PadlockItem padlock) || locked || KeyPinItem.getPins(stack) == 0) {
+            return false;
+        }
+        lockPins = KeyPinItem.getPins(stack);
+        locked = true;
+        lockMod = padlock.lockMod();
+        setChangedAndUpdate();
+        if (player != null && level != null) {
+            LegacySoundPlayer.playSoundAtPlayer(player, "hbm:block.lockHang", 1.0F, 1.0F);
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+            }
+        }
+        return true;
+    }
+
+    public boolean tryCreateCounterfeitKeys(Player player, InteractionHand hand) {
+        if (!locked || player == null) {
+            return false;
+        }
+        if (!cheesable) {
+            player.displayClientMessage(Component.literal(
+                    "This lock is too elaborate for a counterfeit key to be made"), false);
+            player.displayClientMessage(Component.literal(
+                    "Perhaps there is another way around here to unlock it"), false);
+            return true;
+        }
+        ItemStack first = new ItemStack(ModItems.KEY_FAKE.get());
+        KeyPinItem.setPins(first, lockPins);
+        ItemStack second = first.copy();
+        player.setItemInHand(hand, first);
+        if (!player.getInventory().add(second)) {
+            player.drop(second, false);
+        }
+        player.swing(hand, true);
+        return true;
+    }
+
+    public boolean canAccess(Player player, ItemStack held) {
+        if (!locked) {
+            return true;
+        }
+        if (!held.isEmpty() && (held.is(ModItems.KEY.get()) || held.is(ModItems.KEY_FAKE.get()))
+                && KeyPinItem.getPins(held) == lockPins) {
+            LegacySoundPlayer.playSoundAtPlayer(player, "hbm:block.lockOpen", 1.0F, 1.0F);
+            return true;
+        }
+        return tryPick(player, held);
+    }
+
     public void playOpenSound() {
         if (level != null && !level.isClientSide) {
             LegacySoundPlayer.playLegacyStorageOpen(level, worldPosition, 0.5F, 1.0F);
@@ -331,6 +405,11 @@ public class MassStorageBlockEntity extends BlockEntity implements MenuProvider,
             tag.putBoolean(LEGACY_OUTPUT_TAG, true);
             wrote = true;
         }
+        if (locked) {
+            tag.putInt(LEGACY_LOCK_TAG, lockPins);
+            tag.putDouble(LEGACY_LOCK_MOD_TAG, lockMod);
+            wrote = true;
+        }
         tag.putInt(LEGACY_CAPACITY_TAG, capacity());
         if (!wrote && tag.size() == 1 && tag.contains(com.hbm.ntm.item.LegacyStateBlockItem.TAG_VARIANT)) {
             return;
@@ -350,6 +429,15 @@ public class MassStorageBlockEntity extends BlockEntity implements MenuProvider,
         output = tag.getBoolean(LEGACY_OUTPUT_TAG);
         if (tag.contains(LEGACY_CAPACITY_TAG)) {
             capacity = tag.getInt(LEGACY_CAPACITY_TAG);
+        }
+        if (tag.contains(LEGACY_LOCK_TAG)) {
+            lockPins = tag.getInt(LEGACY_LOCK_TAG);
+            lockMod = tag.contains(LEGACY_LOCK_MOD_TAG) ? tag.getDouble(LEGACY_LOCK_MOD_TAG) : 0.1D;
+            locked = true;
+        } else {
+            lockPins = 0;
+            lockMod = 0.1D;
+            locked = false;
         }
         setChangedAndUpdate();
     }
@@ -403,6 +491,10 @@ public class MassStorageBlockEntity extends BlockEntity implements MenuProvider,
         tag.putBoolean(LEGACY_OUTPUT_TAG, output);
         tag.putInt(LEGACY_CAPACITY_TAG, capacity());
         tag.putByte(LEGACY_REDSTONE_TAG, (byte) redstone);
+        tag.putInt(LEGACY_LOCK_TAG, lockPins);
+        tag.putBoolean(LEGACY_LOCKED_TAG, locked);
+        tag.putDouble(LEGACY_LOCK_MOD_TAG, lockMod);
+        tag.putBoolean(LEGACY_CHEESABLE_TAG, cheesable);
     }
 
     @Override
@@ -417,6 +509,10 @@ public class MassStorageBlockEntity extends BlockEntity implements MenuProvider,
             capacity = MassStorageBlock.capacity(0);
         }
         redstone = tag.getByte(LEGACY_REDSTONE_TAG) & 255;
+        lockPins = tag.getInt(LEGACY_LOCK_TAG);
+        locked = tag.getBoolean(LEGACY_LOCKED_TAG);
+        lockMod = tag.contains(LEGACY_LOCK_MOD_TAG) ? tag.getDouble(LEGACY_LOCK_MOD_TAG) : 0.1D;
+        cheesable = !tag.contains(LEGACY_CHEESABLE_TAG) || tag.getBoolean(LEGACY_CHEESABLE_TAG);
     }
 
     @Override
@@ -473,6 +569,62 @@ public class MassStorageBlockEntity extends BlockEntity implements MenuProvider,
     public void invalidateCaps() {
         super.invalidateCaps();
         itemCapability.invalidate();
+    }
+
+    private boolean tryPick(Player player, ItemStack held) {
+        if (player == null || level == null) {
+            return false;
+        }
+        boolean canPick = false;
+        double chanceOfSuccess = lockMod * 100.0D;
+
+        if (!held.isEmpty() && held.is(ModItems.PIN.get()) && hasScrewdriver(player)) {
+            held.shrink(1);
+            canPick = true;
+        } else if (!held.isEmpty() && held.is(ModItems.SCREWDRIVER.get()) && consumeOnePin(player)) {
+            canPick = true;
+        }
+
+        if (!canPick) {
+            return false;
+        }
+
+        if (isWearingLockpickJacket(player)) {
+            chanceOfSuccess *= 100.0D;
+        }
+
+        if (chanceOfSuccess > level.random.nextDouble() * 100.0D) {
+            LegacySoundPlayer.playSoundAtPlayer(player, "hbm:item.pinUnlock", 1.0F, 1.0F);
+            return true;
+        }
+
+        LegacySoundPlayer.playSoundAtPlayer(player, "hbm:item.pinBreak", 1.0F,
+                0.8F + level.random.nextFloat() * 0.2F);
+        return false;
+    }
+
+    private static boolean hasScrewdriver(Player player) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.is(ModItems.SCREWDRIVER.get())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean consumeOnePin(Player player) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.is(ModItems.PIN.get())) {
+                stack.shrink(1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isWearingLockpickJacket(Player player) {
+        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        return chest.is(ModItems.JACKET.get()) || chest.is(ModItems.JACKET2.get());
     }
 
     private void setChangedAndUpdate() {

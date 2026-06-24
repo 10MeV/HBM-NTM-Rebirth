@@ -20,6 +20,12 @@
       "status": "missing_template"
     },
     {
+      "legacy_class": "FusionRecipes",
+      "legacy_file": "hbmFusion.json",
+      "modern_recipe_type": "fusion_reactor",
+      "status": "missing_template"
+    },
+    {
       "legacy_class": "PrecAssRecipes",
       "legacy_file": "hbmPrecisionAssembly.json",
       "modern_recipe_type": "precass",
@@ -33,5 +39,5 @@
     }
   ],
   "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes",
-  "supported_generic_handler_count": 5
+  "supported_generic_handler_count": 6
 }

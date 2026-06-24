@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -36,10 +37,21 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
                 blockEntity.getInterpolatedPress(partialTick), BasicMachineBlockEntity.MAX_PRESS);
 
         poseStack.pushPose();
+        poseStack.translate(0.5D, 0.0D, 0.5D);
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        ObjRenderContext bodyContext = new ObjRenderContext(poseStack, buffer, blockEntity.getBlockState(),
+                modelLight, packedOverlay).withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
+        ObjMachineModels.PRESS_BODY_LEGACY.renderAll(ObjMachineModels.PRESS_BODY_TEXTURE, bodyContext);
+        poseStack.popPose();
+
+        poseStack.pushPose();
         LegacyTileRenderPlans.TranslatedModelPartPlan head = plan.head();
+        poseStack.translate(0.5D, 0.0D, 0.5D);
+        poseStack.scale(0.99F, 1.0F, 0.99F);
         poseStack.translate(head.translateX(), head.translateY(), head.translateZ());
-        ObjMachineModels.PRESS.renderPart("Head", new ObjRenderContext(poseStack, buffer, blockEntity.getBlockState(),
-                modelLight, packedOverlay));
+        ObjRenderContext headContext = new ObjRenderContext(poseStack, buffer, blockEntity.getBlockState(),
+                modelLight, packedOverlay).withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
+        ObjMachineModels.PRESS_HEAD_LEGACY.renderAll(ObjMachineModels.PRESS_HEAD_TEXTURE, headContext);
         poseStack.popPose();
 
         if (!plan.item().active()) {

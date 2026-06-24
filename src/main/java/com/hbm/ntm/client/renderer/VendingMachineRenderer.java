@@ -5,6 +5,7 @@ import com.hbm.ntm.block.VendingMachineBlock;
 import com.hbm.ntm.blockentity.VendingMachineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -17,6 +18,10 @@ import net.minecraft.world.level.block.state.BlockState;
 public class VendingMachineRenderer implements BlockEntityRenderer<VendingMachineBlockEntity> {
     public static final ResourceLocation TEXTURE = ObjMachineModels.VENDING_MACHINE_TEXTURE;
     public static final LegacyWavefrontModel MODEL = ObjMachineModels.VENDING_MACHINE;
+    private static final LegacyWavefrontModel.SelectionHandle SODA =
+            MODEL.prepareRenderOnlyInCallOrder("Soda");
+    private static final LegacyWavefrontModel.SelectionHandle OBAMNA =
+            MODEL.prepareRenderOnlyInCallOrder("Obamna");
 
     public VendingMachineRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -48,7 +53,8 @@ public class VendingMachineRenderer implements BlockEntityRenderer<VendingMachin
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
-        MODEL.renderPart(variant == 0 ? "Soda" : "Obamna", TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+        MODEL.renderOnlyInCallOrder(TEXTURE, new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay),
+                variant == 0 ? SODA : OBAMNA);
         poseStack.popPose();
     }
 

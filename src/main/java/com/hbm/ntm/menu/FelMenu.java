@@ -99,7 +99,7 @@ public class FelMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, false)) {
                 return ItemStack.EMPTY;
             }
-        } else if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        } else if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             if (!moveItemStackTo(stack, FelBlockEntity.SLOT_BATTERY, FelBlockEntity.SLOT_BATTERY + 1, false)) {
                 return ItemStack.EMPTY;
             }

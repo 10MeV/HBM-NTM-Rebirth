@@ -4,13 +4,14 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.ResearchReactorMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.TileControlPacket;
+import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -57,6 +58,8 @@ public class ResearchReactorScreen extends AbstractContainerScreen<ResearchReact
             graphics.blit(TEXTURE, leftPos + 44, topPos + 97, 176, 8, 11, 20);
             buttonTimer--;
         }
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 14, topPos + 23, 3);
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 14, topPos + 61, 2);
         drawDisplay(graphics, 14, 25, menu.getTotalFlux(), 4);
         drawDisplay(graphics, 12, 63, menu.getTemperatureDisplay(), 3);
         drawDisplay(graphics, 5, 101, parseLevelField(), 3);
@@ -76,9 +79,15 @@ public class ResearchReactorScreen extends AbstractContainerScreen<ResearchReact
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(-14, 23, 16, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal("Water on the reactor sides cools it."), mouseX, mouseY);
+            LegacyGuiElements.renderTooltip(graphics, font, java.util.List.of(
+                    Component.literal("The reactor has to be submerged"),
+                    Component.literal("in water on its sides to cool."),
+                    Component.literal("The neutron flux is provided to"),
+                    Component.literal("adjacent breeding reactors.")), mouseX, mouseY);
         } else if (isHovering(-14, 61, 16, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal("Plate fuel needs neutron flux to start."), mouseX, mouseY);
+            LegacyGuiElements.renderTooltip(graphics, font, java.util.List.of(
+                    Component.literal("This reactor is fueled with plate fuel."),
+                    Component.literal("The reaction needs a neutron source to start.")), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
@@ -116,8 +125,8 @@ public class ResearchReactorScreen extends AbstractContainerScreen<ResearchReact
         tag.putDouble("level", percent * 0.01D);
         ModMessages.sendToServer(new TileControlPacket(menu.getBlockEntity().getBlockPos(), tag));
         buttonTimer = 15;
-        if (minecraft != null && minecraft.player != null) {
-            minecraft.player.playSound(SoundEvents.LEVER_CLICK, 0.5F, 1.0F);
+        if (minecraft != null) {
+            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.BLOCK_RBMK_AZ5_COVER.get(), 0.5F));
         }
     }
 

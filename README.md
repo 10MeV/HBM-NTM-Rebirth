@@ -4,8 +4,6 @@ HBM-NTM: Rebirth is a Forge 1.20.1 rebuild of Hbm's Nuclear Tech Mod. It starts 
 
 The port uses modern Forge systems where Minecraft 1.20.1 requires different registration, rendering, data, networking, menu, and capability code. Legacy behavior remains the baseline for migrated features, but this project is not limited to one-to-one reproduction.
 
-The in-game display name is `HBM-NTM: Rebirth`. The technical Forge mod id and resource namespace are `hbm_ntm_rebirth`; Forge mod ids cannot contain uppercase letters or a colon, so `HBM-NTM:Rebirth` is not a valid `modId`.
-
 ## Status
 
 This is an active rebuild project, not a complete 1.7.10 parity release yet. Ported systems are documented in local engineering notes, and the migration policy is source-first: gameplay behavior, item ids, machine contracts, recipes, renderer semantics, and resource choices are checked against the original 1.7.10 code before implementation.

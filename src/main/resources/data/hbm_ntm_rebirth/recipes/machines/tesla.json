@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "CCC",
+    "PIP",
+    "WTW"
+  ],
+  "key": {
+    "C": { "item": "hbm_ntm_rebirth:coil_copper" },
+    "P": { "tag": "forge:ingots/any_plastic" },
+    "I": { "tag": "forge:ingots/iron" },
+    "W": { "tag": "minecraft:planks" },
+    "T": { "item": "hbm_ntm_rebirth:machine_transformer" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:tesla"
+  },
+  "show_notification": true
+}

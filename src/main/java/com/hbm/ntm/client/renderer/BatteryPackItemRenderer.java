@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -13,11 +14,16 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
 
 public class BatteryPackItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final ResourceLocation MODEL_LOCATION = new ResourceLocation(HbmNtm.MOD_ID, "models/machines/battery.obj");
     private static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/battery_lead.png");
     private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, DEFAULT_TEXTURE).asVBO();
+    private static final LegacyWavefrontModel.SelectionHandle BATTERY =
+            MODEL.prepareRenderOnlyInCallOrder("Battery");
+    private static final LegacyWavefrontModel.SelectionHandle CAPACITOR =
+            MODEL.prepareRenderOnlyInCallOrder("Capacitor");
 
     public static final BatteryPackItemRenderer INSTANCE = new BatteryPackItemRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(),
@@ -39,12 +45,9 @@ public class BatteryPackItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         ResourceLocation texture = new ResourceLocation(HbmNtm.MOD_ID,
                 "textures/models/machines/" + batteryPack.getLegacyTextureName() + ".png");
-        MODEL.renderPart(batteryPack.isCapacitor() ? "Capacitor" : "Battery",
-                texture,
-                poseStack,
-                buffer,
-                packedLight,
-                packedOverlay);
+        MODEL.renderOnlyInCallOrder(texture,
+                new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(), packedLight, packedOverlay),
+                batteryPack.isCapacitor() ? CAPACITOR : BATTERY);
 
         poseStack.popPose();
     }

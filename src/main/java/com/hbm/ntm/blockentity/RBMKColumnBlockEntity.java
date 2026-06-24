@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.RBMKColumnBlock;
 import com.hbm.ntm.block.LegacyCoriumFiniteBlock;
+import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
@@ -75,11 +76,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -107,7 +111,7 @@ import java.util.Set;
 public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         implements RBMKNeutronColumn, RBMKAbsorberColumn, RBMKControlColumn, RBMKRodColumn,
         RBMKOutgasserColumn, IRBMKFluxReceiver, IRBMKLoadable, HbmStandardFluidReceiver,
-        HbmStandardFluidSender, HbmEnergyReceiver, RORValueProvider, RORInteractive {
+        HbmStandardFluidSender, HbmEnergyReceiver, RORValueProvider, RORInteractive, CopiableSettings {
     public static final String TAG_HEAT = "heat";
     public static final String TAG_REASIM_WATER = "reasimWater";
     public static final String TAG_REASIM_STEAM = "reasimSteam";
@@ -1272,7 +1276,7 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
                         step.heatRequired(),
                         step.producedType().getTemperature(),
                         efficiency);
-        if (step != null && heaterOutputTank.isEmpty()) {
+        if (step != null) {
             heaterOutputTank.setTankType(step.producedType());
         }
 
@@ -1579,6 +1583,95 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
             return null;
         }
         return null;
+    }
+
+    @Override
+    public boolean supportsSettingsCopy(Level level, BlockPos pos) {
+        return hasOperationalLayout() && kind().control();
+    }
+
+    @Override
+    public CompoundTag getSettings(Level level, BlockPos pos) {
+        CompoundTag tag = new CompoundTag();
+        if (!hasOperationalLayout() || !kind().control()) {
+            return tag;
+        }
+        if (kind().automatic()) {
+            tag.putDouble(TAG_LEVEL_LOWER, levelLower);
+            tag.putDouble(TAG_LEVEL_UPPER, levelUpper);
+            tag.putDouble(TAG_HEAT_LOWER, heatLower);
+            tag.putDouble(TAG_HEAT_UPPER, heatUpper);
+            tag.putInt(TAG_FUNCTION, function.ordinal());
+        } else if (color != null) {
+            tag.putInt(TAG_COLOR, color.ordinal());
+        }
+        return tag;
+    }
+
+    @Override
+    public void pasteSettings(CompoundTag tag, int index, Level level, Player player, BlockPos pos) {
+        if (tag == null || !hasOperationalLayout() || !kind().control()) {
+            return;
+        }
+        if (kind().automatic()) {
+            if (tag.contains(TAG_LEVEL_LOWER)) {
+                levelLower = tag.getDouble(TAG_LEVEL_LOWER);
+            }
+            if (tag.contains(TAG_LEVEL_UPPER)) {
+                levelUpper = tag.getDouble(TAG_LEVEL_UPPER);
+            }
+            if (tag.contains(TAG_HEAT_LOWER)) {
+                heatLower = tag.getDouble(TAG_HEAT_LOWER);
+            }
+            if (tag.contains(TAG_HEAT_UPPER)) {
+                heatUpper = tag.getDouble(TAG_HEAT_UPPER);
+            }
+            if (tag.contains(TAG_FUNCTION)) {
+                function = safeAutoFunction(tag.getInt(TAG_FUNCTION));
+            }
+        } else if (tag.contains(TAG_COLOR)) {
+            color = safeControlColor(tag.getInt(TAG_COLOR));
+        } else {
+            color = null;
+        }
+        syncSettingsChange();
+    }
+
+    @Override
+    public List<Component> infoForDisplay(Level level, BlockPos pos) {
+        if (!hasOperationalLayout() || !kind().control()) {
+            return List.of();
+        }
+        if (kind().automatic()) {
+            return List.of(
+                    Component.literal("Level lower: " + levelLower),
+                    Component.literal("Level upper: " + levelUpper),
+                    Component.literal("Heat lower: " + heatLower),
+                    Component.literal("Heat upper: " + heatUpper),
+                    Component.literal("Function: " + function.name()));
+        }
+        return List.of(Component.literal("Color: " + (color == null ? "none" : color.name())));
+    }
+
+    private static RBMKControlRodPlanner.RBMKColor safeControlColor(int index) {
+        RBMKControlRodPlanner.RBMKColor[] colors = RBMKControlRodPlanner.RBMKColor.values();
+        return index >= 0 && index < colors.length ? colors[index] : null;
+    }
+
+    private static RBMKControlRodPlanner.RBMKFunction safeAutoFunction(int index) {
+        RBMKControlRodPlanner.RBMKFunction[] functions = RBMKControlRodPlanner.RBMKFunction.values();
+        return index >= 0 && index < functions.length ? functions[index] : RBMKControlRodPlanner.RBMKFunction.LINEAR;
+    }
+
+    private void syncSettingsChange() {
+        setChanged();
+        if (level != null) {
+            BlockState state = getBlockState();
+            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
+            if (!level.isClientSide) {
+                networkPackNT(25);
+            }
+        }
     }
 
     private void reduceHeat(double amount) {
@@ -2163,6 +2256,107 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        writeLegacyRbmkBasePacket(data);
+        RBMKColumnBlock.Kind kind = kind();
+        if (kind.rod()) {
+            data.writeDouble(rodFluxState.lastFluxQuantity());
+            data.writeDouble(rodFluxState.lastFluxRatio());
+            data.writeBoolean(rodFluxState.hasRod());
+            data.writeInt(rodFluxState.rodColor());
+        }
+        if (kind.control()) {
+            data.writeDouble(controlState.level());
+            data.writeDouble(controlState.targetLevel());
+            data.writeLong(controlState.power());
+            data.writeBoolean(controlState.hasPower());
+            if (!kind.automatic()) {
+                data.writeDouble(startingLevel);
+                data.writeInt(color == null ? -1 : color.ordinal());
+            } else {
+                data.writeDouble(levelLower);
+                data.writeDouble(levelUpper);
+                data.writeDouble(heatLower);
+                data.writeDouble(heatUpper);
+                data.writeInt(function.ordinal());
+            }
+        }
+        switch (kind) {
+            case BOILER -> {
+                writeTank(data, boilerSteamTank);
+                writeTank(data, boilerFeedTank);
+            }
+            case HEATER -> {
+                writeTank(data, heaterFeedTank);
+                writeTank(data, heaterOutputTank);
+            }
+            case COOLER -> {
+                writeTank(data, coolerColdTank);
+                writeTank(data, coolerWarmTank);
+            }
+            case OUTGASSER -> {
+                writeTank(data, outgasserGasTank);
+                data.writeDouble(outgasserState.progress());
+            }
+            default -> {
+            }
+        }
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyRbmkBasePacket(data);
+        RBMKColumnBlock.Kind kind = kind();
+        if (kind.rod()) {
+            rodFluxState.setLegacyClientFlux(data.readDouble(), data.readDouble());
+            rodFluxState.setHasRod(data.readBoolean());
+            rodFluxState.setRodColor(data.readInt());
+        }
+        if (kind.control()) {
+            controlState.setLevel(data.readDouble());
+            controlState.setTargetLevel(data.readDouble());
+            controlState.setPower(data.readLong());
+            controlState.setHasPower(data.readBoolean());
+            if (!kind.automatic()) {
+                startingLevel = data.readDouble();
+                int colorIndex = data.readInt();
+                RBMKControlRodPlanner.RBMKColor[] colors = RBMKControlRodPlanner.RBMKColor.values();
+                color = colorIndex >= 0 && colorIndex < colors.length ? colors[colorIndex] : null;
+            } else {
+                levelLower = data.readDouble();
+                levelUpper = data.readDouble();
+                heatLower = data.readDouble();
+                heatUpper = data.readDouble();
+                int functionIndex = data.readInt();
+                RBMKControlRodPlanner.RBMKFunction[] functions = RBMKControlRodPlanner.RBMKFunction.values();
+                function = functionIndex >= 0 && functionIndex < functions.length
+                        ? functions[functionIndex] : RBMKControlRodPlanner.RBMKFunction.LINEAR;
+            }
+        }
+        switch (kind) {
+            case BOILER -> {
+                readTank(data, boilerSteamTank);
+                readTank(data, boilerFeedTank);
+            }
+            case HEATER -> {
+                readTank(data, heaterFeedTank);
+                readTank(data, heaterOutputTank);
+            }
+            case COOLER -> {
+                readTank(data, coolerColdTank);
+                readTank(data, coolerWarmTank);
+            }
+            case OUTGASSER -> {
+                readTank(data, outgasserGasTank);
+                outgasserState.setProgress(data.readDouble());
+            }
+            default -> {
+            }
+        }
+        returnFixedTankTypes();
+    }
+
     private void loadStorageItems(CompoundTag tag) {
         for (int slot = 0; slot < storageItems.getSlots(); slot++) {
             storageItems.setStackInSlot(slot, ItemStack.EMPTY);
@@ -2209,6 +2403,28 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
                 heaterItems.setStackInSlot(slot, legacyItems.get(slot));
             }
         }
+    }
+
+    private void writeLegacyRbmkBasePacket(FriendlyByteBuf data) {
+        data.writeDouble(heat);
+        data.writeInt(reasimWater);
+        data.writeInt(reasimSteam);
+        data.writeByte((byte) craneIndicator);
+    }
+
+    private void readLegacyRbmkBasePacket(FriendlyByteBuf data) {
+        heat = data.readDouble();
+        reasimWater = data.readInt();
+        reasimSteam = data.readInt();
+        craneIndicator = data.readByte();
+    }
+
+    private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.write(data, tank);
+    }
+
+    private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.read(data, tank);
     }
 
     @Override
@@ -2538,6 +2754,9 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
             if (!hasOperationalLayout() || stack.isEmpty() || slot < 0 || slot >= delegate.getSlots()) {
                 return stack;
             }
+            if (!delegate.isItemValid(slot, stack)) {
+                return stack;
+            }
             ItemStack existing = delegate.getStackInSlot(slot);
             int limit = Math.min(delegate.getSlotLimit(slot), stack.getMaxStackSize());
             if (existing.isEmpty()) {
@@ -2577,7 +2796,8 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return hasOperationalLayout() && slot >= 0 && slot < delegate.getSlots();
+            return hasOperationalLayout() && slot >= 0 && slot < delegate.getSlots()
+                    && delegate.isItemValid(slot, stack);
         }
 
         @Override
@@ -2601,7 +2821,7 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
 
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            if (!hasOperationalLayout() || slot != 0 || stack.isEmpty()) {
+            if (!isItemValid(slot, stack) || stack.isEmpty()) {
                 return stack;
             }
             int limit = Math.min(getSlotLimit(slot), stack.getMaxStackSize());
@@ -2655,12 +2875,12 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
 
         @Override
         public int getSlotLimit(int slot) {
-            return slot == 0 ? 64 : 0;
+            return slot == 0 ? 1 : 0;
         }
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return hasOperationalLayout() && slot == 0;
+            return hasOperationalLayout() && slot == 0 && stack.getItem() instanceof RBMKFuelRodItem;
         }
 
         @Override
@@ -2668,7 +2888,13 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
             if (!hasOperationalLayout() || slot != 0) {
                 return;
             }
+            if (!stack.isEmpty() && !(stack.getItem() instanceof RBMKFuelRodItem)) {
+                return;
+            }
             fuelRod = stack.copy();
+            if (!fuelRod.isEmpty()) {
+                fuelRod.setCount(1);
+            }
             if (fuelRod.isEmpty()) {
                 rodFluxState.clearRodTick();
             } else if (fuelRod.getItem() instanceof RBMKFuelRodItem) {

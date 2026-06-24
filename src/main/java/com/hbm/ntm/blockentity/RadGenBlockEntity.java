@@ -352,7 +352,13 @@ public class RadGenBlockEntity extends BlockEntity implements MenuProvider, HbmE
 
     @Override
     public AABB getRenderBoundingBox() {
-        return LegacyMachineRenderBounds.visibleMultiblockOr(this, super.getRenderBoundingBox());
+        Direction facing = getBlockState().hasProperty(HorizontalMachineBlock.FACING)
+                ? getBlockState().getValue(HorizontalMachineBlock.FACING)
+                : Direction.EAST;
+        return switch (facing) {
+            case NORTH, SOUTH -> new AABB(worldPosition.offset(-2, 0, -4), worldPosition.offset(3, 4, 4));
+            default -> new AABB(worldPosition.offset(-4, 0, -2), worldPosition.offset(4, 4, 3));
+        };
     }
 
     @Override

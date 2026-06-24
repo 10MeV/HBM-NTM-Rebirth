@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:tank_steel" },
+      "count": 4
+    },
+    {
+      "ingredient": { "tag": "forge:pipes/steel" },
+      "count": 3,
+      "legacy_ore": "pipeSteel"
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/titanium" },
+      "count": 12,
+      "legacy_ore": "ingotTitanium"
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/copper" },
+      "count": 8,
+      "legacy_ore": "ingotCopper"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:heater_oilburner"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

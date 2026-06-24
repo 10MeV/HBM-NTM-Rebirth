@@ -13,6 +13,7 @@ import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -23,6 +24,16 @@ import java.util.Map;
 
 public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantBlockEntity> {
     private static final Map<LegacyMachineDefinition, LegacyWavefrontModel> MODELS = new IdentityHashMap<>();
+    private static final LegacyWavefrontModel.SelectionHandle BASE =
+            ObjMachineModels.CHEMICAL_PLANT.prepareRenderOnlyInCallOrder("Base");
+    private static final LegacyWavefrontModel.SelectionHandle FRAME =
+            ObjMachineModels.CHEMICAL_PLANT.prepareRenderOnlyInCallOrder("Frame");
+    private static final LegacyWavefrontModel.SelectionHandle SLIDER =
+            ObjMachineModels.CHEMICAL_PLANT.prepareRenderOnlyInCallOrder("Slider");
+    private static final LegacyWavefrontModel.SelectionHandle SPINNER =
+            ObjMachineModels.CHEMICAL_PLANT.prepareRenderOnlyInCallOrder("Spinner");
+    private static final LegacyWavefrontModel.SelectionHandle FLUID =
+            ObjMachineModels.CHEMICAL_PLANT.prepareRenderOnlyInCallOrder("Fluid");
 
     public ChemicalPlantRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -57,16 +68,18 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
+        ResourceLocation texture = definition.textureLocation();
 
-        model.renderPart("Base", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+        renderModelPart(model, "Base", texture, context);
         if (chemicalPlant.shouldRenderFrame()) {
-            model.renderPart("Frame", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+            renderModelPart(model, "Frame", texture, context);
         }
 
         LegacyTileRenderPlans.ChemicalPlantMachinePlan machinePlan =
                 LegacyTileRenderPlans.chemicalPlantMachinePlan(anim);
-        renderTranslatedPart(model, machinePlan.slider(), definition, poseStack, buffer, modelLight, packedOverlay);
-        renderRotatingPart(model, machinePlan.spinner(), definition, poseStack, buffer, modelLight, packedOverlay);
+        renderTranslatedPart(model, machinePlan.slider(), texture, poseStack, context);
+        renderRotatingPart(model, machinePlan.spinner(), texture, poseStack, context);
 
         renderProcessingFluid(chemicalPlant, state, model, poseStack, buffer, modelLight, packedOverlay, anim);
 
@@ -74,20 +87,20 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
     }
 
     private static void renderTranslatedPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.TranslatedModelPartPlan part, LegacyMachineDefinition definition,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+            LegacyTileRenderPlans.TranslatedModelPartPlan part, ResourceLocation texture, PoseStack poseStack,
+            ObjRenderContext context) {
         if (!part.active()) {
             return;
         }
         poseStack.pushPose();
         poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-        model.renderPart(part.partName(), definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        renderModelPart(model, part.partName(), texture, context);
         poseStack.popPose();
     }
 
     private static void renderRotatingPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.RotatingModelPartPlan part, LegacyMachineDefinition definition,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture, PoseStack poseStack,
+            ObjRenderContext context) {
         poseStack.pushPose();
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
         if (part.axisX() != 0.0F) {
@@ -100,7 +113,7 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
             poseStack.mulPose(Axis.ZP.rotationDegrees((float) (part.angleDegrees() * part.axisZ())));
         }
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        model.renderPart(part.partName(), definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        renderModelPart(model, part.partName(), texture, context);
         poseStack.popPose();
     }
 
@@ -125,7 +138,31 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
                 .withRenderMode(plan.blend().modernRenderMode())
                 .withLegacyTextureMatrix(1.0F, 1.0F,
                         (float) plan.textureTranslateU(), (float) plan.textureTranslateV());
-        model.renderPart("Fluid", ObjMachineModels.CHEMICAL_PLANT_FLUID_TEXTURE, context);
+        renderModelPart(model, "Fluid", ObjMachineModels.CHEMICAL_PLANT_FLUID_TEXTURE, context);
+    }
+
+    private static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            ObjRenderContext context) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(partName);
+        if (handle != null) {
+            model.renderOnlyInCallOrder(texture, context, handle);
+            return;
+        }
+        model.renderPart(partName, texture, context);
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
+        if (partName == null) {
+            return null;
+        }
+        return switch (partName) {
+            case "Base" -> BASE;
+            case "Frame" -> FRAME;
+            case "Slider" -> SLIDER;
+            case "Spinner" -> SPINNER;
+            case "Fluid" -> FLUID;
+            default -> null;
+        };
     }
 
     private static List<Integer> fluidColors(List<HbmFluidStack> stacks) {

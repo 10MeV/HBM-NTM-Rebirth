@@ -76,6 +76,11 @@ public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockE
     }
 
     @Override
+    protected String legacyContainerKey() {
+        return "container.catalyticReformer";
+    }
+
+    @Override
     protected boolean tickLegacyMachine(Level level, BlockPos pos, BlockState state) {
         boolean changed = setInputTypeFromIdentifier();
         changed |= processFluidContainers();

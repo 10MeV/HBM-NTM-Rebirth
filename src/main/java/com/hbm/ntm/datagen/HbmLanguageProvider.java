@@ -35,6 +35,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("advancements.hbm_ntm_rebirth.rbmk_boom.description", "What is the cost of lies?");
         add("advancements.hbm_ntm_rebirth.zirnox_boom.title", "CIRNOX");
         add("advancements.hbm_ntm_rebirth.zirnox_boom.description", "cope, seethe, mald");
+        add("advancements.hbm_ntm_rebirth.watz_boom.title", "Disgusting");
+        add("advancements.hbm_ntm_rebirth.watz_boom.description", "Drain your septic tank next time.");
         add("advancements.hbm_ntm_rebirth.rad_poison.title", "Yay, Radiation!");
         add("advancements.hbm_ntm_rebirth.rad_poison.description", "Suffer the effects of radiation poisoning.");
         add("advancements.hbm_ntm_rebirth.rad_death.title", "Ouch, Radiation!");
@@ -50,6 +52,7 @@ public class HbmLanguageProvider extends LanguageProvider {
                 "SING, SING ME THE SONG OF THE KAUAI MOHO");
         add("advancements.hbm_ntm_rebirth.digamma_kauai_moho.description",
                 "Everything is awful, here's some hot choccy.");
+        addIcfFuelTranslations();
         add("block.hbm_ntm_rebirth.machine_weapon_table", "Weapon Modification Table");
         add("container.weaponsTable", "Weapon Modification Table");
         add("armor.dash", "Grants %s dashes");
@@ -751,6 +754,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.starmetal_pickaxe", "Starmetal Pickaxe");
         add("item.hbm_ntm_rebirth.starmetal_axe", "Starmetal Axe");
         add("item.hbm_ntm_rebirth.starmetal_shovel", "Starmetal Shovel");
+        addMeteoriteSwordTranslations();
         add("item.hbm_ntm_rebirth.centri_stick", "Centrifuge on a Stick");
         add("item.hbm_ntm_rebirth.smashing_hammer", "Smashing Hammer");
         add("item.hbm_ntm_rebirth.elec_sword", "Stunstick");
@@ -1438,7 +1442,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_difurnace_off", "Blast Furnace (LEGACY)");
         add("block.hbm_ntm_rebirth.machine_electric_furnace_off", "Electric Furnace");
         add("block.hbm_ntm_rebirth.machine_boiler_off", "Old Boiler");
+        add("block.hbm_ntm_rebirth.machine_detector", "Power Detector");
         add("block.hbm_ntm_rebirth.machine_shredder", "Shredder");
+        add("block.hbm_ntm_rebirth.refueler", "Refueling Station");
         add("block.hbm_ntm_rebirth.machine_turbine", "Steam Turbine");
         add("block.hbm_ntm_rebirth.machine_industrial_turbine", "Industrial Steam Turbine");
         add("block.hbm_ntm_rebirth.machine_large_turbine", "Industrial Steam Turbine (LEGACY)");
@@ -1482,6 +1488,18 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.radio_torch_controller", "Redstone-over-Radio Controller");
         add("block.hbm_ntm_rebirth.radio_autocal", "AUTOCAL Automatic Calculator");
         add("block.hbm_ntm_rebirth.radio_telex", "Telex Machine");
+        add("block.hbm_ntm_rebirth.radiobox", "Rosenberg Pest Control Box");
+        add("block.hbm_ntm_rebirth.radiorec", "FM Radio");
+        add("container.radio", "FM Radio");
+        add("container.microwave", "Microwave");
+        add("container.machineShredder", "Shredder");
+        add("container.machineCrucible", "Crucible");
+        add("container.machineFEL", "FEL");
+        add("container.blastFurnace", "Blast Furnace");
+        add("container.machineFunnel", "Combinator Funnel");
+        add("container.keyForge", "Locksmith Table");
+        add("block.hbm_ntm_rebirth.machine_storage_drum", "Nuclear Waste Disposal Drum");
+        add("container.storageDrum", "Nuclear Waste Disposal Drum");
         add("block.hbm_ntm_rebirth.rbmk_display_blank", "Blank Redstone-over-Radio Panel");
         add("block.hbm_ntm_rebirth.rbmk_display", "RBMK Display Panel");
         add("block.hbm_ntm_rebirth.rbmk_gauge", "Redstone-over-Radio Gauge");
@@ -1577,6 +1595,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.struct_scaffold", "Launch Pad Scaffold Block");
         add("block.hbm_ntm_rebirth.struct_soyuz_core", "Soyuz Launcher Core Component");
         add("block.hbm_ntm_rebirth.launch_pad", "Silo Launch Pad");
+        add("block.hbm_ntm_rebirth.launch_pad_large", "Launch Pad");
         add("block.hbm_ntm_rebirth.launch_pad_rusted", "Old Launch Pad");
         add("block.hbm_ntm_rebirth.launch_table", "Large Launch Pad");
         add("block.hbm_ntm_rebirth.compact_launcher", "Compact Launch Pad");
@@ -1614,10 +1633,16 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_refinery", "Oil Refinery");
         add("block.hbm_ntm_rebirth.machine_catalytic_cracker", "Catalytic Cracking Tower");
         add("block.hbm_ntm_rebirth.machine_catalytic_reformer", "Catalytic Reformer");
+        add("block.hbm_ntm_rebirth.machine_autocrafter", "Automatic Crafting Table");
+        add("container.autocrafter", "Automatic Crafting Table");
         add("block.hbm_ntm_rebirth.machine_vacuum_distill", "Vacuum Refinery");
         add("block.hbm_ntm_rebirth.machine_fraction_tower", "Fractioning Tower");
         add("block.hbm_ntm_rebirth.machine_hydrotreater", "Hydrotreater");
         add("block.hbm_ntm_rebirth.machine_coker", "Coker Unit");
+        add("container.catalyticReformer", "Catalytic Reformer");
+        add("container.vacuumDistill", "Vacuum Refinery");
+        add("container.hydrotreater", "Hydrotreater");
+        add("container.machineCoker", "Coker Unit");
         add("block.hbm_ntm_rebirth.machine_pyrooven", "Pyrolysis Oven");
         add("block.hbm_ntm_rebirth.machine_solidifier", "Industrial Solidification Machine");
         add("block.hbm_ntm_rebirth.machine_compressor", "Compressor");
@@ -1638,7 +1663,39 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_pumpjack", "Pumpjack");
         add("block.hbm_ntm_rebirth.machine_well", "Oil Derrick");
         add("block.hbm_ntm_rebirth.machine_fracking_tower", "Hydraulic Fracking Tower");
+        add("container.oilWell", "Oil Derrick");
+        add("container.pumpjack", "Pumpjack");
+        add("container.frackingTower", "Hydraulic Fracking Tower");
         add("block.hbm_ntm_rebirth.machine_centrifuge", "Centrifuge");
+        add("container.centrifuge", "Centrifuge");
+        add("container.crystallizer", "Ore Acidizer");
+        add("container.diFurnace", "Blast Furnace");
+        add("container.electricFurnace", "Electric Furnace");
+        add("container.exposureChamber", "Exposure Chamber");
+        add("container.furnaceCombination", "Combination Oven");
+        add("container.furnaceIron", "Iron Furnace");
+        add("container.furnaceSteel", "Steel Furnace");
+        add("container.heaterFirebox", "Firebox");
+        add("container.heaterHeatex", "Heat Exchanger");
+        add("container.heaterOilburner", "Fluid Burner");
+        add("container.heaterOven", "Heating Oven");
+        add("container.machineAmmoPress", "Ammo Press");
+        add("container.machineArcFurnaceLarge", "Arc Furnace");
+        add("container.machineElectrolyser", "Electrolysis Machine");
+        add("container.machineMixer", "Industrial Mixer");
+        add("container.machinePrecAss", "Precision Assembly Machine");
+        add("container.machinePUREX", "PUREX");
+        add("container.machineRotaryFurnace", "Rotary Furnace");
+        add("container.machineSILEX", "SILEX");
+        add("container.machineSolderingStation", "Soldering Station");
+        add("container.machineStrandCaster", "Strand Caster");
+        add("container.machineTurbine", "Steam Turbine");
+        add("container.machineTurbofan", "Turbofan");
+        add("container.machineWoodBurner", "Wood-Burner");
+        add("container.miningLaser", "Mining Laser");
+        add("container.radGen", "Radiation-Powered Engine");
+        add("container.radiolysis", "RTG and Radiolysis Chamber");
+        add("container.turbinegas", "Combined Cycle Gas Turbine");
         add("block.hbm_ntm_rebirth.machine_gascent", "Gas Centrifuge");
         add("container.gasCentrifuge", "Gas Centrifuge");
         add("desc.gui.gasCent.enrichment", "\u00a72Enrichment\u00a7r$Uranium enrichment requires cascades.$Two-centrifuge cascades will give$uranium fuel, four-centrifuge cascades$will give total separation.");
@@ -1721,12 +1778,15 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_compressor_compact", "Compact Compressor");
         add("block.hbm_ntm_rebirth.machine_lpw2", "LPW2");
         add("block.hbm_ntm_rebirth.reactor_research", "Research Reactor");
+        add("block.hbm_ntm_rebirth.machine_controller", "Reactor Remote Control Block");
         add("block.hbm_ntm_rebirth.machine_reactor_breeding", "Breeding Reactor");
         add("block.hbm_ntm_rebirth.reactor_zirnox", "ZIRNOX Nuclear Reactor");
         add("block.hbm_ntm_rebirth.struct_watz_core", "Watz Powerplant Core Component");
         add("block.hbm_ntm_rebirth.watz_element", "Watz Reaction Chamber");
         add("block.hbm_ntm_rebirth.watz_cooler", "Watz Reactor Supercooler");
         add("block.hbm_ntm_rebirth.watz_end", "Watz Reactor Stability Element");
+        add("container.reactorControl", "Reactor Remote Control Block");
+        add("item.hbm_ntm_rebirth.reactor_sensor", "Reactor Remote Sensor");
         add("block.hbm_ntm_rebirth.struct_torus_core", "Fusion Reactor Vessel Core Component");
         add("block.hbm_ntm_rebirth.fusion_torus", "Fusion Reactor Vessel");
         add("block.hbm_ntm_rebirth.fusion_torus.desc", "Fusion reactor main component.$Requires klystron input energy to ignite plasma,$produces plasma energy and neutron flux.$Requires cooling!");
@@ -1788,7 +1848,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_turbinegas", "Combined Cycle Gas Turbine");
         add("block.hbm_ntm_rebirth.machine_ammo_press", "Ammo Press");
         add("block.hbm_ntm_rebirth.machine_transformer", "10k-20Hz Transformer");
+        add("block.hbm_ntm_rebirth.tesla", "Tesla Coil");
         add("block.hbm_ntm_rebirth.machine_forcefield", "Forcefield Emitter");
+        add("container.annihilator", "Annihilator");
         add("block.hbm_ntm_rebirth.furnace_iron", "Iron Furnace");
         add("block.hbm_ntm_rebirth.furnace_steel", "Steel Furnace");
         add("block.hbm_ntm_rebirth.furnace_combination", "Combination Oven");
@@ -1842,9 +1904,12 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.hbm_ntm_rebirth.sat_dock.info.1", "Cargo ship will land periodically to");
         add("container.hbm_ntm_rebirth.sat_dock.info.2", "deliver resources.");
         add("container.hbm_ntm_rebirth.ashpit", "Ashpit");
+        add("container.soyuzCapsule", "Cargo Landing Capsule");
+        add("container.soyuzLauncher", "Soyuz Launch Platform");
         add("container.hbm_ntm_rebirth.soyuz_capsule", "Cargo Landing Capsule");
         add("container.hbm_ntm_rebirth.soyuz_launcher", "Soyuz Launch Platform");
         add("container.hbm_ntm_rebirth.launch_pad", "Launch Pad");
+        add("container.hbm_ntm_rebirth.launch_pad_large", "Launch Pad");
         add("container.hbm_ntm_rebirth.launch_pad_rusted", "Old Launch Pad");
         add("container.hbm_ntm_rebirth.launch_table", "Large Launch Pad");
         add("container.hbm_ntm_rebirth.compact_launcher", "Compact Launch Pad");
@@ -2223,6 +2288,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.powder_aluminium", "Aluminium Powder");
         add("item.hbm_ntm_rebirth.powder_cobalt_tiny", "Tiny Pile of Cobalt Powder");
         add("item.hbm_ntm_rebirth.powder_magic", "Pulverized Enchantment");
+        add("item.hbm_ntm_rebirth.gem_alexandrite", "Alexandrite");
         add("item.hbm_ntm_rebirth.gem_sodalite", "Sodalite");
         add("item.hbm_ntm_rebirth.powder_nitan_mix", "Nitanium Blend");
         add("item.hbm_ntm_rebirth.powder_astatine", "Astatine Powder");
@@ -2231,6 +2297,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.wire_dense_copper", "Dense Copper Wire");
         add("item.hbm_ntm_rebirth.wire_dense_titanium", "Dense Titanium Wire");
         add("item.hbm_ntm_rebirth.wire_dense_neodymium", "Dense Neodymium Wire");
+        add("item.hbm_ntm_rebirth.wire_dense_dineutronium", "Dense Dineutronium Wire");
         add("item.hbm_ntm_rebirth.pa_coil_gold", "Large Gold Coil");
         add("item.hbm_ntm_rebirth.pa_coil_niobium", "Large NbTi Coil");
         add("item.hbm_ntm_rebirth.pa_coil_bscco", "Large BSCCO Coil");
@@ -2301,6 +2368,12 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.scrap", "Scrap");
         add("item.hbm_ntm_rebirth.scraps", "%s Scraps");
         add("item.hbm_ntm_rebirth.mold", "Foundry Mold");
+        add("block.hbm_ntm_rebirth.foundry_basin", "Foundry Basin");
+        add("block.hbm_ntm_rebirth.foundry_channel", "Foundry Channel");
+        add("block.hbm_ntm_rebirth.foundry_tank", "Foundry Storage Basin");
+        add("block.hbm_ntm_rebirth.foundry_mold", "Shallow Foundry Basin");
+        add("block.hbm_ntm_rebirth.foundry_outlet", "Foundry Outlet");
+        add("block.hbm_ntm_rebirth.foundry_slagtap", "Foundry Spill Outlet");
         add("item.hbm_ntm_rebirth.scrap_plastic", "Plastic Scraps");
         add("item.hbm_ntm_rebirth.scrap_oil", "Oily Scraps");
         add("item.hbm_ntm_rebirth.powder_semtex_mix", "Semtex Blend");
@@ -2770,7 +2843,7 @@ public class HbmLanguageProvider extends LanguageProvider {
                   "plate_cast_combine_steel",
                   "plate_cast_ferrouranium",
                   "plate_cast_tungsten" -> true;
-            case "wire_dense_copper", "wire_dense_titanium", "wire_dense_neodymium",
+            case "wire_dense_copper", "wire_dense_titanium", "wire_dense_neodymium", "wire_dense_dineutronium",
                  "wire_dense_mingrade" -> true;
             case "dust", "dust_tiny", "fragment_coltan", "powder_coltan", "gem_tantalium", "powder_tantalium",
                  "nugget_tantalium", "shell_aluminium", "shell_copper" -> true;
@@ -2887,6 +2960,49 @@ public class HbmLanguageProvider extends LanguageProvider {
                   "piston_set_starmetal" -> true;
             default -> false;
         };
+    }
+
+    private void addMeteoriteSwordTranslations() {
+        add("item.hbm_ntm_rebirth.meteorite_sword", "Meteorite Sword");
+        add("item.hbm_ntm_rebirth.meteorite_sword.base.desc", "Forged from a fallen star$Sharper than most terrestrial blades");
+        add("item.hbm_ntm_rebirth.meteorite_sword_seared", "Meteorite Sword (Seared)");
+        add("item.hbm_ntm_rebirth.meteorite_sword.seared.desc", "Fire strengthens the blade$Making it even more powerful");
+        add("item.hbm_ntm_rebirth.meteorite_sword_reforged", "Meteorite Sword (Reforged)");
+        add("item.hbm_ntm_rebirth.meteorite_sword.reforged.desc", "The sword has been reforged$To rectify past imperfections");
+        add("item.hbm_ntm_rebirth.meteorite_sword_hardened", "Meteorite Sword (Hardened)");
+        add("item.hbm_ntm_rebirth.meteorite_sword.hardened.desc", "Extremely high pressure has been used$To harden the blade further");
+        add("item.hbm_ntm_rebirth.meteorite_sword_alloyed", "Meteorite Sword (Alloyed)");
+        add("item.hbm_ntm_rebirth.meteorite_sword.alloyed.desc", "Cobalt fills the fissures$Strengthening the sword");
+        add("item.hbm_ntm_rebirth.meteorite_sword_machined", "Meteorite Sword (Machined)");
+        add("item.hbm_ntm_rebirth.meteorite_sword.machined.desc", "Advanced machinery was used$To refine the blade even more");
+        add("item.hbm_ntm_rebirth.meteorite_sword_treated", "Meteorite Sword (Treated)");
+        add("item.hbm_ntm_rebirth.meteorite_sword.treated.desc", "Chemicals have been applied$Making the sword more powerful");
+        add("item.hbm_ntm_rebirth.meteorite_sword_etched", "Meteorite Sword (Etched)");
+        add("item.hbm_ntm_rebirth.meteorite_sword.etched.desc", "Acids clean the material$To make this the perfect sword");
+        add("item.hbm_ntm_rebirth.meteorite_sword_bred", "Meteorite Sword (Bred)");
+        add("item.hbm_ntm_rebirth.meteorite_sword.bred.desc", "Immense heat and radiation$Compress the material");
+        add("item.hbm_ntm_rebirth.meteorite_sword_irradiated", "Meteorite Sword (Irradiated)");
+        add("item.hbm_ntm_rebirth.meteorite_sword.irradiated.desc", "The power of the Atom$Gives the sword might");
+        add("item.hbm_ntm_rebirth.meteorite_sword_fused", "Meteorite Sword (Fused)");
+        add("item.hbm_ntm_rebirth.meteorite_sword.fused.desc", "This blade has met$With the forces of the stars");
+        add("item.hbm_ntm_rebirth.meteorite_sword_baleful", "Meteorite Sword (Baleful)");
+        add("item.hbm_ntm_rebirth.meteorite_sword.baleful.desc", "This sword has met temperatures$Far beyond what normal material can endure");
+    }
+
+    private void addIcfFuelTranslations() {
+        add("icffuel.beryllium", "Beryllium");
+        add("icffuel.boron", "Boron");
+        add("icffuel.carbon", "Carbon");
+        add("icffuel.calcium", "Calcium");
+        add("icffuel.chlorine", "Chlorine");
+        add("icffuel.deuterium", "Deuterium");
+        add("icffuel.helium3", "Helium-3");
+        add("icffuel.helium4", "Helium-4");
+        add("icffuel.hydrogen", "Hydrogen");
+        add("icffuel.lithium", "Lithium");
+        add("icffuel.oxygen", "Oxygen");
+        add("icffuel.sodium", "Sodium");
+        add("icffuel.tritium", "Tritium");
     }
 
     private void addAbilityTranslations() {

@@ -63,9 +63,7 @@ public final class HbmOverheadMarkers {
 
         Camera camera = event.getCamera();
         Vec3 cameraPos = camera.getPosition();
-        PoseStack poseStack = event.getPoseStack();
-        poseStack.pushPose();
-        poseStack.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
+        PoseStack markerPose = new PoseStack();
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -79,17 +77,16 @@ public final class HbmOverheadMarkers {
         builder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
 
         for (Map.Entry<BlockPos, Marker> entry : ACTIVE.entrySet()) {
-            renderBox(builder, poseStack, entry.getKey(), entry.getValue());
+            renderBox(builder, markerPose, cameraPos, entry.getKey(), entry.getValue());
         }
         tesselator.end();
-        poseStack.popPose();
 
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
         RenderSystem.enableCull();
         RenderSystem.disableBlend();
 
-        renderLabels(minecraft, camera, player, event.getPoseStack());
+        renderLabels(minecraft, camera, player);
     }
 
     public static void clearAll() {
@@ -134,7 +131,8 @@ public final class HbmOverheadMarkers {
         }
     }
 
-    private static void renderLabels(Minecraft minecraft, Camera camera, Player player, PoseStack poseStack) {
+    private static void renderLabels(Minecraft minecraft, Camera camera, Player player) {
+        PoseStack poseStack = new PoseStack();
         for (Map.Entry<BlockPos, Marker> entry : ACTIVE.entrySet()) {
             BlockPos pos = entry.getKey();
             Marker marker = entry.getValue();
@@ -164,8 +162,8 @@ public final class HbmOverheadMarkers {
         buffer.endBatch();
     }
 
-    private static void renderBox(BufferBuilder builder, PoseStack poseStack, BlockPos pos, Marker marker) {
-        LegacyOverheadRenderer.markerBox(builder, poseStack.last(), pos, marker.color);
+    private static void renderBox(BufferBuilder builder, PoseStack poseStack, Vec3 cameraPos, BlockPos pos, Marker marker) {
+        LegacyOverheadRenderer.markerBoxRelative(builder, poseStack.last(), pos, cameraPos, marker.color, 255);
     }
 
     private record Marker(int color, long expireAt, double maxDistance, String label) {

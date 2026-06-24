@@ -3,7 +3,6 @@ package com.hbm.ntm.menu;
 import com.hbm.ntm.blockentity.WatzReactorBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.multiblock.MultiblockHelper;
-import com.hbm.ntm.recipe.WatzFuelRuntime;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -27,7 +26,7 @@ public class WatzReactorMenu extends AbstractContainerMenu {
     private final HbmFluidGuiHelper.TankData hotCoolantTank;
     private final HbmFluidGuiHelper.TankData mudTank;
     private int heat;
-    private int fluxDisplayScaled;
+    private double fluxDisplay;
     private boolean on;
     private boolean locked;
 
@@ -76,7 +75,7 @@ public class WatzReactorMenu extends AbstractContainerMenu {
     }
 
     public double getFluxDisplay() {
-        return fluxDisplayScaled / 1000.0D;
+        return fluxDisplay;
     }
 
     public boolean isOn() {
@@ -108,13 +107,11 @@ public class WatzReactorMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_SLOT_END, true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (WatzFuelRuntime.isPellet(stack)) {
+        } else {
             if (!HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 0,
                     WatzReactorBlockEntity.PELLET_SLOT_COUNT)) {
                 return ItemStack.EMPTY;
             }
-        } else {
-            return ItemStack.EMPTY;
         }
         HbmInventoryMenuHelper.finishQuickMove(slot, stack);
         return original;
@@ -122,8 +119,8 @@ public class WatzReactorMenu extends AbstractContainerMenu {
 
     private void addDataSlots() {
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getHeat, value -> heat = value);
-        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getFluxDisplayScaled,
-                value -> fluxDisplayScaled = value);
+        HbmMenuDataSlots.addDouble(this::addDataSlot, blockEntity::getFluxDisplay,
+                () -> fluxDisplay, value -> fluxDisplay = value);
         addDataSlot(new DataSlot() {
             @Override
             public int get() {

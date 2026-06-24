@@ -243,16 +243,35 @@ public abstract class LegacySteamTurbineBlockEntity extends HbmEnergyAndFluidBlo
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putInt("lastInputUsed", lastInputUsed);
-        tag.putInt("lastOutputProduced", lastOutputProduced);
-        tag.putLong("lastPowerProduced", lastPowerProduced);
-        tag.putBoolean("operational", operational);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         normalizeConfigState();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        writeLegacyTurbineRuntimeSync(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readLegacyTurbineRuntimeSync(tag);
+    }
+
+    protected void writeLegacyTurbineRuntimeSync(CompoundTag tag) {
+        tag.putInt("lastInputUsed", lastInputUsed);
+        tag.putInt("lastOutputProduced", lastOutputProduced);
+        tag.putLong("lastPowerProduced", lastPowerProduced);
+        tag.putBoolean("operational", operational);
+    }
+
+    protected void readLegacyTurbineRuntimeSync(CompoundTag tag) {
         lastInputUsed = Math.max(0, tag.getInt("lastInputUsed"));
         lastOutputProduced = Math.max(0, tag.getInt("lastOutputProduced"));
         lastPowerProduced = Math.max(0L, tag.getLong("lastPowerProduced"));

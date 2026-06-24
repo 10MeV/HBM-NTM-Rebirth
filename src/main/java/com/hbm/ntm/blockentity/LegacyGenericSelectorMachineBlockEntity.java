@@ -35,6 +35,8 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -610,7 +612,7 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
         super.saveAdditional(tag);
         writeLegacyLoadedTileNbt(tag);
         tag.putString(TAG_KIND, kind.name());
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
         tag.put(TAG_ENERGY, energy.serializeNBT());
         tag.putLong(TAG_LEGACY_POWER, energy.getPower());
         tag.putLong(TAG_LEGACY_MAX_POWER, energy.getMaxPower());
@@ -623,7 +625,7 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     public void load(CompoundTag tag) {
         super.load(tag);
         readLegacyLoadedTileNbt(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        loadItems(tag);
         if (tag.contains(TAG_ENERGY)) {
             energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
         } else if (tag.contains(TAG_LEGACY_POWER)) {
@@ -717,6 +719,19 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     }
 
     @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
     public AABB getRenderBoundingBox() {
         return kind == Kind.PUREX
                 ? new AABB(worldPosition.offset(-2, 0, -2), worldPosition.offset(3, 5, 3))
@@ -751,6 +766,15 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
+    }
+
+    private void loadItems(CompoundTag tag) {
+        if (tag.contains(HbmInventoryMenuHelper.LEGACY_ITEMS_TAG, Tag.TAG_LIST)
+                || tag.contains("Items", Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+            return;
+        }
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
     }
 
     private class AccessibleItemHandler implements IItemHandler {

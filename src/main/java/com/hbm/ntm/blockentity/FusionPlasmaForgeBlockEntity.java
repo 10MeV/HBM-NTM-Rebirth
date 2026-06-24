@@ -157,8 +157,8 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FusionPlasmaForgeBlockEntity forge) {
-        HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, forge);
         boolean changed = forge.tickServer(level);
+        HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, forge);
         forge.networkPackNT(100);
         if (changed || level.getGameTime() % 20L == 0L) {
             forge.setChanged();
@@ -250,20 +250,10 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public boolean selectRecipe(String selection) {
-        if (level == null || GenericMachineRecipeSelector.isNullSelection(selection)) {
-            selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
-            progress = 0.0D;
-            setChanged();
-            return true;
-        }
-        if (!GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.PLASMA_FORGE,
-                selection, items.getStackInSlot(SLOT_BLUEPRINT))) {
-            return false;
-        }
         selectedRecipe = GenericMachineRecipeSelector.normalize(selection);
         conformActiveRecipeTank();
         setChanged();
-        if (!level.isClientSide) {
+        if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
         return true;
@@ -280,8 +270,8 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void receiveFusionPower(long fusionPower, double neutronPower, float r, float g, float b) {
-        plasmaEnergy = Math.max(0L, fusionPower);
-        neutronEnergy = Math.max(0.0D, neutronPower);
+        plasmaEnergy = fusionPower;
+        neutronEnergy = neutronPower;
         plasmaR = r;
         plasmaG = g;
         plasmaB = b;
@@ -476,9 +466,7 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
         return GenericMachineRecipeSelector.isSelectionTag(tag)
-                && hasLegacyUseDistance(player)
-                && GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.PLASMA_FORGE,
-                GenericMachineRecipeSelector.readSelection(tag), items.getStackInSlot(SLOT_BLUEPRINT));
+                && hasLegacyUseDistance(player);
     }
 
     @Override
@@ -501,6 +489,12 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    public void onChunkUnloaded() {
+        destroyNodes();
+        super.onChunkUnloaded();
+    }
+
+    @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
             return itemHandler.cast();
@@ -509,7 +503,6 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean tickServer(Level level) {
-        ensureNodes(level);
         long oldPower = energy.getPower();
         long oldMaxPower = energy.getMaxPower();
         double oldProgress = progress;
@@ -518,13 +511,14 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         plasmaEnergySync = plasmaEnergy;
         plasmaEnergy = 0L;
 
+        runBooster();
+        ensureNodes(level);
         GenericMachineRecipe recipe = activeRecipe(level);
         updateMaxPower(recipe);
         HbmBatteryTransfer.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, getMaxPower());
         if (inputTank.getTankType() != HbmFluids.NONE) {
             refreshTrackedReceiverFluidPortsReport(List.of(inputTank), this);
         }
-        runBooster();
         boolean ignition = recipe == null || recipe.getExtraData().plasmaForge()
                 .map(extra -> extra.ignitionTemp() <= plasmaEnergySync)
                 .orElse(false);
@@ -591,7 +585,6 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (booster > 0) {
             return;
         }
-        maxBooster = 0;
         ItemStack stack = items.getStackInSlot(SLOT_BOOSTER);
         int value = boosterValue(stack);
         if (value <= 0) {
@@ -658,6 +651,8 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (providerNode != null) {
             PlasmaNodespace.destroyNode(level, providerNode.getPos());
         }
+        receiverNode = null;
+        providerNode = null;
     }
 
     private Direction facing() {
@@ -742,21 +737,11 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        data.writeInt(tank.getFill());
-        data.writeInt(tank.getMaxFill());
-        data.writeInt(tank.getTankType().getId());
-        data.writeShort((short) tank.getPressure());
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.write(data, tank);
     }
 
     private static void readTank(FriendlyByteBuf data, HbmFluidTank tank) {
-        int fill = data.readInt();
-        int maxFill = data.readInt();
-        FluidType type = HbmFluids.fromId(data.readInt());
-        int pressure = data.readShort();
-        tank.changeTankSize(maxFill);
-        tank.withPressure(pressure);
-        tank.setTankType(type);
-        tank.setFill(fill);
+        com.hbm.ntm.fluid.LegacyFluidTankPacket.read(data, tank);
     }
 
     private final class AccessibleItemHandler implements IItemHandler {

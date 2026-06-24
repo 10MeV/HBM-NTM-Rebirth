@@ -3,16 +3,26 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.HbmFluidNodeBlock;
 import com.hbm.ntm.block.FluidPipeBlock;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEntity> {
     private static final String[] BASE_TEXTURES = {"pipe_neo", "pipe_silver", "pipe_colored"};
     private static final String[] OVERLAY_TEXTURES = {"pipe_neo_overlay", "pipe_silver_overlay", "pipe_colored_overlay"};
+    private static final ResourceLocation[] BASE_TEXTURE_LOCATIONS = buildTextures(BASE_TEXTURES);
+    private static final ResourceLocation[] OVERLAY_TEXTURE_LOCATIONS = buildTextures(OVERLAY_TEXTURES);
+    private static final String[][] PARTS_BY_MASK = buildPartsByMask();
+    private static final LegacyWavefrontModel.SelectionHandle[] PART_HANDLES = buildPartHandles(PARTS_BY_MASK);
 
     public FluidPipeRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -52,26 +62,7 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
 
-        if (mask == 0) {
-            renderDuct("pX", style, color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("nX", style, color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("pY", style, color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("nY", style, color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("pZ", style, color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("nZ", style, color, poseStack, buffer, modelLight, packedOverlay);
-        } else if ((east || west) && !up && !down && !south && !north) {
-            renderDuct("pX", style, color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("nX", style, color, poseStack, buffer, modelLight, packedOverlay);
-        } else if ((up || down) && !east && !west && !south && !north) {
-            renderDuct("pY", style, color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("nY", style, color, poseStack, buffer, modelLight, packedOverlay);
-        } else if ((south || north) && !east && !west && !up && !down) {
-            renderDuct("pZ", style, color, poseStack, buffer, modelLight, packedOverlay);
-            renderDuct("nZ", style, color, poseStack, buffer, modelLight, packedOverlay);
-        } else {
-            renderConnectedParts(east, west, up, down, south, north, style, color, poseStack, buffer, modelLight,
-                    packedOverlay);
-        }
+        renderParts(mask, state, style, color, poseStack, buffer, modelLight, packedOverlay);
 
         poseStack.popPose();
     }
@@ -85,33 +76,76 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
                 && state.hasProperty(HbmFluidNodeBlock.DOWN);
     }
 
-    private static void renderConnectedParts(boolean east, boolean west, boolean up, boolean down,
-            boolean south, boolean north, int style, int color, PoseStack poseStack, MultiBufferSource buffer,
-            int packedLight, int packedOverlay) {
-        if (east) renderDuct("pX", style, color, poseStack, buffer, packedLight, packedOverlay);
-        if (west) renderDuct("nX", style, color, poseStack, buffer, packedLight, packedOverlay);
-        if (up) renderDuct("pY", style, color, poseStack, buffer, packedLight, packedOverlay);
-        if (down) renderDuct("nY", style, color, poseStack, buffer, packedLight, packedOverlay);
-        if (south) renderDuct("nZ", style, color, poseStack, buffer, packedLight, packedOverlay);
-        if (north) renderDuct("pZ", style, color, poseStack, buffer, packedLight, packedOverlay);
-
-        if (!east && !up && !south) renderDuct("ppn", style, color, poseStack, buffer, packedLight, packedOverlay);
-        if (!east && !up && !north) renderDuct("ppp", style, color, poseStack, buffer, packedLight, packedOverlay);
-        if (!west && !up && !south) renderDuct("npn", style, color, poseStack, buffer, packedLight, packedOverlay);
-        if (!west && !up && !north) renderDuct("npp", style, color, poseStack, buffer, packedLight, packedOverlay);
-        if (!east && !down && !south) renderDuct("pnn", style, color, poseStack, buffer, packedLight, packedOverlay);
-        if (!east && !down && !north) renderDuct("pnp", style, color, poseStack, buffer, packedLight, packedOverlay);
-        if (!west && !down && !south) renderDuct("nnn", style, color, poseStack, buffer, packedLight, packedOverlay);
-        if (!west && !down && !north) renderDuct("nnp", style, color, poseStack, buffer, packedLight, packedOverlay);
+    private static void renderParts(int mask, BlockState state, int style, int color, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
+                .withLegacyShadow();
+        LegacyWavefrontModel.SelectionHandle handle = PART_HANDLES[mask];
+        ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(BASE_TEXTURE_LOCATIONS[style], context, handle);
+        ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(OVERLAY_TEXTURE_LOCATIONS[style], context.withColor(color), handle);
     }
 
-    private static void renderDuct(String part, int style, int color, PoseStack poseStack, MultiBufferSource buffer,
-            int packedLight, int packedOverlay) {
-        ObjBlockModels.PIPE_NEO.renderPart(part, ObjBlockModels.texture(BASE_TEXTURES[style]),
-                poseStack, buffer, packedLight, packedOverlay,
-                255, 255, 255, 255, true);
-        ObjBlockModels.PIPE_NEO.renderPart(part, ObjBlockModels.texture(OVERLAY_TEXTURES[style]),
-                poseStack, buffer, packedLight, packedOverlay,
-                color >> 16 & 255, color >> 8 & 255, color & 255, 255, true);
+    private static ResourceLocation[] buildTextures(String[] names) {
+        ResourceLocation[] textures = new ResourceLocation[names.length];
+        for (int i = 0; i < names.length; i++) {
+            textures[i] = ObjBlockModels.texture(names[i]);
+        }
+        return textures;
+    }
+
+    private static String[][] buildPartsByMask() {
+        String[][] parts = new String[64][];
+        for (int mask = 0; mask < parts.length; mask++) {
+            parts[mask] = buildParts(mask);
+        }
+        return parts;
+    }
+
+    private static LegacyWavefrontModel.SelectionHandle[] buildPartHandles(String[][] partsByMask) {
+        LegacyWavefrontModel.SelectionHandle[] handles = new LegacyWavefrontModel.SelectionHandle[partsByMask.length];
+        for (int mask = 0; mask < partsByMask.length; mask++) {
+            handles[mask] = ObjBlockModels.PIPE_NEO.prepareRenderOnlyInCallOrder(partsByMask[mask]);
+        }
+        return handles;
+    }
+
+    private static String[] buildParts(int mask) {
+        boolean east = (mask & 32) != 0;
+        boolean west = (mask & 16) != 0;
+        boolean up = (mask & 8) != 0;
+        boolean down = (mask & 4) != 0;
+        boolean south = (mask & 2) != 0;
+        boolean north = (mask & 1) != 0;
+
+        if (mask == 0) {
+            return new String[]{"pX", "nX", "pY", "nY", "pZ", "nZ"};
+        }
+        if ((east || west) && !up && !down && !south && !north) {
+            return new String[]{"pX", "nX"};
+        }
+        if ((up || down) && !east && !west && !south && !north) {
+            return new String[]{"pY", "nY"};
+        }
+        if ((south || north) && !east && !west && !up && !down) {
+            return new String[]{"pZ", "nZ"};
+        }
+
+        List<String> parts = new ArrayList<>(14);
+        if (east) parts.add("pX");
+        if (west) parts.add("nX");
+        if (up) parts.add("pY");
+        if (down) parts.add("nY");
+        if (south) parts.add("nZ");
+        if (north) parts.add("pZ");
+
+        if (!east && !up && !south) parts.add("ppn");
+        if (!east && !up && !north) parts.add("ppp");
+        if (!west && !up && !south) parts.add("npn");
+        if (!west && !up && !north) parts.add("npp");
+        if (!east && !down && !south) parts.add("pnn");
+        if (!east && !down && !north) parts.add("pnp");
+        if (!west && !down && !south) parts.add("nnn");
+        if (!west && !down && !north) parts.add("nnp");
+        return parts.toArray(String[]::new);
     }
 }

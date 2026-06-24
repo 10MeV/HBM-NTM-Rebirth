@@ -22,7 +22,7 @@ public class FusionMHDTRenderer implements BlockEntityRenderer<FusionMHDTBlockEn
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     @Override
@@ -36,14 +36,14 @@ public class FusionMHDTRenderer implements BlockEntityRenderer<FusionMHDTBlockEn
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
-        ObjFusionModels.MHDT_LEGACY.renderOnly(ObjFusionModels.MHDT_TEXTURE, context, "Turbine");
+        ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_TEXTURE, context, "Turbine");
 
         poseStack.pushPose();
         float rotor = blockEntity.getRotor(partialTick) % 15.0F;
         poseStack.translate(0.0D, 1.5D, 0.0D);
         poseStack.mulPose(Axis.XP.rotationDegrees(rotor));
         poseStack.translate(0.0D, -1.5D, 0.0D);
-        ObjFusionModels.MHDT_LEGACY.renderOnly(ObjFusionModels.MHDT_TEXTURE, context, "Coils");
+        ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_TEXTURE, context, "Coils");
         poseStack.popPose();
         poseStack.popPose();
     }

@@ -143,7 +143,7 @@ public final class GenericMachineRecipeRuntime {
 
         energy.setPower(energy.getPower() - requiredPower(recipe, factors.powerMultiplier()));
         applyTickPollution(level, pollutionPos, recipe, pollutionSink);
-        double nextProgress = progress + Math.min(factors.speedMultiplier() / Math.max(recipe.getDuration(), 1), 1.0D);
+        double nextProgress = progress + Math.min(factors.speedMultiplier() / recipe.getDuration(), 1.0D);
         boolean completed = false;
         if (nextProgress >= 1.0D) {
             List<ItemStack> inputRemainders = inputRemainders(recipe, items, inputSlots);
@@ -373,11 +373,6 @@ public final class GenericMachineRecipeRuntime {
     }
 
     public record ProcessingFactors(double speedMultiplier, double powerMultiplier) {
-        public ProcessingFactors {
-            speedMultiplier = Math.max(0.0D, speedMultiplier);
-            powerMultiplier = Math.max(0.0D, powerMultiplier);
-        }
-
         public static ProcessingFactors normal() {
             return new ProcessingFactors(1.0D, 1.0D);
         }
