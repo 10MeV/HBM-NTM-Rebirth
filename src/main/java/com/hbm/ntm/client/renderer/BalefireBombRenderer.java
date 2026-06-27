@@ -6,7 +6,6 @@ import com.hbm.ntm.blockentity.BalefireBombBlockEntity;
 import com.hbm.ntm.client.obj.LegacyObjGlintRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjBombModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -30,18 +29,18 @@ public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlo
         if (!(state.getBlock() instanceof BalefireBombBlock)) {
             return;
         }
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(state)));
-        renderModel(poseStack, buffer, packedLight, packedOverlay);
+        renderModel(poseStack, buffer, modelLight, packedOverlay);
 
         if (blockEntity.isLoadedSynced()) {
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
             float age = glintAge(blockEntity.getLevel(), partialTick);
             LegacyObjGlintRenderer.renderClassicGlint(ObjBombModels.FSTBMB,
-                    LegacyObjGlintRenderer.BALEFIRE_GLINT_TEXTURE, context, ObjBombModels.FSTBMB_BALEFIRE,
-                    age, 0.0F, 0.8F, 0.15F, 5.0F, 2.0F);
+                    LegacyObjGlintRenderer.BALEFIRE_GLINT_TEXTURE, poseStack, buffer, modelLight, packedOverlay,
+                    ObjBombModels.FSTBMB_BALEFIRE, age, 0.0F, 0.8F, 0.15F, 5.0F, 2.0F);
             renderTimer(blockEntity, poseStack, buffer);
         }
 
@@ -49,9 +48,8 @@ public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlo
     }
 
     public static void renderModel(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
-                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_NO_CULL);
-        ObjBombModels.renderFstbmbBody(context);
+        ObjBombModels.renderFstbmbBody(poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
     }
 
     public static void applyLegacyItemCommon(PoseStack poseStack) {

@@ -30,6 +30,27 @@ public final class HbmFluidReleaseEffects {
         return applyRelease(level, pos, fluid, amountMb, releaseType);
     }
 
+    public static ReleaseReport applyLegacyTraitRelease(Level level, BlockPos pos, FluidType fluid, int amountMb,
+            FluidReleaseType releaseType) {
+        return collectEffects(fluid, amountMb, releaseType, true, level, pos, true, false, 1.0F);
+    }
+
+    public static ReleaseReport previewLegacyTraitRelease(FluidType fluid, int amountMb, FluidReleaseType releaseType) {
+        return collectEffects(fluid, amountMb, releaseType, false, null, null, true, false, 1.0F);
+    }
+
+    public static ReleaseReport applyLegacyPollutingRelease(Level level, BlockPos pos, FluidType fluid,
+            FluidReleaseType releaseType, float amountMb) {
+        int reportAmount = amountMb <= 0.0F ? 0 : Math.round(amountMb);
+        return collectEffects(fluid, reportAmount, releaseType, true, level, pos, false, true, amountMb);
+    }
+
+    public static ReleaseReport previewLegacyPollutingRelease(FluidType fluid, FluidReleaseType releaseType,
+            float amountMb) {
+        int reportAmount = amountMb <= 0.0F ? 0 : Math.round(amountMb);
+        return collectEffects(fluid, reportAmount, releaseType, false, null, null, false, true, amountMb);
+    }
+
     public static ReleaseBatchReport previewTanks(Iterable<HbmFluidTank> tanks, int amountPerTank, FluidReleaseType releaseType) {
         return releaseTanks(null, null, tanks, amountPerTank, releaseType, true);
     }
@@ -65,7 +86,14 @@ public final class HbmFluidReleaseEffects {
         return ReleaseBatchReport.of(reports);
     }
 
-    private static ReleaseReport collectEffects(FluidType fluid, int amountMb, FluidReleaseType releaseType, boolean apply, Level level, BlockPos pos) {
+    private static ReleaseReport collectEffects(FluidType fluid, int amountMb, FluidReleaseType releaseType,
+            boolean apply, Level level, BlockPos pos) {
+        return collectEffects(fluid, amountMb, releaseType, apply, level, pos, true, true, Math.max(0, amountMb));
+    }
+
+    private static ReleaseReport collectEffects(FluidType fluid, int amountMb, FluidReleaseType releaseType,
+            boolean apply, Level level, BlockPos pos, boolean includeRadiation, boolean includePollution,
+            float pollutionScaleMb) {
         FluidType type = fluid == null ? HbmFluids.NONE : fluid;
         int amount = Math.max(0, amountMb);
         FluidReleaseType release = releaseType == null ? FluidReleaseType.SPILL : releaseType;
@@ -73,22 +101,27 @@ public final class HbmFluidReleaseEffects {
         PollutionSavedData.PollutionSample worldPollution = new PollutionSavedData.PollutionSample();
         float radiation = 0.0F;
 
-        if (type != HbmFluids.NONE && amount > 0 && release != FluidReleaseType.VOID) {
-            VentRadiationFluidTrait radiationTrait = type.getTrait(VentRadiationFluidTrait.class);
-            if (radiationTrait != null) {
-                radiation = radiationTrait.getRadiationPerMb() * amount;
-                if (apply && radiation > 0.0F && level != null && pos != null) {
-                    ChunkRadiationManager.incrementRadiation(level, pos, radiation);
+        boolean hasRadiationAmount = includeRadiation && amount > 0;
+        boolean hasPollutionAmount = includePollution && Float.isFinite(pollutionScaleMb) && pollutionScaleMb > 0.0F;
+        if (type != HbmFluids.NONE && release != FluidReleaseType.VOID
+                && (hasRadiationAmount || hasPollutionAmount)) {
+            if (includeRadiation) {
+                VentRadiationFluidTrait radiationTrait = type.getTrait(VentRadiationFluidTrait.class);
+                if (radiationTrait != null) {
+                    radiation = radiationTrait.getRadiationPerMb() * amount;
+                    if (apply && radiation > 0.0F && level != null && pos != null) {
+                        ChunkRadiationManager.incrementRadiation(level, pos, radiation);
+                    }
                 }
             }
 
-            PollutingFluidTrait pollutingTrait = type.getTrait(PollutingFluidTrait.class);
+            PollutingFluidTrait pollutingTrait = hasPollutionAmount ? type.getTrait(PollutingFluidTrait.class) : null;
             if (pollutingTrait != null) {
                 Map<PollutionKind, Float> source = release == FluidReleaseType.BURN
                         ? pollutingTrait.getBurnPollution()
                         : pollutingTrait.getReleasePollution();
                 for (Map.Entry<PollutionKind, Float> entry : source.entrySet()) {
-                    float pollutionAmount = entry.getValue() * amount;
+                    float pollutionAmount = entry.getValue() * pollutionScaleMb;
                     pollution.merge(entry.getKey(), pollutionAmount, Float::sum);
                     if (pollutionAmount > 0.0F) {
                         worldPollution.add(entry.getKey().pollutionType(), pollutionAmount);

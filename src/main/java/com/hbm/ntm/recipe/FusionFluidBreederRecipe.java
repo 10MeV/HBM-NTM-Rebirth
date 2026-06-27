@@ -3,6 +3,7 @@ package com.hbm.ntm.recipe;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModBlocks;
@@ -120,10 +121,7 @@ public class FusionFluidBreederRecipe implements Recipe<Container> {
         }
 
         private static HbmFluidStack readFluidStack(JsonObject object) {
-            FluidType fluid = HbmFluids.fromName(normalizeFluidName(GsonHelper.getAsString(object, "fluid")));
-            int amount = GsonHelper.getAsInt(object, "amount");
-            int pressure = GsonHelper.getAsInt(object, "pressure", 0);
-            return new HbmFluidStack(fluid, amount, pressure);
+            return HbmFluidJsonUtil.readFluidStack(object, "fusion fluid breeder fluid stack");
         }
 
         private static HbmFluidStack readFluidStack(FriendlyByteBuf buffer) {
@@ -134,11 +132,6 @@ public class FusionFluidBreederRecipe implements Recipe<Container> {
             buffer.writeUtf(stack.type().getName());
             buffer.writeVarInt(stack.amount());
             buffer.writeVarInt(stack.pressure());
-        }
-
-        private static String normalizeFluidName(String name) {
-            ResourceLocation id = ResourceLocation.tryParse(name);
-            return id == null || name.indexOf(':') < 0 ? name : id.getPath();
         }
     }
 }

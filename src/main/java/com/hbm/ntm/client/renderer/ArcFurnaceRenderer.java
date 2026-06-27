@@ -3,9 +3,9 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ArcFurnaceBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import java.util.List;
@@ -47,6 +47,7 @@ public class ArcFurnaceRenderer implements BlockEntityRenderer<ArcFurnaceBlockEn
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
+        LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
         LegacyArcFurnaceRenderHelper.renderPlan(MODEL,
                 LegacyTileRenderPlans.arcFurnacePlan(
                         blockEntity.getPreviousLid(),
@@ -58,8 +59,7 @@ public class ArcFurnaceRenderer implements BlockEntityRenderer<ArcFurnaceBlockEn
                         blockEntity.getMaxLiquid(),
                         blockEntity.hasMaterial(),
                         electrodeStates(blockEntity)),
-                new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay),
-                poseStack);
+                poseStack, buffer, modelLight, packedOverlay, renderMode);
         poseStack.popPose();
     }
 

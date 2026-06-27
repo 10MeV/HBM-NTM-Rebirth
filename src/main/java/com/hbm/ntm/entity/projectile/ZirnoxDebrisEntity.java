@@ -40,7 +40,6 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class ZirnoxDebrisEntity extends Entity {
     private static final String TAG_DEBRIS_TYPE = "debtype";
-    private static final String TAG_ROTATION = "rot";
     private static final EntityDataAccessor<Integer> DATA_TYPE =
             SynchedEntityData.defineId(ZirnoxDebrisEntity.class, EntityDataSerializers.INT);
 
@@ -66,16 +65,18 @@ public class ZirnoxDebrisEntity extends Entity {
     public void tick() {
         super.tick();
         ZirnoxDebrisPlan plan = plan();
+        tickLegacyMotion();
         if (!level().isClientSide()) {
             traceBlockBreak(plan);
+            if (isRemoved()) {
+                return;
+            }
             applyRadiationAura(plan);
             if (RBMKDebrisPlanner.shouldDespawn(tickCount, getId(), plan.lifetimeTicks(),
                     NeutronHandler.rbmkRuntimeSettings(level()).permanentScrap())) {
                 discard();
-                return;
             }
         }
-        tickLegacyMotion();
     }
 
     private void traceBlockBreak(ZirnoxDebrisPlan plan) {
@@ -161,7 +162,7 @@ public class ZirnoxDebrisEntity extends Entity {
                 discard();
             }
         }
-        return InteractionResult.sidedSuccess(level().isClientSide);
+        return InteractionResult.PASS;
     }
 
     private ItemStack pickupStack() {
@@ -212,15 +213,12 @@ public class ZirnoxDebrisEntity extends Entity {
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         entityData.set(DATA_TYPE, RBMKDebrisPlanner.zirnoxTypeFromLegacyOrdinal(tag.getInt(TAG_DEBRIS_TYPE)).legacyIndex());
-        debrisRotation = tag.getFloat(TAG_ROTATION);
-        debrisRotationO = debrisRotation;
         refreshDimensions();
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putInt(TAG_DEBRIS_TYPE, entityData.get(DATA_TYPE));
-        tag.putFloat(TAG_ROTATION, debrisRotation);
     }
 
     @Override

@@ -69,7 +69,7 @@ public class TeleporterBlockEntity extends HbmEnergyBlockEntity implements Legac
         }
 
         teleporter.networkPackNT(15);
-        if (oldPower != teleporter.energy.getPower() || level.getGameTime() % 10L == 0L) {
+        if (oldPower != teleporter.energy.getPower()) {
             teleporter.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

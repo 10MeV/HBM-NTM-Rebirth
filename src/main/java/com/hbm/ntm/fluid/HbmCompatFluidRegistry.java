@@ -1,26 +1,22 @@
 package com.hbm.ntm.fluid;
 
-import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.fluid.HbmFluidContainerRegisterListener;
 import com.hbm.ntm.api.fluid.HbmFluidRegisterListener;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
 public final class HbmCompatFluidRegistry {
-    private static final List<HbmFluidRegisterListener> LISTENERS = new CopyOnWriteArrayList<>();
-    private static volatile int lastInvokedListeners;
-    private static volatile int lastRegisteredFluids;
-    private static volatile int lastSkippedFluids;
+    private static volatile int rejectedListenerRegistrations;
+    private static volatile int resolvedExistingFluids;
+    private static volatile int rejectedFluidRegistrations;
 
     public static void registerFluidRegisterListener(HbmFluidRegisterListener listener) {
-        if (listener != null && !LISTENERS.contains(listener)) {
-            LISTENERS.add(listener);
+        if (listener != null) {
+            rejectedListenerRegistrations++;
         }
     }
 
@@ -39,52 +35,55 @@ public final class HbmCompatFluidRegistry {
 
     public static FluidType registerFluid(String name, int id, int color, int poison, int flammability, int reactivity,
             FluidSymbol symbol, ResourceLocation texture, ResourceLocation forgeFluidId) {
-        Fluid forgeFluid = forgeFluidId == null ? null : ForgeRegistries.FLUIDS.getValue(forgeFluidId);
-        return registerFluid(name, id, color, poison, flammability, reactivity, symbol, texture, forgeFluid);
+        FluidType type = resolveExisting(name);
+        if (type == HbmFluids.NONE && forgeFluidId != null) {
+            type = resolveExistingForgeFluid(forgeFluidId);
+        }
+        return trackResult(type);
     }
 
     public static FluidType registerFluid(String name, int id, int color, int poison, int flammability, int reactivity,
             FluidSymbol symbol, ResourceLocation texture, @Nullable Fluid forgeFluid) {
-        FluidType type = HbmFluids.registerForeign(name, id, color, poison, flammability, reactivity, symbol,
-                texture == null ? null : texture.toString());
-        if (type != HbmFluids.NONE) {
-            lastRegisteredFluids++;
-            if (forgeFluid != null && forgeFluid != Fluids.EMPTY) {
-                HbmFluidForgeMappings.register(type, forgeFluid);
-            }
-        } else {
-            lastSkippedFluids++;
+        FluidType type = resolveExisting(name);
+        if (type == HbmFluids.NONE && forgeFluid != null && forgeFluid != Fluids.EMPTY) {
+            type = HbmFluidForgeMappings.fromForge(forgeFluid);
         }
-        return type;
+        return trackResult(type);
     }
 
-    static void reloadForeignFluids() {
-        HbmFluids.removeForeignFluids();
-        lastInvokedListeners = 0;
-        lastRegisteredFluids = 0;
-        lastSkippedFluids = 0;
-        for (HbmFluidRegisterListener listener : LISTENERS) {
-            try {
-                listener.onFluidsLoad();
-                lastInvokedListeners++;
-            } catch (RuntimeException ex) {
-                lastSkippedFluids++;
-                HbmNtm.LOGGER.warn("HBM fluid register listener failed.", ex);
-            }
+    private static FluidType resolveExisting(String name) {
+        return HbmFluidJsonUtil.readFluidReference(name);
+    }
+
+    private static FluidType resolveExistingForgeFluid(ResourceLocation forgeFluidId) {
+        Fluid forgeFluid = ForgeRegistries.FLUIDS.getValue(forgeFluidId);
+        return forgeFluid == null || forgeFluid == Fluids.EMPTY ? HbmFluids.NONE
+                : HbmFluidForgeMappings.fromForge(forgeFluid);
+    }
+
+    private static FluidType trackResult(FluidType type) {
+        FluidType resolved = type == null ? HbmFluids.NONE : type;
+        if (resolved == HbmFluids.NONE) {
+            rejectedFluidRegistrations++;
+        } else {
+            resolvedExistingFluids++;
         }
+        return resolved;
     }
 
     public static Diagnostics diagnostics() {
-        return new Diagnostics(LISTENERS.size(), lastInvokedListeners, HbmFluids.foreignFluids().size(),
-                lastRegisteredFluids, lastSkippedFluids);
+        return new Diagnostics(rejectedListenerRegistrations, 0, HbmFluids.foreignFluids().size(),
+                resolvedExistingFluids, rejectedFluidRegistrations);
     }
 
     public record Diagnostics(int listeners, int lastInvokedListeners, int foreignFluids, int lastRegisteredFluids,
             int lastSkippedFluids) {
         public String summary() {
-            return "compat fluids listeners=" + listeners + " lastInvoked=" + lastInvokedListeners
-                    + " foreignFluids=" + foreignFluids + " lastRegistered=" + lastRegisteredFluids
-                    + " lastSkipped=" + lastSkippedFluids;
+            return "compat fluids listenerLifecycle=disabled listenerAttempts=" + listeners
+                    + " lastInvoked=" + lastInvokedListeners
+                    + " foreignFluids=" + foreignFluids
+                    + " existingResolved=" + lastRegisteredFluids
+                    + " rejectedRegistrations=" + lastSkippedFluids;
         }
     }
 

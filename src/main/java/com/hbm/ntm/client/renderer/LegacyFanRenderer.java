@@ -5,7 +5,6 @@ import com.hbm.ntm.blockentity.LegacyFanBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -35,23 +34,21 @@ public class LegacyFanRenderer implements BlockEntityRenderer<LegacyFanBlockEnti
         if (!(state.getBlock() instanceof LegacyFanBlock) || !state.hasProperty(LegacyFanBlock.FACING)) {
             return;
         }
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         applyLegacyFacingTransform(poseStack, state.getValue(LegacyFanBlock.FACING));
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
-                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
-        renderPart(FRAME, context);
+        renderPart(FRAME, poseStack, buffer, modelLight, packedOverlay);
         poseStack.mulPose(Axis.YN.rotationDegrees(blockEntity.spin(partialTick)));
-        renderPart(BLADES, context);
+        renderPart(BLADES, poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
     }
 
     public static void renderItemModel(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
             int packedOverlay, BlockState state) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
-                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
-        ObjMachineModels.FAN_LEGACY.renderAll(ObjMachineModels.FAN_TEXTURE, context);
+        ObjMachineModels.FAN_LEGACY.renderAll(poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_CULL);
     }
 
     private static void applyLegacyFacingTransform(PoseStack poseStack, Direction direction) {
@@ -68,7 +65,9 @@ public class LegacyFanRenderer implements BlockEntityRenderer<LegacyFanBlockEnti
         poseStack.translate(0.0D, -0.5D, 0.0D);
     }
 
-    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
-        ObjMachineModels.FAN_LEGACY.renderOnlyInCallOrder(ObjMachineModels.FAN_TEXTURE, context, handle);
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ObjMachineModels.FAN_LEGACY.renderOnlyInCallOrder(ObjMachineModels.FAN_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay, handle, LegacyTexturedRenderMode.CUTOUT_CULL);
     }
 }

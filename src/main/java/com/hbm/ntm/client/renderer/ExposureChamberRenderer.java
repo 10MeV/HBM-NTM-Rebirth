@@ -6,7 +6,8 @@ import com.hbm.ntm.blockentity.ExposureChamberBlockEntity;
 import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.LightTexture;
@@ -62,28 +63,28 @@ public class ExposureChamberRenderer implements BlockEntityRenderer<ExposureCham
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
-        MODEL.renderOnlyInCallOrder(definition.textureLocation(), context, CHAMBER);
+        MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+                CHAMBER);
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.rotationDegrees()));
-        MODEL.renderOnlyInCallOrder(definition.textureLocation(), context, MAGNETS);
+        MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+                MAGNETS);
         poseStack.popPose();
 
         if (plan.on()) {
             poseStack.pushPose();
             poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.coreRotationDegrees()));
             poseStack.translate(0.0D, plan.coreBobY(), 0.0D);
-            ObjRenderContext fullbrightContext = new ObjRenderContext(poseStack, buffer, state,
-                    LightTexture.FULL_BRIGHT, packedOverlay);
-            MODEL.renderOnlyInCallOrder(definition.textureLocation(), fullbrightContext, CORE);
+            MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, LightTexture.FULL_BRIGHT,
+                    packedOverlay, CORE);
             poseStack.popPose();
 
             for (LegacyTileRenderPlans.TranslatedBeamPlan beam : plan.beams()) {
-                poseStack.pushPose();
-                poseStack.translate(beam.translateX(), beam.translateY(), beam.translateZ());
-                LegacyBeamRenderer.beam(poseStack, buffer, beam.beam());
-                poseStack.popPose();
+                LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
+                    queuedPose.translate(beam.translateX(), beam.translateY(), beam.translateZ());
+                    LegacyBeamRenderer.beam(queuedPose, buffer, beam.beam());
+                });
             }
         }
 

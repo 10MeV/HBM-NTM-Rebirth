@@ -1,8 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -41,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AutocrafterBlockEntity extends HbmEnergyBlockEntity
-        implements MenuProvider, LegacyLookOverlayProvider {
+        implements MenuProvider {
     public static final int SLOT_TEMPLATE_START = 0;
     public static final int SLOT_TEMPLATE_END = 8;
     public static final int SLOT_TEMPLATE_OUTPUT = 9;
@@ -109,8 +106,7 @@ public class AutocrafterBlockEntity extends HbmEnergyBlockEntity
 
         if (oldPower != autocrafter.energy.getPower()
                 || !ItemStack.isSameItemSameTags(oldOutput, autocrafter.items.getStackInSlot(SLOT_OUTPUT))
-                || oldOutput.getCount() != autocrafter.items.getStackInSlot(SLOT_OUTPUT).getCount()
-                || level.getGameTime() % 15L == 0L) {
+                || oldOutput.getCount() != autocrafter.items.getStackInSlot(SLOT_OUTPUT).getCount()) {
             autocrafter.setChangedAndUpdate();
         }
     }
@@ -177,12 +173,6 @@ public class AutocrafterBlockEntity extends HbmEnergyBlockEntity
     @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.INPUT;
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.energyStored(energy.getPower(), energy.getMaxPower())));
     }
 
     @Override

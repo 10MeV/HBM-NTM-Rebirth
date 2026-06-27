@@ -3,7 +3,6 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.blockentity.SolarMirrorBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -34,17 +33,15 @@ public class SolarMirrorRenderer implements BlockEntityRenderer<SolarMirrorBlock
     @Override
     public void render(SolarMirrorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer,
-                blockEntity.getBlockState(), packedLight, packedOverlay);
-
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        SOLAR_MIRROR.renderOnlyInCallOrder(context, BASE);
+        SOLAR_MIRROR.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, BASE);
         if (blockEntity.isTargetAbove()) {
             Vec3 delta = Vec3.atLowerCornerOf(blockEntity.getTarget().subtract(blockEntity.getBlockPos()));
             aimAt(delta, poseStack);
         }
-        SOLAR_MIRROR.renderOnlyInCallOrder(context, MIRROR);
+        SOLAR_MIRROR.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, MIRROR);
         poseStack.popPose();
     }
 

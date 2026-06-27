@@ -319,7 +319,6 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel BLOCK_TOASTER = ObjBlockModels.TOASTER;
     public static final LegacyWavefrontModel BLOCK_DECO_COMPUTER = ObjBlockModels.DECO_COMPUTER;
     public static final LegacyWavefrontModel BLOCK_HEV_BATTERY = ObjBlockModels.HEV_BATTERY;
-    public static final LegacyWavefrontModel BLOCK_SKELETON_HOLDER = ObjBlockModels.SKELETON_HOLDER;
     public static final LegacyWavefrontModel BLOCK_ANVIL = ObjBlockModels.ANVIL;
     public static final LegacyWavefrontModel BLOCK_CRYSTAL_POWER = ObjBlockModels.CRYSTAL_POWER;
     public static final LegacyWavefrontModel BLOCK_CRYSTAL_ENERGY = ObjBlockModels.CRYSTAL_ENERGY;

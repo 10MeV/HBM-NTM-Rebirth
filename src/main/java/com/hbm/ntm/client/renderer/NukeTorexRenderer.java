@@ -8,7 +8,6 @@ import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity.Cloudlet;
 import com.hbm.ntm.entity.effect.NukeTorexEntity.TorexType;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -35,8 +34,6 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
             new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/flare.png");
     private static final RenderType CLOUDLET_RENDER_TYPE =
             LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE.renderType(CLOUDLET_TEXTURE);
-    private static final RenderType FLARE_RENDER_TYPE =
-            LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE.renderType(FLARE_TEXTURE);
     private static final Comparator<RenderCloudlet> GLOBAL_FAR_TO_NEAR =
             Comparator.comparingDouble((RenderCloudlet entry) -> entry.distanceToCameraSqr).reversed();
 
@@ -69,13 +66,11 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         }
 
         cloudlets.sort(GLOBAL_FAR_TO_NEAR);
-        PoseStack.Pose pose = poseStack.last();
         Vec3 cameraPos = camera.getPosition();
         CameraBasis cameraBasis = LegacyBillboardRenderer.cameraBasis(camera);
 
-        VertexConsumer consumer = buffer.getBuffer(CLOUDLET_RENDER_TYPE);
         for (RenderCloudlet entry : cloudlets) {
-            renderBillboard(consumer, pose, cameraBasis, entry.cloudlet(), partialTick,
+            renderBillboard(poseStack, buffer, cameraBasis, entry.cloudlet(), partialTick,
                     cameraPos.x, cameraPos.y, cameraPos.z);
         }
         buffer.endBatch(CLOUDLET_RENDER_TYPE);
@@ -95,8 +90,8 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         return entries;
     }
 
-    private static void renderBillboard(VertexConsumer consumer, PoseStack.Pose pose, CameraBasis cameraBasis, Cloudlet cloudlet,
-            float partialTick, double originX, double originY, double originZ) {
+    private static void renderBillboard(PoseStack poseStack, MultiBufferSource buffer, CameraBasis cameraBasis,
+            Cloudlet cloudlet, float partialTick, double originX, double originY, double originZ) {
         float alpha = cloudlet.getAlpha();
         if (alpha <= 0.001F) {
             return;
@@ -115,7 +110,8 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         float blue = Mth.clamp((float) color.z * brightness, 0.0F, 1.0F);
         int light = LightTexture.FULL_BRIGHT;
 
-        LegacyBillboardRenderer.billboardRgbaF(consumer, pose, cameraBasis,
+        LegacyBillboardRenderer.billboardRgbaF(CLOUDLET_TEXTURE, poseStack, buffer,
+                LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE, cameraBasis,
                 x, y, z, scale, scale, red, green, blue, alpha, light);
     }
 
@@ -124,8 +120,6 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         double age = Math.min(entity.tickCount + partialTick, 100.0D);
         float alpha = (float) ((100.0D - age) / 100.0D);
         Random random = new Random(entity.getId());
-        VertexConsumer consumer = buffer.getBuffer(FLARE_RENDER_TYPE);
-        PoseStack.Pose pose = poseStack.last();
 
         for (int i = 0; i < 3; i++) {
             float x = (float) (random.nextGaussian() * 0.5F * entity.rollerSize);
@@ -133,7 +127,8 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
             float z = (float) (random.nextGaussian() * 0.5F * entity.rollerSize);
             float scale = (float) (25.0D * entity.rollerSize);
 
-            LegacyBillboardRenderer.billboardRgbaF(consumer, pose, cameraBasis,
+            LegacyBillboardRenderer.billboardRgbaF(FLARE_TEXTURE, poseStack, buffer,
+                    LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, cameraBasis,
                     x, y, z, scale, scale, 1.0F, 1.0F, 1.0F, alpha, LightTexture.FULL_BRIGHT);
         }
     }

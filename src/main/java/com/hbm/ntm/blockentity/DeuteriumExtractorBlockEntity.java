@@ -76,7 +76,7 @@ public class DeuteriumExtractorBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldWater != extractor.waterTank.getFill()
                 || oldHeavyWater != extractor.heavyWaterTank.getFill();
         extractor.networkPackNT(50);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             extractor.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

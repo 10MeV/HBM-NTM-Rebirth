@@ -110,7 +110,13 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
             if (slot >= 0 && slot < ROD_SLOT_COUNT) {
                 return ZirnoxFuelRuntime.isRod(stack);
             }
-            return (slot == SLOT_CO2_INPUT || slot == SLOT_WATER_INPUT) && !stack.isEmpty();
+            if (slot == SLOT_CO2_INPUT) {
+                return containsFluid(stack, carbonDioxideTank.getTankType());
+            }
+            if (slot == SLOT_WATER_INPUT) {
+                return containsFluid(stack, waterTank.getTankType());
+            }
+            return false;
         }
 
         @Override
@@ -149,9 +155,8 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         }
         changed |= reactor.tickServer(level);
         reactor.networkPackNT(150);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             reactor.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
 
@@ -270,6 +275,11 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of(steamTank);
+    }
+
+    @Override
+    public boolean supportsFluidSettingsCopy() {
+        return false;
     }
 
     @Override
@@ -453,6 +463,10 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         data.putLong(CompatEnergyControl.L_PRESSURE_BAR, Math.round(pressure * 1.0E-5D * 30.0D));
         data.putDouble(CompatEnergyControl.D_CONSUMPTION_MB, output);
         data.putDouble(CompatEnergyControl.D_OUTPUT_MB, output);
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, on);
+        CompatEnergyControl.putTankAmountInfo(data, CompatEnergyControl.S_ZIRNOX_WATER, waterTank);
+        CompatEnergyControl.putTankAmountInfo(data, CompatEnergyControl.S_ZIRNOX_STEAM, steamTank);
+        CompatEnergyControl.putTankAmountInfo(data, CompatEnergyControl.S_ZIRNOX_CO2, carbonDioxideTank);
     }
 
     @Override
@@ -507,7 +521,7 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
                 heat -= 10;
             }
         }
-        if (!isTilted()) {
+        if (!isTilted() && steamTank.getFill() > 0) {
             tryProvideFluidToPorts(steamTank.getTankType(), steamTank.getPressure(), this);
         }
         if (pressure > MAX_PRESSURE || heat > MAX_HEAT) {

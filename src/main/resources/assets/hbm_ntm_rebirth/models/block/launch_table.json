@@ -1,7 +1,7 @@
 ﻿{
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "hbm_ntm_rebirth:block/launch_table/launch_table_base"
+    "particle": "hbm_ntm_rebirth:block/launch_table/launch_table"
   },
   "elements": []
 }

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": { "item": "hbm_ntm_rebirth:coil_copper" },
+    "I": { "item": "hbm_ntm_rebirth:plate_polymer" },
+    "S": { "tag": "forge:ingots/any_resistant_alloy" }
+  },
+  "pattern": [
+    "CCC",
+    "III",
+    " S "
+  ],
+  "result": {
+    "count": 2,
+    "item": "hbm_ntm_rebirth:red_connector_super"
+  },
+  "show_notification": true
+}

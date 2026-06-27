@@ -106,10 +106,12 @@ public class RadiationFogParticle extends TextureSheetParticle implements HbmDef
         Vector3f corner1 = new Vector3f(corners[1]).rotate(rotation).mul(size).add(x, y, z);
         Vector3f corner2 = new Vector3f(corners[2]).rotate(rotation).mul(size).add(x, y, z);
         Vector3f corner3 = new Vector3f(corners[3]).rotate(rotation).mul(size).add(x, y, z);
-        consumer.vertex(corner0.x(), corner0.y(), corner0.z()).uv(u1, v1).color(rCol, gCol, bCol, alpha).uv2(light).endVertex();
-        consumer.vertex(corner1.x(), corner1.y(), corner1.z()).uv(u1, v0).color(rCol, gCol, bCol, alpha).uv2(light).endVertex();
-        consumer.vertex(corner2.x(), corner2.y(), corner2.z()).uv(u0, v0).color(rCol, gCol, bCol, alpha).uv2(light).endVertex();
-        consumer.vertex(corner3.x(), corner3.y(), corner3.z()).uv(u0, v1).color(rCol, gCol, bCol, alpha).uv2(light).endVertex();
+        HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, light,
+                corner0, u1, v1,
+                corner1, u1, v0,
+                corner2, u0, v0,
+                corner3, u0, v1,
+                rCol, gCol, bCol, alpha);
     }
 
     @Override

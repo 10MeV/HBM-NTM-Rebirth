@@ -6,9 +6,9 @@ import com.hbm.ntm.client.obj.LegacyObjTransforms;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.ObjLightModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -35,20 +35,20 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
         if (!(state.getBlock() instanceof LegacyDemonLampBlock)) {
             return;
         }
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         LegacyObjTransforms.applySixFaceAttachmentRotation(poseStack, state.getValue(LegacyDemonLampBlock.FACE));
         poseStack.translate(0.0D, -0.5D, 0.0D);
-        ObjLightModels.DEMON_LAMP_LEGACY.renderAll(new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
-                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL));
-        renderAura(poseStack, buffer);
+        ObjLightModels.DEMON_LAMP_LEGACY.renderAll(poseStack, buffer, modelLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_CULL);
+        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                queuedPose -> renderAura(queuedPose, buffer));
         poseStack.popPose();
     }
 
     private static void renderAura(PoseStack poseStack, MultiBufferSource buffer) {
-        VertexConsumer consumer = LegacyUntexturedQuadRenderer.lightning(buffer);
-        PoseStack.Pose pose = poseStack.last();
         double near = 0.375D;
         double far = 15.0D;
         int segments = 16;
@@ -59,11 +59,11 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
             double yNear = 0.5D + j * 0.125D;
             double yFar = 1.0D + j * 0.125D + height;
 
-            renderAuraRing(consumer, pose, near, far, yNear, yFar, segments, 64);
+            renderAuraRing(poseStack, buffer, near, far, yNear, yFar, segments, 64);
         }
     }
 
-    private static void renderAuraRing(VertexConsumer consumer, PoseStack.Pose pose, double near, double far,
+    private static void renderAuraRing(PoseStack poseStack, MultiBufferSource buffer, double near, double far,
                                        double yNear, double yFar, int segments, int nearAlpha) {
         for (int i = 0; i < segments; i++) {
             double a0 = Math.PI * 2.0D / segments * i;
@@ -74,8 +74,8 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
             double z1 = Math.sin(a1);
 
             renderAuraQuad(
-                    consumer,
-                    pose,
+                    poseStack,
+                    buffer,
                     x0 * near, yNear, z0 * near,
                     x0 * far, yFar, z0 * far,
                     x1 * far, yFar, z1 * far,
@@ -85,21 +85,22 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
     }
 
     private static void renderAuraQuad(
-            VertexConsumer consumer,
-            PoseStack.Pose pose,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
             double x0, double y0, double z0,
             double x1, double y1, double z1,
             double x2, double y2, double z2,
             double x3, double y3, double z3,
             int nearAlpha) {
         LegacyUntexturedQuadRenderer.quad(
-                consumer,
-                pose,
+                poseStack,
+                buffer,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
                 x0, y0, z0,
                 x1, y1, z1,
                 x2, y2, z2,
                 x3, y3, z3,
-                0, 191, 255,
+                0x00BFFF,
                 nearAlpha, 0, 0, nearAlpha);
     }
 }

@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:liquefaction",
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:biomass"
+  },
+  "output": {
+    "amount": 125,
+    "fluid": "BIOGAS",
+    "pressure": 0
+  }
+}

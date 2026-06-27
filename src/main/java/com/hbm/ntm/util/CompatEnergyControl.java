@@ -49,6 +49,59 @@ public final class CompatEnergyControl {
     public static final String I_PROGRESS = com.hbm.ntm.compat.CompatEnergyControl.I_PROGRESS;
     public static final String I_FLUX = com.hbm.ntm.compat.CompatEnergyControl.I_FLUX;
     public static final String I_WATER = com.hbm.ntm.compat.CompatEnergyControl.I_WATER;
+    public static final String L_PLASMA_TU = com.hbm.ntm.compat.CompatEnergyControl.L_PLASMA_TU;
+    public static final String L_KLYSTRON_TU = com.hbm.ntm.compat.CompatEnergyControl.L_KLYSTRON_TU;
+    public static final String D_NEUTRON_FLUX = com.hbm.ntm.compat.CompatEnergyControl.D_NEUTRON_FLUX;
+    public static final String D_FUSION_CONSUMPTION_PERCENT = com.hbm.ntm.compat.CompatEnergyControl.D_FUSION_CONSUMPTION_PERCENT;
+    public static final String D_BONUS_PERCENT = com.hbm.ntm.compat.CompatEnergyControl.D_BONUS_PERCENT;
+    public static final String S_FUSION_RECIPE_TANK_PREFIX = com.hbm.ntm.compat.CompatEnergyControl.S_FUSION_RECIPE_TANK_PREFIX;
+    public static final String S_FUSION_COOLANT = com.hbm.ntm.compat.CompatEnergyControl.S_FUSION_COOLANT;
+    public static final String S_FUSION_HOT_COOLANT = com.hbm.ntm.compat.CompatEnergyControl.S_FUSION_HOT_COOLANT;
+    public static final String S_FUSION_WATER = com.hbm.ntm.compat.CompatEnergyControl.S_FUSION_WATER;
+    public static final String S_FUSION_STEAM = com.hbm.ntm.compat.CompatEnergyControl.S_FUSION_STEAM;
+    public static final String S_FUSION_INPUT = com.hbm.ntm.compat.CompatEnergyControl.S_FUSION_INPUT;
+    public static final String S_FUSION_OUTPUT = com.hbm.ntm.compat.CompatEnergyControl.S_FUSION_OUTPUT;
+    public static final String S_FUSION_AIR = com.hbm.ntm.compat.CompatEnergyControl.S_FUSION_AIR;
+    public static final String S_FUSION_COLD_COOLANT = com.hbm.ntm.compat.CompatEnergyControl.S_FUSION_COLD_COOLANT;
+    public static final String D_FUSION_PROGRESS_RAW = com.hbm.ntm.compat.CompatEnergyControl.D_FUSION_PROGRESS_RAW;
+    public static final String D_FUSION_BONUS_RAW = com.hbm.ntm.compat.CompatEnergyControl.D_FUSION_BONUS_RAW;
+    public static final String D_FUSION_CONSUMPTION_RAW = com.hbm.ntm.compat.CompatEnergyControl.D_FUSION_CONSUMPTION_RAW;
+    public static final String S_FUSION_INPUT_ITEM = com.hbm.ntm.compat.CompatEnergyControl.S_FUSION_INPUT_ITEM;
+    public static final String I_FUSION_INPUT_COUNT = com.hbm.ntm.compat.CompatEnergyControl.I_FUSION_INPUT_COUNT;
+    public static final String S_FUSION_OUTPUT_ITEM = com.hbm.ntm.compat.CompatEnergyControl.S_FUSION_OUTPUT_ITEM;
+    public static final String I_FUSION_OUTPUT_COUNT = com.hbm.ntm.compat.CompatEnergyControl.I_FUSION_OUTPUT_COUNT;
+    public static final String S_ZIRNOX_WATER = com.hbm.ntm.compat.CompatEnergyControl.S_ZIRNOX_WATER;
+    public static final String S_ZIRNOX_STEAM = com.hbm.ntm.compat.CompatEnergyControl.S_ZIRNOX_STEAM;
+    public static final String S_ZIRNOX_CO2 = com.hbm.ntm.compat.CompatEnergyControl.S_ZIRNOX_CO2;
+    public static final String L_ICF_HEATING_RATE_TU = com.hbm.ntm.compat.CompatEnergyControl.L_ICF_HEATING_RATE_TU;
+    public static final String L_ICF_LASER_TU = com.hbm.ntm.compat.CompatEnergyControl.L_ICF_LASER_TU;
+    public static final String L_ICF_MAX_LASER_TU = com.hbm.ntm.compat.CompatEnergyControl.L_ICF_MAX_LASER_TU;
+    public static final String S_ICF_COOLANT = com.hbm.ntm.compat.CompatEnergyControl.S_ICF_COOLANT;
+    public static final String S_ICF_HOT_COOLANT = com.hbm.ntm.compat.CompatEnergyControl.S_ICF_HOT_COOLANT;
+    public static final String S_ICF_STELLAR_FLUX = com.hbm.ntm.compat.CompatEnergyControl.S_ICF_STELLAR_FLUX;
+    public static final String L_ICF_PELLET_DEPLETION = com.hbm.ntm.compat.CompatEnergyControl.L_ICF_PELLET_DEPLETION;
+    public static final String L_ICF_PELLET_MAX_DEPLETION = com.hbm.ntm.compat.CompatEnergyControl.L_ICF_PELLET_MAX_DEPLETION;
+    public static final String L_ICF_PELLET_FUSING_DIFFICULTY = com.hbm.ntm.compat.CompatEnergyControl.L_ICF_PELLET_FUSING_DIFFICULTY;
+    public static final String S_ICF_PELLET_PRIMARY = com.hbm.ntm.compat.CompatEnergyControl.S_ICF_PELLET_PRIMARY;
+    public static final String S_ICF_PELLET_SECONDARY = com.hbm.ntm.compat.CompatEnergyControl.S_ICF_PELLET_SECONDARY;
+    public static final String I_RESEARCH_HEAT_RAW = com.hbm.ntm.compat.CompatEnergyControl.I_RESEARCH_HEAT_RAW;
+    public static final String D_RESEARCH_ROD_LEVEL_RAW = com.hbm.ntm.compat.CompatEnergyControl.D_RESEARCH_ROD_LEVEL_RAW;
+    public static final String D_RESEARCH_ROD_TARGET_RAW = com.hbm.ntm.compat.CompatEnergyControl.D_RESEARCH_ROD_TARGET_RAW;
+    public static final String I_BREEDING_FLUX_RAW = com.hbm.ntm.compat.CompatEnergyControl.I_BREEDING_FLUX_RAW;
+    public static final String D_BREEDING_PROGRESS_RAW = com.hbm.ntm.compat.CompatEnergyControl.D_BREEDING_PROGRESS_RAW;
+    public static final String I_LASER_LENGTH = com.hbm.ntm.compat.CompatEnergyControl.I_LASER_LENGTH;
+    public static final String I_CELL_COUNT = com.hbm.ntm.compat.CompatEnergyControl.I_CELL_COUNT;
+    public static final String I_EMITTER_COUNT = com.hbm.ntm.compat.CompatEnergyControl.I_EMITTER_COUNT;
+    public static final String I_CAPACITOR_COUNT = com.hbm.ntm.compat.CompatEnergyControl.I_CAPACITOR_COUNT;
+    public static final String I_TURBOCHARGER_COUNT = com.hbm.ntm.compat.CompatEnergyControl.I_TURBOCHARGER_COUNT;
+    public static final String I_MUON = com.hbm.ntm.compat.CompatEnergyControl.I_MUON;
+    public static final String D_ROD_LEVEL_PERCENT = com.hbm.ntm.compat.CompatEnergyControl.D_ROD_LEVEL_PERCENT;
+    public static final String D_ROD_TARGET_PERCENT = com.hbm.ntm.compat.CompatEnergyControl.D_ROD_TARGET_PERCENT;
+    public static final String I_FUEL_AMOUNT = com.hbm.ntm.compat.CompatEnergyControl.I_FUEL_AMOUNT;
+    public static final String D_PROCESS_PROGRESS = com.hbm.ntm.compat.CompatEnergyControl.D_PROCESS_PROGRESS;
+    public static final String D_PROCESS_TIME = com.hbm.ntm.compat.CompatEnergyControl.D_PROCESS_TIME;
+    public static final String L_CORE_CAPACITY_C = com.hbm.ntm.compat.CompatEnergyControl.L_CORE_CAPACITY_C;
+    public static final String L_HULL_CAPACITY_C = com.hbm.ntm.compat.CompatEnergyControl.L_HULL_CAPACITY_C;
     public static final String L_DURABILITY = com.hbm.ntm.compat.CompatEnergyControl.L_DURABILITY;
     public static final String S_TANK = com.hbm.ntm.compat.CompatEnergyControl.S_TANK;
     public static final String S_TANK2 = com.hbm.ntm.compat.CompatEnergyControl.S_TANK2;
@@ -69,6 +122,14 @@ public final class CompatEnergyControl {
 
     public static double dischargeItem(ItemStack stack, double needed) {
         return com.hbm.ntm.compat.CompatEnergyControl.dischargeItem(stack, needed);
+    }
+
+    public static void putTankAmountInfo(CompoundTag data, String key, com.hbm.ntm.fluid.HbmFluidTank tank) {
+        com.hbm.ntm.compat.CompatEnergyControl.putTankAmountInfo(data, key, tank);
+    }
+
+    public static void putTypedTankInfo(CompoundTag data, String key, com.hbm.ntm.fluid.HbmFluidTank tank) {
+        com.hbm.ntm.compat.CompatEnergyControl.putTypedTankInfo(data, key, tank);
     }
 
     public static void getEnergyData(BlockEntity blockEntity, CompoundTag data) {

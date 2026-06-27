@@ -3,7 +3,6 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.blockentity.FusionMHDTBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjFusionModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -30,20 +29,20 @@ public class FusionMHDTRenderer implements BlockEntityRenderer<FusionMHDTBlockEn
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = blockEntity.getBlockState();
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, light, packedOverlay)
-                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
-        ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_TEXTURE, context, "Turbine");
+        ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_LEGACY, ObjFusionModels.MHDT_TEXTURE,
+                poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Turbine");
 
         poseStack.pushPose();
         float rotor = blockEntity.getRotor(partialTick) % 15.0F;
         poseStack.translate(0.0D, 1.5D, 0.0D);
         poseStack.mulPose(Axis.XP.rotationDegrees(rotor));
         poseStack.translate(0.0D, -1.5D, 0.0D);
-        ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_TEXTURE, context, "Coils");
+        ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_LEGACY, ObjFusionModels.MHDT_TEXTURE,
+                poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Coils");
         poseStack.popPose();
         poseStack.popPose();
     }

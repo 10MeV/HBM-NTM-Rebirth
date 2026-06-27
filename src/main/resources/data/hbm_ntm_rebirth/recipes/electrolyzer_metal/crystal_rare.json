@@ -1,0 +1,24 @@
+{
+    "type":  "hbm_ntm_rebirth:electrolyzer_metal",
+    "input":  {
+                  "ingredient":  {
+                                     "item":  "hbm_ntm_rebirth:crystal_rare"
+                                 },
+                  "count":  1
+              },
+    "output1":  {
+                    "material":  "Zirconium",
+                    "amount":  48
+                },
+    "output2":  {
+                    "material":  "Boron",
+                    "amount":  16
+                },
+    "byproducts":  [
+                       {
+                           "item":  "hbm_ntm_rebirth:powder_desh_mix",
+                           "count":  3
+                       }
+                   ],
+    "duration":  600
+}

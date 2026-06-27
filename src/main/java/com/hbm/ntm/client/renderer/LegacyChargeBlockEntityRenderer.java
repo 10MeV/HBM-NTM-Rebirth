@@ -16,6 +16,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<LegacyChargeBlockEntity> {
+    private static final ResourceLocation DYNAMITE_TEXTURE = ObjBlockModels.texture("charge_dynamite");
+    private static final ResourceLocation MINER_TEXTURE = ObjBlockModels.texture("charge_miner");
+    private static final ResourceLocation C4_TEXTURE = ObjBlockModels.texture("charge_c4");
+    private static final ResourceLocation SEMTEX_TEXTURE = ObjBlockModels.texture("charge_semtex");
+
     public LegacyChargeBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -26,12 +31,13 @@ public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<Lega
         if (!(state.getBlock() instanceof LegacyChargeBlock block)) {
             return;
         }
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         applyLegacyRotation(poseStack, state.getValue(LegacyChargeBlock.FACING));
-        model(block.kind()).renderAll(texture(block.kind()), poseStack, buffer, packedLight, packedOverlay);
-        renderTimer(blockEntity, poseStack, buffer, packedLight);
+        model(block.kind()).renderAll(texture(block.kind()), poseStack, buffer, modelLight, packedOverlay);
+        renderTimer(blockEntity, poseStack, buffer, modelLight);
         poseStack.popPose();
     }
 
@@ -90,10 +96,10 @@ public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<Lega
 
     private static ResourceLocation texture(LegacyChargeBlock.Kind kind) {
         return switch (kind) {
-            case DYNAMITE -> ObjBlockModels.texture("charge_dynamite");
-            case MINER -> ObjBlockModels.texture("charge_miner");
-            case C4 -> ObjBlockModels.texture("charge_c4");
-            case SEMTEX -> ObjBlockModels.texture("charge_semtex");
+            case DYNAMITE -> DYNAMITE_TEXTURE;
+            case MINER -> MINER_TEXTURE;
+            case C4 -> C4_TEXTURE;
+            case SEMTEX -> SEMTEX_TEXTURE;
         };
     }
 }

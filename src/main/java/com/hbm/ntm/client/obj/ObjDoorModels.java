@@ -46,13 +46,13 @@ public final class ObjDoorModels {
     public static LegacyWavefrontModel doorLegacyModel(String name) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/doors/" + name + ".obj"),
-                doorTexture(name));
+                doorTexture(name)).asVBO();
     }
 
     public static LegacyWavefrontModel rootLegacyModel(String name) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/" + name + ".obj"),
-                rootTexture(name));
+                rootTexture(name)).asVBO();
     }
 
     public static ResourceLocation doorTexture(String name) {

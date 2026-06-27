@@ -65,7 +65,7 @@ public class DiFurnaceRtgBlockEntity extends BlockEntity implements MenuProvider
             level.setBlock(pos, state.setValue(DiFurnaceRtgBlock.LIT, lit), Block.UPDATE_CLIENTS);
             changed = true;
         }
-        if (changed || level.getGameTime() % 10L == 0L) {
+        if (changed) {
             furnace.setChanged();
             level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), Block.UPDATE_CLIENTS);
         }

@@ -9,7 +9,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeRecipeFluidHandlerAdapter;
-import com.hbm.ntm.fluid.HbmFluidPortMachine;
+import com.hbm.ntm.fluid.HbmFluidPortSubscriptionTracker;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -69,6 +69,7 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
     private final LazyOptional<IItemHandler> itemHandler;
     private final LazyOptional<IEnergyStorage> energyHandler;
     private final LazyOptional<IFluidHandler> fluidHandler;
+    private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
     protected float temperature = KELVIN + 20.0F;
 
     protected PABlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state,
@@ -119,16 +120,22 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
         if (level == null || level.isClientSide) {
             return;
         }
+        long previousPower = energy.getPower();
+        int previousColdFill = coldCoolant.getFill();
+        int previousHotFill = hotCoolant.getFill();
+        float previousTemperature = temperature;
         HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(0), this, getReceiverSpeed());
         if (level.getGameTime() % 20L == 0L) {
             HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, energyPorts(), this);
-            HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, fluidPorts(),
+            fluidPortSubscriptions.refreshTransceiver(level, worldPosition, fluidPorts(),
                     getReceivingTanks(), getSendingTanks(), this);
         }
         coolMachine();
-        setChanged();
-        if (level.getGameTime() % 20L == 0L) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        if (previousPower != energy.getPower()
+                || previousColdFill != coldCoolant.getFill()
+                || previousHotFill != hotCoolant.getFill()
+                || Float.compare(previousTemperature, temperature) != 0) {
+            setChanged();
         }
     }
 
@@ -323,10 +330,17 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
 
     @Override
     public void setRemoved() {
+        fluidPortSubscriptions.detachAllDetailed(level, worldPosition, fluidPorts(), this, this);
         super.setRemoved();
         itemHandler.invalidate();
         energyHandler.invalidate();
         fluidHandler.invalidate();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        fluidPortSubscriptions.detachAllDetailed(level, worldPosition, fluidPorts(), this, this);
+        super.onChunkUnloaded();
     }
 
     @Override

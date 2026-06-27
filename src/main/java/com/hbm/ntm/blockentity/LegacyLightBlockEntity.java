@@ -34,6 +34,7 @@ public class LegacyLightBlockEntity extends BlockEntity implements HbmEnergyRece
     private long power;
     private int delay;
     private boolean on;
+    private Direction lastSubscribedInputSide;
     private final BlockPos[] lightPos = new BlockPos[FLOODLIGHT_BEAM_COUNT];
     private final LazyOptional<IEnergyStorage> energyHandler =
             LazyOptional.of(() -> new ForgeEnergyAdapter(this, true, false));
@@ -48,11 +49,17 @@ public class LegacyLightBlockEntity extends BlockEntity implements HbmEnergyRece
         }
 
         Direction inputSide = state.getValue(LegacyDirectionalShapeBlock.FACE).getOpposite();
-        HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, pos, inputSide, blockEntity);
+        if (blockEntity.lastSubscribedInputSide != inputSide
+                || Math.floorMod(level.getGameTime() + pos.hashCode(), 20) == 0L) {
+            HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, pos, inputSide, blockEntity);
+            blockEntity.lastSubscribedInputSide = inputSide;
+        }
 
         if (blockEntity.delay > 0) {
             blockEntity.delay--;
-            blockEntity.setChanged();
+            if (blockEntity.delay == 0 || level.getGameTime() % 20L == 0L) {
+                blockEntity.setChanged();
+            }
             return;
         }
 
@@ -101,8 +108,11 @@ public class LegacyLightBlockEntity extends BlockEntity implements HbmEnergyRece
 
     @Override
     public void setPower(long power) {
-        this.power = Math.max(0L, Math.min(FLOODLIGHT_MAX_POWER, power));
-        setChangedAndSync();
+        long clamped = Math.max(0L, Math.min(FLOODLIGHT_MAX_POWER, power));
+        if (this.power != clamped) {
+            this.power = clamped;
+            setChanged();
+        }
     }
 
     @Override

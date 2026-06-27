@@ -2,9 +2,11 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
 
 public final class LegacyArcFurnaceRenderHelper {
     private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_ARC_FURNACE;
@@ -48,68 +50,82 @@ public final class LegacyArcFurnaceRenderHelper {
             MODEL.prepareRenderOnlyInCallOrder("Cable3");
 
     public static void renderPlan(LegacyWavefrontModel model, LegacyTileRenderPlans.ArcFurnacePlan plan,
-            ObjRenderContext context, PoseStack poseStack) {
-        renderPart(model, "Furnace", context);
-        renderTranslatedPart(model, plan.contentsHot(), fullbrightContext(context, plan.fullbright()), poseStack);
-        renderTranslatedPart(model, plan.contentsCold(), context, poseStack);
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
+        renderPart(model, "Furnace", poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderTranslatedPart(model, plan.contentsHot(), poseStack, buffer,
+                fullbrightLight(packedLight, plan.fullbright()), packedOverlay, renderMode);
+        renderTranslatedPart(model, plan.contentsCold(), poseStack, buffer, packedLight, packedOverlay, renderMode);
 
         poseStack.pushPose();
         LegacyTileRenderPlans.TranslatedModelPartPlan lid = plan.lid();
         poseStack.translate(lid.translateX(), lid.translateY(), lid.translateZ());
-        renderPart(model, lid.partName(), context);
+        renderPart(model, lid.partName(), poseStack, buffer, packedLight, packedOverlay, renderMode);
         for (LegacyTileRenderPlans.ArcElectrodePlan electrode : plan.electrodes()) {
-            renderElectrode(model, electrode, plan, context);
+            renderElectrode(model, electrode, plan, poseStack, buffer, packedLight, packedOverlay, renderMode);
         }
         for (LegacyTileRenderPlans.RotatingModelPartPlan cable : plan.cables()) {
-            renderRotatingPart(model, cable, context, poseStack);
+            renderRotatingPart(model, cable, poseStack, buffer, packedLight, packedOverlay, renderMode);
         }
         poseStack.popPose();
     }
 
     private static void renderElectrode(LegacyWavefrontModel model,
             LegacyTileRenderPlans.ArcElectrodePlan electrode, LegacyTileRenderPlans.ArcFurnacePlan plan,
-            ObjRenderContext context) {
-        renderOptionalPart(model, electrode.ringPartName(), context);
-        renderOptionalPart(model, electrode.freshPartName(), context);
-        ObjRenderContext bright = fullbrightContext(context, plan.fullbright());
-        renderOptionalPart(model, electrode.usedHotPartName(), bright);
-        renderOptionalPart(model, electrode.depletedShortPartName(), bright);
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
+        renderOptionalPart(model, electrode.ringPartName(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderOptionalPart(model, electrode.freshPartName(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+        int brightLight = fullbrightLight(packedLight, plan.fullbright());
+        renderOptionalPart(model, electrode.usedHotPartName(), poseStack, buffer, brightLight, packedOverlay, renderMode);
+        renderOptionalPart(model, electrode.depletedShortPartName(), poseStack, buffer, brightLight,
+                packedOverlay, renderMode);
     }
 
-    private static void renderOptionalPart(LegacyWavefrontModel model, String partName, ObjRenderContext context) {
+    private static void renderOptionalPart(LegacyWavefrontModel model, String partName,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
         if (partName != null) {
-            renderPart(model, partName, context);
+            renderPart(model, partName, poseStack, buffer, packedLight, packedOverlay, renderMode);
         }
     }
 
     private static void renderTranslatedPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.TranslatedModelPartPlan part, ObjRenderContext context, PoseStack poseStack) {
+            LegacyTileRenderPlans.TranslatedModelPartPlan part, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
         if (part == null || !part.active()) {
             return;
         }
         poseStack.pushPose();
         poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-        renderPart(model, part.partName(), context);
+        renderPart(model, part.partName(), poseStack, buffer, packedLight, packedOverlay, renderMode);
         poseStack.popPose();
     }
 
     private static void renderRotatingPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.RotatingModelPartPlan part, ObjRenderContext context, PoseStack poseStack) {
+            LegacyTileRenderPlans.RotatingModelPartPlan part, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
         poseStack.pushPose();
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
         rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        renderPart(model, part.partName(), context);
+        renderPart(model, part.partName(), poseStack, buffer, packedLight, packedOverlay, renderMode);
         poseStack.popPose();
     }
 
-    private static void renderPart(LegacyWavefrontModel model, String partName, ObjRenderContext context) {
+    private static void renderPart(LegacyWavefrontModel model, String partName, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
         LegacyWavefrontModel.SelectionHandle handle = handle(partName);
-        if (model == MODEL && handle != null) {
-            MODEL.renderOnlyInCallOrder(context, handle);
+        if (sameModel(model) && handle != null) {
+            MODEL.renderOnlyInCallOrder(model.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
+                    handle, renderMode);
             return;
         }
-        model.renderPart(partName, context);
+        model.renderPart(partName, model.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    private static boolean sameModel(LegacyWavefrontModel model) {
+        return model == MODEL || model.modelLocation().equals(MODEL.modelLocation());
     }
 
     private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
@@ -137,9 +153,8 @@ public final class LegacyArcFurnaceRenderHelper {
         };
     }
 
-    private static ObjRenderContext fullbrightContext(ObjRenderContext context,
-            LegacyTileRenderPlans.FullbrightStatePlan plan) {
-        return plan == null ? context : context.withLegacyLightmap(plan.lightmapX(), plan.lightmapY());
+    private static int fullbrightLight(int packedLight, LegacyTileRenderPlans.FullbrightStatePlan plan) {
+        return plan == null ? packedLight : LightTexture.FULL_BRIGHT;
     }
 
     private static void rotate(PoseStack poseStack, float axisX, float axisY, float axisZ, double degrees) {

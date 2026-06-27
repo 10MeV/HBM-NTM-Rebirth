@@ -23,6 +23,13 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.IntValue NUKE_WARP_SHOCKWAVE_MESH_SEGMENTS;
     public static final ForgeConfigSpec.BooleanValue DEBUG_NUKE_WARP_SHOCKWAVE_WIREFRAME;
     public static final ForgeConfigSpec.BooleanValue COOLING_TOWER_PARTICLES;
+    public static final ForgeConfigSpec.BooleanValue RENDER_SAFE_OBJ_STATIC_BATCHING;
+    public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_GPU_BACKEND;
+    public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_INSTANCING;
+    public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_MDI;
+    public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_OCCLUSION_CULLING;
+    public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_IRIS_EXTENDED_SHADER_PATH;
+    public static final ForgeConfigSpec.BooleanValue RENDER_DISABLE_GPU_BACKEND_WITH_SHADERS;
     public static final ForgeConfigSpec.BooleanValue ITEM_TOOLTIP_SHOW_TAGS;
     public static final ForgeConfigSpec.BooleanValue ITEM_TOOLTIP_SHOW_CUSTOM_NUKE;
     public static final ForgeConfigSpec.BooleanValue NEI_HIDE_SECRETS;
@@ -93,6 +100,30 @@ public final class HbmClientConfig {
                 .define("coolingTowerParticles", true);
         builder.pop();
 
+        builder.push("rendering");
+        RENDER_SAFE_OBJ_STATIC_BATCHING = builder
+                .comment("Enables the OBJ GPU mesh and static instancing path for world renderers without shader packs.")
+                .define("safeObjStaticBatching", true);
+        RENDER_EXPERIMENTAL_GPU_BACKEND = builder
+                .comment("Modernized render pipeline: enables the experimental OBJ GPU backend once a real backend is available. CPU fallback remains authoritative.")
+                .define("experimentalGpuBackend", false);
+        RENDER_EXPERIMENTAL_INSTANCING = builder
+                .comment("Modernized render pipeline: enables experimental static part instancing once the GPU backend supports it.")
+                .define("experimentalInstancing", false);
+        RENDER_EXPERIMENTAL_MDI = builder
+                .comment("Modernized render pipeline: enables experimental multi-draw indirect batching for eligible instanced OBJ parts when the GPU supports it.")
+                .define("experimentalMdi", false);
+        RENDER_EXPERIMENTAL_OCCLUSION_CULLING = builder
+                .comment("Modernized render pipeline: enables experimental ray-cache occlusion culling for eligible visible machine block entity renderers.")
+                .define("experimentalOcclusionCulling", false);
+        RENDER_EXPERIMENTAL_IRIS_EXTENDED_SHADER_PATH = builder
+                .comment("Modernized render pipeline: enables the future Iris/Oculus ExtendedShader companion path once companion meshes are wired.")
+                .define("experimentalIrisExtendedShaderPath", false);
+        RENDER_DISABLE_GPU_BACKEND_WITH_SHADERS = builder
+                .comment("Disables experimental GPU/instancing paths while Iris/Oculus shader packs are active until a compatible companion path exists.")
+                .define("disableGpuBackendWithShaders", true);
+        builder.pop();
+
         builder.push("tooltips");
         ITEM_TOOLTIP_SHOW_TAGS = builder
                 .comment("Legacy ClientConfig.ITEM_TOOLTIP_SHOW_OREDICT: shows modern item tags in advanced item tooltips.")
@@ -146,6 +177,34 @@ public final class HbmClientConfig {
 
     public static boolean coolingTowerParticles() {
         return COOLING_TOWER_PARTICLES == null || COOLING_TOWER_PARTICLES.get();
+    }
+
+    public static boolean safeObjStaticBatching() {
+        return booleanValue(RENDER_SAFE_OBJ_STATIC_BATCHING, true);
+    }
+
+    public static boolean experimentalGpuBackend() {
+        return booleanValue(RENDER_EXPERIMENTAL_GPU_BACKEND, false);
+    }
+
+    public static boolean experimentalInstancing() {
+        return booleanValue(RENDER_EXPERIMENTAL_INSTANCING, false);
+    }
+
+    public static boolean experimentalMdi() {
+        return booleanValue(RENDER_EXPERIMENTAL_MDI, false);
+    }
+
+    public static boolean experimentalOcclusionCulling() {
+        return booleanValue(RENDER_EXPERIMENTAL_OCCLUSION_CULLING, false);
+    }
+
+    public static boolean experimentalIrisExtendedShaderPath() {
+        return booleanValue(RENDER_EXPERIMENTAL_IRIS_EXTENDED_SHADER_PATH, false);
+    }
+
+    public static boolean disableGpuBackendWithShaders() {
+        return booleanValue(RENDER_DISABLE_GPU_BACKEND_WITH_SHADERS, true);
     }
 
     public static boolean nukeHudFlash() {

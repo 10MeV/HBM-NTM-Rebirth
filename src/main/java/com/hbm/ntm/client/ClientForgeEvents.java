@@ -9,16 +9,27 @@ import com.hbm.ntm.client.overlay.LegacyHelmetOverlayRenderer;
 import com.hbm.ntm.client.overlay.LegacyHevHudRenderer;
 import com.hbm.ntm.client.overlay.LegacyLookOverlayRenderer;
 import com.hbm.ntm.client.obj.ObjArmorModels;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel.RenderBackendClearReason;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel.RenderBackendFlushStage;
 import com.hbm.ntm.client.overlay.ToolAbilityHudRenderer;
 import com.hbm.ntm.client.particle.HbmDeferredParticleRenderer;
 import com.hbm.ntm.client.render.HbmBlackHoleEffects;
 import com.hbm.ntm.client.render.HbmOverheadMarkers;
 import com.hbm.ntm.client.render.HbmRenderEffects;
+import com.hbm.ntm.client.render.HbmRenderFrameLight;
+import com.hbm.ntm.client.render.HbmRenderFrameFlags;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
+import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
+import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.hbm.ntm.client.render.LegacyMultiblockHighlightRenderer;
 import com.hbm.ntm.client.renderer.LegacyAccessoryRenderHelper;
 import com.hbm.ntm.client.renderer.LegacyHeadArmorRenderer;
 import com.hbm.ntm.client.renderer.LegacyJetpackRenderer;
+import com.hbm.ntm.client.renderer.LegacyLightSampleCache;
 import com.hbm.ntm.client.renderer.LegacyObjArmorRenderer;
+import com.hbm.ntm.client.renderer.LegacyRenderLighting;
 import com.hbm.ntm.client.renderer.LegacyScreenQuadRenderer;
 import com.hbm.ntm.client.renderer.NukeTorexRenderer;
 import com.hbm.ntm.client.screen.ArmorTableScreen;
@@ -333,13 +344,31 @@ public final class ClientForgeEvents {
             return;
         }
 
+        boolean endBackendFrame = event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL;
+
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
+            HbmRenderFrameFlags.beginFrame(minecraft, event);
+            HbmRenderFrameLight.beginFrame();
+            HbmRenderFrameCulling.beginFrame(minecraft, event);
+            LegacyLightSampleCache.beginFrame();
+            LegacyRenderLighting.beginFrame();
+            LegacyMachineEffectPresenter.beginFrame();
+        }
+
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
+            LegacyWavefrontModel.flushRenderBackend(RenderBackendFlushStage.AFTER_BLOCK_ENTITIES);
+            LegacyMachineEffectPresenter.present(PresentStage.AFTER_BLOCK_ENTITIES);
+            LegacyRenderLighting.clearCurrentProbe();
+        }
+
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_WEATHER) {
             HbmRenderEffects.render(event);
             HbmOverheadMarkers.render(event);
             return;
         }
 
-        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+        if (endBackendFrame) {
+            LegacyMachineEffectPresenter.present(PresentStage.AFTER_LEVEL);
             HbmDeferredParticleRenderer.renderAfterLevel(event.getCamera(), event.getPartialTick(),
                     minecraft.renderBuffers().bufferSource());
             PoseStack torexPoseStack = new PoseStack();
@@ -352,6 +381,13 @@ public final class ClientForgeEvents {
         if (HbmBlackHoleEffects.isRenderStage(event.getStage())) {
             updateBlackHoleShaders(event.getPartialTick());
             HbmBlackHoleEffects.render(event);
+        }
+
+        if (endBackendFrame) {
+            LegacyWavefrontModel.endRenderBackendFrame();
+            LegacyRenderLighting.clearCurrentProbe();
+            HbmRenderFrameCulling.endFrame();
+            HbmRenderFrameFlags.endFrame();
         }
     }
 
@@ -372,6 +408,7 @@ public final class ClientForgeEvents {
         HbmRenderEffects.tick();
         HbmOverheadMarkers.tick();
         HbmBlackHoleEffects.tick();
+        HbmShaderCompatibilityDetector.processPendingChunkInvalidation();
         updateSootFog();
         showEmptyGasMaskFilterWarning();
         pruneNetworkTransfers();
@@ -380,6 +417,9 @@ public final class ClientForgeEvents {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
             HbmDeferredParticleRenderer.clear();
+            HbmRenderFrameCulling.clear();
+            LegacyLightSampleCache.clear();
+            LegacyMachineEffectPresenter.clear();
             if (hadLevel) {
                 clearNetworkState();
                 hadLevel = false;
@@ -574,6 +614,9 @@ public final class ClientForgeEvents {
         HbmRenderEffects.clearAll();
         HbmOverheadMarkers.clearAll();
         HbmBlackHoleEffects.clearAll();
+        LegacyWavefrontModel.clearRenderBackend(RenderBackendClearReason.CLIENT_DISCONNECT);
+        LegacyRenderLighting.clearCurrentProbe();
+        HbmRenderFrameFlags.endFrame();
         LegacyMovingEntitySound.clearAll();
         SoundLoopSiren.clearAll();
         NukeHudEffects.clearAll();

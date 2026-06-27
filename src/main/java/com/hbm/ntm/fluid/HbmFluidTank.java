@@ -1,6 +1,7 @@
 package com.hbm.ntm.fluid;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -181,8 +182,7 @@ public class HbmFluidTank {
     public TankNbtWriteReport writeToNbtReport(CompoundTag tag, String key) {
         tag.putInt(key, fill);
         tag.putInt(key + "_max", maxFill);
-        tag.putString(key + "_type", type.getName());
-        tag.putInt(key + "_type_id", type.getId());
+        tag.putInt(key + "_type", type.getId());
         tag.putShort(key + "_p", (short) pressure);
         return new TankNbtWriteReport(key, snapshot());
     }
@@ -200,12 +200,16 @@ public class HbmFluidTank {
             maxFill = savedMax;
         }
         fill = Mth.clamp(fill, 0, maxFill);
-        type = HbmFluids.fromName(tag.getString(key + "_type"));
-        if (type == HbmFluids.NONE && tag.contains(key + "_type_id")) {
-            type = HbmFluids.fromId(tag.getInt(key + "_type_id"));
+        if (tag.contains(key + "_type", Tag.TAG_STRING)) {
+            type = HbmFluids.fromNameCompat(tag.getString(key + "_type"));
+        } else {
+            type = HbmFluids.NONE;
         }
-        if (type == HbmFluids.NONE && tag.contains(key + "_type")) {
+        if (type == HbmFluids.NONE && tag.contains(key + "_type", Tag.TAG_INT)) {
             type = HbmFluids.fromId(tag.getInt(key + "_type"));
+        }
+        if (type == HbmFluids.NONE && tag.contains(key + "_type_id", Tag.TAG_INT)) {
+            type = HbmFluids.fromId(tag.getInt(key + "_type_id"));
         }
         int savedPressure = tag.getShort(key + "_p");
         pressure = clampPressure(savedPressure);

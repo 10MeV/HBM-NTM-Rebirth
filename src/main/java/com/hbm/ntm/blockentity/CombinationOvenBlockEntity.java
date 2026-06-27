@@ -108,7 +108,7 @@ public class CombinationOvenBlockEntity extends HbmFluidBlockEntity
         }
         boolean changed = oven.tickServer(level, pos, state);
         oven.networkPackNT(50);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             oven.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

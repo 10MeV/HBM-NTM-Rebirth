@@ -1,0 +1,15 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:fraction_tower",
+    "output1":  {
+                    "fluid":  "hbm_ntm_rebirth:aromatics",
+                    "amount":  40
+                },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:reformate",
+                  "amount":  100
+              },
+    "output2":  {
+                    "fluid":  "hbm_ntm_rebirth:xylene",
+                    "amount":  60
+                }
+}

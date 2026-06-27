@@ -1,9 +1,8 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -24,7 +23,6 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -172,7 +170,7 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldInputFill != gasCent.inputTank.getFill()
                 || oldOutputFill != gasCent.outputTank.getFill();
         gasCent.networkPackNT(50);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             gasCent.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -441,19 +439,6 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.energyStored(energy.getPower(), energy.getMaxPower()),
-                LegacyLookOverlayLines.tank(true, tank),
-                Component.literal(inputTank.getTankType().displayName() + ": "
-                        + inputTank.getFill() + " / " + inputTank.getMaxFill() + " mB")
-                        .withStyle(inputTank.getTankType().requiresHighSpeed() && !hasSpeedUpgrade()
-                                ? ChatFormatting.DARK_RED : ChatFormatting.GRAY),
-                Component.literal(outputTank.getTankType().displayName() + ": "
-                        + outputTank.getFill() + " / " + outputTank.getMaxFill() + " mB")));
-    }
-
-    @Override
     public Component getDisplayName() {
         return customName != null && !customName.isBlank()
                 ? Component.literal(customName)
@@ -469,8 +454,16 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void provideExtraInfo(CompoundTag data) {
         super.provideExtraInfo(data);
-        data.putBoolean("active", progress > 0);
-        data.putInt("progress", progress);
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, progress > 0);
+        data.putInt(CompatEnergyControl.I_PROGRESS, progress);
+        data.putDouble(CompatEnergyControl.D_PROCESS_TIME, getProcessingSpeed());
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_GAS_CENT_FEED, tank);
+        data.putString("gasCentInputType", inputTank.getTankType().legacyName());
+        data.putInt("gasCentInput", inputTank.getFill());
+        data.putInt("gasCentInputMax", inputTank.getMaxFill());
+        data.putString("gasCentOutputType", outputTank.getTankType().legacyName());
+        data.putInt("gasCentOutput", outputTank.getFill());
+        data.putInt("gasCentOutputMax", outputTank.getMaxFill());
     }
 
     @Override

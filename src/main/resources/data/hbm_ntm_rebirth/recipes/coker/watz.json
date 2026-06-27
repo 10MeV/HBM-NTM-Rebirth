@@ -1,0 +1,11 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:coker",
+    "output":  {
+                   "item":  "hbm_ntm_rebirth:ingot_mud",
+                   "count":  4
+               },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:watz",
+                  "amount":  4000
+              }
+}

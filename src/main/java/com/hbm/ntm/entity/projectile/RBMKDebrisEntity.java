@@ -40,7 +40,6 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class RBMKDebrisEntity extends Entity {
     private static final String TAG_DEBRIS_TYPE = "debtype";
-    private static final String TAG_ROTATION = "rot";
     private static final EntityDataAccessor<Integer> DATA_TYPE =
             SynchedEntityData.defineId(RBMKDebrisEntity.class, EntityDataSerializers.INT);
 
@@ -67,7 +66,7 @@ public class RBMKDebrisEntity extends Entity {
         super.tick();
         RBMKDebrisPlan plan = plan();
         if (!level().isClientSide()) {
-            traceLidBlockBreak();
+            traceLidBlockBreak(plan);
             applyRadiationAura(plan);
             if (RBMKDebrisPlanner.shouldDespawn(tickCount, getId(), plan.lifetimeTicks(),
                     NeutronHandler.rbmkRuntimeSettings(level()).permanentScrap())) {
@@ -78,9 +77,9 @@ public class RBMKDebrisEntity extends Entity {
         tickLegacyMotion();
     }
 
-    private void traceLidBlockBreak() {
+    private void traceLidBlockBreak(RBMKDebrisPlan plan) {
         Vec3 motion = getDeltaMovement();
-        if (!RBMKDebrisPlanner.shouldTraceBlockBreak(plan().breaksBlocksOnUpwardHit(), motion.y)) {
+        if (!RBMKDebrisPlanner.shouldTraceBlockBreak(plan.breaksBlocksOnUpwardHit(), motion.y)) {
             return;
         }
 
@@ -161,7 +160,7 @@ public class RBMKDebrisEntity extends Entity {
                 discard();
             }
         }
-        return InteractionResult.sidedSuccess(level().isClientSide);
+        return InteractionResult.PASS;
     }
 
     private ItemStack pickupStack() {
@@ -212,15 +211,12 @@ public class RBMKDebrisEntity extends Entity {
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         entityData.set(DATA_TYPE, RBMKDebrisPlanner.rbmkTypeFromLegacyOrdinal(tag.getInt(TAG_DEBRIS_TYPE)).legacyIndex());
-        debrisRotation = tag.getFloat(TAG_ROTATION);
-        debrisRotationO = debrisRotation;
         refreshDimensions();
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putInt(TAG_DEBRIS_TYPE, entityData.get(DATA_TYPE));
-        tag.putFloat(TAG_ROTATION, debrisRotation);
     }
 
     @Override

@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeManager;
+import org.jetbrains.annotations.Nullable;
 
 public record HbmOilRecipe(
         List<Ingredient> itemInputs,
@@ -68,49 +70,81 @@ public record HbmOilRecipe(
     }
 
     public static List<HbmOilRecipe> crackingRecipes() {
-        return LegacyOilFluidRecipes.crackingRecipes().stream()
+        return crackingRecipes(null);
+    }
+
+    public static List<HbmOilRecipe> crackingRecipes(@Nullable RecipeManager recipeManager) {
+        return LegacyOilFluidRecipes.crackingRecipes(recipeManager).stream()
                 .map(entry -> cracking(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
     public static List<HbmOilRecipe> fractioningRecipes() {
-        return LegacyOilFluidRecipes.fractioningRecipes().stream()
+        return fractioningRecipes(null);
+    }
+
+    public static List<HbmOilRecipe> fractioningRecipes(@Nullable RecipeManager recipeManager) {
+        return LegacyOilFluidRecipes.fractioningRecipes(recipeManager).stream()
                 .map(entry -> fractioning(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
     public static List<HbmOilRecipe> hydrotreatingRecipes() {
-        return LegacyOilFluidRecipes.hydrotreatingRecipes().stream()
+        return hydrotreatingRecipes(null);
+    }
+
+    public static List<HbmOilRecipe> hydrotreatingRecipes(@Nullable RecipeManager recipeManager) {
+        return LegacyOilFluidRecipes.hydrotreatingRecipes(recipeManager).stream()
                 .map(entry -> hydrotreating(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
     public static List<HbmOilRecipe> reformingRecipes() {
-        return LegacyOilFluidRecipes.reformingRecipes().stream()
+        return reformingRecipes(null);
+    }
+
+    public static List<HbmOilRecipe> reformingRecipes(@Nullable RecipeManager recipeManager) {
+        return LegacyOilFluidRecipes.reformingRecipes(recipeManager).stream()
                 .map(entry -> reforming(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
     public static List<HbmOilRecipe> vacuumRecipes() {
-        return LegacyOilFluidRecipes.vacuumRecipes().stream()
+        return vacuumRecipes(null);
+    }
+
+    public static List<HbmOilRecipe> vacuumRecipes(@Nullable RecipeManager recipeManager) {
+        return LegacyOilFluidRecipes.vacuumRecipes(recipeManager).stream()
                 .map(entry -> vacuum(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
     public static List<HbmOilRecipe> refineryRecipes() {
-        return LegacyOilFluidRecipes.refineryRecipes().stream()
+        return refineryRecipes(null);
+    }
+
+    public static List<HbmOilRecipe> refineryRecipes(@Nullable RecipeManager recipeManager) {
+        return LegacyOilFluidRecipes.refineryRecipes(recipeManager).stream()
                 .map(entry -> refinery(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
     public static List<HbmOilRecipe> solidificationRecipes() {
-        return LegacyOilFluidRecipes.solidificationRecipes().stream()
+        return solidificationRecipes(null);
+    }
+
+    public static List<HbmOilRecipe> solidificationRecipes(@Nullable RecipeManager recipeManager) {
+        return LegacyOilFluidRecipes.solidificationRecipes(recipeManager).stream()
                 .map(entry -> solidification(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
     public static List<HbmOilRecipe> cokingRecipes() {
-        return LegacyOilFluidRecipes.cokingRecipes().stream()
+        return cokingRecipes(null);
+    }
+
+    public static List<HbmOilRecipe> cokingRecipes(@Nullable RecipeManager recipeManager) {
+        return LegacyOilFluidRecipes.cokingRecipes(recipeManager).stream()
                 .map(entry -> coking(entry.getKey(), entry.getValue()))
                 .toList();
     }

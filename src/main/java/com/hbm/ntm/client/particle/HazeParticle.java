@@ -99,10 +99,12 @@ public class HazeParticle extends TextureSheetParticle implements HbmDeferredPar
             for (Vector3f corner : corners) {
                 corner.rotate(rotation).add(x, y, z);
             }
-            consumer.vertex(corners[0].x(), corners[0].y(), corners[0].z()).uv(getU1(), getV1()).color(this.rCol, this.gCol, this.bCol, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
-            consumer.vertex(corners[1].x(), corners[1].y(), corners[1].z()).uv(getU1(), getV0()).color(this.rCol, this.gCol, this.bCol, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
-            consumer.vertex(corners[2].x(), corners[2].y(), corners[2].z()).uv(getU0(), getV0()).color(this.rCol, this.gCol, this.bCol, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
-            consumer.vertex(corners[3].x(), corners[3].y(), corners[3].z()).uv(getU0(), getV1()).color(this.rCol, this.gCol, this.bCol, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
+            HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, LightTexture.FULL_BRIGHT,
+                    corners[0], getU1(), getV1(),
+                    corners[1], getU1(), getV0(),
+                    corners[2], getU0(), getV0(),
+                    corners[3], getU0(), getV1(),
+                    this.rCol, this.gCol, this.bCol, alpha);
         }
     }
 

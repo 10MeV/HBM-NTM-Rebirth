@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
@@ -158,7 +157,7 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
             burner.setChanged();
         }
         burner.networkPackNT(25);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -269,13 +268,15 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                Component.literal("-> ").withStyle(ChatFormatting.GREEN)
-                        .append(Component.literal(setting + " mB/t").withStyle(ChatFormatting.RESET)),
-                Component.literal("<- ").withStyle(ChatFormatting.RED)
-                        .append(Component.literal(NUMBER_FORMAT.format(getCurrentHeatOutputPerTick()) + " TU/t")
-                                .withStyle(ChatFormatting.RESET)),
-                LegacyLookOverlayLines.heatTu(heatEnergy)));
+        List<Component> lines = new java.util.ArrayList<>();
+        lines.add(Component.literal("-> ").withStyle(ChatFormatting.GREEN)
+                .append(Component.literal(setting + " mB/t").withStyle(ChatFormatting.RESET)));
+        if (tank.getTankType().getTrait(FlammableFluidTrait.class) != null) {
+            lines.add(Component.literal("<- ").withStyle(ChatFormatting.RED)
+                    .append(Component.literal(NUMBER_FORMAT.format(getCurrentHeatOutputPerTick()) + " TU/t")
+                            .withStyle(ChatFormatting.RESET)));
+        }
+        return LegacyLookOverlay.forBlock(this, lines);
     }
 
     @Override
@@ -296,13 +297,10 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
             return false;
         }
         boolean changed = false;
-        if (tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
-            int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
-            if (ids.length > 0) {
-                int safeIndex = index >= 0 && index < ids.length ? index : 0;
-                tank.setTankType(HbmFluids.fromId(ids[safeIndex]));
-                changed = true;
-            }
+        java.util.OptionalInt id = HbmFluidCopiable.copiedFluidIdAt(tag, index);
+        if (id.isPresent()) {
+            tank.setTankType(HbmFluids.fromId(id.getAsInt()));
+            changed = true;
         }
         if (tag.contains("isOn")) {
             on = tag.getBoolean("isOn");

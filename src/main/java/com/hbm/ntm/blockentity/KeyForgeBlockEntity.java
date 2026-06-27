@@ -55,16 +55,20 @@ public class KeyForgeBlockEntity extends BlockEntity implements MenuProvider {
         }
         ItemStack source = keyForge.items.getStackInSlot(SLOT_SOURCE);
         ItemStack target = keyForge.items.getStackInSlot(SLOT_TARGET);
+        boolean changed = false;
         if (KeyPinItem.canTransfer(source) && KeyPinItem.canTransfer(target)) {
             KeyPinItem.setPins(target, KeyPinItem.getPins(source));
             keyForge.items.setStackInSlot(SLOT_TARGET, target);
+            changed = true;
         }
         ItemStack randomize = keyForge.items.getStackInSlot(SLOT_RANDOMIZE);
         if (KeyPinItem.canTransfer(randomize)) {
             KeyPinItem.setPins(randomize, level.random.nextInt(900) + 100);
             keyForge.items.setStackInSlot(SLOT_RANDOMIZE, randomize);
+            changed = true;
         }
-        if (level.getGameTime() % 20L == 0L) {
+        if (changed) {
+            keyForge.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }

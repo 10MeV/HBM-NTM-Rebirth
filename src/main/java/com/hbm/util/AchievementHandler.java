@@ -14,6 +14,7 @@ public final class AchievementHandler {
     public static final ResourceLocation RBMK_BOOM = com.hbm.ntm.util.AchievementHandler.RBMK_BOOM;
     public static final ResourceLocation ZIRNOX_BOOM = com.hbm.ntm.util.AchievementHandler.ZIRNOX_BOOM;
     public static final ResourceLocation WATZ_BOOM = com.hbm.ntm.util.AchievementHandler.WATZ_BOOM;
+    public static final ResourceLocation SULFURIC = com.hbm.ntm.util.AchievementHandler.SULFURIC;
     public static final ResourceLocation RAD_POISON = com.hbm.ntm.util.AchievementHandler.RAD_POISON;
     public static final ResourceLocation RAD_DEATH = com.hbm.ntm.util.AchievementHandler.RAD_DEATH;
     public static final ResourceLocation DIGAMMA_SEE = com.hbm.ntm.util.AchievementHandler.DIGAMMA_SEE;

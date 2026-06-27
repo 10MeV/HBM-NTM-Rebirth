@@ -5,6 +5,8 @@ import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjProjectileModels;
 import com.hbm.ntm.client.obj.ObjTurretModels;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.energy.HbmEnergyConnectionUtil;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnector;
@@ -344,8 +346,8 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
         ObjTurretModels.renderPart(ObjTurretModels.HIMARS, "Carriage", ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, light, overlay);
         ObjTurretModels.renderPart(ObjTurretModels.HIMARS, "Launcher", ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, light, overlay);
         ObjTurretModels.renderPart(ObjTurretModels.HIMARS, "Crane", ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, light, overlay);
-        ObjTurretModels.renderPart(ObjTurretModels.HIMARS, "TubeStandard", ObjProjectileModels.HIMARS_STANDARD_TEXTURE,
-                poseStack, buffer, light, overlay);
+        ObjTurretModels.renderHimarsTubeStandard(ObjProjectileModels.HIMARS_STANDARD_TEXTURE, poseStack, buffer,
+                light, overlay);
     }
 
     private static void renderTauonBeam(TurretBlockEntityBase turret, PoseStack poseStack,
@@ -370,9 +372,11 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
         }
         poseStack.pushPose();
         poseStack.translate(plan.translateX(), plan.translateY(), plan.translateZ());
-        for (LegacyBeamRenderer.BeamPlan beam : plan.beams()) {
-            LegacyBeamRenderer.beam(poseStack, buffer, beam);
-        }
+        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
+            for (LegacyBeamRenderer.BeamPlan beam : plan.beams()) {
+                LegacyBeamRenderer.beam(queuedPose, buffer, beam);
+            }
+        });
         poseStack.popPose();
     }
 
@@ -470,10 +474,10 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
             poseStack.translate(0.0D, -2.25D, -2.0D);
             ObjTurretModels.renderPart(ObjTurretModels.HIMARS, "Launcher", ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, light, overlay);
             ObjTurretModels.renderPart(ObjTurretModels.HIMARS, "Crane", ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, light, overlay);
-            ObjTurretModels.renderPart(ObjTurretModels.HIMARS, "TubeStandard", ObjProjectileModels.HIMARS_STANDARD_TEXTURE,
-                    poseStack, buffer, light, overlay);
+            ObjTurretModels.renderHimarsTubeStandard(ObjProjectileModels.HIMARS_STANDARD_TEXTURE, poseStack, buffer,
+                    light, overlay);
             for (int cap = 1; cap <= 6; cap++) {
-                ObjTurretModels.renderPart(ObjTurretModels.HIMARS, "CapStandard" + cap, ObjProjectileModels.HIMARS_STANDARD_TEXTURE,
+                ObjTurretModels.renderHimarsCapStandard(cap, ObjProjectileModels.HIMARS_STANDARD_TEXTURE,
                         poseStack, buffer, light, overlay);
             }
         }
@@ -501,15 +505,15 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
             LegacyArtilleryAmmoCatalog.HimarsRocket rocket = rockets.get(typeLoaded);
             ResourceLocation texture = himarsRocketTexture(rocket);
             if (rocket.modelType() == 0) {
-                ObjTurretModels.renderPart(ObjTurretModels.HIMARS, "TubeStandard", texture, poseStack, buffer, light, overlay);
+                ObjTurretModels.renderHimarsTubeStandard(texture, poseStack, buffer, light, overlay);
                 int loaded = Mth.clamp(turret.getAmmoLoaded(), 0, rocket.amount());
                 for (int i = 0; i < loaded; i++) {
-                    ObjTurretModels.renderPart(ObjTurretModels.HIMARS, "CapStandard" + (6 - i), texture, poseStack, buffer, light, overlay);
+                    ObjTurretModels.renderHimarsCapStandard(6 - i, texture, poseStack, buffer, light, overlay);
                 }
             } else if (rocket.modelType() == 1) {
-                ObjTurretModels.renderPart(ObjTurretModels.HIMARS, "TubeSingle", texture, poseStack, buffer, light, overlay);
+                ObjTurretModels.renderHimarsTubeSingle(texture, poseStack, buffer, light, overlay);
                 if (turret.hasAmmo()) {
-                    ObjTurretModels.renderPart(ObjTurretModels.HIMARS, "CapSingle", texture, poseStack, buffer, light, overlay);
+                    ObjTurretModels.renderHimarsCapSingle(texture, poseStack, buffer, light, overlay);
                 }
             }
         }

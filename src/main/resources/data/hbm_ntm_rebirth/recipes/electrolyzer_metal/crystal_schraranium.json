@@ -1,0 +1,24 @@
+{
+    "type":  "hbm_ntm_rebirth:electrolyzer_metal",
+    "input":  {
+                  "ingredient":  {
+                                     "item":  "hbm_ntm_rebirth:crystal_schraranium"
+                                 },
+                  "count":  1
+              },
+    "output1":  {
+                    "material":  "Schrabidium",
+                    "amount":  40
+                },
+    "output2":  {
+                    "material":  "Uranium",
+                    "amount":  16
+                },
+    "byproducts":  [
+                       {
+                           "item":  "hbm_ntm_rebirth:nugget_neptunium",
+                           "count":  2
+                       }
+                   ],
+    "duration":  600
+}

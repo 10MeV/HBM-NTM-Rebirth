@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "key": {
+    "C": {
+      "tag": "forge:circuits/capacitor"
+    },
+    "G": {
+      "tag": "forge:plates/gold"
+    },
+    "S": {
+      "tag": "forge:circuits/controller_chassis"
+    },
+    "V": {
+      "tag": "forge:circuits/vacuum_tube"
+    }
+  },
+  "pattern": [
+    "VVV",
+    "CSC",
+    "GGG"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ore_density_scanner"
+  },
+  "show_notification": true
+}

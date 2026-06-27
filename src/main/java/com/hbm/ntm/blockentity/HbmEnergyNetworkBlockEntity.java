@@ -22,7 +22,15 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity implements HbmEnergyNodeHost, HbmEnergyConnector {
+    private static final int ENERGY_NODE_KEEPALIVE_TICKS = 40;
+    private static final int ENERGY_SUBSCRIPTION_KEEPALIVE_TICKS = 20;
+
     private HbmEnergyNode energyNode;
+    private boolean energyNodeDirty = true;
+    private boolean energySubscriptionDirty = true;
+    private boolean energyProviderSubscribed;
+    private boolean energyReceiverSubscribed;
+    private int lastEnergyPortShapeSignature = Integer.MIN_VALUE;
 
     protected HbmEnergyNetworkBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, HbmEnergyStorage energy) {
         super(type, pos, state, energy);
@@ -30,8 +38,12 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
 
     public static <T extends HbmEnergyNetworkBlockEntity> void serverTick(Level level, BlockPos pos, BlockState state, T blockEntity) {
         if (!level.isClientSide) {
-            blockEntity.refreshEnergyNodeState();
-            blockEntity.refreshEnergyNetworkSubscriptions();
+            if (blockEntity.shouldRefreshEnergyNodeStateNow()) {
+                blockEntity.refreshEnergyNodeState();
+            }
+            if (blockEntity.shouldRefreshEnergyNetworkSubscriptionsNow()) {
+                blockEntity.refreshEnergyNetworkSubscriptions();
+            }
         }
     }
 
@@ -101,6 +113,8 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
             energyNode = null;
         }
         energyNode = HbmEnergyNodespace.createNode(level, createEnergyNode());
+        updateEnergyNodeRefreshBookkeeping();
+        markEnergySubscriptionDirty();
     }
 
     protected void refreshEnergyNetworkSubscriptions() {
@@ -109,18 +123,37 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
         }
         HbmPowerNet powerNet = getPowerNet();
         boolean hasLocalNet = powerNet != null && powerNet.isValid();
-        if (shouldSubscribeAsProvider()) {
-            if (hasLocalNet) {
-                powerNet.addProvider(getNetworkEnergyProvider());
+        boolean providerActive = shouldSubscribeAsProvider();
+        boolean receiverActive = shouldSubscribeAsReceiver();
+        HbmEnergyProvider provider = getNetworkEnergyProvider();
+        HbmEnergyReceiver receiver = getNetworkEnergyReceiver();
+        if (energyProviderSubscribed && !providerActive) {
+            HbmEnergyUtil.unsubscribeProviderFromPorts(level, worldPosition, getNetworkEnergyPorts(), provider);
+            if (hasLocalNet && provider != null) {
+                powerNet.removeProvider(provider);
             }
-            HbmEnergyUtil.subscribeProviderToPorts(level, worldPosition, getNetworkEnergyPorts(), getNetworkEnergyProvider());
         }
-        if (shouldSubscribeAsReceiver()) {
-            if (hasLocalNet) {
-                powerNet.addReceiver(getNetworkEnergyReceiver());
+        if (energyReceiverSubscribed && !receiverActive) {
+            HbmEnergyUtil.unsubscribeReceiverFromPorts(level, worldPosition, getNetworkEnergyPorts(), receiver);
+            if (hasLocalNet && receiver != null) {
+                powerNet.removeReceiver(receiver);
             }
-            HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, getNetworkEnergyPorts(), getNetworkEnergyReceiver());
         }
+        if (providerActive) {
+            if (hasLocalNet) {
+                powerNet.addProvider(provider);
+            }
+            HbmEnergyUtil.subscribeProviderToPorts(level, worldPosition, getNetworkEnergyPorts(), provider);
+        }
+        if (receiverActive) {
+            if (hasLocalNet) {
+                powerNet.addReceiver(receiver);
+            }
+            HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, getNetworkEnergyPorts(), receiver);
+        }
+        energyProviderSubscribed = providerActive;
+        energyReceiverSubscribed = receiverActive;
+        updateEnergySubscriptionRefreshBookkeeping();
     }
 
     protected void refreshEnergyNodeState() {
@@ -133,6 +166,7 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
             if (energyNode != null) {
                 removeEnergyNode();
             }
+            updateEnergyNodeRefreshBookkeeping();
             return;
         }
         if (!hasNode) {
@@ -144,6 +178,8 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
         if (!energyNode.getPositions().equals(currentShape.getPositions())
                 || !energyNode.getConnectionPoints().equals(currentShape.getConnectionPoints())) {
             refreshEnergyNode();
+        } else {
+            updateEnergyNodeRefreshBookkeeping();
         }
     }
 
@@ -171,6 +207,92 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
         return getEnergyPorts();
     }
 
+    protected void markEnergyPortsDirty() {
+        energyNodeDirty = true;
+        energySubscriptionDirty = true;
+    }
+
+    protected void markEnergySubscriptionDirty() {
+        energySubscriptionDirty = true;
+    }
+
+    private void clearEnergyNetworkSubscriptions() {
+        if (level == null || level.isClientSide) {
+            energyProviderSubscribed = false;
+            energyReceiverSubscribed = false;
+            energySubscriptionDirty = true;
+            return;
+        }
+        HbmPowerNet powerNet = getPowerNet();
+        HbmEnergyProvider provider = getNetworkEnergyProvider();
+        HbmEnergyReceiver receiver = getNetworkEnergyReceiver();
+        if (energyProviderSubscribed) {
+            HbmEnergyUtil.unsubscribeProviderFromPorts(level, worldPosition, getNetworkEnergyPorts(), provider);
+            if (powerNet != null && provider != null) {
+                powerNet.removeProvider(provider);
+            }
+        }
+        if (energyReceiverSubscribed) {
+            HbmEnergyUtil.unsubscribeReceiverFromPorts(level, worldPosition, getNetworkEnergyPorts(), receiver);
+            if (powerNet != null && receiver != null) {
+                powerNet.removeReceiver(receiver);
+            }
+        }
+        energyProviderSubscribed = false;
+        energyReceiverSubscribed = false;
+        energySubscriptionDirty = true;
+    }
+
+    protected boolean shouldRefreshEnergyNodeStateNow() {
+        if (energyNodeDirty || energyNode == null || energyNode.isExpired()) {
+            return true;
+        }
+        int portShapeSignature = energyPortShapeSignature(getNetworkEnergyPorts());
+        if (portShapeSignature != lastEnergyPortShapeSignature) {
+            return true;
+        }
+        return isStaggeredKeepalive(ENERGY_NODE_KEEPALIVE_TICKS);
+    }
+
+    protected boolean shouldRefreshEnergyNetworkSubscriptionsNow() {
+        if (energySubscriptionDirty
+                || energyProviderSubscribed != shouldSubscribeAsProvider()
+                || energyReceiverSubscribed != shouldSubscribeAsReceiver()) {
+            return true;
+        }
+        int portShapeSignature = energyPortShapeSignature(getNetworkEnergyPorts());
+        if (portShapeSignature != lastEnergyPortShapeSignature) {
+            return true;
+        }
+        return isStaggeredKeepalive(ENERGY_SUBSCRIPTION_KEEPALIVE_TICKS);
+    }
+
+    private boolean isStaggeredKeepalive(int interval) {
+        return level != null
+                && interval > 0
+                && Math.floorMod(level.getGameTime() + worldPosition.hashCode(), interval) == 0L;
+    }
+
+    private void updateEnergyNodeRefreshBookkeeping() {
+        lastEnergyPortShapeSignature = energyPortShapeSignature(getNetworkEnergyPorts());
+        energyNodeDirty = false;
+    }
+
+    private void updateEnergySubscriptionRefreshBookkeeping() {
+        lastEnergyPortShapeSignature = energyPortShapeSignature(getNetworkEnergyPorts());
+        energySubscriptionDirty = false;
+    }
+
+    private static int energyPortShapeSignature(Iterable<EnergyPort> ports) {
+        int signature = 1;
+        if (ports != null) {
+            for (EnergyPort port : ports) {
+                signature = 31 * signature + (port == null ? 0 : port.hashCode());
+            }
+        }
+        return signature;
+    }
+
     protected boolean subscribeEnergyProvider(HbmEnergyProvider provider) {
         HbmPowerNet powerNet = getPowerNet();
         if (provider == null || powerNet == null || !powerNet.isValid()) {
@@ -191,17 +313,21 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
 
     @Override
     public void removeEnergyNode() {
+        clearEnergyNetworkSubscriptions();
         if (level == null || level.isClientSide) {
             energyNode = null;
             return;
         }
         HbmEnergyNodespace.destroyNode(level, worldPosition);
         energyNode = null;
+        energyNodeDirty = true;
+        energySubscriptionDirty = true;
     }
 
     @Override
     public void onLoad() {
         super.onLoad();
+        markEnergyPortsDirty();
         refreshEnergyNodeState();
     }
 

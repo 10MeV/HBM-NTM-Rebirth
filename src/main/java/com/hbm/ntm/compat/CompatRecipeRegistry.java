@@ -2,6 +2,7 @@ package com.hbm.ntm.compat;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidCompressorRecipes;
@@ -1125,6 +1126,82 @@ public final class CompatRecipeRegistry {
         return HbmFluidCompressorRecipes.recipes();
     }
 
+    public static JsonObject createElectrolyzerFluid(HbmFluidStack input, HbmFluidStack output1,
+            HbmFluidStack output2, ItemStack[] byproducts, int duration) {
+        requireFluidOutput(input, "electrolyzer fluid input");
+        JsonObject json = new JsonObject();
+        json.addProperty("type", ModRecipes.ELECTROLYZER_FLUID.serializer().getId().toString());
+        json.add("input", fluid(input));
+        json.add("output1", output1 == null || output1.isEmpty()
+                ? fluid(new HbmFluidStack(com.hbm.ntm.fluid.HbmFluids.NONE, 0))
+                : fluid(output1));
+        json.add("output2", output2 == null || output2.isEmpty()
+                ? fluid(new HbmFluidStack(com.hbm.ntm.fluid.HbmFluids.NONE, 0))
+                : fluid(output2));
+        JsonArray byproductArray = new JsonArray();
+        for (ItemStack byproduct : itemOutputList(byproducts).stream()
+                .map(HbmItemOutput::representativeStack)
+                .toList()) {
+            byproductArray.add(HbmItemOutput.of(byproduct).toJson());
+        }
+        if (byproductArray.size() > 0) {
+            json.add("byproducts", byproductArray);
+        }
+        json.addProperty("duration", Math.max(1, duration));
+        return json;
+    }
+
+    public static ResourceLocation registerElectrolyzerFluid(com.hbm.ntm.api.recipe.RecipeSink sink,
+            ResourceLocation id, HbmFluidStack input, HbmFluidStack output1, HbmFluidStack output2,
+            ItemStack[] byproducts, int duration) {
+        return emit(sink, id, createElectrolyzerFluid(input, output1, output2, byproducts, duration));
+    }
+
+    public static ResourceLocation registerElectrolyzerFluid(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmFluidStack input, HbmFluidStack output1, HbmFluidStack output2, ItemStack[] byproducts,
+            int duration) {
+        return registerElectrolyzerFluid(sink, compatRecipeId("electrolyzer_fluid", name), input, output1,
+                output2, byproducts, duration);
+    }
+
+    public static JsonObject createElectrolyzerMetal(HbmIngredient input, MaterialStack output1,
+            MaterialStack output2, ItemStack[] byproducts, int duration) {
+        Objects.requireNonNull(input, "electrolyzer metal input");
+        JsonObject json = new JsonObject();
+        json.addProperty("type", ModRecipes.ELECTROLYZER_METAL.serializer().getId().toString());
+        json.add("input", input.toJson());
+        if (output1 != null && !output1.isEmpty()) {
+            json.add("output1", material(output1));
+        }
+        if (output2 != null && !output2.isEmpty()) {
+            json.add("output2", material(output2));
+        }
+        JsonArray byproductArray = new JsonArray();
+        for (ItemStack byproduct : itemOutputList(byproducts).stream()
+                .map(HbmItemOutput::representativeStack)
+                .toList()) {
+            byproductArray.add(HbmItemOutput.of(byproduct).toJson());
+        }
+        if (byproductArray.size() > 0) {
+            json.add("byproducts", byproductArray);
+        }
+        json.addProperty("duration", Math.max(1, duration));
+        return json;
+    }
+
+    public static ResourceLocation registerElectrolyzerMetal(com.hbm.ntm.api.recipe.RecipeSink sink,
+            ResourceLocation id, HbmIngredient input, MaterialStack output1, MaterialStack output2,
+            ItemStack[] byproducts, int duration) {
+        return emit(sink, id, createElectrolyzerMetal(input, output1, output2, byproducts, duration));
+    }
+
+    public static ResourceLocation registerElectrolyzerMetal(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient input, MaterialStack output1, MaterialStack output2, ItemStack[] byproducts,
+            int duration) {
+        return registerElectrolyzerMetal(sink, compatRecipeId("electrolyzer_metal", name), input, output1,
+                output2, byproducts, duration);
+    }
+
     public static JsonObject createArcWelder(String name, ItemStack output, int duration, long power,
             HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
         return createArcWelder(compatRecipeId("arc_welder", name), name, output, duration, power, inputFluid,
@@ -1465,8 +1542,10 @@ public final class CompatRecipeRegistry {
                 supported("registerFuelPool", "fuel_pool", "ModRecipes.FUEL_POOL datapack JSON sink"),
                 supported("registerOutgasser", "outgasser", "ModRecipes.OUTGASSER"),
                 supported("registerCompressor", "compressor", "HbmFluidCompressorRecipes runtime table"),
-                deferred("registerElectrolyzerFluid", "electrolyzer_fluid", "modern serializer not yet migrated"),
-                deferred("registerElectrolyzerMetal", "electrolyzer_metal", "material recipe serializer not yet migrated"),
+                supported("registerElectrolyzerFluid", "electrolyzer_fluid",
+                        "ModRecipes.ELECTROLYZER_FLUID datapack JSON sink"),
+                supported("registerElectrolyzerMetal", "electrolyzer_metal",
+                        "ModRecipes.ELECTROLYZER_METAL datapack JSON sink"),
                 supported("registerArcWelder", "arc_welder", "GenericMachineRecipe.Machine.ARC_WELDER"),
                 deferred("registerRotaryFurnace", "rotary_furnace", "material recipe serializer not yet migrated"),
                 supported("registerExposureChamber", "exposure_chamber", "ModRecipes.EXPOSURE_CHAMBER"),
@@ -1523,6 +1602,13 @@ public final class CompatRecipeRegistry {
         if (stack.pressure() != 0) {
             object.addProperty("pressure", stack.pressure());
         }
+        return object;
+    }
+
+    private static JsonObject material(MaterialStack stack) {
+        JsonObject object = new JsonObject();
+        object.addProperty("material", stack.material.names[0]);
+        object.addProperty("amount", stack.amount);
         return object;
     }
 

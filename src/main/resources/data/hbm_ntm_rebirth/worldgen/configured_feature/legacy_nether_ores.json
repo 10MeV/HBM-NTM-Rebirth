@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:legacy_ore_set",
+  "config": {
+    "dimension": "nether"
+  }
+}

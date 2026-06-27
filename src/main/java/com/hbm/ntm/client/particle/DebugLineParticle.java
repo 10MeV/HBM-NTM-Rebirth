@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.particle;
 
+import com.hbm.ntm.client.obj.LegacyLineRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -81,8 +82,8 @@ public class DebugLineParticle extends Particle {
         int red = (this.color >> 16) & 255;
         int green = (this.color >> 8) & 255;
         int blue = this.color & 255;
-        consumer.vertex(startX, startY, startZ).color(red, green, blue, alpha).endVertex();
-        consumer.vertex(endX, endY, endZ).color(red, green, blue, alpha).endVertex();
+        LegacyLineRenderer.linePositionColorIdentity(consumer, startX, startY, startZ, endX, endY, endZ,
+                red << 16 | green << 8 | blue, alpha);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.hbm.ntm.item;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import java.util.List;
 import net.minecraft.nbt.CompoundTag;
@@ -70,7 +71,7 @@ public class FluidPipeBlockItem extends BlockItem {
         if (tag == null) {
             return HbmFluids.NONE;
         }
-        FluidType type = HbmFluids.fromName(tag.getString(TAG_TYPE));
+        FluidType type = HbmFluidJsonUtil.readFluidReference(tag.getString(TAG_TYPE));
         if (type == HbmFluids.NONE && tag.contains(TAG_TYPE_ID)) {
             type = HbmFluids.fromId(tag.getInt(TAG_TYPE_ID));
         }

@@ -115,7 +115,7 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
         }
         boolean changed = caster.tickServer(level);
         caster.networkPackNT(150);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             caster.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

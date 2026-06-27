@@ -1,7 +1,6 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.ReactorControlBlockEntity;
-import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -38,12 +37,7 @@ public class ReactorControlMenu extends AbstractContainerMenu {
     public ReactorControlMenu(int containerId, Inventory playerInventory, ReactorControlBlockEntity blockEntity) {
         super(ModMenuTypes.REACTOR_CONTROL.get(), containerId);
         this.blockEntity = blockEntity;
-        addSlot(new SlotItemHandler(blockEntity.getItems(), 0, 92, 38) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.is(ModItems.REACTOR_SENSOR.get());
-            }
-        });
+        addSlot(new SlotItemHandler(blockEntity.getItems(), 0, 92, 38));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
         addDataSlots();
     }
@@ -108,12 +102,10 @@ public class ReactorControlMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_SLOT_END, true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (stack.is(ModItems.REACTOR_SENSOR.get())) {
+        } else {
             if (!moveItemStackTo(stack, 0, MACHINE_SLOT_COUNT, false)) {
                 return ItemStack.EMPTY;
             }
-        } else {
-            return ItemStack.EMPTY;
         }
         HbmInventoryMenuHelper.finishQuickMove(slot, stack);
         return original;

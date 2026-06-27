@@ -1,6 +1,8 @@
 package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Arrays;
@@ -19,9 +21,10 @@ public final class LegacyDangerDiamondRenderer {
     private static final double LAYER_OFFSET_X = 0.01D;
     private static final BlendPlan BLEND_PLAN = new BlendPlan(true, 770, 771, 1, 0);
 
-    public static void render(ObjRenderContext context, int poison, int flammability, int reactivity, Symbol symbol) {
+    public static void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode, int poison, int flammability, int reactivity, Symbol symbol) {
         for (QuadSpec quad : renderPlan(poison, flammability, reactivity, symbol).visibleQuads()) {
-            quad(context, quad);
+            quad(poseStack, buffer, packedLight, packedOverlay, renderMode, quad);
         }
     }
 
@@ -41,22 +44,6 @@ public final class LegacyDangerDiamondRenderer {
         return new DangerDiamondPlan(TEXTURE, TEXTURE_SIZE, poison, flammability, reactivity,
                 symbol == null ? Symbol.NONE : symbol, BLEND_PLAN, base, poisonNumber,
                 flammabilityNumber, reactivityNumber, symbolQuad, visible);
-    }
-
-    public static void number(ObjRenderContext context, int value, double yOffset, double zOffset) {
-        QuadSpec spec = numberSpec(value, yOffset, zOffset);
-        if (spec == null) {
-            return;
-        }
-        quad(context, spec);
-    }
-
-    public static void symbol(ObjRenderContext context, Symbol symbol, double yOffset, double zOffset) {
-        QuadSpec spec = symbolSpec(symbol, yOffset, zOffset);
-        if (spec == null) {
-            return;
-        }
-        quad(context, spec);
     }
 
     public static QuadSpec[] quadSpecs(int poison, int flammability, int reactivity, Symbol symbol) {
@@ -95,17 +82,20 @@ public final class LegacyDangerDiamondRenderer {
                 LAYER_OFFSET_X, yOffset, zOffset, SYMBOL_SIZE, SYMBOL_SIZE);
     }
 
-    public static void quad(ObjRenderContext context, QuadSpec spec) {
+    public static void quad(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode, QuadSpec spec) {
         if (spec == null) {
             return;
         }
-        quad(context, spec.u0(), spec.v0(), spec.u1(), spec.v1(),
-                spec.x(), spec.y(), spec.z(), spec.width(), spec.height());
+        quad(poseStack, buffer, packedLight, packedOverlay, renderMode, spec.u0(), spec.v0(),
+                spec.u1(), spec.v1(), spec.x(), spec.y(), spec.z(), spec.width(), spec.height());
     }
 
-    public static void quad(ObjRenderContext context, int u0, int v0, int u1, int v1,
+    public static void quad(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode, int u0, int v0, int u1, int v1,
             double x, double y, double z, double width, double height) {
-        LegacyTexturedQuadRenderer.pixelQuad(TEXTURE, context, 1.0F, 0.0F, 0.0F, TEXTURE_SIZE, TEXTURE_SIZE,
+        LegacyTexturedQuadRenderer.pixelQuad(TEXTURE, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                1.0F, 0.0F, 0.0F, TEXTURE_SIZE, TEXTURE_SIZE,
                 x, y + height, z - width, u0, v0,
                 x, y + height, z + width, u1, v0,
                 x, y - height, z + width, u1, v1,

@@ -69,7 +69,7 @@ public class DeuteriumTowerBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldWater != tower.waterTank.getFill()
                 || oldHeavyWater != tower.heavyWaterTank.getFill();
         tower.networkPackNT(50);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             tower.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

@@ -123,13 +123,13 @@ public final class LegacyHorseRenderer {
             int packedLight, int packedOverlay) {
         poseStack.pushPose();
         applyTransform(poseStack, ID_BODY);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
         for (HorsePartPlan plan : renderPartPlan()) {
             if (plan.pushPartTransform()) {
-                renderWithTransform(poseStack, context, texture, plan.poseId(), plan.parts().toArray(String[]::new));
+                renderWithTransform(poseStack, buffer, texture, packedLight, packedOverlay,
+                        plan.poseId(), plan.parts().toArray(String[]::new));
             } else {
                 for (String part : plan.parts()) {
-                    renderPart(part, texture, context);
+                    renderPart(part, texture, poseStack, buffer, packedLight, packedOverlay);
                 }
             }
         }
@@ -176,23 +176,24 @@ public final class LegacyHorseRenderer {
         return new HorsePoseTransform(id, offset[0], offset[1], offset[2], yaw, pitch, roll);
     }
 
-    private void renderWithTransform(PoseStack poseStack, ObjRenderContext context, ResourceLocation texture,
-            int id, String... parts) {
+    private void renderWithTransform(PoseStack poseStack, MultiBufferSource buffer, ResourceLocation texture,
+            int packedLight, int packedOverlay, int id, String... parts) {
         poseStack.pushPose();
         applyTransform(poseStack, id);
         for (String part : parts) {
-            renderPart(part, texture, context);
+            renderPart(part, texture, poseStack, buffer, packedLight, packedOverlay);
         }
         poseStack.popPose();
     }
 
-    private static void renderPart(String partName, ResourceLocation texture, ObjRenderContext context) {
+    private static void renderPart(String partName, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyWavefrontModel.SelectionHandle handle = handle(partName);
         if (handle != null) {
-            MODEL.renderOnlyInCallOrder(texture, context, handle);
+            MODEL.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle);
             return;
         }
-        MODEL.renderPart(partName, texture, context);
+        MODEL.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static LegacyWavefrontModel.SelectionHandle handle(String partName) {

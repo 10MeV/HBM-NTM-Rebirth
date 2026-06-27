@@ -22,7 +22,7 @@ public class ICFReactorRenderer implements BlockEntityRenderer<ICFReactorBlockEn
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+        return LegacyBlockEntityRenderDistances.MACHINE;
     }
 
     @Override

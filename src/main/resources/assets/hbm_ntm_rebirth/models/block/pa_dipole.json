@@ -1,6 +1,6 @@
 {
   "loader": "forge:obj",
-  "model": "hbm_ntm_rebirth:models/block/particleaccelerator/dipole.obj",
+  "model": "hbm_ntm_rebirth:models/particleaccelerator/dipole.obj",
   "automatic_culling": false,
   "flip_v": true,
   "textures": { "particle": "hbm_ntm_rebirth:block/particleaccelerator/dipole", "default": "hbm_ntm_rebirth:block/particleaccelerator/dipole" }

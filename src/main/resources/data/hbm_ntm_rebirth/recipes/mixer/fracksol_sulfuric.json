@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": { "fluid": "hbm_ntm_rebirth:fracksol", "amount": 1000 },
+  "input1": { "fluid": "hbm_ntm_rebirth:sulfuric_acid", "amount": 900 },
+  "input2": { "fluid": "hbm_ntm_rebirth:petroleum", "amount": 100 },
+  "duration": 20,
+  "source_order": 0
+}

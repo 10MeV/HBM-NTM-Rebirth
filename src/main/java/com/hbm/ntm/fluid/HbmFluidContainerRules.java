@@ -21,10 +21,17 @@ public final class HbmFluidContainerRules {
             case FLUID_TANK -> canFillFluidTank(type);
             case LEAD_FLUID_TANK -> canFillLeadFluidTank(type);
             case FLUID_BARREL -> canFillFluidBarrel(type);
-            case FLUID_PACK -> canFillFluidPack(type);
+            case FLUID_PACK -> false;
             case DISPERSER_CANISTER -> canFillDisperserCanister(type);
             case GLYPHID_GLAND -> canFillGlyphidGland(type);
         };
+    }
+
+    public static boolean canRepresentContainedFluid(ContainerKind kind, FluidType type) {
+        if (type == null || type == HbmFluids.NONE) {
+            return false;
+        }
+        return kind == ContainerKind.FLUID_PACK ? canFillFluidPack(type) : accepts(kind, type);
     }
 
     public static int capacity(ContainerKind kind) {
@@ -68,7 +75,7 @@ public final class HbmFluidContainerRules {
     }
 
     public static boolean canFillGlyphidGland(FluidType type) {
-        return type == HbmFluids.PHEROMONE || type == HbmFluids.SULFURIC_ACID;
+        return type != null && type.isDispersible();
     }
 
     public static boolean canUseGeneralContainer(FluidType type) {

@@ -144,7 +144,7 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
     }
 
     private boolean refine() {
-        VacuumRecipe recipe = LegacyOilFluidRecipes.getVacuum(inputTank.getTankType());
+        VacuumRecipe recipe = LegacyOilFluidRecipes.getVacuum(level, inputTank.getTankType());
         boolean changed = setupRecipeTanks(recipe);
         if (recipe == null) {
             return changed;

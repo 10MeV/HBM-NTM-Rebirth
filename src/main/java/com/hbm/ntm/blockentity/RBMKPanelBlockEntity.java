@@ -1,7 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
-import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
 import com.hbm.ntm.block.RBMKPanelBlock;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
@@ -33,11 +31,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class RBMKPanelBlockEntity extends BlockEntity
-        implements MenuProvider, HbmLegacyLoadedTile, LegacyLookOverlayProvider {
+        implements MenuProvider, HbmLegacyLoadedTile {
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private RBMKPanelPlanner.GaugeUnit[] gauges = defaultGauges();
     private RBMKPanelPlanner.GraphUnit[] graphs = defaultGraphs();
@@ -244,17 +239,6 @@ public class RBMKPanelBlockEntity extends BlockEntity
         super.load(tag);
         readLegacyLoadedTileNbt(tag);
         readPanelData(tag);
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        List<Component> lines = new ArrayList<>();
-        for (String channel : activeChannels()) {
-            if (!channel.isEmpty()) {
-                lines.add(Component.literal("RTTY: " + channel));
-            }
-        }
-        return LegacyLookOverlay.forBlock(this, lines);
     }
 
     private boolean tickGauges(Level level) {
@@ -714,7 +698,7 @@ public class RBMKPanelBlockEntity extends BlockEntity
                     history[i] = BufferUtil.readString(data);
                 }
                 terminal = new RBMKPanelPlanner.TerminalState(history, terminal.channel(),
-                        doesRepeat ? terminal.repeatCommand() : "", terminal.ocMode());
+                        doesRepeat ? terminal.repeatCommand() : "", false);
             }
             case DISPLAY -> {
                 RBMKConsolePlanner.ColumnType[] types = RBMKConsolePlanner.ColumnType.values();
@@ -886,7 +870,7 @@ public class RBMKPanelBlockEntity extends BlockEntity
         RBMKPanelPlanner.TerminalNbtSnapshot snapshot = RBMKPanelPlanner.terminalNbtSnapshot(terminal);
         tag.putString("channel", snapshot.channel());
         tag.putString("repeatCmd", snapshot.repeatCommand());
-        tag.putBoolean("ocMode", snapshot.ocMode());
+        tag.putBoolean("ocMode", false);
         tag.putBoolean("doesRepeat", !terminal.repeatCommand().isEmpty());
         for (int i = 0; i < snapshot.history().length; i++) {
             tag.putString("history" + i, snapshot.history()[i]);
@@ -935,34 +919,6 @@ public class RBMKPanelBlockEntity extends BlockEntity
                         types[ordinal], tag.getCompound("columnData" + i));
             }
         }
-    }
-
-    private List<String> activeChannels() {
-        List<String> channels = new ArrayList<>();
-        switch (panelType()) {
-            case GAUGE -> {
-                for (RBMKPanelPlanner.GaugeUnit unit : gauges) channels.add(unit.rtty());
-            }
-            case GRAPH -> {
-                for (RBMKPanelPlanner.GraphUnit unit : graphs) channels.add(unit.rtty());
-            }
-            case INDICATOR -> {
-                for (RBMKPanelPlanner.IndicatorUnit unit : indicators) channels.add(unit.rtty());
-            }
-            case KEYPAD -> {
-                for (RBMKPanelPlanner.KeyUnit unit : keys) channels.add(unit.rtty());
-            }
-            case LEVER -> {
-                for (RBMKPanelPlanner.LeverUnit unit : levers) channels.add(unit.rtty());
-            }
-            case NUMITRON -> {
-                for (RBMKPanelPlanner.NumitronUnit unit : numitrons) channels.add(unit.rtty());
-            }
-            case TERMINAL -> channels.add(terminal.channel());
-            case DISPLAY -> {
-            }
-        }
-        return channels.stream().distinct().toList();
     }
 
     private void setChangedAndSync(boolean updateNeighbors) {

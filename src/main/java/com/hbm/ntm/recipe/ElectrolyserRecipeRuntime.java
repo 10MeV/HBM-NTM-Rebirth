@@ -4,17 +4,22 @@ import com.hbm.inventory.material.MaterialShapes;
 import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModItems;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
 public final class ElectrolyserRecipeRuntime {
-    private static final List<FluidRecipe> FLUID_RECIPES = List.of(
+    private static final List<FluidRecipe> DEFAULT_FLUID_RECIPES = List.of(
             fluid(HbmFluids.WATER, 2_000, HbmFluids.HYDROGEN, 200, HbmFluids.OXYGEN, 200, 10),
             fluid(HbmFluids.HEAVYWATER, 2_000, HbmFluids.DEUTERIUM, 200, HbmFluids.OXYGEN, 200, 10),
             fluid(HbmFluids.VITRIOL, 1_000, HbmFluids.SULFURIC_ACID, 500, HbmFluids.CHLORINE, 500, 20,
@@ -29,6 +34,7 @@ public final class ElectrolyserRecipeRuntime {
                     stack("dust")),
             fluid(HbmFluids.CALCIUM_CHLORIDE, 250, HbmFluids.CHLORINE, 125,
                     HbmFluids.CALCIUM_SOLUTION, 125, 20));
+    private static final Map<FluidType, FluidRecipe> RUNTIME_FLUID_RECIPES = new LinkedHashMap<>();
 
     private static final List<MetalRecipe> METAL_RECIPES = List.of(
             metal("crystal_iron",
@@ -108,19 +114,55 @@ public final class ElectrolyserRecipeRuntime {
     }
 
     public static List<FluidRecipe> fluidRecipes() {
-        return FLUID_RECIPES;
+        return fluidRecipes(null);
+    }
+
+    public static List<FluidRecipe> fluidRecipes(@Nullable RecipeManager recipeManager) {
+        Map<FluidType, FluidRecipe> recipes = new LinkedHashMap<>();
+        if (recipeManager != null) {
+            for (ElectrolyserFluidRecipe recipe : recipeManager.getAllRecipesFor(ModRecipes.ELECTROLYZER_FLUID.type().get())) {
+                FluidRecipe entry = fromDatapack(recipe);
+                recipes.put(entry.input(), entry);
+            }
+        }
+        for (Map.Entry<FluidType, FluidRecipe> entry : RUNTIME_FLUID_RECIPES.entrySet()) {
+            recipes.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+        if (recipes.isEmpty()) {
+            for (FluidRecipe recipe : DEFAULT_FLUID_RECIPES) {
+                recipes.put(recipe.input(), recipe);
+            }
+        }
+        return new ArrayList<>(recipes.values());
     }
 
     public static List<MetalRecipe> metalRecipes() {
-        return METAL_RECIPES;
+        return metalRecipes(null);
+    }
+
+    public static List<MetalRecipe> metalRecipes(@Nullable RecipeManager recipeManager) {
+        List<MetalRecipe> recipes = new ArrayList<>();
+        if (recipeManager != null) {
+            for (ElectrolyserMetalRecipe recipe : recipeManager.getAllRecipesFor(ModRecipes.ELECTROLYZER_METAL.type().get())) {
+                recipes.add(fromDatapack(recipe));
+            }
+        }
+        if (recipes.isEmpty()) {
+            recipes.addAll(METAL_RECIPES);
+        }
+        return List.copyOf(recipes);
     }
 
     public static List<DisplayRecipe> displayRecipes() {
+        return displayRecipes(null);
+    }
+
+    public static List<DisplayRecipe> displayRecipes(@Nullable RecipeManager recipeManager) {
         List<DisplayRecipe> recipes = new ArrayList<>();
-        for (FluidRecipe recipe : FLUID_RECIPES) {
+        for (FluidRecipe recipe : fluidRecipes(recipeManager)) {
             recipes.add(DisplayRecipe.fluid(recipe));
         }
-        for (MetalRecipe recipe : METAL_RECIPES) {
+        for (MetalRecipe recipe : metalRecipes(recipeManager)) {
             if (!recipe.inputStack().isEmpty()) {
                 recipes.add(DisplayRecipe.metal(recipe));
             }
@@ -130,22 +172,57 @@ public final class ElectrolyserRecipeRuntime {
 
     @Nullable
     public static FluidRecipe fluidForInput(FluidType input) {
-        for (FluidRecipe recipe : FLUID_RECIPES) {
-            if (recipe.input() == input) {
+        FluidRecipe recipe = RUNTIME_FLUID_RECIPES.get(input);
+        if (recipe != null) {
+            return recipe;
+        }
+        return defaultFluidForInput(input);
+    }
+
+    @Nullable
+    public static FluidRecipe fluidForInput(@Nullable Level level, FluidType input) {
+        if (level != null) {
+            List<ElectrolyserFluidRecipe> datapackRecipes =
+                    level.getRecipeManager().getAllRecipesFor(ModRecipes.ELECTROLYZER_FLUID.type().get());
+            FluidRecipe recipe = findDatapack(datapackRecipes, input);
+            if (recipe != null) {
+                return recipe;
+            }
+            recipe = RUNTIME_FLUID_RECIPES.get(input);
+            if (recipe != null || !datapackRecipes.isEmpty()) {
                 return recipe;
             }
         }
-        return null;
+        return fluidForInput(input);
+    }
+
+    public static FluidRecipe registerFluid(HbmFluidStack input, HbmFluidStack output1, HbmFluidStack output2,
+            int duration, ItemStack... byproducts) {
+        if (input == null || input.isEmpty()) {
+            throw new IllegalArgumentException("Electrolyser fluid input cannot be empty");
+        }
+        FluidRecipe recipe = new FluidRecipe(input.type(), input.amount(),
+                output1 == null ? HbmFluids.NONE : output1.type(),
+                output1 == null ? 0 : output1.amount(),
+                output2 == null ? HbmFluids.NONE : output2.type(),
+                output2 == null ? 0 : output2.amount(), duration, byproductList(byproducts));
+        RUNTIME_FLUID_RECIPES.put(recipe.input(), recipe);
+        return recipe;
     }
 
     @Nullable
     public static MetalRecipe metalForInput(ItemStack stack) {
+        return metalForInput(null, stack);
+    }
+
+    @Nullable
+    public static MetalRecipe metalForInput(@Nullable Level level, ItemStack stack) {
         if (stack == null || stack.isEmpty()) {
             return null;
         }
-        for (MetalRecipe recipe : METAL_RECIPES) {
-            RegistryObject<Item> item = ModItems.legacyItem(recipe.inputName());
-            if (item != null && stack.is(item.get())) {
+        RecipeManager recipeManager = level == null ? null : level.getRecipeManager();
+        for (MetalRecipe recipe : metalRecipes(recipeManager)) {
+            if (recipe.matches(stack)) {
                 return recipe;
             }
         }
@@ -154,6 +231,11 @@ public final class ElectrolyserRecipeRuntime {
 
     private static FluidRecipe fluid(FluidType input, int amount, FluidType output1Type, int output1Amount,
             FluidType output2Type, int output2Amount, int duration, ItemStack... byproducts) {
+        return new FluidRecipe(input, amount, output1Type, output1Amount, output2Type, output2Amount, duration,
+                byproductList(byproducts));
+    }
+
+    private static List<ItemStack> byproductList(ItemStack... byproducts) {
         List<ItemStack> outputs = new ArrayList<>();
         if (byproducts != null) {
             for (ItemStack byproduct : byproducts) {
@@ -162,8 +244,41 @@ public final class ElectrolyserRecipeRuntime {
                 }
             }
         }
-        return new FluidRecipe(input, amount, output1Type, output1Amount, output2Type, output2Amount, duration,
-                List.copyOf(outputs));
+        return List.copyOf(outputs);
+    }
+
+    @Nullable
+    private static FluidRecipe defaultFluidForInput(FluidType input) {
+        for (FluidRecipe recipe : DEFAULT_FLUID_RECIPES) {
+            if (recipe.input() == input) {
+                return recipe;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static FluidRecipe findDatapack(List<ElectrolyserFluidRecipe> recipes, FluidType input) {
+        for (ElectrolyserFluidRecipe recipe : recipes) {
+            FluidRecipe entry = fromDatapack(recipe);
+            if (entry.input() == input) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    private static FluidRecipe fromDatapack(ElectrolyserFluidRecipe recipe) {
+        HbmFluidStack input = recipe.input();
+        HbmFluidStack output1 = recipe.output1();
+        HbmFluidStack output2 = recipe.output2();
+        return new FluidRecipe(input.type(), input.amount(), output1.type(), output1.amount(),
+                output2.type(), output2.amount(), recipe.duration(), recipe.byproducts());
+    }
+
+    private static MetalRecipe fromDatapack(ElectrolyserMetalRecipe recipe) {
+        return new MetalRecipe("", recipe.input(), recipe.output1(), recipe.output2(), recipe.duration(),
+                recipe.byproducts());
     }
 
     private static ItemStack stack(String legacyName) {
@@ -185,7 +300,7 @@ public final class ElectrolyserRecipeRuntime {
                 }
             }
         }
-        return new MetalRecipe(inputName, output1, output2, duration, List.copyOf(outputs));
+        return new MetalRecipe(inputName, null, output1, output2, duration, List.copyOf(outputs));
     }
 
     private static MaterialStack stack(com.hbm.inventory.material.NTMMaterial material, int amount) {
@@ -209,9 +324,10 @@ public final class ElectrolyserRecipeRuntime {
         }
     }
 
-    public record MetalRecipe(String inputName, MaterialStack output1, @Nullable MaterialStack output2,
-                              int duration, List<ItemStack> byproducts) {
+    public record MetalRecipe(String inputName, @Nullable HbmIngredient input, MaterialStack output1,
+                              @Nullable MaterialStack output2, int duration, List<ItemStack> byproducts) {
         public MetalRecipe {
+            inputName = inputName == null ? "" : inputName;
             output1 = output1 == null ? null : output1.copy();
             output2 = output2 == null ? null : output2.copy();
             duration = Math.max(1, duration);
@@ -219,8 +335,20 @@ public final class ElectrolyserRecipeRuntime {
         }
 
         public ItemStack inputStack() {
+            if (input != null) {
+                List<ItemStack> stacks = input.displayStacks();
+                return stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(0).copy();
+            }
             RegistryObject<Item> item = ModItems.legacyItem(inputName);
             return item == null ? ItemStack.EMPTY : new ItemStack(item.get());
+        }
+
+        private boolean matches(ItemStack stack) {
+            if (input != null) {
+                return input.test(stack);
+            }
+            RegistryObject<Item> item = ModItems.legacyItem(inputName);
+            return item != null && stack.is(item.get());
         }
     }
 

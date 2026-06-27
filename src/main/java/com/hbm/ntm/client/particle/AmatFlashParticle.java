@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.particle;
 
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -81,6 +82,7 @@ public class AmatFlashParticle extends Particle {
         float globalScale = 0.2F * this.flashScale;
         Random random = new Random(432L);
         Quaternionf rotation = new Quaternionf();
+        int centerAlpha = (int) (alpha * 255.0F);
 
         for (int i = 0; i < BEAM_COUNT; i++) {
             rotation.rotateX(random.nextFloat() * ((float) Math.PI * 2.0F))
@@ -93,24 +95,19 @@ public class AmatFlashParticle extends Particle {
             Vector3f left = new Vector3f(-0.866F * width, length, -0.5F * width).rotate(rotation).add(x, y, z);
             Vector3f right = new Vector3f(0.866F * width, length, -0.5F * width).rotate(rotation).add(x, y, z);
             Vector3f back = new Vector3f(0.0F, length, width).rotate(rotation).add(x, y, z);
-            vertex(consumer, x, y, z, alpha);
-            vertex(consumer, left, 0.0F);
-            vertex(consumer, right, 0.0F);
-            vertex(consumer, x, y, z, alpha);
-            vertex(consumer, right, 0.0F);
-            vertex(consumer, back, 0.0F);
-            vertex(consumer, x, y, z, alpha);
-            vertex(consumer, back, 0.0F);
-            vertex(consumer, left, 0.0F);
+            LegacyWavefrontModel.emitUntexturedVertexColorTriangleIdentity(consumer,
+                    x, y, z, 0xFFFFFF, centerAlpha,
+                    left.x(), left.y(), left.z(), 0xFFFFFF, 0,
+                    right.x(), right.y(), right.z(), 0xFFFFFF, 0);
+            LegacyWavefrontModel.emitUntexturedVertexColorTriangleIdentity(consumer,
+                    x, y, z, 0xFFFFFF, centerAlpha,
+                    right.x(), right.y(), right.z(), 0xFFFFFF, 0,
+                    back.x(), back.y(), back.z(), 0xFFFFFF, 0);
+            LegacyWavefrontModel.emitUntexturedVertexColorTriangleIdentity(consumer,
+                    x, y, z, 0xFFFFFF, centerAlpha,
+                    back.x(), back.y(), back.z(), 0xFFFFFF, 0,
+                    left.x(), left.y(), left.z(), 0xFFFFFF, 0);
         }
-    }
-
-    private static void vertex(VertexConsumer consumer, Vector3f position, float alpha) {
-        vertex(consumer, position.x(), position.y(), position.z(), alpha);
-    }
-
-    private static void vertex(VertexConsumer consumer, float x, float y, float z, float alpha) {
-        consumer.vertex(x, y, z).color(255, 255, 255, (int) (alpha * 255.0F)).endVertex();
     }
 
     @Override

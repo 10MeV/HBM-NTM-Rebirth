@@ -4,7 +4,6 @@ import com.hbm.ntm.block.LaunchPadBlock;
 import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjLaunchModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -32,9 +31,8 @@ public class LaunchPadRenderer implements BlockEntityRenderer<LaunchPadBlockEnti
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, launchPad.getBlockState(),
-                modelLight, packedOverlay).withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
-        ObjLaunchModels.MISSILE_PAD.renderAll(ObjLaunchModels.MISSILE_PAD_TEXTURE, context);
+        ObjLaunchModels.MISSILE_PAD.renderAll(ObjLaunchModels.MISSILE_PAD_TEXTURE, poseStack, buffer,
+                modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
 
         if (!missile.isEmpty()) {
             poseStack.pushPose();

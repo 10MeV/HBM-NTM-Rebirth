@@ -53,9 +53,7 @@ public class RadioTorchControllerBlockEntity extends RadioTorchBlockEntity {
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, radio.channel().isEmpty()
-                ? List.of()
-                : List.of(LegacyLookOverlayLines.freq(radio.channel())));
+        return LegacyLookOverlay.forBlock(this, List.of(LegacyLookOverlayLines.freq(radio.channel())));
     }
 
     @Override

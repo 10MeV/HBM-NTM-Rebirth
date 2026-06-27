@@ -5,7 +5,6 @@ import com.hbm.ntm.blockentity.CraneSplitterBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -77,17 +76,17 @@ public class CraneSplitterRenderer implements BlockEntityRenderer<CraneSplitterB
             poseStack.scale(0.625F, 0.625F, 0.625F);
             poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
             poseStack.translate(0.0D, -0.5D, 0.5D);
-            renderInventoryHalf(state, true, poseStack, buffer, packedLight, packedOverlay);
+            renderInventoryHalf(true, poseStack, buffer, packedLight, packedOverlay);
             poseStack.translate(0.0D, 0.0D, -1.0D);
-            renderInventoryHalf(state, false, poseStack, buffer, packedLight, packedOverlay);
+            renderInventoryHalf(false, poseStack, buffer, packedLight, packedOverlay);
         } else {
             poseStack.translate(0.5D, 0.35D, 0.5D);
             poseStack.scale(0.35F, 0.35F, 0.35F);
             poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
             poseStack.translate(0.0D, -0.5D, 0.5D);
-            renderInventoryHalf(state, true, poseStack, buffer, packedLight, packedOverlay);
+            renderInventoryHalf(true, poseStack, buffer, packedLight, packedOverlay);
             poseStack.translate(0.0D, 0.0D, -1.0D);
-            renderInventoryHalf(state, false, poseStack, buffer, packedLight, packedOverlay);
+            renderInventoryHalf(false, poseStack, buffer, packedLight, packedOverlay);
         }
         poseStack.popPose();
     }
@@ -97,37 +96,37 @@ public class CraneSplitterRenderer implements BlockEntityRenderer<CraneSplitterB
         poseStack.pushPose();
         poseStack.translate(offsetX + 0.5D, 0.0D, offsetZ + 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(CraneSplitterBlock.legacyRenderRotationDegrees(state)));
-        drawSplitter(state, left, poseStack, buffer, packedLight, packedOverlay);
+        drawSplitter(left, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
-    private static void renderInventoryHalf(BlockState state, boolean left, PoseStack poseStack,
+    private static void renderInventoryHalf(boolean left, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        drawSplitter(state, left, poseStack, buffer, packedLight, packedOverlay);
+        drawSplitter(left, poseStack, buffer, packedLight, packedOverlay);
     }
 
-    private static void drawSplitter(BlockState state, boolean left, PoseStack poseStack, MultiBufferSource buffer,
+    private static void drawSplitter(boolean left, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        renderPart(TOP, left ? TOP_LEFT : TOP_RIGHT, context);
-        renderPart(BOTTOM, left ? TOP_RIGHT : TOP_LEFT, context);
+        renderPart(TOP, left ? TOP_LEFT : TOP_RIGHT, poseStack, buffer, packedLight, packedOverlay);
+        renderPart(BOTTOM, left ? TOP_RIGHT : TOP_LEFT, poseStack, buffer, packedLight, packedOverlay);
         if (left) {
-            renderPart(LEFT_PART, LEFT, context);
+            renderPart(LEFT_PART, LEFT, poseStack, buffer, packedLight, packedOverlay);
         } else {
-            renderPart(RIGHT_PART, RIGHT, context);
+            renderPart(RIGHT_PART, RIGHT, poseStack, buffer, packedLight, packedOverlay);
         }
-        renderPart(BACK, left ? BACK_LEFT : BACK_RIGHT, context);
-        renderPart(FRONT, left ? FRONT_LEFT : FRONT_RIGHT, context);
-        renderPart(INNER_PART, INNER, context);
-        renderPart(INNER_LEFT, INNER_SIDE, context);
-        renderPart(INNER_RIGHT, INNER_SIDE, context);
-        renderPart(INNER_TOP, INNER_SIDE, context);
-        renderPart(INNER_BOTTOM, BELT, context);
+        renderPart(BACK, left ? BACK_LEFT : BACK_RIGHT, poseStack, buffer, packedLight, packedOverlay);
+        renderPart(FRONT, left ? FRONT_LEFT : FRONT_RIGHT, poseStack, buffer, packedLight, packedOverlay);
+        renderPart(INNER_PART, INNER, poseStack, buffer, packedLight, packedOverlay);
+        renderPart(INNER_LEFT, INNER_SIDE, poseStack, buffer, packedLight, packedOverlay);
+        renderPart(INNER_RIGHT, INNER_SIDE, poseStack, buffer, packedLight, packedOverlay);
+        renderPart(INNER_TOP, INNER_SIDE, poseStack, buffer, packedLight, packedOverlay);
+        renderPart(INNER_BOTTOM, BELT, poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, TextureAtlasSprite sprite,
-            ObjRenderContext context) {
-        ObjBlockModels.SPLITTER.renderOnlyInCallOrderWithSprite(sprite, context, handle);
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ObjBlockModels.SPLITTER.renderOnlyInCallOrderWithSprite(sprite, poseStack, buffer, packedLight, packedOverlay,
+                handle);
     }
 
     private static TextureAtlasSprite sprite(String name) {

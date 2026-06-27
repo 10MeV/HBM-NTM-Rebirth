@@ -1,0 +1,10 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:solidifier",
+    "output":  {
+                   "item":  "hbm_ntm_rebirth:ore_oil_sand"
+               },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:slop",
+                  "amount":  250
+              }
+}

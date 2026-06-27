@@ -4,8 +4,10 @@ import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
+import com.hbm.ntm.api.tile.IInfoProviderEC;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyCoriumFiniteBlock;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -58,7 +60,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
-        implements MenuProvider, HbmStandardFluidTransceiver, HbmLegacyControlReceiver, RORValueProvider, RORInteractive {
+        implements MenuProvider, HbmStandardFluidTransceiver, HbmLegacyControlReceiver, RORValueProvider,
+        RORInteractive, IInfoProviderEC {
     public static final int SLOT_FUEL_INPUT = 0;
     public static final int SLOT_HOT_OUTPUT = 1;
     public static final int SLOT_IDENTIFIER = 2;
@@ -142,7 +145,7 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         HbmFluidNetworkBlockEntity.serverTick(level, pos, state, pwr);
         changed |= pwr.tickServer(level);
         pwr.networkPackNT(150);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             pwr.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -250,6 +253,10 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         return processTime;
     }
 
+    public int getDepletionPercent() {
+        return processTime > 0.0D ? (int) (progress * 100.0D / processTime) : 0;
+    }
+
     public int getRodCount() {
         return rodCount;
     }
@@ -310,6 +317,11 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of(hotCoolantTank);
+    }
+
+    @Override
+    public boolean supportsFluidSettingsCopy() {
+        return false;
     }
 
     @Override
@@ -511,7 +523,7 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         if ((RORInfo.PREFIX_VALUE + "hullheat").equals(name)) return "" + hullHeat;
         if ((RORInfo.PREFIX_VALUE + "flux").equals(name)) return "" + (int) flux;
         if ((RORInfo.PREFIX_VALUE + "depletion").equals(name)) {
-            return "" + (int) (progress * 100.0D / processTime);
+            return "" + getDepletionPercent();
         }
         return null;
     }
@@ -528,6 +540,26 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
             return null;
         }
         return null;
+    }
+
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, amountLoaded > 0);
+        data.putLong(CompatEnergyControl.L_COREHEAT_C, coreHeat);
+        data.putLong(CompatEnergyControl.L_HULLHEAT_C, hullHeat);
+        data.putLong(CompatEnergyControl.L_CORE_CAPACITY_C, coreHeatCapacity);
+        data.putLong(CompatEnergyControl.L_HULL_CAPACITY_C, HULL_HEAT_CAPACITY_BASE);
+        data.putDouble(CompatEnergyControl.I_FLUX, flux);
+        data.putDouble(CompatEnergyControl.D_ROD_TARGET_PERCENT, rodTarget);
+        data.putDouble(CompatEnergyControl.D_ROD_LEVEL_PERCENT, rodLevel);
+        data.putInt(CompatEnergyControl.I_FUEL_AMOUNT, amountLoaded);
+        data.putDouble(CompatEnergyControl.D_PROCESS_PROGRESS, progress);
+        data.putDouble(CompatEnergyControl.D_PROCESS_TIME, processTime);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_PWR_COOLANT, coolantTank);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_PWR_HOT_COOLANT, hotCoolantTank);
+        int progressPercent = getDepletionPercent();
+        data.putInt(CompatEnergyControl.I_PROGRESS, progressPercent);
+        data.putDouble(CompatEnergyControl.D_DEPLETION_PERCENT, progressPercent);
     }
 
     @Override

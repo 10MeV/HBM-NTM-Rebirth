@@ -6,6 +6,8 @@ import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyConnector;
 import com.hbm.ntm.energy.HbmEnergyHandler;
 import com.hbm.ntm.energy.HbmLoadedEnergy;
+import com.hbm.ntm.energy.HbmEnergyProvider;
+import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -34,12 +36,18 @@ import java.util.List;
 public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmEnergyHandler,
         HbmLoadedEnergy, InfoProviderEC, HbmLegacyLoadedTile {
     private static final String TAG_ENERGY = "Energy";
+    private static final int ENERGY_PORT_KEEPALIVE_TICKS = 20;
 
     protected final HbmEnergyStorage energy;
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private final LazyOptional<IEnergyStorage> forgeEnergy;
     private final LazyOptional<IEnergyStorage> forgeEnergyInput;
     private final LazyOptional<IEnergyStorage> forgeEnergyOutput;
+    private boolean energyPortSubscriptionDirty = true;
+    private int lastProviderPortSignature = Integer.MIN_VALUE;
+    private int lastReceiverPortSignature = Integer.MIN_VALUE;
+    private int lastProviderAllSidesSignature = Integer.MIN_VALUE;
+    private int lastReceiverAllSidesSignature = Integer.MIN_VALUE;
 
     protected HbmEnergyBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, HbmEnergyStorage energy) {
         super(type, pos, state);
@@ -169,22 +177,32 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
     }
 
     protected int subscribeEnergyProviderToAllSides() {
+        if (level == null || level.isClientSide || !shouldRefreshProviderAllSides()) {
+            return 0;
+        }
         int subscribed = 0;
         for (Direction side : Direction.values()) {
             if (subscribeEnergyProviderToSide(side)) {
                 subscribed++;
             }
         }
+        lastProviderAllSidesSignature = energyAllSidesSignature(true);
+        energyPortSubscriptionDirty = false;
         return subscribed;
     }
 
     protected int subscribeEnergyReceiverToAllSides() {
+        if (level == null || level.isClientSide || !shouldRefreshReceiverAllSides()) {
+            return 0;
+        }
         int subscribed = 0;
         for (Direction side : Direction.values()) {
             if (subscribeEnergyReceiverToSide(side)) {
                 subscribed++;
             }
         }
+        lastReceiverAllSidesSignature = energyAllSidesSignature(false);
+        energyPortSubscriptionDirty = false;
         return subscribed;
     }
 
@@ -203,15 +221,31 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
     }
 
     protected int subscribeEnergyProviderToPorts() {
-        return level == null || level.isClientSide
-                ? 0
-                : HbmEnergyUtil.subscribeProviderToPorts(level, worldPosition, getEnergyPorts(), energy);
+        return subscribeEnergyProviderToPorts(getEnergyPorts(), energy);
     }
 
     protected int subscribeEnergyReceiverToPorts() {
-        return level == null || level.isClientSide
-                ? 0
-                : HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, getEnergyPorts(), energy);
+        return subscribeEnergyReceiverToPorts(getEnergyPorts(), energy);
+    }
+
+    protected int subscribeEnergyProviderToPorts(Iterable<EnergyPort> ports, HbmEnergyProvider provider) {
+        if (level == null || level.isClientSide || provider == null || !shouldRefreshProviderPorts(ports)) {
+            return 0;
+        }
+        int subscribed = HbmEnergyUtil.subscribeProviderToPorts(level, worldPosition, ports, provider);
+        lastProviderPortSignature = energyPortSignature(ports);
+        energyPortSubscriptionDirty = false;
+        return subscribed;
+    }
+
+    protected int subscribeEnergyReceiverToPorts(Iterable<EnergyPort> ports, HbmEnergyReceiver receiver) {
+        if (level == null || level.isClientSide || receiver == null || !shouldRefreshReceiverPorts(ports)) {
+            return 0;
+        }
+        int subscribed = HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, ports, receiver);
+        lastReceiverPortSignature = energyPortSignature(ports);
+        energyPortSubscriptionDirty = false;
+        return subscribed;
     }
 
     protected int tryProvideEnergyToPorts() {
@@ -286,14 +320,64 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
         return HbmEnergyUtil.unsubscribeReceiverFromPorts(level, worldPosition, getEnergyPorts(), energy);
     }
 
+    protected void markEnergyPortSubscriptionsDirty() {
+        energyPortSubscriptionDirty = true;
+    }
+
+    private boolean shouldRefreshProviderPorts(Iterable<EnergyPort> ports) {
+        int signature = energyPortSignature(ports);
+        return energyPortSubscriptionDirty || signature != lastProviderPortSignature || isEnergyPortKeepalive();
+    }
+
+    private boolean shouldRefreshReceiverPorts(Iterable<EnergyPort> ports) {
+        int signature = energyPortSignature(ports);
+        return energyPortSubscriptionDirty || signature != lastReceiverPortSignature || isEnergyPortKeepalive();
+    }
+
+    private boolean shouldRefreshProviderAllSides() {
+        int signature = energyAllSidesSignature(true);
+        return energyPortSubscriptionDirty || signature != lastProviderAllSidesSignature || isEnergyPortKeepalive();
+    }
+
+    private boolean shouldRefreshReceiverAllSides() {
+        int signature = energyAllSidesSignature(false);
+        return energyPortSubscriptionDirty || signature != lastReceiverAllSidesSignature || isEnergyPortKeepalive();
+    }
+
+    protected boolean isEnergyPortKeepalive() {
+        return level != null && Math.floorMod(level.getGameTime() + worldPosition.hashCode(), ENERGY_PORT_KEEPALIVE_TICKS) == 0L;
+    }
+
+    private static int energyPortSignature(Iterable<EnergyPort> ports) {
+        int signature = 1;
+        if (ports != null) {
+            for (EnergyPort port : ports) {
+                signature = 31 * signature + (port == null ? 0 : port.hashCode());
+            }
+        }
+        return signature;
+    }
+
+    private int energyAllSidesSignature(boolean provider) {
+        int signature = provider ? 17 : 19;
+        for (Direction side : Direction.values()) {
+            boolean enabled = provider ? canExtractEnergy(side) : canReceiveEnergy(side);
+            signature = 31 * signature + side.ordinal();
+            signature = 31 * signature + (enabled ? 1 : 0);
+        }
+        return signature;
+    }
+
     protected void clearEnergySubscriptions() {
         if (level == null || level.isClientSide) {
+            markEnergyPortSubscriptionsDirty();
             return;
         }
         unsubscribeEnergyProviderFromAllSides();
         unsubscribeEnergyReceiverFromAllSides();
         unsubscribeEnergyProviderFromPorts();
         unsubscribeEnergyReceiverFromPorts();
+        markEnergyPortSubscriptionsDirty();
     }
 
     @Override
@@ -363,6 +447,7 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
         super.load(tag);
         readLegacyLoadedTileNbt(tag);
         energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
+        markEnergyPortSubscriptionsDirty();
     }
 
     @Override

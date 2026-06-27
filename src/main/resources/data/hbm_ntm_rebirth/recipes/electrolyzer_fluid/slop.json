@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:electrolyzer_fluid",
+  "input": { "fluid": "SLOP", "amount": 1000 },
+  "output1": { "fluid": "MERCURY", "amount": 250 },
+  "output2": { "fluid": "NONE", "amount": 0 },
+  "byproducts": [
+    { "item": "hbm_ntm_rebirth:niter", "count": 2 },
+    { "item": "hbm_ntm_rebirth:powder_limestone", "count": 2 },
+    { "item": "hbm_ntm_rebirth:sulfur" }
+  ],
+  "duration": 20
+}

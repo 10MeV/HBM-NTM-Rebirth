@@ -3,6 +3,8 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.ICFControllerBlockEntity;
 import com.hbm.ntm.client.obj.LegacyBeamRenderer;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -41,13 +43,15 @@ public class ICFControllerRenderer implements BlockEntityRenderer<ICFControllerB
                 : Direction.NORTH;
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        LegacyBeamRenderer.beam(poseStack, buffer, LegacyBeamRenderer.beamPlan(
+        LegacyBeamRenderer.BeamPlan beam = LegacyBeamRenderer.beamPlan(
                 facing.getStepX() * plan.laserLength(), 0.0D,
                 facing.getStepZ() * plan.laserLength(),
                 plan.beam().wave(), plan.beam().beamType(),
                 plan.beam().outerColor(), plan.beam().innerColor(),
                 plan.beam().start(), plan.beam().segments(), plan.beam().size(),
-                plan.beam().layers(), plan.beam().thickness()));
+                plan.beam().layers(), plan.beam().thickness());
+        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                queuedPose -> LegacyBeamRenderer.beam(queuedPose, buffer, beam));
         poseStack.popPose();
     }
 }

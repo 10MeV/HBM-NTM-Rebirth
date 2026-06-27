@@ -26,6 +26,11 @@ public class FluidDuctPaintableExhaustBlock extends FluidDuctPaintableBlock {
         super(properties);
     }
 
+    @Override
+    protected String paintableTooltipId() {
+        return "fluid_duct_paintable_block_exhaust";
+    }
+
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {

@@ -1,5 +1,7 @@
 package com.hbm.ntm.client.obj;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 
@@ -15,20 +17,19 @@ public final class LegacyAtlasCuboidRenderer {
 
     public static void smallBlock(TextureAtlasSprite top, TextureAtlasSprite bottom,
             TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
-            ObjRenderContext context, double x, double y, double z) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, int color, int alpha,
+            LegacyTexturedRenderMode renderMode, double x, double y, double z) {
         CuboidBounds bounds = smallBlockBounds(x, y, z);
-        cuboid(top, bottom, north, south, east, west, context, bounds);
+        cuboid(top, bottom, north, south, east, west, poseStack, buffer, packedLight, packedOverlay, color, alpha,
+                renderMode, bounds);
     }
 
     public static void smallBlockGhost(TextureAtlasSprite top, TextureAtlasSprite bottom,
             TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
-            ObjRenderContext context, double x, double y, double z) {
-        smallBlock(top, bottom, north, south, east, west,
-                smallBlockGhostContext(context), x, y, z);
-    }
-
-    public static ObjRenderContext smallBlockGhostContext(ObjRenderContext context) {
-        return context.withTranslucencyNoDepthWrite().withAlpha(SMALL_BLOCK_GHOST_ALPHA);
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            double x, double y, double z) {
+        smallBlock(top, bottom, north, south, east, west, poseStack, buffer, packedLight, packedOverlay,
+                0xFFFFFF, SMALL_BLOCK_GHOST_ALPHA, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE, x, y, z);
     }
 
     public static CuboidBounds smallBlockBounds(double x, double y, double z) {
@@ -77,28 +78,33 @@ public final class LegacyAtlasCuboidRenderer {
 
     public static void cuboid(TextureAtlasSprite top, TextureAtlasSprite bottom,
             TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
-            ObjRenderContext context, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        southFace(south, context, minX, minY, maxZ, maxX, maxY);
-        eastFace(east, context, maxX, minY, minZ, maxY, maxZ);
-        northFace(north, context, minX, minY, minZ, maxX, maxY);
-        westFace(west, context, minX, minY, minZ, maxY, maxZ);
-        topFace(top, context, minX, minZ, maxX, maxY, maxZ);
-        bottomFace(bottom, context, minX, minY, minZ, maxX, maxZ);
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, int color, int alpha,
+            LegacyTexturedRenderMode renderMode, CuboidBounds bounds) {
+        if (bounds == null) {
+            return;
+        }
+        cuboid(top, bottom, north, south, east, west, poseStack, buffer, packedLight, packedOverlay, color, alpha,
+                renderMode, bounds.minX(), bounds.minY(), bounds.minZ(), bounds.maxX(), bounds.maxY(),
+                bounds.maxZ());
     }
 
     public static void cuboid(TextureAtlasSprite top, TextureAtlasSprite bottom,
             TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
-            ObjRenderContext context, CuboidBounds bounds) {
-        if (bounds == null) {
-            return;
-        }
-        cuboid(top, bottom, north, south, east, west, context,
-                bounds.minX(), bounds.minY(), bounds.minZ(), bounds.maxX(), bounds.maxY(), bounds.maxZ());
-    }
-
-    public static void cuboid(TextureAtlasSprite sprite, ObjRenderContext context,
-            double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        cuboid(sprite, sprite, sprite, sprite, sprite, sprite, context, minX, minY, minZ, maxX, maxY, maxZ);
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, int color, int alpha,
+            LegacyTexturedRenderMode renderMode, double minX, double minY, double minZ, double maxX, double maxY,
+            double maxZ) {
+        southFace(south, poseStack, buffer, packedLight, packedOverlay, color, alpha, renderMode,
+                minX, minY, maxZ, maxX, maxY);
+        eastFace(east, poseStack, buffer, packedLight, packedOverlay, color, alpha, renderMode,
+                maxX, minY, minZ, maxY, maxZ);
+        northFace(north, poseStack, buffer, packedLight, packedOverlay, color, alpha, renderMode,
+                minX, minY, minZ, maxX, maxY);
+        westFace(west, poseStack, buffer, packedLight, packedOverlay, color, alpha, renderMode,
+                minX, minY, minZ, maxY, maxZ);
+        topFace(top, poseStack, buffer, packedLight, packedOverlay, color, alpha, renderMode,
+                minX, minZ, maxX, maxY, maxZ);
+        bottomFace(bottom, poseStack, buffer, packedLight, packedOverlay, color, alpha, renderMode,
+                minX, minY, minZ, maxX, maxZ);
     }
 
     public static CuboidPlan cuboidPlan(CuboidBounds bounds) {
@@ -107,33 +113,61 @@ public final class LegacyAtlasCuboidRenderer {
 
     public static void croppedCuboid(TextureAtlasSprite top, TextureAtlasSprite bottom,
             TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
-            ObjRenderContext context, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        croppedSouthFace(south, context, minX, minY, maxZ, maxX, maxY);
-        croppedEastFace(east, context, maxX, minY, minZ, maxY, maxZ);
-        croppedNorthFace(north, context, minX, minY, minZ, maxX, maxY);
-        croppedWestFace(west, context, minX, minY, minZ, maxY, maxZ);
-        croppedTopFace(top, context, minX, minZ, maxX, maxY, maxZ);
-        croppedBottomFace(bottom, context, minX, minY, minZ, maxX, maxZ);
-    }
-
-    public static void croppedCuboid(TextureAtlasSprite sprite, ObjRenderContext context,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        croppedCuboid(sprite, sprite, sprite, sprite, sprite, sprite, context, minX, minY, minZ, maxX, maxY, maxZ);
+        croppedCuboid(top, bottom, north, south, east, west, poseStack, buffer, packedLight, packedOverlay,
+                0xFFFFFF, 255, LegacyTexturedRenderMode.CUTOUT_CULL, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    public static void croppedCuboid(TextureAtlasSprite sprite, ObjRenderContext context, CuboidBounds bounds) {
+    public static void croppedCuboid(TextureAtlasSprite top, TextureAtlasSprite bottom,
+            TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, int color, int alpha,
+            LegacyTexturedRenderMode renderMode, double minX, double minY, double minZ, double maxX, double maxY,
+            double maxZ) {
+        croppedSouthFace(south, poseStack, buffer, packedLight, packedOverlay, color, alpha, renderMode,
+                minX, minY, maxZ, maxX, maxY);
+        croppedEastFace(east, poseStack, buffer, packedLight, packedOverlay, color, alpha, renderMode,
+                maxX, minY, minZ, maxY, maxZ);
+        croppedNorthFace(north, poseStack, buffer, packedLight, packedOverlay, color, alpha, renderMode,
+                minX, minY, minZ, maxX, maxY);
+        croppedWestFace(west, poseStack, buffer, packedLight, packedOverlay, color, alpha, renderMode,
+                minX, minY, minZ, maxY, maxZ);
+        croppedTopFace(top, poseStack, buffer, packedLight, packedOverlay, color, alpha, renderMode,
+                minX, minZ, maxX, maxY, maxZ);
+        croppedBottomFace(bottom, poseStack, buffer, packedLight, packedOverlay, color, alpha, renderMode,
+                minX, minY, minZ, maxX, maxZ);
+    }
+
+    public static void croppedCuboid(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, double minX, double minY, double minZ, double maxX, double maxY,
+            double maxZ) {
+        croppedCuboid(sprite, sprite, sprite, sprite, sprite, sprite, poseStack, buffer, packedLight, packedOverlay,
+                minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    public static void croppedCuboid(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
+            double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        croppedCuboid(sprite, sprite, sprite, sprite, sprite, sprite, poseStack, buffer, packedLight, packedOverlay,
+                color, alpha, renderMode, minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    public static void croppedCuboid(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, CuboidBounds bounds) {
         if (bounds == null) {
             return;
         }
-        croppedCuboid(sprite, context, bounds.minX(), bounds.minY(), bounds.minZ(), bounds.maxX(), bounds.maxY(), bounds.maxZ());
+        croppedCuboid(sprite, poseStack, buffer, packedLight, packedOverlay, bounds.minX(), bounds.minY(),
+                bounds.minZ(), bounds.maxX(), bounds.maxY(), bounds.maxZ());
     }
 
     public static CuboidPlan croppedCuboidPlan(CuboidBounds bounds) {
         return cuboidPlan(bounds, true);
     }
 
-    public static void centeredCube(TextureAtlasSprite sprite, ObjRenderContext context, double radius) {
-        croppedCuboid(sprite, context, centeredCubeBounds(radius));
+    public static void centeredCube(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, double radius) {
+        croppedCuboid(sprite, poseStack, buffer, packedLight, packedOverlay, centeredCubeBounds(radius));
     }
 
     public static CuboidBounds centeredCubeBounds(double radius) {
@@ -146,9 +180,9 @@ public final class LegacyAtlasCuboidRenderer {
         return croppedCuboidPlan(centeredCubeBounds(radius));
     }
 
-    public static void directionalSlab(TextureAtlasSprite sprite, ObjRenderContext context,
-            Direction direction, double thickness) {
-        croppedCuboid(sprite, context, directionalSlabBounds(direction, thickness));
+    public static void directionalSlab(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, Direction direction, double thickness) {
+        croppedCuboid(sprite, poseStack, buffer, packedLight, packedOverlay, directionalSlabBounds(direction, thickness));
     }
 
     public static CuboidBounds directionalSlabBounds(Direction direction, double thickness) {
@@ -175,20 +209,6 @@ public final class LegacyAtlasCuboidRenderer {
         return croppedCuboidPlan(directionalSlabBounds(direction, thickness));
     }
 
-    public static void cross(TextureAtlasSprite sprite, ObjRenderContext context,
-            double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        LegacyTexturedQuadRenderer.doubleSidedSpriteQuad(sprite, context, 0.0F, 0.0F, 1.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, minZ, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, minZ, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, maxZ, 16.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, maxZ, 16.0D, 0.0D));
-        LegacyTexturedQuadRenderer.doubleSidedSpriteQuad(sprite, context, 1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, maxZ, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, maxZ, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, minZ, 16.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, minZ, 16.0D, 0.0D));
-    }
-
     public static List<PlaneQuadPlan> crossPlan(double minX, double minY, double minZ,
             double maxX, double maxY, double maxZ) {
         return List.of(
@@ -202,21 +222,6 @@ public final class LegacyAtlasCuboidRenderer {
                         cuboidVertex(minX, minY, maxZ, 0.0D, 16.0D),
                         cuboidVertex(maxX, minY, minZ, 16.0D, 16.0D),
                         cuboidVertex(maxX, maxY, minZ, 16.0D, 0.0D))));
-    }
-
-    public static void wallQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        wallQuad(sprite, context, 0.0F, 1.0F, 0.0F, minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    public static void wallQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            float normalX, float normalY, float normalZ,
-            double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        LegacyTexturedQuadRenderer.doubleSidedSpriteQuad(sprite, context, normalX, normalY, normalZ,
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, minZ, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, minZ, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, maxZ, 16.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, maxZ, 16.0D, 0.0D));
     }
 
     public static PlaneQuadPlan wallQuadPlan(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
@@ -266,136 +271,160 @@ public final class LegacyAtlasCuboidRenderer {
                         cuboidVertex(bounds.maxX(), bounds.minY(), bounds.maxZ(), cropped ? forwardPixel(bounds.maxX(), bounds.minX(), bounds.maxX(), 16.0D) : 16.0D, cropped ? forwardPixel(bounds.maxZ(), bounds.minZ(), bounds.maxZ(), 16.0D) : 16.0D))));
     }
 
-    private static void southFace(TextureAtlasSprite sprite, ObjRenderContext context,
+    private static void southFace(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
             double minX, double minY, double z, double maxX, double maxY) {
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, context, 0.0F, 0.0F, 1.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, z, 16.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, z, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, z, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, z, 16.0D, 16.0D));
+        LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                0.0F, 0.0F, 1.0F,
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, z, 16.0D, 0.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, z, 0.0D, 0.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, z, 0.0D, 16.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, z, 16.0D, 16.0D, color, alpha));
     }
 
-    private static void northFace(TextureAtlasSprite sprite, ObjRenderContext context,
+    private static void northFace(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
             double minX, double minY, double z, double maxX, double maxY) {
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, context, 0.0F, 0.0F, -1.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, z, 16.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, z, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, z, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, z, 16.0D, 16.0D));
+        LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                0.0F, 0.0F, -1.0F,
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, z, 16.0D, 0.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, z, 0.0D, 0.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, z, 0.0D, 16.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, z, 16.0D, 16.0D, color, alpha));
     }
 
-    private static void eastFace(TextureAtlasSprite sprite, ObjRenderContext context,
+    private static void eastFace(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
             double x, double minY, double minZ, double maxY, double maxZ) {
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, context, 1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, maxZ, 16.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, minZ, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, minZ, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, maxZ, 16.0D, 16.0D));
+        LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                1.0F, 0.0F, 0.0F,
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, maxZ, 16.0D, 0.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, minZ, 0.0D, 0.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, minZ, 0.0D, 16.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, maxZ, 16.0D, 16.0D, color, alpha));
     }
 
-    private static void westFace(TextureAtlasSprite sprite, ObjRenderContext context,
+    private static void westFace(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
             double x, double minY, double minZ, double maxY, double maxZ) {
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, context, -1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, minZ, 16.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, maxZ, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, maxZ, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, minZ, 16.0D, 16.0D));
+        LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                -1.0F, 0.0F, 0.0F,
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, minZ, 16.0D, 0.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, maxZ, 0.0D, 0.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, maxZ, 0.0D, 16.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, minZ, 16.0D, 16.0D, color, alpha));
     }
 
-    private static void topFace(TextureAtlasSprite sprite, ObjRenderContext context,
+    private static void topFace(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
             double minX, double minZ, double maxX, double y, double maxZ) {
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, context, 0.0F, 1.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, minZ, 16.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, minZ, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, maxZ, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, maxZ, 16.0D, 16.0D));
+        LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                0.0F, 1.0F, 0.0F,
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, minZ, 16.0D, 0.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, minZ, 0.0D, 0.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, maxZ, 0.0D, 16.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, maxZ, 16.0D, 16.0D, color, alpha));
     }
 
-    private static void bottomFace(TextureAtlasSprite sprite, ObjRenderContext context,
+    private static void bottomFace(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
             double minX, double y, double minZ, double maxX, double maxZ) {
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, context, 0.0F, -1.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, minZ, 16.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, minZ, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, maxZ, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, maxZ, 16.0D, 16.0D));
+        LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                0.0F, -1.0F, 0.0F,
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, minZ, 16.0D, 0.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, minZ, 0.0D, 0.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, maxZ, 0.0D, 16.0D, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, maxZ, 16.0D, 16.0D, color, alpha));
     }
 
-    private static void croppedSouthFace(TextureAtlasSprite sprite, ObjRenderContext context,
+    private static void croppedSouthFace(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
             double minX, double minY, double z, double maxX, double maxY) {
         double u0 = forwardPixel(maxX, minX, maxX, 16.0D);
         double u1 = forwardPixel(minX, minX, maxX, 0.0D);
         double v0 = reversePixel(maxY, minY, maxY, 0.0D);
         double v1 = reversePixel(minY, minY, maxY, 16.0D);
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, context, 0.0F, 0.0F, 1.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, z, u0, v0),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, z, u1, v0),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, z, u1, v1),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, z, u0, v1));
+        LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                0.0F, 0.0F, 1.0F,
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, z, u0, v0, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, z, u1, v0, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, z, u1, v1, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, z, u0, v1, color, alpha));
     }
 
-    private static void croppedNorthFace(TextureAtlasSprite sprite, ObjRenderContext context,
+    private static void croppedNorthFace(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
             double minX, double minY, double z, double maxX, double maxY) {
         double u0 = reversePixel(maxX, minX, maxX, 0.0D);
         double u1 = reversePixel(minX, minX, maxX, 16.0D);
         double v0 = reversePixel(maxY, minY, maxY, 0.0D);
         double v1 = reversePixel(minY, minY, maxY, 16.0D);
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, context, 0.0F, 0.0F, -1.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, z, u0, v0),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, z, u1, v0),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, z, u1, v1),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, z, u0, v1));
+        LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                0.0F, 0.0F, -1.0F,
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, z, u0, v0, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, z, u1, v0, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, z, u1, v1, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, z, u0, v1, color, alpha));
     }
 
-    private static void croppedEastFace(TextureAtlasSprite sprite, ObjRenderContext context,
+    private static void croppedEastFace(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
             double x, double minY, double minZ, double maxY, double maxZ) {
         double u0 = reversePixel(maxZ, minZ, maxZ, 0.0D);
         double u1 = reversePixel(minZ, minZ, maxZ, 16.0D);
         double v0 = reversePixel(maxY, minY, maxY, 0.0D);
         double v1 = reversePixel(minY, minY, maxY, 16.0D);
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, context, 1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, maxZ, u0, v0),
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, minZ, u1, v0),
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, minZ, u1, v1),
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, maxZ, u0, v1));
+        LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                1.0F, 0.0F, 0.0F,
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, maxZ, u0, v0, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, minZ, u1, v0, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, minZ, u1, v1, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, maxZ, u0, v1, color, alpha));
     }
 
-    private static void croppedWestFace(TextureAtlasSprite sprite, ObjRenderContext context,
+    private static void croppedWestFace(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
             double x, double minY, double minZ, double maxY, double maxZ) {
         double u0 = forwardPixel(maxZ, minZ, maxZ, 16.0D);
         double u1 = forwardPixel(minZ, minZ, maxZ, 0.0D);
         double v0 = reversePixel(maxY, minY, maxY, 0.0D);
         double v1 = reversePixel(minY, minY, maxY, 16.0D);
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, context, -1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, minZ, u1, v0),
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, maxZ, u0, v0),
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, maxZ, u0, v1),
-                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, minZ, u1, v1));
+        LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                -1.0F, 0.0F, 0.0F,
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, minZ, u1, v0, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, maxY, maxZ, u0, v0, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, maxZ, u0, v1, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(x, minY, minZ, u1, v1, color, alpha));
     }
 
-    private static void croppedTopFace(TextureAtlasSprite sprite, ObjRenderContext context,
+    private static void croppedTopFace(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
             double minX, double minZ, double maxX, double y, double maxZ) {
         double u0 = forwardPixel(maxX, minX, maxX, 16.0D);
         double u1 = forwardPixel(minX, minX, maxX, 0.0D);
         double v0 = forwardPixel(minZ, minZ, maxZ, 0.0D);
         double v1 = forwardPixel(maxZ, minZ, maxZ, 16.0D);
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, context, 0.0F, 1.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, minZ, u0, v0),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, minZ, u1, v0),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, maxZ, u1, v1),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, maxZ, u0, v1));
+        LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                0.0F, 1.0F, 0.0F,
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, minZ, u0, v0, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, minZ, u1, v0, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, maxZ, u1, v1, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, maxZ, u0, v1, color, alpha));
     }
 
-    private static void croppedBottomFace(TextureAtlasSprite sprite, ObjRenderContext context,
+    private static void croppedBottomFace(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, int alpha, LegacyTexturedRenderMode renderMode,
             double minX, double y, double minZ, double maxX, double maxZ) {
         double u0 = forwardPixel(maxX, minX, maxX, 16.0D);
         double u1 = forwardPixel(minX, minX, maxX, 0.0D);
         double v0 = forwardPixel(minZ, minZ, maxZ, 0.0D);
         double v1 = forwardPixel(maxZ, minZ, maxZ, 16.0D);
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, context, 0.0F, -1.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, minZ, u0, v0),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, minZ, u1, v0),
-                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, maxZ, u1, v1),
-                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, maxZ, u0, v1));
+        LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                0.0F, -1.0F, 0.0F,
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, minZ, u0, v0, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, minZ, u1, v0, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(minX, y, maxZ, u1, v1, color, alpha),
+                LegacyTexturedQuadRenderer.spritePixelVertex(maxX, y, maxZ, u0, v1, color, alpha));
     }
 
     private static double forwardPixel(double value, double min, double max, double fallback) {

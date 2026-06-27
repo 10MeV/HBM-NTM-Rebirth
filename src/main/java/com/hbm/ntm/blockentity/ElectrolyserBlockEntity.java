@@ -239,7 +239,7 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || !oldOutput1.equals(electrolyser.outputTank1.snapshot())
                 || !oldOutput2.equals(electrolyser.outputTank2.snapshot())
                 || !oldNitric.equals(electrolyser.nitricTank.snapshot());
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             electrolyser.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -252,7 +252,7 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean canProcessFluid() {
-        FluidRecipe recipe = ElectrolyserRecipeRuntime.fluidForInput(inputTank.getTankType());
+        FluidRecipe recipe = ElectrolyserRecipeRuntime.fluidForInput(level, inputTank.getTankType());
         if (recipe == null || energy.getPower() < usageFluid || inputTank.getFill() < recipe.amount()) {
             return false;
         }
@@ -304,7 +304,7 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private void processFluids() {
-        FluidRecipe recipe = ElectrolyserRecipeRuntime.fluidForInput(inputTank.getTankType());
+        FluidRecipe recipe = ElectrolyserRecipeRuntime.fluidForInput(level, inputTank.getTankType());
         if (recipe == null) {
             return;
         }
@@ -316,7 +316,7 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean canProcessMetal() {
-        MetalRecipe recipe = ElectrolyserRecipeRuntime.metalForInput(items.getStackInSlot(SLOT_METAL_INPUT));
+        MetalRecipe recipe = ElectrolyserRecipeRuntime.metalForInput(level, items.getStackInSlot(SLOT_METAL_INPUT));
         if (recipe == null || energy.getPower() < usageOre || nitricTank.getFill() < 100) {
             return false;
         }
@@ -340,7 +340,7 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private void processMetal() {
-        MetalRecipe recipe = ElectrolyserRecipeRuntime.metalForInput(items.getStackInSlot(SLOT_METAL_INPUT));
+        MetalRecipe recipe = ElectrolyserRecipeRuntime.metalForInput(level, items.getStackInSlot(SLOT_METAL_INPUT));
         if (recipe == null) {
             return;
         }
@@ -391,14 +391,14 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private int getDurationFluid(LegacyMachineUpgradeManager.Levels upgrades) {
-        FluidRecipe recipe = ElectrolyserRecipeRuntime.fluidForInput(inputTank.getTankType());
+        FluidRecipe recipe = ElectrolyserRecipeRuntime.fluidForInput(level, inputTank.getTankType());
         int base = recipe == null ? 100 : recipe.duration();
         int speed = upgrades.getLevel(UpgradeType.SPEED) - Math.min(upgrades.getLevel(UpgradeType.POWER), 1);
         return Math.max(1, (int) Math.ceil(base * Math.max(1.0F - 0.25F * speed, 0.2F)));
     }
 
     private int getDurationMetal(LegacyMachineUpgradeManager.Levels upgrades) {
-        MetalRecipe recipe = ElectrolyserRecipeRuntime.metalForInput(items.getStackInSlot(SLOT_METAL_INPUT));
+        MetalRecipe recipe = ElectrolyserRecipeRuntime.metalForInput(level, items.getStackInSlot(SLOT_METAL_INPUT));
         int base = recipe == null ? 600 : recipe.duration();
         int speed = upgrades.getLevel(UpgradeType.SPEED) - Math.min(upgrades.getLevel(UpgradeType.POWER), 1);
         return Math.max(1, (int) Math.ceil(base * Math.max(1.0F - 0.25F * speed, 0.2F)));
@@ -748,7 +748,7 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
             int mapped = mapExternalSlot(slot);
-            if (mapped != SLOT_METAL_INPUT || ElectrolyserRecipeRuntime.metalForInput(stack) == null) {
+            if (mapped != SLOT_METAL_INPUT || ElectrolyserRecipeRuntime.metalForInput(level, stack) == null) {
                 return stack;
             }
             return items.insertItem(mapped, stack, simulate);
@@ -775,7 +775,7 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return mapExternalSlot(slot) == SLOT_METAL_INPUT
-                    && ElectrolyserRecipeRuntime.metalForInput(stack) != null;
+                    && ElectrolyserRecipeRuntime.metalForInput(level, stack) != null;
         }
 
         private int mapExternalSlot(int slot) {

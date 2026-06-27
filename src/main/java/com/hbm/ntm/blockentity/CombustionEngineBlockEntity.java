@@ -1,7 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
@@ -154,7 +152,7 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldFill != engine.tank.getFill()
                 || oldWasOn != engine.wasOn;
         engine.networkPackNT(50);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             engine.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -340,8 +338,12 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void provideExtraInfo(CompoundTag data) {
         super.provideExtraInfo(data);
         data.putBoolean(CompatEnergyControl.B_ACTIVE, wasOn);
+        data.putInt(CompatEnergyControl.I_THROTTLE, throttle);
+        data.putInt(CompatEnergyControl.I_STATE, on ? 1 : 0);
+        data.putDouble(CompatEnergyControl.D_EFFICIENCY, currentEfficiency());
         data.putDouble(CompatEnergyControl.D_CONSUMPTION_MB, lastFuelUsedTenths / 10.0D);
         data.putDouble(CompatEnergyControl.D_OUTPUT_HE, lastPowerProduced);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_COMBUSTION_FUEL, tank);
     }
 
     @Override
@@ -425,16 +427,7 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected boolean showsLegacyFluidLookOverlay() {
-        return true;
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.energyStored(energy.getPower(), energy.getMaxPower()),
-                LegacyLookOverlayLines.tank(true, tank),
-                Component.literal("Throttle: " + throttle),
-                Component.literal("State: " + (on ? "On" : "Off"))));
+        return false;
     }
 
     @Override
@@ -452,14 +445,11 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
             return false;
         }
         boolean changed = false;
-        if (tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
-            int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
-            if (ids.length > 0) {
-                int safeIndex = index >= 0 && index < ids.length ? index : 0;
-                tank.setTankType(HbmFluids.fromId(ids[safeIndex]));
-                tenth = 0;
-                changed = true;
-            }
+        java.util.OptionalInt id = HbmFluidCopiable.copiedFluidIdAt(tag, index);
+        if (id.isPresent()) {
+            tank.setTankType(HbmFluids.fromId(id.getAsInt()));
+            tenth = 0;
+            changed = true;
         }
         if (tag.contains("isOn")) {
             on = tag.getBoolean("isOn");

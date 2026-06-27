@@ -8,8 +8,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluidStack;
-import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
@@ -338,6 +338,14 @@ public final class LegacyGenericRecipeFormat {
         return stack;
     }
 
+    public static ItemStack readLegacyRecipeItemStack(JsonArray array) {
+        return readLegacyItemStack(array);
+    }
+
+    public static HbmIngredient readLegacyRecipeAStack(JsonArray array) {
+        return readLegacyAStack(array);
+    }
+
     private static ItemStack readLegacyItemStack(ResourceLocation legacyId, int count, int legacyMeta) {
         if (LegacyMetaItemMappings.item(legacyId, legacyMeta).isPresent()) {
             return LegacyMetaItemMappings.stack(legacyId, legacyMeta, count)
@@ -362,12 +370,7 @@ public final class LegacyGenericRecipeFormat {
     private static List<HbmFluidStack> readModernFluidStacks(JsonArray array) {
         return array.asList().stream()
                 .map(JsonElement::getAsJsonObject)
-                .map(object -> new HbmFluidStack(
-                        HbmFluids.fromName(getString(object, "fluid", "none").contains(":")
-                                ? new ResourceLocation(getString(object, "fluid", "none")).getPath()
-                                : getString(object, "fluid", "none")),
-                        object.has("amount") ? object.get("amount").getAsInt() : 0,
-                        object.has("pressure") ? object.get("pressure").getAsInt() : 0))
+                .map(object -> HbmFluidJsonUtil.readFluidStack(object, "generic machine fluid stack"))
                 .toList();
     }
 
@@ -375,10 +378,13 @@ public final class LegacyGenericRecipeFormat {
         List<HbmFluidStack> fluids = new ArrayList<>();
         for (JsonElement element : array) {
             JsonArray legacy = element.getAsJsonArray();
-            fluids.add(new HbmFluidStack(
-                    HbmFluids.fromName(legacy.get(0).getAsString()),
-                    legacy.get(1).getAsInt(),
-                    legacy.size() > 2 ? legacy.get(2).getAsInt() : 0));
+            JsonObject modern = new JsonObject();
+            modern.add("fluid", legacy.get(0));
+            modern.add("amount", legacy.get(1));
+            if (legacy.size() > 2) {
+                modern.add("pressure", legacy.get(2));
+            }
+            fluids.add(HbmFluidJsonUtil.readFluidStack(modern, "legacy generic machine fluid stack"));
         }
         return List.copyOf(fluids);
     }

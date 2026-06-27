@@ -96,7 +96,6 @@ public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvi
             launchPad.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
-        launchPad.networkPackNT();
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, RustedLaunchPadBlockEntity launchPad) {
@@ -273,12 +272,6 @@ public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvi
             return itemHandler.cast();
         }
         return super.getCapability(capability, side);
-    }
-
-    private void networkPackNT() {
-        if (level != null && level.getGameTime() % 20L == 0L) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-        }
     }
 
     private void setChangedAndUpdate() {

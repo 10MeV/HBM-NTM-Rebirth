@@ -1,6 +1,8 @@
 package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
 public final class ObjParticleAcceleratorModels {
@@ -28,33 +30,32 @@ public final class ObjParticleAcceleratorModels {
     public static LegacyWavefrontModel model(String name) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/particleaccelerator/" + name + ".obj"),
-                texture(name));
+                texture(name)).asVBO();
     }
 
     public static ResourceLocation texture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/particleaccelerator/" + name + ".png");
     }
 
-    public static void renderBeamlinePart(String partName, ObjRenderContext context) {
-        renderBeamlinePart(partName, BEAMLINE_TEXTURE, context);
-    }
-
-    public static void renderBeamlinePart(String partName, ResourceLocation texture, ObjRenderContext context) {
+    public static void renderBeamlinePart(String partName, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
         LegacyWavefrontModel.SelectionHandle handle = beamlineHandle(partName);
         if (handle != null) {
-            BEAMLINE.renderOnlyInCallOrder(texture, context, handle);
+            BEAMLINE.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle, renderMode);
             return;
         }
-        BEAMLINE.renderPart(partName, texture, context);
+        BEAMLINE.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255,
+                false, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT, partName);
     }
 
-    public static void renderBeamlinePartUntextured(String partName, ObjRenderContext context) {
+    public static void renderBeamlinePartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
         LegacyWavefrontModel.SelectionHandle handle = beamlineHandle(partName);
         if (handle != null) {
-            BEAMLINE.renderOnlyUntextured(context, handle);
+            BEAMLINE.renderOnlyUntextured(poseStack, buffer, red, green, blue, alpha, renderMode, handle);
             return;
         }
-        BEAMLINE.renderPartUntextured(partName, context);
+        BEAMLINE.renderOnlyUntextured(poseStack, buffer, red, green, blue, alpha, renderMode, partName);
     }
 
     private static LegacyWavefrontModel.SelectionHandle beamlineHandle(String partName) {

@@ -92,7 +92,7 @@ public final class ObjTurretModels {
     public static LegacyWavefrontModel model(String modelName, String textureName) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/turrets/" + modelName + ".obj"),
-                texture(textureName));
+                texture(textureName)).asVBO();
     }
 
     public static ResourceLocation texture(String name) {
@@ -101,78 +101,107 @@ public final class ObjTurretModels {
 
     public static void renderPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        PreparedPart prepared = preparedPart(model, partName);
-        if (prepared != null) {
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
-            prepared.model().renderOnlyInCallOrder(texture, context, prepared.selection());
+        if (renderPreparedPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay)) {
             return;
         }
         model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
-    private static PreparedPart preparedPart(LegacyWavefrontModel model, String partName) {
+    public static void renderHimarsTubeStandard(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(HIMARS, HIMARS_TUBE_STANDARD, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderHimarsRocket(int modelType, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(HIMARS, modelType == 1 ? HIMARS_ROCKET_SINGLE : HIMARS_ROCKET_STANDARD,
+                texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderHimarsCapStandard(int cap, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(HIMARS, himarsCapStandardHandle(cap), texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderHimarsTubeSingle(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(HIMARS, HIMARS_TUBE_SINGLE, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderHimarsCapSingle(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(HIMARS, HIMARS_CAP_SINGLE, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    private static boolean renderPreparedPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (model == null || partName == null) {
-            return null;
+            return false;
         }
         if (sameModel(model, CHEKHOV)) {
-            return prepared(CHEKHOV, switch (partName) {
+            return renderPrepared(CHEKHOV, switch (partName) {
                 case "Base" -> CHEKHOV_BASE;
                 case "Carriage" -> CHEKHOV_CARRIAGE;
                 case "Body" -> CHEKHOV_BODY;
                 case "Barrels" -> CHEKHOV_BARRELS;
                 case "Connectors" -> CHEKHOV_CONNECTORS;
                 default -> null;
-            });
+            }, texture, poseStack, buffer, packedLight, packedOverlay);
         }
         if (sameModel(model, JEREMY)) {
-            return prepared(JEREMY, "Gun".equals(partName) ? JEREMY_GUN : null);
+            return renderPrepared(JEREMY, "Gun".equals(partName) ? JEREMY_GUN : null,
+                    texture, poseStack, buffer, packedLight, packedOverlay);
         }
         if (sameModel(model, TAUON)) {
-            return prepared(TAUON, switch (partName) {
+            return renderPrepared(TAUON, switch (partName) {
                 case "Cannon" -> TAUON_CANNON;
                 case "Rotor" -> TAUON_ROTOR;
                 default -> null;
-            });
+            }, texture, poseStack, buffer, packedLight, packedOverlay);
         }
         if (sameModel(model, RICHARD)) {
-            return prepared(RICHARD, switch (partName) {
+            return renderPrepared(RICHARD, switch (partName) {
                 case "Launcher" -> RICHARD_LAUNCHER;
                 case "MissileLoaded" -> RICHARD_MISSILE_LOADED;
                 default -> null;
-            });
+            }, texture, poseStack, buffer, packedLight, packedOverlay);
         }
         if (sameModel(model, HOWARD)) {
-            return prepared(HOWARD, howardHandle(partName));
+            return renderPrepared(HOWARD, howardHandle(partName),
+                    texture, poseStack, buffer, packedLight, packedOverlay);
         }
         if (sameModel(model, HOWARD_DAMAGED)) {
-            return prepared(HOWARD_DAMAGED, switch (partName) {
+            return renderPrepared(HOWARD_DAMAGED, switch (partName) {
                 case "Carriage" -> HOWARD_DAMAGED_CARRIAGE;
                 case "Body" -> HOWARD_DAMAGED_BODY;
                 case "BarrelsTop" -> HOWARD_DAMAGED_BARRELS_TOP;
                 case "BarrelsBottom" -> HOWARD_DAMAGED_BARRELS_BOTTOM;
                 default -> null;
-            });
+            }, texture, poseStack, buffer, packedLight, packedOverlay);
         }
         if (sameModel(model, MAXWELL)) {
-            return prepared(MAXWELL, "Microwave".equals(partName) ? MAXWELL_MICROWAVE : null);
+            return renderPrepared(MAXWELL, "Microwave".equals(partName) ? MAXWELL_MICROWAVE : null,
+                    texture, poseStack, buffer, packedLight, packedOverlay);
         }
         if (sameModel(model, FRITZ)) {
-            return prepared(FRITZ, "Gun".equals(partName) ? FRITZ_GUN : null);
+            return renderPrepared(FRITZ, "Gun".equals(partName) ? FRITZ_GUN : null,
+                    texture, poseStack, buffer, packedLight, packedOverlay);
         }
         if (sameModel(model, ARTY)) {
-            return prepared(ARTY, switch (partName) {
+            return renderPrepared(ARTY, switch (partName) {
                 case "Base" -> ARTY_BASE;
                 case "Carriage" -> ARTY_CARRIAGE;
                 case "Cannon" -> ARTY_CANNON;
                 case "Barrel" -> ARTY_BARREL;
                 default -> null;
-            });
+            }, texture, poseStack, buffer, packedLight, packedOverlay);
         }
         if (sameModel(model, HIMARS)) {
-            return prepared(HIMARS, himarsHandle(partName));
+            return renderPrepared(HIMARS, himarsHandle(partName),
+                    texture, poseStack, buffer, packedLight, packedOverlay);
         }
         if (sameModel(model, SENTRY)) {
-            return prepared(SENTRY, switch (partName) {
+            return renderPrepared(SENTRY, switch (partName) {
                 case "Base" -> SENTRY_BASE;
                 case "Pivot" -> SENTRY_PIVOT;
                 case "Body" -> SENTRY_BODY;
@@ -180,9 +209,9 @@ public final class ObjTurretModels {
                 case "BarrelL" -> SENTRY_BARREL_L;
                 case "BarrelR" -> SENTRY_BARREL_R;
                 default -> null;
-            });
+            }, texture, poseStack, buffer, packedLight, packedOverlay);
         }
-        return null;
+        return false;
     }
 
     private static LegacyWavefrontModel.SelectionHandle howardHandle(String partName) {
@@ -215,15 +244,29 @@ public final class ObjTurretModels {
         };
     }
 
-    private static PreparedPart prepared(LegacyWavefrontModel model, LegacyWavefrontModel.SelectionHandle selection) {
-        return selection == null ? null : new PreparedPart(model, selection);
+    private static LegacyWavefrontModel.SelectionHandle himarsCapStandardHandle(int cap) {
+        return switch (cap) {
+            case 1 -> HIMARS_CAP_STANDARD_1;
+            case 2 -> HIMARS_CAP_STANDARD_2;
+            case 3 -> HIMARS_CAP_STANDARD_3;
+            case 4 -> HIMARS_CAP_STANDARD_4;
+            case 5 -> HIMARS_CAP_STANDARD_5;
+            case 6 -> HIMARS_CAP_STANDARD_6;
+            default -> null;
+        };
+    }
+
+    private static boolean renderPrepared(LegacyWavefrontModel model, LegacyWavefrontModel.SelectionHandle selection,
+            ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (selection == null) {
+            return false;
+        }
+        model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, selection);
+        return true;
     }
 
     private static boolean sameModel(LegacyWavefrontModel model, LegacyWavefrontModel expected) {
         return model == expected || model.modelLocation().equals(expected.modelLocation());
-    }
-
-    private record PreparedPart(LegacyWavefrontModel model, LegacyWavefrontModel.SelectionHandle selection) {
     }
 
     private ObjTurretModels() {

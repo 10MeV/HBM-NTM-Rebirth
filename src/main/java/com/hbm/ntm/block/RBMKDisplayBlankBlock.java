@@ -1,8 +1,12 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.neutron.RBMKPanelBlockPlanner;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
@@ -23,6 +27,13 @@ public class RBMKDisplayBlankBlock extends Block {
     public RBMKDisplayBlankBlock(BlockBehaviour.Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        LegacyStandardInfoTooltip.append(tooltip, "rbmk_display_blank");
     }
 
     @Nullable

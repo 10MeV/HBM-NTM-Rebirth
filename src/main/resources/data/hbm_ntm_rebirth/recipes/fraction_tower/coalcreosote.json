@@ -1,0 +1,15 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:fraction_tower",
+    "output1":  {
+                    "fluid":  "hbm_ntm_rebirth:coaloil",
+                    "amount":  10
+                },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:coalcreosote",
+                  "amount":  100
+              },
+    "output2":  {
+                    "fluid":  "hbm_ntm_rebirth:bitumen",
+                    "amount":  90
+                }
+}

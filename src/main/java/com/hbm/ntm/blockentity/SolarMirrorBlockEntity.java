@@ -38,7 +38,7 @@ public class SolarMirrorBlockEntity extends BlockEntity {
                 boiler.addHeat(sun);
             }
         }
-        if (wasOn != on || level.getGameTime() % 20L == 0L) {
+        if (wasOn != on) {
             setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:electrolyzer_fluid",
+  "input": { "fluid": "VITRIOL", "amount": 1000 },
+  "output1": { "fluid": "SULFURIC_ACID", "amount": 500 },
+  "output2": { "fluid": "CHLORINE", "amount": 500 },
+  "byproducts": [
+    { "item": "hbm_ntm_rebirth:powder_iron" },
+    { "item": "hbm_ntm_rebirth:ingot_mercury" }
+  ],
+  "duration": 20
+}

@@ -9,7 +9,7 @@ public final class HbmFluidTankSet {
 
     public static TankSetInspection inspectReceivingTanks(Iterable<HbmFluidTank> tanks, FluidType type, int pressure) {
         FluidType normalizedType = normalize(type);
-        int normalizedPressure = pressure;
+        int normalizedPressure = normalizePressure(pressure);
         List<TankInspection> details = inspectTanks(tanks, normalizedType, normalizedPressure);
         long demand = 0L;
         int matchingTanks = 0;
@@ -26,7 +26,7 @@ public final class HbmFluidTankSet {
 
     public static TankSetInspection inspectSendingTanks(Iterable<HbmFluidTank> tanks, FluidType type, int pressure) {
         FluidType normalizedType = normalize(type);
-        int normalizedPressure = pressure;
+        int normalizedPressure = normalizePressure(pressure);
         List<TankInspection> details = inspectTanks(tanks, normalizedType, normalizedPressure);
         long available = 0L;
         int matchingTanks = 0;
@@ -49,38 +49,40 @@ public final class HbmFluidTankSet {
     public static TankTransferReport receive(Iterable<HbmFluidTank> tanks, FluidType type, int pressure, long amount,
             boolean simulate) {
         FluidType normalizedType = normalize(type);
-        int normalizedPressure = pressure;
+        int normalizedPressure = normalizePressure(pressure);
         if (amount <= 0L || tanks == null || normalizedType == HbmFluids.NONE) {
             return TankTransferReport.empty(normalizedType, normalizedPressure, amount, simulate);
         }
         List<TankTransferDetail> details = new ArrayList<>();
-        List<HbmFluidTank> tankList = asList(tanks);
+        List<IndexedTank> tankList = indexedTanks(tanks);
         int[] virtualFill = fills(tankList);
         int matchingTanks = countMatching(tankList, normalizedType, normalizedPressure);
         long remaining = amount;
         if (matchingTanks > 1) {
             int firstRound = (int) Math.floor((double) amount / (double) matchingTanks);
             for (int i = 0; i < tankList.size(); i++) {
-                HbmFluidTank tank = tankList.get(i);
+                IndexedTank indexedTank = tankList.get(i);
+                HbmFluidTank tank = indexedTank.tank();
                 if (matches(tank, normalizedType, normalizedPressure)) {
                     int before = virtualFill[i];
                     int accepted = acceptIntoTank(tank, virtualFill, i, firstRound, normalizedType, normalizedPressure,
                             simulate);
                     remaining -= accepted;
-                    details.add(TankTransferDetail.forTank(i, tank, before, virtualFill[i], accepted));
+                    details.add(TankTransferDetail.forTank(indexedTank.index(), tank, before, virtualFill[i], accepted));
                 }
             }
         }
         if (remaining > 0L) {
             for (int i = 0; i < tankList.size(); i++) {
-                HbmFluidTank tank = tankList.get(i);
+                IndexedTank indexedTank = tankList.get(i);
+                HbmFluidTank tank = indexedTank.tank();
                 if (matches(tank, normalizedType, normalizedPressure)) {
                     int before = virtualFill[i];
                     int accepted = acceptIntoTank(tank, virtualFill, i,
                             (int) Math.min(Integer.MAX_VALUE, remaining), normalizedType, normalizedPressure,
                             simulate);
                     remaining -= accepted;
-                    details.add(TankTransferDetail.forTank(i, tank, before, virtualFill[i], accepted));
+                    details.add(TankTransferDetail.forTank(indexedTank.index(), tank, before, virtualFill[i], accepted));
                 }
             }
         }
@@ -96,19 +98,20 @@ public final class HbmFluidTankSet {
     public static TankTransferReport useUp(Iterable<HbmFluidTank> tanks, FluidType type, int pressure, long amount,
             boolean simulate) {
         FluidType normalizedType = normalize(type);
-        int normalizedPressure = pressure;
+        int normalizedPressure = normalizePressure(pressure);
         if (amount <= 0L || tanks == null || normalizedType == HbmFluids.NONE) {
             return TankTransferReport.empty(normalizedType, normalizedPressure, amount, simulate);
         }
         List<TankTransferDetail> details = new ArrayList<>();
-        List<HbmFluidTank> tankList = asList(tanks);
+        List<IndexedTank> tankList = indexedTanks(tanks);
         int[] virtualFill = fills(tankList);
         int matchingTanks = countMatching(tankList, normalizedType, normalizedPressure);
         long remaining = amount;
         if (matchingTanks > 1) {
             int firstRound = (int) Math.floor((double) amount / (double) matchingTanks);
             for (int i = 0; i < tankList.size(); i++) {
-                HbmFluidTank tank = tankList.get(i);
+                IndexedTank indexedTank = tankList.get(i);
+                HbmFluidTank tank = indexedTank.tank();
                 if (matches(tank, normalizedType, normalizedPressure)) {
                     int before = virtualFill[i];
                     int removed = Math.min(firstRound, virtualFill[i]);
@@ -117,13 +120,14 @@ public final class HbmFluidTankSet {
                     }
                     virtualFill[i] -= removed;
                     remaining -= removed;
-                    details.add(TankTransferDetail.forTank(i, tank, before, virtualFill[i], removed));
+                    details.add(TankTransferDetail.forTank(indexedTank.index(), tank, before, virtualFill[i], removed));
                 }
             }
         }
         if (remaining > 0L) {
             for (int i = 0; i < tankList.size(); i++) {
-                HbmFluidTank tank = tankList.get(i);
+                IndexedTank indexedTank = tankList.get(i);
+                HbmFluidTank tank = indexedTank.tank();
                 if (matches(tank, normalizedType, normalizedPressure)) {
                     int before = virtualFill[i];
                     int removed = (int) Math.min(remaining, virtualFill[i]);
@@ -132,7 +136,7 @@ public final class HbmFluidTankSet {
                     }
                     virtualFill[i] -= removed;
                     remaining -= removed;
-                    details.add(TankTransferDetail.forTank(i, tank, before, virtualFill[i], removed));
+                    details.add(TankTransferDetail.forTank(indexedTank.index(), tank, before, virtualFill[i], removed));
                 }
             }
         }
@@ -172,22 +176,24 @@ public final class HbmFluidTankSet {
         return details;
     }
 
-    private static List<HbmFluidTank> asList(Iterable<HbmFluidTank> tanks) {
-        List<HbmFluidTank> list = new ArrayList<>();
+    private static List<IndexedTank> indexedTanks(Iterable<HbmFluidTank> tanks) {
+        List<IndexedTank> list = new ArrayList<>();
         if (tanks != null) {
+            int index = 0;
             for (HbmFluidTank tank : tanks) {
                 if (tank != null) {
-                    list.add(tank);
+                    list.add(new IndexedTank(index, tank));
                 }
+                index++;
             }
         }
         return list;
     }
 
-    private static int countMatching(List<HbmFluidTank> tanks, FluidType type, int pressure) {
+    private static int countMatching(List<IndexedTank> tanks, FluidType type, int pressure) {
         int matching = 0;
-        for (HbmFluidTank tank : tanks) {
-            if (matches(tank, type, pressure)) {
+        for (IndexedTank tank : tanks) {
+            if (matches(tank.tank(), type, pressure)) {
                 matching++;
             }
         }
@@ -198,10 +204,10 @@ public final class HbmFluidTankSet {
         return tank != null && tank.getTankType() == type && tank.getPressure() == pressure;
     }
 
-    private static int[] fills(List<HbmFluidTank> tanks) {
+    private static int[] fills(List<IndexedTank> tanks) {
         int[] fills = new int[tanks.size()];
         for (int i = 0; i < tanks.size(); i++) {
-            fills[i] = tanks.get(i).getFill();
+            fills[i] = tanks.get(i).tank().getFill();
         }
         return fills;
     }
@@ -221,6 +227,13 @@ public final class HbmFluidTankSet {
 
     private static FluidType normalize(FluidType type) {
         return type == null ? HbmFluids.NONE : type;
+    }
+
+    private static int normalizePressure(int pressure) {
+        return HbmFluidTank.clampPressure(pressure);
+    }
+
+    private record IndexedTank(int index, HbmFluidTank tank) {
     }
 
     public record TankSetInspection(

@@ -5,8 +5,6 @@ import com.hbm.inventory.material.MaterialShapes;
 import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.inventory.material.NTMMaterial;
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.item.FoundryScrapsItem;
@@ -47,7 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CrucibleBlockEntity extends BlockEntity
-        implements MenuProvider, ICrucibleAcceptor, LegacyLookOverlayProvider, HbmTileSyncable {
+        implements MenuProvider, ICrucibleAcceptor, HbmTileSyncable {
     public static final int SLOT_INPUT_START = 1;
     public static final int SLOT_INPUT_END = 10;
     public static final int SLOT_COUNT = 10;
@@ -106,7 +104,7 @@ public class CrucibleBlockEntity extends BlockEntity
             return;
         }
         boolean changed = crucible.tickServer(level, pos, state);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             crucible.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -216,15 +214,6 @@ public class CrucibleBlockEntity extends BlockEntity
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
         return new CrucibleMenu(containerId, inventory, this);
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                Component.literal("Heat: " + heat + " / " + MAX_HEAT + "TU"),
-                Component.literal("Selected: " + recipe),
-                Component.literal("Recipe: " + Mats.formatAmount(getRecipeAmount(), false)),
-                Component.literal("Waste: " + Mats.formatAmount(getWasteAmount(), false))));
     }
 
     @Override

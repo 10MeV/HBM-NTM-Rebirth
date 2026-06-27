@@ -17,7 +17,6 @@ public final class RBMKPanelPlanner {
     public static final int GRAPH_SAMPLE_INTERVAL = 10;
     public static final double PANEL_PERMISSION_DISTANCE_SQ = 15.0D * 15.0D;
     public static final int NETWORK_RANGE = 50;
-    public static final int TERMINAL_OC_NETWORK_RANGE = 10;
     public static final int KEY_CLICK_TICKS = 7;
     public static final float LEVER_FLIP_SPEED = 1.0F / 10.0F;
 
@@ -74,8 +73,7 @@ public final class RBMKPanelPlanner {
             case GAUGE, INDICATOR, KEYPAD, LEVER, NUMITRON ->
                     new PanelTickPlan(true, false, false, true, NETWORK_RANGE);
             case GRAPH -> new PanelTickPlan(worldTime % GRAPH_SAMPLE_INTERVAL == 0, false, false, true, NETWORK_RANGE);
-            case TERMINAL -> new PanelTickPlan(true, false, false, true,
-                    terminalOcMode ? TERMINAL_OC_NETWORK_RANGE : NETWORK_RANGE);
+            case TERMINAL -> new PanelTickPlan(true, false, false, true, NETWORK_RANGE);
             case DISPLAY -> new PanelTickPlan(worldTime % DISPLAY_SCAN_INTERVAL == 0, false,
                     worldTime % DISPLAY_SCAN_INTERVAL == 0, worldTime % DISPLAY_SCAN_INTERVAL == 0, NETWORK_RANGE);
         };
@@ -270,8 +268,7 @@ public final class RBMKPanelPlanner {
         for (int i = 0; i < history.length; i++) {
             history[i] = blankToSpace(safe.history()[i]);
         }
-        return new TerminalNbtSnapshot(blankToSpace(safe.channel()), blankToSpace(safe.repeatCommand()),
-                safe.ocMode(), history);
+        return new TerminalNbtSnapshot(blankToSpace(safe.channel()), blankToSpace(safe.repeatCommand()), history);
     }
 
     public static TerminalState terminalStateFromNbt(String channel, String repeatCommand, boolean ocMode,
@@ -282,7 +279,7 @@ public final class RBMKPanelPlanner {
                 normalized[i] = spaceToBlank(history[i]);
             }
         }
-        return new TerminalState(normalized, spaceToBlank(channel), spaceToBlank(repeatCommand), ocMode);
+        return new TerminalState(normalized, spaceToBlank(channel), spaceToBlank(repeatCommand), false);
     }
 
     public static DisplayNbtSnapshot displayNbtSnapshot(int targetX, int targetY, int targetZ, int rotation) {
@@ -488,9 +485,6 @@ public final class RBMKPanelPlanner {
             return new TerminalEvalPlan(safe, null, TerminalAction.NONE);
         }
         TerminalState next = safe.push(command);
-        if (safe.ocMode()) {
-            return new TerminalEvalPlan(next, null, TerminalAction.OC_PUSH_ONLY);
-        }
         if (command.isEmpty()) {
             return new TerminalEvalPlan(next, null, TerminalAction.NONE);
         }
@@ -530,9 +524,6 @@ public final class RBMKPanelPlanner {
 
     public static TerminalTickPlan tickTerminal(TerminalState state) {
         TerminalState safe = state == null ? TerminalState.empty() : state;
-        if (safe.ocMode()) {
-            return new TerminalTickPlan(safe, null, TERMINAL_OC_NETWORK_RANGE);
-        }
         if (!safe.channel().isEmpty() && !safe.repeatCommand().isEmpty()) {
             return new TerminalTickPlan(safe, new RttyBroadcast(safe.channel(), safe.repeatCommand()), NETWORK_RANGE);
         }
@@ -1005,6 +996,7 @@ public final class RBMKPanelPlanner {
             history = normalizeHistory(history);
             channel = channel == null ? "" : channel;
             repeatCommand = repeatCommand == null ? "" : repeatCommand;
+            ocMode = false;
         }
 
         public static TerminalState empty() {
@@ -1035,7 +1027,6 @@ public final class RBMKPanelPlanner {
 
     public enum TerminalAction {
         NONE,
-        OC_PUSH_ONLY,
         SET_CHANNEL,
         START_REPEAT,
         STOP_REPEAT,
@@ -1060,7 +1051,7 @@ public final class RBMKPanelPlanner {
             PanelControlPersistence persistence) {
     }
 
-    public record TerminalNbtSnapshot(String channel, String repeatCommand, boolean ocMode, String[] history) {
+    public record TerminalNbtSnapshot(String channel, String repeatCommand, String[] history) {
     }
 
     public record DisplayNbtSnapshot(int targetX, int targetY, int targetZ, int rotation) {

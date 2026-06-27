@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  P",
+    " B ",
+    "B  "
+  ],
+  "key": {
+    "P": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "B": {
+      "item": "hbm_ntm_rebirth:glass_boron"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:pipette_boron"
+  }
+}

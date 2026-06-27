@@ -8,9 +8,9 @@ import com.hbm.ntm.block.RedWireCoatedBlock;
 import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -68,29 +68,32 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
         boolean posZ = state.getValue(HbmEnergyNodeBlock.SOUTH);
         boolean negZ = state.getValue(HbmEnergyNodeBlock.NORTH);
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, light, packedOverlay);
-        renderWorldCable(context, posX, negX, posY, negY, posZ, negZ);
+        renderWorldCable(poseStack, buffer, light, packedOverlay, posX, negX, posY, negY, posZ, negZ);
     }
 
-    static void renderItemCable(ObjRenderContext context) {
-        ObjBlockModels.CABLE_NEO.renderOnlyInCallOrder(CABLE_TEXTURE, context, ITEM_HANDLE);
+    static void renderItemCable(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ObjBlockModels.CABLE_NEO.renderOnlyInCallOrder(CABLE_TEXTURE, poseStack, buffer, packedLight, packedOverlay,
+                ITEM_HANDLE);
     }
 
-    static void renderCableArms(ObjRenderContext context,
+    static void renderCableArms(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             boolean posX, boolean negX, boolean posY, boolean negY, boolean posZ, boolean negZ) {
-        renderCableSelection(context, ARM_HANDLES[connectionMask(posX, negX, posY, negY, posZ, negZ)]);
+        renderCableSelection(poseStack, buffer, packedLight, packedOverlay,
+                ARM_HANDLES[connectionMask(posX, negX, posY, negY, posZ, negZ)]);
     }
 
-    private static void renderWorldCable(ObjRenderContext context,
-            boolean posX, boolean negX, boolean posY, boolean negY, boolean posZ, boolean negZ) {
-        renderCableSelection(context, WORLD_HANDLES[connectionMask(posX, negX, posY, negY, posZ, negZ)]);
+    private static void renderWorldCable(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, boolean posX, boolean negX, boolean posY, boolean negY, boolean posZ, boolean negZ) {
+        renderCableSelection(poseStack, buffer, packedLight, packedOverlay,
+                WORLD_HANDLES[connectionMask(posX, negX, posY, negY, posZ, negZ)]);
     }
 
-    private static void renderCableSelection(ObjRenderContext context, LegacyWavefrontModel.SelectionHandle handle) {
-        PoseStack poseStack = context.poseStack();
+    private static void renderCableSelection(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, LegacyWavefrontModel.SelectionHandle handle) {
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        ObjBlockModels.CABLE_NEO.renderOnlyInCallOrder(CABLE_TEXTURE, context, handle);
+        ObjBlockModels.CABLE_NEO.renderOnlyInCallOrder(CABLE_TEXTURE, poseStack, buffer, packedLight, packedOverlay,
+                handle);
         poseStack.popPose();
     }
 
@@ -99,7 +102,6 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
         int size = state.hasProperty(RedCableBoxBlock.SIZE) ? state.getValue(RedCableBoxBlock.SIZE) : 0;
         int clampedSize = clampBoxCableSize(size);
         BoxCableTextures textures = BOX_CABLE_TEXTURES_BY_SIZE[clampedSize];
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
         boolean north = state.getValue(HbmEnergyNodeBlock.NORTH);
         boolean east = state.getValue(HbmEnergyNodeBlock.EAST);
         boolean south = state.getValue(HbmEnergyNodeBlock.SOUTH);
@@ -117,76 +119,95 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
                 + (up ? 1 : 0) + (down ? 1 : 0);
 
         if (mask == 0) {
-            renderBoxCableCube(textures.junction(), context, bounds.lower(), bounds.lower(), bounds.lower(),
-                    bounds.upper(), bounds.upper(), bounds.upper());
+            renderBoxCableCube(textures.junction(), poseStack, buffer, packedLight, packedOverlay,
+                    bounds.lower(), bounds.lower(), bounds.lower(), bounds.upper(), bounds.upper(), bounds.upper());
         } else if ((mask & 0b001111) == 0) {
-            renderBoxCableStraightX(textures, context, 0.0D, bounds.lower(), bounds.lower(),
+            renderBoxCableStraightX(textures, poseStack, buffer, packedLight, packedOverlay,
+                    0.0D, bounds.lower(), bounds.lower(),
                     1.0D, bounds.upper(), bounds.upper());
         } else if ((mask & 0b111100) == 0) {
-            renderBoxCableStraightZ(textures, context, bounds.lower(), bounds.lower(), 0.0D,
+            renderBoxCableStraightZ(textures, poseStack, buffer, packedLight, packedOverlay,
+                    bounds.lower(), bounds.lower(), 0.0D,
                     bounds.upper(), bounds.upper(), 1.0D);
         } else if ((mask & 0b110011) == 0) {
-            renderBoxCableStraightY(textures, context, bounds.lower(), 0.0D, bounds.lower(),
+            renderBoxCableStraightY(textures, poseStack, buffer, packedLight, packedOverlay,
+                    bounds.lower(), 0.0D, bounds.lower(),
                     bounds.upper(), 1.0D, bounds.upper());
         } else {
             boolean curve = count == 2;
-            renderBoxCableConnected(textures, context, curve, north, east, south, west, up, down,
+            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+                    north, east, south, west, up, down,
                     bounds.lower(), bounds.lower(), bounds.lower(), bounds.upper(), bounds.upper(), bounds.upper());
-            renderBoxCableArms(textures, context, bounds, curve, north, east, south, west, up, down);
+            renderBoxCableArms(textures, poseStack, buffer, packedLight, packedOverlay, bounds,
+                    curve, north, east, south, west, up, down);
         }
     }
 
-    private static void renderBoxCableArms(BoxCableTextures textures, ObjRenderContext context, BoxCableBounds bounds,
-            boolean curve, boolean north, boolean east, boolean south, boolean west, boolean up, boolean down) {
+    private static void renderBoxCableArms(BoxCableTextures textures, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, BoxCableBounds bounds, boolean curve, boolean north, boolean east,
+            boolean south, boolean west, boolean up, boolean down) {
         if (north) {
-            renderBoxCableConnected(textures, context, curve, north, east, south, west, up, down,
+            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+                    north, east, south, west, up, down,
                     bounds.lower(), bounds.lower(), 0.0D, bounds.upper(), bounds.upper(), bounds.lower());
         }
         if (east) {
-            renderBoxCableConnected(textures, context, curve, north, east, south, west, up, down,
+            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+                    north, east, south, west, up, down,
                     bounds.upper(), bounds.lower(), bounds.lower(), 1.0D, bounds.upper(), bounds.upper());
         }
         if (south) {
-            renderBoxCableConnected(textures, context, curve, north, east, south, west, up, down,
+            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+                    north, east, south, west, up, down,
                     bounds.lower(), bounds.lower(), bounds.upper(), bounds.upper(), bounds.upper(), 1.0D);
         }
         if (west) {
-            renderBoxCableConnected(textures, context, curve, north, east, south, west, up, down,
+            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+                    north, east, south, west, up, down,
                     0.0D, bounds.lower(), bounds.lower(), bounds.lower(), bounds.upper(), bounds.upper());
         }
         if (up) {
-            renderBoxCableConnected(textures, context, curve, north, east, south, west, up, down,
+            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+                    north, east, south, west, up, down,
                     bounds.lower(), bounds.upper(), bounds.lower(), bounds.upper(), 1.0D, bounds.upper());
         }
         if (down) {
-            renderBoxCableConnected(textures, context, curve, north, east, south, west, up, down,
+            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+                    north, east, south, west, up, down,
                     bounds.lower(), 0.0D, bounds.lower(), bounds.upper(), bounds.lower(), bounds.upper());
         }
     }
 
-    private static void renderBoxCableStraightX(BoxCableTextures textures, ObjRenderContext context, double minX,
-            double minY, double minZ, double maxX, double maxY, double maxZ) {
+    private static void renderBoxCableStraightX(BoxCableTextures textures, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, double minX, double minY, double minZ, double maxX, double maxY,
+            double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.straight(), textures.straight(), textures.straight(),
-                textures.straight(), textures.end(), textures.end(), context, minX, minY, minZ, maxX, maxY, maxZ);
+                textures.straight(), textures.end(), textures.end(), poseStack, buffer, packedLight, packedOverlay,
+                0xFFFFFF, 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderBoxCableStraightY(BoxCableTextures textures, ObjRenderContext context, double minX,
-            double minY, double minZ, double maxX, double maxY, double maxZ) {
+    private static void renderBoxCableStraightY(BoxCableTextures textures, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, double minX, double minY, double minZ, double maxX, double maxY,
+            double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.end(), textures.end(), textures.straight(),
-                textures.straight(), textures.straight(), textures.straight(), context, minX, minY, minZ, maxX, maxY,
+                textures.straight(), textures.straight(), textures.straight(), poseStack, buffer, packedLight,
+                packedOverlay, 0xFFFFFF, 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL, minX, minY, minZ, maxX, maxY,
                 maxZ);
     }
 
-    private static void renderBoxCableStraightZ(BoxCableTextures textures, ObjRenderContext context, double minX,
-            double minY, double minZ, double maxX, double maxY, double maxZ) {
+    private static void renderBoxCableStraightZ(BoxCableTextures textures, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, double minX, double minY, double minZ, double maxX, double maxY,
+            double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.straight(), textures.straight(), textures.end(),
-                textures.end(), textures.straight(), textures.straight(), context, minX, minY, minZ, maxX, maxY,
+                textures.end(), textures.straight(), textures.straight(), poseStack, buffer, packedLight,
+                packedOverlay, 0xFFFFFF, 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL, minX, minY, minZ, maxX, maxY,
                 maxZ);
     }
 
-    private static void renderBoxCableConnected(BoxCableTextures textures, ObjRenderContext context, boolean curve,
-            boolean north, boolean east, boolean south, boolean west, boolean up, boolean down, double minX,
-            double minY, double minZ, double maxX, double maxY, double maxZ) {
+    private static void renderBoxCableConnected(BoxCableTextures textures, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, boolean curve, boolean north, boolean east,
+            boolean south, boolean west, boolean up, boolean down, double minX, double minY, double minZ, double maxX,
+            double maxY, double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(
                 boxCableFaceTexture(textures, Direction.UP, curve, north, east, south, west, up, down),
                 boxCableFaceTexture(textures, Direction.DOWN, curve, north, east, south, west, up, down),
@@ -194,12 +215,15 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
                 boxCableFaceTexture(textures, Direction.SOUTH, curve, north, east, south, west, up, down),
                 boxCableFaceTexture(textures, Direction.EAST, curve, north, east, south, west, up, down),
                 boxCableFaceTexture(textures, Direction.WEST, curve, north, east, south, west, up, down),
-                context, minX, minY, minZ, maxX, maxY, maxZ);
+                poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF, 255,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderBoxCableCube(TextureAtlasSprite sprite, ObjRenderContext context, double minX,
-            double minY, double minZ, double maxX, double maxY, double maxZ) {
-        LegacyAtlasCuboidRenderer.croppedCuboid(sprite, context, minX, minY, minZ, maxX, maxY, maxZ);
+    private static void renderBoxCableCube(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, double minX, double minY, double minZ, double maxX, double maxY,
+            double maxZ) {
+        LegacyAtlasCuboidRenderer.croppedCuboid(sprite, poseStack, buffer, packedLight, packedOverlay,
+                0xFFFFFF, 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     private static TextureAtlasSprite boxCableFaceTexture(BoxCableTextures textures, Direction face, boolean curve,
@@ -235,7 +259,6 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
 
     private static void renderCoatedCable(RedCableBlockEntity cable, BlockState state, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
         BlockGetter level = cable.getLevel();
         BlockPos pos = cable.getBlockPos();
         for (Direction face : Direction.values()) {
@@ -243,7 +266,7 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
                 continue;
             }
             CoatedCtFace ctFace = coatedCtFace(level, pos, state, face);
-            renderCoatedFace(context, face, ctFace);
+            renderCoatedFace(poseStack, buffer, packedLight, packedOverlay, face, ctFace);
         }
     }
 
@@ -313,23 +336,30 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
         return 0;
     }
 
-    private static void renderCoatedFace(ObjRenderContext context, Direction face, CoatedCtFace ctFace) {
+    private static void renderCoatedFace(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, Direction face, CoatedCtFace ctFace) {
         FaceVertices vertices = faceVertices(face);
         Vec3d topCenter = vertices.topLeft().average(vertices.topRight());
         Vec3d bottomCenter = vertices.bottomLeft().average(vertices.bottomRight());
         Vec3d centerLeft = vertices.topLeft().average(vertices.bottomLeft());
         Vec3d centerRight = vertices.topRight().average(vertices.bottomRight());
         Vec3d center = topCenter.average(bottomCenter);
-        drawCoatedSubFace(context, face, vertices.topLeft(), topCenter, centerLeft, center, ctFace.topLeft());
-        drawCoatedSubFace(context, face, topCenter, vertices.topRight(), center, centerRight, ctFace.topRight());
-        drawCoatedSubFace(context, face, centerLeft, center, vertices.bottomLeft(), bottomCenter, ctFace.bottomLeft());
-        drawCoatedSubFace(context, face, center, centerRight, bottomCenter, vertices.bottomRight(), ctFace.bottomRight());
+        drawCoatedSubFace(poseStack, buffer, packedLight, packedOverlay, face,
+                vertices.topLeft(), topCenter, centerLeft, center, ctFace.topLeft());
+        drawCoatedSubFace(poseStack, buffer, packedLight, packedOverlay, face,
+                topCenter, vertices.topRight(), center, centerRight, ctFace.topRight());
+        drawCoatedSubFace(poseStack, buffer, packedLight, packedOverlay, face,
+                centerLeft, center, vertices.bottomLeft(), bottomCenter, ctFace.bottomLeft());
+        drawCoatedSubFace(poseStack, buffer, packedLight, packedOverlay, face,
+                center, centerRight, bottomCenter, vertices.bottomRight(), ctFace.bottomRight());
     }
 
-    private static void drawCoatedSubFace(ObjRenderContext context, Direction face, Vec3d topLeft, Vec3d topRight,
-            Vec3d bottomLeft, Vec3d bottomRight, int fragment) {
+    private static void drawCoatedSubFace(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, Direction face, Vec3d topLeft, Vec3d topRight, Vec3d bottomLeft, Vec3d bottomRight,
+            int fragment) {
         CtSpriteFragment sprite = ctSpriteFragment(fragment);
-        LegacyTexturedQuadRenderer.spriteQuad(sprite.sprite(), context,
+        LegacyTexturedQuadRenderer.spriteQuad(sprite.sprite(), poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL,
                 face.getStepX(), face.getStepY(), face.getStepZ(),
                 LegacyTexturedQuadRenderer.spritePixelVertex(topRight.x(), topRight.y(), topRight.z(),
                         sprite.maxU(), sprite.minV()),

@@ -34,6 +34,7 @@ public class ChargerBlockEntity extends HbmEnergyBlockEntity {
     private int usingTicks;
     private int lastUsingTicks;
     private int delay;
+    private long lastEnergySubscriptionDemand = Long.MIN_VALUE;
 
     public ChargerBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CHARGER.get(), pos, state, new HbmEnergyStorage(0L, 0L, 0L));
@@ -48,7 +49,10 @@ public class ChargerBlockEntity extends HbmEnergyBlockEntity {
         long demand = charger.collectChargeDemand(level, pos);
         charger.energy.setMaxPower(demand);
         charger.energy.setTransferRates(demand, 0L);
-        charger.subscribeEnergyReceiverToSide(charger.inputSide());
+        if (demand > 0L && (demand != charger.lastEnergySubscriptionDemand || charger.isEnergyPortKeepalive())) {
+            charger.subscribeEnergyReceiverToSide(charger.inputSide());
+        }
+        charger.lastEnergySubscriptionDemand = demand;
 
         boolean charged = charger.usingTicks >= MAX_USING_TICKS
                 && charger.energy.getPower() > 0L
@@ -75,7 +79,7 @@ public class ChargerBlockEntity extends HbmEnergyBlockEntity {
         }
 
         charger.networkPackNT(20);
-        if (previousUsing != charger.usingTicks || charged || level.getGameTime() % 20L == 0L) {
+        if (previousUsing != charger.usingTicks || charged) {
             charger.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

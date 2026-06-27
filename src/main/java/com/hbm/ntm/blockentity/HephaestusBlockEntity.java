@@ -17,10 +17,12 @@ import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -261,9 +263,9 @@ public class HephaestusBlockEntity extends HbmFluidBlockEntity implements HbmSta
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.heatTu(bufferedHeat),
-                LegacyLookOverlayLines.tank(true, inputTank),
-                LegacyLookOverlayLines.tank(false, outputTank)));
+                Component.literal(String.format(Locale.US, "%,d", bufferedHeat) + " TU"),
+                LegacyLookOverlayLines.compactTank(true, inputTank),
+                LegacyLookOverlayLines.compactTank(false, outputTank)));
     }
 
     @Override

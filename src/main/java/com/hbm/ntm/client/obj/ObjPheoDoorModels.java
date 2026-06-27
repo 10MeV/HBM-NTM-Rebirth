@@ -54,7 +54,7 @@ public final class ObjPheoDoorModels {
     public static LegacyWavefrontModel model(String name, ResourceLocation texture) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/pheodoors/" + name + ".obj"),
-                texture);
+                texture).asVBO();
     }
 
     public static ResourceLocation texture(String name) {

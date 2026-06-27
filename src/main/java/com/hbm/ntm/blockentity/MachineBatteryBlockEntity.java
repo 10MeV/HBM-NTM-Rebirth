@@ -166,9 +166,6 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         if (inventoryChanged || previousPower != blockEntity.energy.getPower() || previousRedstone != blockEntity.lastRedstone) {
             blockEntity.setChanged();
             level.updateNeighbourForOutputSignal(pos, state.getBlock());
-            if (level.getGameTime() % 15L == 0L) {
-                level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-            }
         }
 
         blockEntity.networkPackNT(blockEntity.legacyNetworkPackRange());
@@ -319,7 +316,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.energyStorage(getPower(), getMaxPower()));
+        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.legacyBatteryEnergyStorage(getPower(), getMaxPower()));
     }
 
     public short getRedLow() {

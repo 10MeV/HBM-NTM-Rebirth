@@ -55,7 +55,7 @@ public class FractionTowerBlockEntity extends LegacyRemoteFluidMachineBlockEntit
     @Override
     protected boolean tickLegacyMachine(Level level, BlockPos pos, BlockState state) {
         boolean changed = transferStackedTowerFluids(level, pos);
-        PairRecipe recipe = LegacyOilFluidRecipes.getFractioning(inputTank.getTankType());
+        PairRecipe recipe = LegacyOilFluidRecipes.getFractioning(level, inputTank.getTankType());
         changed |= setupTanks(recipe);
         if (recipe != null && level.getGameTime() % 10L == 0L) {
             changed |= fractionate(recipe);

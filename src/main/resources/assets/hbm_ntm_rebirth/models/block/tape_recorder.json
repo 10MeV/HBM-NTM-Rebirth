@@ -1,6 +1,6 @@
 {
   "loader": "forge:obj",
-  "model": "hbm_ntm_rebirth:models/block/legacy_blocks/taperecorder.obj",
+  "model": "hbm_ntm_rebirth:models/blocks/taperecorder.obj",
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",

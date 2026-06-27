@@ -133,7 +133,7 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
         HbmFluidItemTransfer.unloadTankToSlot(turbine.items, SLOT_OUTPUT_CONTAINER,
                 SLOT_OUTPUT_CONTAINER_OUTPUT, turbine.outputTank);
         turbine.networkPackNT(25);
-        if (result.converted() || level.getGameTime() % 20L == 0L) {
+        if (result.converted()) {
             turbine.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

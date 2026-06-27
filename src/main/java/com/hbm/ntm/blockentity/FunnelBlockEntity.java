@@ -78,7 +78,7 @@ public class FunnelBlockEntity extends BlockEntity implements MenuProvider, HbmL
         for (int slot = SLOT_INPUT_START; slot <= SLOT_INPUT_END; slot++) {
             changed |= funnel.processSlot(slot);
         }
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             funnel.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

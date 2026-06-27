@@ -1,0 +1,20 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:hydrotreater",
+    "output1":  {
+                    "fluid":  "hbm_ntm_rebirth:coalgas",
+                    "amount":  80
+                },
+    "hydrogen":  {
+                     "fluid":  "hbm_ntm_rebirth:hydrogen",
+                     "amount":  10,
+                     "pressure":  1
+                 },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:coaloil",
+                  "amount":  100
+              },
+    "output2":  {
+                    "fluid":  "hbm_ntm_rebirth:sourgas",
+                    "amount":  15
+                }
+}

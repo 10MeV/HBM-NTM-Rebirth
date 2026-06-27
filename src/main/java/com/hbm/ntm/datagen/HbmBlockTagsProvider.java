@@ -95,6 +95,41 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 "cluster_depth_iron", "cluster_depth_titanium", "cluster_depth_tungsten",
                 "depth_brick", "depth_tiles", "depth_nether_brick", "depth_nether_tiles", "depth_dnt",
                 "stone_depth_nether", "ore_depth_nether_neodymium");
+        addLegacyMineable(BlockTags.MINEABLE_WITH_PICKAXE,
+                "ore_uranium", "deepslate_ore_uranium", "ore_thorium", "deepslate_ore_thorium",
+                "ore_titanium", "deepslate_ore_titanium", "ore_sulfur", "deepslate_ore_sulfur",
+                "ore_aluminium", "deepslate_ore_aluminium", "ore_fluorite", "deepslate_ore_fluorite",
+                "ore_niter", "deepslate_ore_niter", "ore_tungsten", "deepslate_ore_tungsten",
+                "ore_lead", "deepslate_ore_lead", "ore_beryllium", "deepslate_ore_beryllium",
+                "ore_rare", "deepslate_ore_rare", "ore_lignite", "deepslate_ore_lignite",
+                "ore_asbestos", "deepslate_ore_asbestos", "ore_cinnebar", "deepslate_ore_cinnebar",
+                "ore_cobalt", "deepslate_ore_cobalt", "ore_alexandrite", "deepslate_ore_alexandrite",
+                "stone_gneiss", "ore_gneiss_iron", "ore_gneiss_gold", "ore_gneiss_uranium",
+                "ore_gneiss_uranium_scorched", "ore_gneiss_copper", "ore_gneiss_asbestos",
+                "ore_gneiss_lithium", "ore_gneiss_schrabidium", "ore_gneiss_rare", "ore_gneiss_gas",
+                "stone_resource_sulfur", "stone_resource_asbestos", "stone_resource_hematite",
+                "stone_resource_malachite", "stone_resource_limestone", "stone_resource_bauxite",
+                "stalactite_sulfur", "stalactite_asbestos", "stalagmite_sulfur", "stalagmite_asbestos",
+                "cluster_iron", "cluster_titanium", "cluster_aluminium", "cluster_copper",
+                "ore_nether_uranium", "ore_nether_tungsten", "ore_nether_sulfur", "ore_nether_fire",
+                "ore_nether_coal", "ore_nether_cobalt", "ore_nether_plutonium", "ore_tikite");
+        addLegacyMineable(BlockTags.NEEDS_IRON_TOOL,
+                "ore_uranium", "deepslate_ore_uranium", "ore_thorium", "deepslate_ore_thorium",
+                "ore_titanium", "deepslate_ore_titanium", "ore_sulfur", "deepslate_ore_sulfur",
+                "ore_aluminium", "deepslate_ore_aluminium", "ore_fluorite", "deepslate_ore_fluorite",
+                "ore_niter", "deepslate_ore_niter", "ore_tungsten", "deepslate_ore_tungsten",
+                "ore_lead", "deepslate_ore_lead", "ore_beryllium", "deepslate_ore_beryllium",
+                "ore_rare", "deepslate_ore_rare", "ore_lignite", "deepslate_ore_lignite",
+                "ore_asbestos", "deepslate_ore_asbestos", "ore_cinnebar", "deepslate_ore_cinnebar",
+                "ore_cobalt", "deepslate_ore_cobalt", "ore_alexandrite", "deepslate_ore_alexandrite",
+                "stone_gneiss", "ore_gneiss_iron", "ore_gneiss_gold", "ore_gneiss_uranium",
+                "ore_gneiss_uranium_scorched", "ore_gneiss_copper", "ore_gneiss_asbestos",
+                "ore_gneiss_lithium", "ore_gneiss_schrabidium", "ore_gneiss_rare", "ore_gneiss_gas",
+                "stone_resource_sulfur", "stone_resource_asbestos", "stone_resource_hematite",
+                "stone_resource_malachite", "stone_resource_limestone", "stone_resource_bauxite",
+                "cluster_iron", "cluster_titanium", "cluster_aluminium", "cluster_copper",
+                "ore_nether_uranium", "ore_nether_tungsten", "ore_nether_sulfur", "ore_nether_fire",
+                "ore_nether_coal", "ore_nether_cobalt", "ore_nether_plutonium", "ore_tikite");
         tag(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.FROZEN_LOG.get(), ModBlocks.FROZEN_PLANKS.get());
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
@@ -150,11 +185,27 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 ModBlocks.REINFORCED_LAMINATE.get());
         tag(forgeBlockTag("glass_panes")).add(ModBlocks.REINFORCED_LAMINATE_PANE.get());
 
-        addLegacyForgeOreTag("uranium", "ore_uranium", "ore_uranium_scorched", "ore_nether_uranium", "ore_nether_uranium_scorched", "ore_gneiss_uranium", "ore_gneiss_uranium_scorched");
-        addLegacyForgeOreTag("thorium", "ore_thorium");
+        addLegacyForgeOreTag("uranium", "ore_uranium", "deepslate_ore_uranium", "ore_uranium_scorched", "ore_nether_uranium", "ore_nether_uranium_scorched", "ore_gneiss_uranium", "ore_gneiss_uranium_scorched");
+        addLegacyForgeOreTag("thorium", "ore_thorium", "deepslate_ore_thorium");
+        addLegacyForgeOreTag("titanium", "ore_titanium", "deepslate_ore_titanium");
+        addLegacyForgeOreTag("sulfur", "ore_sulfur", "deepslate_ore_sulfur", "ore_nether_sulfur", "stone_resource_sulfur");
+        addLegacyForgeOreTag("aluminium", "ore_aluminium", "deepslate_ore_aluminium");
+        addLegacyForgeOreTag("fluorite", "ore_fluorite", "deepslate_ore_fluorite");
+        addLegacyForgeOreTag("niter", "ore_niter", "deepslate_ore_niter");
+        addLegacyForgeOreTag("tungsten", "ore_tungsten", "deepslate_ore_tungsten", "ore_nether_tungsten");
+        addLegacyForgeOreTag("lead", "ore_lead", "deepslate_ore_lead");
+        addLegacyForgeOreTag("beryllium", "ore_beryllium", "deepslate_ore_beryllium");
+        addLegacyForgeOreTag("rare_earth", "ore_rare", "deepslate_ore_rare");
         addLegacyForgeOreTag("schrabidium", "ore_schrabidium", "ore_nether_schrabidium", "ore_gneiss_schrabidium");
-        addLegacyForgeOreTag("lignite", "ore_lignite");
-        addLegacyForgeOreTag("asbestos", "ore_asbestos", "ore_gneiss_asbestos");
+        addLegacyForgeOreTag("lignite", "ore_lignite", "deepslate_ore_lignite");
+        addLegacyForgeOreTag("asbestos", "ore_asbestos", "deepslate_ore_asbestos", "ore_gneiss_asbestos", "stone_resource_asbestos");
+        addLegacyForgeOreTag("cinnebar", "ore_cinnebar", "deepslate_ore_cinnebar");
+        addLegacyForgeOreTag("cobalt", "ore_cobalt", "deepslate_ore_cobalt", "ore_nether_cobalt");
+        addLegacyForgeOreTag("alexandrite", "ore_alexandrite", "deepslate_ore_alexandrite");
+        addLegacyForgeOreTag("hematite", "stone_resource_hematite");
+        addLegacyForgeOreTag("malachite", "stone_resource_malachite");
+        addLegacyForgeOreTag("limestone", "stone_resource_limestone");
+        addLegacyForgeOreTag("bauxite", "stone_resource_bauxite");
         addLegacyForgeOreTag("coal", "ore_nether_coal");
         addLegacyForgeTag("storage_blocks/lead", "block_lead");
         addLegacyForgeTag("storage_blocks/niobium", "block_niobium");

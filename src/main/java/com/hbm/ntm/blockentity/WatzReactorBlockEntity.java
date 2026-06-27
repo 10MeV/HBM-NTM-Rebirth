@@ -129,9 +129,8 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         }
         HbmFluidNetworkBlockEntity.serverTick(level, pos, state, reactor);
         boolean changed = reactor.tickTopSegment(level);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             reactor.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
 
@@ -237,6 +236,36 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    public boolean supportsFluidSettingsCopy() {
+        return false;
+    }
+
+    @Override
+    public int[] getFluidIdsToCopy() {
+        List<HbmFluidTank> tanks = getAllTanks();
+        int[] ids = new int[tanks.size()];
+        int count = 0;
+        for (HbmFluidTank tank : tanks) {
+            FluidType type = tank.getTankType();
+            if (type != null && !type.hasNoId()) {
+                ids[count++] = type.getId();
+            }
+        }
+        if (count == ids.length) {
+            return ids;
+        }
+        int[] compact = new int[count];
+        System.arraycopy(ids, 0, compact, 0, count);
+        return compact;
+    }
+
+    @Nullable
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return null;
+    }
+
+    @Override
     public List<HbmFluidTank> getAllTanks() {
         return List.of(coolantTank, hotCoolantTank, mudTank);
     }
@@ -313,7 +342,7 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected List<HbmFluidTank> getOutputTanks(@Nullable Direction side) {
-        return side == Direction.DOWN ? List.of(hotCoolantTank, mudTank) : List.of();
+        return side == null || side == Direction.DOWN ? List.of(hotCoolantTank, mudTank) : List.of();
     }
 
     @Override

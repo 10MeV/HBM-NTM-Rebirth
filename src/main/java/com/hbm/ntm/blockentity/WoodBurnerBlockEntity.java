@@ -150,7 +150,7 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldOn != burner.on
                 || oldLiquid != burner.liquidBurn;
         burner.networkPackNT(25);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             burner.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

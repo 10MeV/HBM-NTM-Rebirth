@@ -3,12 +3,14 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.block.FluidPipeAnchorBlock;
 import com.hbm.ntm.block.HbmFluidNodeBlock;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidNet;
 import com.hbm.ntm.fluid.HbmFluidNode;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmFluidConnectionUtil;
 import com.hbm.ntm.fluid.HbmFluidConnector;
@@ -97,15 +99,11 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
 
     @Override
     public boolean pasteFluidSettings(CompoundTag tag, int index, @Nullable Player player, boolean recursive) {
-        if (tag == null || !tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
+        java.util.OptionalInt id = HbmFluidCopiable.copiedPipeFluidIdAt(tag, index);
+        if (id.isEmpty()) {
             return false;
         }
-        int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
-        if (ids.length <= 0) {
-            return false;
-        }
-        int safeIndex = index >= 0 && index < ids.length ? index : 0;
-        FluidType target = HbmFluids.fromId(ids[safeIndex]);
+        FluidType target = HbmFluids.fromId(id.getAsInt());
         if (recursive && level != null && !level.isClientSide) {
             return changeConnectedPipeTypes(level, worldPosition, getFluidType(), target, 64) > 0;
         }
@@ -167,7 +165,7 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        type = HbmFluids.fromName(tag.getString(TAG_TYPE));
+        type = HbmFluidJsonUtil.readFluidReference(tag.getString(TAG_TYPE));
         if (type == HbmFluids.NONE && tag.contains(TAG_TYPE + "_id")) {
             type = HbmFluids.fromId(tag.getInt(TAG_TYPE + "_id"));
         }
@@ -223,12 +221,15 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
             if (visit.distance() >= maxDistance) {
                 continue;
             }
-            for (Direction direction : Direction.values()) {
-                queue.add(new PipeVisit(visit.pos().relative(direction), visit.distance() + 1));
-            }
             if (pipe instanceof FluidPipeAnchorBlockEntity anchor) {
+                Direction attachedSide = FluidPipeAnchorBlock.attachedSide(pipe.getBlockState());
+                queue.add(new PipeVisit(visit.pos().relative(attachedSide), visit.distance() + 1));
                 for (BlockPos remote : anchor.getRemoteConnections()) {
                     queue.add(new PipeVisit(remote, visit.distance() + 1));
+                }
+            } else {
+                for (Direction direction : Direction.values()) {
+                    queue.add(new PipeVisit(visit.pos().relative(direction), visit.distance() + 1));
                 }
             }
         }

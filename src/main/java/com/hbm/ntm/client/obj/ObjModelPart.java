@@ -1,9 +1,13 @@
 package com.hbm.ntm.client.obj;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 public final class ObjModelPart {
     private final ResourceLocation modelLocation;
@@ -48,37 +52,56 @@ public final class ObjModelPart {
         return translucent;
     }
 
-    public void render(ObjRenderContext context) {
-        context.poseStack().pushPose();
-        originTransform.apply(context.poseStack());
+    public void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        render(poseStack, buffer, Blocks.AIR.defaultBlockState(), packedLight, packedOverlay, 0xFFFFFF, false, false);
+    }
+
+    public void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, int color) {
+        render(poseStack, buffer, Blocks.AIR.defaultBlockState(), packedLight, packedOverlay, color & 0xFFFFFF, true, false);
+    }
+
+    public void render(PoseStack poseStack, MultiBufferSource buffer, BlockState state, int packedLight, int packedOverlay) {
+        render(poseStack, buffer, state, packedLight, packedOverlay, 0xFFFFFF, false, false);
+    }
+
+    public void render(PoseStack poseStack, MultiBufferSource buffer, BlockState state, int packedLight, int packedOverlay,
+            int color) {
+        render(poseStack, buffer, state, packedLight, packedOverlay, color & 0xFFFFFF, true, false);
+    }
+
+    void render(PoseStack poseStack, MultiBufferSource buffer, BlockState state, int packedLight, int packedOverlay,
+            int color, boolean hasColor, boolean legacyShadow) {
+        color &= 0xFFFFFF;
+        poseStack.pushPose();
+        originTransform.apply(poseStack);
         BakedModel model = Minecraft.getInstance().getModelManager().getModel(modelLocation);
         if (directRender) {
             ObjRenderUtils.renderModel(
                     model,
-                    context.poseStack(),
-                    context.buffer(),
-                    context.packedLight(),
-                    context.packedOverlay(),
+                    poseStack,
+                    buffer,
+                    packedLight,
+                    packedOverlay,
                     renderType,
                     lightMultiplier,
-                    context.color(),
-                    context.hasColor(),
-                    context.legacyShadow());
+                    color,
+                    hasColor,
+                    legacyShadow);
         } else {
             ObjRenderUtils.renderBlockModel(
                     model,
-                    context.state(),
-                    context.modelRenderer(),
-                    context.poseStack(),
-                    context.buffer(),
-                    context.packedLight(),
-                    context.packedOverlay(),
+                    state,
+                    Minecraft.getInstance().getBlockRenderer().getModelRenderer(),
+                    poseStack,
+                    buffer,
+                    packedLight,
+                    packedOverlay,
                     renderType,
                     lightMultiplier,
-                    context.color(),
-                    context.hasColor(),
-                    context.legacyShadow());
+                    color,
+                    hasColor,
+                    legacyShadow);
         }
-        context.poseStack().popPose();
+        poseStack.popPose();
     }
 }

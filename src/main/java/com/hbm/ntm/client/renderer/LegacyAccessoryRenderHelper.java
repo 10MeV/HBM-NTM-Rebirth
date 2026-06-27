@@ -4,8 +4,10 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.util.HbmShadyUtil;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 import net.minecraft.resources.ResourceLocation;
@@ -24,6 +26,7 @@ public final class LegacyAccessoryRenderHelper {
     public static final int POLAROID_CAPE_VARIANT_ID = 11;
 
     private static final List<CapeRule> CAPE_RULES = createCapeRules();
+    private static final Map<String, ResourceLocation> CAPE_TEXTURES_BY_NAME = createCapeTextureCache();
 
     public static AccessoryAngles accessoryAngles(LivingEntity entity, float partialTick) {
         float headYaw = Mth.lerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
@@ -100,10 +103,9 @@ public final class LegacyAccessoryRenderHelper {
     }
 
     public static ResourceLocation capeTexture(String legacyTextureName) {
-        String textureName = safe(legacyTextureName)
-                .toLowerCase(Locale.ROOT)
-                .replaceAll("[^a-z0-9._-]", "_");
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/capes/" + textureName + ".png");
+        String textureName = normalizeCapeTextureName(legacyTextureName);
+        ResourceLocation cached = CAPE_TEXTURES_BY_NAME.get(textureName);
+        return cached != null ? cached : createCapeTexture(textureName);
     }
 
     public record AccessoryAngles(float headYaw, float bodyYaw, float yaw, float wrappedYaw, float pitch) {
@@ -172,6 +174,34 @@ public final class LegacyAccessoryRenderHelper {
         rules.add(new CapeRule("Alcater", HbmShadyUtil.ALCATER, "CapeAlcater"));
         rules.add(new CapeRule("ege444", HbmShadyUtil.EGE444, "CapeJame"));
         return List.copyOf(rules);
+    }
+
+    private static Map<String, ResourceLocation> createCapeTextureCache() {
+        Map<String, ResourceLocation> textures = new HashMap<>();
+        for (CapeRule rule : CAPE_RULES) {
+            cacheCapeTexture(textures, rule.textureName());
+            cacheCapeTexture(textures, rule.polaroidTextureName());
+        }
+        cacheCapeTexture(textures, "CapeWiki");
+        cacheCapeTexture(textures, "CapeTest");
+        return Map.copyOf(textures);
+    }
+
+    private static void cacheCapeTexture(Map<String, ResourceLocation> textures, String legacyTextureName) {
+        String textureName = normalizeCapeTextureName(legacyTextureName);
+        if (!textureName.isEmpty()) {
+            textures.putIfAbsent(textureName, createCapeTexture(textureName));
+        }
+    }
+
+    private static ResourceLocation createCapeTexture(String textureName) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/capes/" + textureName + ".png");
+    }
+
+    private static String normalizeCapeTextureName(String legacyTextureName) {
+        return safe(legacyTextureName)
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9._-]", "_");
     }
 
     private static boolean matches(String uuid, String name, String targetUuid, String targetName) {

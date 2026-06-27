@@ -1,6 +1,8 @@
 package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -20,38 +22,22 @@ public final class LegacyObjGlintRenderer {
     public static final int LAYERS = 2;
 
     public static void renderClassicGlint(LegacyWavefrontModel model, ResourceLocation texture,
-            ObjRenderContext context, String partName, float age, float red, float green, float blue, float speed, float scale) {
-        renderClassicGlint(model, texture, context, partName, null, age, DEFAULT_COLOR_MOD, red, green, blue, speed, scale);
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyWavefrontModel.SelectionHandle selection, float age,
+            float red, float green, float blue, float speed, float scale) {
+        renderClassicGlint(model, texture, poseStack, buffer, packedLight, packedOverlay, selection, age,
+                DEFAULT_COLOR_MOD, red, green, blue, speed, scale);
     }
 
     public static void renderClassicGlint(LegacyWavefrontModel model, ResourceLocation texture,
-            ObjRenderContext context, LegacyWavefrontModel.SelectionHandle selection, float age,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyWavefrontModel.SelectionHandle selection, float age, float colorMod,
             float red, float green, float blue, float speed, float scale) {
-        renderClassicGlint(model, texture, context, null, selection, age, DEFAULT_COLOR_MOD, red, green, blue, speed, scale);
-    }
-
-    public static void renderClassicGlint(LegacyWavefrontModel model, ResourceLocation texture,
-            ObjRenderContext context, String partName, float age, float colorMod,
-            float red, float green, float blue, float speed, float scale) {
-        renderClassicGlint(model, texture, context, partName, null, age, colorMod, red, green, blue, speed, scale);
-    }
-
-    public static void renderClassicGlint(LegacyWavefrontModel model, ResourceLocation texture,
-            ObjRenderContext context, LegacyWavefrontModel.SelectionHandle selection, float age, float colorMod,
-            float red, float green, float blue, float speed, float scale) {
-        renderClassicGlint(model, texture, context, null, selection, age, colorMod, red, green, blue, speed, scale);
-    }
-
-    private static void renderClassicGlint(LegacyWavefrontModel model, ResourceLocation texture,
-            ObjRenderContext context, String partName, LegacyWavefrontModel.SelectionHandle selection,
-            float age, float colorMod, float red, float green, float blue, float speed, float scale) {
-        ObjRenderContext base = context.withGlintEqualDepth()
-                .withColor(red * GLINT_COLOR_MULTIPLIER, green * GLINT_COLOR_MULTIPLIER,
-                        blue * GLINT_COLOR_MULTIPLIER, 1.0F);
-
         for (GlintLayerPlan layer : classicGlintPlan(age, colorMod, red, green, blue, speed, scale).layers()) {
-            ObjRenderContext layerContext = base.withTextureMatrixPlan(layer.textureMatrix());
-            renderPartOrAll(model, texture, layerContext, partName, selection);
+            model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                    color(red), color(green), color(blue), 255, false,
+                    LegacyTexturedRenderMode.GLINT_EQUAL_DEPTH, textureMatrixUvTransform(layer.textureMatrix()),
+                    selection);
         }
     }
 
@@ -84,15 +70,16 @@ public final class LegacyObjGlintRenderer {
                 LegacyTexturedRenderMode.DepthTest.LEQUAL, true, true, 1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    private static void renderPartOrAll(LegacyWavefrontModel model, ResourceLocation texture,
-            ObjRenderContext context, String partName, LegacyWavefrontModel.SelectionHandle selection) {
-        if (selection != null) {
-            model.renderOnlyInCallOrder(texture, context, selection);
-        } else if ("all".equals(partName)) {
-            model.renderAll(texture, context);
-        } else {
-            model.renderPart(partName, texture, context);
-        }
+    private static LegacyWavefrontModel.UvTransform textureMatrixUvTransform(LegacyUvAnimation.TextureMatrixPlan plan) {
+        return switch (plan.order()) {
+            case SCALE_ROTATE_TRANSLATE -> LegacyWavefrontModel.legacyTextureMatrixDynamic(
+                    (float) plan.scaleU(), (float) plan.scaleV(),
+                    (float) plan.rotationDegrees(), (float) plan.translateU(), (float) plan.translateV());
+        };
+    }
+
+    private static int color(float value) {
+        return Math.max(0, Math.min(255, Math.round(value * GLINT_COLOR_MULTIPLIER * 255.0F)));
     }
 
     public record GlintPlan(

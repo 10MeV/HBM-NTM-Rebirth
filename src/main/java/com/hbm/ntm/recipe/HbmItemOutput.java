@@ -10,10 +10,15 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.tags.ITag;
+import net.minecraftforge.registries.tags.ITagManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -246,10 +251,34 @@ public final class HbmItemOutput {
     }
 
     private static ItemStack readItemStack(JsonObject object, String name) {
+        if (!object.has("item") && object.has("tag")) {
+            return readTagStack(object, name);
+        }
+
         String itemName = GsonHelper.getAsString(object, "item");
         ResourceLocation itemId = new ResourceLocation(itemName);
         Item item = HbmRegistryUtil.item(itemId)
                 .orElseThrow(() -> new JsonSyntaxException("Unknown item '" + itemName + "' in " + name));
+        return stackFromItem(object, name, item);
+    }
+
+    private static ItemStack readTagStack(JsonObject object, String name) {
+        String tagName = GsonHelper.getAsString(object, "tag");
+        ResourceLocation tagId = new ResourceLocation(tagName);
+        TagKey<Item> tagKey = ItemTags.create(tagId);
+        ITagManager<Item> tags = ForgeRegistries.ITEMS.tags();
+        if (tags == null) {
+            throw new JsonSyntaxException("Item tags are not available while resolving output tag '#" + tagName
+                    + "' in " + name);
+        }
+        ITag<Item> tag = tags.getTag(tagKey);
+        Item item = tag.stream()
+                .findFirst()
+                .orElseThrow(() -> new JsonSyntaxException("Empty item tag '#" + tagName + "' in " + name));
+        return stackFromItem(object, name, item);
+    }
+
+    private static ItemStack stackFromItem(JsonObject object, String name, Item item) {
         int count = GsonHelper.getAsInt(object, "count", 1);
         if (count < 1) {
             throw new JsonSyntaxException("Invalid item count " + count + " in " + name);

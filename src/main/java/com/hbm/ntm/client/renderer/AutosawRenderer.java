@@ -4,7 +4,6 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.AutosawBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -47,7 +46,7 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
     public void render(AutosawBlockEntity autosaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = autosaw.getBlockState();
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(autosaw, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
@@ -56,21 +55,22 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
                 autosaw.getLastPitch(), autosaw.getPitch(),
                 autosaw.getLastSpin(), autosaw.getSpin(),
                 autosaw.isOn(), worldTime(autosaw), partialTick);
-        renderPart(BASE, context);
+        renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
         poseStack.mulPose(Axis.YN.rotationDegrees((float) plan.turnDegrees()));
-        renderPart(MAIN, context);
+        renderPart(MAIN, poseStack, buffer, modelLight, packedOverlay);
         poseStack.translate(0.0D, plan.engineTranslateY(), 0.0D);
-        renderPart(ENGINE, context);
+        renderPart(ENGINE, poseStack, buffer, modelLight, packedOverlay);
         poseStack.translate(0.0D, -plan.engineTranslateY(), 0.0D);
-        renderPart(plan.armUpper(), ARM_UPPER, context, poseStack);
-        renderPart(plan.armLower(), ARM_LOWER, context, poseStack);
-        renderPart(plan.armTip(), ARM_TIP, context, poseStack);
-        renderPart(plan.sawBlade(), SAWBLADE, context, poseStack);
+        renderPart(plan.armUpper(), ARM_UPPER, poseStack, buffer, modelLight, packedOverlay);
+        renderPart(plan.armLower(), ARM_LOWER, poseStack, buffer, modelLight, packedOverlay);
+        renderPart(plan.armTip(), ARM_TIP, poseStack, buffer, modelLight, packedOverlay);
+        renderPart(plan.sawBlade(), SAWBLADE, poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
     }
 
     private static void renderPart(LegacyTileRenderPlans.PivotedModelPartPlan part,
-            LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context, PoseStack poseStack) {
+            LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
@@ -84,21 +84,25 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
             poseStack.mulPose(Axis.ZP.rotationDegrees((float) (part.angleDegrees() * part.axisZ())));
         }
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        renderPart(handle, context);
+        renderPart(handle, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
-    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
-        ObjMachineModels.AUTOSAW.renderOnlyInCallOrder(ObjMachineModels.AUTOSAW_TEXTURE, context, handle);
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ObjMachineModels.AUTOSAW.renderOnlyInCallOrder(ObjMachineModels.AUTOSAW_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay, handle);
     }
 
-    static void renderModelPart(String partName, ObjRenderContext context) {
+    static void renderModelPart(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
         LegacyWavefrontModel.SelectionHandle handle = handle(partName);
         if (handle != null) {
-            renderPart(handle, context);
+            renderPart(handle, poseStack, buffer, packedLight, packedOverlay);
             return;
         }
-        ObjMachineModels.AUTOSAW.renderPart(partName, ObjMachineModels.AUTOSAW_TEXTURE, context);
+        ObjMachineModels.AUTOSAW.renderPart(partName, ObjMachineModels.AUTOSAW_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay);
     }
 
     private static LegacyWavefrontModel.SelectionHandle handle(String partName) {

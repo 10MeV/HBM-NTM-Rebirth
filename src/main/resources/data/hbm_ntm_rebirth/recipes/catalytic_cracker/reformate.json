@@ -1,0 +1,15 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:catalytic_cracker",
+    "output1":  {
+                    "fluid":  "hbm_ntm_rebirth:unsaturateds",
+                    "amount":  40
+                },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:reformate",
+                  "amount":  100
+              },
+    "output2":  {
+                    "fluid":  "hbm_ntm_rebirth:reformgas",
+                    "amount":  60
+                }
+}

@@ -1,5 +1,7 @@
 package com.hbm.ntm.client.particle;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
@@ -25,9 +27,9 @@ public class TownAuraParticle extends TextureSheetParticle {
         this.xd *= 0.019999999552965164D;
         this.yd *= 0.019999999552965164D;
         this.zd *= 0.019999999552965164D;
-        float color = 0.5F + random.nextFloat() * 0.5F;
-        this.rCol = 0.8F * color;
-        this.gCol = 0.9F * color;
+        float color = 0.08F + random.nextFloat() * 0.12F;
+        this.rCol = color;
+        this.gCol = color;
         this.bCol = color;
         this.lifetime = Math.max(1, (int) (LEGACY_LIFETIME_BASE / (this.random.nextDouble() * 0.8D + 0.2D)));
         this.friction = 0.99F;
@@ -43,6 +45,15 @@ public class TownAuraParticle extends TextureSheetParticle {
         if (!this.removed) {
             this.setSpriteFromAge(sprites);
         }
+    }
+
+    @Override
+    public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(consumer, camera, partialTick,
+                this.xo, this.yo, this.zo, this.x, this.y, this.z,
+                this.oRoll, this.roll, this.getQuadSize(partialTick),
+                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
     }
 
     @Override

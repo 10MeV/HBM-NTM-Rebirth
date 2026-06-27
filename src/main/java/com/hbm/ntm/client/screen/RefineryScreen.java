@@ -7,6 +7,7 @@ import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.RefineryRecipe;
 import com.hbm.ntm.menu.RefineryMenu;
 import java.util.List;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -84,7 +85,8 @@ public class RefineryScreen extends AbstractContainerScreen<RefineryMenu> {
 
     private void renderPipes(GuiGraphics graphics) {
         HbmFluidGuiHelper.TankData input = menu.getTank(0);
-        RefineryRecipe recipe = input == null ? null : LegacyOilFluidRecipes.getRefinery(input.type());
+        RefineryRecipe recipe = input == null ? null
+                : LegacyOilFluidRecipes.getRefinery(Minecraft.getInstance().level, input.type());
         if (recipe == null) {
             graphics.blit(TEXTURE, leftPos + 52, topPos + 63, 247, 1, 33, 48, TEX_WIDTH, TEX_HEIGHT);
             graphics.blit(TEXTURE, leftPos + 52, topPos + 32, 247, 50, 66, 52, TEX_WIDTH, TEX_HEIGHT);

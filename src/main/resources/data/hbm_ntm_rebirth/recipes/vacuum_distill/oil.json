@@ -1,0 +1,23 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:vacuum_distill",
+    "output3":  {
+                    "fluid":  "hbm_ntm_rebirth:sourgas",
+                    "amount":  15
+                },
+    "output1":  {
+                    "fluid":  "hbm_ntm_rebirth:reformate",
+                    "amount":  25
+                },
+    "output0":  {
+                    "fluid":  "hbm_ntm_rebirth:heavyoil_vacuum",
+                    "amount":  40
+                },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:oil",
+                  "amount":  100
+              },
+    "output2":  {
+                    "fluid":  "hbm_ntm_rebirth:lightoil_vacuum",
+                    "amount":  20
+                }
+}

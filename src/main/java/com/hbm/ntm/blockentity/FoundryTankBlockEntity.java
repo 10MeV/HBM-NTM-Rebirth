@@ -29,7 +29,7 @@ public class FoundryTankBlockEntity extends FoundryBaseBlockEntity {
         int oldAmount = tank.amount;
         Object oldType = tank.type;
         tank.tickServer(level);
-        if (oldAmount != tank.amount || oldType != tank.type || level.getGameTime() % 20L == 0L) {
+        if (oldAmount != tank.amount || oldType != tank.type) {
             tank.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

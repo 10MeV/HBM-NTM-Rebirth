@@ -1,8 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.entity.RadarControl;
 import com.hbm.ntm.api.entity.RadarControlState;
 import com.hbm.ntm.api.entity.RadarClientControlProfile;
@@ -61,7 +58,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RadarBlockEntity extends HbmEnergyBlockEntity
-        implements LegacyLookOverlayProvider, MenuProvider, RadarRedstoneSource, RadarScanProvider {
+        implements MenuProvider, RadarRedstoneSource, RadarScanProvider {
     public static final long MAX_POWER = RadarConfig.POWER_CAP_DEFAULT;
     public static final long CONSUMPTION = RadarConfig.CONSUMPTION_DEFAULT;
     public static final int SLOT_COUNT = RadarInventoryProfile.SLOT_COUNT;
@@ -356,11 +353,6 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     @Override
     public AABB getRenderBoundingBox() {
         return renderBoundsOffset.move(worldPosition);
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.energyStorage(getPower(), getMaxPower()));
     }
 
     @Override

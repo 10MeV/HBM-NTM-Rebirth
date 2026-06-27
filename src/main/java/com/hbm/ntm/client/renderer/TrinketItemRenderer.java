@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.TrinketVariant;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.item.TrinketBlockItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -36,8 +35,8 @@ public class TrinketItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.pushPose();
         applyItemDisplay(item.kind(), variant, displayContext, poseStack);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(), packedLight, packedOverlay);
-        TrinketBlockEntityRenderer.renderTrinket(item.kind(), variant, 0, 0.0F, context);
+        TrinketBlockEntityRenderer.renderTrinket(item.kind(), variant, 0, 0.0F, poseStack, buffer,
+                Blocks.AIR.defaultBlockState(), packedLight, packedOverlay);
         poseStack.popPose();
     }
 

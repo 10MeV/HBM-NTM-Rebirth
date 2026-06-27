@@ -216,11 +216,11 @@ public final class Fluids {
     }
 
     public static FluidType fromNameCompat(String name) {
-        return HbmFluids.fromName(name);
+        return HbmFluids.fromNameCompat(name);
     }
 
     public static String toNameCompat(FluidType type) {
-        return type == null ? HbmFluids.NONE.getName() : type.getName();
+        return HbmFluids.toNameCompat(type);
     }
 
     public static FluidType[] getAll() {

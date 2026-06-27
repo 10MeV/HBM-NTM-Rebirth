@@ -5,7 +5,6 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ChemicalFactoryBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -64,16 +63,15 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
         ResourceLocation texture = definition.textureLocation();
 
-        renderModelPart(model, "Base", texture, context);
+        renderModelPart(model, "Base", texture, poseStack, buffer, modelLight, packedOverlay);
         if (chemicalFactory.shouldRenderFrame()) {
-            renderModelPart(model, "Frame", texture, context);
+            renderModelPart(model, "Frame", texture, poseStack, buffer, modelLight, packedOverlay);
         }
 
         for (LegacyTileRenderPlans.RotatingModelPartPlan fan : plan.fans()) {
-            renderRotatingPart(model, fan, texture, poseStack, context);
+            renderRotatingPart(model, fan, texture, poseStack, buffer, modelLight, packedOverlay);
         }
 
         poseStack.popPose();
@@ -81,23 +79,23 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
 
     private static void renderRotatingPart(LegacyWavefrontModel model,
             LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture, PoseStack poseStack,
-            ObjRenderContext context) {
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
         rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        renderModelPart(model, part.partName(), texture, context);
+        renderModelPart(model, part.partName(), texture, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
     private static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
-            ObjRenderContext context) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyWavefrontModel.SelectionHandle handle = handle(partName);
         if (handle != null) {
-            model.renderOnlyInCallOrder(texture, context, handle);
+            model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle);
             return;
         }
-        model.renderPart(partName, texture, context);
+        model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static LegacyWavefrontModel.SelectionHandle handle(String partName) {

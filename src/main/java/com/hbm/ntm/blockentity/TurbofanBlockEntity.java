@@ -1,7 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergySideMode;
@@ -180,7 +178,7 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldShowBlood != turbofan.showBlood
                 || oldAfterburner != turbofan.afterburner;
         turbofan.networkPackNT(150);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             turbofan.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -443,16 +441,7 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected boolean showsLegacyFluidLookOverlay() {
-        return true;
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.energyStored(energy.getPower(), energy.getMaxPower()),
-                LegacyLookOverlayLines.tank(true, fuelTank),
-                LegacyLookOverlayLines.tank(false, bloodTank),
-                Component.literal("Afterburner: " + afterburner)));
+        return false;
     }
 
     @Override
@@ -467,12 +456,11 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (tag == null || !tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
             return false;
         }
-        int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
-        if (ids.length == 0) {
+        java.util.OptionalInt id = HbmFluidCopiable.copiedFluidIdAt(tag, index);
+        if (id.isEmpty()) {
             return false;
         }
-        int safeIndex = index >= 0 && index < ids.length ? index : 0;
-        fuelTank.setTankType(HbmFluids.fromId(ids[safeIndex]));
+        fuelTank.setTankType(HbmFluids.fromId(id.getAsInt()));
         onFluidContentsChanged();
         return true;
     }

@@ -35,7 +35,7 @@ public final class ObjNetworkModels {
     public static LegacyWavefrontModel legacyModel(String name) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/network/" + name + ".obj"),
-                texture(name));
+                texture(name)).asVBO();
     }
 
     public static ResourceLocation texture(String name) {

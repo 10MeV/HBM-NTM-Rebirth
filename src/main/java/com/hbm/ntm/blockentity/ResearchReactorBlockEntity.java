@@ -122,7 +122,7 @@ public class ResearchReactorBlockEntity extends BlockEntity
             ChunkRadiationManager.incrementRadiation(level, pos, reactor.heat / (float) MAX_HEAT * 50.0F);
         }
         reactor.networkPackNT(150);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             reactor.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -340,6 +340,11 @@ public class ResearchReactorBlockEntity extends BlockEntity
         data.putDouble(CompatEnergyControl.D_HEAT_C, getTemperatureDisplay());
         data.putInt(CompatEnergyControl.I_FLUX, totalFlux);
         data.putInt(CompatEnergyControl.I_WATER, water);
+        data.putDouble(CompatEnergyControl.D_ROD_LEVEL_PERCENT, rodLevel * 100.0D);
+        data.putDouble(CompatEnergyControl.D_ROD_TARGET_PERCENT, targetLevel * 100.0D);
+        data.putInt(CompatEnergyControl.I_RESEARCH_HEAT_RAW, heat);
+        data.putDouble(CompatEnergyControl.D_RESEARCH_ROD_LEVEL_RAW, rodLevel);
+        data.putDouble(CompatEnergyControl.D_RESEARCH_ROD_TARGET_RAW, targetLevel);
     }
 
     public int getSlotFlux(int slot) {

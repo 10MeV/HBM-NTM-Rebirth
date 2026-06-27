@@ -1,8 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -45,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
-        implements MenuProvider, HbmLegacyButtonReceiver, LegacyLookOverlayProvider {
+        implements MenuProvider, HbmLegacyButtonReceiver {
     public static final int SLOT_BATTERY = 0;
     public static final int SLOT_RADIUS = 1;
     public static final int SLOT_HEALTH = 2;
@@ -133,8 +130,7 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
                 forceField.cooldown);
         if (oldPower != forceField.getPower() || oldHealth != forceField.health
                 || oldMaxHealth != forceField.maxHealth || oldCooldown != forceField.cooldown
-                || oldColor != forceField.color || oldRadius != forceField.radius
-                || level.getGameTime() % 20L == 0L) {
+                || oldColor != forceField.color || oldRadius != forceField.radius) {
             forceField.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -452,11 +448,6 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
         if (tag.contains("color")) {
             color = tag.getInt("color");
         }
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.energyStorage(getPower(), getMaxPower()));
     }
 
     private static final class AccessibleItemHandler implements IItemHandler {

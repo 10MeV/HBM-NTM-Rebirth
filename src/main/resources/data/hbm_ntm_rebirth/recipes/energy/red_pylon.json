@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": { "item": "hbm_ntm_rebirth:coil_copper" },
+    "P": { "item": "hbm_ntm_rebirth:plate_polymer" },
+    "T": { "item": "hbm_ntm_rebirth:red_wire_coated" },
+    "W": { "tag": "minecraft:planks" }
+  },
+  "pattern": [
+    "CWC",
+    "PWP",
+    " T "
+  ],
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:red_pylon"
+  },
+  "show_notification": true
+}

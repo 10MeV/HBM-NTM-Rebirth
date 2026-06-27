@@ -1,8 +1,9 @@
 package com.hbm.ntm.api.fluid;
 
 /**
- * Called every time the HBM fluid type table is rebuilt. Register addon or
- * compat fluid types here so they survive in-game reloads.
+ * Legacy source-compatibility hook. Modern HBM fluid types are built from the
+ * fixed table and config/datapack-facing JSON, so this listener is intentionally
+ * not invoked by the compat facade.
  */
 @FunctionalInterface
 public interface HbmFluidRegisterListener {

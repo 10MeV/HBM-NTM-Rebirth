@@ -4,6 +4,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.config.SteamEngineConfig;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
@@ -92,7 +93,7 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
 
         engine.networkPackNT(150);
-        if (result.converted() || level.getGameTime() % 20L == 0L) {
+        if (result.converted()) {
             engine.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -143,6 +144,15 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public long getLastPowerProduced() {
         return lastPowerProduced;
+    }
+
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        super.provideExtraInfo(data);
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, lastPowerProduced > 0L);
+        data.putDouble(CompatEnergyControl.D_OUTPUT_HE, lastPowerProduced);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_STEAM_ENGINE_STEAM, steamTank);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_STEAM_ENGINE_SPENT, spentSteamTank);
     }
 
     @Nullable

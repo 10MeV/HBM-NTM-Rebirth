@@ -4,5 +4,6 @@
   "solid_input": {
     "ingredient": { "item": "hbm_ntm_rebirth:oil_tar_crack" }
   },
-  "duration": 20
+  "duration": 20,
+  "source_order": 1
 }

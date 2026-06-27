@@ -18,6 +18,7 @@ public final class AchievementHandler {
     public static final ResourceLocation RBMK_BOOM = new ResourceLocation(HbmNtm.MOD_ID, "rbmk_boom");
     public static final ResourceLocation ZIRNOX_BOOM = new ResourceLocation(HbmNtm.MOD_ID, "zirnox_boom");
     public static final ResourceLocation WATZ_BOOM = new ResourceLocation(HbmNtm.MOD_ID, "watz_boom");
+    public static final ResourceLocation SULFURIC = new ResourceLocation(HbmNtm.MOD_ID, "sulfuric");
     public static final ResourceLocation RAD_POISON = new ResourceLocation(HbmNtm.MOD_ID, "rad_poison");
     public static final ResourceLocation RAD_DEATH = new ResourceLocation(HbmNtm.MOD_ID, "rad_death");
     public static final ResourceLocation DIGAMMA_SEE =

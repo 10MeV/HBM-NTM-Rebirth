@@ -1,0 +1,15 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:catalytic_cracker",
+    "output1":  {
+                    "fluid":  "hbm_ntm_rebirth:kerosene",
+                    "amount":  40
+                },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:diesel_crack",
+                  "amount":  100
+              },
+    "output2":  {
+                    "fluid":  "hbm_ntm_rebirth:petroleum",
+                    "amount":  30
+                }
+}

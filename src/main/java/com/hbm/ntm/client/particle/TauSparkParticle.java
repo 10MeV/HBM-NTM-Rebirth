@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.particle;
 
+import com.hbm.ntm.client.obj.LegacyLineRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -11,7 +12,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -95,13 +95,13 @@ public class TauSparkParticle extends Particle {
         double currentX = Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x();
         double currentY = Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y();
         double currentZ = Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z();
-        consumer.vertex(currentX, currentY, currentZ).color(255, 255, 255, 255).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        LegacyLineRenderer.pointPositionColorIdentity(consumer, currentX, currentY, currentZ, 0xFFFFFF, 255);
         for (int i = this.steps.size() - 1; i >= 1; i--) {
             Vec3 step = this.steps.get(i);
             currentX -= step.x;
             currentY -= step.y;
             currentZ -= step.z;
-            consumer.vertex(currentX, currentY, currentZ).color(255, 255, 255, 255).uv2(LightTexture.FULL_BRIGHT).endVertex();
+            LegacyLineRenderer.pointPositionColorIdentity(consumer, currentX, currentY, currentZ, 0xFFFFFF, 255);
         }
     }
 

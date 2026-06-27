@@ -11,20 +11,20 @@ public final class ObjRbmkModels {
     public static final double FUEL_CHANNEL_CHERENKOV_START_Y = 0.75D;
     public static final double FUEL_CHANNEL_CHERENKOV_STEP = 0.25D;
 
-    public static final LegacyWavefrontModel ELEMENT = model("rbmk_element", iconTexture("rbmk_element")).noSmooth().mixedMode();
-    public static final LegacyWavefrontModel ELEMENT_RODS = model("rbmk_element_rods", iconTexture("rbmk_element_fuel")).noSmooth();
-    public static final LegacyWavefrontModel ELEMENT_RODS_VBO = model("rbmk_element_rods", iconTexture("rbmk_element_fuel")).noSmooth().asVBO();
-    public static final LegacyWavefrontModel RODS = model("rbmk_rods", iconTexture("rbmk_control")).noSmooth();
-    public static final LegacyWavefrontModel RODS_VBO = model("rbmk_rods", iconTexture("rbmk_control")).noSmooth().asVBO();
+    public static final LegacyWavefrontModel ELEMENT = rawModel("rbmk_element", iconTexture("rbmk_element")).noSmooth().mixedMode();
+    public static final LegacyWavefrontModel ELEMENT_RODS = rawModel("rbmk_element_rods", iconTexture("rbmk_element_fuel")).noSmooth();
+    public static final LegacyWavefrontModel ELEMENT_RODS_VBO = rawModel("rbmk_element_rods", iconTexture("rbmk_element_fuel")).noSmooth().asVBO();
+    public static final LegacyWavefrontModel RODS = rawModel("rbmk_rods", iconTexture("rbmk_control")).noSmooth();
+    public static final LegacyWavefrontModel RODS_VBO = rawModel("rbmk_rods", iconTexture("rbmk_control")).noSmooth().asVBO();
     private static final String ELEMENT_RODS_PART = "Rods";
     private static final String CONTROL_LID_PART = "Lid";
     private static final LegacyWavefrontModel.SelectionHandle ELEMENT_RODS_HANDLE =
             ELEMENT_RODS_VBO.prepareRenderOnlyInCallOrder(ELEMENT_RODS_PART);
     private static final LegacyWavefrontModel.SelectionHandle CONTROL_LID_HANDLE =
             RODS_VBO.prepareRenderOnlyInCallOrder(CONTROL_LID_PART);
-    public static final LegacyWavefrontModel CRANE_CONSOLE = model("crane_console", modelTexture("crane_console")).asVBO();
-    public static final LegacyWavefrontModel CRANE = model("crane", modelTexture("rbmk_crane")).asVBO();
-    public static final LegacyWavefrontModel AUTOLOADER = model("autoloader", modelTexture("rbmk_autoloader")).asVBO();
+    public static final LegacyWavefrontModel CRANE_CONSOLE = rawModel("crane_console", modelTexture("crane_console")).asVBO();
+    public static final LegacyWavefrontModel CRANE = rawModel("crane", modelTexture("rbmk_crane")).asVBO();
+    public static final LegacyWavefrontModel AUTOLOADER = rawModel("autoloader", modelTexture("rbmk_autoloader")).asVBO();
     private static final LegacyWavefrontModel.SelectionHandle CRANE_MAIN =
             CRANE.prepareRenderOnlyInCallOrder("Main");
     private static final LegacyWavefrontModel.SelectionHandle CRANE_GIRDER =
@@ -51,14 +51,14 @@ public final class ObjRbmkModels {
             AUTOLOADER.prepareRenderOnlyInCallOrder("Base");
     private static final LegacyWavefrontModel.SelectionHandle AUTOLOADER_PISTON =
             AUTOLOADER.prepareRenderOnlyInCallOrder("Piston");
-    public static final LegacyWavefrontModel CONSOLE = model("rbmk_console", modelTexture("rbmk_control")).asVBO();
-    public static final LegacyWavefrontModel BUTTON = model("button", modelTexture("keypad")).asVBO();
-    public static final LegacyWavefrontModel GAUGE = model("gauge", modelTexture("gauge")).asVBO();
-    public static final LegacyWavefrontModel NUMITRON = model("numitron", modelTexture("numitron")).asVBO();
-    public static final LegacyWavefrontModel LEVER = model("lever", modelTexture("lever")).asVBO();
-    public static final LegacyWavefrontModel INDICATOR = model("indicator", modelTexture("indicator")).asVBO();
-    public static final LegacyWavefrontModel TERMINAL = model("terminal", modelTexture("terminal")).asVBO();
-    public static final LegacyWavefrontModel DEBRIS = model("debris", iconTexture("rbmk_debris")).noSmooth();
+    public static final LegacyWavefrontModel CONSOLE = rawModel("rbmk_console", modelTexture("rbmk_control")).asVBO();
+    public static final LegacyWavefrontModel BUTTON = rawModel("button", modelTexture("keypad")).asVBO();
+    public static final LegacyWavefrontModel GAUGE = rawModel("gauge", modelTexture("gauge")).asVBO();
+    public static final LegacyWavefrontModel NUMITRON = rawModel("numitron", modelTexture("numitron")).asVBO();
+    public static final LegacyWavefrontModel LEVER = rawModel("lever", modelTexture("lever")).asVBO();
+    public static final LegacyWavefrontModel INDICATOR = rawModel("indicator", modelTexture("indicator")).asVBO();
+    public static final LegacyWavefrontModel TERMINAL = rawModel("terminal", modelTexture("terminal")).asVBO();
+    public static final LegacyWavefrontModel DEBRIS = rawModel("debris", iconTexture("rbmk_debris")).noSmooth();
 
     public static final ResourceLocation CRANE_CONSOLE_TEXTURE = modelTexture("crane_console");
     public static final ResourceLocation CRANE_TEXTURE = modelTexture("rbmk_crane");
@@ -93,85 +93,86 @@ public final class ObjRbmkModels {
         int green = argbColor >> 8 & 255;
         int blue = argbColor & 255;
         poseStack.pushPose();
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
-                .withRgb(red, green, blue);
         for (int i = 0; i <= height; i++) {
-            renderFuelRodPart(ELEMENT_RODS_PART, ELEMENT_FUEL_TEXTURE, context);
+            renderFuelRodPart(ELEMENT_RODS_PART, ELEMENT_FUEL_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay, red, green, blue);
             poseStack.translate(0.0D, 1.0D, 0.0D);
         }
         poseStack.popPose();
     }
 
-    public static void renderFuelRodPart(String partName, ResourceLocation texture, ObjRenderContext context) {
+    public static void renderFuelRodPart(String partName, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue) {
         if (ELEMENT_RODS_PART.equals(partName)) {
-            ELEMENT_RODS_VBO.renderOnlyInCallOrder(texture, context, ELEMENT_RODS_HANDLE);
+            ELEMENT_RODS_VBO.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, 255, false, ELEMENT_RODS_HANDLE);
             return;
         }
-        ELEMENT_RODS_VBO.renderPart(partName, texture, context);
-    }
-
-    public static void renderFuelChannelCherenkov(ObjRenderContext context, int height) {
-        LegacyUntexturedQuadRenderer.horizontalSlices(context.withAdditiveTranslucency(),
-                -0.5D, -0.5D, 0.5D, 0.5D,
-                FUEL_CHANNEL_CHERENKOV_START_Y,
-                FUEL_CHANNEL_CHERENKOV_START_Y + Math.max(0, height),
-                FUEL_CHANNEL_CHERENKOV_STEP,
-                FUEL_CHANNEL_CHERENKOV_COLOR,
-                FUEL_CHANNEL_CHERENKOV_ALPHA);
+        ELEMENT_RODS_VBO.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay,
+                red, green, blue, 255);
     }
 
     public static void renderControlLid(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        renderControlRodPart(CONTROL_LID_PART, texture,
-                new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay));
+        renderControlRodPart(CONTROL_LID_PART, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
-    public static void renderControlRodPart(String partName, ResourceLocation texture, ObjRenderContext context) {
+    public static void renderControlRodPart(String partName, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (CONTROL_LID_PART.equals(partName)) {
-            RODS_VBO.renderOnlyInCallOrder(texture, context, CONTROL_LID_HANDLE);
+            RODS_VBO.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, CONTROL_LID_HANDLE);
             return;
         }
-        RODS_VBO.renderPart(partName, texture, context);
+        RODS_VBO.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
-    public static void renderTerminal(ObjRenderContext context) {
-        TERMINAL.renderAll(TERMINAL_TEXTURE, context);
+    public static void renderTerminal(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, LegacyTexturedRenderMode renderMode) {
+        TERMINAL.renderAll(TERMINAL_TEXTURE, poseStack, buffer, packedLight, packedOverlay,
+                255, 255, 255, 255, false, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT);
     }
 
-    public static void renderCraneConsolePart(String partName, ObjRenderContext context) {
+    public static void renderCraneConsolePart(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
         LegacyWavefrontModel.SelectionHandle handle = craneConsoleHandle(partName);
         if (handle != null) {
-            CRANE_CONSOLE.renderOnlyInCallOrder(CRANE_CONSOLE_TEXTURE, context, handle);
+            CRANE_CONSOLE.renderOnlyInCallOrder(CRANE_CONSOLE_TEXTURE, poseStack, buffer, packedLight, packedOverlay,
+                    handle, renderMode);
             return;
         }
-        CRANE_CONSOLE.renderPart(partName, CRANE_CONSOLE_TEXTURE, context);
+        CRANE_CONSOLE.renderPart(partName, CRANE_CONSOLE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
     }
 
-    public static void renderCraneConsolePartUntextured(String partName, ObjRenderContext context) {
+    public static void renderCraneConsolePartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int red, int green, int blue, int alpha) {
         LegacyWavefrontModel.SelectionHandle handle = craneConsoleHandle(partName);
         if (handle != null) {
-            CRANE_CONSOLE.renderOnlyUntextured(context, handle);
+            CRANE_CONSOLE.renderOnlyUntextured(poseStack, buffer, red, green, blue, alpha, handle);
             return;
         }
-        CRANE_CONSOLE.renderPartUntextured(partName, context);
+        CRANE_CONSOLE.renderPartUntextured(partName, poseStack, buffer, red, green, blue, alpha);
     }
 
-    public static void renderCranePart(String partName, ObjRenderContext context) {
+    public static void renderCranePart(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
         LegacyWavefrontModel.SelectionHandle handle = craneHandle(partName);
         if (handle != null) {
-            CRANE.renderOnlyInCallOrder(CRANE_TEXTURE, context, handle);
+            CRANE.renderOnlyInCallOrder(CRANE_TEXTURE, poseStack, buffer, packedLight, packedOverlay,
+                    handle, renderMode);
             return;
         }
-        CRANE.renderPart(partName, CRANE_TEXTURE, context);
+        CRANE.renderPart(partName, CRANE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
     }
 
-    public static void renderAutoloaderPart(String partName, ObjRenderContext context) {
+    public static void renderAutoloaderPart(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
         LegacyWavefrontModel.SelectionHandle handle = autoloaderHandle(partName);
         if (handle != null) {
-            AUTOLOADER.renderOnlyInCallOrder(AUTOLOADER_TEXTURE, context, handle);
+            AUTOLOADER.renderOnlyInCallOrder(AUTOLOADER_TEXTURE, poseStack, buffer, packedLight, packedOverlay,
+                    handle, renderMode);
             return;
         }
-        AUTOLOADER.renderPart(partName, AUTOLOADER_TEXTURE, context);
+        AUTOLOADER.renderPart(partName, AUTOLOADER_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
     }
 
     public static void renderDebris(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
@@ -230,7 +231,8 @@ public final class ObjRbmkModels {
         };
     }
 
-    private static LegacyWavefrontModel model(String name, ResourceLocation texture) {
+    // RBMK intentionally keeps raw, mixed, and explicit VBO variants just like 1.7.10 ResourceManager.
+    private static LegacyWavefrontModel rawModel(String name, ResourceLocation texture) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/rbmk/" + name + ".obj"),
                 texture);

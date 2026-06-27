@@ -1,0 +1,14 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:coker",
+    "output":  {
+                   "item":  "hbm_ntm_rebirth:powder_limestone"
+               },
+    "byproduct":  {
+                      "fluid":  "hbm_ntm_rebirth:colloid",
+                      "amount":  250
+                  },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:slop",
+                  "amount":  1000
+              }
+}

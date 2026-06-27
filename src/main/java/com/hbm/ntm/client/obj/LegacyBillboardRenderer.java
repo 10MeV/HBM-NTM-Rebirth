@@ -4,8 +4,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -25,33 +25,35 @@ public final class LegacyBillboardRenderer {
                 new Vector3f(0.0F, 1.0F, 0.0F).rotate(rotation));
     }
 
-    public static void billboard(ResourceLocation texture, ObjRenderContext context,
-            double x, double y, double z, double halfWidth, double halfHeight) {
-        billboard(texture, context, currentCameraBasis(), x, y, z, halfWidth, halfHeight, 0xFFFFFF, 255);
-    }
-
-    public static void billboard(ResourceLocation texture, ObjRenderContext context, CameraBasis basis,
-            double x, double y, double z, double halfWidth, double halfHeight, int color, int alpha) {
-        LegacyTexturedQuadRenderer.Vertex[] vertices = vertices(basis, x, y, z, halfWidth, halfHeight, color, alpha);
-        LegacyTexturedQuadRenderer.quadWithComputedNormal(texture, context,
-                vertices[0], vertices[1], vertices[2], vertices[3]);
-    }
-
-    public static void spriteBillboard(TextureAtlasSprite sprite, ObjRenderContext context,
-            double x, double y, double z, double halfWidth, double halfHeight) {
-        spriteBillboard(sprite, context, currentCameraBasis(), x, y, z, halfWidth, halfHeight, 0xFFFFFF, 255);
-    }
-
-    public static void spriteBillboard(TextureAtlasSprite sprite, ObjRenderContext context, CameraBasis basis,
-            double x, double y, double z, double halfWidth, double halfHeight, int color, int alpha) {
-        LegacyTexturedQuadRenderer.Vertex[] vertices = vertices(basis, x, y, z, halfWidth, halfHeight, color, alpha);
-        LegacyTexturedQuadRenderer.spriteUnitQuadWithComputedNormal(sprite, context,
-                vertices[0], vertices[1], vertices[2], vertices[3]);
-    }
-
     public static void billboardRgbaF(VertexConsumer consumer, PoseStack.Pose pose, CameraBasis basis,
             double x, double y, double z, double halfWidth, double halfHeight,
             float red, float green, float blue, float alpha, int packedLight) {
+        BillboardQuad quad = quad(basis, x, y, z, halfWidth, halfHeight);
+        emitBillboard(consumer, pose, quad, red, green, blue, alpha, packedLight);
+    }
+
+    public static void billboardRgbaF(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTexturedRenderMode renderMode, CameraBasis basis,
+            double x, double y, double z, double halfWidth, double halfHeight,
+            float red, float green, float blue, float alpha, int packedLight) {
+        BillboardQuad quad = quad(basis, x, y, z, halfWidth, halfHeight);
+        int color = channel(red) << 16 | channel(green) << 8 | channel(blue);
+        int alphaByte = channel(alpha);
+        if (LegacyWavefrontModel.renderTexturedTransientBillboard(texture, poseStack, buffer, packedLight,
+                OverlayTexture.NO_OVERLAY, renderMode, 0.0F, 1.0F, 0.0F,
+                quad.x0(), quad.y0(), quad.z0(), 1.0F, 1.0F,
+                quad.x1(), quad.y1(), quad.z1(), 1.0F, 0.0F,
+                quad.x2(), quad.y2(), quad.z2(), 0.0F, 0.0F,
+                quad.x3(), quad.y3(), quad.z3(), 0.0F, 1.0F,
+                color, alphaByte)) {
+            return;
+        }
+        emitBillboard(buffer.getBuffer(renderMode.renderType(texture)), poseStack.last(), quad,
+                red, green, blue, alpha, packedLight);
+    }
+
+    private static BillboardQuad quad(CameraBasis basis,
+            double x, double y, double z, double halfWidth, double halfHeight) {
         Vector3f right = basis.right();
         Vector3f up = basis.up();
         float rightX = right.x() * (float) halfWidth;
@@ -63,37 +65,23 @@ public final class LegacyBillboardRenderer {
         float centerX = (float) x;
         float centerY = (float) y;
         float centerZ = (float) z;
-
-        vertex(consumer, pose, centerX - rightX - upX, centerY - rightY - upY, centerZ - rightZ - upZ,
-                1.0F, 1.0F, red, green, blue, alpha, packedLight);
-        vertex(consumer, pose, centerX - rightX + upX, centerY - rightY + upY, centerZ - rightZ + upZ,
-                1.0F, 0.0F, red, green, blue, alpha, packedLight);
-        vertex(consumer, pose, centerX + rightX + upX, centerY + rightY + upY, centerZ + rightZ + upZ,
-                0.0F, 0.0F, red, green, blue, alpha, packedLight);
-        vertex(consumer, pose, centerX + rightX - upX, centerY + rightY - upY, centerZ + rightZ - upZ,
-                0.0F, 1.0F, red, green, blue, alpha, packedLight);
+        return new BillboardQuad(
+                centerX - rightX - upX, centerY - rightY - upY, centerZ - rightZ - upZ,
+                centerX - rightX + upX, centerY - rightY + upY, centerZ - rightZ + upZ,
+                centerX + rightX + upX, centerY + rightY + upY, centerZ + rightZ + upZ,
+                centerX + rightX - upX, centerY + rightY - upY, centerZ + rightZ - upZ);
     }
 
-    private static LegacyTexturedQuadRenderer.Vertex[] vertices(CameraBasis basis,
-            double x, double y, double z, double halfWidth, double halfHeight, int color, int alpha) {
-        Vector3f right = basis.right();
-        Vector3f up = basis.up();
-        double rightX = right.x() * halfWidth;
-        double rightY = right.y() * halfWidth;
-        double rightZ = right.z() * halfWidth;
-        double upX = up.x() * halfHeight;
-        double upY = up.y() * halfHeight;
-        double upZ = up.z() * halfHeight;
-        return new LegacyTexturedQuadRenderer.Vertex[] {
-                LegacyTexturedQuadRenderer.vertex(x - rightX - upX, y - rightY - upY, z - rightZ - upZ,
-                        1.0D, 1.0D, color, alpha),
-                LegacyTexturedQuadRenderer.vertex(x - rightX + upX, y - rightY + upY, z - rightZ + upZ,
-                        1.0D, 0.0D, color, alpha),
-                LegacyTexturedQuadRenderer.vertex(x + rightX + upX, y + rightY + upY, z + rightZ + upZ,
-                        0.0D, 0.0D, color, alpha),
-                LegacyTexturedQuadRenderer.vertex(x + rightX - upX, y + rightY - upY, z + rightZ - upZ,
-                        0.0D, 1.0D, color, alpha)
-        };
+    private static void emitBillboard(VertexConsumer consumer, PoseStack.Pose pose, BillboardQuad quad,
+            float red, float green, float blue, float alpha, int packedLight) {
+        vertex(consumer, pose, quad.x0(), quad.y0(), quad.z0(),
+                1.0F, 1.0F, red, green, blue, alpha, packedLight);
+        vertex(consumer, pose, quad.x1(), quad.y1(), quad.z1(),
+                1.0F, 0.0F, red, green, blue, alpha, packedLight);
+        vertex(consumer, pose, quad.x2(), quad.y2(), quad.z2(),
+                0.0F, 0.0F, red, green, blue, alpha, packedLight);
+        vertex(consumer, pose, quad.x3(), quad.y3(), quad.z3(),
+                0.0F, 1.0F, red, green, blue, alpha, packedLight);
     }
 
     private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, float x, float y, float z,
@@ -105,6 +93,17 @@ public final class LegacyBillboardRenderer {
                 .uv2(packedLight)
                 .normal(pose.normal(), 0.0F, 1.0F, 0.0F)
                 .endVertex();
+    }
+
+    private static int channel(float value) {
+        return (int) (Math.max(0.0F, Math.min(1.0F, value)) * 255.0F);
+    }
+
+    private record BillboardQuad(
+            float x0, float y0, float z0,
+            float x1, float y1, float z1,
+            float x2, float y2, float z2,
+            float x3, float y3, float z3) {
     }
 
     public record CameraBasis(Vector3f right, Vector3f up) {

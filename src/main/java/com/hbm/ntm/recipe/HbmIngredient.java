@@ -8,6 +8,7 @@ import com.google.gson.JsonSyntaxException;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.nbt.CompoundTag;
@@ -313,10 +314,8 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         int fluidContainerAmount = 0;
         if (object.has("fluid_container")) {
             JsonObject fluidContainer = object.getAsJsonObject("fluid_container");
-            String fluidName = fluidContainer.get("fluid").getAsString();
-            fluidContainerType = HbmFluids.fromName(fluidName.contains(":")
-                    ? new ResourceLocation(fluidName).getPath()
-                    : fluidName);
+            fluidContainerType = HbmFluidJsonUtil.requireFluidReference(fluidContainer.get("fluid"),
+                    "HBM fluid container ingredient");
             fluidContainerAmount = fluidContainer.get("amount").getAsInt();
             if (fluidContainerType == null || fluidContainerType == HbmFluids.NONE || fluidContainerAmount <= 0) {
                 throw new JsonSyntaxException("Invalid HBM fluid container ingredient");

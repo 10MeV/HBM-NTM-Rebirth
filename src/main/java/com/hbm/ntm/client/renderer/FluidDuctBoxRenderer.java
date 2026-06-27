@@ -7,7 +7,8 @@ import com.hbm.ntm.block.HbmFluidNodeBlock;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.fluid.HbmFluidDuctVariants;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.util.ColorUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -21,7 +22,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityRenderer<T> {
-    private static final String[] MATERIALS = {"silver", "copper", "white"};
     private static final TextureSet[] BOX_TEXTURES_BY_METADATA = buildBoxTextures(false);
     private static final TextureSet[] EXHAUST_TEXTURES_BY_METADATA = buildBoxTextures(true);
 
@@ -48,13 +48,13 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
         boolean exhaust = state.getBlock() instanceof FluidDuctExhaustBlock;
         TextureSet textures = exhaust ? EXHAUST_TEXTURES_BY_METADATA[clampedMetadata]
                 : BOX_TEXTURES_BY_METADATA[clampedMetadata];
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state,
-                LegacyRenderLighting.resolveMultiblockLight(duct, packedLight), packedOverlay);
+        int modelLight = LegacyRenderLighting.resolveMultiblockLight(duct, packedLight);
+        int color = 0xFFFFFF;
         if (!exhaust
                 && FluidDuctBoxBlock.rectifyLegacyMaterial(clampedMetadata) == 2
                 && duct instanceof FluidPipeBlockEntity pipe
                 && pipe.getFluidType() != HbmFluids.NONE) {
-            context = context.withColor(ColorUtil.lightenColor(pipe.getFluidType().getColor(), 0.25D));
+            color = ColorUtil.lightenColor(pipe.getFluidType().getColor(), 0.25D);
         }
 
         boolean north = state.getValue(HbmFluidNodeBlock.NORTH);
@@ -74,81 +74,98 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
                 + (up ? 1 : 0) + (down ? 1 : 0);
 
         if (mask == 0) {
-            renderBox(textures.junction(), context, bounds.junctionLower(), bounds.junctionLower(),
+            renderBox(textures.junction(), poseStack, buffer, modelLight, packedOverlay, color,
+                    bounds.junctionLower(), bounds.junctionLower(),
                     bounds.junctionLower(), bounds.junctionUpper(), bounds.junctionUpper(), bounds.junctionUpper());
         } else if ((mask & 0b001111) == 0) {
-            renderStraightX(textures, context, 0.0D, bounds.lower(), bounds.lower(),
+            renderStraightX(textures, poseStack, buffer, modelLight, packedOverlay, color,
+                    0.0D, bounds.lower(), bounds.lower(),
                     1.0D, bounds.upper(), bounds.upper());
         } else if ((mask & 0b111100) == 0) {
-            renderStraightZ(textures, context, bounds.lower(), bounds.lower(), 0.0D,
+            renderStraightZ(textures, poseStack, buffer, modelLight, packedOverlay, color,
+                    bounds.lower(), bounds.lower(), 0.0D,
                     bounds.upper(), bounds.upper(), 1.0D);
         } else if ((mask & 0b110011) == 0) {
-            renderStraightY(textures, context, bounds.lower(), 0.0D, bounds.lower(),
+            renderStraightY(textures, poseStack, buffer, modelLight, packedOverlay, color,
+                    bounds.lower(), 0.0D, bounds.lower(),
                     bounds.upper(), 1.0D, bounds.upper());
         } else {
             boolean simpleCurve = count == 2;
             double coreMin = simpleCurve ? bounds.lower() : bounds.junctionLower();
             double coreMax = simpleCurve ? bounds.upper() : bounds.junctionUpper();
-            renderConnectedBox(textures, context, simpleCurve, north, east, south, west, up, down,
+            renderConnectedBox(textures, poseStack, buffer, modelLight, packedOverlay, color,
+                    simpleCurve, north, east, south, west, up, down,
                     coreMin, coreMin, coreMin, coreMax, coreMax, coreMax);
-            renderArms(textures, context, bounds, simpleCurve, north, east, south, west, up, down);
+            renderArms(textures, poseStack, buffer, modelLight, packedOverlay, color,
+                    bounds, simpleCurve, north, east, south, west, up, down);
         }
     }
 
-    private static void renderArms(TextureSet textures, ObjRenderContext context, FluidDuctBoxBlock.DuctBounds bounds,
-            boolean curve, boolean north, boolean east, boolean south, boolean west,
-            boolean up, boolean down) {
+    private static void renderArms(TextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, FluidDuctBoxBlock.DuctBounds bounds, boolean curve,
+            boolean north, boolean east, boolean south, boolean west, boolean up, boolean down) {
         double armLower = curve ? bounds.lower() : bounds.junctionLower();
         double armUpper = curve ? bounds.upper() : bounds.junctionUpper();
         if (north) {
-            renderConnectedBox(textures, context, curve, north, east, south, west, up, down,
+            renderConnectedBox(textures, poseStack, buffer, packedLight, packedOverlay, color,
+                    curve, north, east, south, west, up, down,
                     bounds.lower(), bounds.lower(), 0.0D, bounds.upper(), bounds.upper(), armLower);
         }
         if (east) {
-            renderConnectedBox(textures, context, curve, north, east, south, west, up, down,
+            renderConnectedBox(textures, poseStack, buffer, packedLight, packedOverlay, color,
+                    curve, north, east, south, west, up, down,
                     armUpper, bounds.lower(), bounds.lower(), 1.0D, bounds.upper(), bounds.upper());
         }
         if (south) {
-            renderConnectedBox(textures, context, curve, north, east, south, west, up, down,
+            renderConnectedBox(textures, poseStack, buffer, packedLight, packedOverlay, color,
+                    curve, north, east, south, west, up, down,
                     bounds.lower(), bounds.lower(), armUpper, bounds.upper(), bounds.upper(), 1.0D);
         }
         if (west) {
-            renderConnectedBox(textures, context, curve, north, east, south, west, up, down,
+            renderConnectedBox(textures, poseStack, buffer, packedLight, packedOverlay, color,
+                    curve, north, east, south, west, up, down,
                     0.0D, bounds.lower(), bounds.lower(), armLower, bounds.upper(), bounds.upper());
         }
         if (up) {
-            renderConnectedBox(textures, context, curve, north, east, south, west, up, down,
+            renderConnectedBox(textures, poseStack, buffer, packedLight, packedOverlay, color,
+                    curve, north, east, south, west, up, down,
                     bounds.lower(), armUpper, bounds.lower(), bounds.upper(), 1.0D, bounds.upper());
         }
         if (down) {
-            renderConnectedBox(textures, context, curve, north, east, south, west, up, down,
+            renderConnectedBox(textures, poseStack, buffer, packedLight, packedOverlay, color,
+                    curve, north, east, south, west, up, down,
                     bounds.lower(), 0.0D, bounds.lower(), bounds.upper(), armLower, bounds.upper());
         }
     }
 
-    private static void renderStraightX(TextureSet textures, ObjRenderContext context, double minX, double minY,
-            double minZ, double maxX, double maxY, double maxZ) {
+    private static void renderStraightX(TextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, double minX, double minY, double minZ, double maxX,
+            double maxY, double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.straight(), textures.straight(), textures.straight(),
-                textures.straight(), textures.end(), textures.end(), context, minX, minY, minZ, maxX, maxY, maxZ);
+                textures.straight(), textures.end(), textures.end(), poseStack, buffer, packedLight, packedOverlay,
+                color, 255, LegacyTexturedRenderMode.CUTOUT_CULL, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderStraightY(TextureSet textures, ObjRenderContext context, double minX, double minY,
-            double minZ, double maxX, double maxY, double maxZ) {
+    private static void renderStraightY(TextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, double minX, double minY, double minZ, double maxX,
+            double maxY, double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.end(), textures.end(), textures.straight(),
-                textures.straight(), textures.straight(), textures.straight(), context, minX, minY, minZ, maxX, maxY,
-                maxZ);
+                textures.straight(), textures.straight(), textures.straight(), poseStack, buffer, packedLight,
+                packedOverlay, color, 255, LegacyTexturedRenderMode.CUTOUT_CULL, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderStraightZ(TextureSet textures, ObjRenderContext context, double minX, double minY,
-            double minZ, double maxX, double maxY, double maxZ) {
+    private static void renderStraightZ(TextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, double minX, double minY, double minZ, double maxX,
+            double maxY, double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.straight(), textures.straight(), textures.end(),
-                textures.end(), textures.straight(), textures.straight(), context, minX, minY, minZ, maxX, maxY,
-                maxZ);
+                textures.end(), textures.straight(), textures.straight(), poseStack, buffer, packedLight,
+                packedOverlay, color, 255, LegacyTexturedRenderMode.CUTOUT_CULL, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderConnectedBox(TextureSet textures, ObjRenderContext context, boolean curve,
-            boolean north, boolean east, boolean south, boolean west, boolean up, boolean down, double minX,
-            double minY, double minZ, double maxX, double maxY, double maxZ) {
+    private static void renderConnectedBox(TextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, boolean curve, boolean north, boolean east, boolean south,
+            boolean west, boolean up, boolean down, double minX, double minY, double minZ, double maxX, double maxY,
+            double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(
                 faceTexture(textures, Direction.UP, curve, north, east, south, west, up, down),
                 faceTexture(textures, Direction.DOWN, curve, north, east, south, west, up, down),
@@ -156,12 +173,15 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
                 faceTexture(textures, Direction.SOUTH, curve, north, east, south, west, up, down),
                 faceTexture(textures, Direction.EAST, curve, north, east, south, west, up, down),
                 faceTexture(textures, Direction.WEST, curve, north, east, south, west, up, down),
-                context, minX, minY, minZ, maxX, maxY, maxZ);
+                poseStack, buffer, packedLight, packedOverlay, color, 255, LegacyTexturedRenderMode.CUTOUT_CULL,
+                minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderBox(TextureAtlasSprite sprite, ObjRenderContext context, double minX, double minY,
-            double minZ, double maxX, double maxY, double maxZ) {
-        LegacyAtlasCuboidRenderer.croppedCuboid(sprite, context, minX, minY, minZ, maxX, maxY, maxZ);
+    private static void renderBox(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color, double minX, double minY, double minZ, double maxX,
+            double maxY, double maxZ) {
+        LegacyAtlasCuboidRenderer.croppedCuboid(sprite, poseStack, buffer, packedLight, packedOverlay,
+                color, 255, LegacyTexturedRenderMode.CUTOUT_CULL, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     private static TextureAtlasSprite faceTexture(TextureSet textures, Direction face, boolean curve, boolean north,
@@ -211,11 +231,11 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
     }
 
     private static TextureSet[] buildBoxTextures(boolean exhaust) {
-        TextureSet[] textures = new TextureSet[FluidDuctBoxBlock.LEGACY_METADATA_COUNT];
+        TextureSet[] textures = new TextureSet[HbmFluidDuctVariants.BOX_METADATA_COUNT];
         for (int metadata = 0; metadata < textures.length; metadata++) {
             String prefix = exhaust ? "boxduct_exhaust"
-                    : "boxduct_" + MATERIALS[FluidDuctBoxBlock.rectifyLegacyMaterial(metadata)];
-            textures[metadata] = TextureSet.create(prefix, FluidDuctBoxBlock.legacySizeStep(metadata));
+                    : "boxduct_" + HbmFluidDuctVariants.boxMaterialTexture(metadata);
+            textures[metadata] = TextureSet.create(prefix, HbmFluidDuctVariants.boxSizeStep(metadata));
         }
         return textures;
     }

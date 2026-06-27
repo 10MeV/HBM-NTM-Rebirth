@@ -20,7 +20,6 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -48,10 +47,6 @@ public class FusionKlystronCreativeBlockEntity extends BlockEntity
             FusionKlystronCreativeBlockEntity klystron) {
         klystron.ensureNode(level);
         klystron.networkPackNT(100);
-        if (level.getGameTime() % 20L == 0L) {
-            klystron.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-        }
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state,

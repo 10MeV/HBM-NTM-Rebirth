@@ -1,12 +1,13 @@
 package com.hbm.ntm.recipe;
 
 import com.google.gson.JsonObject;
-import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
@@ -21,10 +22,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class LiquefactionRecipe implements Recipe<Container> {
     private final ResourceLocation id;
-    private final Ingredient input;
+    private final HbmIngredient input;
     private final HbmFluidStack output;
 
-    public LiquefactionRecipe(ResourceLocation id, Ingredient input, HbmFluidStack output) {
+    public LiquefactionRecipe(ResourceLocation id, HbmIngredient input, HbmFluidStack output) {
         this.id = id;
         this.input = input;
         this.output = output;
@@ -57,7 +58,7 @@ public class LiquefactionRecipe implements Recipe<Container> {
     @Override
     public NonNullList<Ingredient> getIngredients() {
         NonNullList<Ingredient> ingredients = NonNullList.create();
-        ingredients.add(input);
+        ingredients.add(input.ingredient());
         return ingredients;
     }
 
@@ -89,18 +90,19 @@ public class LiquefactionRecipe implements Recipe<Container> {
     public static class Serializer implements RecipeSerializer<LiquefactionRecipe> {
         @Override
         public LiquefactionRecipe fromJson(ResourceLocation id, JsonObject json) {
-            Ingredient input = Ingredient.fromJson(GsonHelper.getAsJsonObject(json, "ingredient"));
+            HbmIngredient input = json.has("input")
+                    ? HbmIngredient.fromJson(GsonHelper.getAsJsonObject(json, "input"))
+                    : new HbmIngredient(Ingredient.fromJson(GsonHelper.getAsJsonObject(json, "ingredient")),
+                            1, ItemStack.EMPTY, new CompoundTag(), null, -1, false, null, null, 0);
             JsonObject output = GsonHelper.getAsJsonObject(json, "output");
-            FluidType fluid = HbmFluids.fromName(normalizeFluidName(GsonHelper.getAsString(output, "fluid")));
-            int amount = GsonHelper.getAsInt(output, "amount");
-            int pressure = GsonHelper.getAsInt(output, "pressure", 0);
-            return new LiquefactionRecipe(id, input, new HbmFluidStack(fluid, amount, pressure));
+            return new LiquefactionRecipe(id, input,
+                    HbmFluidJsonUtil.readFluidStack(output, "liquefaction output"));
         }
 
         @Nullable
         @Override
         public LiquefactionRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buffer) {
-            Ingredient input = Ingredient.fromNetwork(buffer);
+            HbmIngredient input = HbmIngredient.fromNetwork(buffer);
             HbmFluidStack output = new HbmFluidStack(HbmFluids.fromName(buffer.readUtf()), buffer.readVarInt(), buffer.readVarInt());
             return new LiquefactionRecipe(id, input, output);
         }
@@ -111,14 +113,6 @@ public class LiquefactionRecipe implements Recipe<Container> {
             buffer.writeUtf(recipe.output.type().getName());
             buffer.writeVarInt(recipe.output.amount());
             buffer.writeVarInt(recipe.output.pressure());
-        }
-
-        private static String normalizeFluidName(String name) {
-            if (name.indexOf(':') < 0) {
-                return name;
-            }
-            ResourceLocation id = ResourceLocation.tryParse(name);
-            return id == null ? name : id.getPath();
         }
     }
 }

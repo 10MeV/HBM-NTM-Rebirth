@@ -1,14 +1,20 @@
 {
   "handlers": [
     {
+      "external_template_status": "missing",
       "legacy_file": "hbmIrradiation.json",
+      "main_resource_recipe_count": 19,
+      "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/outgasser",
       "modern_recipe_type": "outgasser",
-      "status": "missing_template"
+      "status": "main_resources_only"
     },
     {
+      "external_template_status": "missing",
       "legacy_file": "hbmExposureChamber.json",
+      "main_resource_recipe_count": 4,
+      "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/exposure_chamber",
       "modern_recipe_type": "exposure_chamber",
-      "status": "missing_template"
+      "status": "main_resources_only"
     }
   ],
   "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes"

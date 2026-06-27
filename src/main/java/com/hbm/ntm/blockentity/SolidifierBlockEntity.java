@@ -125,7 +125,7 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
             solidifier.setChanged();
         }
         solidifier.networkPackNT(50);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -159,7 +159,10 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void provideExtraInfo(CompoundTag data) {
         super.provideExtraInfo(data);
         data.putBoolean(CompatEnergyControl.B_ACTIVE, progress > 0);
+        data.putInt(CompatEnergyControl.I_PROGRESS, progress);
+        data.putDouble(CompatEnergyControl.D_PROCESS_TIME, processTime);
         data.putDouble(CompatEnergyControl.D_CONSUMPTION_HE, usage);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_SOLIDIFIER_INPUT, tank);
     }
 
     public List<ItemStack> getDrops() {
@@ -351,7 +354,7 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (energy.getPower() < usage) {
             return false;
         }
-        SolidificationRecipe recipe = LegacyOilFluidRecipes.getSolidification(tank.getTankType());
+        SolidificationRecipe recipe = LegacyOilFluidRecipes.getSolidification(level, tank.getTankType());
         if (recipe == null || recipe.inputAmount() > tank.getFill()) {
             return false;
         }
@@ -359,7 +362,7 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private void finishProcess() {
-        SolidificationRecipe recipe = LegacyOilFluidRecipes.getSolidification(tank.getTankType());
+        SolidificationRecipe recipe = LegacyOilFluidRecipes.getSolidification(level, tank.getTankType());
         if (recipe == null || recipe.inputAmount() > tank.getFill()) {
             progress = 0;
             return;

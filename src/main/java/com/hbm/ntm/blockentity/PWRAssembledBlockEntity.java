@@ -135,7 +135,7 @@ public class PWRAssembledBlockEntity extends BlockEntity implements RORValueProv
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         PWRControllerBlockEntity core = getLoadedCore();
-        if (port && side != null && hasOriginalBlock() && isPortCapability(capability) && core != null) {
+        if (port && hasOriginalBlock() && isPortCapability(capability) && core != null) {
             return core.getCapability(capability, side);
         }
         return super.getCapability(capability, side);

@@ -1,17 +1,17 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMissilePartModels;
 import com.hbm.ntm.item.missile.CustomMissileItem;
 import com.hbm.ntm.item.missile.MissilePartItem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -21,8 +21,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 public class CustomMissileItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final ResourceLocation FALLBACK_ICON =
@@ -99,26 +97,13 @@ public class CustomMissileItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.translate(-0.5D, -0.5D, 0.0D);
         }
 
-        VertexConsumer vertices = buffer.getBuffer(RenderType.entityCutoutNoCull(FALLBACK_ICON));
-        PoseStack.Pose pose = poseStack.last();
-        Matrix4f matrix = pose.pose();
-        Matrix3f normal = pose.normal();
-        vertex(vertices, matrix, normal, 0.0F, 1.0F, 0.0F, 0.0F, 1.0F, packedLight, packedOverlay);
-        vertex(vertices, matrix, normal, 1.0F, 1.0F, 0.0F, 1.0F, 1.0F, packedLight, packedOverlay);
-        vertex(vertices, matrix, normal, 1.0F, 0.0F, 0.0F, 1.0F, 0.0F, packedLight, packedOverlay);
-        vertex(vertices, matrix, normal, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, packedLight, packedOverlay);
+        LegacyTexturedQuadRenderer.quad(FALLBACK_ICON, poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, 0.0F, 1.0F,
+                LegacyTexturedQuadRenderer.vertex(0.0F, 1.0F, 0.0F, 0.0F, 1.0F),
+                LegacyTexturedQuadRenderer.vertex(1.0F, 1.0F, 0.0F, 1.0F, 1.0F),
+                LegacyTexturedQuadRenderer.vertex(1.0F, 0.0F, 0.0F, 1.0F, 0.0F),
+                LegacyTexturedQuadRenderer.vertex(0.0F, 0.0F, 0.0F, 0.0F, 0.0F));
         poseStack.popPose();
-    }
-
-    private static void vertex(VertexConsumer vertices, Matrix4f matrix, Matrix3f normal, float x, float y, float z,
-            float u, float v, int packedLight, int packedOverlay) {
-        vertices.vertex(matrix, x, y, z)
-                .color(255, 255, 255, 255)
-                .uv(u, v)
-                .overlayCoords(packedOverlay)
-                .uv2(packedLight)
-                .normal(normal, 0.0F, 0.0F, 1.0F)
-                .endVertex();
     }
 
     private static AABB include(AABB bounds, ObjMissilePartModels.LegacyMissilePart part, double yOffset) {

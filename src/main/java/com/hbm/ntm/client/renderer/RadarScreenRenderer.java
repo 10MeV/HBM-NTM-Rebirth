@@ -7,7 +7,8 @@ import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.RadarScreenBlockEntity;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -56,33 +57,34 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
         ObjModelLibrary.MACHINE_RADAR_SCREEN_LEGACY.renderAll(definition.textureLocation(),
                 poseStack, buffer, modelLight, packedOverlay);
 
-        ObjRenderContext overlayContext = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
-                .fullBright()
-                .withTranslucencyNoDepthWrite();
         RadarScreenSnapshot snapshot = screen.getSnapshot();
         Level level = screen.getLevel();
         long gameTime = level == null ? 0L : level.getGameTime();
         RadarScreenDisplayProfile.WorldOverlay overlay =
                 RadarScreenDisplayProfile.overlay(snapshot, gameTime, partialTick, screen.getBlockPos());
-        if (overlay.linked()) {
-            renderLinkedOverlay(overlay, overlayContext);
-        } else {
-            renderNoiseOverlay(overlay, overlayContext);
-        }
+        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
+            if (overlay.linked()) {
+                renderLinkedOverlay(overlay, queuedPose, buffer, packedOverlay);
+            } else {
+                renderNoiseOverlay(overlay, queuedPose, buffer, packedOverlay);
+            }
+        });
 
         poseStack.popPose();
     }
 
-    private static void renderLinkedOverlay(RadarScreenDisplayProfile.WorldOverlay overlay, ObjRenderContext context) {
-        LegacyRadarDisplayRenderer.renderWorldLinkedSweep(context, overlay.sweepOffset());
+    private static void renderLinkedOverlay(RadarScreenDisplayProfile.WorldOverlay overlay, PoseStack poseStack,
+            MultiBufferSource buffer, int packedOverlay) {
+        LegacyRadarDisplayRenderer.renderWorldLinkedSweep(poseStack, buffer, overlay.sweepOffset());
 
         RadarScreenDisplayProfile.forEachWorldBlip(overlay.snapshot(),
-                blip -> LegacyRadarDisplayRenderer.renderWorldBlip(RADAR_GUI_TEXTURE, context,
+                blip -> LegacyRadarDisplayRenderer.renderWorldBlip(RADAR_GUI_TEXTURE, poseStack, buffer, packedOverlay,
                         blip.entry(), blip.reference(), blip.range()));
     }
 
-    private static void renderNoiseOverlay(RadarScreenDisplayProfile.WorldOverlay overlay, ObjRenderContext context) {
-        LegacyRadarDisplayRenderer.renderWorldNoise(RADAR_GUI_TEXTURE, context,
+    private static void renderNoiseOverlay(RadarScreenDisplayProfile.WorldOverlay overlay, PoseStack poseStack,
+            MultiBufferSource buffer, int packedOverlay) {
+        LegacyRadarDisplayRenderer.renderWorldNoise(RADAR_GUI_TEXTURE, poseStack, buffer, packedOverlay,
                 LegacyRadarDisplayRenderer.noiseV(overlay.noiseSeed()));
     }
 }

@@ -20,8 +20,7 @@ public final class HbmFluidForgeMappings {
     private static final List<TagAlias> TAG_ALIASES = new ArrayList<>();
 
     static {
-        register(HbmFluids.WATER, Fluids.WATER);
-        register(HbmFluids.LAVA, Fluids.LAVA);
+        resetMappings();
         registerDefaultTagAliases();
     }
 
@@ -30,6 +29,7 @@ public final class HbmFluidForgeMappings {
     }
 
     public static void bootstrap(java.nio.file.Path configDir) {
+        resetMappings();
         ModFluids.registerMappings();
         resetTagAliases();
         HbmFluidForgeAliasConfig.initialize(configDir);
@@ -67,6 +67,18 @@ public final class HbmFluidForgeMappings {
         TagKey<Fluid> tag = TagKey.create(Registries.FLUID, tagId);
         TAG_ALIASES.removeIf(alias -> alias.tag().equals(tag));
         TAG_ALIASES.add(new TagAlias(tag, hbmType));
+    }
+
+    public static FluidType fromTagAlias(ResourceLocation tagId) {
+        if (tagId == null) {
+            return HbmFluids.NONE;
+        }
+        for (TagAlias alias : TAG_ALIASES) {
+            if (alias.tag().location().equals(tagId)) {
+                return alias.hbmType();
+            }
+        }
+        return HbmFluids.NONE;
     }
 
     public static FluidType fromForge(FluidStack stack) {
@@ -164,6 +176,13 @@ public final class HbmFluidForgeMappings {
     private static void resetTagAliases() {
         TAG_ALIASES.clear();
         registerDefaultTagAliases();
+    }
+
+    private static void resetMappings() {
+        TO_FORGE.clear();
+        FROM_FORGE.clear();
+        register(HbmFluids.WATER, Fluids.WATER);
+        register(HbmFluids.LAVA, Fluids.LAVA);
     }
 
     private static void registerDefaultTagAliases() {

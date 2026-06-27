@@ -29,6 +29,7 @@ import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
 
 import static com.hbm.ntm.fluid.trait.SimpleFluidTraits.ANTIMATTER;
+import static com.hbm.ntm.fluid.trait.SimpleFluidTraits.DELICIOUS;
 import static com.hbm.ntm.fluid.trait.SimpleFluidTraits.GASEOUS;
 import static com.hbm.ntm.fluid.trait.SimpleFluidTraits.GASEOUS_AT_ROOM_TEMPERATURE;
 import static com.hbm.ntm.fluid.trait.SimpleFluidTraits.LEAD_CONTAINER;
@@ -43,7 +44,6 @@ public final class HbmFluids {
     private static final Map<Integer, FluidType> BY_ID = new LinkedHashMap<>();
     private static final Map<String, FluidType> BY_NAME = new LinkedHashMap<>();
     private static final Map<String, FluidType> CUSTOM_BY_NAME = new LinkedHashMap<>();
-    private static final Map<String, FluidType> FOREIGN_BY_NAME = new LinkedHashMap<>();
     private static final Map<String, FluidType> FLUID_MIGRATION = new LinkedHashMap<>();
     private static int nextId;
 
@@ -90,7 +90,6 @@ public final class HbmFluids {
     public static final FluidType OXYGEN = register("OXYGEN", 0x98BDF9, 3, 0, 0, FluidSymbol.CRYOGENIC, LIQUID, GASEOUS_AT_ROOM_TEMPERATURE).setTemperature(-100);
     public static final FluidType XENON = register("XENON", 0xBA45E8, 0, 0, 0, FluidSymbol.ASPHYXIANT, GASEOUS);
     public static final FluidType BALEFIRE = register("BALEFIRE", 0x28E02E, 4, 4, 3, FluidSymbol.RADIATION, LIQUID, VISCOUS).setTemperature(1500);
-    public static final FluidType CORIUM_FLUID = register("CORIUM_FLUID", 0x7D3F19, 4, 0, 0, FluidSymbol.RADIATION, NO_CONTAINER, LIQUID, VISCOUS).setTemperature(1500);
     public static final FluidType MERCURY = register("MERCURY", 0x808080, 2, 0, 0, FluidSymbol.NONE, LIQUID);
     public static final FluidType PAIN = register("PAIN", 0x938541, 2, 0, 1, FluidSymbol.ACID, LIQUID, VISCOUS).setTemperature(300);
     public static final FluidType WASTEFLUID = register("WASTEFLUID", 0x544400, 2, 0, 1, FluidSymbol.RADIATION, NO_CONTAINER, LIQUID, VISCOUS);
@@ -118,7 +117,7 @@ public final class HbmFluids {
     public static final FluidType DIESEL_CRACK = register("DIESEL_CRACK", 0xF2EED5, 1, 2, 0, FluidSymbol.NONE, LIQUID);
     public static final FluidType AROMATICS = register("AROMATICS", 0x68A09A, 1, 4, 1, FluidSymbol.NONE, LIQUID, VISCOUS);
     public static final FluidType UNSATURATEDS = register("UNSATURATEDS", 0x628FAE, 1, 4, 1, FluidSymbol.NONE, GASEOUS);
-    public static final FluidType SALIENT = register("SALIENT", 0x457F2D, 0, 0, 0, FluidSymbol.NONE, LIQUID, VISCOUS);
+    public static final FluidType SALIENT = register("SALIENT", 0x457F2D, 0, 0, 0, FluidSymbol.NONE, DELICIOUS, LIQUID, VISCOUS);
     public static final FluidType XPJUICE = register("XPJUICE", 0xBBFF09, 0, 0, 0, FluidSymbol.NONE, LIQUID, VISCOUS);
     public static final FluidType ENDERJUICE = register("ENDERJUICE", 0x127766, 0, 0, 0, FluidSymbol.NONE, LIQUID);
     public static final FluidType PETROIL_LEADED = register("PETROIL_LEADED", 0x44413D, 1, 3, 0, FluidSymbol.NONE, LIQUID);
@@ -126,14 +125,14 @@ public final class HbmFluids {
     public static final FluidType COALGAS_LEADED = register("COALGAS_LEADED", 0x445772, 1, 2, 0, FluidSymbol.NONE, LIQUID);
     public static final FluidType SULFURIC_ACID = register("SULFURIC_ACID", 0xB0AA64, 3, 0, 2, FluidSymbol.ACID, LIQUID);
     public static final FluidType COOLANT_HOT = register("COOLANT_HOT", 0x99525E, 1, 0, 0, FluidSymbol.NONE, LIQUID).setTemperature(600);
-    public static final FluidType MUG = register("MUG", 0x4B2D28, 0, 0, 0, FluidSymbol.NONE, LIQUID);
-    public static final FluidType MUG_HOT = register("MUG_HOT", 0x6B2A20, 0, 0, 0, FluidSymbol.NONE, LIQUID).setTemperature(500);
+    public static final FluidType MUG = register("MUG", 0x4B2D28, 0, 0, 0, FluidSymbol.NONE, DELICIOUS, LIQUID);
+    public static final FluidType MUG_HOT = register("MUG_HOT", 0x6B2A20, 0, 0, 0, FluidSymbol.NONE, DELICIOUS, LIQUID).setTemperature(500);
     public static final FluidType WOODOIL = register("WOODOIL", 0x847D54, 2, 2, 0, FluidSymbol.NONE, LIQUID, VISCOUS);
     public static final FluidType COALCREOSOTE = register("COALCREOSOTE", 0x51694F, 3, 2, 0, FluidSymbol.NONE, LIQUID, VISCOUS);
     public static final FluidType SEEDSLURRY = register("SEEDSLURRY", 0x7CC35E, 0, 0, 0, FluidSymbol.NONE, LIQUID, VISCOUS);
     public static final FluidType NITRIC_ACID = register("NITRIC_ACID", 0xBB7A1E, 3, 0, 2, FluidSymbol.OXIDIZER, LIQUID);
     public static final FluidType SOLVENT = register("SOLVENT", 0xE4E3EF, 2, 3, 0, FluidSymbol.NONE, LIQUID);
-    public static final FluidType BLOOD = register("BLOOD", 0xB22424, 0, 0, 0, FluidSymbol.NONE, LIQUID, VISCOUS);
+    public static final FluidType BLOOD = register("BLOOD", 0xB22424, 0, 0, 0, FluidSymbol.NONE, LIQUID, VISCOUS, DELICIOUS);
     public static final FluidType BLOOD_HOT = register("BLOOD_HOT", 0xF22419, 3, 0, 0, FluidSymbol.NONE, LIQUID, VISCOUS).setTemperature(666);
     public static final FluidType SYNGAS = register("SYNGAS", 0x131313, 1, 4, 2, FluidSymbol.NONE, GASEOUS);
     public static final FluidType OXYHYDROGEN = register("OXYHYDROGEN", 0x483FC1, 0, 4, 2, FluidSymbol.NONE, GASEOUS);
@@ -203,8 +202,9 @@ public final class HbmFluids {
     public static final FluidType AIR = register("AIR", 0xE7EAEB, 0, 0, 0, FluidSymbol.NONE, GASEOUS);
     public static final FluidType CONCRETE = register("CONCRETE", 0xA2A2A2, 0, 0, 0, FluidSymbol.NONE, LIQUID);
     public static final FluidType DHC = register("DHC", 0xD2AFFF, 0, 0, 0, FluidSymbol.NONE, GASEOUS);
-    public static final FluidType FLUE = register("FLUE", 0x131313, 1, 4, 1, FluidSymbol.NONE, GASEOUS);
     public static final FluidType AIRBLAST = register("AIRBLAST", 0xFFDADA, 0, 3, 0, FluidSymbol.NONE, GASEOUS).setTemperature(1200);
+    public static final FluidType FLUE = register("FLUE", 0x131313, 1, 4, 1, FluidSymbol.NONE, GASEOUS);
+    public static final FluidType CORIUM_FLUID = register("CORIUM_FLUID", 0x7D3F19, 4, 0, 0, FluidSymbol.RADIATION, NO_CONTAINER, LIQUID, VISCOUS).setTemperature(1500);
 
     static {
         registerLegacyBehaviorTraits();
@@ -248,26 +248,6 @@ public final class HbmFluids {
         return type;
     }
 
-    static FluidType registerForeign(String name, int id, int color, int poison, int flammability, int reactivity,
-            FluidSymbol symbol, String textureName) {
-        if (name == null || name.isBlank() || id < 0 || hasRegisteredName(name) || hasRegisteredId(id)) {
-            return NONE;
-        }
-        FluidType type = FLUID_MIGRATION.remove(normalize(name));
-        if (type == null) {
-            type = new FluidType(id, name, color, poison, flammability, reactivity, symbol, textureName,
-                    0xFFFFFF, null, true);
-        } else {
-            type.setupExternal(id, name, color, poison, flammability, reactivity, symbol, textureName,
-                    0xFFFFFF, null, true);
-        }
-        BY_ID.put(type.getId(), type);
-        BY_NAME.put(normalize(type.getName()), type);
-        FOREIGN_BY_NAME.put(normalize(type.getName()), type);
-        nextId = Math.max(nextId, id + 1);
-        return type;
-    }
-
     static void removeCustomFluids() {
         for (FluidType type : CUSTOM_BY_NAME.values()) {
             FLUID_MIGRATION.put(normalize(type.getName()), type);
@@ -283,34 +263,17 @@ public final class HbmFluids {
         CUSTOM_BY_NAME.clear();
     }
 
-    static void removeForeignFluids() {
-        for (FluidType type : FOREIGN_BY_NAME.values()) {
-            FLUID_MIGRATION.put(normalize(type.getName()), type);
-            HbmFluidForgeMappings.unregister(type);
-            FluidType byId = BY_ID.get(type.getId());
-            if (byId == type) {
-                BY_ID.remove(type.getId());
-            }
-            FluidType byName = BY_NAME.get(normalize(type.getName()));
-            if (byName == type) {
-                BY_NAME.remove(normalize(type.getName()));
-            }
-        }
-        FOREIGN_BY_NAME.clear();
-    }
-
     public static Collection<FluidType> customFluids() {
         return Collections.unmodifiableCollection(CUSTOM_BY_NAME.values());
     }
 
     public static Collection<FluidType> foreignFluids() {
-        return Collections.unmodifiableCollection(FOREIGN_BY_NAME.values());
+        return List.of();
     }
 
     public static HbmFluidTraitConfig.LoadReport bootstrap(java.nio.file.Path configDir) {
         HbmFluidTraitConfig.resetToCapturedBuiltIns();
         HbmFluidTypeConfig.initialize(configDir);
-        HbmCompatFluidRegistry.reloadForeignFluids();
         HbmFluidTraitConfig.recaptureBuiltIns();
         HbmFluidTraitConfig.LoadReport report = HbmFluidTraitConfig.initialize(configDir);
         HbmFluidForgeMappings.bootstrap(configDir);
@@ -331,6 +294,30 @@ public final class HbmFluids {
             return NONE;
         }
         return BY_NAME.getOrDefault(normalize(name), NONE);
+    }
+
+    public static FluidType fromNameCompat(String name) {
+        if (name == null || name.isBlank()) {
+            return NONE;
+        }
+        String compatName = name.trim();
+        if (compatName.contains(":")) {
+            ResourceLocation id = ResourceLocation.tryParse(compatName);
+            compatName = id == null ? compatName : id.getPath();
+        }
+        String normalized = normalize(compatName);
+        if ("ACID".equals(normalized)) {
+            return PEROXIDE;
+        }
+        return fromName(compatName);
+    }
+
+    public static String toNameCompat(FluidType type) {
+        FluidType normalized = type == null ? NONE : type;
+        if (normalized == PEROXIDE) {
+            return "ACID";
+        }
+        return normalized.getName();
     }
 
     public static Collection<FluidType> all() {

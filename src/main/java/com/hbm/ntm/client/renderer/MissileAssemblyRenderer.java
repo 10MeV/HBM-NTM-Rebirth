@@ -36,16 +36,17 @@ public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssem
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyRotation(facing)));
         ObjLaunchModels.MISSILE_ASSEMBLY.renderAll(ObjLaunchModels.MISSILE_ASSEMBLY_TEXTURE,
-                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+                poseStack, buffer, modelLight, OverlayTexture.NO_OVERLAY);
 
         CustomMissilePartProfile.Assembly assembly = blockEntity.assemblyForPreview();
         if (assembly != null) {
-            renderPreviewMissile(assembly, poseStack, buffer, packedLight);
+            renderPreviewMissile(assembly, poseStack, buffer, modelLight);
         }
         poseStack.popPose();
     }

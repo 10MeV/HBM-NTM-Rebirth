@@ -3,7 +3,9 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.api.tile.InfoProviderEC;
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -27,12 +29,11 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
-        implements HbmStandardFluidTransceiver, FusionPowerReceiver, LegacyLookOverlayProvider {
+        implements HbmStandardFluidTransceiver, FusionPowerReceiver, LegacyLookOverlayProvider, InfoProviderEC {
     public static final int TANK_CAPACITY = 32_000;
     private static final String TAG_PLASMA_ENERGY_SYNC = "plasmaEnergySync";
 
@@ -65,10 +66,6 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
             boiler.tryProvideFluidToPorts(boiler.steamTank.getTankType(), boiler.steamTank.getPressure(), boiler);
         }
         boiler.networkPackNT(50);
-        if (level.getGameTime() % 20L == 0L) {
-            boiler.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-        }
     }
 
     public HbmFluidTank getWaterTank() { return waterTank; }
@@ -81,8 +78,8 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
                 Component.literal("-> ").withStyle(ChatFormatting.GREEN)
                         .append(LegacyLookOverlayLines.rate(displayedPlasmaEnergy(), "TU")
                                 .copy().withStyle(ChatFormatting.RESET)),
-                LegacyLookOverlayLines.tank(true, waterTank),
-                LegacyLookOverlayLines.tank(false, steamTank)));
+                LegacyLookOverlayLines.compactTank(true, waterTank),
+                LegacyLookOverlayLines.compactTank(false, steamTank)));
     }
 
     @Override
@@ -122,6 +119,11 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of(steamTank);
+    }
+
+    @Override
+    public boolean supportsFluidSettingsCopy() {
+        return false;
     }
 
     @Override
@@ -220,6 +222,14 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         plasmaEnergy = data.readLong();
         readTank(data, waterTank);
         readTank(data, steamTank);
+    }
+
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, displayedPlasmaEnergy() > 0L);
+        data.putLong(CompatEnergyControl.L_PLASMA_TU, displayedPlasmaEnergy());
+        CompatEnergyControl.putTankAmountInfo(data, CompatEnergyControl.S_FUSION_WATER, waterTank);
+        CompatEnergyControl.putTankAmountInfo(data, CompatEnergyControl.S_FUSION_STEAM, steamTank);
     }
 
     @Override

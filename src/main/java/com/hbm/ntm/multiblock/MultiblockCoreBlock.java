@@ -80,6 +80,15 @@ public interface MultiblockCoreBlock {
         return false;
     }
 
+    default boolean usesMultiblockDummySupportShapeOverride(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    default VoxelShape getMultiblockDummySupportShape(BlockState state, BlockGetter level, BlockPos corePos,
+            BlockPos dummyPos) {
+        return Shapes.block();
+    }
+
     default BlockState multiblockParticleState(BlockState state, BlockGetter level, BlockPos corePos) {
         return MultiblockHelper.steelParticleState();
     }

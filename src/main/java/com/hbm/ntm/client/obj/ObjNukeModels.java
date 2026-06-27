@@ -1,6 +1,8 @@
 package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
 public final class ObjNukeModels {
@@ -25,13 +27,13 @@ public final class ObjNukeModels {
     public static LegacyWavefrontModel model(String modelName, String textureName) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/" + modelName + ".obj"),
-                texture(textureName));
+                texture(textureName)).asVBO();
     }
 
     public static LegacyWavefrontModel rootModel(String modelName, String textureName) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/" + modelName + ".obj"),
-                texture(textureName));
+                texture(textureName)).asVBO();
     }
 
     public static ResourceLocation texture(String name) {
@@ -59,13 +61,14 @@ public final class ObjNukeModels {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/bombs/" + name + ".png");
     }
 
-    public static void renderGadgetPart(ResourceLocation texture, ObjRenderContext context, String partName) {
+    public static void renderGadgetPart(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode, String partName) {
         LegacyWavefrontModel.SelectionHandle handle = gadgetHandle(partName);
         if (handle != null) {
-            GADGET.renderOnlyInCallOrder(texture, context, handle);
+            GADGET.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle, renderMode);
             return;
         }
-        GADGET.renderPart(partName, texture, context);
+        GADGET.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static LegacyWavefrontModel.SelectionHandle gadgetHandle(String partName) {

@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:electrolyzer_fluid",
+  "input": { "fluid": "REDMUD", "amount": 450 },
+  "output1": { "fluid": "MERCURY", "amount": 150 },
+  "output2": { "fluid": "LYE", "amount": 50 },
+  "byproducts": [
+    { "item": "hbm_ntm_rebirth:powder_titanium", "count": 3 },
+    { "item": "hbm_ntm_rebirth:powder_iron", "count": 3 },
+    { "item": "hbm_ntm_rebirth:powder_aluminium", "count": 2 }
+  ],
+  "duration": 20
+}

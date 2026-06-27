@@ -15,7 +15,8 @@ public final class MixerRecipeRuntime {
         }
         return level.getRecipeManager().getAllRecipesFor(ModRecipes.MIXER.type().get()).stream()
                 .filter(recipe -> recipe.output().type() == output)
-                .sorted(Comparator.comparing(recipe -> recipe.getId().toString()))
+                .sorted(Comparator.comparingInt(MixerRecipe::sourceOrder)
+                        .thenComparing(recipe -> recipe.getId().toString()))
                 .toList();
     }
 

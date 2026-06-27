@@ -132,6 +132,9 @@ public class RBMKConsoleBlock extends LegacyXrMultiblockBlock implements EntityB
                     ? InteractionResult.sidedSuccess(level.isClientSide)
                     : InteractionResult.PASS;
         }
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.SUCCESS;
+        }
         if (level.isClientSide) {
             return MultiblockHelper.isOperationalCoreLayoutComplete(level, pos)
                     ? InteractionResult.SUCCESS

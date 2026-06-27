@@ -57,6 +57,7 @@ public final class HbmFluidContainerConfig {
 
     private static LoadReport readContainers(JsonObject root, boolean createdDefault) {
         List<String> warnings = new ArrayList<>();
+        List<PendingContainer> pending = new ArrayList<>();
         int loaded = 0;
         int skipped = 0;
         if (root == null) {
@@ -84,15 +85,22 @@ public final class HbmFluidContainerConfig {
                     warnings.add("entry " + i + " has invalid fluid or amount");
                     continue;
                 }
-                if (HbmFluidContainerRegistry.registerConfiguredContainer(full, empty, fluid, amount)) {
-                    loaded++;
-                } else {
-                    skipped++;
-                    warnings.add("entry " + i + " was rejected by the container registry");
-                }
+                pending.add(new PendingContainer(i, full, empty, fluid, amount));
             } catch (RuntimeException ex) {
+                if (ex instanceof HbmFluidJsonUtil.UnknownFluidReferenceException) {
+                    throw ex;
+                }
                 skipped++;
                 warnings.add("entry " + i + " failed: " + ex.getMessage());
+            }
+        }
+        for (PendingContainer container : pending) {
+            if (HbmFluidContainerRegistry.registerConfiguredContainer(container.full(), container.empty(),
+                    container.fluid(), container.amount())) {
+                loaded++;
+            } else {
+                skipped++;
+                warnings.add("entry " + container.index() + " was rejected by the container registry");
             }
         }
         return new LoadReport(true, createdDefault, loaded, skipped, warnings);
@@ -135,15 +143,7 @@ public final class HbmFluidContainerConfig {
     }
 
     private static FluidType readFluid(JsonElement element) {
-        if (element == null) {
-            return HbmFluids.NONE;
-        }
-        String name = element.getAsString();
-        if (name.contains(":")) {
-            ResourceLocation id = ResourceLocation.tryParse(name);
-            name = id == null ? name : id.getPath();
-        }
-        return HbmFluids.fromName(name);
+        return HbmFluidJsonUtil.requireFluidReference(element, "fluid container config fluid");
     }
 
     private static void writeDefault(Path config) throws IOException {
@@ -160,6 +160,9 @@ public final class HbmFluidContainerConfig {
             return "fluid container config loadedConfig=" + loadedConfig + " createdDefault=" + createdDefault
                     + " containers=" + containers + " skipped=" + skipped;
         }
+    }
+
+    private record PendingContainer(int index, ItemStack full, ItemStack empty, FluidType fluid, int amount) {
     }
 
     private HbmFluidContainerConfig() {

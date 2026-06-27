@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 12000,
+  "ignitionTemp": 50000000,
+  "input_fluids": [
+    { "amount": 12000, "fluid": "hbm_ntm_rebirth:stellar_flux" }
+  ],
+  "input_items": [
+    { "count": 16, "ingredient": { "tag": "forge:welded_plates/osmiridium" }, "legacy_ore": "plateWeldedOsmiridium" },
+    { "count": 16, "ingredient": { "tag": "forge:dense_wires/dineutronium" }, "legacy_ore": "wireDenseDineutronium" },
+    { "count": 12, "ingredient": { "item": "hbm_ntm_rebirth:circuit_quantum" }, "legacy_id": "hbm:circuit", "legacy_meta": 13 },
+    { "count": 1, "ingredient": { "item": "hbm_ntm_rebirth:singularity_spark" } },
+    { "count": 64, "ingredient": { "item": "hbm_ntm_rebirth:powder_chlorophyte" } }
+  ],
+  "internal_name": "plsm.dfccore",
+  "output_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:dfc_core" }
+  ],
+  "pools": [],
+  "power": 100000000,
+  "source_order": 138
+}

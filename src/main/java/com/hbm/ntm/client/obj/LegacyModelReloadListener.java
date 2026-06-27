@@ -12,6 +12,7 @@ public final class LegacyModelReloadListener extends SimplePreparableReloadListe
 
     @Override
     protected void apply(Void ignored, ResourceManager resourceManager, ProfilerFiller profiler) {
+        LegacyTexturedQuadRenderer.clearSpriteCache();
         LegacyWavefrontModel.reloadAll(resourceManager);
     }
 }

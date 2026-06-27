@@ -7,6 +7,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.neutron.NeutronHandler;
 import com.hbm.ntm.neutron.RBMKIOPlanner;
 import com.hbm.ntm.neutron.RBMKThermalState;
@@ -16,8 +17,8 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +48,8 @@ public class RBMKSteamOutletBlockEntity extends HbmFluidNetworkBlockEntity imple
         if (blockEntity.steamTank.getFill() > 0) {
             blockEntity.tryProvideFluidToPorts(HbmFluids.SUPERHOTSTEAM, blockEntity.steamTank.getPressure(), blockEntity);
         }
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             blockEntity.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
         blockEntity.networkPackNT(25);
     }
@@ -97,6 +97,11 @@ public class RBMKSteamOutletBlockEntity extends HbmFluidNetworkBlockEntity imple
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of(steamTank);
+    }
+
+    @Override
+    public boolean supportsFluidSettingsCopy() {
+        return false;
     }
 
     @Override
@@ -150,5 +155,15 @@ public class RBMKSteamOutletBlockEntity extends HbmFluidNetworkBlockEntity imple
             steamTank.readFromNbt(tag, LEGACY_TANK_KEY);
         }
         steamTank.setTankType(HbmFluids.SUPERHOTSTEAM);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        LegacyFluidTankPacket.write(data, steamTank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        LegacyFluidTankPacket.read(data, steamTank);
     }
 }

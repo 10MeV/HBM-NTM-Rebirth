@@ -14,6 +14,7 @@ import com.hbm.ntm.block.ICFAssembledBlock;
 import com.hbm.ntm.block.LegacyChargeBlock;
 import com.hbm.ntm.block.LegacyChainBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
+import com.hbm.ntm.block.LegacyBasaltOreBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
@@ -29,6 +30,7 @@ import com.hbm.ntm.block.SteelScaffoldBlock;
 import com.hbm.ntm.block.VendingMachineBlock;
 import com.hbm.ntm.block.WatzEndBlock;
 import com.hbm.ntm.block.conveyor.ConveyorBlock;
+import com.hbm.ntm.fluid.HbmFluidDuctVariants;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -458,6 +460,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         steelGrateWithItem(ModBlocks.STEEL_GRATE, "steel_grate");
         steelGrateWithItem(ModBlocks.STEEL_GRATE_WIDE, "steel_grate_wide");
         chainWithItem();
+        existingModelWithItemNoRotation(ModBlocks.POLE_TOP, "pole_top");
+        existingModelWithItem(ModBlocks.POLE_SATELLITE_RECEIVER, "pole_satellite_receiver");
         glowingMushWithItem();
         wasteLogWithItem();
         simpleCubeWithItem(ModBlocks.WASTE_PLANKS, "waste_planks");
@@ -477,12 +481,17 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.ASH_DIGAMMA, "ash_digamma");
         crossBlockOnly(ModBlocks.FIRE_DIGAMMA, "fire_digamma");
         crossBlockOnly(ModBlocks.BALEFIRE, "balefire");
+        crossWithItem(ModBlocks.STALACTITE_SULFUR, "stalactite.sulfur");
+        crossWithItem(ModBlocks.STALACTITE_ASBESTOS, "stalactite.asbestos");
+        crossWithItem(ModBlocks.STALAGMITE_SULFUR, "stalagmite.sulfur");
+        crossWithItem(ModBlocks.STALAGMITE_ASBESTOS, "stalagmite.asbestos");
         pribrisDebrisWithItem(ModBlocks.PRIBRIS, "rbmk/rbmk_debris");
         pribrisDebrisWithItem(ModBlocks.PRIBRIS_BURNING, "rbmk/rbmk_debris_burning");
         pribrisDebrisAllStatesWithItem(ModBlocks.PRIBRIS_RADIATING, "rbmk/rbmk_debris_radiating");
         pribrisDebrisWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk/rbmk_debris_digamma");
-        simpleCubeWithItem(ModBlocks.VOLCANIC_LAVA_BLOCK, "volcanic_lava_still");
-        simpleCubeWithItem(ModBlocks.RAD_LAVA_BLOCK, "rad_lava_still");
+        basaltOreWithItem();
+        liquidBlockOnly(ModBlocks.VOLCANIC_LAVA_BLOCK, "volcanic_lava_still", "volcanic_lava_flowing");
+        liquidBlockOnly(ModBlocks.RAD_LAVA_BLOCK, "rad_lava_still", "rad_lava_flowing");
         volcanoCoreWithItem(ModBlocks.VOLCANO_CORE, "volcano_core");
         volcanoCoreWithItem(ModBlocks.VOLCANO_RAD_CORE, "volcano_rad_core");
         taintWithItem();
@@ -869,7 +878,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         String blockName = block.getId().getPath();
         ModelFile model = models().getBuilder(blockName)
                 .customLoader(net.minecraftforge.client.model.generators.loaders.ObjModelBuilder::begin)
-                .modelLocation(new ResourceLocation(HbmNtm.MOD_ID, "models/block/legacy_blocks/barrel.obj"))
+                .modelLocation(new ResourceLocation(HbmNtm.MOD_ID, "models/blocks/barrel.obj"))
                 .flipV(true)
                 .end()
                 .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/" + textureName))
@@ -887,7 +896,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     private void steelScaffoldWithItem() {
         ModelFile model = models().getBuilder("steel_scaffold")
                 .customLoader(net.minecraftforge.client.model.generators.loaders.ObjModelBuilder::begin)
-                .modelLocation(new ResourceLocation(HbmNtm.MOD_ID, "models/block/legacy_blocks/scaffold.obj"))
+                .modelLocation(new ResourceLocation(HbmNtm.MOD_ID, "models/blocks/scaffold.obj"))
                 .flipV(true)
                 .end()
                 .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/scaffold_steel"))
@@ -1023,11 +1032,58 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(block.get(), model);
     }
 
+    private void liquidBlockOnly(RegistryObject<Block> block, String stillTexture, String flowingTexture) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cube(
+                blockName,
+                modLoc("block/" + stillTexture),
+                modLoc("block/" + stillTexture),
+                modLoc("block/" + flowingTexture),
+                modLoc("block/" + flowingTexture),
+                modLoc("block/" + flowingTexture),
+                modLoc("block/" + flowingTexture))
+                .texture("particle", modLoc("block/" + stillTexture))
+                .renderType("minecraft:translucent");
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
+    }
+
+    private void basaltOreWithItem() {
+        getVariantBuilder(ModBlocks.ORE_BASALT.get());
+        for (LegacyBasaltOreBlock.Variant variant : LegacyBasaltOreBlock.Variant.values()) {
+            ModelFile model = basaltOreModel(variant.textureName());
+            getVariantBuilder(ModBlocks.ORE_BASALT.get())
+                    .partialState().with(LegacyBasaltOreBlock.VARIANT, variant.legacyMeta())
+                    .modelForState().modelFile(model).addModel();
+        }
+        simpleBlockItem(ModBlocks.ORE_BASALT.get(), models().getExistingFile(modLoc("block/ore_basalt_sulfur")));
+    }
+
+    private ModelFile basaltOreModel(String textureName) {
+        return models().cube(
+                textureName,
+                modLoc("block/" + textureName + "_top"),
+                modLoc("block/" + textureName + "_top"),
+                modLoc("block/" + textureName),
+                modLoc("block/" + textureName),
+                modLoc("block/" + textureName),
+                modLoc("block/" + textureName))
+                .texture("particle", modLoc("block/" + textureName));
+    }
+
     private void crossBlockOnly(RegistryObject<Block> block, String textureName) {
         String blockName = block.getId().getPath();
         ModelFile model = models().cross(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
                 .renderType("minecraft:cutout");
         simpleBlock(block.get(), model);
+    }
+
+    private void crossWithItem(RegistryObject<Block> block, String textureName) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cross(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
+                .renderType("minecraft:cutout");
+        simpleBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
     }
 
     private void glowingMushWithItem() {
@@ -1292,10 +1348,10 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     }
 
     private void fluidPipeWithItem() {
-        ModelFile[] models = new ModelFile[FluidPipeBlock.LEGACY_STYLE_COUNT];
-        String[] textures = {"pipe_neo", "pipe_silver", "pipe_colored"};
+        ModelFile[] models = new ModelFile[HbmFluidDuctVariants.STANDARD_STYLE_COUNT];
         for (int style = 0; style < models.length; style++) {
-            models[style] = particleOnlyModel("fluid_duct_neo_" + style, textures[style]);
+            models[style] = particleOnlyModel("fluid_duct_neo_" + style,
+                    HbmFluidDuctVariants.standardParticleTexture(style));
         }
         var builder = getMultipartBuilder(ModBlocks.FLUID_DUCT_NEO.get());
         for (int style = 0; style < models.length; style++) {
@@ -1332,11 +1388,10 @@ public class HbmBlockStateProvider extends BlockStateProvider {
 
     private void fluidDuctBoxWithItem(RegistryObject<Block> block) {
         String blockName = block.getId().getPath();
-        ModelFile[] models = new ModelFile[FluidDuctBoxBlock.LEGACY_METADATA_COUNT];
+        ModelFile[] models = new ModelFile[HbmFluidDuctVariants.BOX_METADATA_COUNT];
         for (int metadata = 0; metadata < models.length; metadata++) {
             models[metadata] = particleOnlyModel(blockName + "_" + metadata,
-                    boxDuctTexture(FluidDuctBoxBlock.rectifyLegacyMaterial(metadata),
-                            FluidDuctBoxBlock.legacySizeStep(metadata)));
+                    HbmFluidDuctVariants.boxJunctionTexture(metadata));
         }
         legacyDuctMetadataMultipart(block, models);
         customBlockItem(block);
@@ -1344,10 +1399,10 @@ public class HbmBlockStateProvider extends BlockStateProvider {
 
     private void fluidDuctExhaustWithItem() {
         String blockName = ModBlocks.FLUID_DUCT_EXHAUST.getId().getPath();
-        ModelFile[] models = new ModelFile[FluidDuctBoxBlock.LEGACY_METADATA_COUNT];
+        ModelFile[] models = new ModelFile[HbmFluidDuctVariants.BOX_METADATA_COUNT];
         for (int metadata = 0; metadata < models.length; metadata++) {
             models[metadata] = particleOnlyModel(blockName + "_" + metadata,
-                    "boxduct_exhaust_junction_" + FluidDuctBoxBlock.legacySizeStep(metadata));
+                    HbmFluidDuctVariants.exhaustJunctionTexture(metadata));
         }
         legacyDuctMetadataMultipart(ModBlocks.FLUID_DUCT_EXHAUST, models);
         customBlockItem(ModBlocks.FLUID_DUCT_EXHAUST);
@@ -1368,15 +1423,6 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         return models().getBuilder(name)
                 .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "block/block")))
                 .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/" + texture));
-    }
-
-    private static String boxDuctTexture(int material, int step) {
-        String materialName = switch (material) {
-            case 1 -> "copper";
-            case 2 -> "white";
-            default -> "silver";
-        };
-        return "boxduct_" + materialName + "_junction_" + step;
     }
 
     private void fluidDuctGaugeWithItem() {

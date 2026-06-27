@@ -1,7 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -160,7 +158,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         diesel.networkPackNT(50);
 
         if (oldPower != diesel.energy.getPower() || oldFill != diesel.tank.getFill()
-                || oldWasOn != diesel.wasOn || level.getGameTime() % 20L == 0L) {
+                || oldWasOn != diesel.wasOn) {
             diesel.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -293,15 +291,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected boolean showsLegacyFluidLookOverlay() {
-        return true;
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.energyStored(energy.getPower(), powerCap),
-                LegacyLookOverlayLines.tank(true, tank),
-                Component.literal("Output: " + getHEFromFuel() + " HE/t")));
+        return false;
     }
 
     @Override
@@ -316,12 +306,11 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (tag == null || !tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
             return false;
         }
-        int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
-        if (ids.length == 0) {
+        java.util.OptionalInt id = HbmFluidCopiable.copiedFluidIdAt(tag, index);
+        if (id.isEmpty()) {
             return false;
         }
-        int safeIndex = index >= 0 && index < ids.length ? index : 0;
-        tank.setTankType(HbmFluids.fromId(ids[safeIndex]));
+        tank.setTankType(HbmFluids.fromId(id.getAsInt()));
         onFluidContentsChanged();
         return true;
     }
@@ -333,6 +322,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         data.putBoolean(CompatEnergyControl.B_ACTIVE, active);
         data.putDouble(CompatEnergyControl.D_CONSUMPTION_MB, active ? 1.0D : 0.0D);
         data.putDouble(CompatEnergyControl.D_OUTPUT_HE, getHEFromFuel());
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_DIESEL_FUEL, tank);
     }
 
     @Override

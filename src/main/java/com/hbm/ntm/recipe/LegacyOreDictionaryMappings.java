@@ -98,6 +98,7 @@ public final class LegacyOreDictionaryMappings {
         registerShape("wireDense", "dense_wires");
         registerShape("plateTriple", "cast_plates");
         registerShape("plateCast", "cast_plates");
+        registerShape("plateWelded", "welded_plates");
         registerShape("plateSextuple", "welded_plates");
         registerShape("plate", "plates");
         registerShape("shell", "shells");

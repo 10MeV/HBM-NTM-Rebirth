@@ -1,11 +1,11 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.redstoneoverradio.ROR;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.api.redstoneoverradio.RTTYReaderState;
 import com.hbm.ntm.registry.ModBlockEntities;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -44,11 +44,10 @@ public class RadioTorchReaderBlockEntity extends RadioTorchBlockEntity {
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        List<net.minecraft.network.chat.Component> lines = new ArrayList<>();
+        List<Component> lines = new ArrayList<>();
         for (int i = 0; i < RTTYReaderState.SLOT_COUNT; i++) {
             if (!radio.channel(i).isEmpty() && !radio.name(i).isEmpty()) {
-                lines.add(LegacyLookOverlayLines.freq(i + 1, radio.channel(i)));
-                lines.add(net.minecraft.network.chat.Component.literal(radio.name(i)));
+                lines.add(Component.literal(radio.channel(i) + ": " + radio.name(i)).withStyle(ChatFormatting.AQUA));
             }
         }
         return LegacyLookOverlay.forBlock(this, lines);

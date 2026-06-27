@@ -58,6 +58,14 @@ public class ICFControllerBlock extends HorizontalMachineBlock implements Entity
         return InteractionResult.CONSUME;
     }
 
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
+        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof ICFControllerBlockEntity controller) {
+            controller.restoreAssembly();
+        }
+        super.onRemove(state, level, pos, newState, moving);
+    }
+
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
@@ -88,7 +96,7 @@ public class ICFControllerBlock extends HorizontalMachineBlock implements Entity
                     assembledBlock.setOriginal(partState.state(), pos, partState.part() == ICFPart.PORT);
                 }
             }
-            controller.setup(result.ports(), result.cells(), result.emitters(), result.capacitors(),
+            controller.setup(result.parts().keySet(), result.ports(), result.cells(), result.emitters(), result.capacitors(),
                     result.turbochargers());
         } else {
             controller.clearAssembly();

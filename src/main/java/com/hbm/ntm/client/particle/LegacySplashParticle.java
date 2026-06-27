@@ -7,7 +7,6 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
@@ -111,10 +110,12 @@ public class LegacySplashParticle extends TextureSheetParticle implements HbmDef
         float minV = flipV ? this.getV1() : this.getV0();
         float maxV = flipV ? this.getV0() : this.getV1();
         int light = this.getLightColor(partialTick);
-        consumer.vertex(corners[0].x(), corners[0].y(), corners[0].z()).uv(maxU, maxV).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
-        consumer.vertex(corners[1].x(), corners[1].y(), corners[1].z()).uv(maxU, minV).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
-        consumer.vertex(corners[2].x(), corners[2].y(), corners[2].z()).uv(minU, minV).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
-        consumer.vertex(corners[3].x(), corners[3].y(), corners[3].z()).uv(minU, maxV).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
+        HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, light,
+                corners[0], maxU, maxV,
+                corners[1], maxU, minV,
+                corners[2], minU, minV,
+                corners[3], minU, maxV,
+                this.rCol, this.gCol, this.bCol, this.alpha);
     }
 
     @Override

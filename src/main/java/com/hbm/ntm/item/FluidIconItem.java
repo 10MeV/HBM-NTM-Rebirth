@@ -2,6 +2,7 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModItems;
 import java.util.List;
@@ -18,6 +19,9 @@ public class FluidIconItem extends Item {
     private static final String TAG_FLUID = "hbm_fluid";
     private static final String TAG_AMOUNT = "hbm_fluid_amount";
     private static final String TAG_PRESSURE = "hbm_fluid_pressure";
+    private static final String LEGACY_TAG_TYPE = "type";
+    private static final String LEGACY_TAG_AMOUNT = "fill";
+    private static final String LEGACY_TAG_PRESSURE = "pressure";
 
     public FluidIconItem(Properties properties) {
         super(properties);
@@ -35,20 +39,35 @@ public class FluidIconItem extends Item {
 
     public static FluidType getFluidType(ItemStack stack) {
         CompoundTag tag = stack.getTag();
-        if (tag == null || !tag.contains(TAG_FLUID)) {
-            return HbmFluids.NONE;
+        if (tag != null) {
+            if (tag.contains(TAG_FLUID)) {
+                return HbmFluidJsonUtil.readFluidReference(tag.getString(TAG_FLUID));
+            }
+            if (tag.contains(LEGACY_TAG_TYPE)) {
+                FluidType type = HbmFluids.fromId(tag.getInt(LEGACY_TAG_TYPE));
+                return type == null ? HbmFluids.NONE : type;
+            }
         }
-        return HbmFluids.fromName(tag.getString(TAG_FLUID));
+        int legacyDamage = stack.getDamageValue();
+        return legacyDamage > 0 ? HbmFluids.fromId(legacyDamage) : HbmFluids.NONE;
     }
 
     public static int getAmount(ItemStack stack) {
         CompoundTag tag = stack.getTag();
-        return tag == null ? 0 : Math.max(0, tag.getInt(TAG_AMOUNT));
+        if (tag == null) {
+            return 0;
+        }
+        String key = tag.contains(TAG_AMOUNT) ? TAG_AMOUNT : LEGACY_TAG_AMOUNT;
+        return Math.max(0, tag.getInt(key));
     }
 
     public static int getPressure(ItemStack stack) {
         CompoundTag tag = stack.getTag();
-        return tag == null ? 0 : Math.max(0, tag.getInt(TAG_PRESSURE));
+        if (tag == null) {
+            return 0;
+        }
+        String key = tag.contains(TAG_PRESSURE) ? TAG_PRESSURE : LEGACY_TAG_PRESSURE;
+        return Math.max(0, tag.getInt(key));
     }
 
     public static int getTintColor(ItemStack stack, int tintIndex) {

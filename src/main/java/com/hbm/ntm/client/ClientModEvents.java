@@ -2,6 +2,8 @@ package com.hbm.ntm.client;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyModelReloadListener;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel.RenderBackendClearReason;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.particle.AshesParticle;
 import com.hbm.ntm.client.particle.BlackPowderSmokeParticle;
@@ -31,6 +33,7 @@ import com.hbm.ntm.client.particle.SchrabFogParticle;
 import com.hbm.ntm.client.particle.SmokePlumeParticle;
 import com.hbm.ntm.client.particle.TownAuraParticle;
 import com.hbm.ntm.client.render.HbmBlackHoleEffects;
+import com.hbm.ntm.client.render.HbmOptimizedRenderShaders;
 import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.client.particle.RocketFlameParticle;
 import com.hbm.ntm.client.renderer.AssemblyFactoryRenderer;
@@ -62,6 +65,7 @@ import com.hbm.ntm.client.renderer.CustomNukeRenderer;
 import com.hbm.ntm.client.renderer.CustomMissileRenderer;
 import com.hbm.ntm.client.renderer.CustomMissileLauncherRenderer;
 import com.hbm.ntm.client.renderer.DeathBlastRenderer;
+import com.hbm.ntm.client.renderer.DfcMachineRenderer;
 import com.hbm.ntm.client.renderer.DigammaSpearRenderer;
 import com.hbm.ntm.client.renderer.EmpBlastRenderer;
 import com.hbm.ntm.client.renderer.ElectricPressRenderer;
@@ -87,6 +91,7 @@ import com.hbm.ntm.client.renderer.FusionPlasmaForgeRenderer;
 import com.hbm.ntm.client.renderer.FusionTorusStructCoreRenderer;
 import com.hbm.ntm.client.renderer.FusionTorusRenderer;
 import com.hbm.ntm.client.renderer.GeigerRenderer;
+import com.hbm.ntm.client.renderer.ExcavatorRenderer;
 import com.hbm.ntm.client.renderer.HexafluorideTankRenderer;
 import com.hbm.ntm.client.renderer.IndustrialSteamTurbineRenderer;
 import com.hbm.ntm.client.renderer.ICFControllerRenderer;
@@ -108,6 +113,7 @@ import com.hbm.ntm.client.renderer.LargeLaunchPadRenderer;
 import com.hbm.ntm.client.renderer.LiquefactorRenderer;
 import com.hbm.ntm.client.renderer.MachineBatterySocketRenderer;
 import com.hbm.ntm.client.renderer.MachineLpw2Renderer;
+import com.hbm.ntm.client.renderer.MassStorageRenderer;
 import com.hbm.ntm.client.renderer.MicrowaveRenderer;
 import com.hbm.ntm.client.renderer.MiningLaserRenderer;
 import com.hbm.ntm.client.renderer.MinerRocketRenderer;
@@ -157,6 +163,7 @@ import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
 import com.hbm.ntm.client.renderer.TurbofanRenderer;
 import com.hbm.ntm.client.renderer.TurbineGasRenderer;
 import com.hbm.ntm.client.renderer.WatzReactorRenderer;
+import com.hbm.ntm.client.renderer.WatzPumpRenderer;
 import com.hbm.ntm.client.renderer.WatzStructCoreRenderer;
 import com.hbm.ntm.client.renderer.ZirnoxDestroyedRenderer;
 import com.hbm.ntm.client.renderer.ZirnoxDebrisRenderer;
@@ -193,12 +200,18 @@ import com.hbm.ntm.client.screen.CrateScreen;
 import com.hbm.ntm.client.screen.CrucibleScreen;
 import com.hbm.ntm.client.screen.CustomNukeScreen;
 import com.hbm.ntm.client.screen.CyclotronScreen;
+import com.hbm.ntm.client.screen.DfcCoreScreen;
+import com.hbm.ntm.client.screen.DfcEmitterScreen;
+import com.hbm.ntm.client.screen.DfcInjectorScreen;
+import com.hbm.ntm.client.screen.DfcReceiverScreen;
+import com.hbm.ntm.client.screen.DfcStabilizerScreen;
 import com.hbm.ntm.client.screen.DiFurnaceScreen;
 import com.hbm.ntm.client.screen.DiFurnaceRtgScreen;
 import com.hbm.ntm.client.screen.DieselGeneratorScreen;
 import com.hbm.ntm.client.screen.ElectrolyserScreen;
 import com.hbm.ntm.client.screen.ElectricFurnaceScreen;
 import com.hbm.ntm.client.screen.ElectricPressScreen;
+import com.hbm.ntm.client.screen.ExcavatorScreen;
 import com.hbm.ntm.client.screen.ExposureChamberScreen;
 import com.hbm.ntm.client.screen.FireboxHeaterScreen;
 import com.hbm.ntm.client.screen.FelScreen;
@@ -293,6 +306,7 @@ import com.hbm.ntm.item.BedrockOreItem;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidIconItem;
+import com.hbm.ntm.item.FluidPipetteItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.ICFPelletItem;
@@ -370,6 +384,7 @@ public final class ClientModEvents {
             MenuScreens.register(ModMenuTypes.ARC_WELDER.get(), ArcWelderScreen::new);
             MenuScreens.register(ModMenuTypes.ARC_FURNACE.get(), ArcFurnaceScreen::new);
             MenuScreens.register(ModMenuTypes.MINING_LASER.get(), MiningLaserScreen::new);
+            MenuScreens.register(ModMenuTypes.EXCAVATOR.get(), ExcavatorScreen::new);
             MenuScreens.register(ModMenuTypes.PROCESSING_MACHINE.get(), ProcessingMachineScreen::new);
             MenuScreens.register(ModMenuTypes.SHREDDER.get(), ShredderScreen::new);
             MenuScreens.register(ModMenuTypes.AUTOCRAFTER.get(), AutocrafterScreen::new);
@@ -389,6 +404,11 @@ public final class ClientModEvents {
             MenuScreens.register(ModMenuTypes.BREEDING_REACTOR.get(), BreedingReactorScreen::new);
             MenuScreens.register(ModMenuTypes.ZIRNOX_REACTOR.get(), ZirnoxReactorScreen::new);
             MenuScreens.register(ModMenuTypes.WATZ_REACTOR.get(), WatzReactorScreen::new);
+            MenuScreens.register(ModMenuTypes.DFC_CORE.get(), DfcCoreScreen::new);
+            MenuScreens.register(ModMenuTypes.DFC_EMITTER.get(), DfcEmitterScreen::new);
+            MenuScreens.register(ModMenuTypes.DFC_RECEIVER.get(), DfcReceiverScreen::new);
+            MenuScreens.register(ModMenuTypes.DFC_INJECTOR.get(), DfcInjectorScreen::new);
+            MenuScreens.register(ModMenuTypes.DFC_STABILIZER.get(), DfcStabilizerScreen::new);
             MenuScreens.register(ModMenuTypes.ICF_REACTOR.get(), ICFReactorScreen::new);
             MenuScreens.register(ModMenuTypes.FUSION_TORUS.get(), FusionTorusScreen::new);
             MenuScreens.register(ModMenuTypes.FUSION_KLYSTRON.get(), FusionKlystronScreen::new);
@@ -481,6 +501,11 @@ public final class ClientModEvents {
                     .filter(RBMKPelletItem.class::isInstance)
                     .forEach(item -> ItemProperties.register(item, RBMKPelletItem.META_PROPERTY,
                             (stack, level, entity, seed) -> RBMKItemPlanner.rectifyPelletMeta(stack.getDamageValue())));
+            ModItems.CONTROL_FLUID_ITEMS.stream()
+                    .map(RegistryObject::get)
+                    .filter(FluidPipetteItem.class::isInstance)
+                    .forEach(item -> ItemProperties.register(item, new ResourceLocation(HbmNtm.MOD_ID, "filled"),
+                            (stack, level, entity, seed) -> ((FluidPipetteItem) item).getFill(stack) > 0 ? 1.0F : 0.0F));
         });
     }
 
@@ -534,6 +559,7 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.OIL_DRILL.get(), OilDrillRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.BOILER.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.PROCESSING_MACHINE.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.MASS_STORAGE.get(), MassStorageRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.CHARGER.get(), ChargerRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.REFUELER.get(), RefuelerRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.RADIOBOX.get(), RadioDecoRenderer::new);
@@ -570,6 +596,7 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.TURBINE_GAS.get(), TurbineGasRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.ARC_FURNACE.get(), ArcFurnaceRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.MINING_LASER.get(), MiningLaserRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.EXCAVATOR.get(), ExcavatorRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.GEIGER.get(), GeigerRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_GENERIC_SELECTOR_MACHINE.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.HEPHAESTUS.get(), LegacyVisibleMachineRenderer::new);
@@ -624,7 +651,11 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.WATZ_REACTOR.get(), WatzReactorRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.WATZ_STRUCT_CORE.get(), WatzStructCoreRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.STORAGE_DRUM.get(), StorageDrumRenderer::new);
-        event.registerBlockEntityRenderer(ModBlockEntities.WATZ_PUMP.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.WATZ_PUMP.get(), WatzPumpRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.DFC_EMITTER.get(), DfcMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.DFC_RECEIVER.get(), DfcMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.DFC_INJECTOR.get(), DfcMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.DFC_STABILIZER.get(), DfcMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.ICF_REACTOR.get(), ICFReactorRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.ICF_CONTROLLER.get(), ICFControllerRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.ICF_STRUCT_CORE.get(), ICFStructCoreRenderer::new);
@@ -779,6 +810,10 @@ public final class ClientModEvents {
                 .map(RegistryObject::get)
                 .filter(FluidIdentifierItem.class::isInstance)
                 .forEach(item -> event.register((stack, tintIndex) -> ((FluidIdentifierItem) item).getTintColor(stack, tintIndex), item));
+        ModItems.CONTROL_FLUID_ITEMS.stream()
+                .map(RegistryObject::get)
+                .filter(FluidPipetteItem.class::isInstance)
+                .forEach(item -> event.register((stack, tintIndex) -> ((FluidPipetteItem) item).getTintColor(stack, tintIndex), item));
         ModItems.ORE_BYPRODUCT_ITEMS.stream()
                 .map(RegistryObject::get)
                 .filter(OreByproductItem.class::isInstance)
@@ -913,6 +948,8 @@ public final class ClientModEvents {
 
     @SubscribeEvent
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
+        LegacyWavefrontModel.clearRenderBackend(RenderBackendClearReason.SHADER_RELOAD);
+        HbmOptimizedRenderShaders.registerShaders(event);
         HbmRenderEffects.registerShaders(event);
         HbmBlackHoleEffects.registerShaders(event);
     }

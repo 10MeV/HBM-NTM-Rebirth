@@ -3,9 +3,6 @@ package com.hbm.ntm.blockentity;
 import com.hbm.inventory.material.MaterialShapes;
 import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.Mats.MaterialStack;
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -55,7 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
-        implements MenuProvider, HbmLegacyButtonReceiver, LegacyLookOverlayProvider {
+        implements MenuProvider, HbmLegacyButtonReceiver {
     public static final int SLOT_ELECTRODE_0 = 0;
     public static final int SLOT_ELECTRODE_1 = 1;
     public static final int SLOT_ELECTRODE_2 = 2;
@@ -151,7 +148,7 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
         HbmEnergyUtil.chargeStorageFromItem(furnace.items.getStackInSlot(SLOT_BATTERY),
                 furnace.energy, furnace.energy.getReceiverSpeed());
         if (level.getGameTime() % 20L == 0L) {
-            HbmEnergyUtil.subscribeReceiverToPorts(level, pos, furnace.energyPorts(state), furnace.energy);
+            furnace.subscribeEnergyReceiverToPorts(furnace.energyPorts(state), furnace.energy);
         }
 
         furnace.upgrade = LegacyMachineUpgradeManager.checkSlots(furnace.items, SLOT_UPGRADE, SLOT_UPGRADE,
@@ -205,7 +202,7 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
                 || oldHasMaterial != furnace.hasMaterial
                 || oldLiquidAmount != furnace.getLiquidAmount();
         furnace.networkPackNT(25);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             furnace.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -597,14 +594,6 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.INPUT;
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.energyStored(energy.getPower(), energy.getMaxPower()),
-                Component.literal("Consumption: " + consumption() + " HE/t"),
-                Component.literal(liquidMode ? "Liquid mode" : "Solid mode")));
     }
 
     @Override

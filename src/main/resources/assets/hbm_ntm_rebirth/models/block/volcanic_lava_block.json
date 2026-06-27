@@ -1,6 +1,13 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube",
+  "render_type": "minecraft:translucent",
   "textures": {
-    "all": "hbm_ntm_rebirth:block/volcanic_lava_still"
+    "down": "hbm_ntm_rebirth:block/volcanic_lava_still",
+    "up": "hbm_ntm_rebirth:block/volcanic_lava_still",
+    "north": "hbm_ntm_rebirth:block/volcanic_lava_flowing",
+    "south": "hbm_ntm_rebirth:block/volcanic_lava_flowing",
+    "west": "hbm_ntm_rebirth:block/volcanic_lava_flowing",
+    "east": "hbm_ntm_rebirth:block/volcanic_lava_flowing",
+    "particle": "hbm_ntm_rebirth:block/volcanic_lava_still"
   }
 }

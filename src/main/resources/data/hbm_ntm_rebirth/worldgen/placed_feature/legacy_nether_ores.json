@@ -1,0 +1,8 @@
+{
+  "feature": "hbm_ntm_rebirth:legacy_nether_ores",
+  "placement": [
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

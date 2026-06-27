@@ -61,44 +61,9 @@ public class ICFStructCoreBlockEntity extends BlockEntity {
 
     @Override
     public AABB getRenderBoundingBox() {
-        BlockState state = getBlockState();
-        Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
-                ? state.getValue(HorizontalMachineBlock.FACING)
-                : Direction.NORTH;
-        Direction rot = facing.getClockWise();
-        int minX = Integer.MAX_VALUE;
-        int minY = Integer.MAX_VALUE;
-        int minZ = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE;
-        int maxY = Integer.MIN_VALUE;
-        int maxZ = Integer.MIN_VALUE;
-        for (int y = 0; y < PREVIEW_HEIGHT; y++) {
-            for (int width = PREVIEW_WIDTH_MIN; width <= PREVIEW_WIDTH_MAX; width++) {
-                for (int length = PREVIEW_LENGTH_MIN; length <= PREVIEW_LENGTH_MAX; length++) {
-                    if (legacyPreviewComponent(width, y, length) < 0) {
-                        continue;
-                    }
-                    int x = facing.getStepX() * width + rot.getStepX() * length;
-                    int z = facing.getStepZ() * width + rot.getStepZ() * length;
-                    minX = Math.min(minX, x);
-                    minY = Math.min(minY, y);
-                    minZ = Math.min(minZ, z);
-                    maxX = Math.max(maxX, x + 1);
-                    maxY = Math.max(maxY, y + 1);
-                    maxZ = Math.max(maxZ, z + 1);
-                }
-            }
-        }
-        if (minX == Integer.MAX_VALUE) {
-            return super.getRenderBoundingBox();
-        }
-        return new AABB(
-                worldPosition.getX() + minX,
-                worldPosition.getY() + minY,
-                worldPosition.getZ() + minZ,
-                worldPosition.getX() + maxX,
-                worldPosition.getY() + maxY,
-                worldPosition.getZ() + maxZ);
+        return previewRenderBoundingBox(worldPosition, getBlockState().hasProperty(HorizontalMachineBlock.FACING)
+                ? getBlockState().getValue(HorizontalMachineBlock.FACING)
+                : Direction.NORTH);
     }
 
     public static int legacyPreviewComponent(int widthwiseOffset, int y, int lengthwiseOffset) {
@@ -200,6 +165,33 @@ public class ICFStructCoreBlockEntity extends BlockEntity {
             for (int j = -1; j <= 1; j++) positions.add(relative(corePos, facing, rot, j, 5, i));
         }
         return positions;
+    }
+
+    public static AABB previewRenderBoundingBox(BlockPos corePos, Direction facing) {
+        Direction rot = facing.getClockWise();
+        int minX = corePos.getX();
+        int minY = corePos.getY();
+        int minZ = corePos.getZ();
+        int maxX = corePos.getX() + 1;
+        int maxY = corePos.getY() + 1;
+        int maxZ = corePos.getZ() + 1;
+        for (int y = 0; y < PREVIEW_HEIGHT; y++) {
+            for (int width = PREVIEW_WIDTH_MIN; width <= PREVIEW_WIDTH_MAX; width++) {
+                for (int length = PREVIEW_LENGTH_MIN; length <= PREVIEW_LENGTH_MAX; length++) {
+                    if (legacyPreviewComponent(width, y, length) < 0) {
+                        continue;
+                    }
+                    BlockPos block = relative(corePos, facing, rot, width, y, length);
+                    minX = Math.min(minX, block.getX());
+                    minY = Math.min(minY, block.getY());
+                    minZ = Math.min(minZ, block.getZ());
+                    maxX = Math.max(maxX, block.getX() + 1);
+                    maxY = Math.max(maxY, block.getY() + 1);
+                    maxZ = Math.max(maxZ, block.getZ() + 1);
+                }
+            }
+        }
+        return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     private static BlockPos relative(BlockPos origin, Direction facing, Direction rot, int widthwiseOffset, int y,

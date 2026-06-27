@@ -4,6 +4,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.config.HbmCommonConfig;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
@@ -23,6 +24,7 @@ import com.hbm.ntm.uninos.networkproviders.PlasmaNodespace;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -70,7 +72,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         boolean changed = mhdt.tickServer(level);
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, mhdt);
         mhdt.networkPackNT(150);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             mhdt.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -119,17 +121,17 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         boolean cool = isCool();
         long power = displayedPower();
         List<Component> lines = new ArrayList<>();
-        lines.add(Component.literal("-> ")
-                .withStyle(hasPlasma ? net.minecraft.ChatFormatting.GREEN : net.minecraft.ChatFormatting.GOLD)
+        lines.add(Component.literal("-> ").withStyle(ChatFormatting.GREEN)
                 .append(Component.literal(LegacyLookOverlayLines.shortNumber(displayedPlasmaEnergy())
                         + "TU/t / " + LegacyLookOverlayLines.shortNumber(HbmCommonConfig.fusionMhdtMinimumPlasma())
-                        + "TU/t")));
-        lines.add(Component.literal("<- ").withStyle(net.minecraft.ChatFormatting.RED)
+                        + "TU/t").withStyle(hasPlasma ? ChatFormatting.RESET : ChatFormatting.GOLD)));
+        lines.add(Component.literal("<- ").withStyle(ChatFormatting.RED)
                 .append(Component.literal(LegacyLookOverlayLines.shortNumber(cool ? power : 0L) + "HE/t")));
-        lines.add(LegacyLookOverlayLines.tank(true, coldTank));
-        lines.add(LegacyLookOverlayLines.tank(false, hotTank));
+        lines.add(LegacyLookOverlayLines.compactTank(true, coldTank));
+        lines.add(LegacyLookOverlayLines.compactTank(false, hotTank));
         if (displayedPlasmaEnergy() > 0L && !hasPlasma) {
-            lines.add(LegacyLookOverlayLines.blinkingWarning("LOW POWER"));
+            int color = System.currentTimeMillis() % 1000L < 500L ? 0xFF8000 : 0xFFFF00;
+            lines.add(Component.literal("! LOW POWER !").withStyle(style -> style.withColor(color)));
         }
         if (!cool) {
             lines.add(LegacyLookOverlayLines.blinkingWarning("INSUFFICIENT COOLING"));
@@ -160,6 +162,11 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of(hotTank);
+    }
+
+    @Override
+    public boolean supportsFluidSettingsCopy() {
+        return false;
     }
 
     @Override
@@ -275,6 +282,16 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         plasmaEnergy = data.readLong();
         readTank(data, coldTank);
         readTank(data, hotTank);
+    }
+
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        super.provideExtraInfo(data);
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, displayedPlasmaEnergy() > 0L && isCool());
+        data.putLong(CompatEnergyControl.L_PLASMA_TU, displayedPlasmaEnergy());
+        data.putDouble(CompatEnergyControl.D_OUTPUT_HE, isCool() ? displayedPower() : 0L);
+        CompatEnergyControl.putTankAmountInfo(data, CompatEnergyControl.S_FUSION_COLD_COOLANT, coldTank);
+        CompatEnergyControl.putTankAmountInfo(data, CompatEnergyControl.S_FUSION_HOT_COOLANT, hotTank);
     }
 
     @Override

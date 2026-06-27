@@ -3,7 +3,6 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyDemonLampBlock;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjLightModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -14,7 +13,6 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Blocks;
 
 public class LegacyDemonLampItemRenderer extends BlockEntityWithoutLevelRenderer {
     public static final LegacyDemonLampItemRenderer INSTANCE = new LegacyDemonLampItemRenderer(
@@ -35,9 +33,8 @@ public class LegacyDemonLampItemRenderer extends BlockEntityWithoutLevelRenderer
 
         poseStack.pushPose();
         applyDisplay(displayContext, poseStack);
-        ObjLightModels.DEMON_LAMP_LEGACY.renderAll(new ObjRenderContext(poseStack, buffer,
-                Blocks.AIR.defaultBlockState(), packedLight, packedOverlay)
-                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL));
+        ObjLightModels.DEMON_LAMP_LEGACY.renderAll(poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_CULL);
         poseStack.popPose();
     }
 

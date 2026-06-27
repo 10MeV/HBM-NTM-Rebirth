@@ -67,8 +67,18 @@ public class FT_Toxin extends ToxinFluidTrait {
         }
     }
 
-    public void addInfoHidden(List<Component> info) {
-        addHiddenInfo(info);
+    public void addInfoHidden(List<String> info) {
+        if (info == null) {
+            return;
+        }
+        info.add(ChatFormatting.LIGHT_PURPLE + "[Toxin]");
+        List<Component> entryInfo = new ArrayList<>();
+        for (ToxinEntry entry : entries) {
+            entry.addInfo(entryInfo);
+        }
+        for (Component line : entryInfo) {
+            info.add(line.getString());
+        }
     }
 
     public void affect(LivingEntity entity, double intensity) {
@@ -328,8 +338,9 @@ public class FT_Toxin extends ToxinFluidTrait {
         if (element.isJsonArray()) {
             JsonArray array = element.getAsJsonArray();
             if (array.size() >= 4) {
-                effects.addEffect(effectId(array.get(0)), array.get(1).getAsInt(), array.get(2).getAsInt(),
-                        array.get(3).getAsBoolean());
+                effects.addEffect(effectId(array.get(0)), LegacyFluidTraitJson.intValue(array.get(1)),
+                        LegacyFluidTraitJson.intValue(array.get(2)),
+                        LegacyFluidTraitJson.booleanValue(array.get(3)));
             }
         } else if (element.isJsonObject()) {
             JsonObject object = element.getAsJsonObject();
@@ -348,6 +359,14 @@ public class FT_Toxin extends ToxinFluidTrait {
     private static ResourceLocation effectId(JsonElement element) {
         if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()) {
             return legacyPotionId(element.getAsInt());
+        }
+        if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
+            String value = element.getAsString();
+            try {
+                return legacyPotionId(Integer.decode(value));
+            } catch (NumberFormatException ignored) {
+                return resource(value);
+            }
         }
         return resource(element.getAsString());
     }
@@ -420,18 +439,15 @@ public class FT_Toxin extends ToxinFluidTrait {
     }
 
     private static int intValue(JsonObject object, String key, int fallback) {
-        JsonElement element = object.get(key);
-        return element == null ? fallback : element.getAsInt();
+        return LegacyFluidTraitJson.intValue(object, key, fallback);
     }
 
     private static float floatValue(JsonObject object, String key, float fallback) {
-        JsonElement element = object.get(key);
-        return element == null ? fallback : element.getAsFloat();
+        return LegacyFluidTraitJson.floatValue(object, key, fallback);
     }
 
     private static boolean booleanValue(JsonObject object, String key, boolean fallback) {
-        JsonElement element = object.get(key);
-        return element == null ? fallback : element.getAsBoolean();
+        return LegacyFluidTraitJson.booleanValue(object, key, fallback);
     }
 
     private static String formatDuration(int ticks) {

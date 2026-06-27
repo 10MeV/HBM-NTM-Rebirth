@@ -7,7 +7,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeRecipeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
-import com.hbm.ntm.fluid.HbmFluidPortMachine;
+import com.hbm.ntm.fluid.HbmFluidPortSubscriptionTracker;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -126,6 +126,7 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
             ForgeRecipeFluidHandlerAdapter.create(List.of(crystallizerTank), List.of(), 0,
                     this::onFluidContentsChanged));
+    private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
 
     private int progress;
     private int duration = CENTRIFUGE_PROCESS_TIME;
@@ -188,7 +189,7 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
         if (level.getGameTime() % 20L == 0L) {
             HbmEnergyUtil.subscribeReceiverToAllNeighborNetworks(level, pos, machine);
             if (machine.kind == Kind.CRYSTALLIZER) {
-                HbmFluidPortMachine.refreshReceiverPorts(level, pos, machine.crystallizerFluidPorts(),
+                machine.fluidPortSubscriptions.refreshReceiver(level, pos, machine.crystallizerFluidPorts(),
                         List.of(machine.crystallizerTank), machine);
             }
         }
@@ -208,7 +209,7 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
             machine.setChanged();
         }
         machine.networkPackNT(25);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -564,6 +565,22 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
         return new ProcessingMachineMenu(containerId, inventory, this);
+    }
+
+    @Override
+    public void setRemoved() {
+        if (kind == Kind.CRYSTALLIZER) {
+            fluidPortSubscriptions.detachAllDetailed(level, worldPosition, crystallizerFluidPorts(), this, null);
+        }
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        if (kind == Kind.CRYSTALLIZER) {
+            fluidPortSubscriptions.detachAllDetailed(level, worldPosition, crystallizerFluidPorts(), this, null);
+        }
+        super.onChunkUnloaded();
     }
 
     @Override

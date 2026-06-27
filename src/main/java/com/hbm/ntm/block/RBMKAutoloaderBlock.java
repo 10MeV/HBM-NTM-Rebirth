@@ -210,6 +210,9 @@ public class RBMKAutoloaderBlock extends BaseEntityBlock implements MultiblockCo
         BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
         if (player instanceof ServerPlayer serverPlayer
                 && blockEntity instanceof RBMKAutoloaderBlockEntity autoloader) {
+            if (player.isShiftKeyDown()) {
+                return InteractionResult.SUCCESS;
+            }
             NetworkHooks.openScreen(serverPlayer, autoloader, autoloader.getBlockPos());
             return InteractionResult.SUCCESS;
         }

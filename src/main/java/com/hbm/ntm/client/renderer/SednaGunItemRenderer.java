@@ -1636,7 +1636,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static void renderNi4Ni(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ResourceLocation texture = Ni4NiGunItem.getColors(stack) == null ? spec.textureLocation()
-                : new ResourceLocation(HbmNtm.MOD_ID, "textures/models/weapons/n_i_4_n_i_greyscale.png");
+                : ObjWeaponModels.N_I_4_N_I_GREYSCALE_TEXTURE;
         int[] colors = Ni4NiGunItem.getColors(stack);
         int dark = colors == null ? 0xFFFFFF : colors[0];
         int light = colors == null ? 0xFFFFFF : colors[1];
@@ -1673,7 +1673,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     }
 
     private static ResourceLocation specCoinTexture() {
-        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/weapons/n_i_4_n_i.png");
+        return ObjWeaponModels.N_I_4_N_I_TEXTURE;
     }
 
     private static boolean hasUpgrade(ItemStack stack, int id) {

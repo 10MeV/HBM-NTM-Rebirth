@@ -7,5 +7,6 @@
     "ingredient": { "tag": "forge:dusts/sulfur" },
     "legacy_ore": "dustSulfur"
   },
-  "duration": 20
+  "duration": 20,
+  "source_order": 1
 }

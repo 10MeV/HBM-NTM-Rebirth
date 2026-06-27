@@ -111,13 +111,14 @@ public class FluidDuctPaintableBlockEntity extends FluidPipeBlockEntity implemen
             ResourceLocation key = ResourceLocation.tryParse(tag.getString(TAG_PAINT_BLOCK_NAME));
             Block block = key == null ? null : ForgeRegistries.BLOCKS.getValue(key);
             if (block != null && block != Blocks.AIR) {
-                state = block.defaultBlockState();
+                state = PaintableDuctBlockEntity.stateFromLegacyMeta(block, tag.getInt(TAG_PAINT_META));
             }
         }
         if (state == null && tag.contains(TAG_PAINT_BLOCK)) {
             BlockState legacyState = Block.stateById(tag.getInt(TAG_PAINT_BLOCK));
             if (!legacyState.isAir()) {
-                state = legacyState;
+                state = PaintableDuctBlockEntity.stateFromLegacyMeta(legacyState.getBlock(),
+                        tag.getInt(TAG_PAINT_META));
             }
         }
         paintedState = state;

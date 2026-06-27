@@ -4,6 +4,7 @@ import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.FluidPipeAnchorBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidDuctVariants;
 import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.FluidPipeStyleBlockItem;
 import com.hbm.ntm.network.HbmKeybind;
@@ -36,8 +37,7 @@ import java.util.List;
 
 @SuppressWarnings("deprecation")
 public class FluidPipeBlock extends HbmFluidNodeBlock {
-    public static final int LEGACY_STYLE_COUNT = 3;
-    private static final int[] LEGACY_CREATIVE_STYLES = {0, 1, 2};
+    public static final int LEGACY_STYLE_COUNT = HbmFluidDuctVariants.STANDARD_STYLE_COUNT;
     public static final IntegerProperty LEGACY_STYLE = IntegerProperty.create("legacy_style", 0,
             LEGACY_STYLE_COUNT - 1);
     private static final VoxelShape CORE = box(5.0D, 5.0D, 5.0D, 11.0D, 11.0D, 11.0D);
@@ -124,7 +124,7 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return shapeForState(state);
+        return selectedShapeForState(state);
     }
 
     @Override
@@ -132,15 +132,7 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
         return collisionShapeForState(state);
     }
 
-    private static VoxelShape shapeForState(BlockState state) {
-        return shapeForState(state, true);
-    }
-
     private static VoxelShape collisionShapeForState(BlockState state) {
-        return shapeForState(state, false);
-    }
-
-    private static VoxelShape shapeForState(BlockState state, boolean selectionShape) {
         boolean north = state.getValue(NORTH);
         boolean east = state.getValue(EAST);
         boolean south = state.getValue(SOUTH);
@@ -150,7 +142,7 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
         int mask = connectionMask(north, east, south, west, up, down);
 
         if (mask == 0) {
-            return selectionShape ? FULL_SHAPE : ISOLATED_COLLISION_SHAPE;
+            return ISOLATED_COLLISION_SHAPE;
         }
         if ((east || west) && !north && !south && !up && !down) {
             return X_STRAIGHT_SHAPE;
@@ -172,6 +164,36 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
         return shape;
     }
 
+    private static VoxelShape selectedShapeForState(BlockState state) {
+        boolean north = state.getValue(NORTH);
+        boolean east = state.getValue(EAST);
+        boolean south = state.getValue(SOUTH);
+        boolean west = state.getValue(WEST);
+        boolean up = state.getValue(UP);
+        boolean down = state.getValue(DOWN);
+        int mask = connectionMask(north, east, south, west, up, down);
+
+        if (mask == 0) {
+            return FULL_SHAPE;
+        }
+        if ((east || west) && !north && !south && !up && !down) {
+            return X_STRAIGHT_SHAPE;
+        }
+        if ((up || down) && !north && !south && !east && !west) {
+            return Y_STRAIGHT_SHAPE;
+        }
+        if ((north || south) && !east && !west && !up && !down) {
+            return Z_STRAIGHT_SHAPE;
+        }
+
+        return box(west ? 0.0D : 5.0D,
+                down ? 0.0D : 5.0D,
+                north ? 0.0D : 5.0D,
+                east ? 16.0D : 11.0D,
+                up ? 16.0D : 11.0D,
+                south ? 16.0D : 11.0D);
+    }
+
     private static int connectionMask(boolean north, boolean east, boolean south, boolean west, boolean up, boolean down) {
         return (east ? 32 : 0)
                 | (west ? 16 : 0)
@@ -188,11 +210,11 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
     }
 
     public static int clampLegacyStyle(int style) {
-        return Math.max(0, Math.min(LEGACY_STYLE_COUNT - 1, style));
+        return HbmFluidDuctVariants.clampStandardStyle(style);
     }
 
     public static int[] legacyCreativeStyles() {
-        return LEGACY_CREATIVE_STYLES.clone();
+        return HbmFluidDuctVariants.standardVisibleStyles();
     }
 
 }

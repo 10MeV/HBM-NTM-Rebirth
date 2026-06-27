@@ -24,10 +24,10 @@ public final class ObjEntityModels {
     public static final LegacyWavefrontModel BOT_PRIME_BODY = model("bot_prime_body", "mark_zero_body");
     public static final LegacyWavefrontModel PLASTIC_BAG = model("plasticbag");
     public static final LegacyWavefrontModel TUNNELER = new LegacyWavefrontModel(
-            new ResourceLocation(HbmNtm.MOD_ID, "models/mobs/tunneler.obj"));
+            new ResourceLocation(HbmNtm.MOD_ID, "models/mobs/tunneler.obj")).asVBO();
     public static final LegacyWavefrontModel CAPSULE = new LegacyWavefrontModel(
             new ResourceLocation(HbmNtm.MOD_ID, "models/mobs/capsule.obj"),
-            modelTexture("turbofan_blades"));
+            modelTexture("turbofan_blades")).asVBO();
 
     public static final ResourceLocation TESLACRAB_TEXTURE = texture("teslacrab");
     public static final ResourceLocation MASKMAN_TEXTURE = texture("maskman");
@@ -69,7 +69,7 @@ public final class ObjEntityModels {
     public static LegacyWavefrontModel model(String modelName, String textureName) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/mobs/" + modelName + ".obj"),
-                texture(textureName));
+                texture(textureName)).asVBO();
     }
 
     public static LegacyWavefrontModel rootModel(String name) {
@@ -79,7 +79,7 @@ public final class ObjEntityModels {
     public static LegacyWavefrontModel rootModel(String modelName, ResourceLocation texture) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/" + modelName + ".obj"),
-                texture);
+                texture).asVBO();
     }
 
     public static ResourceLocation texture(String name) {

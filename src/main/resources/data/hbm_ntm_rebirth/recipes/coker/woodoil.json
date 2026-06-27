@@ -1,0 +1,14 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:coker",
+    "output":  {
+                   "item":  "minecraft:charcoal"
+               },
+    "byproduct":  {
+                      "fluid":  "hbm_ntm_rebirth:gas_coker",
+                      "amount":  300
+                  },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:woodoil",
+                  "amount":  3000
+              }
+}

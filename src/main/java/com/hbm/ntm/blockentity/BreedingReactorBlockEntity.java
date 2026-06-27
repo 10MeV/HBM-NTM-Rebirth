@@ -78,7 +78,7 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
         breeder.flux = breeder.collectFlux(level, pos);
         boolean changed = breeder.processTick(level);
         breeder.networkPackNT(20);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             breeder.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -161,6 +161,10 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public void provideExtraInfo(CompoundTag data) {
         data.putInt(CompatEnergyControl.I_FLUX, flux);
+        data.putDouble(CompatEnergyControl.D_PROCESS_PROGRESS, progress);
+        data.putInt(CompatEnergyControl.I_PROGRESS, (int) (progress * 100.0F));
+        data.putInt(CompatEnergyControl.I_BREEDING_FLUX_RAW, flux);
+        data.putDouble(CompatEnergyControl.D_BREEDING_PROGRESS_RAW, progress);
     }
 
     public List<ItemStack> getDrops() {

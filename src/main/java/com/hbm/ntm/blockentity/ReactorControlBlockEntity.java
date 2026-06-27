@@ -55,7 +55,7 @@ public class ReactorControlBlockEntity extends BlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot == 0 && stack.is(ModItems.REACTOR_SENSOR.get());
+            return slot == 0;
         }
 
         @Override
@@ -104,10 +104,6 @@ public class ReactorControlBlockEntity extends BlockEntity
             }
         }
         control.networkPackNT(150);
-        if (level.getGameTime() % 20L == 0L) {
-            control.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-        }
     }
 
     private boolean establishLink() {

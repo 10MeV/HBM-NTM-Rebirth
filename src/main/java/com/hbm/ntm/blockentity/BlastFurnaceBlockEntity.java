@@ -119,7 +119,7 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
         }
         boolean changed = furnace.tickServer(level, pos, state);
         furnace.networkPackNT(100);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             furnace.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -326,8 +326,10 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
                 flueTank.setFill(flueTank.getFill() + FLUE_GAS);
                 if (flueTank.getFill() > flueTank.getMaxFill()) {
                     int spill = flueTank.getFill() - flueTank.getMaxFill();
-                    HbmFluidReleaseEffects.applyRelease(level, pos.above(7), flueTank.getTankType(), spill,
+                    HbmFluidReleaseEffects.applyLegacyTraitRelease(level, pos.above(7), flueTank.getTankType(), spill,
                             FluidReleaseType.SPILL);
+                    HbmFluidReleaseEffects.applyLegacyPollutingRelease(level, pos, flueTank.getTankType(),
+                            FluidReleaseType.SPILL, spill);
                     flueTank.setFill(flueTank.getMaxFill());
                 }
             }

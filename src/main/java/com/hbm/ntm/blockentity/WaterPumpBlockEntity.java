@@ -18,9 +18,11 @@ import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import java.util.Locale;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -129,7 +131,7 @@ public class WaterPumpBlockEntity extends HbmFluidNetworkBlockEntity
                 || oldSteam != (pump.steam == null ? 0 : pump.steam.getFill())
                 || oldSpentSteam != (pump.spentSteam == null ? 0 : pump.spentSteam.getFill())
                 || oldPower != pump.energy.getPower();
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             pump.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -377,7 +379,10 @@ public class WaterPumpBlockEntity extends HbmFluidNetworkBlockEntity
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         List<Component> lines = new ArrayList<>();
         if (isElectric()) {
-            lines.add(Component.literal("-> " + energy.getPower() + " / " + ELECTRIC_MAX_POWER + "HE"));
+            lines.add(Component.literal("-> ").withStyle(ChatFormatting.GREEN)
+                    .append(Component.literal(String.format(Locale.US, "%,d", energy.getPower()) + " / "
+                            + String.format(Locale.US, "%,d", ELECTRIC_MAX_POWER) + "HE")
+                            .withStyle(ChatFormatting.RESET)));
             lines.add(LegacyLookOverlayLines.tank(false, water));
         } else if (steam != null && spentSteam != null) {
             lines.add(LegacyLookOverlayLines.tank(true, steam));

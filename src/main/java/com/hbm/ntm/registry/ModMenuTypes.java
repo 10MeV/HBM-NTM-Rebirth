@@ -31,12 +31,18 @@ import com.hbm.ntm.menu.CrucibleMenu;
 import com.hbm.ntm.menu.CrateMenu;
 import com.hbm.ntm.menu.CustomNukeMenu;
 import com.hbm.ntm.menu.CyclotronMenu;
+import com.hbm.ntm.menu.DfcCoreMenu;
+import com.hbm.ntm.menu.DfcEmitterMenu;
+import com.hbm.ntm.menu.DfcInjectorMenu;
+import com.hbm.ntm.menu.DfcReceiverMenu;
+import com.hbm.ntm.menu.DfcStabilizerMenu;
 import com.hbm.ntm.menu.DiFurnaceMenu;
 import com.hbm.ntm.menu.DiFurnaceRtgMenu;
 import com.hbm.ntm.menu.DieselGeneratorMenu;
 import com.hbm.ntm.menu.ElectrolyserMenu;
 import com.hbm.ntm.menu.ElectricFurnaceMenu;
 import com.hbm.ntm.menu.ElectricPressMenu;
+import com.hbm.ntm.menu.ExcavatorMenu;
 import com.hbm.ntm.menu.ExposureChamberMenu;
 import com.hbm.ntm.menu.FluidTankMenu;
 import com.hbm.ntm.menu.FluidPumpMenu;
@@ -188,6 +194,9 @@ public final class ModMenuTypes {
     public static final RegistryObject<MenuType<MiningLaserMenu>> MINING_LASER =
             MENUS.register("mining_laser", () -> IForgeMenuType.create(MiningLaserMenu::new));
 
+    public static final RegistryObject<MenuType<ExcavatorMenu>> EXCAVATOR =
+            MENUS.register("excavator", () -> IForgeMenuType.create(ExcavatorMenu::new));
+
     public static final RegistryObject<MenuType<ProcessingMachineMenu>> PROCESSING_MACHINE =
             MENUS.register("processing_machine", () -> IForgeMenuType.create(ProcessingMachineMenu::new));
 
@@ -244,6 +253,21 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<WatzReactorMenu>> WATZ_REACTOR =
             MENUS.register("watz_reactor", () -> IForgeMenuType.create(WatzReactorMenu::new));
+
+    public static final RegistryObject<MenuType<DfcCoreMenu>> DFC_CORE =
+            MENUS.register("dfc_core", () -> IForgeMenuType.create(DfcCoreMenu::new));
+
+    public static final RegistryObject<MenuType<DfcEmitterMenu>> DFC_EMITTER =
+            MENUS.register("dfc_emitter", () -> IForgeMenuType.create(DfcEmitterMenu::new));
+
+    public static final RegistryObject<MenuType<DfcReceiverMenu>> DFC_RECEIVER =
+            MENUS.register("dfc_receiver", () -> IForgeMenuType.create(DfcReceiverMenu::new));
+
+    public static final RegistryObject<MenuType<DfcInjectorMenu>> DFC_INJECTOR =
+            MENUS.register("dfc_injector", () -> IForgeMenuType.create(DfcInjectorMenu::new));
+
+    public static final RegistryObject<MenuType<DfcStabilizerMenu>> DFC_STABILIZER =
+            MENUS.register("dfc_stabilizer", () -> IForgeMenuType.create(DfcStabilizerMenu::new));
 
     public static final RegistryObject<MenuType<ICFReactorMenu>> ICF_REACTOR =
             MENUS.register("icf_reactor", () -> IForgeMenuType.create(ICFReactorMenu::new));

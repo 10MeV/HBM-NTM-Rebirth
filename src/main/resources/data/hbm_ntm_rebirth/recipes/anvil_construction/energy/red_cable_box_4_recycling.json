@@ -1,0 +1,17 @@
+﻿{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:red_cable_box" },
+      "count": 16,
+      "partial_nbt": "{hbmLegacyVariant:4}"
+    }
+  ],
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:ingot_red_copper" },
+    { "item": "hbm_ntm_rebirth:plate_polymer" }
+  ],
+  "tier_lower": 2,
+  "overlay": "recycling"
+}
+

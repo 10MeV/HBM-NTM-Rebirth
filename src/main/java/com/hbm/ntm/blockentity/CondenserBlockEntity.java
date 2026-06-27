@@ -80,7 +80,7 @@ public class CondenserBlockEntity extends HbmFluidNetworkBlockEntity
         boolean changed = oldInput != condenser.inputTank.getFill()
                 || oldOutput != condenser.outputTank.getFill()
                 || oldWaterTimer != condenser.waterTimer;
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             condenser.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

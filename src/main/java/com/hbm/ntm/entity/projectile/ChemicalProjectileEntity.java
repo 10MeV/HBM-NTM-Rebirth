@@ -2,17 +2,17 @@ package com.hbm.ntm.entity.projectile;
 
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidBlockImpactEffects;
+import com.hbm.ntm.fluid.HbmFluidContactEffects;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
-import com.hbm.ntm.fluid.trait.VentRadiationFluidTrait;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.ModDamageSources;
-import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
+import com.hbm.ntm.util.EnchantmentUtil;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -22,12 +22,16 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseFireBlock;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -40,7 +44,6 @@ import java.util.List;
 public class ChemicalProjectileEntity extends LegacyThrowableEntity {
     private static final EntityDataAccessor<Integer> FLUID_ID =
             SynchedEntityData.defineId(ChemicalProjectileEntity.class, EntityDataSerializers.INT);
-    private static final int RELEASE_AMOUNT_MB = 5;
 
     public ChemicalProjectileEntity(EntityType<? extends ChemicalProjectileEntity> type, Level level) {
         super(type, level);
@@ -126,21 +129,51 @@ public class ChemicalProjectileEntity extends LegacyThrowableEntity {
         float adjustedIntensity = currentStyle == ChemicalStyle.LIQUID || currentStyle == ChemicalStyle.BURNING
                 ? 1.0F
                 : intensity;
+        LivingEntity living = entity instanceof LivingEntity livingEntity ? livingEntity : null;
 
         if (currentStyle == ChemicalStyle.AMAT) {
-            EntityDamageUtil.attackEntityFromNt(entity, ModDamageSources.radiation(level()), adjustedIntensity, true);
-        } else if (currentStyle == ChemicalStyle.LIGHTNING) {
-            EntityDamageUtil.attackEntityFromNt(entity, ModDamageSources.source(level(), ModDamageSources.ELECTRICITY),
-                    0.5F, true);
+            EntityDamageUtil.attackEntityFromIgnoreIFrame(entity, ModDamageSources.radiation(level()), 1.0F);
+            if (living != null) {
+                RadiationUtil.contaminate(living, 50.0F * adjustedIntensity, true);
+                return;
+            }
         }
-        type.affectEntity(entity, adjustedIntensity);
+        if (currentStyle == ChemicalStyle.LIGHTNING) {
+            EntityDamageUtil.attackEntityFromIgnoreIFrame(entity,
+                    ModDamageSources.source(level(), ModDamageSources.ELECTRICITY), 0.5F);
+            if (living != null) {
+                living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 9));
+                living.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 9));
+                return;
+            }
+        }
+
+        HbmFluidContactEffects.affectChemicalProjectile(type, entity, adjustedIntensity,
+                mapContactStyle(currentStyle), this, getOwner());
+
+        if (type == HbmFluids.XPJUICE && entity instanceof Player player) {
+            EnchantmentUtil.addExperience(player, 1, false);
+            discard();
+        }
+        if (type == HbmFluids.ENDERJUICE) {
+            teleportRandomly(entity);
+        }
 
         if (isExtinguishing()) {
             entity.clearFire();
         }
-        if (currentStyle == ChemicalStyle.BURNING || currentStyle == ChemicalStyle.GASFLAME) {
-            entity.setSecondsOnFire(currentStyle == ChemicalStyle.GASFLAME ? Math.max(1, (int) Math.ceil(5.0F * adjustedIntensity)) : 5);
-        }
+    }
+
+    private static HbmFluidContactEffects.ChemicalContactStyle mapContactStyle(ChemicalStyle style) {
+        return switch (style) {
+            case AMAT -> HbmFluidContactEffects.ChemicalContactStyle.AMAT;
+            case LIGHTNING -> HbmFluidContactEffects.ChemicalContactStyle.LIGHTNING;
+            case LIQUID -> HbmFluidContactEffects.ChemicalContactStyle.LIQUID;
+            case GAS -> HbmFluidContactEffects.ChemicalContactStyle.GAS;
+            case GASFLAME -> HbmFluidContactEffects.ChemicalContactStyle.GASFLAME;
+            case BURNING -> HbmFluidContactEffects.ChemicalContactStyle.BURNING;
+            case NULL -> HbmFluidContactEffects.ChemicalContactStyle.NULL;
+        };
     }
 
     private boolean isExtinguishing() {
@@ -160,47 +193,79 @@ public class ChemicalProjectileEntity extends LegacyThrowableEntity {
             affect(entityHit.getEntity(), intensity);
         } else if (hit.getType() == HitResult.Type.BLOCK) {
             BlockPos pos = new BlockPos(hitBlockX(hit), hitBlockY(hit), hitBlockZ(hit));
-            FluidType type = fluid();
-            releaseBlockImpactRadiation(pos, type);
-            if (style() == ChemicalStyle.BURNING || style() == ChemicalStyle.GASFLAME) {
-                placeAdjacentFire(pos, type == HbmFluids.BALEFIRE);
-            }
-            if (isExtinguishing()) {
-                extinguishAdjacentFire(pos);
-            }
+            HbmFluidBlockImpactEffects.applyChemicalProjectileImpact(level(), pos, fluid(), mapImpactStyle(style()));
             discard();
         }
     }
 
-    private void releaseBlockImpactRadiation(BlockPos pos, FluidType type) {
-        VentRadiationFluidTrait trait = type.getTrait(VentRadiationFluidTrait.class);
-        if (trait != null) {
-            ChunkRadiationManager.incrementRadiation(level(), pos, trait.getRadiationPerMb() * RELEASE_AMOUNT_MB);
-        }
+    private static HbmFluidBlockImpactEffects.ChemicalImpactStyle mapImpactStyle(ChemicalStyle style) {
+        return switch (style) {
+            case AMAT -> HbmFluidBlockImpactEffects.ChemicalImpactStyle.AMAT;
+            case LIGHTNING -> HbmFluidBlockImpactEffects.ChemicalImpactStyle.LIGHTNING;
+            case LIQUID -> HbmFluidBlockImpactEffects.ChemicalImpactStyle.LIQUID;
+            case GAS -> HbmFluidBlockImpactEffects.ChemicalImpactStyle.GAS;
+            case GASFLAME -> HbmFluidBlockImpactEffects.ChemicalImpactStyle.GASFLAME;
+            case BURNING -> HbmFluidBlockImpactEffects.ChemicalImpactStyle.BURNING;
+            case NULL -> HbmFluidBlockImpactEffects.ChemicalImpactStyle.NULL;
+        };
     }
 
-    private void placeAdjacentFire(BlockPos pos, boolean balefire) {
-        for (Direction direction : Direction.values()) {
-            BlockPos firePos = pos.relative(direction);
-            if (!level().getBlockState(firePos).isAir()) {
-                continue;
-            }
-            BlockState fire = balefire
-                    ? ModBlocks.BALEFIRE.get().defaultBlockState()
-                    : BaseFireBlock.getState(level(), firePos);
-            if (fire.canSurvive(level(), firePos)) {
-                level().setBlock(firePos, fire, 3);
-            }
-        }
+    private void teleportRandomly(Entity entity) {
+        double targetX = getX() + (random.nextDouble() - 0.5D) * 64.0D;
+        double targetY = Mth.clamp(getY() + random.nextInt(64) - 32.0D,
+                level().getMinBuildHeight() + 1.0D, level().getMaxBuildHeight() - 1.0D);
+        double targetZ = getZ() + (random.nextDouble() - 0.5D) * 64.0D;
+        teleportTo(entity, targetX, targetY, targetZ);
     }
 
-    private void extinguishAdjacentFire(BlockPos pos) {
-        for (Direction direction : Direction.values()) {
-            BlockPos target = pos.relative(direction);
-            if (level().getBlockState(target).is(Blocks.FIRE)) {
-                level().removeBlock(target, false);
+    private boolean teleportTo(Entity entity, double x, double y, double z) {
+        double startX = entity.getX();
+        double startY = entity.getY();
+        double startZ = entity.getZ();
+        double targetY = Mth.clamp(y, level().getMinBuildHeight() + 1.0D, level().getMaxBuildHeight() - 1.0D);
+        entity.setPos(x, targetY, z);
+        boolean valid = false;
+        BlockPos cursor = BlockPos.containing(entity.getX(), entity.getY(), entity.getZ());
+
+        if (level().isLoaded(cursor)) {
+            while (cursor.getY() > level().getMinBuildHeight()) {
+                BlockPos below = cursor.below();
+                if (level().getBlockState(below).blocksMotion()) {
+                    valid = true;
+                    break;
+                }
+                entity.setPos(entity.getX(), entity.getY() - 1.0D, entity.getZ());
+                cursor = cursor.below();
+            }
+
+            if (valid && (!level().noCollision(entity) || level().containsAnyLiquid(entity.getBoundingBox()))) {
+                valid = false;
             }
         }
+
+        if (!valid) {
+            entity.setPos(startX, startY, startZ);
+            return false;
+        }
+
+        if (level() instanceof ServerLevel serverLevel) {
+            for (int i = 0; i < 32; i++) {
+                double progress = i / 31.0D;
+                double px = Mth.lerp(progress, startX, entity.getX())
+                        + (random.nextDouble() - 0.5D) * entity.getBbWidth() * 2.0D;
+                double py = Mth.lerp(progress, startY, entity.getY()) + random.nextDouble() * entity.getBbHeight();
+                double pz = Mth.lerp(progress, startZ, entity.getZ())
+                        + (random.nextDouble() - 0.5D) * entity.getBbWidth() * 2.0D;
+                serverLevel.sendParticles(ParticleTypes.PORTAL, px, py, pz, 1,
+                        (random.nextFloat() - 0.5F) * 0.2F,
+                        (random.nextFloat() - 0.5F) * 0.2F,
+                        (random.nextFloat() - 0.5F) * 0.2F, 0.0D);
+            }
+        }
+        level().playSound(null, startX, startY, startZ, SoundEvents.ENDERMAN_TELEPORT,
+                SoundSource.HOSTILE, 1.0F, 1.0F);
+        entity.playSound(SoundEvents.ENDERMAN_TELEPORT, 1.0F, 1.0F);
+        return true;
     }
 
     @Override
@@ -274,7 +339,7 @@ public class ChemicalProjectileEntity extends LegacyThrowableEntity {
                     : ChemicalStyle.GAS;
         }
         if (type.hasTrait(SimpleFluidTraits.Liquid.class)) {
-            return type.hasTrait(FlammableFluidTrait.class) || type.hasTrait(CombustibleFluidTrait.class)
+            return type.hasTrait(CombustibleFluidTrait.class)
                     ? ChemicalStyle.BURNING
                     : ChemicalStyle.LIQUID;
         }

@@ -51,7 +51,7 @@ public class RadioboxBlockEntity extends HbmEnergyBlockEntity {
         }
 
         box.networkPackNT(15);
-        if (oldPower != box.energy.getPower() || level.getGameTime() % 20L == 0L) {
+        if (oldPower != box.energy.getPower()) {
             box.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

@@ -1,23 +1,21 @@
 package com.hbm.ntm.client.particle;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleRenderType;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -273,14 +271,8 @@ public class SpentCasingParticle extends Particle {
         float offX = Mth.cos(-yaw) * width;
         float offZ = Mth.sin(-yaw) * width;
         float timeAlpha = 1.0F - this.age / (float) Math.max(1, this.maxSmokeGen);
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.getBuilder();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.disableCull();
-        RenderSystem.depthMask(false);
-        builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        PoseStack poseStack = new PoseStack();
+        MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
         for (int i = 0; i + 1 < this.smokeNodes.size(); i++) {
             SmokeNode node = this.smokeNodes.get(i);
             SmokeNode past = this.smokeNodes.get(i + 1);
@@ -292,20 +284,21 @@ public class SpentCasingParticle extends Particle {
             double pastX = originX + past.x;
             double pastY = originY + past.y;
             double pastZ = originZ + past.z;
-            builder.vertex(nodeX, nodeY, nodeZ).color(255, 255, 255, nodeAlpha).endVertex();
-            builder.vertex(nodeX + offX, nodeY, nodeZ + offZ).color(255, 255, 255, 0).endVertex();
-            builder.vertex(pastX + offX, pastY, pastZ + offZ).color(255, 255, 255, 0).endVertex();
-            builder.vertex(pastX, pastY, pastZ).color(255, 255, 255, pastAlpha).endVertex();
+            LegacyUntexturedQuadRenderer.quad(poseStack, buffer, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
+                    nodeX, nodeY, nodeZ,
+                    nodeX + offX, nodeY, nodeZ + offZ,
+                    pastX + offX, pastY, pastZ + offZ,
+                    pastX, pastY, pastZ,
+                    0xFFFFFF, nodeAlpha, 0, 0, pastAlpha);
 
-            builder.vertex(nodeX, nodeY, nodeZ).color(255, 255, 255, nodeAlpha).endVertex();
-            builder.vertex(nodeX - offX, nodeY, nodeZ - offZ).color(255, 255, 255, 0).endVertex();
-            builder.vertex(pastX - offX, pastY, pastZ - offZ).color(255, 255, 255, 0).endVertex();
-            builder.vertex(pastX, pastY, pastZ).color(255, 255, 255, pastAlpha).endVertex();
+            LegacyUntexturedQuadRenderer.quad(poseStack, buffer, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
+                    nodeX, nodeY, nodeZ,
+                    nodeX - offX, nodeY, nodeZ - offZ,
+                    pastX - offX, pastY, pastZ - offZ,
+                    pastX, pastY, pastZ,
+                    0xFFFFFF, nodeAlpha, 0, 0, pastAlpha);
         }
-        tesselator.end();
-        RenderSystem.depthMask(true);
-        RenderSystem.enableCull();
-        RenderSystem.disableBlend();
+        buffer.endBatch(LegacyUntexturedQuadRenderer.translucentNoCullType());
         this.previousSmokeRenderX = renderX;
         this.previousSmokeRenderY = renderY;
         this.previousSmokeRenderZ = renderZ;
@@ -318,10 +311,8 @@ public class SpentCasingParticle extends Particle {
         int green = color >> 8 & 255;
         int blue = color & 255;
         if (handle != null) {
-            MODEL.renderOnlyInCallOrder(TEXTURE_LOCATION,
-                    new ObjRenderContext(poseStack, buffer, null, packedLight, OverlayTexture.NO_OVERLAY)
-                            .withRgba(red, green, blue, 255),
-                    handle);
+            MODEL.renderOnlyInCallOrder(TEXTURE_LOCATION, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
+                    red, green, blue, 255, false, handle);
             return;
         }
         MODEL.renderPart(partName, TEXTURE_LOCATION, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,

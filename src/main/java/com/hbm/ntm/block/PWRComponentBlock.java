@@ -1,8 +1,6 @@
 package com.hbm.ntm.block;
 
 import java.util.List;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -38,19 +36,7 @@ public class PWRComponentBlock extends Block {
     }
 
     public static void appendStandardPwrInfo(List<Component> tooltip, String id) {
-        if (Screen.hasShiftDown()) {
-            String key = "block.hbm_ntm_rebirth." + id + ".desc";
-            Component.translatable(key).getString().lines()
-                    .flatMap(line -> List.of(line.split("\\$")).stream())
-                    .filter(line -> !line.isBlank())
-                    .map(line -> Component.literal(line).withStyle(ChatFormatting.YELLOW))
-                    .forEach(tooltip::add);
-            return;
-        }
-        tooltip.add(Component.literal("Hold <")
-                .append(Component.literal("LSHIFT").withStyle(ChatFormatting.YELLOW, ChatFormatting.ITALIC))
-                .append(Component.literal("> to display more info"))
-                .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+        LegacyStandardInfoTooltip.append(tooltip, id);
     }
 
     public enum Kind {

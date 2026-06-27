@@ -7,7 +7,6 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -57,38 +56,38 @@ public class TurbofanRenderer implements BlockEntityRenderer<TurbofanBlockEntity
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay)
-                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
-        renderPart(BODY, definition.textureLocation(), context);
+        renderPart(BODY, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
 
         poseStack.pushPose();
         poseStack.translate(0.0D, LegacyTileRenderPlans.TURBOFAN_BLADE_PIVOT_Y, 0.0D);
         poseStack.mulPose(Axis.ZN.rotationDegrees(blockEntity.getBladeSpin(partialTick)));
         poseStack.translate(0.0D, -LegacyTileRenderPlans.TURBOFAN_BLADE_PIVOT_Y, 0.0D);
-        renderPart(BLADES, definition.textureLocation(), context);
+        renderPart(BLADES, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
         ResourceLocation afterburnerTexture = blockEntity.getAfterburner() == 0
                 ? ObjMachineModels.TURBOFAN_BACK_TEXTURE
                 : ObjMachineModels.TURBOFAN_AFTERBURNER_TEXTURE;
-        renderPart(AFTERBURNER, afterburnerTexture, context);
+        renderPart(AFTERBURNER, afterburnerTexture, poseStack, buffer, modelLight, packedOverlay);
 
         poseStack.popPose();
     }
 
     private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ResourceLocation texture,
-            ObjRenderContext context) {
-        MODEL.renderOnlyInCallOrder(texture, context, handle);
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        MODEL.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle,
+                LegacyTexturedRenderMode.CUTOUT_CULL);
     }
 
     static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
-            ObjRenderContext context) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
         LegacyWavefrontModel.SelectionHandle handle = sameModel(model) ? handle(partName) : null;
         if (handle != null) {
-            renderPart(handle, texture, context);
+            MODEL.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle, renderMode);
             return;
         }
-        model.renderPart(partName, texture, context);
+        model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static boolean sameModel(LegacyWavefrontModel model) {

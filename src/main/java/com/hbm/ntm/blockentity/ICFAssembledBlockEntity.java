@@ -11,7 +11,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -32,19 +31,6 @@ public class ICFAssembledBlockEntity extends BlockEntity implements HbmEnergyCon
         super(ModBlockEntities.ICF_BLOCK.get(), pos, state);
     }
 
-    public static void serverTick(Level level, BlockPos pos, BlockState state, ICFAssembledBlockEntity blockEntity) {
-        if (level.getGameTime() % 20L != 0L || blockEntity.corePos == null) {
-            return;
-        }
-        if (!level.hasChunk(blockEntity.corePos.getX() >> 4, blockEntity.corePos.getZ() >> 4)) {
-            return;
-        }
-        BlockEntity core = level.getBlockEntity(blockEntity.corePos);
-        if (!(core instanceof ICFControllerBlockEntity controller) || !controller.isAssembled()) {
-            blockEntity.restoreOriginalBlock();
-        }
-    }
-
     public void setOriginal(BlockState state, BlockPos corePos, boolean port) {
         this.originalState = state;
         this.originalBlockId = ForgeRegistries.BLOCKS.getKey(state.getBlock());
@@ -62,6 +48,10 @@ public class ICFAssembledBlockEntity extends BlockEntity implements HbmEnergyCon
 
     public boolean isPort() {
         return port;
+    }
+
+    public boolean isLinkedTo(BlockPos pos) {
+        return corePos != null && corePos.equals(pos);
     }
 
     public void suppressRestore() {

@@ -6,7 +6,6 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts.LegacyPort;
-import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidRecipeIO;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -65,7 +64,7 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
 
     @Override
     protected boolean tickLegacyMachine(Level level, BlockPos pos, BlockState state) {
-        PairRecipe recipe = LegacyOilFluidRecipes.getCracking(inputTank.getTankType());
+        PairRecipe recipe = LegacyOilFluidRecipes.getCracking(level, inputTank.getTankType());
         boolean changed = setupTanks(recipe);
         if (recipe != null && level.getGameTime() % 5L == 0L) {
             changed |= crack(recipe);
@@ -75,11 +74,9 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
 
     @Override
     protected void refreshFluidPorts() {
-        HbmFluidPortMachine.refreshReceiverPorts(level, worldPosition, getFluidPorts(),
-                List.of(inputTank, steamTank), this);
+        refreshTrackedReceiverFluidPortsReport(List.of(inputTank, steamTank), this);
         if (level != null && level.getGameTime() % 10L == 0L) {
-            HbmFluidPortMachine.refreshProviderPorts(level, worldPosition, getFluidPorts(),
-                    List.of(leftOutputTank, rightOutputTank, spentSteamTank), this);
+            refreshTrackedProviderFluidPortsReport(List.of(leftOutputTank, rightOutputTank, spentSteamTank), this);
         }
     }
 

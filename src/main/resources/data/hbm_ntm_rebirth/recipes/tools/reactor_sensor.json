@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "pattern": [
+    "WPW",
+    "CMC",
+    "PPP"
+  ],
+  "key": {
+    "W": {
+      "tag": "forge:wires/tungsten"
+    },
+    "P": {
+      "tag": "forge:plates/lead"
+    },
+    "C": {
+      "tag": "forge:circuits/basic"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:magnetron"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:reactor_sensor"
+  },
+  "show_notification": true
+}

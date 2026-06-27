@@ -1,8 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.energy.IBatteryItem;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -40,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShredderBlockEntity extends HbmEnergyBlockEntity
-        implements MenuProvider, LegacyLookOverlayProvider {
+        implements MenuProvider {
     private static final String TAG_ITEMS = "items";
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_POWER = "powerTime";
@@ -129,8 +126,7 @@ public class ShredderBlockEntity extends HbmEnergyBlockEntity
         }
 
         shredder.networkPackNT(50);
-        if (oldPower != shredder.energy.getPower() || oldProgress != shredder.progress
-                || level.getGameTime() % 10L == 0L) {
+        if (oldPower != shredder.energy.getPower() || oldProgress != shredder.progress) {
             shredder.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -174,12 +170,6 @@ public class ShredderBlockEntity extends HbmEnergyBlockEntity
     @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.INPUT;
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.energyStored(energy.getPower(), energy.getMaxPower())));
     }
 
     @Override

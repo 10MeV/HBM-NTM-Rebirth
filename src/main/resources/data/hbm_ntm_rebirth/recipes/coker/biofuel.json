@@ -1,0 +1,14 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:coker",
+    "output":  {
+                   "item":  "hbm_ntm_rebirth:coke_petroleum"
+               },
+    "byproduct":  {
+                      "fluid":  "hbm_ntm_rebirth:gas_coker",
+                      "amount":  65
+                  },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:biofuel",
+                  "amount":  650
+              }
+}

@@ -1,0 +1,28 @@
+{
+    "type":  "hbm_ntm_rebirth:electrolyzer_metal",
+    "input":  {
+                  "ingredient":  {
+                                     "item":  "hbm_ntm_rebirth:crystal_lithium"
+                                 },
+                  "count":  1
+              },
+    "output1":  {
+                    "material":  "Lithium",
+                    "amount":  432
+                },
+    "output2":  {
+                    "material":  "Boron",
+                    "amount":  144
+                },
+    "byproducts":  [
+                       {
+                           "item":  "hbm_ntm_rebirth:powder_quartz",
+                           "count":  2
+                       },
+                       {
+                           "item":  "hbm_ntm_rebirth:fluorite",
+                           "count":  2
+                       }
+                   ],
+    "duration":  600
+}

@@ -92,19 +92,18 @@ public final class ObjSoyuzModels {
 
     public static void renderLanderCapsule(boolean rusted, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
-        LANDER.renderOnlyInCallOrder(rusted ? LANDER_RUST_TEXTURE : LANDER_TEXTURE, context, LANDER_CAPSULE);
+        LANDER.renderOnlyInCallOrder(rusted ? LANDER_RUST_TEXTURE : LANDER_TEXTURE, poseStack, buffer, packedLight,
+                packedOverlay, LANDER_CAPSULE);
     }
 
     public static void renderLanderChute(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
-        LANDER.renderOnlyInCallOrder(CHUTE_TEXTURE, context, LANDER_CHUTE);
+        LANDER.renderOnlyInCallOrder(CHUTE_TEXTURE, poseStack, buffer, packedLight, packedOverlay, LANDER_CHUTE);
     }
 
     public static void renderModule(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
         for (SoyuzPartPlan plan : modulePartPlan()) {
-            MODULE.renderOnlyInCallOrder(plan.texture(), context, plan.selection());
+            MODULE.renderOnlyInCallOrder(plan.texture(), poseStack, buffer, packedLight, packedOverlay,
+                    plan.selection());
         }
     }
 
@@ -163,9 +162,9 @@ public final class ObjSoyuzModels {
 
     private static void renderSoyuzParts(List<SoyuzPartPlan> plans, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
         for (SoyuzPartPlan plan : plans) {
-            SOYUZ.renderOnlyInCallOrder(plan.texture(), context, plan.selection());
+            SOYUZ.renderOnlyInCallOrder(plan.texture(), poseStack, buffer, packedLight, packedOverlay,
+                    plan.selection());
         }
     }
 

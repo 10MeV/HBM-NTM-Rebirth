@@ -24,13 +24,8 @@ final class LegacyRecipeIconRenderer {
     }
 
     static boolean shouldRenderWithin(BlockEntity blockEntity, double range) {
-        Minecraft minecraft = Minecraft.getInstance();
         return blockEntity.getLevel() != null
-                && minecraft.player != null
-                && minecraft.player.distanceToSqr(
-                blockEntity.getBlockPos().getX() + 0.5D,
-                blockEntity.getBlockPos().getY() + 1.0D,
-                blockEntity.getBlockPos().getZ() + 0.5D) < range * range;
+                && LegacyRenderDistanceGates.isPlayerWithin(blockEntity, 1.0D, range);
     }
 
     static void renderInLegacyMachineSpace(GenericMachineRecipe recipe, Level level, PoseStack poseStack,

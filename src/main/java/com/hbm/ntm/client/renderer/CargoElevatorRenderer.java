@@ -4,7 +4,6 @@ import com.hbm.ntm.blockentity.CargoElevatorBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -43,31 +42,31 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
                 packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, elevator.getBlockState(),
-                modelLight, packedOverlay).withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
 
         LegacyTileRenderPlans.CargoElevatorPlan plan = LegacyTileRenderPlans.cargoElevatorPlan(
                 elevator.shouldRenderPlatform(), elevator.getPrevExtension(), elevator.getExtension(),
                 partialTick, elevator.getHeight());
         if (plan.renderPlatform()) {
-            renderPart(BASE, context);
-            renderTranslatedParts(plan.platformParts(), poseStack, context);
+            renderPart(BASE, poseStack, buffer, modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+            renderTranslatedParts(plan.platformParts(), poseStack, buffer, modelLight, packedOverlay,
+                    LegacyTexturedRenderMode.CUTOUT_CULL);
         }
 
-        renderTranslatedParts(plan.guides(), poseStack, context);
+        renderTranslatedParts(plan.guides(), poseStack, buffer, modelLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_CULL);
         poseStack.popPose();
     }
 
     private static void renderTranslatedParts(
             Iterable<LegacyTileRenderPlans.TranslatedModelPartPlan> parts, PoseStack poseStack,
-            ObjRenderContext context) {
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
         for (LegacyTileRenderPlans.TranslatedModelPartPlan part : parts) {
             if (!part.active()) {
                 continue;
             }
             poseStack.pushPose();
             poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-            renderPart(handle(part), context);
+            renderPart(handle(part), poseStack, buffer, packedLight, packedOverlay, renderMode);
             poseStack.popPose();
         }
     }
@@ -81,13 +80,14 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
         throw new IllegalArgumentException("Unexpected cargo elevator part: " + part.partName());
     }
 
-    static void renderModelPart(String partName, ObjRenderContext context) {
+    static void renderModelPart(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
         LegacyWavefrontModel.SelectionHandle handle = handle(partName);
         if (handle != null) {
-            renderPart(handle, context);
+            MODEL.renderOnlyInCallOrder(TEXTURE, poseStack, buffer, packedLight, packedOverlay, handle);
             return;
         }
-        MODEL.renderPart(partName, TEXTURE, context);
+        MODEL.renderPart(partName, TEXTURE, poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
@@ -103,7 +103,8 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
         };
     }
 
-    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
-        MODEL.renderOnlyInCallOrder(TEXTURE, context, handle);
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
+        MODEL.renderOnlyInCallOrder(TEXTURE, poseStack, buffer, packedLight, packedOverlay, handle, renderMode);
     }
 }

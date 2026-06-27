@@ -1,9 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.handler.pollution.PollutionHandler;
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.energy.IBatteryItem;
 import com.hbm.ntm.energy.HbmEnergySideMode;
@@ -43,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
-        implements MenuProvider, LegacyLookOverlayProvider, LegacyUpgradeInfoProvider {
+        implements MenuProvider, LegacyUpgradeInfoProvider {
     private static final String TAG_ITEMS = "Items";
     private static final String TAG_POWER = "power";
     private static final String TAG_PROGRESS = "progress";
@@ -133,8 +130,7 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
         }
 
         furnace.networkPackNT(50);
-        if (oldPower != furnace.energy.getPower() || oldProgress != furnace.progress || oldActive != furnace.active
-                || level.getGameTime() % 10L == 0L) {
+        if (oldPower != furnace.energy.getPower() || oldProgress != furnace.progress || oldActive != furnace.active) {
             furnace.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -182,12 +178,6 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
     @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.INPUT;
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.energyStored(energy.getPower(), energy.getMaxPower())));
     }
 
     @Override

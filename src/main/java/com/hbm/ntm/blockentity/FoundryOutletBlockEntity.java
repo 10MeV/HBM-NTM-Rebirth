@@ -4,13 +4,19 @@ import api.hbm.block.ICrucibleAcceptor;
 import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.inventory.material.NTMMaterial;
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.FoundryOutletBlock;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.util.CrucibleUtil;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -21,7 +27,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-public class FoundryOutletBlockEntity extends FoundryBaseBlockEntity {
+public class FoundryOutletBlockEntity extends FoundryBaseBlockEntity implements LegacyLookOverlayProvider {
+    private static final int FOUNDRY_TITLE_COLOR = 0xFF4000;
+    private static final int FOUNDRY_TITLE_SHADOW_COLOR = 0x401000;
     private static final String TAG_INVERT = "invert";
     private static final String TAG_INVERT_FILTER = "invertFilter";
     private static final String TAG_FILTER = "filter";
@@ -46,10 +54,6 @@ public class FoundryOutletBlockEntity extends FoundryBaseBlockEntity {
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FoundryOutletBlockEntity outlet) {
-        if (!level.isClientSide && level.getGameTime() % 20L == 0L) {
-            outlet.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-        }
     }
 
     public NTMMaterial getFilter() {
@@ -92,6 +96,22 @@ public class FoundryOutletBlockEntity extends FoundryBaseBlockEntity {
     @Override
     public int getCapacity() {
         return 0;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        List<Component> lines = new ArrayList<>();
+        if (filter != null) {
+            lines.add(Component.translatable("foundry.filter", filter.names[0]).withStyle(ChatFormatting.YELLOW));
+        }
+        if (invertFilter) {
+            lines.add(Component.translatable("foundry.invertFilter").withStyle(ChatFormatting.YELLOW));
+        }
+        if (invertRedstone) {
+            lines.add(Component.translatable("foundry.inverted").withStyle(ChatFormatting.DARK_RED));
+        }
+        return LegacyLookOverlay.withTitle(Component.translatable(getBlockState().getBlock().getDescriptionId()),
+                FOUNDRY_TITLE_COLOR, FOUNDRY_TITLE_SHADOW_COLOR, lines);
     }
 
     @Override

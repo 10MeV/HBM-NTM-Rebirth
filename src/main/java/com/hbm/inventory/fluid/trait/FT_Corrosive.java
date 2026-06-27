@@ -56,7 +56,7 @@ public class FT_Corrosive extends CorrosiveFluidTrait {
 
     public void deserializeJSON(JsonObject object) {
         if (object != null && object.has("rating")) {
-            this.rating = object.get("rating").getAsInt();
+            this.rating = LegacyFluidTraitJson.intValue(object, "rating", 0);
         }
     }
 }

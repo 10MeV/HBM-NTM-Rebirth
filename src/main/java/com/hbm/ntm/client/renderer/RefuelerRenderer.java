@@ -2,9 +2,11 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.RefuelerBlock;
 import com.hbm.ntm.blockentity.RefuelerBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -33,13 +35,14 @@ public class RefuelerRenderer implements BlockEntityRenderer<RefuelerBlockEntity
     public void render(RefuelerBlockEntity refueler, float partialTick, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
         BlockState state = refueler.getBlockState();
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(refueler, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         orient(poseStack, state.hasProperty(RefuelerBlock.FACING) ? state.getValue(RefuelerBlock.FACING) : Direction.NORTH);
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        MODEL.renderOnlyInCallOrder(ObjMachineModels.REFUELER_TEXTURE, context, FUELER);
-        renderFluid(refueler, partialTick, poseStack, context);
+        MODEL.renderOnlyInCallOrder(ObjMachineModels.REFUELER_TEXTURE, poseStack, buffer, modelLight,
+                packedOverlay, FUELER);
+        enqueueFluid(refueler, partialTick, poseStack, buffer);
         poseStack.popPose();
     }
 
@@ -59,24 +62,28 @@ public class RefuelerRenderer implements BlockEntityRenderer<RefuelerBlockEntity
             poseStack.scale(0.55F, 0.55F, 0.55F);
             poseStack.translate(-bounds.getCenter().x, -bounds.getCenter().y, -bounds.getCenter().z);
         }
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        MODEL.renderOnlyInCallOrder(ObjMachineModels.REFUELER_TEXTURE, context, FUELER);
+        MODEL.renderOnlyInCallOrder(ObjMachineModels.REFUELER_TEXTURE, poseStack, buffer, packedLight,
+                packedOverlay, FUELER);
         poseStack.popPose();
     }
 
-    private static void renderFluid(RefuelerBlockEntity refueler, float partialTick, PoseStack poseStack,
-            ObjRenderContext context) {
-        if (refueler.getTank().getFill() <= 0) {
+    private static void enqueueFluid(RefuelerBlockEntity refueler, float partialTick, PoseStack poseStack,
+            MultiBufferSource buffer) {
+        double fillLevel = Math.max(0.0D, Math.min(1.0D, refueler.getInterpolatedFillLevel(partialTick)));
+        if (fillLevel <= 1.0E-5D) {
             return;
         }
         int color = refueler.getTank().getTankType().getColor();
-        double fillLevel = Math.max(0.0D, Math.min(1.0D, refueler.getInterpolatedFillLevel(partialTick)));
+        LegacyTileRenderPlans.RefuelerFluidPlan plan = LegacyTileRenderPlans.refuelerFluidPlan(fillLevel, color);
         poseStack.pushPose();
-        poseStack.translate(0.0D, (1.0D - fillLevel) * -0.625D, 0.0D);
-        MODEL.renderOnlyUntextured(
-                context.withRgba(color >>> 16 & 255, color >>> 8 & 255, color & 255, 191)
-                        .withAdditiveTranslucency(),
-                FLUID);
+        poseStack.translate(0.0D, plan.translateY(), 0.0D);
+        LegacyTileRenderPlans.ClipPlanePlan clip = plan.clipPlane();
+        double clipD = clip.d() + clip.y() * plan.translateY();
+        LegacyTileRenderPlans.RgbaPlan tint = plan.color();
+        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose ->
+                MODEL.renderOnlyUntexturedClipped(queuedPose, buffer, tint.redByte(), tint.greenByte(), tint.blueByte(),
+                        tint.alphaByte(), LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                        FLUID, clip.x(), clip.y(), clip.z(), clipD));
         poseStack.popPose();
     }
 

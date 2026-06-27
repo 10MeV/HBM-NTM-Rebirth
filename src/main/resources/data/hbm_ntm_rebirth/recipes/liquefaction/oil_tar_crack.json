@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:liquefaction",
+  "ingredient": {
+    "tag": "forge:tar/crack"
+  },
+  "output": {
+    "amount": 100,
+    "fluid": "BITUMEN",
+    "pressure": 0
+  }
+}

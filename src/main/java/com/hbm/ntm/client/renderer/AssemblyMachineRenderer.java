@@ -2,9 +2,9 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -63,11 +63,10 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F + blockstateModelYRotation(state)));
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
 
-        renderModelPart("Base", context);
+        renderModelPart("Base", poseStack, buffer, modelLight, packedOverlay);
         if (assembler.shouldRenderFrame()) {
-            renderModelPart("Frame", context);
+            renderModelPart("Frame", poseStack, buffer, modelLight, packedOverlay);
         }
 
         poseStack.pushPose();
@@ -76,9 +75,9 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
                 assembler.getArm(0).getPositions(partialTick),
                 assembler.getArm(1).getPositions(partialTick));
         poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.ringDegrees()));
-        renderModelPart("Ring", context);
+        renderModelPart("Ring", poseStack, buffer, modelLight, packedOverlay);
         for (LegacyTileRenderPlans.AssemblyArmPlan arm : plan.arms()) {
-            renderArmPlan(poseStack, context, arm);
+            renderArmPlan(poseStack, buffer, modelLight, packedOverlay, arm);
         }
         poseStack.popPose();
 
@@ -90,17 +89,18 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
         poseStack.popPose();
     }
 
-    private static void renderArmPlan(PoseStack poseStack, ObjRenderContext context,
+    private static void renderArmPlan(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay,
             LegacyTileRenderPlans.AssemblyArmPlan arm) {
         poseStack.pushPose();
         for (LegacyTileRenderPlans.PivotedModelPartPlan part : arm.rotations()) {
             applyPivot(poseStack, part);
-            renderModelPart(part.partName(), context);
+            renderModelPart(part.partName(), poseStack, buffer, packedLight, packedOverlay);
         }
         LegacyTileRenderPlans.TranslatedModelPartPlan tool = arm.tool();
         if (tool != null && tool.active()) {
             poseStack.translate(tool.translateX(), tool.translateY(), tool.translateZ());
-            renderModelPart(tool.partName(), context);
+            renderModelPart(tool.partName(), poseStack, buffer, packedLight, packedOverlay);
         }
         poseStack.popPose();
     }
@@ -112,18 +112,28 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
     }
 
-    static void renderModelPart(String partName, ObjRenderContext context) {
-        renderModelPart(MODEL, partName, ObjMachineModels.ASSEMBLY_MACHINE_TEXTURE, context);
+    private static void renderModelPart(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        renderModelPart(MODEL, partName, ObjMachineModels.ASSEMBLY_MACHINE_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay);
+    }
+
+    private static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderModelPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
     }
 
     static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
-            ObjRenderContext context) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
         LegacyWavefrontModel.SelectionHandle handle = sameModel(model) ? handle(partName) : null;
         if (handle != null) {
-            MODEL.renderOnlyInCallOrder(texture, context, handle);
+            model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle, renderMode);
             return;
         }
-        model.renderPart(partName, texture, context);
+        model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay,
+                255, 255, 255, 255, false, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT);
     }
 
     private static boolean sameModel(LegacyWavefrontModel model) {

@@ -3,6 +3,8 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.blockentity.TeslaBlockEntity;
 import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.ObjUtilityModels;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import java.util.ArrayList;
@@ -29,10 +31,11 @@ public class TeslaRenderer implements BlockEntityRenderer<TeslaBlockEntity> {
     @Override
     public void render(TeslaBlockEntity tesla, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(tesla, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        ObjUtilityModels.TESLA.renderAll(ObjUtilityModels.TESLA_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+        ObjUtilityModels.TESLA.renderAll(ObjUtilityModels.TESLA_TEXTURE, poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
         Level level = tesla.getLevel();
@@ -53,9 +56,11 @@ public class TeslaRenderer implements BlockEntityRenderer<TeslaBlockEntity> {
 
         poseStack.pushPose();
         poseStack.translate(0.5D, TeslaBlockEntity.OFFSET, 0.5D);
-        for (LegacyTileRenderPlans.TeslaTargetBeamPlan beam : plan.targetBeams()) {
-            LegacyBeamRenderer.beam(poseStack, buffer, beam.beam());
-        }
+        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
+            for (LegacyTileRenderPlans.TeslaTargetBeamPlan beam : plan.targetBeams()) {
+                LegacyBeamRenderer.beam(queuedPose, buffer, beam.beam());
+            }
+        });
         poseStack.popPose();
     }
 }

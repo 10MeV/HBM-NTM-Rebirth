@@ -11,7 +11,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeRecipeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
-import com.hbm.ntm.fluid.HbmFluidPortMachine;
+import com.hbm.ntm.fluid.HbmFluidPortSubscriptionTracker;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -106,7 +106,6 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
             UpgradeType.SPEED, 3,
             UpgradeType.POWER, 3,
             UpgradeType.OVERDRIVE, 3);
-
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private final ItemStackHandler items = new ItemStackHandler(ITEM_COUNT) {
         @Override
@@ -163,6 +162,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     private final List<HbmFluidTank> allTankList = List.of(
             inputTanks[0], inputTanks[1], inputTanks[2],
             outputTanks[0], outputTanks[1], outputTanks[2]);
+    private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new ChemicalPlantAccessibleItemHandler());
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
@@ -203,7 +203,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
             blockEntity.setChanged();
         }
         blockEntity.networkPackNT(100);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -585,7 +585,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private int subscribeEnergyReceiverToPorts() {
-        return level == null || level.isClientSide
+        return level == null || level.isClientSide || Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) != 0L
                 ? 0
                 : HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, ENERGY_PORTS, this);
     }
@@ -604,8 +604,28 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private void refreshFluidPortSubscriptions() {
-        HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, FLUID_PORTS,
-                inputTankList, outputTankList, this);
+        if (level != null && !level.isClientSide) {
+            fluidPortSubscriptions.refreshTransceiver(level, worldPosition, FLUID_PORTS,
+                    inputTankList, outputTankList, this);
+        }
+    }
+
+    private void detachFluidPortSubscriptions() {
+        if (level != null && !level.isClientSide) {
+            fluidPortSubscriptions.detachAll(level, worldPosition, FLUID_PORTS, this, this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        detachFluidPortSubscriptions();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        detachFluidPortSubscriptions();
+        super.onChunkUnloaded();
     }
 
     private boolean processFluidContainers() {

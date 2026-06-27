@@ -9,6 +9,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
+import com.hbm.ntm.fluid.HbmFluidReleaseEffects;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
@@ -157,7 +158,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             blockEntity.setChanged();
         }
         blockEntity.networkPackNT(50);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -220,6 +221,9 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         data.putBoolean(CompatEnergyControl.B_ACTIVE, fluidUsed > 0);
         data.putDouble(CompatEnergyControl.D_CONSUMPTION_MB, fluidUsed);
         data.putDouble(CompatEnergyControl.D_OUTPUT_HE, lastOutput);
+        data.putBoolean("isOn", on);
+        data.putBoolean("doesBurn", burn);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_GAS_FLARE_FUEL, tank);
     }
 
     public long getPower() {
@@ -264,13 +268,10 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             return false;
         }
         boolean changed = false;
-        if (tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
-            int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
-            if (ids.length > 0) {
-                int safeIndex = index >= 0 && index < ids.length ? index : 0;
-                tank.setTankType(HbmFluids.fromId(ids[safeIndex]));
-                changed = true;
-            }
+        java.util.OptionalInt id = HbmFluidCopiable.copiedFluidIdAt(tag, index);
+        if (id.isPresent()) {
+            tank.setTankType(HbmFluids.fromId(id.getAsInt()));
+            changed = true;
         }
         if (tag.contains("isOn")) {
             on = tag.getBoolean("isOn");
@@ -377,7 +378,12 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             if (eject <= 0) {
                 return false;
             }
-            tank.release(level, pos, eject, FluidReleaseType.SPILL, false);
+            tank.drain(eject, false);
+            HbmFluidReleaseEffects.applyLegacyTraitRelease(level, pos, type, eject, FluidReleaseType.SPILL);
+            if (level.getGameTime() % 5L == 0L) {
+                HbmFluidReleaseEffects.applyLegacyPollutingRelease(level, pos, type, FluidReleaseType.SPILL,
+                        eject * 5.0F);
+            }
             fluidUsed = eject;
             if (level.getGameTime() % 7L == 0L) {
                 LegacySoundPlayer.playSoundEffect(level, pos.getX(), pos.getY() + 11.0D, pos.getZ(),
@@ -390,7 +396,11 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (eject <= 0) {
             return false;
         }
-        tank.release(level, pos, eject, FluidReleaseType.BURN, false);
+        tank.drain(eject, false);
+        if (level.getGameTime() % 5L == 0L) {
+            HbmFluidReleaseEffects.applyLegacyPollutingRelease(level, pos, type, FluidReleaseType.BURN,
+                    eject * 5.0F);
+        }
         long powerProduced = flammable.getHeatEnergyPerBucket() * eject / 1_000L;
         int penalty = type.hasTrait(SimpleFluidTraits.Gaseous.class)
                 || type.hasTrait(SimpleFluidTraits.GaseousAtRoomTemperature.class) ? 5 : 10;

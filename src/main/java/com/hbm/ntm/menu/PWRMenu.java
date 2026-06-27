@@ -124,6 +124,10 @@ public class PWRMenu extends AbstractContainerMenu {
         return processTime;
     }
 
+    public int getDepletionPercent() {
+        return processTime > 0.0D ? (int) (progress * 100.0D / processTime) : 0;
+    }
+
     public int getRodCount() {
         return rodCount;
     }
@@ -157,7 +161,7 @@ public class PWRMenu extends AbstractContainerMenu {
     }
 
     public int getProgressScaled(int max) {
-        return (int) (progress * max / processTime);
+        return processTime > 0.0D ? (int) (progress * max / processTime) : 0;
     }
 
     public int getRodLevelScaled(int max) {

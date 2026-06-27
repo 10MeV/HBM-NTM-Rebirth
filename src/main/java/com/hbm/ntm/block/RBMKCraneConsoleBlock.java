@@ -133,18 +133,6 @@ public class RBMKCraneConsoleBlock extends LegacyXrMultiblockBlock implements En
                     ? InteractionResult.sidedSuccess(level.isClientSide)
                     : InteractionResult.PASS;
         }
-        if (level.isClientSide) {
-            return MultiblockHelper.isOperationalCoreLayoutComplete(level, pos)
-                    ? InteractionResult.SUCCESS
-                    : InteractionResult.PASS;
-        }
-        if (!level.isClientSide) {
-            if (MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos)
-                    instanceof RBMKCraneConsoleBlockEntity) {
-                return InteractionResult.SUCCESS;
-            }
-            return InteractionResult.PASS;
-        }
         return InteractionResult.PASS;
     }
 

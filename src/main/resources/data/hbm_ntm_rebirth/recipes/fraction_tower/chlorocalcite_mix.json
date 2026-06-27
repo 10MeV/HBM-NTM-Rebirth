@@ -1,0 +1,15 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:fraction_tower",
+    "output1":  {
+                    "fluid":  "hbm_ntm_rebirth:chlorocalcite_cleaned",
+                    "amount":  50
+                },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:chlorocalcite_mix",
+                  "amount":  100
+              },
+    "output2":  {
+                    "fluid":  "hbm_ntm_rebirth:colloid",
+                    "amount":  50
+                }
+}

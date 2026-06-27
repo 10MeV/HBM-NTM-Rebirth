@@ -91,7 +91,11 @@ public class GibletParticle extends TextureSheetParticle {
     @Override
     public void render(VertexConsumer consumer, Camera camera, float partialTick) {
         this.oRoll = this.roll = Mth.lerp(partialTick, this.prevRotationYaw, this.rotationYaw) * Mth.DEG_TO_RAD;
-        super.render(consumer, camera, partialTick);
+        HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(consumer, camera, partialTick,
+                this.xo, this.yo, this.zo, this.x, this.y, this.z,
+                this.oRoll, this.roll, this.getQuadSize(partialTick),
+                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
     }
 
     @Override

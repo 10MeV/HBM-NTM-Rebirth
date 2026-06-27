@@ -160,7 +160,7 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         boolean changed = forge.tickServer(level);
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, forge);
         forge.networkPackNT(100);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             forge.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -301,6 +301,11 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of();
+    }
+
+    @Override
+    public boolean supportsFluidSettingsCopy() {
+        return false;
     }
 
     @Override
@@ -626,7 +631,8 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     private void distributePlasma() {
         connected = false;
         PlasmaNetwork net = providerNode == null ? null : providerNode.getPlasmaNet();
-        if (net == null || net.receiverEntries.isEmpty()) {
+        List<?> receivers = net == null ? List.of() : net.receiverSnapshot();
+        if (receivers.isEmpty()) {
             return;
         }
         connected = true;
@@ -634,7 +640,7 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (powerReceived <= 0L) {
             return;
         }
-        for (Object receiver : new ArrayList<>(net.receiverEntries.keySet())) {
+        for (Object receiver : receivers) {
             if (receiver instanceof FusionPowerReceiver fusionReceiver) {
                 fusionReceiver.receiveFusionPower(powerReceived, neutronEnergy, plasmaR, plasmaG, plasmaB);
             }

@@ -5,7 +5,6 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.SteamEngineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -62,53 +61,52 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
-        renderPlan(MODEL, plan, context, poseStack);
+        renderPlan(MODEL, plan, poseStack, buffer, modelLight, packedOverlay);
 
         poseStack.popPose();
     }
 
     static void renderPlan(LegacyWavefrontModel model, LegacyTileRenderPlans.SteamEnginePlan plan,
-            ObjRenderContext context, PoseStack poseStack) {
-        model.renderOnlyInCallOrder(context, BASE);
-        renderRotatingPart(model, plan.flywheel(), FLYWHEEL, context, poseStack);
-        renderRotatingPart(model, plan.shaft(), SHAFT, context, poseStack);
-        renderTransmission(model, plan.transmission(), context, poseStack);
-        renderTranslatedPart(model, plan.piston(), PISTON, context, poseStack);
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        model.renderOnlyInCallOrder(poseStack, buffer, packedLight, packedOverlay, BASE);
+        renderRotatingPart(model, plan.flywheel(), FLYWHEEL, poseStack, buffer, packedLight, packedOverlay);
+        renderRotatingPart(model, plan.shaft(), SHAFT, poseStack, buffer, packedLight, packedOverlay);
+        renderTransmission(model, plan.transmission(), poseStack, buffer, packedLight, packedOverlay);
+        renderTranslatedPart(model, plan.piston(), PISTON, poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static void renderRotatingPart(LegacyWavefrontModel model,
             LegacyTileRenderPlans.RotatingModelPartPlan part, LegacyWavefrontModel.SelectionHandle handle,
-            ObjRenderContext context, PoseStack poseStack) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
         rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        model.renderOnlyInCallOrder(context, handle);
+        model.renderOnlyInCallOrder(poseStack, buffer, packedLight, packedOverlay, handle);
         poseStack.popPose();
     }
 
     private static void renderTransmission(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.SteamEngineTransmissionPlan transmission, ObjRenderContext context,
-            PoseStack poseStack) {
+            LegacyTileRenderPlans.SteamEngineTransmissionPlan transmission, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(transmission.translateX(), transmission.translateY(), 0.0D);
         poseStack.translate(transmission.pivotX(), transmission.pivotY(), 0.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) -transmission.angleDegrees()));
         poseStack.translate(-transmission.pivotX(), -transmission.pivotY(), 0.0D);
-        model.renderOnlyInCallOrder(context, TRANSMISSION);
+        model.renderOnlyInCallOrder(poseStack, buffer, packedLight, packedOverlay, TRANSMISSION);
         poseStack.popPose();
     }
 
     private static void renderTranslatedPart(LegacyWavefrontModel model,
             LegacyTileRenderPlans.TranslatedModelPartPlan part, LegacyWavefrontModel.SelectionHandle handle,
-            ObjRenderContext context, PoseStack poseStack) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!part.active()) {
             return;
         }
         poseStack.pushPose();
         poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-        model.renderOnlyInCallOrder(context, handle);
+        model.renderOnlyInCallOrder(poseStack, buffer, packedLight, packedOverlay, handle);
         poseStack.popPose();
     }
 

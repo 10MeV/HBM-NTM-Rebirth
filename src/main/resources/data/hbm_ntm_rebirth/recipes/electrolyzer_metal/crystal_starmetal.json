@@ -1,0 +1,28 @@
+{
+    "type":  "hbm_ntm_rebirth:electrolyzer_metal",
+    "input":  {
+                  "ingredient":  {
+                                     "item":  "hbm_ntm_rebirth:crystal_starmetal"
+                                 },
+                  "count":  1
+              },
+    "output1":  {
+                    "material":  "Dura",
+                    "amount":  288
+                },
+    "output2":  {
+                    "material":  "Cobalt",
+                    "amount":  288
+                },
+    "byproducts":  [
+                       {
+                           "item":  "hbm_ntm_rebirth:powder_astatine",
+                           "count":  3
+                       },
+                       {
+                           "item":  "hbm_ntm_rebirth:ingot_mercury",
+                           "count":  8
+                       }
+                   ],
+    "duration":  600
+}

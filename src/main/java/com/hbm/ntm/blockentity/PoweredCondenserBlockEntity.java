@@ -93,7 +93,7 @@ public class PoweredCondenserBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldInput != condenser.inputTank.getFill()
                 || oldOutput != condenser.outputTank.getFill()
                 || oldWaterTimer != condenser.waterTimer;
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             condenser.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -219,8 +219,11 @@ public class PoweredCondenserBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         List<net.minecraft.network.chat.Component> lines = new ArrayList<>();
-        lines.add(LegacyLookOverlayLines.energyStored(energy.getPower(), energy.getMaxPower()));
-        lines.addAll(LegacyLookOverlayLines.allCompactFluidUserTanks(this));
+        lines.add(net.minecraft.network.chat.Component.literal(
+                LegacyLookOverlayLines.shortNumber(energy.getPower()) + "HE / "
+                        + LegacyLookOverlayLines.shortNumber(energy.getMaxPower()) + "HE"));
+        lines.add(LegacyLookOverlayLines.groupedCompactTank(true, inputTank));
+        lines.add(LegacyLookOverlayLines.groupedCompactTank(false, outputTank));
         return LegacyLookOverlay.forBlock(this, lines);
     }
 

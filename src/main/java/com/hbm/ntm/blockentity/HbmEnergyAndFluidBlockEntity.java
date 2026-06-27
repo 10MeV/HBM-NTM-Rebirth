@@ -34,6 +34,10 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
     private final LazyOptional<IEnergyStorage> forgeEnergy;
     private final LazyOptional<IEnergyStorage> forgeEnergyInput;
     private final LazyOptional<IEnergyStorage> forgeEnergyOutput;
+    private boolean energyPortSubscriptionDirty = true;
+    private boolean energyPortProviderSubscribed;
+    private boolean energyPortReceiverSubscribed;
+    private int lastEnergyPortShapeSignature = Integer.MIN_VALUE;
 
     protected HbmEnergyAndFluidBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state,
             HbmEnergyStorage energy, List<HbmFluidTank> tanks) {
@@ -120,12 +124,54 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
         if (level == null || level.isClientSide) {
             return;
         }
-        if (shouldSubscribeAsEnergyReceiver()) {
+        boolean receiverActive = shouldSubscribeAsEnergyReceiver();
+        boolean providerActive = shouldSubscribeAsEnergyProvider();
+        if (!shouldRefreshEnergyPortSubscriptions(receiverActive, providerActive)) {
+            return;
+        }
+        if (energyPortReceiverSubscribed && !receiverActive) {
+            HbmEnergyUtil.unsubscribeReceiverFromPorts(level, worldPosition, getEnergyPorts(), energy);
+        }
+        if (energyPortProviderSubscribed && !providerActive) {
+            HbmEnergyUtil.unsubscribeProviderFromPorts(level, worldPosition, getEnergyPorts(), energy);
+        }
+        if (receiverActive) {
             HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, getEnergyPorts(), energy);
         }
-        if (shouldSubscribeAsEnergyProvider()) {
+        if (providerActive) {
             HbmEnergyUtil.subscribeProviderToPorts(level, worldPosition, getEnergyPorts(), energy);
         }
+        energyPortReceiverSubscribed = receiverActive;
+        energyPortProviderSubscribed = providerActive;
+        lastEnergyPortShapeSignature = energyPortShapeSignature(getEnergyPorts());
+        energyPortSubscriptionDirty = false;
+    }
+
+    protected void markEnergyPortSubscriptionsDirty() {
+        energyPortSubscriptionDirty = true;
+    }
+
+    private boolean shouldRefreshEnergyPortSubscriptions(boolean receiverActive, boolean providerActive) {
+        int portShapeSignature = energyPortShapeSignature(getEnergyPorts());
+        return energyPortSubscriptionDirty
+                || energyPortReceiverSubscribed != receiverActive
+                || energyPortProviderSubscribed != providerActive
+                || portShapeSignature != lastEnergyPortShapeSignature
+                || isStaggeredEnergyPortKeepalive();
+    }
+
+    private boolean isStaggeredEnergyPortKeepalive() {
+        return level != null && Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) == 0L;
+    }
+
+    private static int energyPortShapeSignature(Iterable<EnergyPort> ports) {
+        int signature = 1;
+        if (ports != null) {
+            for (EnergyPort port : ports) {
+                signature = 31 * signature + (port == null ? 0 : port.hashCode());
+            }
+        }
+        return signature;
     }
 
     protected int tryProvideEnergyToPorts() {
@@ -146,6 +192,9 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
         }
         HbmEnergyUtil.unsubscribeReceiverFromPorts(level, worldPosition, getEnergyPorts(), energy);
         HbmEnergyUtil.unsubscribeProviderFromPorts(level, worldPosition, getEnergyPorts(), energy);
+        energyPortReceiverSubscribed = false;
+        energyPortProviderSubscribed = false;
+        energyPortSubscriptionDirty = true;
     }
 
     @Override
@@ -158,6 +207,7 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
     public void load(CompoundTag tag) {
         super.load(tag);
         energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
+        markEnergyPortSubscriptionsDirty();
     }
 
     @Override

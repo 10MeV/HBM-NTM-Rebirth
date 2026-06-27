@@ -86,6 +86,8 @@ public class RadGenBlockEntity extends BlockEntity implements MenuProvider, HbmE
             LazyOptional.of(() -> new ForgeEnergyAdapter(energy, false, true));
     private boolean isOn;
     private int output;
+    private boolean energyPortSubscriptionDirty = true;
+    private int lastEnergyPortSignature = Integer.MIN_VALUE;
 
     public RadGenBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.RADGEN.get(), pos, state);
@@ -104,10 +106,15 @@ public class RadGenBlockEntity extends BlockEntity implements MenuProvider, HbmE
         int oldOutput = radGen.output;
 
         radGen.output = 0;
-        if (level.getGameTime() % 20L == 0L) {
-            HbmEnergyUtil.subscribeProviderToPorts(level, pos, radGen.energyPorts(state), radGen);
+        List<EnergyPort> energyPorts = radGen.energyPorts(state);
+        if (radGen.shouldRefreshEnergyPorts(level, energyPorts)) {
+            HbmEnergyUtil.subscribeProviderToPorts(level, pos, energyPorts, radGen);
+            radGen.lastEnergyPortSignature = radGen.energyPortSignature(energyPorts);
+            radGen.energyPortSubscriptionDirty = false;
         }
-        HbmEnergyUtil.tryProvideToPorts(level, pos, radGen.energyPorts(state), radGen);
+        if (radGen.energy.getPower() > 0L) {
+            HbmEnergyUtil.tryProvideToPorts(level, pos, energyPorts, radGen);
+        }
 
         boolean changed = radGen.loadWaitingLanes();
         changed |= radGen.tickProcessing();
@@ -115,10 +122,20 @@ public class RadGenBlockEntity extends BlockEntity implements MenuProvider, HbmE
 
         changed |= oldPower != radGen.energy.getPower() || oldOn != radGen.isOn || oldOutput != radGen.output;
         radGen.networkPackNT(50);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             radGen.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+    }
+
+    private boolean shouldRefreshEnergyPorts(Level level, List<EnergyPort> ports) {
+        int signature = energyPortSignature(ports);
+        return energyPortSubscriptionDirty
+                || signature != lastEnergyPortSignature
+                || Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) == 0L;
+    }
+
+    private int energyPortSignature(List<EnergyPort> ports) {
+        return ports.hashCode();
     }
 
     private static void energyClamp(HbmEnergyStorage energy) {

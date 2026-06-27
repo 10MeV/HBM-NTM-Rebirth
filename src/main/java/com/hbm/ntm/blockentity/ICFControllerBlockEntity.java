@@ -3,6 +3,8 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.api.tile.IInfoProviderEC;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -12,9 +14,11 @@ import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,19 +30,22 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
-public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements LegacyLookOverlayProvider {
+public class ICFControllerBlockEntity extends HbmEnergyBlockEntity
+        implements LegacyLookOverlayProvider, IInfoProviderEC {
     public static final int CAPACITOR_POWER = 2_500_000;
     public static final int TURBO_POWER = 5_000_000;
     private static final String TAG_POWER = "power";
     private static final String TAG_CAPACITOR_COUNT = "capacitorCount";
     private static final String TAG_TURBOCHARGER_COUNT = "turbochargerCount";
     private static final String TAG_LASER_LENGTH = "laserLength";
+    private static final int ENERGY_SUBSCRIPTION_KEEPALIVE_TICKS = 20;
 
     private final List<BlockPos> ports = new ArrayList<>();
+    private final List<BlockPos> assembledParts = new ArrayList<>();
+    private List<EnergyPort> cachedEnergyPorts = List.of();
     private int laserLength;
     private int cellCount;
     private int emitterCount;
@@ -46,6 +53,10 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
     private int turbochargerCount;
     private long power;
     private boolean assembled;
+    private boolean energySubscriptionDirty = true;
+    private boolean energyReceiverSubscribed;
+    private boolean restoringAssembly;
+    private int lastEnergyPortSignature = Integer.MIN_VALUE;
 
     public ICFControllerBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ICF_CONTROLLER.get(), pos, state, new LegacyICFEnergyStorage());
@@ -55,24 +66,20 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
     public static void serverTick(Level level, BlockPos pos, BlockState state, ICFControllerBlockEntity controller) {
         controller.energy.setMaxPower(controller.getMaxPower());
         controller.energy.setTransferRates(controller.getMaxPower(), 0L);
-        controller.networkPackNT(50);
+        controller.ensureAssemblyPartsKnown(level);
+        controller.refreshEnergyPortSubscription(level, pos);
         if (controller.assembled) {
-            if (controller.getMaxPower() > 0L) {
-                HbmEnergyUtil.subscribeReceiverToPorts(level, pos, controller.getEnergyPorts(), controller.energy);
-            }
             if (controller.legacySyncedPower() > 0L) {
                 controller.fireLaser(level, state);
                 controller.setPower(0L);
+                controller.setChanged();
             } else {
                 controller.laserLength = 0;
             }
         } else {
             controller.laserLength = 0;
         }
-        if (level.getGameTime() % 20L == 0L) {
-            controller.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-        }
+        controller.networkPackNT(50);
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ICFControllerBlockEntity controller) {
@@ -90,13 +97,14 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
                 pos.getZ() + 0.5D + dir.getStepZ() * dist + rot.getStepZ() * offXZ);
     }
 
-    public void setup(Set<BlockPos> ports, Set<BlockPos> cells, Set<BlockPos> emitters,
+    public void setup(Set<BlockPos> assembledParts, Set<BlockPos> ports, Set<BlockPos> cells, Set<BlockPos> emitters,
             Set<BlockPos> capacitors, Set<BlockPos> turbochargers) {
         this.cellCount = 0;
         this.emitterCount = 0;
         this.capacitorCount = 0;
         this.turbochargerCount = 0;
         this.ports.clear();
+        this.assembledParts.clear();
 
         Direction dir = getBlockState().getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING).getOpposite();
         Set<BlockPos> validCells = new HashSet<>();
@@ -128,19 +136,58 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
                 turbochargerCount++;
             }
         }
+        this.assembledParts.addAll(assembledParts);
         this.ports.addAll(ports);
+        rebuildCachedEnergyPorts();
+        markEnergySubscriptionDirty();
         assembled = true;
         setChanged();
     }
 
     public void clearAssembly() {
+        clearAssemblyState();
+        setChanged();
+    }
+
+    public void restoreAssembly() {
+        if (restoringAssembly) {
+            return;
+        }
+        if (level != null && !level.isClientSide) {
+            ensureAssemblyPartsKnown(level);
+            restoringAssembly = true;
+            try {
+                for (BlockPos partPos : List.copyOf(assembledParts)) {
+                    if (!level.hasChunk(partPos.getX() >> 4, partPos.getZ() >> 4)) {
+                        continue;
+                    }
+                    if (level.getBlockEntity(partPos) instanceof ICFAssembledBlockEntity assembledBlock
+                            && assembledBlock.isLinkedTo(worldPosition)) {
+                        assembledBlock.restoreOriginalBlock();
+                    }
+                }
+            } finally {
+                restoringAssembly = false;
+            }
+        }
+        clearAssemblyState();
+        setChanged();
+    }
+
+    private void clearAssemblyState() {
+        if (energyReceiverSubscribed && level != null && !level.isClientSide) {
+            HbmEnergyUtil.unsubscribeReceiverFromPorts(level, worldPosition, getEnergyPorts(), energy);
+        }
         ports.clear();
+        assembledParts.clear();
+        cachedEnergyPorts = List.of();
         cellCount = 0;
         emitterCount = 0;
         capacitorCount = 0;
         turbochargerCount = 0;
         assembled = false;
-        setChanged();
+        energyReceiverSubscribed = false;
+        markEnergySubscriptionDirty();
     }
 
     @Override
@@ -176,7 +223,15 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
     }
 
     public void setAssembled(boolean assembled) {
+        if (this.assembled && !assembled) {
+            restoreAssembly();
+            return;
+        }
         this.assembled = assembled;
+        if (!assembled) {
+            clearAssemblyState();
+        }
+        markEnergySubscriptionDirty();
         setChanged();
     }
 
@@ -193,21 +248,74 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
     }
 
     @Override
+    public void provideExtraInfo(CompoundTag data) {
+        super.provideExtraInfo(data);
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, assembled && legacySyncedPower() > 0L);
+        data.putInt(CompatEnergyControl.I_LASER_LENGTH, laserLength);
+        data.putInt(CompatEnergyControl.I_CELL_COUNT, cellCount);
+        data.putInt(CompatEnergyControl.I_EMITTER_COUNT, emitterCount);
+        data.putInt(CompatEnergyControl.I_CAPACITOR_COUNT, capacitorCount);
+        data.putInt(CompatEnergyControl.I_TURBOCHARGER_COUNT, turbochargerCount);
+    }
+
+    @Override
     protected HbmEnergySideMode getEnergySideMode(Direction side) {
         return HbmEnergySideMode.INPUT;
     }
 
     @Override
     protected Iterable<EnergyPort> getEnergyPorts() {
-        Direction facing = getBlockState().getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING);
-        List<EnergyPort> energyPorts = new ArrayList<>();
+        return cachedEnergyPorts;
+    }
+
+    private void rebuildCachedEnergyPorts() {
+        List<EnergyPort> energyPorts = new ArrayList<>(ports.size() * Direction.values().length);
         for (BlockPos port : ports) {
             BlockPos relative = port.subtract(worldPosition);
             for (Direction side : Direction.values()) {
                 energyPorts.add(new EnergyPort(relative.relative(side), side));
             }
         }
-        return energyPorts;
+        cachedEnergyPorts = List.copyOf(energyPorts);
+    }
+
+    private void refreshEnergyPortSubscription(Level level, BlockPos pos) {
+        boolean receiverActive = assembled && getMaxPower() > 0L;
+        if (!shouldRefreshEnergyPortSubscription(level, receiverActive)) {
+            return;
+        }
+        if (energyReceiverSubscribed && !receiverActive) {
+            HbmEnergyUtil.unsubscribeReceiverFromPorts(level, pos, getEnergyPorts(), energy);
+        }
+        if (receiverActive) {
+            subscribeEnergyReceiverToPorts(getEnergyPorts(), energy);
+        }
+        energyReceiverSubscribed = receiverActive;
+        lastEnergyPortSignature = energyPortSignature(getEnergyPorts());
+        energySubscriptionDirty = false;
+    }
+
+    private boolean shouldRefreshEnergyPortSubscription(Level level, boolean receiverActive) {
+        int portSignature = energyPortSignature(getEnergyPorts());
+        return energySubscriptionDirty
+                || energyReceiverSubscribed != receiverActive
+                || portSignature != lastEnergyPortSignature
+                || Math.floorMod(level.getGameTime() + worldPosition.hashCode(), ENERGY_SUBSCRIPTION_KEEPALIVE_TICKS) == 0L;
+    }
+
+    private void markEnergySubscriptionDirty() {
+        energySubscriptionDirty = true;
+        markEnergyPortSubscriptionsDirty();
+    }
+
+    private static int energyPortSignature(Iterable<EnergyPort> ports) {
+        int signature = 1;
+        if (ports != null) {
+            for (EnergyPort port : ports) {
+                signature = 31 * signature + (port == null ? 0 : port.hashCode());
+            }
+        }
+        return signature;
     }
 
     @Override
@@ -276,6 +384,7 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
         tag.putInt("capacitorCount", capacitorCount);
         tag.putInt("turbochargerCount", turbochargerCount);
         ListTag list = new ListTag();
+        ListTag assembledPartList = new ListTag();
         tag.putInt("portCount", ports.size());
         for (int i = 0; i < ports.size(); i++) {
             BlockPos port = ports.get(i);
@@ -287,6 +396,14 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
             tag.putIntArray("p" + i, new int[] {port.getX(), port.getY(), port.getZ()});
         }
         tag.put("ports", list);
+        for (BlockPos part : assembledParts) {
+            CompoundTag entry = new CompoundTag();
+            entry.putInt("x", part.getX());
+            entry.putInt("y", part.getY());
+            entry.putInt("z", part.getZ());
+            assembledPartList.add(entry);
+        }
+        tag.put("assembledParts", assembledPartList);
     }
 
     @Override
@@ -317,6 +434,48 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
                     ports.add(new BlockPos(port[0], port[1], port[2]));
                 }
             }
+        }
+        rebuildCachedEnergyPorts();
+        assembledParts.clear();
+        ListTag partList = tag.getList("assembledParts", Tag.TAG_COMPOUND);
+        for (int i = 0; i < partList.size(); i++) {
+            CompoundTag entry = partList.getCompound(i);
+            assembledParts.add(new BlockPos(entry.getInt("x"), entry.getInt("y"), entry.getInt("z")));
+        }
+        markEnergySubscriptionDirty();
+    }
+
+    private void ensureAssemblyPartsKnown(Level level) {
+        if (!assembled || !assembledParts.isEmpty() || level.isClientSide) {
+            return;
+        }
+        Queue<BlockPos> queue = new ArrayDeque<>();
+        Set<BlockPos> visited = new HashSet<>();
+        boolean rebuildPorts = ports.isEmpty();
+        for (Direction direction : Direction.values()) {
+            queue.add(worldPosition.relative(direction));
+        }
+        while (!queue.isEmpty() && visited.size() < 1024) {
+            BlockPos current = queue.remove();
+            if (!visited.add(current) || !level.getBlockState(current).is(ModBlocks.ICF_BLOCK.get())) {
+                continue;
+            }
+            if (!(level.getBlockEntity(current) instanceof ICFAssembledBlockEntity assembledBlock)
+                    || !assembledBlock.isLinkedTo(worldPosition)) {
+                continue;
+            }
+            assembledParts.add(current.immutable());
+            if (rebuildPorts && assembledBlock.isPort()) {
+                ports.add(current.immutable());
+            }
+            for (Direction direction : Direction.values()) {
+                queue.add(current.relative(direction));
+            }
+        }
+        if (!assembledParts.isEmpty()) {
+            rebuildCachedEnergyPorts();
+            markEnergySubscriptionDirty();
+            setChanged();
         }
     }
 
@@ -354,9 +513,11 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity implements Le
     private AABB beamAabb(Direction dir, int length) {
         double x1 = Math.min(worldPosition.getX(), worldPosition.getX() + dir.getStepX() * length) + 0.2D;
         double x2 = Math.max(worldPosition.getX(), worldPosition.getX() + dir.getStepX() * length) + 0.8D;
+        double y1 = Math.min(worldPosition.getY(), worldPosition.getY() + dir.getStepY() * length) + 0.2D;
+        double y2 = Math.max(worldPosition.getY(), worldPosition.getY() + dir.getStepY() * length) + 0.8D;
         double z1 = Math.min(worldPosition.getZ(), worldPosition.getZ() + dir.getStepZ() * length) + 0.2D;
         double z2 = Math.max(worldPosition.getZ(), worldPosition.getZ() + dir.getStepZ() * length) + 0.8D;
-        return new AABB(x1, worldPosition.getY() + 0.2D, z1, x2, worldPosition.getY() + 0.8D, z2);
+        return new AABB(x1, y1, z1, x2, y2, z2);
     }
 
     private long legacySyncedPower() {

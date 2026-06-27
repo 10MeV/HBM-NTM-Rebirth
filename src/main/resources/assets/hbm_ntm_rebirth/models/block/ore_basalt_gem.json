@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "hbm_ntm_rebirth:block/ore_basalt_gem_top",
+    "up": "hbm_ntm_rebirth:block/ore_basalt_gem_top",
+    "north": "hbm_ntm_rebirth:block/ore_basalt_gem",
+    "south": "hbm_ntm_rebirth:block/ore_basalt_gem",
+    "west": "hbm_ntm_rebirth:block/ore_basalt_gem",
+    "east": "hbm_ntm_rebirth:block/ore_basalt_gem",
+    "particle": "hbm_ntm_rebirth:block/ore_basalt_gem"
+  }
+}

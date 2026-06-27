@@ -1,0 +1,10 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:solidifier",
+    "output":  {
+                   "item":  "hbm_ntm_rebirth:solid_fuel_bf"
+               },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:balefire",
+                  "amount":  230
+              }
+}

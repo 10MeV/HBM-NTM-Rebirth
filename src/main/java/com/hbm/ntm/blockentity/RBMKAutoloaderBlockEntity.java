@@ -4,7 +4,8 @@ import com.hbm.ntm.item.RBMKFuelRodItem;
 import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.menu.RBMKAutoloaderMenu;
 import com.hbm.ntm.multiblock.MultiblockHelper;
-import com.hbm.ntm.network.HbmTileSyncable;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.neutron.RBMKAutoloaderPlanner;
 import com.hbm.ntm.neutron.RBMKFuelRodSpec;
 import com.hbm.ntm.neutron.RBMKFuelRodState;
@@ -16,6 +17,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvider, HbmTileSyncable, CopiableSettings {
+public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyLoadedTile, CopiableSettings {
     public static final String TAG_ITEMS = "items";
     public static final String TAG_SLOT = "slot";
     public static final String TAG_PISTON = "piston";
@@ -50,6 +52,7 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
     public static final String CONTROL_PLUS = "plus";
     private static final int LAYOUT_REPAIR_INTERVAL = 20;
 
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private final ItemStackHandler items = new ItemStackHandler(RBMKAutoloaderPlanner.SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -86,6 +89,11 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
 
     public RBMKAutoloaderBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.RBMK_AUTOLOADER.get(), pos, state);
+    }
+
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RBMKAutoloaderBlockEntity blockEntity) {
@@ -169,9 +177,6 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-            if (!level.isClientSide) {
-                syncToTracking();
-            }
         }
     }
 
@@ -227,6 +232,7 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
             setChanged();
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
         }
+        networkPackNT(100);
     }
 
     private void tickClient() {
@@ -343,12 +349,57 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
         if (plan.cycle() != cycle) {
             cycle = plan.cycle();
             setChanged();
+            networkPackNT(100);
+        }
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = legacyLoadedTileClientTag();
+        tag.putDouble(TAG_PISTON, piston);
+        tag.putInt(TAG_CYCLE, cycle);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_PISTON)) {
+            syncPiston = tag.getDouble(TAG_PISTON);
+            if (!clientRenderInitialized) {
+                initializeClientRenderPiston(syncPiston);
+            } else {
+                turnProgress = 2;
+            }
+        }
+        if (tag.contains(TAG_CYCLE)) {
+            cycle = clampCycle(tag.getInt(TAG_CYCLE));
+        }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        writeLegacyLoadedTileBinary(data);
+        data.writeDouble(piston);
+        data.writeInt(cycle);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        syncPiston = data.readDouble();
+        cycle = clampCycle(data.readInt());
+        if (!clientRenderInitialized) {
+            initializeClientRenderPiston(syncPiston);
+        } else {
+            turnProgress = 2;
         }
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
         tag.put(TAG_ITEMS, HbmItemStackUtil.saveSlottedItems(items, TAG_SLOT));
         tag.putDouble(TAG_PISTON, piston);
         tag.putBoolean(TAG_RETRACTING, isRetracting);
@@ -359,6 +410,7 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readLegacyLoadedTileNbt(tag);
         loadItems(tag);
         piston = tag.getDouble(TAG_PISTON);
         if (level != null && level.isClientSide) {

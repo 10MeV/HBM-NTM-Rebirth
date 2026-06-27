@@ -3,9 +3,9 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.IndustrialSteamTurbineBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -59,18 +59,19 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
-        context = context.withRenderMode(LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
-        renderPlan(MODEL, plan, context, poseStack);
+        renderPlan(MODEL, plan, poseStack, buffer, modelLight, packedOverlay,
+                LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
 
         poseStack.popPose();
     }
 
     static void renderPlan(LegacyWavefrontModel model, LegacyTileRenderPlans.IndustrialTurbinePlan plan,
-            ObjRenderContext context, PoseStack poseStack) {
-        model.renderOnlyInCallOrder(context, TURBINE);
-        renderRotatingPart(model, plan.gauge(), GAUGE, context, poseStack);
-        renderRotatingPart(model, plan.flywheel(), FLYWHEEL, context, poseStack);
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
+        model.renderOnlyInCallOrder(model.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
+                TURBINE, renderMode);
+        renderRotatingPart(model, plan.gauge(), GAUGE, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderRotatingPart(model, plan.flywheel(), FLYWHEEL, poseStack, buffer, packedLight, packedOverlay, renderMode);
     }
 
     private static double gaugeDegrees(FluidType type) {
@@ -88,12 +89,14 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
 
     private static void renderRotatingPart(LegacyWavefrontModel model,
             LegacyTileRenderPlans.RotatingModelPartPlan part, LegacyWavefrontModel.SelectionHandle handle,
-            ObjRenderContext context, PoseStack poseStack) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
         poseStack.pushPose();
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
         rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        model.renderOnlyInCallOrder(context, handle);
+        model.renderOnlyInCallOrder(model.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
+                handle, renderMode);
         poseStack.popPose();
     }
 

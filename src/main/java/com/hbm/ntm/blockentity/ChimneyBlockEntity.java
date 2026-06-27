@@ -1,8 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnector;
@@ -27,7 +24,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 public class ChimneyBlockEntity extends BlockEntity
-        implements HbmFluidConnector, HbmFluidReceiver, LegacyLookOverlayProvider, HbmLegacyLoadedTile {
+        implements HbmFluidConnector, HbmFluidReceiver, HbmLegacyLoadedTile {
     private static final String TAG_ON_TICKS = "onTicks";
     private static final String TAG_ASH_TICK = "ashTick";
     private static final String TAG_SOOT_TICK = "sootTick";
@@ -104,11 +101,6 @@ public class ChimneyBlockEntity extends BlockEntity
     @Override
     public long getDemand(FluidType type, int pressure) {
         return SmokeExhaustPollution.isSmoke(type) ? 1_000_000L : 0L;
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.fluidNames(SmokeExhaustPollution.SMOKES));
     }
 
     @Override

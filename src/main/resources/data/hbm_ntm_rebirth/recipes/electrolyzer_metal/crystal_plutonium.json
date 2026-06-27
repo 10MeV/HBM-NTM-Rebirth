@@ -1,0 +1,24 @@
+{
+    "type":  "hbm_ntm_rebirth:electrolyzer_metal",
+    "input":  {
+                  "ingredient":  {
+                                     "item":  "hbm_ntm_rebirth:crystal_plutonium"
+                                 },
+                  "count":  1
+              },
+    "output1":  {
+                    "material":  "Plutonium",
+                    "amount":  432
+                },
+    "output2":  {
+                    "material":  "Polonium",
+                    "amount":  144
+                },
+    "byproducts":  [
+                       {
+                           "item":  "hbm_ntm_rebirth:powder_lithium_tiny",
+                           "count":  3
+                       }
+                   ],
+    "duration":  600
+}

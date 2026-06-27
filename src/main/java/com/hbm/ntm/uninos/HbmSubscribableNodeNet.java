@@ -57,9 +57,19 @@ public class HbmSubscribableNodeNet<R, P, L extends HbmNetworkNode> extends HbmN
         return receiverEntries.size();
     }
 
+    public List<R> receiverSnapshot() {
+        pruneStale(System.currentTimeMillis());
+        return new ArrayList<>(receiverEntries.keySet());
+    }
+
     public int getProviderCount() {
         pruneStale(System.currentTimeMillis());
         return providerEntries.size();
+    }
+
+    public List<P> providerSnapshot() {
+        pruneStale(System.currentTimeMillis());
+        return new ArrayList<>(providerEntries.keySet());
     }
 
     public void resetTrackers() {

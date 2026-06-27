@@ -113,6 +113,11 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, BasicMachineBlockEntity blockEntity) {
         blockEntity.ticksExisted++;
+        int previousBurnTime = blockEntity.burnTime;
+        int previousSpeed = blockEntity.speed;
+        int previousPress = blockEntity.press;
+        boolean previousRetracting = blockEntity.retracting;
+        int previousDelay = blockEntity.delay;
         PressRecipe recipe = blockEntity.findMatchingPressRecipe(level);
         boolean canProcess = recipe != null;
 
@@ -152,10 +157,16 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
             }
         }
 
-        blockEntity.setChanged();
-        blockEntity.networkPackNT(50);
-        if (blockEntity.isPressActiveForSync(canProcess) || blockEntity.ticksExisted % 10 == 0) {
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+        boolean machineStateChanged = previousBurnTime != blockEntity.burnTime
+                || previousSpeed != blockEntity.speed
+                || previousPress != blockEntity.press
+                || previousRetracting != blockEntity.retracting
+                || previousDelay != blockEntity.delay;
+        if (machineStateChanged) {
+            blockEntity.setChanged();
+        }
+        if (machineStateChanged || blockEntity.isPressActiveForSync(canProcess) || blockEntity.ticksExisted % 20 == 0) {
+            blockEntity.networkPackNT(50);
         }
     }
 

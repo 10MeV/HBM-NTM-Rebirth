@@ -51,7 +51,7 @@ public class FT_Pheromone extends PheromoneFluidTrait {
 
     public void deserializeJSON(JsonObject object) {
         if (object != null && object.has("type")) {
-            this.type = object.get("type").getAsInt();
+            this.type = LegacyFluidTraitJson.intValue(object, "type", 0);
         }
     }
 }

@@ -1,10 +1,14 @@
 package com.hbm.ntm.fluid;
 
 import com.google.gson.JsonObject;
+import com.hbm.config.GeneralConfig;
+import com.hbm.inventory.fluid.Fluids;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.trait.ContainerFluidTrait;
+import com.hbm.ntm.fluid.trait.CorrosiveFluidTrait;
 import com.hbm.ntm.fluid.trait.FluidTrait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
+import com.hbm.render.util.EnumSymbol;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,6 +22,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public final class FluidType {
     public static final int ROOM_TEMPERATURE = 20;
@@ -28,13 +33,13 @@ public final class FluidType {
     private int color;
     private int guiTint;
     private String displayNameOverride;
-    private int poison;
-    private int flammability;
-    private int reactivity;
-    private FluidSymbol symbol;
+    public int poison;
+    public int flammability;
+    public int reactivity;
+    public EnumSymbol symbol;
     private final Map<Class<? extends FluidTrait>, FluidTrait> traits = new LinkedHashMap<>();
-    private int temperature = ROOM_TEMPERATURE;
-    private boolean renderTankWithTint;
+    public int temperature = ROOM_TEMPERATURE;
+    public boolean renderWithTint;
 
     FluidType(int id, String name, int color, int poison, int flammability, int reactivity, FluidSymbol symbol) {
         this(id, name, color, poison, flammability, reactivity, symbol, null, 0xFFFFFF, null, false);
@@ -56,15 +61,55 @@ public final class FluidType {
         this.poison = poison;
         this.flammability = flammability;
         this.reactivity = reactivity;
-        this.symbol = symbol;
+        this.symbol = EnumSymbol.fromModern(symbol);
         this.texture = texture(textureName == null || textureName.isBlank() ? toPath() : textureName);
-        this.renderTankWithTint = renderTankWithTint;
+        this.renderWithTint = renderTankWithTint;
         return this;
     }
 
     public FluidType setTemperature(int temperature) {
         this.temperature = temperature;
         return this;
+    }
+
+    @Deprecated(forRemoval = false)
+    public FluidType setTemp(int temperature) {
+        return setTemperature(temperature);
+    }
+
+    @Deprecated(forRemoval = false)
+    public FluidType addContainers(Object... containers) {
+        if (containers == null || containers.length == 0) {
+            return this;
+        }
+        ContainerFluidTrait trait = mutableContainerTrait();
+        for (Object container : containers) {
+            if (container instanceof Fluids.CD_Canister canister) {
+                trait.withCanister(canister.color);
+            } else if (container instanceof Fluids.CD_Gastank gasTank) {
+                trait.withGasTank(gasTank.bottleColor, gasTank.labelColor);
+            }
+        }
+        return this;
+    }
+
+    @Deprecated(forRemoval = false)
+    @SuppressWarnings("unchecked")
+    public <T> T getContainer(Class<? extends T> container) {
+        if (container == null) {
+            return null;
+        }
+        ContainerFluidTrait trait = getTrait(ContainerFluidTrait.class);
+        if (trait == null) {
+            return null;
+        }
+        if (container == Fluids.CD_Canister.class && trait.hasCanister()) {
+            return (T) new Fluids.CD_Canister(trait.getCanisterColor());
+        }
+        if (container == Fluids.CD_Gastank.class && trait.hasGasTank()) {
+            return (T) new Fluids.CD_Gastank(trait.getGasTankBottleColor(), trait.getGasTankLabelColor());
+        }
+        return null;
     }
 
     public FluidType addTraits(FluidTrait... traits) {
@@ -115,8 +160,33 @@ public final class FluidType {
         return id;
     }
 
+    @Deprecated(forRemoval = false)
+    public int getID() {
+        return getId();
+    }
+
+    @Deprecated(forRemoval = false)
+    public static FluidType getEnum(int id) {
+        return HbmFluids.fromId(id);
+    }
+
+    @Deprecated(forRemoval = false)
+    public static FluidType getEnumFromName(String name) {
+        return HbmFluids.fromName(name);
+    }
+
     public String getName() {
         return name;
+    }
+
+    @Deprecated(forRemoval = false)
+    public String name() {
+        return getName();
+    }
+
+    @Deprecated(forRemoval = false)
+    public int ordinal() {
+        return getId();
     }
 
     public String toPath() {
@@ -125,6 +195,23 @@ public final class FluidType {
 
     public String getTranslationKey() {
         return "hbmfluid." + toPath();
+    }
+
+    @Deprecated(forRemoval = false)
+    public String getUnlocalizedName() {
+        return getTranslationKey();
+    }
+
+    @Deprecated(forRemoval = false)
+    public String getConditionalName() {
+        return displayNameOverride != null && !displayNameOverride.isBlank()
+                ? displayNameOverride
+                : getTranslationKey();
+    }
+
+    @Deprecated(forRemoval = false)
+    public String getLocalizedName() {
+        return getDisplayName().getString();
     }
 
     public Component getDisplayName() {
@@ -150,13 +237,28 @@ public final class FluidType {
         return guiTint;
     }
 
+    @Deprecated(forRemoval = false)
+    public int getTint() {
+        return getGuiTint();
+    }
+
+    @Deprecated(forRemoval = false)
+    public int getMSAColor() {
+        return getColor();
+    }
+
     public FluidType renderTankWithTint() {
-        this.renderTankWithTint = true;
+        this.renderWithTint = true;
+        return this;
+    }
+
+    FluidType setRenderTankWithTint(boolean renderTankWithTint) {
+        this.renderWithTint = renderTankWithTint;
         return this;
     }
 
     public boolean shouldRenderTankWithTint() {
-        return renderTankWithTint;
+        return renderWithTint;
     }
 
     public int getPoison() {
@@ -172,7 +274,7 @@ public final class FluidType {
     }
 
     public FluidSymbol getSymbol() {
-        return symbol;
+        return symbol == null ? FluidSymbol.NONE : symbol.modern();
     }
 
     public int getTemperature() {
@@ -181,6 +283,12 @@ public final class FluidType {
 
     public ResourceLocation getTexture() {
         return texture;
+    }
+
+    @Deprecated(forRemoval = false)
+    public String getDict(int quantity) {
+        String prefix = GeneralConfig.enableFluidContainerCompat() ? "container" : "ntmcontainer";
+        return legacyContainerTagName(prefix, quantity);
     }
 
     public JsonObject toJson() {
@@ -192,13 +300,13 @@ public final class FluidType {
         object.addProperty("p", poison);
         object.addProperty("f", flammability);
         object.addProperty("r", reactivity);
-        object.addProperty("symbol", symbol.name());
+        object.addProperty("symbol", getSymbol().name());
         object.addProperty("texture", texture.toString());
         if (displayNameOverride != null) {
             object.addProperty("displayName", displayNameOverride);
         }
         object.addProperty("temperature", temperature);
-        object.addProperty("renderTankWithTint", renderTankWithTint);
+        object.addProperty("renderTankWithTint", renderWithTint);
 
         JsonObject traitsJson = new JsonObject();
         for (FluidTrait trait : traits.values()) {
@@ -211,7 +319,7 @@ public final class FluidType {
     public void appendInfo(List<Component> info, boolean showHidden) {
         if (temperature != ROOM_TEMPERATURE) {
             info.add(Component.literal(temperature + "\u00b0C")
-                    .withStyle(temperature < ROOM_TEMPERATURE ? ChatFormatting.BLUE : ChatFormatting.RED));
+                    .withStyle(temperature < 0 ? ChatFormatting.BLUE : ChatFormatting.RED));
         }
 
         List<Component> hidden = new ArrayList<>();
@@ -230,8 +338,24 @@ public final class FluidType {
         }
     }
 
+    @Deprecated(forRemoval = false)
+    public void addInfo(List<String> info) {
+        if (info == null) {
+            return;
+        }
+        List<Component> components = new ArrayList<>();
+        appendInfo(components, false);
+        for (Component component : components) {
+            info.add(component.getString());
+        }
+    }
+
     public boolean isHot() {
         return temperature >= 100;
+    }
+
+    public boolean isCorrosive() {
+        return hasTrait(CorrosiveFluidTrait.class);
     }
 
     public boolean isAntimatter() {
@@ -246,6 +370,11 @@ public final class FluidType {
         return hasTrait(SimpleFluidTraits.NoId.class);
     }
 
+    @Deprecated(forRemoval = false)
+    public boolean hasNoID() {
+        return hasNoId();
+    }
+
     public boolean needsLeadContainer() {
         return hasTrait(SimpleFluidTraits.LeadContainer.class);
     }
@@ -254,6 +383,11 @@ public final class FluidType {
         return !hasTrait(SimpleFluidTraits.Antimatter.class)
                 && !hasTrait(SimpleFluidTraits.NoContainer.class)
                 && !hasTrait(SimpleFluidTraits.Viscous.class);
+    }
+
+    @Deprecated(forRemoval = false)
+    public boolean isDispersable() {
+        return isDispersible();
     }
 
     public boolean hasCanisterContainer() {
@@ -267,7 +401,34 @@ public final class FluidType {
     }
 
     public HbmFluidReleaseEffects.ReleaseReport onFluidRelease(Level level, BlockPos pos, int amountMb, FluidReleaseType releaseType) {
-        return HbmFluidReleaseEffects.applyRelease(level, pos, this, amountMb, releaseType);
+        return HbmFluidReleaseEffects.applyLegacyTraitRelease(level, pos, this, amountMb, releaseType);
+    }
+
+    @Deprecated(forRemoval = false)
+    public void onTankBroken(BlockEntity blockEntity, com.hbm.inventory.fluid.tank.FluidTank tank) {
+    }
+
+    @Deprecated(forRemoval = false)
+    public void onTankUpdate(BlockEntity blockEntity, com.hbm.inventory.fluid.tank.FluidTank tank) {
+    }
+
+    @Deprecated(forRemoval = false)
+    public HbmFluidReleaseEffects.ReleaseReport onFluidRelease(BlockEntity blockEntity,
+            com.hbm.inventory.fluid.tank.FluidTank tank, int overflowAmount) {
+        if (blockEntity == null || blockEntity.getLevel() == null) {
+            return HbmFluidReleaseEffects.previewLegacyTraitRelease(this, overflowAmount, FluidReleaseType.SPILL);
+        }
+        return onFluidRelease(blockEntity.getLevel(), blockEntity.getBlockPos().getX(), blockEntity.getBlockPos().getY(),
+                blockEntity.getBlockPos().getZ(), tank, overflowAmount);
+    }
+
+    @Deprecated(forRemoval = false)
+    public HbmFluidReleaseEffects.ReleaseReport onFluidRelease(Level level, int x, int y, int z,
+            com.hbm.inventory.fluid.tank.FluidTank tank, int overflowAmount) {
+        if (level == null) {
+            return HbmFluidReleaseEffects.previewLegacyTraitRelease(this, overflowAmount, FluidReleaseType.SPILL);
+        }
+        return onFluidRelease(level, new BlockPos(x, y, z), overflowAmount, FluidReleaseType.SPILL);
     }
 
     public HbmFluidReleaseEffects.ReleaseReport previewRelease(int amountMb, FluidReleaseType releaseType) {
@@ -280,6 +441,19 @@ public final class FluidType {
 
     public HbmFluidContactEffects.ContactReport previewEntityContact(Entity entity, float intensity) {
         return HbmFluidContactEffects.previewContact(this, entity, intensity);
+    }
+
+    private ContainerFluidTrait mutableContainerTrait() {
+        ContainerFluidTrait trait = getTrait(ContainerFluidTrait.class);
+        if (trait == null) {
+            trait = new ContainerFluidTrait();
+            addTraits(trait);
+        }
+        return trait;
+    }
+
+    private String legacyContainerTagName(String prefix, int quantity) {
+        return prefix + quantity + name.replace("_", "").toLowerCase(Locale.US);
     }
 
     private static String prettyName(String raw) {

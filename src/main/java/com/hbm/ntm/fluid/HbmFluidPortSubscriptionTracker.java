@@ -18,10 +18,17 @@ import net.minecraft.world.level.Level;
 public final class HbmFluidPortSubscriptionTracker {
     private final Set<FluidType> receiverTypes = new HashSet<>();
     private final Set<FluidType> providerTypes = new HashSet<>();
+    private final Set<ProviderKey> providerKeys = new HashSet<>();
 
     public TrackedPortRefreshReport refreshReceiver(Level level, BlockPos origin, Iterable<FluidPort> ports,
             Iterable<HbmFluidTank> receivingTanks, HbmFluidReceiver receiver) {
-        return refreshReceiverDetailed(level, origin, ports, receivingTanks, receiver).summary();
+        Set<FluidType> activeReceivers = receiverTypes(receivingTanks);
+        PortMachineDetachReport detach = detachObsoleteReceivers(level, origin, ports, activeReceivers, receiver);
+        PortMachineRefreshReport refresh = HbmFluidPortMachine.refreshReceiverPortsReport(
+                level, origin, ports, receivingTanks, receiver);
+        receiverTypes.clear();
+        receiverTypes.addAll(activeReceivers);
+        return new TrackedPortRefreshReport(detach, refresh);
     }
 
     public TrackedPortRefreshDetailReport refreshReceiverDetailed(Level level, BlockPos origin, Iterable<FluidPort> ports,
@@ -33,37 +40,63 @@ public final class HbmFluidPortSubscriptionTracker {
                 level, origin, ports, receivingTanks, receiver);
         receiverTypes.clear();
         receiverTypes.addAll(activeReceivers);
-        return new TrackedPortRefreshDetailReport(detach, refresh);
+        return new TrackedPortRefreshDetailReport(detach, refresh, activeReceivers, providerKeys);
     }
 
     public TrackedPortRefreshReport refreshProvider(Level level, BlockPos origin, Iterable<FluidPort> ports,
             Iterable<HbmFluidTank> sendingTanks, HbmFluidProvider provider) {
-        return refreshProviderDetailed(level, origin, ports, sendingTanks, provider).summary();
+        Set<ProviderKey> activeProviderKeys = providerKeys(sendingTanks);
+        Set<FluidType> activeProviders = providerTypes(activeProviderKeys);
+        PortMachineDetachReport detach = detachObsoleteProviders(level, origin, ports, activeProviders, provider);
+        PortMachineRefreshReport refresh = HbmFluidPortMachine.refreshProviderPortsReport(
+                level, origin, ports, sendingTanks, provider);
+        providerTypes.clear();
+        providerTypes.addAll(activeProviders);
+        providerKeys.clear();
+        providerKeys.addAll(activeProviderKeys);
+        return new TrackedPortRefreshReport(detach, refresh);
     }
 
     public TrackedPortRefreshDetailReport refreshProviderDetailed(Level level, BlockPos origin, Iterable<FluidPort> ports,
             Iterable<HbmFluidTank> sendingTanks, HbmFluidProvider provider) {
-        Set<FluidType> activeProviders = providerTypes(sendingTanks);
+        Set<ProviderKey> activeProviderKeys = providerKeys(sendingTanks);
+        Set<FluidType> activeProviders = providerTypes(activeProviderKeys);
         PortMachineDetachDetailReport detach = detachObsoleteProvidersDetailed(
                 level, origin, ports, activeProviders, provider);
         PortMachineRefreshDetailReport refresh = HbmFluidPortMachine.refreshProviderPortsDetailedReport(
                 level, origin, ports, sendingTanks, provider);
         providerTypes.clear();
         providerTypes.addAll(activeProviders);
-        return new TrackedPortRefreshDetailReport(detach, refresh);
+        providerKeys.clear();
+        providerKeys.addAll(activeProviderKeys);
+        return new TrackedPortRefreshDetailReport(detach, refresh, receiverTypes, activeProviderKeys);
     }
 
     public TrackedPortRefreshReport refreshTransceiver(Level level, BlockPos origin, Iterable<FluidPort> ports,
             Iterable<HbmFluidTank> receivingTanks, Iterable<HbmFluidTank> sendingTanks,
             HbmStandardFluidTransceiver transceiver) {
-        return refreshTransceiverDetailed(level, origin, ports, receivingTanks, sendingTanks, transceiver).summary();
+        Set<FluidType> activeReceivers = receiverTypes(receivingTanks);
+        Set<ProviderKey> activeProviderKeys = providerKeys(sendingTanks);
+        Set<FluidType> activeProviders = providerTypes(activeProviderKeys);
+        PortMachineDetachReport detach = detachObsoleteReceivers(level, origin, ports, activeReceivers, transceiver)
+                .merge(detachObsoleteProviders(level, origin, ports, activeProviders, transceiver));
+        PortMachineRefreshReport refresh = HbmFluidPortMachine.refreshTransceiverPortsReport(
+                level, origin, ports, receivingTanks, sendingTanks, transceiver);
+        receiverTypes.clear();
+        receiverTypes.addAll(activeReceivers);
+        providerTypes.clear();
+        providerTypes.addAll(activeProviders);
+        providerKeys.clear();
+        providerKeys.addAll(activeProviderKeys);
+        return new TrackedPortRefreshReport(detach, refresh);
     }
 
     public TrackedPortRefreshDetailReport refreshTransceiverDetailed(Level level, BlockPos origin,
             Iterable<FluidPort> ports, Iterable<HbmFluidTank> receivingTanks, Iterable<HbmFluidTank> sendingTanks,
             HbmStandardFluidTransceiver transceiver) {
         Set<FluidType> activeReceivers = receiverTypes(receivingTanks);
-        Set<FluidType> activeProviders = providerTypes(sendingTanks);
+        Set<ProviderKey> activeProviderKeys = providerKeys(sendingTanks);
+        Set<FluidType> activeProviders = providerTypes(activeProviderKeys);
         PortMachineDetachDetailReport detach = detachObsoleteReceiversDetailed(
                 level, origin, ports, activeReceivers, transceiver)
                 .merge(detachObsoleteProvidersDetailed(level, origin, ports, activeProviders, transceiver));
@@ -73,12 +106,26 @@ public final class HbmFluidPortSubscriptionTracker {
         receiverTypes.addAll(activeReceivers);
         providerTypes.clear();
         providerTypes.addAll(activeProviders);
-        return new TrackedPortRefreshDetailReport(detach, refresh);
+        providerKeys.clear();
+        providerKeys.addAll(activeProviderKeys);
+        return new TrackedPortRefreshDetailReport(detach, refresh, activeReceivers, activeProviderKeys);
     }
 
     public PortMachineDetachReport detachAll(Level level, BlockPos origin, Iterable<FluidPort> ports,
             HbmFluidReceiver receiver, HbmFluidProvider provider) {
-        return detachAllDetailed(level, origin, ports, receiver, provider).summary();
+        PortMachineDetachReport detach = HbmFluidPortMachine.PortMachineDetachReport.empty();
+        if (!receiverTypes.isEmpty() && receiver != null) {
+            detach = detach.merge(HbmFluidPortMachine.detachReceiverPortsForTypesReport(
+                    level, origin, ports, receiverTypes, receiver));
+        }
+        if (!providerTypes.isEmpty() && provider != null) {
+            detach = detach.merge(HbmFluidPortMachine.detachProviderPortsForTypesReport(
+                    level, origin, ports, providerTypes, provider));
+        }
+        receiverTypes.clear();
+        providerTypes.clear();
+        providerKeys.clear();
+        return detach;
     }
 
     public PortMachineDetachDetailReport detachAllDetailed(Level level, BlockPos origin, Iterable<FluidPort> ports,
@@ -94,6 +141,7 @@ public final class HbmFluidPortSubscriptionTracker {
         }
         receiverTypes.clear();
         providerTypes.clear();
+        providerKeys.clear();
         return detach;
     }
 
@@ -103,6 +151,10 @@ public final class HbmFluidPortSubscriptionTracker {
 
     public Set<FluidType> getTrackedProviderTypes() {
         return Set.copyOf(providerTypes);
+    }
+
+    public Set<ProviderKey> getTrackedProviderKeys() {
+        return Set.copyOf(providerKeys);
     }
 
     private PortMachineDetachReport detachObsoleteReceivers(Level level, BlockPos origin, Iterable<FluidPort> ports,
@@ -147,16 +199,35 @@ public final class HbmFluidPortSubscriptionTracker {
         return types;
     }
 
-    private static Set<FluidType> providerTypes(Iterable<HbmFluidTank> tanks) {
-        Set<FluidType> types = new HashSet<>();
+    private static Set<ProviderKey> providerKeys(Iterable<HbmFluidTank> tanks) {
+        Set<ProviderKey> keys = new HashSet<>();
         if (tanks != null) {
             for (HbmFluidTank tank : tanks) {
                 if (tank != null && tank.getTankType() != HbmFluids.NONE && tank.getFill() > 0) {
-                    types.add(tank.getTankType());
+                    keys.add(new ProviderKey(tank.getTankType(), tank.getPressure()));
+                }
+            }
+        }
+        return keys;
+    }
+
+    private static Set<FluidType> providerTypes(Iterable<ProviderKey> keys) {
+        Set<FluidType> types = new HashSet<>();
+        if (keys != null) {
+            for (ProviderKey key : keys) {
+                if (key != null && key.type() != HbmFluids.NONE) {
+                    types.add(key.type());
                 }
             }
         }
         return types;
+    }
+
+    public record ProviderKey(FluidType type, int pressure) {
+        public ProviderKey {
+            type = type == null ? HbmFluids.NONE : type;
+            pressure = HbmFluidTank.clampPressure(pressure);
+        }
     }
 
     public record TrackedPortRefreshReport(
@@ -175,16 +246,22 @@ public final class HbmFluidPortSubscriptionTracker {
 
     public record TrackedPortRefreshDetailReport(
             PortMachineDetachDetailReport detach,
-            PortMachineRefreshDetailReport refresh) {
+            PortMachineRefreshDetailReport refresh,
+            Set<FluidType> receiverTypes,
+            Set<ProviderKey> providerKeys) {
         public TrackedPortRefreshDetailReport {
             detach = detach == null ? PortMachineDetachDetailReport.empty() : detach;
             refresh = refresh == null ? PortMachineRefreshDetailReport.empty() : refresh;
+            receiverTypes = receiverTypes == null ? Set.of() : Set.copyOf(receiverTypes);
+            providerKeys = providerKeys == null ? Set.of() : Set.copyOf(providerKeys);
         }
 
         public static TrackedPortRefreshDetailReport empty() {
             return new TrackedPortRefreshDetailReport(
                     PortMachineDetachDetailReport.empty(),
-                    PortMachineRefreshDetailReport.empty());
+                    PortMachineRefreshDetailReport.empty(),
+                    Set.of(),
+                    Set.of());
         }
 
         public TrackedPortRefreshReport summary() {

@@ -46,6 +46,12 @@ public class FT_Poison extends PoisonFluidTrait {
         info.add(Component.literal("[Toxic Fumes]").withStyle(ChatFormatting.GREEN));
     }
 
+    public void addInfoHidden(List<String> info) {
+        if (info != null) {
+            info.add(ChatFormatting.GREEN + "[Toxic Fumes]");
+        }
+    }
+
     @Override
     public void writeJson(JsonObject object) {
         object.addProperty("level", level);
@@ -62,10 +68,10 @@ public class FT_Poison extends PoisonFluidTrait {
             return;
         }
         if (object.has("level")) {
-            this.level = object.get("level").getAsInt();
+            this.level = LegacyFluidTraitJson.intValue(object, "level", 0);
         }
         if (object.has("withering")) {
-            this.withering = object.get("withering").getAsBoolean();
+            this.withering = LegacyFluidTraitJson.booleanValue(object, "withering", false);
         }
     }
 }

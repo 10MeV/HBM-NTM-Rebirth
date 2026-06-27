@@ -111,7 +111,7 @@ public class FT_Polluting extends PollutingFluidTrait {
             JsonObject release = object.getAsJsonObject("release");
             for (PollutionHandler.PollutionType type : PollutionHandler.PollutionType.values()) {
                 if (release.has(type.name())) {
-                    release(type, release.get(type.name()).getAsFloat());
+                    release(type, LegacyFluidTraitJson.floatValue(release.get(type.name())));
                 }
             }
         }
@@ -119,7 +119,7 @@ public class FT_Polluting extends PollutingFluidTrait {
             JsonObject burn = object.getAsJsonObject("burn");
             for (PollutionHandler.PollutionType type : PollutionHandler.PollutionType.values()) {
                 if (burn.has(type.name())) {
-                    burn(type, burn.get(type.name()).getAsFloat());
+                    burn(type, LegacyFluidTraitJson.floatValue(burn.get(type.name())));
                 }
             }
         }

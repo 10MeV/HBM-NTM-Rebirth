@@ -2,18 +2,21 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.FusionTorusBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjFusionModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.Util;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
 
 public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlockEntity> {
-    private static final double EXTRA_PLASMA_LAYER_DISTANCE_SQ = 100.0D * 100.0D;
+    private static final double EXTRA_PLASMA_LAYER_DISTANCE = 100.0D;
 
     public FusionTorusRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -32,8 +35,6 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
     public void render(FusionTorusBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, blockEntity.getBlockState(), light, packedOverlay)
-                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -42,17 +43,27 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
             poseStack.mulPose(Axis.ZP.rotationDegrees(10.0F));
             poseStack.mulPose(Axis.YP.rotationDegrees(5.0F));
         }
-        ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_TEXTURE, context, "Torus");
+        ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_LEGACY, ObjFusionModels.TORUS_TEXTURE,
+                poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Torus");
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(blockEntity.getMagnet(partialTick)));
-        ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_TEXTURE, context, "Magnet");
+        ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_LEGACY, ObjFusionModels.TORUS_TEXTURE,
+                poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Magnet");
         poseStack.popPose();
 
-        if (blockEntity.getConnection(0)) ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_TEXTURE, context, "Bolts2");
-        if (blockEntity.getConnection(1)) ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_TEXTURE, context, "Bolts4");
-        if (blockEntity.getConnection(2)) ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_TEXTURE, context, "Bolts3");
-        if (blockEntity.getConnection(3)) ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_TEXTURE, context, "Bolts1");
+        if (blockEntity.getConnection(0)) {
+            renderSolidPart(poseStack, buffer, light, packedOverlay, "Bolts2");
+        }
+        if (blockEntity.getConnection(1)) {
+            renderSolidPart(poseStack, buffer, light, packedOverlay, "Bolts4");
+        }
+        if (blockEntity.getConnection(2)) {
+            renderSolidPart(poseStack, buffer, light, packedOverlay, "Bolts3");
+        }
+        if (blockEntity.getConnection(3)) {
+            renderSolidPart(poseStack, buffer, light, packedOverlay, "Bolts1");
+        }
 
         if (blockEntity.getPlasmaEnergy() > 0L) {
             long time = Util.getMillis() + visualTimeOffset(blockEntity);
@@ -62,22 +73,44 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
             float glowExtra = positiveUnit(time / 10000.0D);
             float sparkleSpin = positiveUnit(time / 500.0D * -1.0D);
             float sparkleOsc = positiveUnit(Math.sin(time / 1000.0D) * 0.5D);
-            ObjRenderContext plasma = context.fullBright().withColor(
-                    blockEntity.getPlasmaR(), blockEntity.getPlasmaG(), blockEntity.getPlasmaB(), alpha);
-            ObjFusionModels.renderTorusPart(ObjFusionModels.PLASMA_TEXTURE,
-                    plasma.withAdditiveTranslucency().withUvScroll(0.0F, mainOsc), "Plasma");
-            if (shouldRenderExtraPlasmaLayers(blockEntity)) {
-                ObjFusionModels.renderTorusPart(ObjFusionModels.PLASMA_GLOW_TEXTURE, plasma.withAdditiveTranslucency()
-                        .withColor(blockEntity.getPlasmaR() * 2.0F, blockEntity.getPlasmaG() * 2.0F,
-                                blockEntity.getPlasmaB() * 2.0F, alpha * 2.0F)
-                        .withUvScroll(0.0F, positiveUnit(glowOsc + glowExtra)), "Plasma");
-                ObjFusionModels.renderTorusPart(ObjFusionModels.PLASMA_SPARKLE_TEXTURE, plasma.withAdditiveTranslucency()
-                        .withColor(blockEntity.getPlasmaR() * 2.0F, blockEntity.getPlasmaG() * 2.0F,
-                                blockEntity.getPlasmaB() * 2.0F, 0.75F)
-                        .withUvScroll(sparkleSpin, sparkleOsc), "Plasma");
-            }
+            float red = blockEntity.getPlasmaR();
+            float green = blockEntity.getPlasmaG();
+            float blue = blockEntity.getPlasmaB();
+            boolean renderExtraLayers = shouldRenderExtraPlasmaLayers(blockEntity);
+            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
+                renderPlasmaLayer(ObjFusionModels.PLASMA_TEXTURE, queuedPose, buffer, packedOverlay,
+                        red, green, blue, alpha, 0.0F, mainOsc);
+                if (renderExtraLayers) {
+                    renderPlasmaLayer(ObjFusionModels.PLASMA_GLOW_TEXTURE, queuedPose, buffer, packedOverlay,
+                            red * 2.0F, green * 2.0F, blue * 2.0F, alpha * 2.0F,
+                            0.0F, positiveUnit(glowOsc + glowExtra));
+                    renderPlasmaLayer(ObjFusionModels.PLASMA_SPARKLE_TEXTURE, queuedPose, buffer, packedOverlay,
+                            red * 2.0F, green * 2.0F, blue * 2.0F, 0.75F, sparkleSpin, sparkleOsc);
+                }
+            });
         }
         poseStack.popPose();
+    }
+
+    private static void renderSolidPart(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, String partName) {
+        ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_LEGACY, ObjFusionModels.TORUS_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, partName);
+    }
+
+    private static void renderPlasmaLayer(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedOverlay, float red, float green, float blue, float alpha, float uOffset, float vOffset) {
+        ObjFusionModels.renderTorusPart(texture, poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay,
+                colorByte(red), colorByte(green), colorByte(blue), colorByte(alpha), false,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, uvScroll(uOffset, vOffset), "Plasma");
+    }
+
+    private static LegacyWavefrontModel.UvTransform uvScroll(float uOffset, float vOffset) {
+        return LegacyWavefrontModel.UvTransform.dynamic(1.0F, 0.0F, 0.0F, 1.0F, uOffset, vOffset, 0.0F);
+    }
+
+    private static int colorByte(float value) {
+        return Math.max(0, Math.min(255, Math.round(value * 255.0F)));
     }
 
     private static long visualTimeOffset(FusionTorusBlockEntity blockEntity) {
@@ -85,11 +118,8 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
     }
 
     private static boolean shouldRenderExtraPlasmaLayers(FusionTorusBlockEntity blockEntity) {
-        Minecraft minecraft = Minecraft.getInstance();
-        return minecraft.player == null || minecraft.player.distanceToSqr(
-                blockEntity.getBlockPos().getX() + 0.5D,
-                blockEntity.getBlockPos().getY() + 2.5D,
-                blockEntity.getBlockPos().getZ() + 0.5D) < EXTRA_PLASMA_LAYER_DISTANCE_SQ;
+        return LegacyRenderDistanceGates.isPlayerWithinOr(blockEntity, 2.5D,
+                EXTRA_PLASMA_LAYER_DISTANCE, true);
     }
 
     private static float positiveUnit(double value) {

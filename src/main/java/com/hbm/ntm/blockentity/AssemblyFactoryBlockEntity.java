@@ -11,7 +11,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.ForgeRecipeFluidHandlerAdapter;
-import com.hbm.ntm.fluid.HbmFluidPortMachine;
+import com.hbm.ntm.fluid.HbmFluidPortSubscriptionTracker;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -97,6 +97,8 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     public static final int MODULE_BASE = 4;
 
     private final HbmStandardFluidTransceiver coolingFluidNetwork = new CoolingFluidNetwork();
+    private final HbmFluidPortSubscriptionTracker recipeFluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
+    private final HbmFluidPortSubscriptionTracker coolingFluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
     private final ItemStackHandler items = new ItemStackHandler(60) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -197,7 +199,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
             blockEntity.setChanged();
         }
         blockEntity.networkPackNT(100);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -500,6 +502,24 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     }
 
     @Override
+    public void setRemoved() {
+        detachFluidPortSubscriptions();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        detachFluidPortSubscriptions();
+        super.onChunkUnloaded();
+    }
+
+    private void detachFluidPortSubscriptions() {
+        recipeFluidPortSubscriptions.detachAllDetailed(level, worldPosition, recipeFluidPorts(), this, this);
+        coolingFluidPortSubscriptions.detachAllDetailed(level, worldPosition, coolingFluidPorts(),
+                coolingFluidNetwork, coolingFluidNetwork);
+    }
+
+    @Override
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
@@ -581,15 +601,15 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private int subscribeEnergyReceiverToPorts() {
-        return level == null || level.isClientSide
+        return level == null || level.isClientSide || Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) != 0L
                 ? 0
                 : HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, energyPorts(), this);
     }
 
     private void refreshFluidPortSubscriptions() {
-        HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, recipeFluidPorts(),
+        recipeFluidPortSubscriptions.refreshTransceiver(level, worldPosition, recipeFluidPorts(),
                 receivingTankList, sendingTankList, this);
-        HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, coolingFluidPorts(),
+        coolingFluidPortSubscriptions.refreshTransceiver(level, worldPosition, coolingFluidPorts(),
                 List.of(water), List.of(spentSteam), coolingFluidNetwork);
     }
 

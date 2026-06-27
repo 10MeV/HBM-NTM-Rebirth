@@ -2,7 +2,6 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyLanternBlock;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.client.obj.ObjTrinketModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -14,7 +13,6 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Blocks;
 
 public class LegacyLanternItemRenderer extends BlockEntityWithoutLevelRenderer {
     public static final LegacyLanternItemRenderer INSTANCE = new LegacyLanternItemRenderer(
@@ -40,15 +38,13 @@ public class LegacyLanternItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.pushPose();
         applyDisplay(displayContext, poseStack);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(),
-                packedLight, packedOverlay);
-        MODEL.renderOnlyInCallOrder(ObjTrinketModels.LANTERN_TEXTURE, context, LANTERN);
+        MODEL.renderOnlyInCallOrder(ObjTrinketModels.LANTERN_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay, LANTERN);
 
         LegacyTileRenderPlans.LanternLightPlan lightPlan =
                 LegacyTileRenderPlans.lanternLightPlan(System.currentTimeMillis());
-        MODEL.renderOnlyUntextured(
-                context.withRgb(lightPlan.red(), lightPlan.green(), lightPlan.blue()),
-                LIGHT);
+        MODEL.renderOnlyUntextured(poseStack, buffer, lightPlan.red(), lightPlan.green(), lightPlan.blue(),
+                lightPlan.alpha(), LIGHT);
         poseStack.popPose();
     }
 

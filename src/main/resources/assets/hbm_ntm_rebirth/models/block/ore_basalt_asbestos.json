@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "hbm_ntm_rebirth:block/ore_basalt_asbestos_top",
+    "up": "hbm_ntm_rebirth:block/ore_basalt_asbestos_top",
+    "north": "hbm_ntm_rebirth:block/ore_basalt_asbestos",
+    "south": "hbm_ntm_rebirth:block/ore_basalt_asbestos",
+    "west": "hbm_ntm_rebirth:block/ore_basalt_asbestos",
+    "east": "hbm_ntm_rebirth:block/ore_basalt_asbestos",
+    "particle": "hbm_ntm_rebirth:block/ore_basalt_asbestos"
+  }
+}

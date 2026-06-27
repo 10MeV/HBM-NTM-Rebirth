@@ -1,7 +1,9 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
+import com.hbm.ntm.api.tile.InfoProviderEC;
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -45,7 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
-        implements MenuProvider, HbmStandardFluidTransceiver, FusionPowerReceiver {
+        implements MenuProvider, HbmStandardFluidTransceiver, FusionPowerReceiver, InfoProviderEC {
     public static final int SLOT_FLUID_ID = 0;
     public static final int SLOT_INPUT = 1;
     public static final int SLOT_OUTPUT = 2;
@@ -100,7 +102,7 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
         changed |= breeder.tickServer(level);
         HbmFluidNetworkBlockEntity.serverTick(level, pos, state, breeder);
         breeder.networkPackNT(25);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             breeder.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -148,6 +150,11 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of(outputTank);
+    }
+
+    @Override
+    public boolean supportsFluidSettingsCopy() {
+        return false;
     }
 
     @Override
@@ -255,6 +262,25 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
         progress = data.readDouble();
         readTank(data, inputTank);
         readTank(data, outputTank);
+    }
+
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, displayedNeutronEnergy() > 0.0D && (canProcessSolid() || canProcessLiquid()));
+        data.putDouble(CompatEnergyControl.D_NEUTRON_FLUX, displayedNeutronEnergy());
+        data.putInt(CompatEnergyControl.I_PROGRESS, (int) Math.round(progress * 100.0D / CAPACITY));
+        data.putDouble(CompatEnergyControl.D_FUSION_PROGRESS_RAW, progress / CAPACITY);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_FUSION_INPUT, inputTank);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_FUSION_OUTPUT, outputTank);
+        putItemInfo(data, items.getStackInSlot(SLOT_INPUT),
+                CompatEnergyControl.S_FUSION_INPUT_ITEM, CompatEnergyControl.I_FUSION_INPUT_COUNT);
+        putItemInfo(data, items.getStackInSlot(SLOT_OUTPUT),
+                CompatEnergyControl.S_FUSION_OUTPUT_ITEM, CompatEnergyControl.I_FUSION_OUTPUT_COUNT);
+    }
+
+    private static void putItemInfo(CompoundTag data, ItemStack stack, String nameKey, String countKey) {
+        data.putString(nameKey, stack.isEmpty() ? "" : stack.getDescriptionId());
+        data.putInt(countKey, stack.isEmpty() ? 0 : stack.getCount());
     }
 
     @Override

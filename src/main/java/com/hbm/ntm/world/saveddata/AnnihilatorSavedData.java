@@ -3,6 +3,7 @@ package com.hbm.ntm.world.saveddata;
 import com.hbm.ntm.util.HbmRegistryUtil;
 
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.recipe.AnnihilatorRecipeRuntime;
 import net.minecraft.nbt.CompoundTag;
@@ -1539,7 +1540,7 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         public static PoolKey fluid(String fluid) {
-            return new PoolKey(Kind.FLUID, null, 0, Objects.requireNonNull(fluid, "fluid"), null);
+            return new PoolKey(Kind.FLUID, null, 0, normalizeFluidName(fluid), null);
         }
 
         public static PoolKey oreDict(String oreDict) {
@@ -1573,17 +1574,23 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         public FluidType fluidType() {
-            return kind == Kind.FLUID ? HbmFluids.fromName(fluid) : HbmFluids.NONE;
+            return kind == Kind.FLUID ? HbmFluidJsonUtil.readFluidReference(fluid) : HbmFluids.NONE;
         }
 
         public Object toLegacyObject() {
             return switch (kind) {
                 case ITEM -> HbmRegistryUtil.item(item).map(Object.class::cast).orElse(item);
                 case ITEM_META -> new LegacyItemKey(item, meta);
-                case FLUID -> HbmFluids.fromName(fluid);
+                case FLUID -> HbmFluidJsonUtil.readFluidReference(fluid);
                 case ORE_DICT -> oreDict;
                 case UNKNOWN -> null;
             };
+        }
+
+        private static String normalizeFluidName(String fluid) {
+            String name = Objects.requireNonNull(fluid, "fluid");
+            FluidType type = HbmFluidJsonUtil.readFluidReference(name);
+            return type == HbmFluids.NONE ? name : type.getName();
         }
 
         private static Optional<ResourceLocation> readItem(CompoundTag tag) {

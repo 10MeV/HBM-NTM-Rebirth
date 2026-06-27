@@ -5,6 +5,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmRegistryUtil;
@@ -193,8 +195,7 @@ public class AnnihilatorRecipe implements Recipe<Container> {
             return switch (type) {
                 case "item" -> AnnihilatorSavedData.PoolKey.item(resolveItemKey(key, "item"));
                 case "comp" -> readComparableKey(key);
-                case "fluid" -> AnnihilatorSavedData.PoolKey.fluid(normalizeFluidName(
-                        GsonHelper.getAsString(key, "fluid")));
+                case "fluid" -> AnnihilatorSavedData.PoolKey.fluid(readFluidKeyName(key));
                 case "dict" -> AnnihilatorSavedData.PoolKey.oreDict(GsonHelper.getAsString(key, "dict"));
                 default -> throw new JsonSyntaxException("Unsupported annihilator key type: " + type);
             };
@@ -355,12 +356,9 @@ public class AnnihilatorRecipe implements Recipe<Container> {
             return id;
         }
 
-        private static String normalizeFluidName(String name) {
-            if (name.indexOf(':') < 0) {
-                return name;
-            }
-            ResourceLocation id = ResourceLocation.tryParse(name);
-            return id == null ? name : id.getPath();
+        private static String readFluidKeyName(JsonObject key) {
+            FluidType type = HbmFluidJsonUtil.requireFluidReference(key.get("fluid"), "annihilator fluid key");
+            return type.getName();
         }
     }
 }

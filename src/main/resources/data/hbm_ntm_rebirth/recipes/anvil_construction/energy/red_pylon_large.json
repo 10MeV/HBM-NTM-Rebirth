@@ -1,0 +1,27 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "tag": "forge:any/concrete" },
+      "count": 2,
+      "legacy_ore": "anyConcrete"
+    },
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:steel_scaffold" },
+      "count": 8
+    },
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:plate_polymer" },
+      "count": 8
+    },
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:coil_copper" },
+      "count": 4
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:red_pylon_large"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

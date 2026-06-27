@@ -1,0 +1,19 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:catalytic_reformer",
+    "output3":  {
+                    "fluid":  "hbm_ntm_rebirth:hydrogen",
+                    "amount":  5
+                },
+    "output1":  {
+                    "fluid":  "hbm_ntm_rebirth:reformate",
+                    "amount":  50
+                },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:naphtha_coker",
+                  "amount":  100
+              },
+    "output2":  {
+                    "fluid":  "hbm_ntm_rebirth:reformgas",
+                    "amount":  10
+                }
+}

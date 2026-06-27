@@ -1,13 +1,12 @@
 package com.hbm.ntm.client.render;
 
 import com.hbm.ntm.client.ClientHbmPlayerProperties;
+import com.hbm.ntm.client.obj.LegacyLineRenderer;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.renderer.LegacyOverheadRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -20,8 +19,10 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
@@ -72,14 +73,11 @@ public final class HbmOverheadMarkers {
         RenderSystem.depthMask(false);
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.getBuilder();
-        builder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
-
+        List<LegacyWavefrontModel.UntexturedLineTransient> lines = new ArrayList<>(ACTIVE.size() * 12);
         for (Map.Entry<BlockPos, Marker> entry : ACTIVE.entrySet()) {
-            renderBox(builder, markerPose, cameraPos, entry.getKey(), entry.getValue());
+            collectBox(lines, cameraPos, entry.getKey(), entry.getValue());
         }
-        tesselator.end();
+        LegacyLineRenderer.drawPositionColorLines(Tesselator.getInstance(), markerPose.last(), lines);
 
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
@@ -162,8 +160,12 @@ public final class HbmOverheadMarkers {
         buffer.endBatch();
     }
 
-    private static void renderBox(BufferBuilder builder, PoseStack poseStack, Vec3 cameraPos, BlockPos pos, Marker marker) {
-        LegacyOverheadRenderer.markerBoxRelative(builder, poseStack.last(), pos, cameraPos, marker.color, 255);
+    private static void collectBox(List<LegacyWavefrontModel.UntexturedLineTransient> lines,
+            Vec3 cameraPos, BlockPos pos, Marker marker) {
+        lines.addAll(LegacyLineRenderer.boxLines(
+                pos.getX() - cameraPos.x, pos.getY() - cameraPos.y, pos.getZ() - cameraPos.z,
+                pos.getX() + 1.0D - cameraPos.x, pos.getY() + 1.0D - cameraPos.y, pos.getZ() + 1.0D - cameraPos.z,
+                marker.color, 255));
     }
 
     private record Marker(int color, long expireAt, double maxDistance, String label) {

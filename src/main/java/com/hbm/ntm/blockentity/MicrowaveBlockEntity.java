@@ -120,8 +120,7 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
         }
 
         microwave.networkPackNT(20);
-        if (oldTime != microwave.time || oldSpeed != microwave.speed || oldPower != microwave.energy.getPower()
-                || level.getGameTime() % 20L == 0L) {
+        if (oldTime != microwave.time || oldSpeed != microwave.speed || oldPower != microwave.energy.getPower()) {
             microwave.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

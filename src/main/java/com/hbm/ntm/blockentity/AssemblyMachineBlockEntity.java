@@ -11,7 +11,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeRecipeFluidHandlerAdapter;
-import com.hbm.ntm.fluid.HbmFluidPortMachine;
+import com.hbm.ntm.fluid.HbmFluidPortSubscriptionTracker;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -92,7 +92,6 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
             UpgradeType.SPEED, 3,
             UpgradeType.POWER, 3,
             UpgradeType.OVERDRIVE, 3);
-
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private final ItemStackHandler items = new ItemStackHandler(17) {
         @Override
@@ -130,6 +129,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private final HbmEnergyStorage energy = new HbmEnergyStorage(DEFAULT_MAX_POWER, DEFAULT_MAX_POWER, 0L);
     private final HbmFluidTank inputTank = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
     private final HbmFluidTank outputTank = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
+    private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AssemblyAccessibleItemHandler());
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
@@ -168,7 +168,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
             blockEntity.setChanged();
         }
         blockEntity.networkPackNT(100);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -584,7 +584,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private int subscribeEnergyReceiverToPorts() {
-        return level == null || level.isClientSide
+        return level == null || level.isClientSide || Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) != 0L
                 ? 0
                 : HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, ENERGY_PORTS, this);
     }
@@ -603,8 +603,28 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private void refreshFluidPortSubscriptions() {
-        HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, FLUID_PORTS,
-                List.of(inputTank), List.of(outputTank), this);
+        if (level != null && !level.isClientSide) {
+            fluidPortSubscriptions.refreshTransceiver(level, worldPosition, FLUID_PORTS,
+                    List.of(inputTank), List.of(outputTank), this);
+        }
+    }
+
+    private void detachFluidPortSubscriptions() {
+        if (level != null && !level.isClientSide) {
+            fluidPortSubscriptions.detachAll(level, worldPosition, FLUID_PORTS, this, this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        detachFluidPortSubscriptions();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        detachFluidPortSubscriptions();
+        super.onChunkUnloaded();
     }
 
     private class AssemblyAccessibleItemHandler implements IItemHandler {

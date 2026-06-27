@@ -39,7 +39,7 @@ public class FoundryChannelBlockEntity extends FoundryBaseBlockEntity {
         int oldAmount = channel.amount;
         Object oldType = channel.type;
         channel.tickServer(level);
-        if (oldAmount != channel.amount || oldType != channel.type || level.getGameTime() % 20L == 0L) {
+        if (oldAmount != channel.amount || oldType != channel.type) {
             channel.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

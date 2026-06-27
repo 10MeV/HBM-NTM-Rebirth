@@ -1,15 +1,14 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.obj.LegacyRenderColor;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjRbmkModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
-import com.hbm.ntm.neutron.RBMKControlRodPlanner;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.util.Mth;
 
 public final class LegacyRbmkMachineRenderer {
@@ -50,24 +49,25 @@ public final class LegacyRbmkMachineRenderer {
     public static final double AUTOLOADER_INVENTORY_Y = -6.0D;
     public static final double AUTOLOADER_INVENTORY_SCALE = 1.75D;
 
-    public static void renderTerminalModel(ObjRenderContext context) {
-        PoseStack poseStack = context.poseStack();
+    public static void renderTerminalModel(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(TERMINAL_MODEL_X, 0.0D, 0.0D);
-        ObjRbmkModels.TERMINAL.renderAll(ObjRbmkModels.TERMINAL_TEXTURE, context);
+        ObjRbmkModels.renderTerminal(poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
         poseStack.popPose();
     }
 
-    public static void renderTerminalText(Font font, ObjRenderContext context, RBMKPanelPlanner.TerminalState state,
-            String workingLine, boolean cursor) {
-        renderTerminalText(font, context, terminalLines(font, state, workingLine, cursor));
+    public static void renderTerminalText(Font font, PoseStack poseStack, MultiBufferSource buffer,
+            RBMKPanelPlanner.TerminalState state, String workingLine, boolean cursor) {
+        renderTerminalText(font, poseStack, buffer, terminalLines(font, state, workingLine, cursor));
     }
 
-    public static void renderTerminalText(Font font, ObjRenderContext context, TerminalLine[] lines) {
+    public static void renderTerminalText(Font font, PoseStack poseStack, MultiBufferSource buffer,
+            TerminalLine[] lines) {
         if (font == null || lines == null) {
             return;
         }
-        PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.translate(TERMINAL_TEXT_X, TERMINAL_TEXT_Y, TERMINAL_TEXT_Z);
         for (TerminalLine line : lines) {
@@ -80,7 +80,7 @@ public final class LegacyRbmkMachineRenderer {
             poseStack.scale(TERMINAL_TEXT_SCALE, -TERMINAL_TEXT_SCALE, TERMINAL_TEXT_SCALE);
             poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
             font.drawInBatch(line.text(), 0.0F, -font.lineHeight / 2.0F, line.color(), false,
-                    poseStack.last().pose(), context.buffer(), Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+                    poseStack.last().pose(), buffer, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
             poseStack.popPose();
         }
         poseStack.popPose();
@@ -135,92 +135,69 @@ public final class LegacyRbmkMachineRenderer {
         return builder.toString();
     }
 
-    public static void renderCraneConsole(ObjRenderContext context, CraneConsoleState state, float partialTick,
-            long currentMillis) {
+    public static void renderCraneConsole(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, CraneConsoleState state, float partialTick, long currentMillis) {
         CraneConsoleState safe = state == null ? CraneConsoleState.EMPTY : state;
-        renderCraneConsolePlan(context, LegacyTileRenderPlans.craneConsolePlan(
+        renderCraneConsolePlan(poseStack, buffer, packedLight, packedOverlay, LegacyTileRenderPlans.craneConsolePlan(
                 safe.lastTiltFront(), safe.tiltFront(), safe.lastTiltLeft(), safe.tiltLeft(),
                 safe.loadedHeat(), safe.loadedEnrichment(), safe.loading(), safe.loaded(), safe.validTarget(),
                 null, currentMillis, partialTick));
     }
 
-    public static void renderCraneConsolePlan(ObjRenderContext context, LegacyTileRenderPlans.CraneConsolePlan plan) {
+    public static void renderCraneConsolePlan(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, LegacyTileRenderPlans.CraneConsolePlan plan) {
         if (plan == null) {
             return;
         }
-        PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.translate(plan.translateX(), 0.0D, 0.0D);
-        ObjRbmkModels.renderCraneConsolePart("Console_Coonsole", context);
-        renderCraneJoystick(context, plan.joystick());
-        renderCraneMeter(context, plan.meterHeat());
-        renderCraneMeter(context, plan.meterEnrichment());
-        renderCraneLamp(context, plan.loadingLamp());
-        renderCraneLamp(context, plan.targetLamp());
+        ObjRbmkModels.renderCraneConsolePart("Console_Coonsole", poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+        renderCraneJoystick(poseStack, buffer, packedLight, packedOverlay, plan.joystick());
+        renderCraneMeter(poseStack, buffer, packedLight, packedOverlay, plan.meterHeat());
+        renderCraneMeter(poseStack, buffer, packedLight, packedOverlay, plan.meterEnrichment());
+        renderCraneLamp(poseStack, buffer, plan.loadingLamp());
+        renderCraneLamp(poseStack, buffer, plan.targetLamp());
         poseStack.popPose();
     }
 
-    public static void renderCraneJoystick(ObjRenderContext context, double lastTiltFront, double tiltFront,
-            double lastTiltLeft, double tiltLeft, float partialTick) {
-        PoseStack poseStack = context.poseStack();
-        poseStack.pushPose();
-        poseStack.translate(CRANE_JOYSTICK_PIVOT_X, CRANE_JOYSTICK_PIVOT_Y, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) interpolate(lastTiltFront, tiltFront, partialTick)));
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) interpolate(lastTiltLeft, tiltLeft, partialTick)));
-        poseStack.translate(-CRANE_JOYSTICK_PIVOT_X, CRANE_JOYSTICK_RETURN_Y, 0.0D);
-        ObjRbmkModels.renderCraneConsolePart("Joystick", context);
-        poseStack.popPose();
-    }
-
-    public static void renderCraneJoystick(ObjRenderContext context, LegacyTileRenderPlans.CraneJoystickPlan plan) {
+    public static void renderCraneJoystick(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, LegacyTileRenderPlans.CraneJoystickPlan plan) {
         if (plan == null) {
             return;
         }
-        PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.translate(plan.pivotX(), plan.pivotY(), 0.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) plan.tiltFrontDegrees()));
         poseStack.mulPose(Axis.XP.rotationDegrees((float) plan.tiltLeftDegrees()));
         poseStack.translate(-plan.pivotX(), plan.restoreY(), 0.0D);
-        ObjRbmkModels.renderCraneConsolePart("Joystick", context);
+        ObjRbmkModels.renderCraneConsolePart("Joystick", poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
         poseStack.popPose();
     }
 
-    public static void renderCraneMeter(ObjRenderContext context, String partName, double pivotZ, double value,
-            long currentMillis) {
-        PoseStack poseStack = context.poseStack();
-        poseStack.pushPose();
-        poseStack.translate(0.0D, CRANE_METER_PIVOT_Y, pivotZ);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) craneMeterAngle(value, currentMillis)));
-        poseStack.translate(0.0D, -CRANE_METER_PIVOT_Y, -pivotZ);
-        ObjRbmkModels.renderCraneConsolePart(partName, context);
-        poseStack.popPose();
-    }
-
-    public static void renderCraneMeter(ObjRenderContext context, LegacyTileRenderPlans.CraneMeterPlan plan) {
+    public static void renderCraneMeter(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, LegacyTileRenderPlans.CraneMeterPlan plan) {
         if (plan == null) {
             return;
         }
-        PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.translate(0.0D, plan.pivotY(), plan.pivotZ());
         poseStack.mulPose(Axis.XP.rotationDegrees((float) plan.angleDegrees()));
         poseStack.translate(0.0D, -plan.pivotY(), -plan.pivotZ());
-        ObjRbmkModels.renderCraneConsolePart(plan.partName(), context);
+        ObjRbmkModels.renderCraneConsolePart(plan.partName(), poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
         poseStack.popPose();
     }
 
-    public static void renderCraneLamp(ObjRenderContext context, String partName, int color) {
-        ObjRbmkModels.renderCraneConsolePartUntextured(partName, context.fullBright().withColor(color));
-    }
-
-    public static void renderCraneLamp(ObjRenderContext context, LegacyTileRenderPlans.ModelPartTintPlan plan) {
+    public static void renderCraneLamp(PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTileRenderPlans.ModelPartTintPlan plan) {
         if (plan == null || !plan.active()) {
             return;
         }
         LegacyTileRenderPlans.RgbaPlan color = plan.color();
-        ObjRbmkModels.renderCraneConsolePartUntextured(plan.partName(),
-                context.fullBright().withRgba(color.redByte(), color.greenByte(), color.blueByte(), color.alphaByte()));
+        ObjRbmkModels.renderCraneConsolePartUntextured(plan.partName(), poseStack, buffer,
+                color.redByte(), color.greenByte(), color.blueByte(), color.alphaByte());
     }
 
     public static double craneMeterAngle(double value, long currentMillis) {
@@ -240,7 +217,8 @@ public final class LegacyRbmkMachineRenderer {
         return validTarget ? CRANE_LAMP_VALID_TARGET : CRANE_LAMP_INVALID_TARGET;
     }
 
-    public static void renderCrane(ObjRenderContext context, CraneState state, float partialTick) {
+    public static void renderCrane(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            CraneState state, float partialTick) {
         if (state == null || !state.setUp()) {
             return;
         }
@@ -248,44 +226,48 @@ public final class LegacyRbmkMachineRenderer {
         double posLeft = interpolate(state.lastPosLeft(), state.posLeft(), partialTick);
         double progress = interpolate(state.lastProgress(), state.progress(), partialTick);
 
-        PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.translate(-posFront, 0.0D, posLeft);
         poseStack.mulPose(Axis.YP.rotationDegrees(normalizedCraneRotation(state.craneRotationOffset())));
-        renderCraneGirder(context, state.spans(), posFront, posLeft, state.craneRotationOffset());
-        ObjRbmkModels.renderCranePart("Main", context);
-        renderCraneTubeAndCarriage(context, craneTubeHeight(state.height()));
+        renderCraneGirder(poseStack, buffer, packedLight, packedOverlay, state.spans(), posFront, posLeft,
+                state.craneRotationOffset());
+        ObjRbmkModels.renderCranePart("Main", poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+        renderCraneTubeAndCarriage(poseStack, buffer, packedLight, packedOverlay, craneTubeHeight(state.height()));
         poseStack.translate(0.0D, craneLiftY(progress), 0.0D);
-        ObjRbmkModels.renderCranePart("Lift", context);
+        ObjRbmkModels.renderCranePart("Lift", poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
         poseStack.popPose();
     }
 
-    public static void renderCraneGirder(ObjRenderContext context, CraneSpans spans, double posFront, double posLeft,
-            int craneRotationOffset) {
+    public static void renderCraneGirder(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, CraneSpans spans, double posFront, double posLeft, int craneRotationOffset) {
         CraneSpans safe = spans == null ? CraneSpans.ZERO : spans;
         GirderPlan plan = girderPlan(safe, posFront, posLeft, craneRotationOffset);
-        PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(-normalizedCraneRotation(craneRotationOffset)));
         poseStack.translate(plan.translateX(), 0.0D, plan.translateZ());
         poseStack.mulPose(Axis.YP.rotationDegrees(normalizedCraneRotation(craneRotationOffset)));
         for (int i = 0; i < plan.span(); i++) {
-            ObjRbmkModels.renderCranePart("Girder", context);
+            ObjRbmkModels.renderCranePart("Girder", poseStack, buffer, packedLight, packedOverlay,
+                    LegacyTexturedRenderMode.CUTOUT_NO_CULL);
             poseStack.translate(-1.0D, 0.0D, 0.0D);
         }
         poseStack.popPose();
     }
 
-    public static void renderCraneTubeAndCarriage(ObjRenderContext context, int tubeHeight) {
-        PoseStack poseStack = context.poseStack();
+    public static void renderCraneTubeAndCarriage(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, int tubeHeight) {
         poseStack.pushPose();
         int height = Math.max(0, tubeHeight);
         for (int i = 0; i < height; i++) {
-            ObjRbmkModels.renderCranePart("Tube", context);
+            ObjRbmkModels.renderCranePart("Tube", poseStack, buffer, packedLight, packedOverlay,
+                    LegacyTexturedRenderMode.CUTOUT_NO_CULL);
             poseStack.translate(0.0D, 1.0D, 0.0D);
         }
         poseStack.translate(0.0D, -1.0D, 0.0D);
-        ObjRbmkModels.renderCranePart("Carriage", context);
+        ObjRbmkModels.renderCranePart("Carriage", poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
         poseStack.popPose();
     }
 
@@ -312,18 +294,20 @@ public final class LegacyRbmkMachineRenderer {
         return normalized / 90 * 90;
     }
 
-    public static void renderAutoloader(ObjRenderContext context, double lastPiston, double renderPiston,
-            float partialTick) {
-        ObjRbmkModels.renderAutoloaderPart("Base", context);
-        renderAutoloaderPiston(context, lastPiston, renderPiston, partialTick);
+    public static void renderAutoloader(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, double lastPiston, double renderPiston, float partialTick,
+            LegacyTexturedRenderMode renderMode) {
+        ObjRbmkModels.renderAutoloaderPart("Base", poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderAutoloaderPiston(poseStack, buffer, packedLight, packedOverlay, lastPiston, renderPiston, partialTick,
+                renderMode);
     }
 
-    public static void renderAutoloaderPiston(ObjRenderContext context, double lastPiston, double renderPiston,
-            float partialTick) {
-        PoseStack poseStack = context.poseStack();
+    public static void renderAutoloaderPiston(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, double lastPiston, double renderPiston, float partialTick,
+            LegacyTexturedRenderMode renderMode) {
         poseStack.pushPose();
         poseStack.translate(0.0D, autoloaderPistonY(lastPiston, renderPiston, partialTick), 0.0D);
-        ObjRbmkModels.renderAutoloaderPart("Piston", context);
+        ObjRbmkModels.renderAutoloaderPart("Piston", poseStack, buffer, packedLight, packedOverlay, renderMode);
         poseStack.popPose();
     }
 
@@ -336,31 +320,6 @@ public final class LegacyRbmkMachineRenderer {
     public static double autoloaderPistonY(double lastPiston, double renderPiston, float partialTick) {
         return AUTOLOADER_PISTON_BASE_Y
                 + Mth.clamp(interpolate(lastPiston, renderPiston, partialTick), 0.0D, 1.0D) * AUTOLOADER_PISTON_SCALE;
-    }
-
-    public static void renderControlLid(ObjRenderContext context, boolean automatic,
-            RBMKControlRodPlanner.RBMKColor manualColor, double stackOffset, double lastLevel, double level,
-            float partialTick) {
-        renderControlLid(context, controlTexture(automatic, manualColor), stackOffset,
-                interpolate(lastLevel, level, partialTick));
-    }
-
-    public static void renderControlLid(ObjRenderContext context, ResourceLocation texture, double stackOffset,
-            double level) {
-        PoseStack poseStack = context.poseStack();
-        poseStack.pushPose();
-        poseStack.translate(0.0D, stackOffset + level, 0.0D);
-        ObjRbmkModels.renderControlLid(texture, poseStack, context.buffer(), context.packedLight(), context.packedOverlay());
-        poseStack.popPose();
-    }
-
-    public static ResourceLocation controlTexture(boolean automatic, RBMKControlRodPlanner.RBMKColor manualColor) {
-        if (automatic) {
-            return ObjRbmkModels.CONTROL_AUTO_TEXTURE;
-        }
-        return manualColor == null
-                ? ObjRbmkModels.CONTROL_STANDARD_TEXTURE
-                : ObjRbmkModels.manualControlTexture(manualColor.ordinal());
     }
 
     public static double interpolate(double previous, double current, float partialTick) {

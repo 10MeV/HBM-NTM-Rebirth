@@ -146,9 +146,6 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         if (previousPower != blockEntity.getPower() || previousRedstone != blockEntity.lastRedstone) {
             blockEntity.setChanged();
             blockEntity.updateComparatorOutputs();
-            if (level.getGameTime() % 15L == 0L) {
-                level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-            }
         }
 
         blockEntity.networkPackNT(100);
@@ -195,7 +192,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
             return null;
         }
         return LegacyLookOverlay.withTitle(stack.getHoverName(),
-                LegacyLookOverlayLines.energyStorage(getPower(), getMaxPower()));
+                LegacyLookOverlayLines.legacyBatteryEnergyStorage(getPower(), getMaxPower()));
     }
 
     public long getDeltaPerSecond() {

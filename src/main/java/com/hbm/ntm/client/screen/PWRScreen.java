@@ -95,8 +95,8 @@ public class PWRScreen extends AbstractContainerScreen<PWRMenu> {
                             + String.format(Locale.US, "%,d", PWRControllerHeat.HULL_CAPACITY) + " TU")),
                     mouseX, mouseY);
         } else if (isHovering(52, 31, 36, 18, mouseX, mouseY)) {
-            int percent = (int) (menu.getProgress() * 100.0D / menu.getProcessTime());
-            LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal(percent + "%")), mouseX, mouseY);
+            LegacyGuiElements.renderTooltip(graphics, font,
+                    List.of(Component.literal(menu.getDepletionPercent() + "%")), mouseX, mouseY);
         } else if (isHovering(52, 53, 54, 4, mouseX, mouseY)) {
             LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal(
                     "Control rod level: " + (100.0D - Math.round(menu.getRodLevelExact() * 100.0D) / 100.0D) + "%")),

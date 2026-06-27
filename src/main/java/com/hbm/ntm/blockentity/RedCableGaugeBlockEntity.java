@@ -14,7 +14,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,10 +51,7 @@ public class RedCableGaugeBlockEntity extends HbmEnergyNodeBlockEntity
         if (level.getGameTime() % 20L == 0L) {
             gauge.deltaLastSecond = gauge.deltaSecond;
             gauge.deltaSecond = 0L;
-        }
-        if (level.getGameTime() % 25L == 0L) {
             gauge.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
         gauge.networkPackNT(25);
     }

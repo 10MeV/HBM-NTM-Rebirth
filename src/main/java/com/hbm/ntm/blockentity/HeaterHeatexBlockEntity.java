@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.api.tile.ControlReceiver;
@@ -25,6 +24,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -118,7 +118,7 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
                 || oldOutputType != heatex.outputTank.getTankType()
                 || oldToCool != heatex.amountToCool
                 || oldDelay != heatex.tickDelay;
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             heatex.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -287,7 +287,8 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(LegacyLookOverlayLines.heatTu(heatEnergy)));
+        return LegacyLookOverlay.forBlock(this,
+                List.of(Component.literal(String.format(Locale.US, "%,d", heatEnergy) + " TU")));
     }
 
     @Override
@@ -307,13 +308,10 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
             return false;
         }
         boolean changed = false;
-        if (tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
-            int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
-            if (ids.length > 0) {
-                int safeIndex = index >= 0 && index < ids.length ? index : 0;
-                inputTank.setTankType(HbmFluids.fromId(ids[safeIndex]));
-                changed = true;
-            }
+        java.util.OptionalInt id = HbmFluidCopiable.copiedFluidIdAt(tag, index);
+        if (id.isPresent()) {
+            inputTank.setTankType(HbmFluids.fromId(id.getAsInt()));
+            changed = true;
         }
         if (tag.contains(TAG_TO_COOL)) {
             amountToCool = Mth.clamp(tag.getInt(TAG_TO_COOL), 1, inputTank.getMaxFill());

@@ -54,6 +54,8 @@ public final class HbmFluidForgeAliasConfig {
 
     private static LoadReport readAliases(JsonObject root, boolean createdDefault) {
         List<String> warnings = new ArrayList<>();
+        List<PendingTagAlias> pendingTagAliases = new ArrayList<>();
+        List<PendingFluidMapping> pendingFluidMappings = new ArrayList<>();
         int tagAliases = 0;
         int fluidMappings = 0;
         int skipped = 0;
@@ -74,9 +76,11 @@ public final class HbmFluidForgeAliasConfig {
                     warnings.add(tagName + " targets an unknown or empty HBM fluid");
                     continue;
                 }
-                HbmFluidForgeMappings.registerTagAlias(tag, type);
-                tagAliases++;
+                pendingTagAliases.add(new PendingTagAlias(tag, type));
             } catch (RuntimeException ex) {
+                if (ex instanceof HbmFluidJsonUtil.UnknownFluidReferenceException) {
+                    throw ex;
+                }
                 skipped++;
                 warnings.add(tagName + " failed: " + ex.getMessage());
             }
@@ -101,16 +105,26 @@ public final class HbmFluidForgeAliasConfig {
                     warnings.add(forgeFluidName + " targets an unknown or empty HBM fluid");
                     continue;
                 }
-                if (mapping.export()) {
-                    HbmFluidForgeMappings.register(mapping.type(), forgeFluid);
-                } else {
-                    HbmFluidForgeMappings.registerImportAlias(forgeFluid, mapping.type());
-                }
-                fluidMappings++;
+                pendingFluidMappings.add(new PendingFluidMapping(forgeFluid, mapping.type(), mapping.export()));
             } catch (RuntimeException ex) {
+                if (ex instanceof HbmFluidJsonUtil.UnknownFluidReferenceException) {
+                    throw ex;
+                }
                 skipped++;
                 warnings.add(forgeFluidName + " failed: " + ex.getMessage());
             }
+        }
+        for (PendingTagAlias alias : pendingTagAliases) {
+            HbmFluidForgeMappings.registerTagAlias(alias.tag(), alias.type());
+            tagAliases++;
+        }
+        for (PendingFluidMapping mapping : pendingFluidMappings) {
+            if (mapping.export()) {
+                HbmFluidForgeMappings.register(mapping.type(), mapping.forgeFluid());
+            } else {
+                HbmFluidForgeMappings.registerImportAlias(mapping.forgeFluid(), mapping.type());
+            }
+            fluidMappings++;
         }
         return new LoadReport(true, createdDefault, tagAliases, fluidMappings, skipped, warnings);
     }
@@ -132,22 +146,7 @@ public final class HbmFluidForgeAliasConfig {
     }
 
     private static FluidType parseFluid(JsonElement element) {
-        if (element == null) {
-            return HbmFluids.NONE;
-        }
-        String name;
-        if (element.isJsonObject()) {
-            JsonObject object = element.getAsJsonObject();
-            JsonElement fluid = object.get("fluid");
-            name = fluid == null ? "" : fluid.getAsString();
-        } else {
-            name = element.getAsString();
-        }
-        if (name.contains(":")) {
-            ResourceLocation id = ResourceLocation.tryParse(name);
-            name = id == null ? name : id.getPath();
-        }
-        return HbmFluids.fromName(name);
+        return HbmFluidJsonUtil.requireFluidReference(element, "Forge fluid alias target");
     }
 
     private static FluidMapping parseFluidMapping(JsonElement element) {
@@ -177,6 +176,12 @@ public final class HbmFluidForgeAliasConfig {
     }
 
     private record FluidMapping(FluidType type, boolean export) {
+    }
+
+    private record PendingTagAlias(ResourceLocation tag, FluidType type) {
+    }
+
+    private record PendingFluidMapping(Fluid forgeFluid, FluidType type, boolean export) {
     }
 
     public record LoadReport(boolean loadedConfig, boolean createdDefault, int aliases, int fluidMappings, int skipped,

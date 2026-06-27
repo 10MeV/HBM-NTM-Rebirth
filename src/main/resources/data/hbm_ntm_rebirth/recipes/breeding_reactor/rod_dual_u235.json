@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:breeding_reactor",
+  "flux": 600,
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:rod_dual_u235"
+    }
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:rod_dual_np237"
+  }
+}

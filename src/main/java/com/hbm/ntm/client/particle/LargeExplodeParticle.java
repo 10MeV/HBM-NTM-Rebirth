@@ -139,7 +139,11 @@ public class LargeExplodeParticle extends TextureSheetParticle {
         if (this.primary) {
             this.setPrimarySprite(partialTick);
         }
-        super.render(consumer, camera, partialTick);
+        HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(consumer, camera, partialTick,
+                this.xo, this.yo, this.zo, this.x, this.y, this.z,
+                this.oRoll, this.roll, this.getQuadSize(partialTick),
+                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
     }
 
     private void setPrimarySprite(float partialTick) {

@@ -25,8 +25,6 @@ public class ChungusBlockEntity extends LegacySteamTurbineBlockEntity implements
     private static final double CONSUMPTION_PERCENT = 1.0D;
     private static final long MAX_TRANSIENT_POWER = Long.MAX_VALUE;
     private static final int TURN_TIMER_ACTIVE = 25;
-    private static final String[] SPIN_BLOCKS = new String[] {"", "|", "/", "\\"};
-
     private int turnTimer;
     private float rotor;
     private float lastRotor;
@@ -140,12 +138,10 @@ public class ChungusBlockEntity extends LegacySteamTurbineBlockEntity implements
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        int spinner = isOperational() ? (int) ((level.getGameTime() / 4L) % 4L) : 0;
         return LegacyLookOverlay.forBlock(this, List.of(
                 LegacyLookOverlayLines.tank(true, inputTank),
                 LegacyLookOverlayLines.tank(false, outputTank),
-                LegacyLookOverlayLines.energyOut(getLastPowerProduced(),
-                        net.minecraft.network.chat.Component.literal(SPIN_BLOCKS[spinner]))));
+                LegacyLookOverlayLines.energyOut(energy.getPower())));
     }
 
     @Override

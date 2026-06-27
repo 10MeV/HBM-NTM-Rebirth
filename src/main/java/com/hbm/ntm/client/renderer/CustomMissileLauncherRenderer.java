@@ -8,7 +8,6 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjLaunchModels;
 import com.hbm.ntm.client.obj.ObjMissilePartModels;
 import com.hbm.ntm.client.obj.ObjMissilePartModels.LegacyMissilePart;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.item.missile.CustomMissilePartProfile;
 import com.hbm.ntm.item.missile.CustomMissilePartProfile.PartSize;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -52,9 +51,7 @@ public class CustomMissileLauncherRenderer implements BlockEntityRenderer<Custom
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         if (state.getBlock() instanceof CustomMissileLauncherBlock launcher
                 && launcher.kind() == CustomMissileLauncherBlock.Kind.LAUNCH_TABLE) {
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight,
-                    OverlayTexture.NO_OVERLAY).withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
-            renderLaunchTable(blockEntity, context, buffer, modelLight);
+            renderLaunchTable(blockEntity, poseStack, buffer, modelLight);
         } else {
             renderCompactLauncher(blockEntity, poseStack, buffer, modelLight);
         }
@@ -95,17 +92,17 @@ public class CustomMissileLauncherRenderer implements BlockEntityRenderer<Custom
         }
     }
 
-    private static void renderLaunchTable(CustomMissileLauncherBlockEntity blockEntity, ObjRenderContext context,
+    private static void renderLaunchTable(CustomMissileLauncherBlockEntity blockEntity, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
-        PoseStack poseStack = context.poseStack();
-        ObjLaunchModels.LAUNCH_TABLE_BASE_LEGACY.renderAll(ObjLaunchModels.LAUNCH_TABLE_BASE_TEXTURE, context);
+        ObjLaunchModels.LAUNCH_TABLE_BASE_LEGACY.renderAll(ObjLaunchModels.LAUNCH_TABLE_BASE_TEXTURE,
+                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
         PartSize padSize = blockEntity.getPadSize();
         if (padSize == PartSize.SIZE_20) {
             ObjLaunchModels.LAUNCH_TABLE_LARGE_PAD_LEGACY.renderAll(ObjLaunchModels.LAUNCH_TABLE_LARGE_PAD_TEXTURE,
-                    context);
+                    poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
         } else {
             ObjLaunchModels.LAUNCH_TABLE_SMALL_PAD_LEGACY.renderAll(ObjLaunchModels.LAUNCH_TABLE_SMALL_PAD_TEXTURE,
-                    context);
+                    poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
         }
 
         CustomMissilePartProfile.Assembly assembly = blockEntity.assemblyForPreview();
@@ -120,11 +117,14 @@ public class CustomMissileLauncherRenderer implements BlockEntityRenderer<Custom
         poseStack.translate(0.0D, 1.0D, 3.5D);
         for (int i = 0; i < missileHeight + 1; i++) {
             if (i == connectorHeight && isValidForPad(assembly, padSize)) {
-                scaffold.connector().renderAll(scaffold.connectorTexture(), context);
+                scaffold.connector().renderAll(scaffold.connectorTexture(), poseStack, buffer, packedLight,
+                        OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
             } else if (i > connectorHeight) {
-                scaffold.empty().renderAll(scaffold.baseTexture(), context);
+                scaffold.empty().renderAll(scaffold.baseTexture(), poseStack, buffer, packedLight,
+                        OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
             } else {
-                scaffold.base().renderAll(scaffold.baseTexture(), context);
+                scaffold.base().renderAll(scaffold.baseTexture(), poseStack, buffer, packedLight,
+                        OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
             }
             poseStack.translate(0.0D, 1.0D, 0.0D);
         }

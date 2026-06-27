@@ -137,6 +137,9 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        if (hasExploded) {
+            return null;
+        }
         return LegacyLookOverlay.forBlock(this, List.of(
                 LegacyLookOverlayLines.heatTu(heat),
                 LegacyLookOverlayLines.tank(true, feedTank),
@@ -217,7 +220,7 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
         if (blockEntity.steamTank.getTankType() != HbmFluids.NONE && blockEntity.steamTank.getFill() > 0) {
             blockEntity.tryProvideFluidToPorts(blockEntity.steamTank.getTankType(), blockEntity.steamTank.getPressure(), blockEntity);
         }
-        if (result.converted() || level.getGameTime() % 20L == 0L) {
+        if (result.converted()) {
             blockEntity.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

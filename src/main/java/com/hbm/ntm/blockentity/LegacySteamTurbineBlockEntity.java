@@ -1,8 +1,8 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -74,7 +74,7 @@ public abstract class LegacySteamTurbineBlockEntity extends HbmEnergyAndFluidBlo
             turbine.tryProvideFluidToPorts(turbine.outputTank.getTankType(), turbine.outputTank.getPressure(), turbine);
         }
         turbine.networkPackNT(150);
-        if (result.converted() || level.getGameTime() % 20L == 0L) {
+        if (result.converted()) {
             turbine.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -153,6 +153,17 @@ public abstract class LegacySteamTurbineBlockEntity extends HbmEnergyAndFluidBlo
         return operational;
     }
 
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        super.provideExtraInfo(data);
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, operational);
+        data.putDouble(CompatEnergyControl.D_CONSUMPTION_MB, lastInputUsed);
+        data.putDouble(CompatEnergyControl.D_OUTPUT_MB, lastOutputProduced);
+        data.putDouble(CompatEnergyControl.D_OUTPUT_HE, lastPowerProduced);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_TURBINE_INPUT, inputTank);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_TURBINE_OUTPUT, outputTank);
+    }
+
     @Nullable
     @Override
     public HbmFluidTank getTankToPasteFluidSettings() {
@@ -161,10 +172,7 @@ public abstract class LegacySteamTurbineBlockEntity extends HbmEnergyAndFluidBlo
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.tank(true, inputTank),
-                LegacyLookOverlayLines.tank(false, outputTank),
-                LegacyLookOverlayLines.energyOut(lastPowerProduced)));
+        return null;
     }
 
     protected Direction facing() {

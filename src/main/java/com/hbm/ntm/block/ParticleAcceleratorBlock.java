@@ -8,11 +8,14 @@ import com.hbm.ntm.multiblock.LegacyProxyMode;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -97,6 +100,13 @@ public class ParticleAcceleratorBlock extends LegacyXrMultiblockBlock implements
     @Override
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        LegacyStandardInfoTooltip.append(tooltip, variant.tooltipId);
     }
 
     @Override
@@ -206,19 +216,21 @@ public class ParticleAcceleratorBlock extends LegacyXrMultiblockBlock implements
     }
 
     public enum Variant {
-        SOURCE(new int[] { 1, 1, 1, 1, 4, 4 }, 1),
-        BEAMLINE(new int[] { 0, 0, 0, 0, 1, 1 }, 0),
-        RFC(new int[] { 1, 1, 1, 1, 4, 4 }, 1),
-        QUADRUPOLE(new int[] { 1, 1, 1, 1, 1, 1 }, 1),
-        DIPOLE(new int[] { 1, 1, 1, 1, 1, 1 }, 1),
-        DETECTOR(new int[] { 2, 2, 2, 2, 4, 4 }, 2);
+        SOURCE(new int[] { 1, 1, 1, 1, 4, 4 }, 1, "pa_source"),
+        BEAMLINE(new int[] { 0, 0, 0, 0, 1, 1 }, 0, "pa_beamline"),
+        RFC(new int[] { 1, 1, 1, 1, 4, 4 }, 1, "pa_rfc"),
+        QUADRUPOLE(new int[] { 1, 1, 1, 1, 1, 1 }, 1, "pa_quadrupole"),
+        DIPOLE(new int[] { 1, 1, 1, 1, 1, 1 }, 1, "pa_dipole"),
+        DETECTOR(new int[] { 2, 2, 2, 2, 4, 4 }, 2, "pa_detector");
 
         private final int[] dimensions;
         private final int heightOffset;
+        private final String tooltipId;
 
-        Variant(int[] dimensions, int heightOffset) {
+        Variant(int[] dimensions, int heightOffset, String tooltipId) {
             this.dimensions = dimensions;
             this.heightOffset = heightOffset;
+            this.tooltipId = tooltipId;
         }
     }
 }

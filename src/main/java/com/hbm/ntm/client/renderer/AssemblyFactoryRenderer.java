@@ -5,7 +5,6 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.AssemblyFactoryBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -96,12 +95,11 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
         ResourceLocation texture = definition.textureLocation();
 
-        renderModelPart("Base", texture, context);
+        renderModelPart("Base", texture, poseStack, buffer, modelLight, packedOverlay);
         if (blockEntity.shouldRenderFrame()) {
-            renderModelPart("Frame", texture, context);
+            renderModelPart("Frame", texture, poseStack, buffer, modelLight, packedOverlay);
         }
 
         double slide1 = blockEntity.getAnimation(0).getSlider(partialTick);
@@ -114,12 +112,12 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
         LegacyTileRenderPlans.AssemblyFactoryPlan plan = LegacyTileRenderPlans.assemblyFactoryPlan(
                 slide1, slide2, arm1, arm2, arm3, arm4);
         for (LegacyTileRenderPlans.AssemblyArmPlan slider : plan.sliders()) {
-            renderArmPlan(poseStack, texture, context, slider);
+            renderArmPlan(poseStack, texture, buffer, modelLight, packedOverlay, slider);
         }
 
         if (LegacyRecipeIconRenderer.shouldRender(blockEntity)) {
             renderRecipeIcons(blockEntity, poseStack, buffer, packedLight);
-            renderSparks(blockEntity, partialTick, poseStack, buffer, state, packedLight, packedOverlay,
+            renderSparks(blockEntity, partialTick, poseStack, buffer, packedLight, packedOverlay,
                     slide1, slide2, arm2, arm4);
         }
 
@@ -137,27 +135,28 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
         }
     }
 
-    private static void renderArmPlan(PoseStack poseStack, ResourceLocation texture, ObjRenderContext context,
+    private static void renderArmPlan(PoseStack poseStack, ResourceLocation texture, MultiBufferSource buffer,
+            int packedLight, int packedOverlay,
             LegacyTileRenderPlans.AssemblyArmPlan arm) {
         poseStack.pushPose();
         LegacyTileRenderPlans.TranslatedModelPartPlan slider = arm.slider();
         if (slider != null && slider.active()) {
             poseStack.translate(slider.translateX(), slider.translateY(), slider.translateZ());
-            renderModelPart(slider.partName(), texture, context);
+            renderModelPart(slider.partName(), texture, poseStack, buffer, packedLight, packedOverlay);
         }
         for (LegacyTileRenderPlans.PivotedModelPartPlan part : arm.rotations()) {
             applyPivot(poseStack, part);
-            renderModelPart(part.partName(), texture, context);
+            renderModelPart(part.partName(), texture, poseStack, buffer, packedLight, packedOverlay);
         }
         LegacyTileRenderPlans.TranslatedModelPartPlan tool = arm.tool();
         if (tool != null && tool.active()) {
             poseStack.translate(tool.translateX(), tool.translateY(), tool.translateZ());
-            renderModelPart(tool.partName(), texture, context);
+            renderModelPart(tool.partName(), texture, poseStack, buffer, packedLight, packedOverlay);
         }
         LegacyTileRenderPlans.PivotedModelPartPlan blade = arm.blade();
         if (blade != null) {
             applyPivot(poseStack, blade);
-            renderModelPart(blade.partName(), texture, context);
+            renderModelPart(blade.partName(), texture, poseStack, buffer, packedLight, packedOverlay);
         }
         poseStack.popPose();
     }
@@ -169,13 +168,14 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
     }
 
-    private static void renderModelPart(String partName, ResourceLocation texture, ObjRenderContext context) {
+    private static void renderModelPart(String partName, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyWavefrontModel.SelectionHandle handle = handle(partName);
         if (handle != null) {
-            MODEL.renderOnlyInCallOrder(texture, context, handle);
+            MODEL.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle);
             return;
         }
-        MODEL.renderPart(partName, texture, context);
+        MODEL.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
@@ -212,12 +212,12 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
     }
 
     private static void renderSparks(AssemblyFactoryBlockEntity blockEntity, float partialTick, PoseStack poseStack,
-            MultiBufferSource buffer, BlockState state, int packedLight, int packedOverlay,
+            MultiBufferSource buffer, int packedLight, int packedOverlay,
             double slide1, double slide2, double[] arm2, double[] arm4) {
         LegacyTileRenderPlans.AssemblySparkRenderPlan plan = LegacyTileRenderPlans.assemblySparkPlan(
                 blockEntity.getLevel().getGameTime(), partialTick, slide1, slide2, arm2[2], arm2[3],
                 arm4[2], arm4[3]);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        LegacyAssemblySparkRenderer.renderPlan(ObjMachineModels.ASSEMBLY_FACTORY_SPARKS_TEXTURE, context, plan);
+        LegacyAssemblySparkRenderer.renderPlan(ObjMachineModels.ASSEMBLY_FACTORY_SPARKS_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay, plan);
     }
 }

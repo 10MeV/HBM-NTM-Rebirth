@@ -37,6 +37,7 @@ public class CableDiodeBlockEntity extends BlockEntity
     private long power;
     private boolean recursionBrake;
     private int pulses;
+    private Direction lastSubscribedOutput;
 
     public CableDiodeBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CABLE_DIODE.get(), pos, state);
@@ -47,10 +48,13 @@ public class CableDiodeBlockEntity extends BlockEntity
             return;
         }
         Direction output = diode.getOutputDirection();
-        for (Direction side : Direction.values()) {
-            if (side != output) {
-                HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, pos, side, diode);
+        if (diode.lastSubscribedOutput != output || Math.floorMod(level.getGameTime() + pos.hashCode(), 20) == 0L) {
+            for (Direction side : Direction.values()) {
+                if (side != output) {
+                    HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, pos, side, diode);
+                }
             }
+            diode.lastSubscribedOutput = output;
         }
         diode.pulses = 0;
         diode.setPower(0L);
@@ -186,7 +190,7 @@ public class CableDiodeBlockEntity extends BlockEntity
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         return LegacyLookOverlay.forBlock(this, List.of(
                 LegacyLookOverlayLines.maxRate(getMaxPower(), "HE/t"),
-                LegacyLookOverlayLines.priority(priority)));
+                LegacyLookOverlayLines.plainPriority(priority)));
     }
 
     @Override

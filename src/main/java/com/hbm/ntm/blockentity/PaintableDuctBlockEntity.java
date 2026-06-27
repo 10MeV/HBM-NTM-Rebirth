@@ -2,6 +2,8 @@ package com.hbm.ntm.blockentity;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.hbm.ntm.item.FluidDuctVariantBlockItem;
+import com.hbm.ntm.item.LegacyStateBlockItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -62,6 +64,9 @@ public interface PaintableDuctBlockEntity {
                 state = legacyState;
             }
         }
+        if (state != null) {
+            state = stateFromLegacyMeta(state.getBlock(), tag.getInt(TAG_SETTINGS_PAINT_META));
+        }
         setPaintedState(state, tag.getInt(TAG_SETTINGS_PAINT_META) & 15);
         return state != null;
     }
@@ -74,5 +79,15 @@ public interface PaintableDuctBlockEntity {
         List<Component> lines = new ArrayList<>(1);
         lines.add(painted.getBlock().getName());
         return lines;
+    }
+
+    static BlockState stateFromLegacyMeta(Block block, int legacyMeta) {
+        if (block.asItem() instanceof FluidDuctVariantBlockItem duct) {
+            return duct.stateForLegacyMetadata(legacyMeta);
+        }
+        if (block.asItem() instanceof LegacyStateBlockItem stateItem) {
+            return stateItem.stateForVariant(legacyMeta);
+        }
+        return block.defaultBlockState();
     }
 }

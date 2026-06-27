@@ -1,7 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjArmorModels;
 import com.hbm.ntm.item.FsbArmorItem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -196,14 +196,11 @@ public final class LegacyObjArmorRenderer {
                                     int packedLight, int packedOverlay) {
         int light = extra.fullBright() ? FULL_BRIGHT : packedLight;
         if (extra.untextured()) {
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, light, packedOverlay)
-                    .withColor((extra.red() << 16) | (extra.green() << 8) | extra.blue())
-                    .withAlpha(extra.alpha());
-            if (extra.additive()) {
-                ObjArmorModels.renderPartUntexturedAdditive(spec.model(), extra.part(), context);
-            } else {
-                ObjArmorModels.renderPartUntextured(spec.model(), extra.part(), context);
-            }
+            LegacyTexturedRenderMode renderMode = extra.additive()
+                    ? LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE
+                    : LegacyTexturedRenderMode.CUTOUT_NO_CULL;
+            ObjArmorModels.renderPartUntextured(spec.model(), extra.part(), poseStack, buffer,
+                    extra.red(), extra.green(), extra.blue(), extra.alpha(), renderMode);
         } else if (extra.additive()) {
             ObjArmorModels.renderPartAdditive(spec.model(), extra.part(), extra.texture(), poseStack, buffer, FULL_BRIGHT,
                     packedOverlay, extra.red(), extra.green(), extra.blue(), extra.alpha());

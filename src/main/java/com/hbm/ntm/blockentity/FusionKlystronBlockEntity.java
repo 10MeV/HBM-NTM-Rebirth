@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -98,7 +99,7 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, klystron);
         boolean changed = klystron.tickServer(level);
         klystron.networkPackNT(100);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             klystron.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -168,6 +169,11 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public List<HbmFluidTank> getReceivingTanks() {
         return List.of(airTank);
+    }
+
+    @Override
+    public boolean supportsFluidSettingsCopy() {
+        return false;
     }
 
     @Override
@@ -338,6 +344,16 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
         return super.getCapability(capability, side);
     }
 
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        super.provideExtraInfo(data);
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, output > 0L);
+        data.putDouble(CompatEnergyControl.D_CONSUMPTION_HE, output > 0L ? output : 0L);
+        data.putDouble(CompatEnergyControl.D_OUTPUT_HE, output);
+        data.putDouble(CompatEnergyControl.D_OUTPUT_TARGET_HE, outputTarget);
+        CompatEnergyControl.putTankAmountInfo(data, CompatEnergyControl.S_FUSION_AIR, airTank);
+    }
+
     private boolean tickServer(Level level) {
         long oldOutput = output;
         long oldMax = maxPower;
@@ -394,7 +410,7 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (network == null) {
             return false;
         }
-        for (Object receiver : network.receiverEntries.keySet()) {
+        for (Object receiver : network.receiverSnapshot()) {
             if (receiver instanceof FusionTorusBlockEntity torus && torus.isLoaded() && !torus.isRemoved()) {
                 torus.addKlystronEnergy(output);
                 return true;

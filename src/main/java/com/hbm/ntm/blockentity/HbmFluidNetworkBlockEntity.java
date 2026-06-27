@@ -13,6 +13,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
+import com.hbm.ntm.util.HbmMachinePerformanceCounters;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,8 +26,17 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity implements HbmFluidConnector {
+    private static final int FLUID_NODE_KEEPALIVE_TICKS = 40;
+    private static final int FLUID_SUBSCRIPTION_KEEPALIVE_TICKS = 20;
+
     private final Set<FluidType> networkProviderSubscriptions = new HashSet<>();
     private final Set<FluidType> networkReceiverSubscriptions = new HashSet<>();
+    private boolean fluidNodeStateDirty = true;
+    private boolean fluidSubscriptionDirty = true;
+    private int lastFluidNodeTypesSignature = Integer.MIN_VALUE;
+    private int lastFluidPortShapeSignature = Integer.MIN_VALUE;
+    private int lastFluidProviderSubscriptionSignature = Integer.MIN_VALUE;
+    private int lastFluidReceiverSubscriptionSignature = Integer.MIN_VALUE;
 
     protected HbmFluidNetworkBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, java.util.List<HbmFluidTank> tanks) {
         super(type, pos, state, tanks);
@@ -34,8 +44,13 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
 
     public static <T extends HbmFluidNetworkBlockEntity> void serverTick(Level level, BlockPos pos, BlockState state, T blockEntity) {
         if (!level.isClientSide) {
-            blockEntity.refreshFluidNodeState();
-            blockEntity.refreshFluidNetworkSubscriptions();
+            HbmMachinePerformanceCounters.fluidNetworkTick();
+            if (blockEntity.shouldRefreshFluidNodeStateNow()) {
+                blockEntity.refreshFluidNodeState();
+            }
+            if (blockEntity.shouldRefreshFluidNetworkSubscriptionsNow()) {
+                blockEntity.refreshFluidNetworkSubscriptions();
+            }
         }
     }
 
@@ -101,6 +116,8 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         if (!shouldCreateFluidNode()) {
             Set<FluidType> trackedTypes = getTrackedFluidNodeTypes();
             removeFluidNode();
+            updateFluidNodeRefreshBookkeeping();
+            HbmMachinePerformanceCounters.fluidNodeRefresh();
             return FluidNodeStateReport.removedAll(trackedTypes);
         }
         List<FluidType> nodeTypes = getFluidNodeTypes();
@@ -139,6 +156,8 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
             }
         }
         FluidNodeObsoleteRemovalReport obsolete = removeObsoleteFluidNodesReport(new HashSet<>(nodeTypes));
+        updateFluidNodeRefreshBookkeeping();
+        HbmMachinePerformanceCounters.fluidNodeRefresh();
         return new FluidNodeStateReport(
                 false,
                 false,
@@ -160,6 +179,7 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
     @Override
     public void onFluidSettingsPasted() {
         super.onFluidSettingsPasted();
+        markTankTypesDirty();
         refreshFluidNodeState();
     }
 
@@ -180,7 +200,70 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
     }
 
     protected NetworkFluidSubscriptionReport refreshFluidNetworkSubscriptions() {
-        return refreshFluidNetworkSubscriptionsDetailedReport().summary();
+        if (level == null || level.isClientSide) {
+            return NetworkFluidSubscriptionReport.empty();
+        }
+        List<FluidType> nodeTypes = getFluidNodeTypes();
+        Set<FluidType> activeProviderTypes = new HashSet<>();
+        Set<FluidType> activeReceiverTypes = new HashSet<>();
+        for (FluidType type : nodeTypes) {
+            if (shouldSubscribeAsFluidProvider(type)) {
+                activeProviderTypes.add(type);
+            }
+            if (shouldSubscribeAsFluidReceiver(type)) {
+                activeReceiverTypes.add(type);
+            }
+        }
+
+        HbmFluidProvider provider = getNetworkFluidProvider();
+        HbmFluidReceiver receiver = getNetworkFluidReceiver();
+        NetworkFluidSubscriptionDetachReport providerDetach =
+                detachObsoleteNetworkProviderSubscriptions(activeProviderTypes, provider);
+        NetworkFluidSubscriptionDetachReport receiverDetach =
+                detachObsoleteNetworkReceiverSubscriptions(activeReceiverTypes, receiver);
+
+        int localProviderSubscriptions = 0;
+        int localReceiverSubscriptions = 0;
+        int remoteProviderPorts = 0;
+        int remoteReceiverPorts = 0;
+        for (FluidType type : nodeTypes) {
+            HbmFluidNet fluidNet = getFluidNet(type);
+            boolean hasLocalNet = fluidNet != null && fluidNet.isValid();
+            if (activeProviderTypes.contains(type)) {
+                if (hasLocalNet && provider != null) {
+                    fluidNet.addProvider(provider);
+                    localProviderSubscriptions++;
+                }
+                remoteProviderPorts += HbmFluidUtil.subscribeProviderToPortsReport(
+                        level, worldPosition, getNetworkFluidPorts(type), type, provider).subscribedPorts();
+            }
+            if (activeReceiverTypes.contains(type)) {
+                if (hasLocalNet && receiver != null) {
+                    fluidNet.addReceiver(receiver);
+                    localReceiverSubscriptions++;
+                }
+                remoteReceiverPorts += HbmFluidUtil.subscribeReceiverToPortsReport(
+                        level, worldPosition, getNetworkFluidPorts(type), type, receiver).subscribedPorts();
+            }
+        }
+
+        networkProviderSubscriptions.clear();
+        networkProviderSubscriptions.addAll(activeProviderTypes);
+        networkReceiverSubscriptions.clear();
+        networkReceiverSubscriptions.addAll(activeReceiverTypes);
+        updateFluidSubscriptionRefreshBookkeeping(activeProviderTypes, activeReceiverTypes);
+        HbmMachinePerformanceCounters.fluidSubscriptionRefresh();
+        return new NetworkFluidSubscriptionReport(
+                activeProviderTypes.size(),
+                activeReceiverTypes.size(),
+                localProviderSubscriptions,
+                localReceiverSubscriptions,
+                remoteProviderPorts,
+                remoteReceiverPorts,
+                providerDetach.types(),
+                providerDetach.ports(),
+                receiverDetach.types(),
+                receiverDetach.ports());
     }
 
     protected NetworkFluidSubscriptionDetailReport refreshFluidNetworkSubscriptionsDetailedReport() {
@@ -249,6 +332,8 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         networkProviderSubscriptions.addAll(activeProviderTypes);
         networkReceiverSubscriptions.clear();
         networkReceiverSubscriptions.addAll(activeReceiverTypes);
+        updateFluidSubscriptionRefreshBookkeeping(activeProviderTypes, activeReceiverTypes);
+        HbmMachinePerformanceCounters.fluidSubscriptionRefresh();
         NetworkFluidSubscriptionReport summary = new NetworkFluidSubscriptionReport(
                 activeProviderTypes.size(),
                 activeReceiverTypes.size(),
@@ -275,9 +360,129 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         return getFluidPorts();
     }
 
+    protected void markPortsDirty() {
+        fluidNodeStateDirty = true;
+        fluidSubscriptionDirty = true;
+    }
+
+    protected void markTankTypesDirty() {
+        fluidNodeStateDirty = true;
+        fluidSubscriptionDirty = true;
+    }
+
+    protected void markFluidSubscriptionDirty() {
+        fluidSubscriptionDirty = true;
+    }
+
+    protected boolean shouldRefreshFluidNodeStateNow() {
+        if (fluidNodeStateDirty || hasExpiredFluidNode()) {
+            return true;
+        }
+        int nodeTypesSignature = fluidNodeTypesSignature();
+        int portShapeSignature = fluidPortShapeSignature(getFluidPorts());
+        if (nodeTypesSignature != lastFluidNodeTypesSignature || portShapeSignature != lastFluidPortShapeSignature) {
+            return true;
+        }
+        return isStaggeredKeepalive(FLUID_NODE_KEEPALIVE_TICKS);
+    }
+
+    protected boolean shouldRefreshFluidNetworkSubscriptionsNow() {
+        if (fluidSubscriptionDirty) {
+            return true;
+        }
+        Set<FluidType> activeProviderTypes = activeProviderSubscriptionTypes(getFluidNodeTypes());
+        Set<FluidType> activeReceiverTypes = activeReceiverSubscriptionTypes(getFluidNodeTypes());
+        int providerSignature = activeProviderTypes.hashCode();
+        int receiverSignature = activeReceiverTypes.hashCode();
+        if (providerSignature != lastFluidProviderSubscriptionSignature
+                || receiverSignature != lastFluidReceiverSubscriptionSignature) {
+            return true;
+        }
+        return isStaggeredKeepalive(FLUID_SUBSCRIPTION_KEEPALIVE_TICKS);
+    }
+
+    private boolean hasExpiredFluidNode() {
+        for (FluidType type : getTrackedFluidNodeTypes()) {
+            HbmFluidNode node = getFluidNode(type);
+            if (node == null || node.isExpired()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isStaggeredKeepalive(int interval) {
+        return level != null
+                && interval > 0
+                && Math.floorMod(level.getGameTime() + worldPosition.hashCode(), interval) == 0L;
+    }
+
+    private void updateFluidNodeRefreshBookkeeping() {
+        lastFluidNodeTypesSignature = fluidNodeTypesSignature();
+        lastFluidPortShapeSignature = fluidPortShapeSignature(getFluidPorts());
+        fluidNodeStateDirty = false;
+        fluidSubscriptionDirty = true;
+    }
+
+    private void updateFluidSubscriptionRefreshBookkeeping(Set<FluidType> activeProviderTypes,
+            Set<FluidType> activeReceiverTypes) {
+        lastFluidProviderSubscriptionSignature = activeProviderTypes == null ? 0 : activeProviderTypes.hashCode();
+        lastFluidReceiverSubscriptionSignature = activeReceiverTypes == null ? 0 : activeReceiverTypes.hashCode();
+        fluidSubscriptionDirty = false;
+    }
+
+    private int fluidNodeTypesSignature() {
+        return getFluidNodeTypes().hashCode();
+    }
+
+    private static int fluidPortShapeSignature(Iterable<FluidPort> ports) {
+        int signature = 1;
+        if (ports != null) {
+            for (FluidPort port : ports) {
+                signature = 31 * signature + (port == null ? 0 : port.hashCode());
+            }
+        }
+        return signature;
+    }
+
+    private Set<FluidType> activeProviderSubscriptionTypes(List<FluidType> nodeTypes) {
+        Set<FluidType> active = new HashSet<>();
+        for (FluidType type : nodeTypes) {
+            if (shouldSubscribeAsFluidProvider(type)) {
+                active.add(type);
+            }
+        }
+        return active;
+    }
+
+    private Set<FluidType> activeReceiverSubscriptionTypes(List<FluidType> nodeTypes) {
+        Set<FluidType> active = new HashSet<>();
+        for (FluidType type : nodeTypes) {
+            if (shouldSubscribeAsFluidReceiver(type)) {
+                active.add(type);
+            }
+        }
+        return active;
+    }
+
     private NetworkFluidSubscriptionDetachReport detachObsoleteNetworkProviderSubscriptions(
             Set<FluidType> activeTypes, HbmFluidProvider provider) {
-        return detachObsoleteNetworkProviderSubscriptionsDetailedReport(activeTypes, provider).summary();
+        Set<FluidType> staleTypes = new HashSet<>(networkProviderSubscriptions);
+        staleTypes.removeAll(activeTypes);
+        int detachedTypes = 0;
+        int detachedPorts = 0;
+        for (FluidType type : staleTypes) {
+            HbmFluidNet fluidNet = getFluidNet(type);
+            if (fluidNet != null && provider != null) {
+                if (fluidNet.isProvider(provider)) {
+                    detachedTypes++;
+                }
+                fluidNet.removeProvider(provider);
+            }
+            detachedPorts += HbmFluidUtil.unsubscribeProviderFromPortsReport(
+                    level, worldPosition, getNetworkFluidPorts(type), type, provider).unsubscribedPorts();
+        }
+        return new NetworkFluidSubscriptionDetachReport(staleTypes.size(), detachedTypes, detachedPorts);
     }
 
     private NetworkFluidSubscriptionDetachDetailReport detachObsoleteNetworkProviderSubscriptionsDetailedReport(
@@ -310,7 +515,22 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
 
     private NetworkFluidSubscriptionDetachReport detachObsoleteNetworkReceiverSubscriptions(
             Set<FluidType> activeTypes, HbmFluidReceiver receiver) {
-        return detachObsoleteNetworkReceiverSubscriptionsDetailedReport(activeTypes, receiver).summary();
+        Set<FluidType> staleTypes = new HashSet<>(networkReceiverSubscriptions);
+        staleTypes.removeAll(activeTypes);
+        int detachedTypes = 0;
+        int detachedPorts = 0;
+        for (FluidType type : staleTypes) {
+            HbmFluidNet fluidNet = getFluidNet(type);
+            if (fluidNet != null && receiver != null) {
+                if (fluidNet.isSubscribed(receiver)) {
+                    detachedTypes++;
+                }
+                fluidNet.removeReceiver(receiver);
+            }
+            detachedPorts += HbmFluidUtil.unsubscribeReceiverFromPortsReport(
+                    level, worldPosition, getNetworkFluidPorts(type), type, receiver).unsubscribedPorts();
+        }
+        return new NetworkFluidSubscriptionDetachReport(staleTypes.size(), detachedTypes, detachedPorts);
     }
 
     private NetworkFluidSubscriptionDetachDetailReport detachObsoleteNetworkReceiverSubscriptionsDetailedReport(
@@ -346,6 +566,7 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         detachObsoleteNetworkReceiverSubscriptions(Set.of(), getNetworkFluidReceiver());
         networkProviderSubscriptions.clear();
         networkReceiverSubscriptions.clear();
+        markFluidSubscriptionDirty();
     }
 
     private FluidNodeObsoleteRemovalReport removeObsoleteFluidNodesReport(Set<FluidType> activeTypes) {
@@ -383,6 +604,7 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
     @Override
     public void onLoad() {
         super.onLoad();
+        markTankTypesDirty();
         refreshFluidNodeState();
     }
 

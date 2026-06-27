@@ -2,7 +2,6 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -14,11 +13,24 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Blocks;
 
 public class BatteryPackItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final ResourceLocation MODEL_LOCATION = new ResourceLocation(HbmNtm.MOD_ID, "models/machines/battery.obj");
     private static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/battery_lead.png");
+    private static final ResourceLocation[] TEXTURES_BY_LEGACY_META = {
+            texture("battery_redstone"),
+            DEFAULT_TEXTURE,
+            texture("battery_lithium"),
+            texture("battery_sodium"),
+            texture("battery_schrabidium"),
+            texture("battery_quantum"),
+            texture("capacitor_copper"),
+            texture("capacitor_gold"),
+            texture("capacitor_niobium"),
+            texture("capacitor_tantalum"),
+            texture("capacitor_bismuth"),
+            texture("capacitor_spark")
+    };
     private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, DEFAULT_TEXTURE).asVBO();
     private static final LegacyWavefrontModel.SelectionHandle BATTERY =
             MODEL.prepareRenderOnlyInCallOrder("Battery");
@@ -43,13 +55,23 @@ public class BatteryPackItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.pushPose();
         applyDisplay(displayContext, poseStack);
 
-        ResourceLocation texture = new ResourceLocation(HbmNtm.MOD_ID,
-                "textures/models/machines/" + batteryPack.getLegacyTextureName() + ".png");
-        MODEL.renderOnlyInCallOrder(texture,
-                new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(), packedLight, packedOverlay),
+        ResourceLocation texture = textureFor(batteryPack);
+        MODEL.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
                 batteryPack.isCapacitor() ? CAPACITOR : BATTERY);
 
         poseStack.popPose();
+    }
+
+    static ResourceLocation textureFor(HbmBatteryPackItem batteryPack) {
+        int legacyMeta = batteryPack.getLegacyMeta();
+        if (legacyMeta >= 0 && legacyMeta < TEXTURES_BY_LEGACY_META.length) {
+            return TEXTURES_BY_LEGACY_META[legacyMeta];
+        }
+        return texture(batteryPack.getLegacyTextureName());
+    }
+
+    private static ResourceLocation texture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/" + name + ".png");
     }
 
     private static void applyDisplay(ItemDisplayContext displayContext, PoseStack poseStack) {

@@ -1,11 +1,10 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -335,11 +334,6 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.allFluidUserTanks(this));
-    }
-
-    @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, TAG_ITEMS, items);
@@ -360,7 +354,7 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
         currentFill = tag.getInt(TAG_FILL);
         recipeIndex = tag.getInt(TAG_RECIPE_INDEX);
         mode = tag.contains(TAG_MODE) ? LaserWavelength.valueOf(tag.getString(TAG_MODE)) : LaserWavelength.NULL;
-        currentFluid = tag.contains(TAG_CURRENT_FLUID) ? HbmFluids.fromName(tag.getString(TAG_CURRENT_FLUID)) : HbmFluids.NONE;
+        currentFluid = tag.contains(TAG_CURRENT_FLUID) ? HbmFluidJsonUtil.readFluidReference(tag.getString(TAG_CURRENT_FLUID)) : HbmFluids.NONE;
         currentStack = tag.contains(TAG_CURRENT_STACK) ? ItemStack.of(tag.getCompound(TAG_CURRENT_STACK)) : ItemStack.EMPTY;
         readLegacyCurrentSource(tag);
     }

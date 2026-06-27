@@ -184,7 +184,7 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
         }
         boolean changed = furnace.tickServer(level, pos, state);
         furnace.networkPackNT(100);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             furnace.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

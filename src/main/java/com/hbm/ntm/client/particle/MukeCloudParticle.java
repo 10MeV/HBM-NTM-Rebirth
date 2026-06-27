@@ -87,8 +87,6 @@ public class MukeCloudParticle extends Particle implements HbmDeferredParticleRe
 
     @Override
     public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
-        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.texturedNoDepthWrite(
-                this.balefire ? BALEFIRE_TEXTURE : TEXTURE));
         int frame = Mth.clamp((int) ((this.age + partialTick) * 25.0F / Math.max(1, this.lifetime)), 0, 24);
         float uMin = (frame % 5) * FRAME_SIZE;
         float uMax = uMin + FRAME_SIZE;
@@ -107,22 +105,13 @@ public class MukeCloudParticle extends Particle implements HbmDeferredParticleRe
         float centerZ = (float) z;
 
         // Legacy ParticleMukeCloud fixes vertical height to +/-scale; only X/Z follow the camera-facing basis.
-        putVertex(consumer, centerX - right.x() - up.x(), centerY - scale,
-                centerZ - right.z() - up.z(), uMax, vMax);
-        putVertex(consumer, centerX - right.x() + up.x(), centerY + scale,
-                centerZ - right.z() + up.z(), uMax, vMin);
-        putVertex(consumer, centerX + right.x() + up.x(), centerY + scale,
-                centerZ + right.z() + up.z(), uMin, vMin);
-        putVertex(consumer, centerX + right.x() - up.x(), centerY - scale,
-                centerZ + right.z() - up.z(), uMin, vMax);
-    }
-
-    private static void putVertex(VertexConsumer consumer, float x, float y, float z, float u, float v) {
-        consumer.vertex(x, y, z)
-                .uv(u, v)
-                .color(1.0F, 1.0F, 1.0F, 1.0F)
-                .uv2(LightTexture.FULL_BRIGHT)
-                .endVertex();
+        HbmDeferredParticleRenderer.renderTexturedNoDepthWriteQuad(this.balefire ? BALEFIRE_TEXTURE : TEXTURE,
+                buffer, LightTexture.FULL_BRIGHT, 0.0F, 1.0F, 0.0F,
+                centerX - right.x() - up.x(), centerY - scale, centerZ - right.z() - up.z(), uMax, vMax,
+                centerX - right.x() + up.x(), centerY + scale, centerZ - right.z() + up.z(), uMax, vMin,
+                centerX + right.x() + up.x(), centerY + scale, centerZ + right.z() + up.z(), uMin, vMin,
+                centerX + right.x() - up.x(), centerY - scale, centerZ + right.z() - up.z(), uMin, vMax,
+                0xFFFFFF, 255);
     }
 
     @Override

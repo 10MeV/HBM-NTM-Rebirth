@@ -8,7 +8,6 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.fluid.FluidSymbol;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -20,12 +19,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class LegacyFluidTankRenderHelper {
     private static final ResourceLocation TANK_FRAME_TEXTURE = ObjMachineModels.LEGACY_FLUIDTANK_FRAME_TEXTURE;
     private static final ResourceLocation TANK_INNER_TEXTURE = ObjMachineModels.LEGACY_FLUIDTANK_INNER_TEXTURE;
-    private static final ResourceLocation TANK_NONE_TEXTURE = tankTexture("NONE");
-    private static final ResourceLocation TANK_DANGER_TEXTURE = tankTexture("DANGER");
+    private static final Map<String, ResourceLocation> TANK_TEXTURES_BY_NAME = new ConcurrentHashMap<>();
+    private static final ResourceLocation TANK_NONE_TEXTURE = tankTextureCached("NONE");
+    private static final ResourceLocation TANK_DANGER_TEXTURE = tankTextureCached("DANGER");
     private static final LegacyWavefrontModel NORMAL_MODEL = ObjMachineModels.FLUIDTANK;
     private static final LegacyWavefrontModel EXPLODED_MODEL = ObjMachineModels.FLUIDTANK_EXPLODED;
     private static final LegacyWavefrontModel.SelectionHandle NORMAL_FRAME =
@@ -45,6 +47,13 @@ public final class LegacyFluidTankRenderHelper {
     public static void renderSmallTank(LegacyWavefrontModel normalModel, LegacyWavefrontModel explodedModel,
             HbmFluidTank tank, boolean exploded, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
+        renderSmallTankBody(normalModel, explodedModel, tank, exploded, poseStack, buffer, packedLight, packedOverlay);
+        renderSmallTankDiamonds(tank.getTankType(), poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderSmallTankBody(LegacyWavefrontModel normalModel, LegacyWavefrontModel explodedModel,
+            HbmFluidTank tank, boolean exploded, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
         FluidType type = tank.getTankType();
         if (exploded) {
             renderKnownTankPart(explodedModel, EXPLODED_FRAME, "Frame", TANK_FRAME_TEXTURE, poseStack, buffer,
@@ -57,7 +66,6 @@ public final class LegacyFluidTankRenderHelper {
                     packedLight, packedOverlay, 0xFFFFFF);
             renderTankPart(normalModel, "Tank", type, poseStack, buffer, packedLight, packedOverlay);
         }
-        renderSmallTankDiamonds(type, poseStack, buffer, packedLight, packedOverlay);
     }
 
     public static void renderBigAssTankFluid(HbmFluidTank tank, BlockState state, PoseStack poseStack,
@@ -71,11 +79,10 @@ public final class LegacyFluidTankRenderHelper {
         LegacyUvAnimation.Range u = LegacyUvAnimation.bigAssTankFluidU(animation);
         LegacyTileRenderPlans.BigAssTankFluidPlan plan = LegacyTileRenderPlans.bigAssTankFluidPlan(
                 height, u.min(), u.max(), LegacyUvAnimation.bigAssTankFluidV(height));
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
-                .withRenderMode(plan.blend().modernRenderMode());
         ResourceLocation texture = type == null ? HbmFluids.NONE.getTexture() : type.getTexture();
         for (LegacyTileRenderPlans.TexturedQuadPlan quad : plan.quads()) {
-            renderTexturedQuad(texture, context, quad);
+            renderTexturedQuad(texture, poseStack, buffer, packedLight, packedOverlay,
+                    plan.blend().modernRenderMode(), quad);
         }
     }
 
@@ -86,10 +93,8 @@ public final class LegacyFluidTankRenderHelper {
         }
         LegacyTileRenderPlans.Bat9000FluidPlan plan = LegacyTileRenderPlans.bat9000FluidPlan(tank.getFill(),
                 tank.getMaxFill(), fluidColor(tank.getTankType()));
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
-                .withoutTranslucency();
         for (LegacyTileRenderPlans.UntexturedQuadPlan quad : plan.quads()) {
-            renderUntexturedQuad(context, quad);
+            renderUntexturedQuad(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL, quad);
         }
     }
 
@@ -142,11 +147,8 @@ public final class LegacyFluidTankRenderHelper {
             String part, ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
             int packedOverlay, int color) {
         if (handle != null) {
-            model.renderOnlyInCallOrder(texture,
-                    new ObjRenderContext(poseStack, buffer,
-                            net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), packedLight, packedOverlay)
-                            .withRgb(color >> 16 & 255, color >> 8 & 255, color & 255),
-                    handle);
+            model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                    color >> 16 & 255, color >> 8 & 255, color & 255, 255, false, handle);
             return;
         }
         model.renderPart(part, texture, poseStack, buffer, packedLight, packedOverlay,
@@ -155,10 +157,9 @@ public final class LegacyFluidTankRenderHelper {
 
     private static void renderDangerDiamond(FluidType type, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
-                packedLight, packedOverlay).withRenderMode(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
-        LegacyDangerDiamondRenderer.render(context, type.getPoison(), type.getFlammability(),
-                type.getReactivity(), dangerSymbol(type.getSymbol()));
+        LegacyDangerDiamondRenderer.render(poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE, type.getPoison(),
+                type.getFlammability(), type.getReactivity(), dangerSymbol(type.getSymbol()));
     }
 
     private static void renderDangerDiamondPlan(LegacyTileRenderPlans.TankDangerDiamondPlan plan, FluidType type,
@@ -181,7 +182,8 @@ public final class LegacyFluidTankRenderHelper {
         }
     }
 
-    private static void renderTexturedQuad(ResourceLocation texture, ObjRenderContext context,
+    private static void renderTexturedQuad(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
             LegacyTileRenderPlans.TexturedQuadPlan quad) {
         if (quad.vertices().size() != 4) {
             return;
@@ -191,7 +193,8 @@ public final class LegacyFluidTankRenderHelper {
         LegacyTileRenderPlans.QuadVertexPlan v1 = quad.vertices().get(1);
         LegacyTileRenderPlans.QuadVertexPlan v2 = quad.vertices().get(2);
         LegacyTileRenderPlans.QuadVertexPlan v3 = quad.vertices().get(3);
-        LegacyTexturedQuadRenderer.quad(texture, context, normalX, 0.0F, 0.0F,
+        LegacyTexturedQuadRenderer.quad(texture, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                normalX, 0.0F, 0.0F,
                 vertex(v0), vertex(v1), vertex(v2), vertex(v3));
     }
 
@@ -200,7 +203,8 @@ public final class LegacyFluidTankRenderHelper {
                 vertex.color(), vertex.alpha());
     }
 
-    private static void renderUntexturedQuad(ObjRenderContext context,
+    private static void renderUntexturedQuad(PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTexturedRenderMode renderMode,
             LegacyTileRenderPlans.UntexturedQuadPlan quad) {
         if (quad.vertices().size() != 4) {
             return;
@@ -211,7 +215,7 @@ public final class LegacyFluidTankRenderHelper {
         LegacyTileRenderPlans.UntexturedVertexPlan v3 = quad.vertices().get(3);
         LegacyTileRenderPlans.RgbaPlan color = v0.color();
         int rgb = color.redByte() << 16 | color.greenByte() << 8 | color.blueByte();
-        LegacyUntexturedQuadRenderer.quad(context,
+        LegacyUntexturedQuadRenderer.quad(poseStack, buffer, renderMode,
                 v0.x(), v0.y(), v0.z(),
                 v1.x(), v1.y(), v1.z(),
                 v2.x(), v2.y(), v2.z(),
@@ -233,7 +237,7 @@ public final class LegacyFluidTankRenderHelper {
         if (corrosive != null && corrosive.isHighlyCorrosive()) {
             return TANK_DANGER_TEXTURE;
         }
-        return tankTexture(type.getName());
+        return tankTextureCached(type.getName());
     }
 
     private static int tankModelTint(FluidType type) {
@@ -244,9 +248,14 @@ public final class LegacyFluidTankRenderHelper {
         return type == null ? 0xFFFFFF : type.getColor();
     }
 
-    private static ResourceLocation tankTexture(String name) {
+    private static ResourceLocation tankTextureCached(String name) {
+        return TANK_TEXTURES_BY_NAME.computeIfAbsent(name.toLowerCase(Locale.US),
+                LegacyFluidTankRenderHelper::createTankTexture);
+    }
+
+    private static ResourceLocation createTankTexture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID,
-                "textures/models/tank/tank_" + name.toLowerCase(Locale.US) + ".png");
+                "textures/models/tank/tank_" + name + ".png");
     }
 
     private static LegacyDangerDiamondRenderer.Symbol dangerSymbol(FluidSymbol symbol) {

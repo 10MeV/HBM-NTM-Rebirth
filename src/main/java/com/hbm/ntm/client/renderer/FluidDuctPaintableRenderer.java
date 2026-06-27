@@ -6,7 +6,6 @@ import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.blockentity.PaintableDuctBlockEntity;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -37,7 +36,6 @@ public class FluidDuctPaintableRenderer<T extends BlockEntity & PaintableDuctBlo
             int packedOverlay) {
         BlockState state = duct.getBlockState();
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(duct, packedLight);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
         BlockState painted = duct.getPaintedState();
         boolean exhaust = state.getBlock() instanceof FluidDuctPaintableExhaustBlock;
         boolean overlay = state.hasProperty(com.hbm.ntm.block.FluidDuctPaintableBlock.OVERLAY)
@@ -48,20 +46,28 @@ public class FluidDuctPaintableRenderer<T extends BlockEntity & PaintableDuctBlo
             HbmClientRenderUtil.renderSingleBlock(Minecraft.getInstance().getBlockRenderer(), painted, poseStack,
                     buffer, modelLight);
             if (overlay) {
-                renderCube(DUCT_OVERLAY, context);
+                renderCube(DUCT_OVERLAY, poseStack, buffer, modelLight, packedOverlay);
             }
         } else {
-            renderCube(exhaust ? DUCT_EXHAUST_BASE : DUCT_BASE, context);
+            renderCube(exhaust ? DUCT_EXHAUST_BASE : DUCT_BASE, poseStack, buffer, modelLight, packedOverlay);
             if (!exhaust) {
                 int color = duct instanceof FluidPipeBlockEntity pipe ? pipe.getFluidType().getColor() : 0xFFFFFF;
-                renderCube(DUCT_COLOR_OVERLAY, context.withColor(color));
+                renderCube(DUCT_COLOR_OVERLAY, poseStack, buffer, modelLight, packedOverlay, color);
             }
         }
         poseStack.popPose();
     }
 
-    private static void renderCube(TextureAtlasSprite sprite, ObjRenderContext context) {
-        LegacyAtlasCuboidRenderer.croppedCuboid(sprite, context, 0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+    private static void renderCube(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        renderCube(sprite, poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF);
+    }
+
+    private static void renderCube(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int color) {
+        LegacyAtlasCuboidRenderer.croppedCuboid(sprite, poseStack, buffer, packedLight, packedOverlay,
+                color, 255, com.hbm.ntm.client.obj.LegacyTexturedRenderMode.CUTOUT_CULL,
+                0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
     }
 
     private static TextureAtlasSprite sprite(String texture) {

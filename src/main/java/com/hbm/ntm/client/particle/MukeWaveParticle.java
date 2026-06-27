@@ -62,10 +62,12 @@ public class MukeWaveParticle extends TextureSheetParticle implements HbmDeferre
         double x = Mth.lerp(partialTick, this.xo, this.x) - camera.getPosition().x();
         double y = Mth.lerp(partialTick, this.yo, this.y) - camera.getPosition().y() - 0.25D;
         double z = Mth.lerp(partialTick, this.zo, this.z) - camera.getPosition().z();
-        consumer.vertex(x - scale, y, z - scale).uv(getU1(), getV1()).color(1.0F, 1.0F, 1.0F, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        consumer.vertex(x - scale, y, z + scale).uv(getU1(), getV0()).color(1.0F, 1.0F, 1.0F, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        consumer.vertex(x + scale, y, z + scale).uv(getU0(), getV0()).color(1.0F, 1.0F, 1.0F, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        consumer.vertex(x + scale, y, z - scale).uv(getU0(), getV1()).color(1.0F, 1.0F, 1.0F, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, LightTexture.FULL_BRIGHT,
+                x - scale, y, z - scale, getU1(), getV1(),
+                x - scale, y, z + scale, getU1(), getV0(),
+                x + scale, y, z + scale, getU0(), getV0(),
+                x + scale, y, z - scale, getU0(), getV1(),
+                1.0F, 1.0F, 1.0F, alpha);
     }
 
     @Override

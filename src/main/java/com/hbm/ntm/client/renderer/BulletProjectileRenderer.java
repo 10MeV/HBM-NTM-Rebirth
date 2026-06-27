@@ -21,12 +21,10 @@ import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjEffectModels;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.client.obj.ObjWeaponModels;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.item.ChargeThrowerItem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
@@ -50,9 +48,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
 
 import java.util.List;
 import java.util.Random;
@@ -119,8 +115,26 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             new LegacyWavefrontModel(CHARGE_THROWER_MODEL, CHARGE_THROWER_HOOK).asVBO();
     private static final LegacyWavefrontModel LEADBURSTER =
             new LegacyWavefrontModel(LEADBURSTER_MODEL, LEADBURSTER_TEXTURE).asVBO();
-    private static final RenderType FLARE_RENDER_TYPE =
-            LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE.renderType(FLARE_TEXTURE);
+    private static final LegacyWavefrontModel.SelectionHandle PROJECTILE_BULLET_RIFLE =
+            PROJECTILES.prepareRenderOnlyInCallOrder("BulletRifle");
+    private static final LegacyWavefrontModel.SelectionHandle PROJECTILE_BULLET_PISTOL =
+            PROJECTILES.prepareRenderOnlyInCallOrder("BulletPistol");
+    private static final LegacyWavefrontModel.SelectionHandle PROJECTILE_BUCKSHOT =
+            PROJECTILES.prepareRenderOnlyInCallOrder("Buckshot");
+    private static final LegacyWavefrontModel.SelectionHandle PROJECTILE_FLECHETTE =
+            PROJECTILES.prepareRenderOnlyInCallOrder("Flechette");
+    private static final LegacyWavefrontModel.SelectionHandle PROJECTILE_GRENADE =
+            PROJECTILES.prepareRenderOnlyInCallOrder("Grenade");
+    private static final LegacyWavefrontModel.SelectionHandle PROJECTILE_ROCKET =
+            PROJECTILES.prepareRenderOnlyInCallOrder("Rocket");
+    private static final LegacyWavefrontModel.SelectionHandle PROJECTILE_MISSILE_MIRV =
+            PROJECTILES.prepareRenderOnlyInCallOrder("MissileMIRV");
+    private static final LegacyWavefrontModel.SelectionHandle LEADBURSTER_BASE =
+            LEADBURSTER.prepareRenderOnlyInCallOrder("Based");
+    private static final LegacyWavefrontModel.SelectionHandle LEADBURSTER_SPINNER =
+            LEADBURSTER.prepareRenderOnlyInCallOrder("Based.001");
+    private static final LegacyWavefrontModel.SelectionHandle LEADBURSTER_BACKLIGHT =
+            LEADBURSTER.prepareRenderOnlyInCallOrder("Backlight");
     private final ModelPart bulletCube;
 
     public BulletProjectileRenderer(EntityRendererProvider.Context context) {
@@ -186,12 +200,14 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
 
         switch (style) {
             case NORMAL, FOLLY -> renderBullet(trail, entity, poseStack, buffer, packedLight, bulletCube);
-            case PISTOL -> renderProjectilePart("BulletPistol", BULLET_PISTOL, 0.5F, poseStack, buffer, packedLight);
-            case FLECHETTE -> renderProjectilePart("Flechette", FLECHETTE, 0.5F, poseStack, buffer, packedLight);
-            case PELLET -> renderProjectilePart("Buckshot", BUCKSHOT, 0.5F, poseStack, buffer, packedLight);
+            case PISTOL -> renderProjectilePart(PROJECTILE_BULLET_PISTOL, BULLET_PISTOL, 0.5F,
+                    poseStack, buffer, packedLight);
+            case FLECHETTE -> renderProjectilePart(PROJECTILE_FLECHETTE, FLECHETTE, 0.5F,
+                    poseStack, buffer, packedLight);
+            case PELLET -> renderProjectilePart(PROJECTILE_BUCKSHOT, BUCKSHOT, 0.5F, poseStack, buffer, packedLight);
             case BOLT -> renderBolt(BulletTrail.fromLegacyId(trail), entity.getId(), poseStack, buffer);
             case ROCKET -> {
-                renderProjectilePart("Rocket", ROCKET, 0.5F, poseStack, buffer, packedLight);
+                renderProjectilePart(PROJECTILE_ROCKET, ROCKET, 0.5F, poseStack, buffer, packedLight);
                 if (trail == LegacySednaBulletAppearance.ROCKET_THRUST) {
                     poseStack.pushPose();
                     poseStack.translate(0.375D, 0.0D, 0.0D);
@@ -200,9 +216,10 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
                     poseStack.popPose();
                 }
             }
-            case GRENADE -> renderProjectilePart("Grenade", GRENADE, 0.25F, poseStack, buffer, packedLight);
+            case GRENADE -> renderProjectilePart(PROJECTILE_GRENADE, GRENADE, 0.25F, poseStack, buffer, packedLight);
             case ORB -> renderOrb(trail, entity, partialTick, poseStack, buffer);
-            case APDS -> renderProjectilePart("Flechette", FLECHETTE, 2.0F, poseStack, buffer, packedLight);
+            case APDS -> renderProjectilePart(PROJECTILE_FLECHETTE, FLECHETTE, 2.0F,
+                    poseStack, buffer, packedLight);
             case BLADE -> renderBlade(entity, partialTick, poseStack, buffer, packedLight);
             case LEADBURSTER -> renderLeadburster(entity, partialTick, poseStack, buffer, packedLight);
             default -> {
@@ -326,13 +343,13 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
 
     private static void renderLegacyBeamFlare(double scale, float outerAlpha, float innerAlpha,
             PoseStack poseStack, MultiBufferSource buffer) {
-        VertexConsumer consumer = buffer.getBuffer(FLARE_RENDER_TYPE);
-        PoseStack.Pose pose = poseStack.last();
         CameraBasis cameraBasis = LegacyBillboardRenderer.currentCameraBasis();
-        LegacyBillboardRenderer.billboardRgbaF(consumer, pose, cameraBasis,
+        LegacyBillboardRenderer.billboardRgbaF(FLARE_TEXTURE, poseStack, buffer,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, cameraBasis,
                 0.0D, 0.0D, 0.0D, scale, scale, 1.0F, 1.0F, 1.0F, outerAlpha, LightTexture.FULL_BRIGHT);
         scale *= 0.5D;
-        LegacyBillboardRenderer.billboardRgbaF(consumer, pose, cameraBasis,
+        LegacyBillboardRenderer.billboardRgbaF(FLARE_TEXTURE, poseStack, buffer,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, cameraBasis,
                 0.0D, 0.0D, 0.0D, scale, scale, 1.0F, 1.0F, 1.0F, innerAlpha, LightTexture.FULL_BRIGHT);
     }
 
@@ -371,13 +388,13 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
 
         double scale = Math.min(5.0D, (entity.tickCount + partialTick - 2.0F) * 0.5D)
                 * (0.8D + entity.level().random.nextDouble() * 0.4D);
-        VertexConsumer consumer = buffer.getBuffer(FLARE_RENDER_TYPE);
-        PoseStack.Pose pose = poseStack.last();
         CameraBasis cameraBasis = LegacyBillboardRenderer.currentCameraBasis();
-        LegacyBillboardRenderer.billboardRgbaF(consumer, pose, cameraBasis,
+        LegacyBillboardRenderer.billboardRgbaF(FLARE_TEXTURE, poseStack, buffer,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, cameraBasis,
                 0.0D, 0.0D, 0.0D, scale, scale, red, green, blue, 0.5F, LightTexture.FULL_BRIGHT);
         scale *= 0.5D;
-        LegacyBillboardRenderer.billboardRgbaF(consumer, pose, cameraBasis,
+        LegacyBillboardRenderer.billboardRgbaF(FLARE_TEXTURE, poseStack, buffer,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, cameraBasis,
                 0.0D, 0.0D, 0.0D, scale, scale, 1.0F, 1.0F, 1.0F, 0.75F, LightTexture.FULL_BRIGHT);
     }
 
@@ -456,8 +473,8 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         poseStack.pushPose();
         poseStack.scale(0.5F / 1.5F, 0.5F / 1.5F, 0.5F / 1.5F);
         poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-        PROJECTILES.renderPart("MissileMIRV", ROCKET_MIRV, poseStack, buffer, packedLight,
-                OverlayTexture.NO_OVERLAY);
+        PROJECTILES.renderOnlyInCallOrder(ROCKET_MIRV, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
+                PROJECTILE_MISSILE_MIRV);
         poseStack.popPose();
     }
 
@@ -465,7 +482,8 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         poseStack.pushPose();
         poseStack.scale(0.25F / 1.5F, 0.25F / 1.5F, 0.25F / 1.5F);
         poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-        PROJECTILES.renderPart("Grenade", GRENADE, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        PROJECTILES.renderOnlyInCallOrder(GRENADE, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
+                PROJECTILE_GRENADE);
         poseStack.popPose();
     }
 
@@ -519,16 +537,16 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             double sagMean = (sagJ + sagK) * 0.5D;
             Vec3 sample = delta.scale((j + 0.5D) / 10.0D).subtract(0.0D, sagMean, 0.0D);
             int light = LevelRenderer.getLightColor(entity.level(), BlockPos.containing(bulletPos.add(sample)));
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(),
-                    light, OverlayTexture.NO_OVERLAY).withColor(0x606060);
-            LegacyTexturedLineRenderer.wrappedLineSegment(WIRE_GREYSCALE, context,
+            LegacyTexturedLineRenderer.wrappedLineSegment(WIRE_GREYSCALE, poseStack, buffer,
+                    light, OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
                     delta.x * j / 10.0D,
                     delta.y * j / 10.0D - sagJ,
                     delta.z * j / 10.0D,
                     delta.x * k / 10.0D,
                     delta.y * k / 10.0D - sagK,
                     delta.z * k / 10.0D,
-                    offsets.iX(), offsets.iY(), offsets.iZ(), offsets.jX(), offsets.jZ(), 8.0D);
+                    offsets.iX(), offsets.iY(), offsets.iZ(), offsets.jX(), offsets.jZ(), 8.0D,
+                    0x606060, 255);
         }
     }
 
@@ -605,7 +623,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
                     packedLight, OverlayTexture.NO_OVERLAY);
             return;
         }
-        renderProjectilePart("BulletRifle", BULLET_RIFLE, 0.5F, poseStack, buffer, packedLight);
+        renderProjectilePart(PROJECTILE_BULLET_RIFLE, BULLET_RIFLE, 0.5F, poseStack, buffer, packedLight);
     }
 
     private static boolean renderLegacySednaBullet(int trail, BulletProjectileEntity entity, PoseStack poseStack,
@@ -651,62 +669,65 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         }
         double scaledWidthF = widthF / 1.5D;
         double scaledWidthB = widthB / 1.5D;
-        VertexConsumer consumer = LegacyUntexturedQuadRenderer.solid(buffer);
-        PoseStack.Pose pose = poseStack.last();
-        sednaQuad(consumer, pose, dark, light,
+        sednaQuad(poseStack, buffer, dark, light,
                 length, scaledWidthB, -scaledWidthB, length, scaledWidthB, scaledWidthB,
                 0.0D, scaledWidthF, scaledWidthF, 0.0D, scaledWidthF, -scaledWidthF);
-        sednaQuad(consumer, pose, dark, light,
+        sednaQuad(poseStack, buffer, dark, light,
                 length, -scaledWidthB, -scaledWidthB, length, -scaledWidthB, scaledWidthB,
                 0.0D, -scaledWidthF, scaledWidthF, 0.0D, -scaledWidthF, -scaledWidthF);
-        sednaQuad(consumer, pose, dark, light,
+        sednaQuad(poseStack, buffer, dark, light,
                 length, -scaledWidthB, scaledWidthB, length, scaledWidthB, scaledWidthB,
                 0.0D, scaledWidthF, scaledWidthF, 0.0D, -scaledWidthF, scaledWidthF);
-        sednaQuad(consumer, pose, dark, light,
+        sednaQuad(poseStack, buffer, dark, light,
                 length, -scaledWidthB, -scaledWidthB, length, scaledWidthB, -scaledWidthB,
                 0.0D, scaledWidthF, -scaledWidthF, 0.0D, -scaledWidthF, -scaledWidthF);
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, length, scaledWidthB, scaledWidthB, dark, 255);
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, length, scaledWidthB, -scaledWidthB, dark, 255);
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, length, -scaledWidthB, -scaledWidthB, dark, 255);
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, length, -scaledWidthB, scaledWidthB, dark, 255);
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, 0.0D, scaledWidthF, scaledWidthF, light, 255);
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, 0.0D, scaledWidthF, -scaledWidthF, light, 255);
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, 0.0D, -scaledWidthF, -scaledWidthF, light, 255);
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, 0.0D, -scaledWidthF, scaledWidthF, light, 255);
+        LegacyUntexturedQuadRenderer.quad(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                length, scaledWidthB, scaledWidthB,
+                length, scaledWidthB, -scaledWidthB,
+                length, -scaledWidthB, -scaledWidthB,
+                length, -scaledWidthB, scaledWidthB,
+                dark, 255, 255, 255, 255);
+        LegacyUntexturedQuadRenderer.quad(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                0.0D, scaledWidthF, scaledWidthF,
+                0.0D, scaledWidthF, -scaledWidthF,
+                0.0D, -scaledWidthF, -scaledWidthF,
+                0.0D, -scaledWidthF, scaledWidthF,
+                light, 255, 255, 255, 255);
     }
 
-    private static void sednaQuad(VertexConsumer consumer, PoseStack.Pose pose, int dark, int light,
+    private static void sednaQuad(PoseStack poseStack, MultiBufferSource buffer, int dark, int light,
             double x0, double y0, double z0, double x1, double y1, double z1,
             double x2, double y2, double z2, double x3, double y3, double z3) {
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, x0, y0, z0, dark, 255);
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, x1, y1, z1, dark, 255);
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, x2, y2, z2, light, 255);
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, x3, y3, z3, light, 255);
+        LegacyWavefrontModel.renderUntexturedVertexColorTransientQuad(poseStack, buffer,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                x0, y0, z0, dark, 255,
+                x1, y1, z1, dark, 255,
+                x2, y2, z2, light, 255,
+                x3, y3, z3, light, 255);
     }
 
-    private static void renderProjectilePart(String part, ResourceLocation texture, float scale,
+    private static void renderProjectilePart(LegacyWavefrontModel.SelectionHandle part, ResourceLocation texture, float scale,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.scale(scale, scale, scale);
         poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        PROJECTILES.renderPart(part, texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        PROJECTILES.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, part);
         poseStack.popPose();
     }
 
     private static void renderOrb(int trail, BulletProjectileEntity entity, float partialTick,
             PoseStack poseStack, MultiBufferSource buffer) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(),
-                LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY).withAdditiveTranslucency();
         if (trail == 0) {
-            ObjEffectModels.SPHERE_UV.renderAll(TOM_FLAME, context);
+            renderOrbSphere(poseStack, buffer);
             poseStack.pushPose();
             poseStack.scale(0.3F, 0.3F, 0.3F);
-            ObjEffectModels.SPHERE_UV.renderAll(TOM_FLAME, context);
+            renderOrbSphere(poseStack, buffer);
             poseStack.popPose();
             int timeSeed = (int) ((entity.tickCount + partialTick) * 5.0F);
             for (int i = 0; i < 5; i++) {
-                LegacySparkRenderer.renderSpark(context, timeSeed + 100 * i, 0.0D, 0.0D, 0.0D,
+                LegacySparkRenderer.renderSpark(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                        timeSeed + 100 * i, 0.0D, 0.0D, 0.0D,
                         0.5F, 2, 2, 0x8080FF, 0xFFFFFF);
             }
             return;
@@ -720,10 +741,17 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             poseStack.popPose();
             int timeSeed = (int) ((entity.tickCount + partialTick) * 5.0F);
             for (int i = 0; i < 3; i++) {
-                LegacySparkRenderer.renderSpark(context, timeSeed + 100 * i, 0.0D, 0.0D, 0.0D,
+                LegacySparkRenderer.renderSpark(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                        timeSeed + 100 * i, 0.0D, 0.0D, 0.0D,
                         1.0F, 2, 3, 0xFF0000, 0xFF8080);
             }
         }
+    }
+
+    private static void renderOrbSphere(PoseStack poseStack, MultiBufferSource buffer) {
+        ObjEffectModels.SPHERE_UV.renderAll(TOM_FLAME, poseStack, buffer, LightTexture.FULL_BRIGHT,
+                OverlayTexture.NO_OVERLAY, 255, 255, 255, 255, false,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, LegacyWavefrontModel.UvTransform.DEFAULT);
     }
 
     private static void renderTau(BulletProjectileEntity entity, int trail, float partialTick,
@@ -747,8 +775,6 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             return;
         }
 
-        VertexConsumer consumer = buffer.getBuffer(RenderType.lightning());
-        Matrix4f pose = poseStack.last().pose();
         for (int i = 0; i < nodes.size() - 1; i++) {
             BulletTauTrailUtil.TauTrailNode node = nodes.get(i);
             BulletTauTrailUtil.TauTrailNode past = nodes.get(i + 1);
@@ -757,25 +783,26 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             if (nodeAlpha == 0.0D && pastAlpha == 0.0D) {
                 break;
             }
-            tauRibbon(consumer, pose, node.offset().x, node.offset().y, node.offset().z,
+            tauRibbon(poseStack, buffer, node.offset().x, node.offset().y, node.offset().z,
                     past.offset().x, past.offset().y, past.offset().z, scale, red, green, blue,
                     (float) nodeAlpha, (float) pastAlpha);
-            tauRibbon(consumer, pose, node.offset().x, node.offset().y, node.offset().z,
+            tauRibbon(poseStack, buffer, node.offset().x, node.offset().y, node.offset().z,
                     past.offset().x, past.offset().y, past.offset().z, -scale, red, green, blue,
                     (float) nodeAlpha, (float) pastAlpha);
         }
     }
 
-    private static void tauRibbon(VertexConsumer consumer, Matrix4f pose,
+    private static void tauRibbon(PoseStack poseStack, MultiBufferSource buffer,
             double nodeX, double nodeY, double nodeZ, double pastX, double pastY, double pastZ,
             double yOffset, float red, float green, float blue, float nodeAlpha, float pastAlpha) {
         float outerAlpha = 0.25F;
-        vertex(consumer, pose, (float) nodeX, (float) nodeY, (float) nodeZ, red, green, blue, nodeAlpha);
-        vertex(consumer, pose, (float) nodeX, (float) (nodeY + yOffset), (float) nodeZ,
-                red, green, blue, nodeAlpha * outerAlpha);
-        vertex(consumer, pose, (float) pastX, (float) (pastY + yOffset), (float) pastZ,
-                red, green, blue, pastAlpha * outerAlpha);
-        vertex(consumer, pose, (float) pastX, (float) pastY, (float) pastZ, red, green, blue, pastAlpha);
+        LegacyUntexturedQuadRenderer.quadRgbaF(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                nodeX, nodeY, nodeZ,
+                nodeX, nodeY + yOffset, nodeZ,
+                pastX, pastY + yOffset, pastZ,
+                pastX, pastY, pastZ,
+                red, green, blue,
+                nodeAlpha, nodeAlpha * outerAlpha, pastAlpha * outerAlpha, pastAlpha);
     }
 
     private static void renderBlade(BulletProjectileEntity entity, float partialTick, PoseStack poseStack,
@@ -801,12 +828,15 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         poseStack.pushPose();
         poseStack.mulPose(Axis.ZN.rotationDegrees(90.0F));
         poseStack.scale(0.05F, 0.05F, 0.05F);
-        LEADBURSTER.renderPart("Based", LEADBURSTER_TEXTURE, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        LEADBURSTER.renderOnlyInCallOrder(LEADBURSTER_TEXTURE, poseStack, buffer, packedLight,
+                OverlayTexture.NO_OVERLAY, LEADBURSTER_BASE);
         if (entity.getStuckIn() != -1) {
             poseStack.mulPose(Axis.YP.rotationDegrees((entity.tickCount + partialTick) * -18.0F));
         }
-        LEADBURSTER.renderPart("Based.001", LEADBURSTER_TEXTURE, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
-        LEADBURSTER.renderPart("Backlight", LEADBURSTER_TEXTURE, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        LEADBURSTER.renderOnlyInCallOrder(LEADBURSTER_TEXTURE, poseStack, buffer, packedLight,
+                OverlayTexture.NO_OVERLAY, LEADBURSTER_SPINNER);
+        LEADBURSTER.renderOnlyInCallOrder(LEADBURSTER_TEXTURE, poseStack, buffer, packedLight,
+                OverlayTexture.NO_OVERLAY, LEADBURSTER_BACKLIGHT);
         poseStack.popPose();
     }
 
@@ -866,42 +896,45 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         poseStack.scale(0.25F, 0.125F, 0.125F);
         poseStack.scale(-1.0F, 1.0F, 1.0F);
         poseStack.scale(2.0F, 2.0F, 2.0F);
-        VertexConsumer consumer = buffer.getBuffer(RenderType.lightning());
-        Matrix4f pose = poseStack.last().pose();
-        triangle(consumer, pose, red, green, blue, 1.0F, 6, 0, 0, 3, -1, -1, 3, 1, -1);
-        triangle(consumer, pose, red, green, blue, 1.0F, 6, 0, 0, 3, 1, 1, 3, -1, 1);
-        triangle(consumer, pose, red, green, blue, 1.0F, 6, 0, 0, 3, -1, 1, 3, -1, -1);
-        triangle(consumer, pose, red, green, blue, 1.0F, 6, 0, 0, 3, 1, -1, 3, 1, 1);
-        triangle(consumer, pose, red, green, blue, 1.0F, 6, 0, 0, 4, -0.5F, -0.5F, 4, 0.5F, -0.5F);
-        triangle(consumer, pose, red, green, blue, 1.0F, 6, 0, 0, 4, 0.5F, 0.5F, 4, -0.5F, 0.5F);
-        triangle(consumer, pose, red, green, blue, 1.0F, 6, 0, 0, 4, -0.5F, 0.5F, 4, -0.5F, -0.5F);
-        triangle(consumer, pose, red, green, blue, 1.0F, 6, 0, 0, 4, 0.5F, -0.5F, 4, 0.5F, 0.5F);
-        tailQuad(consumer, pose, red, green, blue, 4, 0.5F, -0.5F, 4, 0.5F, 0.5F, 0, 0.5F, 0.5F, 0, 0.5F, -0.5F);
-        tailQuad(consumer, pose, red, green, blue, 4, -0.5F, -0.5F, 4, -0.5F, 0.5F, 0, -0.5F, 0.5F, 0, -0.5F, -0.5F);
-        tailQuad(consumer, pose, red, green, blue, 4, -0.5F, 0.5F, 4, 0.5F, 0.5F, 0, 0.5F, 0.5F, 0, -0.5F, 0.5F);
-        tailQuad(consumer, pose, red, green, blue, 4, -0.5F, -0.5F, 4, 0.5F, -0.5F, 0, 0.5F, -0.5F, 0, -0.5F, -0.5F);
+        int color = rgb(red, green, blue);
+        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 3, -1, -1, 3, 1, -1);
+        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 3, 1, 1, 3, -1, 1);
+        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 3, -1, 1, 3, -1, -1);
+        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 3, 1, -1, 3, 1, 1);
+        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 4, -0.5F, -0.5F, 4, 0.5F, -0.5F);
+        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 4, 0.5F, 0.5F, 4, -0.5F, 0.5F);
+        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 4, -0.5F, 0.5F, 4, -0.5F, -0.5F);
+        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 4, 0.5F, -0.5F, 4, 0.5F, 0.5F);
+        tailQuad(poseStack, buffer, red, green, blue, 4, 0.5F, -0.5F, 4, 0.5F, 0.5F, 0, 0.5F, 0.5F, 0, 0.5F, -0.5F);
+        tailQuad(poseStack, buffer, red, green, blue, 4, -0.5F, -0.5F, 4, -0.5F, 0.5F, 0, -0.5F, 0.5F, 0, -0.5F, -0.5F);
+        tailQuad(poseStack, buffer, red, green, blue, 4, -0.5F, 0.5F, 4, 0.5F, 0.5F, 0, 0.5F, 0.5F, 0, -0.5F, 0.5F);
+        tailQuad(poseStack, buffer, red, green, blue, 4, -0.5F, -0.5F, 4, 0.5F, -0.5F, 0, 0.5F, -0.5F, 0, -0.5F, -0.5F);
         poseStack.popPose();
     }
 
-    private static void triangle(VertexConsumer consumer, Matrix4f pose, float red, float green, float blue, float alpha,
+    private static void triangle(PoseStack poseStack, MultiBufferSource buffer, int color, float alpha,
             float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3) {
-        vertex(consumer, pose, x1, y1, z1, red, green, blue, alpha);
-        vertex(consumer, pose, x2, y2, z2, red, green, blue, 0.0F);
-        vertex(consumer, pose, x3, y3, z3, red, green, blue, 0.0F);
+        LegacyWavefrontModel.renderUntexturedVertexColorTransientTriangle(poseStack, buffer,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                x1, y1, z1, color, alpha(alpha),
+                x2, y2, z2, color, 0,
+                x3, y3, z3, color, 0);
     }
 
-    private static void tailQuad(VertexConsumer consumer, Matrix4f pose, float red, float green, float blue,
+    private static void tailQuad(PoseStack poseStack, MultiBufferSource buffer, float red, float green, float blue,
             float x1, float y1, float z1, float x2, float y2, float z2,
             float x3, float y3, float z3, float x4, float y4, float z4) {
-        vertex(consumer, pose, x1, y1, z1, red, green, blue, 1.0F);
-        vertex(consumer, pose, x2, y2, z2, red, green, blue, 1.0F);
-        vertex(consumer, pose, x3, y3, z3, red, green, blue, 0.0F);
-        vertex(consumer, pose, x4, y4, z4, red, green, blue, 0.0F);
+        LegacyUntexturedQuadRenderer.quadRgbaF(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4,
+                red, green, blue, 1.0F, 1.0F, 0.0F, 0.0F);
     }
 
-    private static void vertex(VertexConsumer consumer, Matrix4f pose, float x, float y, float z,
-            float red, float green, float blue, float alpha) {
-        consumer.vertex(pose, x, y, z).color(red, green, blue, alpha).endVertex();
+    private static int rgb(float red, float green, float blue) {
+        return alpha(red) << 16 | alpha(green) << 8 | alpha(blue);
+    }
+
+    private static int alpha(float value) {
+        return Mth.clamp((int) (value * 255.0F), 0, 255);
     }
 
     @Override

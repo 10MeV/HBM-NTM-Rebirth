@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.damage.EntityDamageUtil;
@@ -104,8 +103,7 @@ public class ThresherBlockEntity extends HbmFluidNetworkBlockEntity
             thresher.runThresher(level, pos, blockState);
         }
         thresher.networkPackNT(20);
-        if (oldOn != thresher.on || oldFill != thresher.tank.getFill() || oldAngle != thresher.angle
-                || level.getGameTime() % 20L == 0L) {
+        if (oldOn != thresher.on || oldFill != thresher.tank.getFill() || oldAngle != thresher.angle) {
             thresher.setChanged();
             level.sendBlockUpdated(pos, blockState, blockState, Block.UPDATE_CLIENTS);
         }
@@ -427,11 +425,11 @@ public class ThresherBlockEntity extends HbmFluidNetworkBlockEntity
         if (tag == null || !tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
             return false;
         }
-        int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
-        if (ids.length == 0) {
+        java.util.OptionalInt id = HbmFluidCopiable.copiedFluidIdAt(tag, index);
+        if (id.isEmpty()) {
             return false;
         }
-        FluidType type = HbmFluids.fromId(ids[Math.max(0, Math.min(index, ids.length - 1))]);
+        FluidType type = HbmFluids.fromId(id.getAsInt());
         if (!acceptsFuel(type)) {
             return false;
         }
@@ -443,7 +441,9 @@ public class ThresherBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         List<Component> lines = new ArrayList<>();
-        lines.add(LegacyLookOverlayLines.compactTank(true, tank));
+        lines.add(tank.getTankType().getDisplayName().copy()
+                .append(Component.literal(": " + tank.getFill() + "/" + tank.getMaxFill() + "mB")
+                        .withStyle(ChatFormatting.RESET)));
         if (suspended) {
             lines.add(Component.literal("! ")
                     .append(Component.translatable("block.hbm_ntm_rebirth.machine_thresher.suspended"))

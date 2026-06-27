@@ -5,6 +5,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.config.SteamTurbineConfig;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -23,7 +24,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEntity implements RORValueProvider {
-    private static final String[] SPIN_BLOCKS = new String[] {"", "|", "/", "\\"};
+    private static final String[] SPIN_BLOCKS = new String[] {"▖ ", "▘ ", " ▘", " ▖"};
     private static final long MAX_STORED_POWER = 100_000_000L;
     private static final double CONSUMPTION_PERCENT = 0.2D;
     private static final double FLYWHEEL_MAX_ENERGY = 50_000_000D;
@@ -143,6 +144,15 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
         return maxPowerTarget;
     }
 
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        super.provideExtraInfo(data);
+        data.putDouble(CompatEnergyControl.D_OUTPUT_TARGET_HE, lastPowerTarget);
+        data.putDouble(CompatEnergyControl.D_TURBINE_PERCENT, spin * 100.0D);
+        data.putLong("flywheelEnergy", flywheelEnergy);
+        data.putLong("maxPowerTarget", maxPowerTarget);
+    }
+
     private void updateAudioLoop() {
         double spinNum = Math.min(1.0D, Math.max(0.0D, spin) * 2.0D);
         audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.largeTurbineRunning",
@@ -181,7 +191,7 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        int spinner = flywheelEnergy <= 0L ? 0 : (int) ((level.getGameTime() / 4L) % 4L);
+        int spinner = lastPowerTarget <= 0L ? 0 : (int) ((level.getGameTime() / 4L) % 4L);
         int spinPercent = (int) Math.round(spin * 100.0D);
         FluidType inputType = inputTank.getTankType();
         CoolableFluidTrait trait = inputType.getTrait(CoolableFluidTrait.class);

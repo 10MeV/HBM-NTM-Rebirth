@@ -2,8 +2,12 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.FluidDuctGaugeBlockEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.BlockGetter;
@@ -44,6 +48,13 @@ public class FluidDuctGaugeBlock extends FluidPipeBlock {
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
             CollisionContext context) {
         return FULL_BLOCK_SHAPE;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        LegacyStandardInfoTooltip.append(tooltip, "fluid_duct_gauge");
     }
 
     @Nullable

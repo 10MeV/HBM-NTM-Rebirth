@@ -1,6 +1,7 @@
 package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.fluid.HbmFluidDuctVariants;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
@@ -43,6 +44,7 @@ public class HbmItemModelProvider extends ItemModelProvider {
         ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.HIDDEN_RECIPE_ITEMS.forEach(item -> itemModel(item.get()));
         itemModel(ModItems.CONVEYOR_WAND.get());
+        fluidDuctVariantItemModels();
     }
 
     private void itemModel(Item item) {
@@ -468,8 +470,7 @@ public class HbmItemModelProvider extends ItemModelProvider {
             return;
         }
         if (path.equals("fluid_duct_neo") || path.equals("fluid_duct_box") || path.equals("fluid_duct_exhaust")) {
-            getBuilder(path)
-                    .parent(new ModelFile.UncheckedModelFile("minecraft:builtin/entity"));
+            builtinEntityItem(path);
             return;
         }
         if (path.equals("fluid_duct") || path.equals("fluid_valve") || path.equals("fluid_switch")
@@ -583,6 +584,21 @@ public class HbmItemModelProvider extends ItemModelProvider {
         getBuilder(itemPath)
                 .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
                 .texture("layer0", modLoc("item/" + texturePath));
+    }
+
+    private void fluidDuctVariantItemModels() {
+        for (int style = 0; style < HbmFluidDuctVariants.STANDARD_STYLE_COUNT; style++) {
+            builtinEntityItem("fluid_duct_neo_" + style);
+        }
+        for (int metadata = 0; metadata < HbmFluidDuctVariants.BOX_METADATA_COUNT; metadata++) {
+            builtinEntityItem("fluid_duct_box_" + metadata);
+            builtinEntityItem("fluid_duct_exhaust_" + metadata);
+        }
+    }
+
+    private void builtinEntityItem(String itemPath) {
+        getBuilder(itemPath)
+                .parent(new ModelFile.UncheckedModelFile("minecraft:builtin/entity"));
     }
 
     @Nullable

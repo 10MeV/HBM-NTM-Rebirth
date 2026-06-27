@@ -6,7 +6,7 @@ import com.hbm.ntm.fluid.FluidSymbol;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmCompatFluidRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
-import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.resources.ResourceLocation;
@@ -87,7 +87,7 @@ public final class CompatFluidRegistry {
     }
 
     public static FluidType getFluid(String name) {
-        return HbmFluids.fromName(name);
+        return HbmFluidJsonUtil.readFluidReference(name);
     }
 
     public static List<HbmFluidContainerRegistry.ContainerEntry> getContainers(FluidType type) {

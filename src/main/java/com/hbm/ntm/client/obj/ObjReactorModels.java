@@ -86,7 +86,7 @@ public final class ObjReactorModels {
     public static LegacyWavefrontModel model(String name) {
         return new LegacyWavefrontModel(
                 modelLocation(name),
-                texture(name));
+                texture(name)).asVBO();
     }
 
     private static ResourceLocation modelLocation(String name) {
@@ -116,8 +116,7 @@ public final class ObjReactorModels {
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyWavefrontModel.SelectionHandle handle = lpw2Handle(partName);
         if (handle != null) {
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
-            LPW2.renderOnlyInCallOrder(texture, context, handle);
+            LPW2.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle);
             return;
         }
         LPW2.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
@@ -128,11 +127,9 @@ public final class ObjReactorModels {
             int blue, int alpha, float uScale, float vScale, float uTranslate, float vTranslate) {
         LegacyWavefrontModel.SelectionHandle handle = lpw2Handle(partName);
         if (handle != null) {
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
-                    .withRgba(red, green, blue, alpha)
-                    .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL)
-                    .withLegacyTextureMatrix(uScale, vScale, uTranslate, vTranslate);
-            LPW2.renderOnlyInCallOrder(texture, context, handle);
+            LPW2.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha, false, LegacyTexturedRenderMode.CUTOUT_CULL,
+                    LegacyWavefrontModel.legacyTextureMatrixDynamic(uScale, vScale, uTranslate, vTranslate), handle);
             return;
         }
         LPW2.renderPartWithLegacyTextureMatrixCull(partName, texture, poseStack, buffer, packedLight, packedOverlay,

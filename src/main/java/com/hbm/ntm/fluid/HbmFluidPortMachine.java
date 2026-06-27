@@ -26,7 +26,18 @@ public final class HbmFluidPortMachine {
 
     public static PortMachineRefreshReport refreshReceiverPortsReport(Level level, BlockPos origin,
             Iterable<FluidPort> ports, Iterable<HbmFluidTank> receivingTanks, HbmFluidReceiver receiver) {
-        return refreshReceiverPortsDetailedReport(level, origin, ports, receivingTanks, receiver).summary();
+        if (level == null || level.isClientSide || receivingTanks == null || receiver == null) {
+            return PortMachineRefreshReport.empty();
+        }
+        int touched = 0;
+        Set<FluidType> seenTypes = new HashSet<>();
+        for (HbmFluidTank tank : receivingTanks) {
+            if (tank != null && tank.getTankType() != HbmFluids.NONE && seenTypes.add(tank.getTankType())) {
+                touched += HbmFluidUtil.subscribeReceiverToPortsReport(
+                        level, origin, ports, tank.getTankType(), receiver).subscribedPorts();
+            }
+        }
+        return new PortMachineRefreshReport(seenTypes.size(), touched, 0, 0, 0L);
     }
 
     public static PortMachineRefreshDetailReport refreshReceiverPortsDetailedReport(Level level, BlockPos origin,
@@ -57,7 +68,24 @@ public final class HbmFluidPortMachine {
 
     public static PortMachineRefreshReport refreshProviderPortsReport(Level level, BlockPos origin,
             Iterable<FluidPort> ports, Iterable<HbmFluidTank> sendingTanks, HbmFluidProvider provider) {
-        return refreshProviderPortsDetailedReport(level, origin, ports, sendingTanks, provider).summary();
+        if (level == null || level.isClientSide || sendingTanks == null || provider == null) {
+            return PortMachineRefreshReport.empty();
+        }
+        int touched = 0;
+        long transferred = 0L;
+        Set<FluidKey> seenKeys = new HashSet<>();
+        for (HbmFluidTank tank : sendingTanks) {
+            if (tank != null
+                    && tank.getTankType() != HbmFluids.NONE
+                    && tank.getFill() > 0
+                    && seenKeys.add(new FluidKey(tank.getTankType(), tank.getPressure()))) {
+                HbmFluidUtil.PortTransferReport report = HbmFluidUtil.tryProvideToPortsReport(
+                        level, origin, ports, tank.getTankType(), tank.getPressure(), provider);
+                touched += report.touchedPorts();
+                transferred += report.transferredMb();
+            }
+        }
+        return new PortMachineRefreshReport(0, 0, seenKeys.size(), touched, transferred);
     }
 
     public static PortMachineRefreshDetailReport refreshProviderPortsDetailedReport(Level level, BlockPos origin,
@@ -96,8 +124,8 @@ public final class HbmFluidPortMachine {
     public static PortMachineRefreshReport refreshTransceiverPortsReport(Level level, BlockPos origin,
             Iterable<FluidPort> ports, Iterable<HbmFluidTank> receivingTanks, Iterable<HbmFluidTank> sendingTanks,
             HbmStandardFluidTransceiver transceiver) {
-        return refreshTransceiverPortsDetailedReport(level, origin, ports, receivingTanks, sendingTanks, transceiver)
-                .summary();
+        return refreshReceiverPortsReport(level, origin, ports, receivingTanks, transceiver)
+                .merge(refreshProviderPortsReport(level, origin, ports, sendingTanks, transceiver));
     }
 
     public static PortMachineRefreshDetailReport refreshTransceiverPortsDetailedReport(Level level, BlockPos origin,
@@ -114,7 +142,7 @@ public final class HbmFluidPortMachine {
 
     public static PortMachineDetachReport detachReceiverPortsReport(Level level, BlockPos origin,
             Iterable<FluidPort> ports, Iterable<HbmFluidTank> receivingTanks, HbmFluidReceiver receiver) {
-        return detachReceiverPortsDetailedReport(level, origin, ports, receivingTanks, receiver).summary();
+        return detachReceiverPortsForTypesReport(level, origin, ports, fluidTypes(receivingTanks), receiver);
     }
 
     public static PortMachineDetachDetailReport detachReceiverPortsDetailedReport(Level level, BlockPos origin,
@@ -124,7 +152,18 @@ public final class HbmFluidPortMachine {
 
     public static PortMachineDetachReport detachReceiverPortsForTypesReport(Level level, BlockPos origin,
             Iterable<FluidPort> ports, Iterable<FluidType> types, HbmFluidReceiver receiver) {
-        return detachReceiverPortsForTypesDetailedReport(level, origin, ports, types, receiver).summary();
+        if (level == null || level.isClientSide || types == null || receiver == null) {
+            return PortMachineDetachReport.empty();
+        }
+        int receiverPorts = 0;
+        Set<FluidType> seenTypes = new HashSet<>();
+        for (FluidType type : types) {
+            if (type != null && type != HbmFluids.NONE && seenTypes.add(type)) {
+                receiverPorts += HbmFluidUtil.unsubscribeReceiverFromPortsReport(
+                        level, origin, ports, type, receiver).unsubscribedPorts();
+            }
+        }
+        return new PortMachineDetachReport(seenTypes.size(), receiverPorts, 0, 0);
     }
 
     public static PortMachineDetachDetailReport detachReceiverPortsForTypesDetailedReport(Level level, BlockPos origin,
@@ -155,7 +194,7 @@ public final class HbmFluidPortMachine {
 
     public static PortMachineDetachReport detachProviderPortsReport(Level level, BlockPos origin,
             Iterable<FluidPort> ports, Iterable<HbmFluidTank> sendingTanks, HbmFluidProvider provider) {
-        return detachProviderPortsDetailedReport(level, origin, ports, sendingTanks, provider).summary();
+        return detachProviderPortsForTypesReport(level, origin, ports, fluidTypes(sendingTanks), provider);
     }
 
     public static PortMachineDetachDetailReport detachProviderPortsDetailedReport(Level level, BlockPos origin,
@@ -165,7 +204,18 @@ public final class HbmFluidPortMachine {
 
     public static PortMachineDetachReport detachProviderPortsForTypesReport(Level level, BlockPos origin,
             Iterable<FluidPort> ports, Iterable<FluidType> types, HbmFluidProvider provider) {
-        return detachProviderPortsForTypesDetailedReport(level, origin, ports, types, provider).summary();
+        if (level == null || level.isClientSide || types == null || provider == null) {
+            return PortMachineDetachReport.empty();
+        }
+        int providerPorts = 0;
+        Set<FluidType> seenTypes = new HashSet<>();
+        for (FluidType type : types) {
+            if (type != null && type != HbmFluids.NONE && seenTypes.add(type)) {
+                providerPorts += HbmFluidUtil.unsubscribeProviderFromPortsReport(
+                        level, origin, ports, type, provider).unsubscribedPorts();
+            }
+        }
+        return new PortMachineDetachReport(0, 0, seenTypes.size(), providerPorts);
     }
 
     public static PortMachineDetachDetailReport detachProviderPortsForTypesDetailedReport(Level level, BlockPos origin,
@@ -199,8 +249,8 @@ public final class HbmFluidPortMachine {
     public static PortMachineDetachReport detachTransceiverPortsReport(Level level, BlockPos origin,
             Iterable<FluidPort> ports, Iterable<HbmFluidTank> receivingTanks, Iterable<HbmFluidTank> sendingTanks,
             HbmStandardFluidTransceiver transceiver) {
-        return detachTransceiverPortsDetailedReport(level, origin, ports, receivingTanks, sendingTanks, transceiver)
-                .summary();
+        return detachReceiverPortsReport(level, origin, ports, receivingTanks, transceiver)
+                .merge(detachProviderPortsReport(level, origin, ports, sendingTanks, transceiver));
     }
 
     public static PortMachineDetachDetailReport detachTransceiverPortsDetailedReport(Level level, BlockPos origin,

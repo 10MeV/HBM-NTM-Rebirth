@@ -98,7 +98,6 @@ public class MukeFlashParticle extends Particle implements HbmDeferredParticleRe
         if (alpha <= 0.0F) {
             return;
         }
-        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.texturedAdditiveNoDepthWrite(TEXTURE));
         float scale = progressAge * 3.0F + 1.0F;
         Vec3 cameraPos = camera.getPosition();
         double x = Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x();
@@ -115,23 +114,14 @@ public class MukeFlashParticle extends Particle implements HbmDeferredParticleRe
             float py = (float) (y + random.nextDouble() * 7.5D - 3.75D);
             float pz = (float) (z + random.nextDouble() * 15.0D - 7.5D);
 
-            putVertex(consumer, px - right.x() - up.x(), py - right.y() - up.y(), pz - right.z() - up.z(),
-                    1.0F, 1.0F, alpha);
-            putVertex(consumer, px - right.x() + up.x(), py - right.y() + up.y(), pz - right.z() + up.z(),
-                    1.0F, 0.0F, alpha);
-            putVertex(consumer, px + right.x() + up.x(), py + right.y() + up.y(), pz + right.z() + up.z(),
-                    0.0F, 0.0F, alpha);
-            putVertex(consumer, px + right.x() - up.x(), py + right.y() - up.y(), pz + right.z() - up.z(),
-                    0.0F, 1.0F, alpha);
+            HbmDeferredParticleRenderer.renderTexturedAdditiveNoDepthWriteQuad(TEXTURE, buffer,
+                    LightTexture.FULL_BRIGHT, 0.0F, 1.0F, 0.0F,
+                    px - right.x() - up.x(), py - right.y() - up.y(), pz - right.z() - up.z(), 1.0F, 1.0F,
+                    px - right.x() + up.x(), py - right.y() + up.y(), pz - right.z() + up.z(), 1.0F, 0.0F,
+                    px + right.x() + up.x(), py + right.y() + up.y(), pz + right.z() + up.z(), 0.0F, 0.0F,
+                    px + right.x() - up.x(), py + right.y() - up.y(), pz + right.z() - up.z(), 0.0F, 1.0F,
+                    0xFFE5BF, (int) (alpha * 255.0F));
         }
-    }
-
-    private static void putVertex(VertexConsumer consumer, float x, float y, float z, float u, float v, float alpha) {
-        consumer.vertex(x, y, z)
-                .uv(u, v)
-                .color(1.0F, 0.9F, 0.75F, alpha)
-                .uv2(LightTexture.FULL_BRIGHT)
-                .endVertex();
     }
 
     @Override

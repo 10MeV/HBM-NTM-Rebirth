@@ -1,0 +1,10 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:solidifier",
+    "output":  {
+                   "item":  "hbm_ntm_rebirth:oil_tar_wood"
+               },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:woodoil",
+                  "amount":  1000
+              }
+}

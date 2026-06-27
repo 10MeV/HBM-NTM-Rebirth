@@ -1,6 +1,7 @@
 package com.hbm.ntm.api.block;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.blockentity.RotaryFurnaceBlockEntity;
 import com.hbm.ntm.fluid.HbmFluids;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -87,6 +88,12 @@ public final class LegacyLookOverlayPorts {
                     List.of(
                             LegacyLookOverlayLines.fluidPort(true, HbmFluids.STEAM),
                             LegacyLookOverlayLines.fluidPort(false, HbmFluids.SPENTSTEAM)));
+        }
+        if (blockEntity instanceof RotaryFurnaceBlockEntity furnace
+                && (exactMatches(blockEntity, viewedPos, facing, rot, 1, 2, 0)
+                || exactMatches(blockEntity, viewedPos, facing, rot, -1, 2, 0))) {
+            return LegacyLookOverlay.forBlock(blockEntity,
+                    List.of(LegacyLookOverlayLines.fluidPort(true, furnace.getInputTank().getTankType())));
         }
         if (exactMatches(blockEntity, viewedPos, facing, rot, 1, 1, 0)) {
             return LegacyLookOverlay.forBlock(blockEntity,

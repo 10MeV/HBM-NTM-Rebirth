@@ -2,6 +2,7 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.network.HbmItemControlReceiver;
 import com.hbm.ntm.network.ModMessages;
@@ -146,10 +147,10 @@ public class FluidIdentifierItem extends Item implements IFluidIdentifierItem, H
             return HbmFluids.fromId(tag.getInt(key + "_id"));
         }
         FluidType type = tag.contains(key, Tag.TAG_STRING)
-                ? HbmFluids.fromName(tag.getString(key))
+                ? HbmFluidJsonUtil.readFluidReference(tag.getString(key))
                 : HbmFluids.NONE;
         if (type == HbmFluids.NONE) {
-            type = HbmFluids.fromName(tag.getString(primary ? TAG_PRIMARY_NAME : TAG_SECONDARY_NAME));
+            type = HbmFluidJsonUtil.readFluidReference(tag.getString(primary ? TAG_PRIMARY_NAME : TAG_SECONDARY_NAME));
         }
         return type == null ? HbmFluids.NONE : type;
     }

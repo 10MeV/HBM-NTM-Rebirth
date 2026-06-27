@@ -1,8 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
@@ -21,7 +19,6 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -48,7 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
-        implements MenuProvider, HbmLegacyControlReceiver, LegacyLookOverlayProvider, HbmPersistentBlockState {
+        implements MenuProvider, HbmLegacyControlReceiver, HbmPersistentBlockState {
     public static final int SLOT_DISCHARGE = 0;
     public static final int SLOT_CHARGE = 1;
     public static final int SLOT_COUNT = 2;
@@ -145,7 +142,7 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
                 || oldHigh != battery.redHigh
                 || oldPriority != battery.priority;
         battery.networkPackNT(100);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             battery.setChanged();
             level.updateNeighbourForOutputSignal(pos, state.getBlock());
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
@@ -362,15 +359,6 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
             case MODE_OUTPUT -> HbmEnergySideMode.OUTPUT;
             default -> HbmEnergySideMode.NONE;
         };
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                Component.literal(power + " HE").withStyle(ChatFormatting.GREEN),
-                Component.literal((delta.signum() >= 0 ? "+" : "") + delta + " HE/s")
-                        .withStyle(delta.signum() > 0 ? ChatFormatting.GREEN
-                                : delta.signum() < 0 ? ChatFormatting.RED : ChatFormatting.YELLOW)));
     }
 
     @Override

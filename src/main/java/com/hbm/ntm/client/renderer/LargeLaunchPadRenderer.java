@@ -5,7 +5,6 @@ import com.hbm.ntm.blockentity.LargeLaunchPadBlockEntity;
 import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjLaunchModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.item.missile.MissileItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -35,26 +34,26 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, launchPad.getBlockState(),
-                modelLight, packedOverlay).withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
 
-        ObjLaunchModels.renderMissileErectorPart("Pad", ObjLaunchModels.MISSILE_ERECTOR_TEXTURE, context);
-        renderFormFactorParts(launchPad, missile, partialTick, poseStack, buffer, context, modelLight, packedOverlay);
+        ObjLaunchModels.renderMissileErectorPart("Pad", ObjLaunchModels.MISSILE_ERECTOR_TEXTURE,
+                poseStack, buffer, modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+        renderFormFactorParts(launchPad, missile, partialTick, poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
     }
 
     private static void renderFormFactorParts(LargeLaunchPadBlockEntity launchPad, ItemStack missile,
-            float partialTick, PoseStack poseStack, MultiBufferSource buffer, ObjRenderContext context,
-            int packedLight, int packedOverlay) {
+            float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ErectorParts parts = partsFor(launchPad.getFormFactor());
         if (parts == null) {
             return;
         }
 
         poseStack.pushPose();
-        ObjLaunchModels.renderMissileErectorPart(parts.pad(), parts.texture(), context);
+        ObjLaunchModels.renderMissileErectorPart(parts.pad(), parts.texture(), poseStack, buffer, packedLight,
+                packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
         if (!missile.isEmpty() && launchPad.isErected()) {
-            ObjLaunchModels.renderMissileErectorPart(parts.rope(), parts.texture(), context);
+            ObjLaunchModels.renderMissileErectorPart(parts.rope(), parts.texture(), poseStack, buffer, packedLight,
+                    packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
         }
 
         float erectorAngle = launchPad.getErector(partialTick);
@@ -62,9 +61,11 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
         poseStack.translate(0.0D, parts.pivotY(), -parts.pivotZ());
         poseStack.mulPose(Axis.XN.rotationDegrees(erectorAngle));
         poseStack.translate(0.0D, -parts.pivotY(), parts.pivotZ());
-        ObjLaunchModels.renderMissileErectorPart(parts.pivot(), parts.texture(), context);
+        ObjLaunchModels.renderMissileErectorPart(parts.pivot(), parts.texture(), poseStack, buffer, packedLight,
+                packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
         poseStack.translate(0.0D, lift, 0.0D);
-        ObjLaunchModels.renderMissileErectorPart(parts.erector(), parts.texture(), context);
+        ObjLaunchModels.renderMissileErectorPart(parts.erector(), parts.texture(), poseStack, buffer, packedLight,
+                packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
         if (!missile.isEmpty() && (launchPad.isErected() || launchPad.isReadyToLoad())) {
             poseStack.translate(0.0D, 2.0D, 0.0D);
             MissileItemRenderer.renderRawMissile(missile, poseStack, buffer, packedLight, packedOverlay);
@@ -74,9 +75,10 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
 
     private static ErectorParts partsFor(int formFactorOrdinal) {
         MissileItem.FormFactor[] values = MissileItem.FormFactor.values();
-        MissileItem.FormFactor formFactor = formFactorOrdinal >= 0 && formFactorOrdinal < values.length
-                ? values[formFactorOrdinal]
-                : MissileItem.FormFactor.ABM;
+        if (formFactorOrdinal < 0 || formFactorOrdinal >= values.length) {
+            return null;
+        }
+        MissileItem.FormFactor formFactor = values[formFactorOrdinal];
         return switch (formFactor) {
             case ABM, OTHER -> new ErectorParts("ABM_Pad", "ABM_Erector", "ABM_Pivot", "ABM_Rope",
                     1.5D, 1.25D, ObjLaunchModels.MISSILE_ERECTOR_ABM_TEXTURE);

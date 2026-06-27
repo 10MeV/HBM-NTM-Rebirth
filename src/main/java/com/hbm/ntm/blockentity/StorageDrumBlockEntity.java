@@ -169,7 +169,7 @@ public class StorageDrumBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected boolean showsLegacyFluidLookOverlay() {
-        return true;
+        return false;
     }
 
     @Override
@@ -251,7 +251,8 @@ public class StorageDrumBlockEntity extends HbmFluidNetworkBlockEntity
         if (overflow <= 0 || level == null) {
             return;
         }
-        HbmFluidReleaseEffects.applyRelease(level, worldPosition, tank.getTankType(), overflow, FluidReleaseType.SPILL);
+        HbmFluidReleaseEffects.applyLegacyTraitRelease(level, worldPosition, tank.getTankType(), overflow,
+                FluidReleaseType.SPILL);
     }
 
     @Nullable

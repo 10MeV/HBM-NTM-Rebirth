@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  L",
+    " G ",
+    "G  "
+  ],
+  "key": {
+    "L": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "G": {
+      "tag": "forge:glass/colorless"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:pipette"
+  }
+}

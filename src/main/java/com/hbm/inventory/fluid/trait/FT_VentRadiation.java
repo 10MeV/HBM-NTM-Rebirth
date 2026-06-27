@@ -2,10 +2,8 @@ package com.hbm.inventory.fluid.trait;
 
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
-import com.hbm.ntm.fluid.FluidReleaseType;
-import com.hbm.ntm.fluid.FluidType;
-import com.hbm.ntm.fluid.HbmFluidReleaseEffects;
 import com.hbm.ntm.fluid.trait.VentRadiationFluidTrait;
+import com.hbm.ntm.radiation.ChunkRadiationManager;
 import java.io.IOException;
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -50,10 +48,8 @@ public class FT_VentRadiation extends VentRadiationFluidTrait {
 
     public void onFluidRelease(Level level, int x, int y, int z, com.hbm.inventory.fluid.tank.FluidTank tank,
             int overflowAmount, FluidTrait.FluidReleaseType release) {
-        FluidType type = tank == null ? null : tank.getTankType();
-        if (type != null) {
-            FluidReleaseType modernRelease = release == null ? FluidReleaseType.SPILL : release.modern();
-            HbmFluidReleaseEffects.applyRelease(level, new BlockPos(x, y, z), type, overflowAmount, modernRelease);
+        if (level != null && overflowAmount > 0 && radPerMB > 0.0F) {
+            ChunkRadiationManager.incrementRadiation(level, new BlockPos(x, y, z), overflowAmount * radPerMB);
         }
     }
 
@@ -68,7 +64,7 @@ public class FT_VentRadiation extends VentRadiationFluidTrait {
 
     public void deserializeJSON(JsonObject object) {
         if (object != null && object.has("radiation")) {
-            this.radPerMB = object.get("radiation").getAsFloat();
+            this.radPerMB = LegacyFluidTraitJson.floatValue(object, "radiation", 0.0F);
         }
     }
 }

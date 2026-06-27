@@ -464,11 +464,6 @@
     {
       "blocked": [
         {
-          "internal_name": "ass.excavator",
-          "reason": "output machine_excavator is not registered in the clean port; requires the excavator machine BE/UI/renderer/runtime slice",
-          "source_order": 106
-        },
-        {
           "internal_name": "ass.chopper",
           "reason": "output spawn_chopper and the Hunter Chopper spawn/entity item chain are not registered in the clean port",
           "source_order": 192
@@ -497,14 +492,9 @@
           "internal_name": "ass.exobomb",
           "reason": "output therm_exo block/runtime is not registered in the clean port",
           "source_order": 210
-        },
-        {
-          "internal_name": "ass.digimemer",
-          "reason": "legacy recipe is conditional Mekanism integration outputting external Mekanism:MachineBlock meta 4; no modern HBM output anchor",
-          "source_order": 334
         }
       ],
-      "blocked_count": 8,
+      "blocked_count": 6,
       "excluded": [
         {
           "internal_name": "ass.sealframe",
@@ -585,16 +575,21 @@
           "internal_name": "ass.silohatchlarge",
           "reason": "old door/seal-door recipes are decorative/deferred by project rule",
           "source_order": 69
+        },
+        {
+          "internal_name": "ass.digimemer",
+          "reason": "legacy conditional Mekanism integration output is excluded by the mod-integration freeze",
+          "source_order": 334
         }
       ],
-      "excluded_count": 16,
+      "excluded_count": 17,
       "legacy_count": 335,
       "legacy_file": "AssemblyMachineRecipes.java",
       "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/AssemblyMachineRecipes.java",
       "machine": "assembly_machine",
       "missing": [],
       "missing_count": 0,
-      "modern_count": 584,
+      "modern_count": 585,
       "present": [
         {
           "internal_name": "ass.plateiron",
@@ -1135,6 +1130,12 @@
           "modern_id": "hbm_ntm_rebirth:assembly_machine/silex",
           "modern_source_order": 105,
           "source_order": 105
+        },
+        {
+          "internal_name": "ass.excavator",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/excavator",
+          "modern_source_order": 119,
+          "source_order": 106
         },
         {
           "internal_name": "ass.drillsteel",
@@ -2463,23 +2464,12 @@
           "source_order": 333
         }
       ],
-      "present_count": 311,
+      "present_count": 312,
       "status": "checked"
     },
     {
-      "blocked": [
-        {
-          "internal_name": "purex.watznaqadah",
-          "reason": "legacy PUREX recipe is conditional on OreDictionary nuggetNaquadria; the clean port has no source-backed Naquadah/Naquadria nugget output anchor",
-          "source_order": 45
-        },
-        {
-          "internal_name": "purex.watznaqadria",
-          "reason": "legacy PUREX recipe is conditional on OreDictionary nuggetNaquadria; the clean port has no source-backed Naquadah/Naquadria nugget output anchor",
-          "source_order": 46
-        }
-      ],
-      "blocked_count": 2,
+      "blocked": [],
+      "blocked_count": 0,
       "excluded": [],
       "excluded_count": 0,
       "legacy_count": 55,
@@ -2488,7 +2478,7 @@
       "machine": "purex",
       "missing": [],
       "missing_count": 0,
-      "modern_count": 53,
+      "modern_count": 55,
       "present": [
         {
           "internal_name": "purex.uzh",
@@ -2761,6 +2751,18 @@
           "source_order": 44
         },
         {
+          "internal_name": "purex.watznaqadah",
+          "modern_id": "hbm_ntm_rebirth:purex/watznaqadah",
+          "modern_source_order": 459,
+          "source_order": 45
+        },
+        {
+          "internal_name": "purex.watznaqadria",
+          "modern_id": "hbm_ntm_rebirth:purex/watznaqadria",
+          "modern_source_order": 468,
+          "source_order": 46
+        },
+        {
           "internal_name": "purex.icf",
           "modern_id": "hbm_ntm_rebirth:purex/icf_pellet_recycle",
           "modern_source_order": 479,
@@ -2809,7 +2811,7 @@
           "source_order": 54
         }
       ],
-      "present_count": 53,
+      "present_count": 55,
       "status": "checked"
     },
     {
@@ -2888,7 +2890,210 @@
       ],
       "present_count": 10,
       "status": "checked"
+    },
+    {
+      "blocked": [
+        {
+          "internal_name": "plsm.dfccore",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/dfc_core",
+          "modern_source_order": 138,
+          "reason": "DFC runtime migration is paused by current reactor-first boundary; recipe anchor is materialized but the machine family is not counted complete",
+          "source_order": 30
+        },
+        {
+          "internal_name": "plsm.dfcemitter",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/dfc_emitter",
+          "modern_source_order": 139,
+          "reason": "DFC runtime migration is paused by current reactor-first boundary; recipe anchor is materialized but the machine family is not counted complete",
+          "source_order": 31
+        },
+        {
+          "internal_name": "plsm.dfcreceiver",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/dfc_receiver",
+          "modern_source_order": 140,
+          "reason": "DFC runtime migration is paused by current reactor-first boundary; recipe anchor is materialized but the machine family is not counted complete",
+          "source_order": 32
+        },
+        {
+          "internal_name": "plsm.dfcinjector",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/dfc_injector",
+          "modern_source_order": 141,
+          "reason": "DFC runtime migration is paused by current reactor-first boundary; recipe anchor is materialized but the machine family is not counted complete",
+          "source_order": 33
+        },
+        {
+          "internal_name": "plsm.dfcstabilizer",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/dfc_stabilizer",
+          "modern_source_order": 142,
+          "reason": "DFC runtime migration is paused by current reactor-first boundary; recipe anchor is materialized but the machine family is not counted complete",
+          "source_order": 34
+        }
+      ],
+      "blocked_count": 5,
+      "excluded": [],
+      "excluded_count": 0,
+      "legacy_count": 18,
+      "legacy_file": "PlasmaForgeRecipes.java",
+      "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/PlasmaForgeRecipes.java",
+      "machine": "plasma_forge_reactor_scope",
+      "missing": [],
+      "missing_count": 0,
+      "modern_count": 18,
+      "present": [
+        {
+          "internal_name": "plsm.fusionvessel",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/fusion_vessel",
+          "modern_source_order": 118,
+          "source_order": 14
+        },
+        {
+          "internal_name": "plsm.icfcell",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/icf_laser_cell",
+          "modern_source_order": 119,
+          "source_order": 15
+        },
+        {
+          "internal_name": "plsm.icfemitter",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/icf_laser_emitter",
+          "modern_source_order": 120,
+          "source_order": 16
+        },
+        {
+          "internal_name": "plsm.icfcapacitor",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/icf_laser_capacitor",
+          "modern_source_order": 121,
+          "source_order": 17
+        },
+        {
+          "internal_name": "plsm.icfturbo",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/icf_laser_turbo",
+          "modern_source_order": 122,
+          "source_order": 18
+        },
+        {
+          "internal_name": "plsm.icfcasing",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/icf_laser_casing",
+          "modern_source_order": 123,
+          "source_order": 19
+        },
+        {
+          "internal_name": "plsm.icfport",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/icf_laser_port",
+          "modern_source_order": 124,
+          "source_order": 20
+        },
+        {
+          "internal_name": "plsm.icfcontroller",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/icf_controller",
+          "modern_source_order": 125,
+          "source_order": 21
+        },
+        {
+          "internal_name": "plsm.icfscaffold",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/icf_component_scaffold",
+          "modern_source_order": 126,
+          "source_order": 22
+        },
+        {
+          "internal_name": "plsm.icfvessel",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/icf_component_vessel",
+          "modern_source_order": 127,
+          "source_order": 23
+        },
+        {
+          "internal_name": "plsm.icfstructural",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/icf_component_structural",
+          "modern_source_order": 128,
+          "source_order": 24
+        },
+        {
+          "internal_name": "plsm.icfcore",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/icf_core",
+          "modern_source_order": 130,
+          "source_order": 25
+        },
+        {
+          "internal_name": "plsm.icfpress",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/icf_press",
+          "modern_source_order": 134,
+          "source_order": 26
+        }
+      ],
+      "present_count": 13,
+      "status": "checked"
     }
   ],
-  "note": "Coverage is extracted from 1.7.10 Java GenericRecipe registrations, not legacy template JSON."
+  "note": "Coverage is extracted from 1.7.10 Java GenericRecipe registrations, not legacy template JSON.",
+  "recipe_families": [
+    {
+      "blocked_count": 0,
+      "legacy_count": 31,
+      "legacy_file": "BreederRecipes.java",
+      "legacy_json_file": "hbmBreeder.json",
+      "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/BreederRecipes.java",
+      "machine": "breeding_reactor",
+      "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/breeding_reactor",
+      "missing_count": 0,
+      "modern_count": 31,
+      "modern_recipe_type": "breeding_reactor",
+      "present_count": 31,
+      "status": "main_resources_aligned"
+    },
+    {
+      "blocked_count": 0,
+      "legacy_count": 31,
+      "legacy_file": "FuelPoolRecipes.java",
+      "legacy_json_file": "hbmFuelpool.json",
+      "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/FuelPoolRecipes.java",
+      "machine": "fuel_pool",
+      "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/fuel_pool",
+      "missing_count": 0,
+      "modern_count": 31,
+      "modern_recipe_type": "fuel_pool",
+      "present_count": 31,
+      "status": "main_resources_aligned"
+    },
+    {
+      "blocked_count": 0,
+      "legacy_count": 19,
+      "legacy_file": "OutgasserRecipes.java",
+      "legacy_json_file": "hbmIrradiation.json",
+      "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/OutgasserRecipes.java",
+      "machine": "outgasser",
+      "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/outgasser",
+      "missing_count": 0,
+      "modern_count": 19,
+      "modern_recipe_type": "outgasser",
+      "present_count": 19,
+      "status": "main_resources_aligned"
+    },
+    {
+      "blocked_count": 0,
+      "legacy_count": 4,
+      "legacy_file": "ExposureChamberRecipes.java",
+      "legacy_json_file": "hbmExposureChamber.json",
+      "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/ExposureChamberRecipes.java",
+      "machine": "exposure_chamber",
+      "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/exposure_chamber",
+      "missing_count": 0,
+      "modern_count": 4,
+      "modern_recipe_type": "exposure_chamber",
+      "present_count": 4,
+      "status": "main_resources_aligned"
+    },
+    {
+      "blocked_count": 0,
+      "legacy_count": 3,
+      "legacy_file": "FluidBreederRecipes.java",
+      "legacy_json_file": "hbmIrradiationFluids.json",
+      "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/FluidBreederRecipes.java",
+      "machine": "fusion_fluid_breeder",
+      "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/fusion_fluid_breeder",
+      "missing_count": 0,
+      "modern_count": 3,
+      "modern_recipe_type": "fusion_fluid_breeder",
+      "present_count": 3,
+      "status": "main_resources_aligned"
+    }
+  ]
 }

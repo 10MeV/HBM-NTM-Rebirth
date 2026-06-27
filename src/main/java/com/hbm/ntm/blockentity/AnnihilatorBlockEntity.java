@@ -2,8 +2,6 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.hazard.HazardRegistry;
 import com.hbm.hazard.HazardSystem;
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
@@ -132,8 +130,8 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
             }
             if (annihilator.tank.getFill() > 0) {
                 int amount = annihilator.tank.getFill();
-                HbmFluidReleaseEffects.applyRelease(level, pos, annihilator.tank.getTankType(),
-                        safeDoubleMb(amount), FluidReleaseType.BURN);
+                HbmFluidReleaseEffects.applyLegacyPollutingRelease(level, pos, annihilator.tank.getTankType(),
+                        FluidReleaseType.BURN, safeDoubleMb(amount));
                 annihilator.tryAddPayout(data.pushToPool(serverLevel, annihilator.pool,
                         annihilator.tank.getTankType(), amount, false));
                 annihilator.tank.setFill(0);
@@ -157,7 +155,7 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
                 || !oldPool.equals(annihilator.pool)
                 || !oldMonitor.equals(annihilator.monitorBigInt);
         annihilator.networkPackNT(25);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             annihilator.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -357,15 +355,7 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected boolean showsLegacyFluidLookOverlay() {
-        return true;
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.compactTank(true, tank),
-                Component.literal("Pool: " + pool),
-                Component.literal("Monitor: " + monitorBigInt)));
+        return false;
     }
 
     @Override

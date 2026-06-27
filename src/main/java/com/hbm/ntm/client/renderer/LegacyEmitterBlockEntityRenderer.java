@@ -3,6 +3,8 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyEmitterBlock;
 import com.hbm.ntm.blockentity.LegacyEmitterBlockEntity;
 import com.hbm.ntm.client.obj.LegacyEmitterBeamRenderer;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import java.util.List;
@@ -51,7 +53,8 @@ public class LegacyEmitterBlockEntityRenderer implements BlockEntityRenderer<Leg
         applyLegacyFacingTransform(poseStack, state.getValue(LegacyEmitterBlock.FACING));
         poseStack.translate(0.0D, LegacyEmitterBeamRenderer.FINAL_BEAM_OFFSET_Y,
                 LegacyEmitterBeamRenderer.FINAL_BEAM_OFFSET_Z);
-        LegacyEmitterBeamRenderer.renderPlans(plans, poseStack, buffer);
+        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                queuedPose -> LegacyEmitterBeamRenderer.renderPlans(plans, queuedPose, buffer));
         poseStack.popPose();
     }
 

@@ -1,0 +1,28 @@
+{
+    "type":  "hbm_ntm_rebirth:electrolyzer_metal",
+    "input":  {
+                  "ingredient":  {
+                                     "item":  "hbm_ntm_rebirth:crystal_copper"
+                                 },
+                  "count":  1
+              },
+    "output1":  {
+                    "material":  "Copper",
+                    "amount":  432
+                },
+    "output2":  {
+                    "material":  "Lead",
+                    "amount":  32
+                },
+    "byproducts":  [
+                       {
+                           "item":  "hbm_ntm_rebirth:powder_lithium_tiny",
+                           "count":  3
+                       },
+                       {
+                           "item":  "hbm_ntm_rebirth:sulfur",
+                           "count":  2
+                       }
+                   ],
+    "duration":  600
+}

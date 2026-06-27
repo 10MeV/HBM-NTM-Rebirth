@@ -5,7 +5,6 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ChungusBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -56,27 +55,27 @@ public class ChungusRenderer implements BlockEntityRenderer<ChungusBlockEntity> 
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
-        renderPart(BODY, context);
+        renderPart(BODY, poseStack, buffer, modelLight, packedOverlay);
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, 4.5D);
         poseStack.mulPose(Axis.XP.rotationDegrees(blockEntity.getLeverAngle()));
         poseStack.translate(0.0D, 0.0D, -4.5D);
-        renderPart(LEVER, context);
+        renderPart(LEVER, poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 2.5D, 0.0D);
         poseStack.mulPose(Axis.ZN.rotationDegrees(blockEntity.getRotor(partialTick)));
         poseStack.translate(0.0D, -2.5D, 0.0D);
-        renderPart(BLADES, context);
+        renderPart(BLADES, poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
         poseStack.popPose();
     }
 
-    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
-        MODEL.renderOnlyInCallOrder(TEXTURE, context, handle);
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        MODEL.renderOnlyInCallOrder(TEXTURE, poseStack, buffer, packedLight, packedOverlay, handle);
     }
 }

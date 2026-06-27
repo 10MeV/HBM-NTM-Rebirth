@@ -9,7 +9,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeRecipeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
-import com.hbm.ntm.fluid.HbmFluidPortMachine;
+import com.hbm.ntm.fluid.HbmFluidPortSubscriptionTracker;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -123,6 +123,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
             ForgeRecipeFluidHandlerAdapter.create(List.of(inputTank), List.of(), 0, this::onFluidContentsChanged));
+    private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
     private final ICapabilityProvider redProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_0);
     private final ICapabilityProvider yellowProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_1);
     private final ICapabilityProvider greenProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_2);
@@ -158,7 +159,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
                 arcWelder.inputTank, level, pos);
         if (level.getGameTime() % 20L == 0L) {
             HbmEnergyUtil.subscribeReceiverToPorts(level, pos, arcWelder.connectionEnergyPorts(state), arcWelder);
-            HbmFluidPortMachine.refreshReceiverPorts(level, pos, arcWelder.connectionFluidPorts(state),
+            arcWelder.fluidPortSubscriptions.refreshReceiver(level, pos, arcWelder.connectionFluidPorts(state),
                     List.of(arcWelder.inputTank), arcWelder);
         }
 
@@ -178,7 +179,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
             arcWelder.setChanged();
         }
         arcWelder.networkPackNT(25);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -494,6 +495,18 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
         return new ArcWelderMenu(containerId, inventory, this);
+    }
+
+    @Override
+    public void setRemoved() {
+        fluidPortSubscriptions.detachAllDetailed(level, worldPosition, connectionFluidPorts(getBlockState()), this, null);
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        fluidPortSubscriptions.detachAllDetailed(level, worldPosition, connectionFluidPorts(getBlockState()), this, null);
+        super.onChunkUnloaded();
     }
 
     @Override

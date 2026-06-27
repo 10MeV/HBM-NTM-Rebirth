@@ -1,6 +1,8 @@
 package com.hbm.ntm.fluid.trait;
 
 import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonWriter;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +34,7 @@ public abstract class FluidTrait {
         registerLegacyName("plasma", SimpleFluidTraits.Plasma.class);
         registerLegacyName("amat", SimpleFluidTraits.Antimatter.class);
         registerLegacyName("leadcontainer", SimpleFluidTraits.LeadContainer.class);
+        registerLegacyName("delicious", SimpleFluidTraits.Delicious.class);
         registerLegacyName("noid", SimpleFluidTraits.NoId.class);
         registerLegacyName("nocontainer", SimpleFluidTraits.NoContainer.class);
         registerLegacyName("unsiphonable", SimpleFluidTraits.Unsiphonable.class);
@@ -56,6 +59,12 @@ public abstract class FluidTrait {
     public void writeJson(JsonObject object) {
     }
 
+    public void serializeJSON(JsonWriter writer) throws IOException {
+    }
+
+    public void deserializeJSON(JsonObject object) {
+    }
+
     public static Map<String, Class<? extends FluidTrait>> legacyTraitNames() {
         return Collections.unmodifiableMap(TRAITS_BY_LEGACY_NAME);
     }
@@ -72,4 +81,5 @@ public abstract class FluidTrait {
         TRAITS_BY_LEGACY_NAME.put(name, traitClass);
         LEGACY_NAMES_BY_TRAIT.put(traitClass, name);
     }
+
 }

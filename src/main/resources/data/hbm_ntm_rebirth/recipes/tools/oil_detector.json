@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "key": {
+    "C": {
+      "tag": "forge:circuits/analog"
+    },
+    "I": {
+      "tag": "forge:ingots/copper"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    },
+    "W": {
+      "tag": "forge:wires/gold"
+    }
+  },
+  "pattern": [
+    "W I",
+    "WCI",
+    "PPP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:oil_detector"
+  },
+  "show_notification": true
+}

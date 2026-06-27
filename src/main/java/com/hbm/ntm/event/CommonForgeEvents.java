@@ -30,6 +30,7 @@ import com.hbm.ntm.item.NcrpaArmorItem;
 import com.hbm.ntm.item.No9ArmorItem;
 import com.hbm.ntm.item.TrenchmasterArmorItem;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.network.LoadedTileAccessCache;
 import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.HbmServerKeybinds;
@@ -301,6 +302,7 @@ public final class CommonForgeEvents {
         if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
+        LoadedTileAccessCache.invalidate(level, event.getPos());
         if (!HbmAbilityToolItem.isHandlingAbilityBreak()
                 && event.getPlayer().getMainHandItem().getItem() instanceof HbmAbilityToolItem abilityTool
                 && abilityTool.handleAbilityBlockBreak(event)) {
@@ -311,6 +313,13 @@ public final class CommonForgeEvents {
         }
         handleCoalGasOnBlockBreak(event, level);
         handleLeadPollutionOnBlockBreak(event, level);
+    }
+
+    @SubscribeEvent
+    public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
+        if (event.getLevel() instanceof ServerLevel level) {
+            LoadedTileAccessCache.invalidate(level, event.getPos());
+        }
     }
 
     private static void handleCoalGasOnBlockBreak(BlockEvent.BreakEvent event, ServerLevel level) {
@@ -677,6 +686,7 @@ public final class CommonForgeEvents {
             HbmUninosNodespaces.unloadLevel(level);
             NeutronNodeWorld.unloadLevel(level);
             PollutionManager.unloadLevel(level);
+            LoadedTileAccessCache.clearLevel(level);
             TRACKED_ITEM_ENTITIES.remove(level.dimension());
         }
     }

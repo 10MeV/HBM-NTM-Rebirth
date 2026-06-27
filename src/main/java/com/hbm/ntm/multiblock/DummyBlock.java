@@ -12,12 +12,13 @@ import com.hbm.ntm.api.conveyor.IConveyorPackage;
 import com.hbm.ntm.api.conveyor.IEnterableBlock;
 import com.hbm.ntm.api.multiblock.DummyPart;
 import com.hbm.ntm.neutron.RBMKStructureDimensions;
-import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -29,8 +30,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.pathfinder.PathComputationType;
@@ -60,18 +59,6 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
         return new MultiblockDummyBlockEntity(pos, state);
     }
 
-    @Nullable
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (type != ModBlockEntities.MULTIBLOCK_DUMMY.get()) {
-            return null;
-        }
-        return level.isClientSide
-                ? null
-                : (tickLevel, tickPos, tickState, blockEntity) ->
-                MultiblockDummyBlockEntity.serverTick(tickLevel, tickPos, tickState, (MultiblockDummyBlockEntity) blockEntity);
-    }
-
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (player.getItemInHand(hand).is(ModItems.RADAR_LINKER.get())) {
@@ -86,6 +73,18 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
             return dummy.forwardUse(serverPlayer, hand, hit);
         }
         return InteractionResult.PASS;
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos,
+            boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, block, fromPos, movedByPiston);
+        validateCoreLink(level, pos, state);
+    }
+
+    @Override
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        validateCoreLink(level, pos, state);
     }
 
     @Override
@@ -299,6 +298,16 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
     }
 
     @Override
+    public VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
+        if (core != null && core.state().getBlock() instanceof MultiblockCoreBlock coreBlock
+                && coreBlock.usesMultiblockDummySupportShapeOverride(core.state(), level, core.pos())) {
+            return coreBlock.getMultiblockDummySupportShape(core.state(), level, core.pos(), pos);
+        }
+        return super.getBlockSupportShape(state, level, pos);
+    }
+
+    @Override
     public boolean useShapeForLightOcclusion(BlockState state) {
         return false;
     }
@@ -357,6 +366,17 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
             return particleState;
         }
         return MultiblockHelper.steelParticleState();
+    }
+
+    private static void validateCoreLink(Level level, BlockPos pos, BlockState state) {
+        if (level.isClientSide) {
+            return;
+        }
+        if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
+            MultiblockDummyBlockEntity.serverTick(level, pos, state, dummy);
+        } else {
+            level.removeBlock(pos, false);
+        }
     }
 
     @Nullable

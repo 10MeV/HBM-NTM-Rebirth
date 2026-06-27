@@ -1,6 +1,7 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.FluidDuctBoxBlockEntity;
+import com.hbm.ntm.fluid.HbmFluidDuctVariants;
 import com.hbm.ntm.item.FluidDuctVariantBlockItem;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -20,9 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
 public class FluidDuctBoxBlock extends FluidPipeBlock {
-    public static final int LEGACY_METADATA_COUNT = 15;
-    private static final int[] BOX_CREATIVE_METADATA = createSequentialMetadata();
-    private static final int[] EXHAUST_CREATIVE_METADATA = {0, 3, 6, 9, 12};
+    public static final int LEGACY_METADATA_COUNT = HbmFluidDuctVariants.BOX_METADATA_COUNT;
     public static final IntegerProperty LEGACY_METADATA = IntegerProperty.create("legacy_metadata", 0,
             LEGACY_METADATA_COUNT - 1);
 
@@ -44,15 +43,15 @@ public class FluidDuctBoxBlock extends FluidPipeBlock {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return shapeForState(state);
+        return selectedShapeForState(state);
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return shapeForState(state);
+        return collisionShapeForState(state);
     }
 
-    protected static VoxelShape shapeForState(BlockState state) {
+    protected static VoxelShape collisionShapeForState(BlockState state) {
         boolean north = state.getValue(NORTH);
         boolean east = state.getValue(EAST);
         boolean south = state.getValue(SOUTH);
@@ -102,6 +101,36 @@ public class FluidDuctBoxBlock extends FluidPipeBlock {
         return shape;
     }
 
+    protected static VoxelShape selectedShapeForState(BlockState state) {
+        boolean north = state.getValue(NORTH);
+        boolean east = state.getValue(EAST);
+        boolean south = state.getValue(SOUTH);
+        boolean west = state.getValue(WEST);
+        boolean up = state.getValue(UP);
+        boolean down = state.getValue(DOWN);
+        DuctBounds bounds = boundsFor(state);
+
+        if ((east || west) && !north && !south && !up && !down) {
+            return box(0.0D, bounds.lowerPx(), bounds.lowerPx(), 16.0D, bounds.upperPx(), bounds.upperPx());
+        }
+        if ((up || down) && !north && !south && !east && !west) {
+            return box(bounds.lowerPx(), 0.0D, bounds.lowerPx(), bounds.upperPx(), 16.0D, bounds.upperPx());
+        }
+        if ((north || south) && !east && !west && !up && !down) {
+            return box(bounds.lowerPx(), bounds.lowerPx(), 0.0D, bounds.upperPx(), bounds.upperPx(), 16.0D);
+        }
+
+        boolean simpleCurve = connectionCount(north, east, south, west, up, down) == 2;
+        double lower = simpleCurve ? bounds.lowerPx() : bounds.junctionLowerPx();
+        double upper = simpleCurve ? bounds.upperPx() : bounds.junctionUpperPx();
+        return box(west ? 0.0D : lower,
+                down ? 0.0D : lower,
+                north ? 0.0D : lower,
+                east ? 16.0D : upper,
+                up ? 16.0D : upper,
+                south ? 16.0D : upper);
+    }
+
     @Override
     public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
         if (asItem() instanceof FluidDuctVariantBlockItem item) {
@@ -125,23 +154,23 @@ public class FluidDuctBoxBlock extends FluidPipeBlock {
     }
 
     public static int clampLegacyMetadata(int metadata) {
-        return Math.max(0, Math.min(LEGACY_METADATA_COUNT - 1, metadata));
+        return HbmFluidDuctVariants.clampBoxMetadata(metadata);
     }
 
     public static int[] boxCreativeMetadata() {
-        return BOX_CREATIVE_METADATA.clone();
+        return HbmFluidDuctVariants.boxVisibleMetadata();
     }
 
     public static int[] exhaustCreativeMetadata() {
-        return EXHAUST_CREATIVE_METADATA.clone();
+        return HbmFluidDuctVariants.exhaustVisibleMetadata();
     }
 
     public static int rectifyLegacyMaterial(int metadata) {
-        return clampLegacyMetadata(metadata) % 3;
+        return HbmFluidDuctVariants.boxMaterialIndex(metadata);
     }
 
     public static int legacySizeStep(int metadata) {
-        return clampLegacyMetadata(metadata) / 3;
+        return HbmFluidDuctVariants.boxSizeStep(metadata);
     }
 
     public static DuctBounds boundsFor(BlockState state) {
@@ -162,14 +191,6 @@ public class FluidDuctBoxBlock extends FluidPipeBlock {
             boolean down) {
         return (north ? 1 : 0) + (east ? 1 : 0) + (south ? 1 : 0) + (west ? 1 : 0)
                 + (up ? 1 : 0) + (down ? 1 : 0);
-    }
-
-    private static int[] createSequentialMetadata() {
-        int[] metadata = new int[LEGACY_METADATA_COUNT];
-        for (int i = 0; i < metadata.length; i++) {
-            metadata[i] = i;
-        }
-        return metadata;
     }
 
     public record DuctBounds(double lower, double upper, double junctionLower, double junctionUpper) {

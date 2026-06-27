@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
-import com.hbm.ntm.client.obj.LegacyUvAnimation;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
 public final class LegacyAssemblySparkRenderer {
@@ -13,47 +13,24 @@ public final class LegacyAssemblySparkRenderer {
     public static final double EPSILON = 0.01D;
     public static final double MIRRORED_U_OFFSET = 0.5D;
 
-    public static void renderSparkPair(ResourceLocation texture, ObjRenderContext context,
-            LegacyUvAnimation.Range u, double length) {
-        renderSparkPair(texture, context, u.min(), u.max(), length);
-    }
-
-    public static void renderSparkPair(ResourceLocation texture, ObjRenderContext context,
-            double uMin, double uMax, double length) {
-        LegacyTexturedQuadRenderer.quad(texture, context,
-                LegacyTexturedQuadRenderer.vertex(-EPSILON, -WIDE, length,
-                        uMin + MIRRORED_U_OFFSET, 0.0D, 0xFFFFFF, 0),
-                LegacyTexturedQuadRenderer.vertex(-EPSILON, WIDE, length,
-                        uMin + MIRRORED_U_OFFSET, 1.0D, 0xFFFFFF, 0),
-                LegacyTexturedQuadRenderer.vertex(-EPSILON, NARROW, 0.0D,
-                        uMax + MIRRORED_U_OFFSET, 1.0D, 0xFFFFFF, 255),
-                LegacyTexturedQuadRenderer.vertex(-EPSILON, -NARROW, 0.0D,
-                        uMax + MIRRORED_U_OFFSET, 0.0D, 0xFFFFFF, 255));
-        LegacyTexturedQuadRenderer.quad(texture, context,
-                LegacyTexturedQuadRenderer.vertex(EPSILON, -WIDE, length, uMin, 1.0D, 0xFFFFFF, 0),
-                LegacyTexturedQuadRenderer.vertex(EPSILON, WIDE, length, uMin, 0.0D, 0xFFFFFF, 0),
-                LegacyTexturedQuadRenderer.vertex(EPSILON, NARROW, 0.0D, uMax, 0.0D, 0xFFFFFF, 255),
-                LegacyTexturedQuadRenderer.vertex(EPSILON, -NARROW, 0.0D, uMax, 1.0D, 0xFFFFFF, 255));
-    }
-
-    public static void renderPlan(ResourceLocation texture, ObjRenderContext context,
-            LegacyTileRenderPlans.AssemblySparkRenderPlan plan) {
+    public static void renderPlan(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTileRenderPlans.AssemblySparkRenderPlan plan) {
         if (!plan.active()) {
             return;
         }
-        ObjRenderContext resolved = context;
-        if (plan.blend() != null) {
-            resolved = resolved.withRenderMode(plan.blend().modernRenderMode());
-        }
-        if (plan.fullbright() != null) {
-            resolved = resolved.withLegacyLightmap(plan.fullbright().lightmapX(), plan.fullbright().lightmapY());
-        }
-        PoseStack poseStack = context.poseStack();
+        LegacyTexturedRenderMode renderMode = plan.blend() == null
+                ? LegacyTexturedRenderMode.CUTOUT_NO_CULL
+                : plan.blend().modernRenderMode();
+        int resolvedLight = plan.fullbright() == null
+                ? packedLight
+                : LegacyTexturedQuadRenderer.legacyLightmap(plan.fullbright().lightmapX(),
+                        plan.fullbright().lightmapY());
         for (LegacyTileRenderPlans.AssemblySparkBladePlan blade : plan.blades()) {
             poseStack.pushPose();
             poseStack.translate(blade.translateX(), blade.translateY(), blade.translateZ());
             for (LegacyTileRenderPlans.TexturedQuadPlan quad : blade.quads()) {
-                LegacyTexturedQuadRenderer.quad(texture, resolved,
+                LegacyTexturedQuadRenderer.quad(texture, poseStack, buffer, resolvedLight, packedOverlay,
+                        renderMode, 0.0F, 1.0F, 0.0F,
                         vertex(quad.vertices().get(0)), vertex(quad.vertices().get(1)),
                         vertex(quad.vertices().get(2)), vertex(quad.vertices().get(3)));
             }

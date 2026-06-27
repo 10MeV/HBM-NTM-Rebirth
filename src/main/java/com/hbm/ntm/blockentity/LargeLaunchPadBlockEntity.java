@@ -68,8 +68,6 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
         if (changed) {
             launchPad.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-        } else if (level.getGameTime() % 20L == 0L) {
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
         launchPad.networkPackNT(250);
     }

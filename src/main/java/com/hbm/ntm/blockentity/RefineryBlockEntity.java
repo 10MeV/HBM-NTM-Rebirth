@@ -2,6 +2,9 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -64,7 +67,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         implements HbmPersistentBlockState, HbmStandardFluidTransceiver, HbmFluidOverpressurable,
-        HbmFluidRepairable, MenuProvider {
+        HbmFluidRepairable, LegacyLookOverlayProvider, MenuProvider {
     private static final String TAG_SULFUR = "sulfur";
     private static final String TAG_EXPLODED = "exploded";
     private static final String TAG_ON_FIRE = "onFire";
@@ -150,7 +153,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
             refinery.setChanged();
         }
         refinery.networkPackNT(150);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -468,6 +471,15 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    public LegacyLookOverlay getLookOverlay(Level level, Player player, BlockPos viewedPos) {
+        if (player == null || !player.getMainHandItem().is(ModItems.BLOWTORCH.get())
+                || !isDamagedForFluidRepair()) {
+            return null;
+        }
+        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.repairMaterials(getFluidRepairMaterials()));
+    }
+
+    @Override
     public void repairFluidMachine() {
         repair();
     }
@@ -555,7 +567,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean refine() {
-        RefineryRecipe recipe = LegacyOilFluidRecipes.getRefinery(inputTank().getTankType());
+        RefineryRecipe recipe = LegacyOilFluidRecipes.getRefinery(level, inputTank().getTankType());
         boolean changed = setupRecipeTanks(recipe);
         if (recipe == null) {
             return changed;

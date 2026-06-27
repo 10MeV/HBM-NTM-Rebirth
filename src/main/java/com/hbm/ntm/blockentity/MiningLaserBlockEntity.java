@@ -1,8 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -70,7 +67,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
-        implements MenuProvider, HbmStandardFluidSender, HbmLegacyButtonReceiver, LegacyLookOverlayProvider {
+        implements MenuProvider, HbmStandardFluidSender, HbmLegacyButtonReceiver {
     public static final int SLOT_BATTERY = 0;
     public static final int SLOT_UPGRADE_START = 1;
     public static final int SLOT_UPGRADE_END = 8;
@@ -212,7 +209,7 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldBeam != laser.beam
                 || oldOn != laser.isOn
                 || oldTargetY != laser.targetY;
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             laser.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -623,15 +620,6 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
         return HbmFluidSideMode.OUTPUT;
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.energyStored(energy.getPower(), energy.getMaxPower()),
-                LegacyLookOverlayLines.tank(false, oilTank),
-                Component.literal(isOn ? "Online" : "Offline"),
-                Component.literal("Width: " + getWidth())));
     }
 
     @Override

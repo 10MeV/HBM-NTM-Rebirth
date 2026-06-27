@@ -131,7 +131,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
             launchPad.setChanged();
         }
         launchPad.networkPackNT(250);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }

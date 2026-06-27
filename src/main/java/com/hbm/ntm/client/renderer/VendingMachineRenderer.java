@@ -5,7 +5,6 @@ import com.hbm.ntm.block.VendingMachineBlock;
 import com.hbm.ntm.blockentity.VendingMachineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -53,7 +52,7 @@ public class VendingMachineRenderer implements BlockEntityRenderer<VendingMachin
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
-        MODEL.renderOnlyInCallOrder(TEXTURE, new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay),
+        MODEL.renderOnlyInCallOrder(TEXTURE, poseStack, buffer, packedLight, packedOverlay,
                 variant == 0 ? SODA : OBAMNA);
         poseStack.popPose();
     }

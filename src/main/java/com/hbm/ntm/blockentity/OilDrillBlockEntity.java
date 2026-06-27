@@ -1,8 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.config.OilDrillConfig;
 import com.hbm.ntm.energy.HbmEnergySideMode;
@@ -170,7 +168,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
             drill.setChanged();
         }
         drill.networkPackNT(25);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -338,18 +336,6 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (amount > 0L) {
             onFluidContentsChanged();
         }
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        List<net.minecraft.network.chat.Component> lines = new ArrayList<>();
-        lines.add(LegacyLookOverlayLines.energyStored(getPower(), getMaxPower()));
-        lines.add(LegacyLookOverlayLines.compactTank(false, oilTank));
-        lines.add(LegacyLookOverlayLines.compactTank(false, gasTank));
-        if (frackingTank != null) {
-            lines.add(LegacyLookOverlayLines.compactTank(true, frackingTank));
-        }
-        return LegacyLookOverlay.forBlock(this, lines);
     }
 
     @Override

@@ -4,7 +4,6 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.ThresherBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -45,7 +44,7 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
     public void render(ThresherBlockEntity thresher, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = thresher.getBlockState();
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(thresher, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
@@ -53,19 +52,20 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
                 thresher.getPreviousAngle(), thresher.getAngle(),
                 thresher.getLastSpin(), thresher.getSpin(),
                 thresher.isOn(), worldTime(thresher), partialTick);
-        renderPart(BASE, context);
+        renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
         poseStack.translate(0.0D, plan.engineTranslateY(), 0.0D);
-        renderPart(ENGINE, context);
+        renderPart(ENGINE, poseStack, buffer, modelLight, packedOverlay);
         poseStack.translate(0.0D, -plan.engineTranslateY(), 0.0D);
-        renderPart(plan.armUpper(), ARM_UPPER, context, poseStack);
-        renderPart(plan.armLower(), ARM_LOWER, context, poseStack);
-        renderPart(plan.front(), FRONT, context, poseStack);
-        renderPart(plan.wheel(), WHEEL, context, poseStack);
+        renderPart(plan.armUpper(), ARM_UPPER, poseStack, buffer, modelLight, packedOverlay);
+        renderPart(plan.armLower(), ARM_LOWER, poseStack, buffer, modelLight, packedOverlay);
+        renderPart(plan.front(), FRONT, poseStack, buffer, modelLight, packedOverlay);
+        renderPart(plan.wheel(), WHEEL, poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
     }
 
     private static void renderPart(LegacyTileRenderPlans.PivotedModelPartPlan part,
-            LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context, PoseStack poseStack) {
+            LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
@@ -79,21 +79,25 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
             poseStack.mulPose(Axis.ZP.rotationDegrees((float) (part.angleDegrees() * part.axisZ())));
         }
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        renderPart(handle, context);
+        renderPart(handle, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
-    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
-        ObjMachineModels.THRESHER.renderOnlyInCallOrder(ObjMachineModels.THRESHER_TEXTURE, context, handle);
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ObjMachineModels.THRESHER.renderOnlyInCallOrder(ObjMachineModels.THRESHER_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay, handle);
     }
 
-    static void renderModelPart(String partName, ObjRenderContext context) {
+    static void renderModelPart(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
         LegacyWavefrontModel.SelectionHandle handle = handle(partName);
         if (handle != null) {
-            renderPart(handle, context);
+            renderPart(handle, poseStack, buffer, packedLight, packedOverlay);
             return;
         }
-        ObjMachineModels.THRESHER.renderPart(partName, ObjMachineModels.THRESHER_TEXTURE, context);
+        ObjMachineModels.THRESHER.renderPart(partName, ObjMachineModels.THRESHER_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay);
     }
 
     private static LegacyWavefrontModel.SelectionHandle handle(String partName) {

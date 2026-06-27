@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.tile.InfoProviderEC;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyProvider;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -46,7 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RadiolysisBlockEntity extends HbmFluidBlockEntity
-        implements MenuProvider, HbmStandardFluidTransceiver, HbmEnergyProvider {
+        implements MenuProvider, HbmStandardFluidTransceiver, HbmEnergyProvider, InfoProviderEC {
     public static final int SLOT_RTG_START = 0;
     public static final int SLOT_RTG_END = 9;
     public static final int SLOT_FLUID_ID_INPUT = 10;
@@ -112,7 +114,7 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
         }
         boolean changed = radiolysis.tickServer(level, pos, state);
         radiolysis.networkPackNT(50);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             radiolysis.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -174,6 +176,15 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
     @Override
     public long getProviderSpeed() {
         return Math.max(0L, heat * 10L);
+    }
+
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        data.putDouble(CompatEnergyControl.D_OUTPUT_HE, heat * 10L);
+        data.putInt("heat", heat);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_RADIOLYSIS_INPUT, inputTank);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_RADIOLYSIS_OUTPUT_1, outputTank1);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_RADIOLYSIS_OUTPUT_2, outputTank2);
     }
 
     @Override
@@ -288,12 +299,12 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
         setPower(power + heat * 10L);
 
         setFluidTankTypeFromIdentifierSlot(items, SLOT_FLUID_ID_INPUT, SLOT_FLUID_ID_OUTPUT, inputTank);
-        setupTanks();
+        setupTanks(level);
 
         if (heat > 100) {
             int crackTime = (int) Math.max(-0.1D * (heat - 100) + 30.0D, 5.0D);
             if (level.getGameTime() % crackTime == 0L) {
-                crack();
+                crack(level);
             }
             if (heat >= 200 && level.getGameTime() % 100L == 0L) {
                 sterilize();
@@ -325,8 +336,9 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
         return RtgPelletRuntime.updateHeat(items, SLOT_RTG_START, SLOT_RTG_END);
     }
 
-    private void setupTanks() {
-        RadiolysisRecipes.Result result = RadiolysisRecipes.getRadiolysis(inputTank.getTankType());
+    private void setupTanks(Level level) {
+        RadiolysisRecipes.Result result = RadiolysisRecipes.getRadiolysis(level.getRecipeManager(),
+                inputTank.getTankType());
         if (result == null) {
             inputTank.setTankType(HbmFluids.NONE);
             outputTank1.setTankType(HbmFluids.NONE);
@@ -337,8 +349,9 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
         outputTank2.setTankType(result.right().type());
     }
 
-    private void crack() {
-        RadiolysisRecipes.Result result = RadiolysisRecipes.getRadiolysis(inputTank.getTankType());
+    private void crack(Level level) {
+        RadiolysisRecipes.Result result = RadiolysisRecipes.getRadiolysis(level.getRecipeManager(),
+                inputTank.getTankType());
         if (result == null || inputTank.getFill() < 100 || !hasSpace(result.left(), result.right())) {
             return;
         }

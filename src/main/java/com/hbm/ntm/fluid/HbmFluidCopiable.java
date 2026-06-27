@@ -2,6 +2,7 @@ package com.hbm.ntm.fluid;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalInt;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -39,6 +40,10 @@ public interface HbmFluidCopiable {
         return null;
     }
 
+    public default boolean supportsFluidSettingsCopy() {
+        return getFluidIdsToCopy().length > 0 || getTankToPasteFluidSettings() != null;
+    }
+
     default CompoundTag getFluidSettings() {
         CompoundTag tag = new CompoundTag();
         int[] ids = getFluidIdsToCopy();
@@ -50,17 +55,16 @@ public interface HbmFluidCopiable {
 
     default boolean pasteFluidSettings(CompoundTag tag, int index, @Nullable Player player, boolean recursive) {
         HbmFluidTank tank = getTankToPasteFluidSettings();
-        if (tank == null || tag == null || !tag.contains(TAG_FLUID_IDS)) {
+        if (tank == null) {
             return false;
         }
 
-        int[] ids = tag.getIntArray(TAG_FLUID_IDS);
-        if (ids.length <= 0) {
+        OptionalInt id = copiedFluidIdAt(tag, index);
+        if (id.isEmpty()) {
             return false;
         }
 
-        int safeIndex = index >= 0 && index < ids.length ? index : 0;
-        tank.setTankType(HbmFluids.fromId(ids[safeIndex]));
+        tank.setTankType(HbmFluids.fromId(id.getAsInt()));
         onFluidSettingsPasted();
         return true;
     }
@@ -75,5 +79,27 @@ public interface HbmFluidCopiable {
     }
 
     default void onFluidSettingsPasted() {
+    }
+
+    static OptionalInt copiedFluidIdAt(@Nullable CompoundTag tag, int index) {
+        if (tag == null || !tag.contains(TAG_FLUID_IDS)) {
+            return OptionalInt.empty();
+        }
+        int[] ids = tag.getIntArray(TAG_FLUID_IDS);
+        if (index < 0 || index >= ids.length) {
+            return OptionalInt.empty();
+        }
+        return OptionalInt.of(ids[index]);
+    }
+
+    static OptionalInt copiedPipeFluidIdAt(@Nullable CompoundTag tag, int index) {
+        if (tag == null || !tag.contains(TAG_FLUID_IDS)) {
+            return OptionalInt.empty();
+        }
+        int[] ids = tag.getIntArray(TAG_FLUID_IDS);
+        if (ids.length == 0) {
+            return OptionalInt.empty();
+        }
+        return OptionalInt.of(index >= 0 && index < ids.length ? ids[index] : HbmFluids.NONE.getId());
     }
 }

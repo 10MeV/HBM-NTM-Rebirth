@@ -4,8 +4,10 @@ import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
 import com.hbm.ntm.block.FluidDuctBoxBlock;
 import com.hbm.ntm.block.FluidPipeBlock;
 import com.hbm.ntm.block.LegacyFileCabinetBlock;
+import com.hbm.ntm.block.LegacyBasaltOreBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.RedCableBoxBlock;
+import com.hbm.ntm.fluid.HbmFluidDuctVariants;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
@@ -19,6 +21,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.minecraft.world.level.storage.loot.entries.AlternativesEntry;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
@@ -72,15 +75,15 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 .filter(block -> block != ModBlocks.TURRET_HOWARD_DAMAGED
                         && block != ModBlocks.TURRET_SENTRY_DAMAGED)
                 .forEach(block -> dropSelf(block.get()));
-        add(ModBlocks.TURRET_HOWARD_DAMAGED.get(), noDrop());
-        add(ModBlocks.TURRET_SENTRY_DAMAGED.get(), noDrop());
-        add(ModBlocks.MACHINE_FLUIDTANK.get(), noDrop());
-        add(ModBlocks.MACHINE_BAT9000.get(), noDrop());
-        add(ModBlocks.MACHINE_BIGASSTANK.get(), noDrop());
-        add(ModBlocks.MACHINE_UF6_TANK.get(), noDrop());
-        add(ModBlocks.MACHINE_PUF6_TANK.get(), noDrop());
-        add(ModBlocks.MACHINE_REFINERY.get(), noDrop());
-        add(ModBlocks.BARREL_PLASTIC.get(), noDrop());
+        addNoDrop(ModBlocks.TURRET_HOWARD_DAMAGED.get());
+        addNoDrop(ModBlocks.TURRET_SENTRY_DAMAGED.get());
+        addNoDrop(ModBlocks.MACHINE_FLUIDTANK.get());
+        addNoDrop(ModBlocks.MACHINE_BAT9000.get());
+        addNoDrop(ModBlocks.MACHINE_BIGASSTANK.get());
+        addNoDrop(ModBlocks.MACHINE_UF6_TANK.get());
+        addNoDrop(ModBlocks.MACHINE_PUF6_TANK.get());
+        addNoDrop(ModBlocks.MACHINE_REFINERY.get());
+        addNoDrop(ModBlocks.BARREL_PLASTIC.get());
         dropSelf(ModBlocks.BARREL_CORRODED.get());
         dropSelf(ModBlocks.MACHINE_FENSU.get());
         add(ModBlocks.MACHINE_BOILER_OFF.get(), oldBoilerScrapsDrop());
@@ -91,38 +94,38 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 legacyStateVariantDrop(ModBlocks.RED_CABLE_BOX.get(), RedCableBoxBlock.SIZE, 5));
         add(ModBlocks.FLUID_DUCT_NEO.get(),
                 legacyStateVariantDrop(ModBlocks.FLUID_DUCT_NEO.get(), FluidPipeBlock.LEGACY_STYLE,
-                        FluidPipeBlock.legacyCreativeStyles()));
+                        HbmFluidDuctVariants.standardVisibleStyles()));
         add(ModBlocks.FLUID_DUCT_BOX.get(),
                 legacyStateVariantDrop(ModBlocks.FLUID_DUCT_BOX.get(), FluidDuctBoxBlock.LEGACY_METADATA,
-                        FluidDuctBoxBlock.boxCreativeMetadata()));
+                        HbmFluidDuctVariants.boxVisibleMetadata()));
         add(ModBlocks.FLUID_DUCT_EXHAUST.get(),
                 legacyStateVariantDrop(ModBlocks.FLUID_DUCT_EXHAUST.get(), FluidDuctBoxBlock.LEGACY_METADATA,
-                        FluidDuctBoxBlock.LEGACY_METADATA_COUNT));
+                        HbmFluidDuctVariants.BOX_METADATA_COUNT));
         add(ModBlocks.RAD_ABSORBER.get(),
                 legacyStateVariantDrop(ModBlocks.RAD_ABSORBER.get(), LegacyRadAbsorberBlock.TIER, 4));
-        add(ModBlocks.BARREL_STEEL.get(), noDrop());
-        add(ModBlocks.BARREL_TCALLOY.get(), noDrop());
-        add(ModBlocks.BARREL_ANTIMATTER.get(), noDrop());
+        addNoDrop(ModBlocks.BARREL_STEEL.get());
+        addNoDrop(ModBlocks.BARREL_TCALLOY.get());
+        addNoDrop(ModBlocks.BARREL_ANTIMATTER.get());
         dropSelf(ModBlocks.MACHINE_MINIRTG.get());
         dropSelf(ModBlocks.MACHINE_POWERRTG.get());
         dropSelf(ModBlocks.FIELD_DISTURBER.get());
         dropSelf(ModBlocks.CAPACITOR_BUS.get());
-        add(ModBlocks.MACHINE_RTG_FURNACE.get(), noDrop());
+        addNoDrop(ModBlocks.MACHINE_RTG_FURNACE.get());
         dropSelf(ModBlocks.MACHINE_BATTERY.get());
         dropSelf(ModBlocks.MACHINE_BATTERY_POTATO.get());
         dropSelf(ModBlocks.MACHINE_LITHIUM_BATTERY.get());
         dropSelf(ModBlocks.MACHINE_SCHRABIDIUM_BATTERY.get());
         dropSelf(ModBlocks.MACHINE_DINEUTRONIUM_BATTERY.get());
-        add(ModBlocks.MACHINE_WELL.get(), noDrop());
-        add(ModBlocks.MACHINE_PUMPJACK.get(), noDrop());
-        add(ModBlocks.MACHINE_FRACKING_TOWER.get(), noDrop());
-        add(ModBlocks.CRATE_IRON.get(), noDrop());
-        add(ModBlocks.CRATE_STEEL.get(), noDrop());
-        add(ModBlocks.CRATE_DESH.get(), noDrop());
-        add(ModBlocks.CRATE_TUNGSTEN.get(), noDrop());
-        add(ModBlocks.SAFE.get(), noDrop());
-        add(ModBlocks.MASS_STORAGE.get(), noDrop());
-        add(ModBlocks.VENDING_MACHINE.get(), noDrop());
+        addNoDrop(ModBlocks.MACHINE_WELL.get());
+        addNoDrop(ModBlocks.MACHINE_PUMPJACK.get());
+        addNoDrop(ModBlocks.MACHINE_FRACKING_TOWER.get());
+        addNoDrop(ModBlocks.CRATE_IRON.get());
+        addNoDrop(ModBlocks.CRATE_STEEL.get());
+        addNoDrop(ModBlocks.CRATE_DESH.get());
+        addNoDrop(ModBlocks.CRATE_TUNGSTEN.get());
+        addNoDrop(ModBlocks.SAFE.get());
+        addNoDrop(ModBlocks.MASS_STORAGE.get());
+        addNoDrop(ModBlocks.VENDING_MACHINE.get());
         dropSelf(ModBlocks.MACHINE_SATLINKER.get());
         dropSelf(ModBlocks.PA_SOURCE.get());
         dropSelf(ModBlocks.PA_BEAMLINE.get());
@@ -132,7 +135,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         dropSelf(ModBlocks.PA_DETECTOR.get());
         dropSelf(ModBlocks.SAT_DOCK.get());
         dropSelf(ModBlocks.SOYUZ_CAPSULE.get());
-        add(ModBlocks.SOYUZ_LAUNCHER.get(), noDrop());
+        addNoDrop(ModBlocks.SOYUZ_LAUNCHER.get());
         dropSelf(ModBlocks.STRUCT_LAUNCHER.get());
         dropSelf(ModBlocks.STRUCT_SCAFFOLD.get());
         dropSelf(ModBlocks.STRUCT_SOYUZ_CORE.get());
@@ -142,14 +145,14 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         dropSelf(ModBlocks.LAUNCH_TABLE.get());
         dropSelf(ModBlocks.COMPACT_LAUNCHER.get());
         dropSelf(ModBlocks.MACHINE_MISSILE_ASSEMBLY.get());
-        add(ModBlocks.OIL_PIPE.get(), noDrop());
+        addNoDrop(ModBlocks.OIL_PIPE.get());
         add(ModBlocks.CONVEYOR.get(), conveyorWandDrop("REGULAR"));
         add(ModBlocks.CONVEYOR_EXPRESS.get(), conveyorWandDrop("EXPRESS"));
         add(ModBlocks.CONVEYOR_DOUBLE.get(), conveyorWandDrop("DOUBLE"));
         add(ModBlocks.CONVEYOR_TRIPLE.get(), conveyorWandDrop("TRIPLE"));
         add(ModBlocks.CONVEYOR_LIFT.get(), conveyorWandDrop("REGULAR"));
         add(ModBlocks.CONVEYOR_CHUTE.get(), conveyorWandDrop("REGULAR"));
-        add(ModBlocks.FLOODLIGHT_BEAM.get(), noDrop());
+        addNoDrop(ModBlocks.FLOODLIGHT_BEAM.get());
         dropSelf(ModBlocks.CRANE_EXTRACTOR.get());
         dropSelf(ModBlocks.CRANE_INSERTER.get());
         dropSelf(ModBlocks.CRANE_GRABBER.get());
@@ -163,7 +166,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         dropSelf(ModBlocks.FOUNDRY_TANK.get());
         dropSelf(ModBlocks.FOUNDRY_OUTLET.get());
         dropSelf(ModBlocks.FOUNDRY_SLAGTAP.get());
-        add(ModBlocks.FOUNDRY_SLAG.get(), noDrop());
+        addNoDrop(ModBlocks.FOUNDRY_SLAG.get());
         ModBlocks.PYLON_BLOCKS.forEach(block -> dropSelf(block.get()));
         ModBlocks.BLOCK_TAB_BLOCKS.stream()
                 .filter(block -> !ModBlocks.CAP_BLOCKS.contains(block))
@@ -171,10 +174,10 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         addLegacyOreDrops();
         addCapBlockDrops();
         addPileGraphiteDrops();
-        add(ModBlocks.WASTE_LEAVES.get(), noDrop());
-        add(ModBlocks.LEAVES_LAYER.get(), noDrop());
-        add(ModBlocks.BARRICADE.get(), noDrop());
-        add(ModBlocks.OIL_SPILL.get(), noDrop());
+        addNoDrop(ModBlocks.WASTE_LEAVES.get());
+        addNoDrop(ModBlocks.LEAVES_LAYER.get());
+        addNoDrop(ModBlocks.BARRICADE.get());
+        addNoDrop(ModBlocks.OIL_SPILL.get());
         add(ModBlocks.WASTE_LOG.get(), wasteLogDrop());
         add(ModBlocks.MUSH_BLOCK.get(), hugeMushDrop());
         add(ModBlocks.MUSH_BLOCK_STEM.get(), hugeMushDrop());
@@ -182,11 +185,11 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.FROZEN_DIRT.get(), block -> singleItemDrop(Items.SNOWBALL));
         add(ModBlocks.FROZEN_LOG.get(), block -> snowballStackDrop(2.0F, 4.0F));
         add(ModBlocks.FROZEN_PLANKS.get(), block -> singleItemDrop(Items.SNOWBALL));
-        add(ModBlocks.FIRE_DIGAMMA.get(), noDrop());
-        add(ModBlocks.BALEFIRE.get(), noDrop());
-        add(ModBlocks.CORIUM_BLOCK.get(), noDrop());
-        add(ModBlocks.MUD_BLOCK.get(), noDrop());
-        add(ModBlocks.TAINT.get(), noDrop());
+        addNoDrop(ModBlocks.FIRE_DIGAMMA.get());
+        addNoDrop(ModBlocks.BALEFIRE.get());
+        addNoDrop(ModBlocks.CORIUM_BLOCK.get());
+        addNoDrop(ModBlocks.MUD_BLOCK.get());
+        addNoDrop(ModBlocks.TAINT.get());
         ModBlocks.NUKE_TAB_BLOCKS.stream()
                 .filter(block -> block != ModBlocks.CHARGE_DYNAMITE
                         && block != ModBlocks.CHARGE_MINER
@@ -195,26 +198,26 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                         && block != ModBlocks.VOLCANO_CORE
                         && block != ModBlocks.VOLCANO_RAD_CORE)
                 .forEach(block -> dropSelf(block.get()));
-        add(ModBlocks.VOLCANO_CORE.get(), noDrop());
-        add(ModBlocks.VOLCANO_RAD_CORE.get(), noDrop());
-        add(ModBlocks.CHARGE_DYNAMITE.get(), noDrop());
-        add(ModBlocks.CHARGE_MINER.get(), noDrop());
-        add(ModBlocks.CHARGE_C4.get(), noDrop());
-        add(ModBlocks.CHARGE_SEMTEX.get(), noDrop());
-        add(ModBlocks.GAS_RADON.get(), noDrop());
-        add(ModBlocks.GAS_RADON_DENSE.get(), noDrop());
-        add(ModBlocks.GAS_RADON_TOMB.get(), noDrop());
-        add(ModBlocks.GAS_MELTDOWN.get(), noDrop());
-        add(ModBlocks.GAS_MONOXIDE.get(), noDrop());
-        add(ModBlocks.GAS_ASBESTOS.get(), noDrop());
-        add(ModBlocks.GAS_COAL.get(), noDrop());
-        add(ModBlocks.CHLORINE_GAS.get(), noDrop());
-        add(ModBlocks.TOXIC_BLOCK.get(), noDrop());
-        add(ModBlocks.DUMMY_BLOCK.get(), noDrop());
-        add(ModBlocks.ICF_BLOCK.get(), noDrop());
-        add(ModBlocks.PWR_BLOCK.get(), noDrop());
+        addNoDrop(ModBlocks.VOLCANO_CORE.get());
+        addNoDrop(ModBlocks.VOLCANO_RAD_CORE.get());
+        addNoDrop(ModBlocks.CHARGE_DYNAMITE.get());
+        addNoDrop(ModBlocks.CHARGE_MINER.get());
+        addNoDrop(ModBlocks.CHARGE_C4.get());
+        addNoDrop(ModBlocks.CHARGE_SEMTEX.get());
+        addNoDrop(ModBlocks.GAS_RADON.get());
+        addNoDrop(ModBlocks.GAS_RADON_DENSE.get());
+        addNoDrop(ModBlocks.GAS_RADON_TOMB.get());
+        addNoDrop(ModBlocks.GAS_MELTDOWN.get());
+        addNoDrop(ModBlocks.GAS_MONOXIDE.get());
+        addNoDrop(ModBlocks.GAS_ASBESTOS.get());
+        addNoDrop(ModBlocks.GAS_COAL.get());
+        addNoDrop(ModBlocks.CHLORINE_GAS.get());
+        addNoDrop(ModBlocks.TOXIC_BLOCK.get());
+        addNoDrop(ModBlocks.DUMMY_BLOCK.get());
+        addNoDrop(ModBlocks.ICF_BLOCK.get());
+        addNoDrop(ModBlocks.PWR_BLOCK.get());
         add(ModBlocks.ZIRNOX_DESTROYED.get(), zirnoxDestroyedDrop());
-        add(ModBlocks.SPOTLIGHT_BEAM.get(), noDrop());
+        addNoDrop(ModBlocks.SPOTLIGHT_BEAM.get());
         add(ModBlocks.SPOTLIGHT_INCANDESCENT_OFF.get(),
                 block -> createSingleItemTable(ModBlocks.legacyBlock("spotlight_incandescent").get()));
         add(ModBlocks.SPOTLIGHT_FLUORO_OFF.get(),
@@ -241,6 +244,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.ORE_SELLAFIELD_DIAMOND.get(), block -> singleItemDrop(Items.DIAMOND));
         add(ModBlocks.ORE_SELLAFIELD_EMERALD.get(), block -> singleItemDrop(Items.EMERALD));
         add(ModBlocks.ORE_SELLAFIELD_RADGEM.get(), block -> singleItemDrop(ModItems.legacyItem("gem_rad").get()));
+        add(ModBlocks.ORE_BASALT.get(), block -> basaltOreDrop(block));
     }
 
     private void addPileGraphiteDrops() {
@@ -273,6 +277,11 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         addLegacySingleOreDrop("ore_coltan", "fragment_coltan");
         addLegacyFortuneOreDrop("ore_cobalt", "fragment_cobalt", 4.0F, 9.0F);
         addLegacyFortuneOreDrop("ore_nether_cobalt", "fragment_cobalt", 5.0F, 12.0F);
+        addLegacyFortuneOreDrop("stone_resource_malachite", "chunk_ore_malachite", 3.0F, 4.0F);
+        add(ModBlocks.STALACTITE_SULFUR.get(), block -> singleItemDrop(ModItems.legacyItem("sulfur").get()));
+        add(ModBlocks.STALAGMITE_SULFUR.get(), block -> singleItemDrop(ModItems.legacyItem("sulfur").get()));
+        add(ModBlocks.STALACTITE_ASBESTOS.get(), block -> singleItemDrop(ModItems.legacyItem("powder_asbestos").get()));
+        add(ModBlocks.STALAGMITE_ASBESTOS.get(), block -> singleItemDrop(ModItems.legacyItem("powder_asbestos").get()));
         addLegacyNetherFireOreDrop();
         addLegacyNoSilkFortuneDrop("ore_oil", "oil_tar_crude");
         addLegacySingleOreDrop("block_meteor_cobble", "fragment_meteorite");
@@ -447,6 +456,31 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         return table;
     }
 
+    private LootTable.Builder basaltOreDrop(Block block) {
+        LootTable.Builder table = LootTable.lootTable();
+        for (LegacyBasaltOreBlock.Variant variant : LegacyBasaltOreBlock.Variant.values()) {
+            LootItem.Builder<?> item = basaltOreDropEntry(block, variant);
+            table.withPool(LootPool.lootPool()
+                    .setRolls(ConstantValue.exactly(1.0F))
+                    .add(item)
+                    .when(ExplosionCondition.survivesExplosion())
+                    .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
+                            .setProperties(StatePropertiesPredicate.Builder.properties()
+                                    .hasProperty(LegacyBasaltOreBlock.VARIANT, variant.legacyMeta()))));
+        }
+        return table;
+    }
+
+    private LootItem.Builder<?> basaltOreDropEntry(Block block, LegacyBasaltOreBlock.Variant variant) {
+        Item item = variant.droppedItem();
+        if (item != null) {
+            return LootItem.lootTableItem(item);
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putInt(LegacyStateBlockItem.TAG_VARIANT, variant.legacyMeta());
+        return LootItem.lootTableItem(block).apply(SetNbtFunction.setTag(tag));
+    }
+
     private LootTable.Builder stackDrop(Item item, float count) {
         return LootTable.lootTable()
                 .withPool(LootPool.lootPool()
@@ -465,8 +499,24 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                         .when(ExplosionCondition.survivesExplosion()));
     }
 
+    private void addNoDrop(Block block) {
+        if (!block.getLootTable().equals(BuiltInLootTables.EMPTY)) {
+            add(block, noDrop());
+        }
+    }
+
+    @Override
+    protected void add(Block block, LootTable.Builder builder) {
+        if (!block.getLootTable().equals(BuiltInLootTables.EMPTY)) {
+            super.add(block, builder);
+        }
+    }
+
     @Override
     protected Iterable<Block> getKnownBlocks() {
-        return ModBlocks.BLOCKS.getEntries().stream().map(RegistryObject::get)::iterator;
+        return ModBlocks.BLOCKS.getEntries().stream()
+                .map(RegistryObject::get)
+                .filter(block -> block != ModBlocks.ORE_BEDROCK.get())
+                .filter(block -> !block.getLootTable().equals(BuiltInLootTables.EMPTY))::iterator;
     }
 }

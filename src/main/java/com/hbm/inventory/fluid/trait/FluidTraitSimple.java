@@ -3,7 +3,6 @@ package com.hbm.inventory.fluid.trait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
 import java.util.List;
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
 
 /**
  * Legacy package bridges for 1.7.10 simple fluid tag traits.
@@ -79,15 +78,10 @@ public final class FluidTraitSimple {
         }
     }
 
-    public static class FT_Delicious extends com.hbm.ntm.fluid.trait.FluidTrait {
+    public static class FT_Delicious extends SimpleFluidTraits.Delicious {
         @Override
         public String getLegacyName() {
             return "delicious";
-        }
-
-        @Override
-        public void addHiddenInfo(List<Component> info) {
-            info.add(Component.literal("[Delicious]").withStyle(ChatFormatting.DARK_GREEN));
         }
 
         public void addInfoHidden(List<String> info) {

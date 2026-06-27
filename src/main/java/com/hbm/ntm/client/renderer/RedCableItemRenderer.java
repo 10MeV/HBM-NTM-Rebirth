@@ -1,6 +1,5 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -10,7 +9,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Blocks;
 
 public class RedCableItemRenderer extends BlockEntityWithoutLevelRenderer {
     public static final RedCableItemRenderer INSTANCE = new RedCableItemRenderer(
@@ -26,8 +24,7 @@ public class RedCableItemRenderer extends BlockEntityWithoutLevelRenderer {
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         applyDisplay(displayContext, poseStack);
-        RedCableRenderer.renderItemCable(new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(),
-                packedLight, packedOverlay));
+        RedCableRenderer.renderItemCable(poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 

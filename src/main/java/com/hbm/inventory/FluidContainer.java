@@ -14,8 +14,8 @@ public class FluidContainer {
     public int content;
 
     public FluidContainer(ItemStack fullContainer, ItemStack emptyContainer, FluidType type, int content) {
-        this.fullContainer = fullContainer == null ? ItemStack.EMPTY : fullContainer.copy();
-        this.emptyContainer = emptyContainer == null ? ItemStack.EMPTY : emptyContainer.copy();
+        this.fullContainer = fullContainer == null ? null : fullContainer.copy();
+        this.emptyContainer = emptyContainer == null || emptyContainer.isEmpty() ? null : emptyContainer.copy();
         this.type = type;
         this.content = content;
     }

@@ -48,6 +48,15 @@ public class LegacyStateBlockItem extends BlockItem {
         return Math.max(0, Math.min(variants - 1, variant));
     }
 
+    public BlockState stateForVariant(int variant) {
+        int clamped = Math.max(0, Math.min(variants - 1, variant));
+        return getBlock().defaultBlockState().setValue(property, clamped);
+    }
+
+    public BlockState stateForStack(ItemStack stack) {
+        return stateForVariant(getVariant(stack));
+    }
+
     public static ItemStack createStack(LegacyStateBlockItem item, int variant) {
         ItemStack stack = new ItemStack(item);
         stack.getOrCreateTag().putInt(TAG_VARIANT, variant);

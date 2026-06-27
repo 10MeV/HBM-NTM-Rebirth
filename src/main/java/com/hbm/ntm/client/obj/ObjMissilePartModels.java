@@ -397,7 +397,7 @@ public final class ObjMissilePartModels {
     private static LegacyWavefrontModel missileModel(String modelName, String textureName) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/" + modelName + ".obj"),
-                missileTexture(textureName));
+                missileTexture(textureName)).asVBO();
     }
 
     public static ResourceLocation missileTexture(String name) {

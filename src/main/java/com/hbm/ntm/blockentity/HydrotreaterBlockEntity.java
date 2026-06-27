@@ -84,7 +84,7 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
         if (level.getGameTime() % 2L == 0L) {
             changed |= reform();
         } else {
-            changed |= setupRecipeTanks(LegacyOilFluidRecipes.getHydrotreating(inputTank.getTankType()));
+            changed |= setupRecipeTanks(LegacyOilFluidRecipes.getHydrotreating(level, inputTank.getTankType()));
         }
         return changed;
     }
@@ -134,7 +134,7 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
     }
 
     private boolean reform() {
-        TripleRecipe recipe = LegacyOilFluidRecipes.getHydrotreating(inputTank.getTankType());
+        TripleRecipe recipe = LegacyOilFluidRecipes.getHydrotreating(level, inputTank.getTankType());
         boolean changed = setupRecipeTanks(recipe);
         if (recipe == null || !hasCatalyst()) {
             return changed;

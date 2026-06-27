@@ -30,6 +30,7 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
+import com.hbm.ntm.util.HbmMachinePerformanceCounters;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -102,6 +103,21 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
         return false;
     }
 
+    public boolean supportsFluidSettingsCopy() {
+        return true;
+    }
+
+    @Override
+    public int[] getFluidIdsToCopy() {
+        return supportsFluidSettingsCopy() ? HbmFluidCopiable.super.getFluidIdsToCopy() : new int[0];
+    }
+
+    @Nullable
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return supportsFluidSettingsCopy() ? HbmFluidCopiable.super.getTankToPasteFluidSettings() : null;
+    }
+
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
         return tanks;
     }
@@ -124,7 +140,9 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidUtil.PortSubscribeReport subscribeFluidProviderToPortsReport(FluidType type,
             com.hbm.ntm.fluid.HbmFluidProvider provider) {
-        return subscribeFluidProviderToPortsDetailedReport(type, provider).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidUtil.PortSubscribeReport.empty()
+                : HbmFluidUtil.subscribeProviderToPortsReport(level, worldPosition, getFluidPorts(), type, provider);
     }
 
     protected HbmFluidUtil.PortSubscribeDetailReport subscribeFluidProviderToPortsDetailedReport(FluidType type,
@@ -141,7 +159,9 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidUtil.PortSubscribeReport subscribeFluidReceiverToPortsReport(FluidType type,
             com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
-        return subscribeFluidReceiverToPortsDetailedReport(type, receiver).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidUtil.PortSubscribeReport.empty()
+                : HbmFluidUtil.subscribeReceiverToPortsReport(level, worldPosition, getFluidPorts(), type, receiver);
     }
 
     protected HbmFluidUtil.PortSubscribeDetailReport subscribeFluidReceiverToPortsDetailedReport(FluidType type,
@@ -158,7 +178,13 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidUtil.PortTransferReport tryProvideFluidToPortsReport(FluidType type, int pressure,
             com.hbm.ntm.fluid.HbmFluidProvider provider) {
-        return tryProvideFluidToPortsDetailedReport(type, pressure, provider).summary();
+        if (provider == null || type == null || type == HbmFluids.NONE
+                || provider.getFluidAvailable(type, pressure) <= 0L) {
+            return HbmFluidUtil.PortTransferReport.empty();
+        }
+        return level == null || level.isClientSide
+                ? HbmFluidUtil.PortTransferReport.empty()
+                : HbmFluidUtil.tryProvideToPortsReport(level, worldPosition, getFluidPorts(), type, pressure, provider);
     }
 
     protected HbmFluidUtil.PortTransferDetailReport tryProvideFluidToPortsDetailedReport(FluidType type, int pressure,
@@ -189,7 +215,10 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidPortMachine.PortMachineRefreshReport refreshReceiverFluidPortsReport(
             Iterable<HbmFluidTank> receivingTanks, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
-        return refreshReceiverFluidPortsDetailedReport(receivingTanks, receiver).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineRefreshReport.empty()
+                : HbmFluidPortMachine.refreshReceiverPortsReport(
+                        level, worldPosition, getFluidPorts(), receivingTanks, receiver);
     }
 
     protected HbmFluidPortMachine.PortMachineRefreshDetailReport refreshReceiverFluidPortsDetailedReport(
@@ -202,7 +231,10 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidPortMachine.PortMachineRefreshReport refreshProviderFluidPortsReport(
             Iterable<HbmFluidTank> sendingTanks, com.hbm.ntm.fluid.HbmFluidProvider provider) {
-        return refreshProviderFluidPortsDetailedReport(sendingTanks, provider).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineRefreshReport.empty()
+                : HbmFluidPortMachine.refreshProviderPortsReport(
+                        level, worldPosition, getFluidPorts(), sendingTanks, provider);
     }
 
     protected HbmFluidPortMachine.PortMachineRefreshDetailReport refreshProviderFluidPortsDetailedReport(
@@ -216,7 +248,10 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     protected HbmFluidPortMachine.PortMachineRefreshReport refreshTransceiverFluidPortsReport(
             Iterable<HbmFluidTank> receivingTanks, Iterable<HbmFluidTank> sendingTanks,
             com.hbm.ntm.fluid.HbmStandardFluidTransceiver transceiver) {
-        return refreshTransceiverFluidPortsDetailedReport(receivingTanks, sendingTanks, transceiver).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineRefreshReport.empty()
+                : HbmFluidPortMachine.refreshTransceiverPortsReport(
+                        level, worldPosition, getFluidPorts(), receivingTanks, sendingTanks, transceiver);
     }
 
     protected HbmFluidPortMachine.PortMachineRefreshDetailReport refreshTransceiverFluidPortsDetailedReport(
@@ -230,7 +265,9 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport refreshTrackedReceiverFluidPortsReport(
             Iterable<HbmFluidTank> receivingTanks, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
-        return refreshTrackedReceiverFluidPortsDetailedReport(receivingTanks, receiver).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport.empty()
+                : fluidPortSubscriptions.refreshReceiver(level, worldPosition, getFluidPorts(), receivingTanks, receiver);
     }
 
     protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshDetailReport refreshTrackedReceiverFluidPortsDetailedReport(
@@ -243,7 +280,9 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport refreshTrackedProviderFluidPortsReport(
             Iterable<HbmFluidTank> sendingTanks, com.hbm.ntm.fluid.HbmFluidProvider provider) {
-        return refreshTrackedProviderFluidPortsDetailedReport(sendingTanks, provider).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport.empty()
+                : fluidPortSubscriptions.refreshProvider(level, worldPosition, getFluidPorts(), sendingTanks, provider);
     }
 
     protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshDetailReport refreshTrackedProviderFluidPortsDetailedReport(
@@ -257,7 +296,10 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport refreshTrackedTransceiverFluidPortsReport(
             Iterable<HbmFluidTank> receivingTanks, Iterable<HbmFluidTank> sendingTanks,
             com.hbm.ntm.fluid.HbmStandardFluidTransceiver transceiver) {
-        return refreshTrackedTransceiverFluidPortsDetailedReport(receivingTanks, sendingTanks, transceiver).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport.empty()
+                : fluidPortSubscriptions.refreshTransceiver(
+                        level, worldPosition, getFluidPorts(), receivingTanks, sendingTanks, transceiver);
     }
 
     protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshDetailReport refreshTrackedTransceiverFluidPortsDetailedReport(
@@ -271,7 +313,10 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidPortMachine.PortMachineDetachReport detachReceiverFluidPortsReport(
             Iterable<HbmFluidTank> receivingTanks, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
-        return detachReceiverFluidPortsDetailedReport(receivingTanks, receiver).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineDetachReport.empty()
+                : HbmFluidPortMachine.detachReceiverPortsReport(
+                        level, worldPosition, getFluidPorts(), receivingTanks, receiver);
     }
 
     protected HbmFluidPortMachine.PortMachineDetachDetailReport detachReceiverFluidPortsDetailedReport(
@@ -284,7 +329,10 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidPortMachine.PortMachineDetachReport detachProviderFluidPortsReport(
             Iterable<HbmFluidTank> sendingTanks, com.hbm.ntm.fluid.HbmFluidProvider provider) {
-        return detachProviderFluidPortsDetailedReport(sendingTanks, provider).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineDetachReport.empty()
+                : HbmFluidPortMachine.detachProviderPortsReport(
+                        level, worldPosition, getFluidPorts(), sendingTanks, provider);
     }
 
     protected HbmFluidPortMachine.PortMachineDetachDetailReport detachProviderFluidPortsDetailedReport(
@@ -298,7 +346,10 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     protected HbmFluidPortMachine.PortMachineDetachReport detachTransceiverFluidPortsReport(
             Iterable<HbmFluidTank> receivingTanks, Iterable<HbmFluidTank> sendingTanks,
             com.hbm.ntm.fluid.HbmStandardFluidTransceiver transceiver) {
-        return detachTransceiverFluidPortsDetailedReport(receivingTanks, sendingTanks, transceiver).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineDetachReport.empty()
+                : HbmFluidPortMachine.detachTransceiverPortsReport(
+                        level, worldPosition, getFluidPorts(), receivingTanks, sendingTanks, transceiver);
     }
 
     protected HbmFluidPortMachine.PortMachineDetachDetailReport detachTransceiverFluidPortsDetailedReport(
@@ -312,7 +363,9 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidPortMachine.PortMachineDetachReport detachTrackedFluidPortsReport(
             com.hbm.ntm.fluid.HbmFluidReceiver receiver, com.hbm.ntm.fluid.HbmFluidProvider provider) {
-        return detachTrackedFluidPortsDetailedReport(receiver, provider).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineDetachReport.empty()
+                : fluidPortSubscriptions.detachAll(level, worldPosition, getFluidPorts(), receiver, provider);
     }
 
     protected HbmFluidPortMachine.PortMachineDetachDetailReport detachTrackedFluidPortsDetailedReport(
@@ -369,7 +422,10 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidUtil.PortDetachReport unsubscribeFluidProviderFromPortsReport(FluidType type,
             com.hbm.ntm.fluid.HbmFluidProvider provider) {
-        return unsubscribeFluidProviderFromPortsDetailedReport(type, provider).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidUtil.PortDetachReport.empty()
+                : HbmFluidUtil.unsubscribeProviderFromPortsReport(
+                        level, worldPosition, getFluidPorts(), type, provider);
     }
 
     protected HbmFluidUtil.PortDetachDetailReport unsubscribeFluidProviderFromPortsDetailedReport(FluidType type,
@@ -387,7 +443,10 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidUtil.PortDetachReport unsubscribeFluidReceiverFromPortsReport(FluidType type,
             com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
-        return unsubscribeFluidReceiverFromPortsDetailedReport(type, receiver).summary();
+        return level == null || level.isClientSide
+                ? HbmFluidUtil.PortDetachReport.empty()
+                : HbmFluidUtil.unsubscribeReceiverFromPortsReport(
+                        level, worldPosition, getFluidPorts(), type, receiver);
     }
 
     protected HbmFluidUtil.PortDetachDetailReport unsubscribeFluidReceiverFromPortsDetailedReport(FluidType type,
@@ -1031,6 +1090,7 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     protected void onFluidContentsChanged() {
         setChanged();
         if (level != null && !level.isClientSide) {
+            HbmMachinePerformanceCounters.blockUpdate();
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
@@ -1077,9 +1137,11 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
                     true,
                     this::onFluidContentsChanged);
         }
-        List<HbmFluidTank> visibleTanks = mode == HbmFluidSideMode.INPUT ? getInputTanks(side) : getOutputTanks(side);
+        List<HbmFluidTank> inputTanks = mode == HbmFluidSideMode.INPUT ? getInputTanks(side) : List.of();
+        List<HbmFluidTank> outputTanks = mode == HbmFluidSideMode.OUTPUT ? getOutputTanks(side) : List.of();
         return new ForgeFluidHandlerAdapter(
-                visibleTanks,
+                inputTanks,
+                outputTanks,
                 getInputPressure(side),
                 mode.canFill(),
                 mode.canDrain(),

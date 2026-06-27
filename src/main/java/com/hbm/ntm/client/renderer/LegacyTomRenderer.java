@@ -1,10 +1,14 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.obj.LegacyUvAnimation;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjWeaponModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,34 +34,36 @@ public final class LegacyTomRenderer {
         return new TomStatePlan(false, false, true, false);
     }
 
-    public static void renderMain(ObjRenderContext context) {
-        ObjWeaponModels.TOM_MAIN.renderAll(ObjWeaponModels.TOM_MAIN_TEXTURE, context.fullBright());
+    public static void renderMain(PoseStack poseStack, MultiBufferSource buffer, int packedOverlay) {
+        renderAll(ObjWeaponModels.TOM_MAIN, ObjWeaponModels.TOM_MAIN_TEXTURE, poseStack, buffer,
+                LightTexture.FULL_BRIGHT, packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                LegacyWavefrontModel.UvTransform.DEFAULT);
     }
 
-    public static void renderTom(ObjRenderContext context, long currentMillis) {
-        PoseStack poseStack = context.poseStack();
+    public static void renderTom(PoseStack poseStack, MultiBufferSource buffer, int packedOverlay,
+            long currentMillis) {
         poseStack.pushPose();
         try {
             applyModelScale(poseStack);
-            renderMain(context);
-            renderFlames(context, currentMillis);
+            renderMain(poseStack, buffer, packedOverlay);
+            renderFlames(poseStack, buffer, packedOverlay, currentMillis);
         } finally {
             poseStack.popPose();
         }
     }
 
-    public static void renderFlames(ObjRenderContext context, long currentMillis) {
-        PoseStack poseStack = context.poseStack();
-        ObjRenderContext flameContext = context.fullBright()
-                .withAdditiveTranslucency()
-                .withLegacyHmfAnimation((float) currentMillis, HMF_MODULO, HMF_QUOTIENT);
+    public static void renderFlames(PoseStack poseStack, MultiBufferSource buffer, int packedOverlay,
+            long currentMillis) {
+        LegacyWavefrontModel.UvTransform uvTransform = hmfTransform(currentMillis);
         poseStack.pushPose();
         try {
             applyInitialFlameScale(poseStack);
             TomRenderPlan plan = plan(currentMillis);
             for (FlameLayer layer : plan.flameLayers()) {
                 applyBeforeFlameLayer(poseStack, layer);
-                ObjWeaponModels.TOM_FLAME.renderAll(ObjWeaponModels.TOM_FLAME_TEXTURE, flameContext);
+                renderAll(ObjWeaponModels.TOM_FLAME, ObjWeaponModels.TOM_FLAME_TEXTURE, poseStack, buffer,
+                        LightTexture.FULL_BRIGHT, packedOverlay, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                        uvTransform);
                 applyAfterFlameLayer(poseStack, layer);
             }
         } finally {
@@ -102,6 +108,24 @@ public final class LegacyTomRenderer {
 
     private static void applyScale(PoseStack poseStack, FlameScale scale) {
         poseStack.scale(scale.x(), scale.y(), scale.z());
+    }
+
+    private static void renderAll(LegacyWavefrontModel model, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
+            LegacyWavefrontModel.UvTransform uvTransform) {
+        model.renderAll(texture, poseStack, buffer, packedLight, packedOverlay,
+                255, 255, 255, 255, false, renderMode, uvTransform);
+    }
+
+    private static LegacyWavefrontModel.UvTransform hmfTransform(long currentMillis) {
+        return LegacyWavefrontModel.UvTransform.dynamic(
+                1.0F,
+                0.0F,
+                0.0F,
+                1.0F,
+                0.0F,
+                (float) LegacyUvAnimation.legacyHmfOffset(currentMillis, HMF_MODULO, HMF_QUOTIENT),
+                LegacyUvAnimation.LEGACY_HMF_TEXTURE_OFFSET);
     }
 
     private LegacyTomRenderer() {

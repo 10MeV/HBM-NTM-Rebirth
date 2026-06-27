@@ -5,7 +5,6 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.TurbineGasBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -48,8 +47,7 @@ public class TurbineGasRenderer implements BlockEntityRenderer<TurbineGasBlockEn
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
-        MODEL.renderAll(definition.textureLocation(), context);
+        MODEL.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
 
         poseStack.popPose();
     }

@@ -9,7 +9,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeRecipeFluidHandlerAdapter;
-import com.hbm.ntm.fluid.HbmFluidPortMachine;
+import com.hbm.ntm.fluid.HbmFluidPortSubscriptionTracker;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -88,6 +88,7 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
 
     private final Kind kind;
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
+    private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
     private final ItemStackHandler items;
     private final HbmEnergyStorage energy;
     private final HbmFluidTank[] inputTanks;
@@ -214,7 +215,7 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
             blockEntity.setChanged();
         }
         blockEntity.networkPackNT(100);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -406,14 +407,35 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     }
 
     private void subscribeEnergyReceiverToPorts() {
-        if (level != null && !level.isClientSide) {
+        if (level != null && !level.isClientSide
+                && Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) == 0L) {
             HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, kind.energyPorts, this);
         }
     }
 
     private void refreshFluidPortSubscriptions() {
-        HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, kind.fluidPorts,
-                inputTankList, outputTankList, this);
+        if (level != null && !level.isClientSide) {
+            fluidPortSubscriptions.refreshTransceiver(level, worldPosition, kind.fluidPorts,
+                    inputTankList, outputTankList, this);
+        }
+    }
+
+    private void detachFluidPortSubscriptions() {
+        if (level != null && !level.isClientSide) {
+            fluidPortSubscriptions.detachAll(level, worldPosition, kind.fluidPorts, this, this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        detachFluidPortSubscriptions();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        detachFluidPortSubscriptions();
+        super.onChunkUnloaded();
     }
 
     private boolean canExtractExternalSlot(int slot) {

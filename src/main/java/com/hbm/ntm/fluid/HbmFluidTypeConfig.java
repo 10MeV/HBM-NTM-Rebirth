@@ -91,10 +91,23 @@ public final class HbmFluidTypeConfig {
                 String texture = stringValue(object, "texture", name.toLowerCase(Locale.US));
                 int temperature = intValue(object, "temperature", FluidType.ROOM_TEMPERATURE);
 
-                HbmFluids.registerCustom(normalizedName, id, color, poison, flammability, reactivity, symbol, texture,
-                        tint, displayName).setTemperature(temperature);
+                boolean renderTankWithTint = booleanValue(object, "renderTankWithTint", true);
+                FluidType type = HbmFluids.registerCustom(normalizedName, id, color, poison, flammability,
+                        reactivity, symbol, texture, tint, displayName)
+                        .setTemperature(temperature)
+                        .setRenderTankWithTint(renderTankWithTint);
+                JsonObject traits = object(object, "traits");
+                if (traits != null) {
+                    HbmFluidTraitConfig.TraitParseResult parsed = HbmFluidTraitConfig.readTraitBlock(type.getName(), traits);
+                    type.setTraits(parsed.traits());
+                    skipped += parsed.skipped();
+                    warnings.addAll(parsed.warnings());
+                }
                 loaded++;
             } catch (RuntimeException ex) {
+                if (ex instanceof HbmFluidJsonUtil.UnknownFluidReferenceException) {
+                    throw ex;
+                }
                 skipped++;
                 warnings.add(name + " failed: " + ex.getMessage());
             }
@@ -144,6 +157,16 @@ public final class HbmFluidTypeConfig {
             return Integer.decode(element.getAsString());
         }
         return element.getAsInt();
+    }
+
+    private static boolean booleanValue(JsonObject object, String key, boolean fallback) {
+        JsonElement element = object.get(key);
+        return element == null ? fallback : element.getAsBoolean();
+    }
+
+    private static JsonObject object(JsonObject object, String key) {
+        JsonElement element = object.get(key);
+        return element != null && element.isJsonObject() ? element.getAsJsonObject() : null;
     }
 
     private static <E extends Enum<E>> E enumValue(Class<E> type, String value, E fallback) {

@@ -1,6 +1,9 @@
 {
+  "external_template_status": "missing",
   "legacy_file": "hbmIrradiationFluids.json",
   "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes",
+  "main_resource_recipe_count": 3,
+  "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/fusion_fluid_breeder",
   "modern_recipe_type": "fusion_fluid_breeder",
-  "status": "missing_template"
+  "status": "main_resources_only"
 }

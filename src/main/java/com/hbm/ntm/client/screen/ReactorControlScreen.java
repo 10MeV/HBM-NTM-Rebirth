@@ -4,7 +4,6 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.ReactorControlMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.TileControlPacket;
-import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -12,6 +11,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -218,7 +218,7 @@ public class ReactorControlScreen extends AbstractContainerScreen<ReactorControl
 
     private void playClick() {
         if (minecraft != null) {
-            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.BLOCK_RBMK_AZ5_COVER.get(), 0.5F));
+            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
         }
     }
 }

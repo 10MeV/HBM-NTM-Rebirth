@@ -79,7 +79,7 @@ public class FT_Combustible extends CombustibleFluidTrait {
             return;
         }
         if (object.has("energy")) {
-            this.combustionEnergy = object.get("energy").getAsLong();
+            this.combustionEnergy = LegacyFluidTraitJson.longValue(object, "energy", 0L);
         }
         if (object.has("grade")) {
             this.fuelGrade = FuelGrade.valueOf(object.get("grade").getAsString());

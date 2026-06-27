@@ -100,7 +100,7 @@ public final class ObjLaunchModels {
     public static LegacyWavefrontModel legacyModel(String modelName, String textureName) {
         return new LegacyWavefrontModel(
                 legacyModelLocation(modelName),
-                texture(textureName));
+                texture(textureName)).asVBO();
     }
 
     private static ResourceLocation legacyModelLocation(String modelName) {
@@ -150,13 +150,15 @@ public final class ObjLaunchModels {
         return new SoyuzLauncherRenderPlan(rotation, SOYUZ_LAUNCHER_STATE, parts);
     }
 
-    public static void renderMissileErectorPart(String partName, ResourceLocation texture, ObjRenderContext context) {
+    public static void renderMissileErectorPart(String partName, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
         LegacyWavefrontModel.SelectionHandle handle = missileErectorHandle(partName);
         if (handle != null) {
-            MISSILE_ERECTOR.renderOnlyInCallOrder(texture, context, handle);
+            MISSILE_ERECTOR.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle,
+                    renderMode);
             return;
         }
-        MISSILE_ERECTOR.renderPart(partName, texture, context);
+        MISSILE_ERECTOR.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
     public static void renderSoyuzLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer,

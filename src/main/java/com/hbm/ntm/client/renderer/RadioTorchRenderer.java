@@ -12,7 +12,6 @@ import com.hbm.ntm.blockentity.RadioTorchReceiverBlockEntity;
 import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -25,15 +24,15 @@ import net.minecraft.world.level.block.state.BlockState;
 public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjBlockModels.RTTY.asVBO();
 
-    private static final ResourceLocation SENDER_OFF = blockSprite("rtty_sender_off");
-    private static final ResourceLocation SENDER_ON = blockSprite("rtty_sender_on");
-    private static final ResourceLocation RECEIVER_OFF = blockSprite("rtty_rec_off");
-    private static final ResourceLocation RECEIVER_ON = blockSprite("rtty_rec_on");
-    private static final ResourceLocation LOGIC_OFF = blockSprite("rtty_logic_off");
-    private static final ResourceLocation LOGIC_ON = blockSprite("rtty_logic_on");
-    private static final ResourceLocation READER = blockSprite("rtty_reader");
-    private static final ResourceLocation COUNTER = blockSprite("rtty_counter");
-    private static final ResourceLocation CONTROLLER = blockSprite("rtty_controller");
+    private static final TextureAtlasSprite SENDER_OFF = sprite("rtty_sender_off");
+    private static final TextureAtlasSprite SENDER_ON = sprite("rtty_sender_on");
+    private static final TextureAtlasSprite RECEIVER_OFF = sprite("rtty_rec_off");
+    private static final TextureAtlasSprite RECEIVER_ON = sprite("rtty_rec_on");
+    private static final TextureAtlasSprite LOGIC_OFF = sprite("rtty_logic_off");
+    private static final TextureAtlasSprite LOGIC_ON = sprite("rtty_logic_on");
+    private static final TextureAtlasSprite READER = sprite("rtty_reader");
+    private static final TextureAtlasSprite COUNTER = sprite("rtty_counter");
+    private static final TextureAtlasSprite CONTROLLER = sprite("rtty_controller");
 
     public RadioTorchRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -46,17 +45,17 @@ public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEn
                 ? state.getValue(RadioTorchBlock.FACING)
                 : Direction.UP;
         int light = LegacyRenderLighting.resolveMultiblockLight(torch, packedLight);
-        TextureAtlasSprite sprite = LegacyTexturedQuadRenderer.blockSprite(textureFor(torch));
+        TextureAtlasSprite sprite = textureFor(torch);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, light, packedOverlay);
         Rotation rotation = legacyRotation(facing);
-        MODEL.renderWithSprite(sprite, context, rotation.yaw(), rotation.pitch(), 0.0F);
+        MODEL.renderWithSprite(sprite, poseStack, buffer, light, packedOverlay, rotation.yaw(), rotation.pitch(),
+                0.0F, false);
         poseStack.popPose();
     }
 
-    private static ResourceLocation textureFor(RadioTorchBlockEntity torch) {
+    private static TextureAtlasSprite textureFor(RadioTorchBlockEntity torch) {
         if (torch instanceof RadioTorchDeviceBlockEntity device) {
             boolean active = device.radioState().lastState() > 0;
             return torch instanceof RadioTorchReceiverBlockEntity
@@ -95,8 +94,8 @@ public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEn
         return new Rotation(rotation, flip);
     }
 
-    private static ResourceLocation blockSprite(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "block/" + name);
+    private static TextureAtlasSprite sprite(String name) {
+        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + name));
     }
 
     private record Rotation(float yaw, float pitch) {

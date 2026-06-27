@@ -1,11 +1,15 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.RBMKColumnBlock;
 import com.hbm.ntm.block.LegacyCoriumFiniteBlock;
 import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
+import com.hbm.ntm.api.tile.InfoProviderEC;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.fluid.FluidType;
@@ -69,9 +73,11 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.AchievementHandler;
+import com.hbm.ntm.util.HbmMachinePerformanceCounters;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import com.hbm.tileentity.machine.rbmk.IRBMKFluxReceiver;
 import com.hbm.tileentity.machine.rbmk.IRBMKLoadable;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -111,7 +117,8 @@ import java.util.Set;
 public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         implements RBMKNeutronColumn, RBMKAbsorberColumn, RBMKControlColumn, RBMKRodColumn,
         RBMKOutgasserColumn, IRBMKFluxReceiver, IRBMKLoadable, HbmStandardFluidReceiver,
-        HbmStandardFluidSender, HbmEnergyReceiver, RORValueProvider, RORInteractive, CopiableSettings {
+        HbmStandardFluidSender, HbmEnergyReceiver, RORValueProvider, RORInteractive, CopiableSettings,
+        LegacyLookOverlayProvider, InfoProviderEC {
     public static final String TAG_HEAT = "heat";
     public static final String TAG_REASIM_WATER = "reasimWater";
     public static final String TAG_REASIM_STEAM = "reasimSteam";
@@ -183,6 +190,7 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
     private int craneIndicator;
     private int boilerVentDelay;
     private int lastBoilerConsumption;
+    private int lastBoilerOutput;
     private final List<BlockPos> thermalNeighborCache = new ArrayList<>(4);
     private ItemStack fuelRod = ItemStack.EMPTY;
     private final RBMKRodFluxState rodFluxState = new RBMKRodFluxState();
@@ -998,6 +1006,29 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         return tag;
     }
 
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.translatable(getBlockState().getBlock().getDescriptionId()).withStyle(ChatFormatting.YELLOW));
+        for (RBMKBaseRuntimePlanner.DiagnosticEntry entry :
+                RBMKBaseRuntimePlanner.diagnosticEntries(diagnosticData())) {
+            if (isModernOnlyDoddKey(entry.key())) {
+                continue;
+            }
+            lines.add(Component.translatable("tile.rbmk.dodd." + entry.key())
+                    .append(Component.literal(": " + entry.legacyValue())));
+        }
+        return LegacyLookOverlay.withTitle(
+                Component.literal("Dump of Ordered Data Diagnostic (DODD)"),
+                0x00FF00,
+                0x006000,
+                lines);
+    }
+
+    private static boolean isModernOnlyDoddKey(String key) {
+        return "maxHeat".equals(key) || "rbmkType".equals(key) || "hasLid".equals(key);
+    }
+
     public RBMKConsolePlanner.ColumnSnapshot displaySnapshot() {
         if (!hasOperationalLayout()) {
             return null;
@@ -1233,6 +1264,7 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
                         () -> 20 + level.random.nextInt(10));
         applyThermalState(thermalState);
         lastBoilerConsumption = result.waterUsed();
+        lastBoilerOutput = result.steamProduced();
         boilerVentDelay = state.ventDelay();
         boilerFeedTank.setFill(state.feedFill());
         boilerSteamTank.setTankType(fluidForSteamGrade(state.steamGrade()));
@@ -1444,6 +1476,98 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         }
         if (outgasserGasTank.isEmpty()) {
             outgasserGasTank.setTankType(HbmFluids.TRITIUM);
+        }
+    }
+
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        if (!hasOperationalLayout()) {
+            return;
+        }
+        RBMKColumnBlock.Kind kind = kind();
+        data.putDouble(CompatEnergyControl.D_HEAT_C, heat);
+        data.putString("rbmkColumnKind", kind.name());
+        data.putInt("rbmkX", worldPosition.getX());
+        data.putInt("rbmkY", worldPosition.getY());
+        data.putInt("rbmkZ", worldPosition.getZ());
+
+        if (kind.rod()) {
+            provideRodExtraInfo(data);
+            return;
+        }
+        if (kind.control()) {
+            data.putDouble(CompatEnergyControl.D_ROD_LEVEL_PERCENT, controlState.level() * 100.0D);
+            data.putDouble(CompatEnergyControl.D_ROD_TARGET_PERCENT, controlState.targetLevel() * 100.0D);
+            data.putDouble("rbmkControlMultiplier", controlMultiplier() * 100.0D);
+            data.putBoolean("rbmkControlAutomatic", kind.automatic());
+            return;
+        }
+        if (kind == RBMKColumnBlock.Kind.BOILER) {
+            data.putDouble(CompatEnergyControl.D_CONSUMPTION_MB, lastBoilerConsumption);
+            data.putDouble(CompatEnergyControl.D_OUTPUT_MB, lastBoilerOutput);
+            CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_RBMK_BOILER_FEED, boilerFeedTank);
+            CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_RBMK_BOILER_STEAM, boilerSteamTank);
+            data.putInt(CompatEnergyControl.I_WATER, boilerFeedTank.getFill());
+            data.putInt("rbmkWaterMax", boilerFeedTank.getMaxFill());
+            data.putInt("rbmkSteam", boilerSteamTank.getFill());
+            data.putInt("rbmkSteamMax", boilerSteamTank.getMaxFill());
+            data.putString("rbmkSteamType", boilerSteamTank.getTankType().getName());
+            data.putInt("rbmkSteamTypeId", boilerSteamTank.getTankType().getId());
+            return;
+        }
+        if (kind == RBMKColumnBlock.Kind.HEATER) {
+            CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_RBMK_HEATER_FEED, heaterFeedTank);
+            CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_RBMK_HEATER_OUTPUT, heaterOutputTank);
+            data.putInt("rbmkInput", heaterFeedTank.getFill());
+            data.putInt("rbmkInputMax", heaterFeedTank.getMaxFill());
+            data.putInt("rbmkOutput", heaterOutputTank.getFill());
+            data.putInt("rbmkOutputMax", heaterOutputTank.getMaxFill());
+            data.putString("rbmkInputType", heaterFeedTank.getTankType().getName());
+            data.putString("rbmkOutputType", heaterOutputTank.getTankType().getName());
+            return;
+        }
+        if (kind == RBMKColumnBlock.Kind.COOLER) {
+            CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_RBMK_COOLER_COLD, coolerColdTank);
+            CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_RBMK_COOLER_WARM, coolerWarmTank);
+            data.putInt("rbmkInput", coolerColdTank.getFill());
+            data.putInt("rbmkInputMax", coolerColdTank.getMaxFill());
+            data.putInt("rbmkOutput", coolerWarmTank.getFill());
+            data.putInt("rbmkOutputMax", coolerWarmTank.getMaxFill());
+            return;
+        }
+        if (kind == RBMKColumnBlock.Kind.OUTGASSER) {
+            CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_RBMK_OUTGASSER_GAS, outgasserGasTank);
+            data.putInt("rbmkGas", outgasserGasTank.getFill());
+            data.putInt("rbmkGasMax", outgasserGasTank.getMaxFill());
+            data.putDouble(CompatEnergyControl.I_PROGRESS, outgasserState.progress());
+            data.putString("rbmkGasType", outgasserGasTank.getTankType().getName());
+            data.putInt("rbmkGasTypeId", outgasserGasTank.getTankType().getId());
+            ItemStack input = outgasserItems.getStackInSlot(0);
+            data.putString("rbmkInputItem", input.isEmpty() ? "" : input.getDescriptionId());
+            data.putInt("rbmkInputCount", input.getCount());
+        }
+    }
+
+    private void provideRodExtraInfo(CompoundTag data) {
+        data.putDouble(CompatEnergyControl.I_FLUX,
+                (int) (rodFluxState.lastFluxQuantity() * rodFluxState.lastFluxRatio())
+                        + (int) (rodFluxState.lastFluxQuantity() * (1.0D - rodFluxState.lastFluxRatio())));
+        data.putDouble("rbmkFastFlux", rodFluxState.lastFluxQuantity() * rodFluxState.lastFluxRatio());
+        data.putDouble("rbmkSlowFlux", rodFluxState.lastFluxQuantity() * (1.0D - rodFluxState.lastFluxRatio()));
+        data.putDouble("rbmkFluxRatio", rodFluxState.lastFluxRatio());
+        data.putBoolean("rbmkModerated", kind().moderated());
+
+        if (fuelRod.getItem() instanceof RBMKFuelRodItem item) {
+            RBMKFuelRodSpec spec = item.getSpec();
+            RBMKFuelRodState state = item.getState(fuelRod);
+            data.putDouble(CompatEnergyControl.D_DEPLETION_PERCENT,
+                    (1.0D - state.enrichment(spec)) * 100.0D);
+            data.putDouble(CompatEnergyControl.D_XENON_PERCENT, state.xenon());
+            data.putDouble(CompatEnergyControl.D_SKIN_C, state.hullHeat());
+            data.putDouble(CompatEnergyControl.D_CORE_C, state.coreHeat());
+            data.putDouble(CompatEnergyControl.D_MELT_C, spec.meltingPoint());
+            data.putString("rbmkFuel", fuelRod.getItem().getDescriptionId());
+            data.putInt("rbmkFuelCount", fuelRod.getCount());
         }
     }
 
@@ -1667,6 +1791,7 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         setChanged();
         if (level != null) {
             BlockState state = getBlockState();
+            HbmMachinePerformanceCounters.blockUpdate();
             level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
             if (!level.isClientSide) {
                 networkPackNT(25);
@@ -2452,6 +2577,11 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
             case OUTGASSER -> List.of(outgasserGasTank);
             default -> List.of();
         };
+    }
+
+    @Override
+    public boolean supportsFluidSettingsCopy() {
+        return false;
     }
 
     @Override

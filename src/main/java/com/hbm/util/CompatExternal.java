@@ -12,6 +12,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmCompatFluidRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.render.util.EnumSymbol;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -161,9 +162,19 @@ public final class CompatExternal {
     }
 
     public static FluidType registerFluid(String name, int id, int color, int poison, int flammability,
+            int reactivity, EnumSymbol symbol, ResourceLocation texture) {
+        return registerFluid(name, id, color, poison, flammability, reactivity, modern(symbol), texture);
+    }
+
+    public static FluidType registerFluid(String name, int id, int color, int poison, int flammability,
             int reactivity, FluidSymbol symbol, String texture) {
         return com.hbm.ntm.compat.CompatExternal.registerFluid(name, id, color, poison, flammability, reactivity,
                 symbol, texture);
+    }
+
+    public static FluidType registerFluid(String name, int id, int color, int poison, int flammability,
+            int reactivity, EnumSymbol symbol, String texture) {
+        return registerFluid(name, id, color, poison, flammability, reactivity, modern(symbol), texture);
     }
 
     public static FluidType registerFluid(String name, int id, int color, int poison, int flammability,
@@ -179,9 +190,21 @@ public final class CompatExternal {
     }
 
     public static FluidType registerFluid(String name, int id, int color, int poison, int flammability,
+            int reactivity, EnumSymbol symbol, ResourceLocation texture, ResourceLocation forgeFluidId) {
+        return registerFluid(name, id, color, poison, flammability, reactivity, modern(symbol), texture,
+                forgeFluidId);
+    }
+
+    public static FluidType registerFluid(String name, int id, int color, int poison, int flammability,
             int reactivity, FluidSymbol symbol, String texture, String forgeFluidId) {
         return com.hbm.ntm.compat.CompatExternal.registerFluid(name, id, color, poison, flammability, reactivity,
                 symbol, texture, forgeFluidId);
+    }
+
+    public static FluidType registerFluid(String name, int id, int color, int poison, int flammability,
+            int reactivity, EnumSymbol symbol, String texture, String forgeFluidId) {
+        return registerFluid(name, id, color, poison, flammability, reactivity, modern(symbol), texture,
+                forgeFluidId);
     }
 
     public static FluidType registerFluid(String name, int id, int color, int poison, int flammability,
@@ -194,6 +217,12 @@ public final class CompatExternal {
             int reactivity, FluidSymbol symbol, ResourceLocation texture, Fluid forgeFluid) {
         return com.hbm.ntm.compat.CompatExternal.registerFluid(name, id, color, poison, flammability, reactivity,
                 symbol, texture, forgeFluid);
+    }
+
+    public static FluidType registerFluid(String name, int id, int color, int poison, int flammability,
+            int reactivity, EnumSymbol symbol, ResourceLocation texture, Fluid forgeFluid) {
+        return registerFluid(name, id, color, poison, flammability, reactivity, modern(symbol), texture,
+                forgeFluid);
     }
 
     public static FluidType getFluid(String name) {
@@ -226,6 +255,10 @@ public final class CompatExternal {
 
     public static HbmFluidContainerRegistry.Diagnostics fluidContainerDiagnostics() {
         return com.hbm.ntm.compat.CompatExternal.fluidContainerDiagnostics();
+    }
+
+    private static FluidSymbol modern(EnumSymbol symbol) {
+        return symbol == null ? FluidSymbol.NONE : symbol.modern();
     }
 
     public static void registerTurretTargetSimple(Class<? extends Entity> clazz, int type) {

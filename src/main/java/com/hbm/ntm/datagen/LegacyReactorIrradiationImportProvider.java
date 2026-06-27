@@ -6,8 +6,8 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluidStack;
-import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.recipe.HbmItemOutput;
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
@@ -39,12 +39,15 @@ public final class LegacyReactorIrradiationImportProvider implements DataProvide
     private final PackOutput.PathProvider recipePathProvider;
     private final Path reportPath;
     private final Path legacyRecipeDir;
+    private final Path mainRecipeDir;
 
     public LegacyReactorIrradiationImportProvider(PackOutput output, Path projectRoot) {
         this.recipePathProvider = output.createPathProvider(PackOutput.Target.DATA_PACK, "recipes");
         this.reportPath = projectRoot.resolve("reports")
                 .resolve("legacy_reactor_irradiation_import_report.json");
         this.legacyRecipeDir = projectRoot.resolve("legacy_recipes");
+        this.mainRecipeDir = projectRoot.resolve("src").resolve("main").resolve("resources")
+                .resolve("data").resolve(HbmNtm.MOD_ID).resolve("recipes");
     }
 
     @Override
@@ -124,7 +127,7 @@ public final class LegacyReactorIrradiationImportProvider implements DataProvide
 
         Path source = resolveLegacyFile(legacyFile.fileName());
         if (source == null) {
-            handler.addProperty("status", "missing_template");
+            reportMainResourceFallback(handler, legacyFile);
             return saves;
         }
         handler.addProperty("source", reportPath(source));
@@ -214,12 +217,8 @@ public final class LegacyReactorIrradiationImportProvider implements DataProvide
         if (array == null || array.size() < 2) {
             throw new JsonSyntaxException("recipe #" + sourceIndex + " missing " + key + " fluid stack");
         }
-        String fluidName = array.get(0).getAsString();
-        FluidType type = HbmFluids.fromName(fluidName);
-        if (type == HbmFluids.NONE) {
-            throw new JsonSyntaxException("recipe #" + sourceIndex + " unknown " + key + " fluid '"
-                    + fluidName + "'");
-        }
+        FluidType type = HbmFluidJsonUtil.requireFluidReference(array.get(0),
+                "recipe #" + sourceIndex + " " + key);
         int amount = array.get(1).getAsInt();
         int pressure = array.size() < 3 ? 0 : array.get(2).getAsInt();
         HbmFluidStack stack = new HbmFluidStack(type, amount, pressure);
@@ -289,6 +288,29 @@ public final class LegacyReactorIrradiationImportProvider implements DataProvide
             return template;
         }
         return null;
+    }
+
+    private void reportMainResourceFallback(JsonObject handler, LegacyFile legacyFile) {
+        Path recipeDir = mainRecipeDir.resolve(legacyFile.modernType());
+        int count = countJsonFiles(recipeDir);
+        handler.addProperty("status", count > 0 ? "main_resources_only" : "missing_template");
+        handler.addProperty("external_template_status", "missing");
+        handler.addProperty("main_resource_recipe_dir", reportPath(recipeDir));
+        handler.addProperty("main_resource_recipe_count", count);
+    }
+
+    private static int countJsonFiles(Path dir) {
+        if (!Files.isDirectory(dir)) {
+            return 0;
+        }
+        try (var files = Files.walk(dir)) {
+            return (int) files
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().endsWith(".json"))
+                    .count();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to count main-resource recipes in " + dir, exception);
+        }
     }
 
     private static String reportPath(Path path) {

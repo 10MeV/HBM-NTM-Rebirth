@@ -49,8 +49,8 @@ public class LegacyChargeBlockEntity extends BlockEntity implements HbmLegacyLoa
             return;
         }
 
-        blockEntity.setChanged();
         if (blockEntity.timer % 20 == 0) {
+            blockEntity.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }

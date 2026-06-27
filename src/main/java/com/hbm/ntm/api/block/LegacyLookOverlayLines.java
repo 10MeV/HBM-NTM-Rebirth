@@ -54,7 +54,9 @@ public final class LegacyLookOverlayLines {
     }
 
     public static Component itemPort(boolean input, String name) {
-        return arrow(input).append(Component.literal(name).withStyle(ChatFormatting.RESET));
+        return Component.literal(input ? "-> " : "<- ")
+                .withStyle(input ? ChatFormatting.YELLOW : ChatFormatting.RED)
+                .append(Component.literal(name).withStyle(ChatFormatting.RESET));
     }
 
     public static List<Component> fluidPorts(boolean input, FluidType... types) {
@@ -102,6 +104,11 @@ public final class LegacyLookOverlayLines {
         return Component.literal("Priority: ").append(Component.literal(name).withStyle(ChatFormatting.YELLOW));
     }
 
+    public static Component plainPriority(Enum<?> priority) {
+        String name = priority == null ? "NORMAL" : priority.name();
+        return Component.literal("Priority: " + name);
+    }
+
     public static Component freq(String channel) {
         return Component.literal("Freq: " + safe(channel)).withStyle(ChatFormatting.AQUA);
     }
@@ -111,6 +118,10 @@ public final class LegacyLookOverlayLines {
     }
 
     public static Component signal(boolean state) {
+        return Component.literal("Signal: " + state).withStyle(ChatFormatting.RED);
+    }
+
+    public static Component signal(int state) {
         return Component.literal("Signal: " + state).withStyle(ChatFormatting.RED);
     }
 
@@ -137,9 +148,7 @@ public final class LegacyLookOverlayLines {
     public static Component repairMaterial(ItemStack stack) {
         MutableComponent line = Component.literal("- ");
         line.append(stack.getHoverName().copy().withStyle(ChatFormatting.RESET));
-        if (stack.getCount() > 1) {
-            line.append(Component.literal(" x" + stack.getCount()).withStyle(ChatFormatting.RESET));
-        }
+        line.append(Component.literal(" x" + stack.getCount()).withStyle(ChatFormatting.RESET));
         return line;
     }
 
@@ -245,6 +254,17 @@ public final class LegacyLookOverlayLines {
         return percent((double) power, (double) maxPower);
     }
 
+    public static Component legacyUnclampedPercent(double value, double maxValue) {
+        double percent = maxValue <= 0.0D ? 0.0D : value / maxValue;
+        int charge = (int) Math.floor(percent * 10_000.0D);
+        int color = ((int) (0xFF - 0xFF * percent)) << 16 | ((int) (0xFF * percent) << 8);
+        return Component.literal((charge / 100.0D) + "%").withStyle(style -> style.withColor(color));
+    }
+
+    public static Component legacyUnclampedChargePercent(long power, long maxPower) {
+        return legacyUnclampedPercent((double) power, (double) maxPower);
+    }
+
     public static Component percent(double value, double maxValue) {
         double percent = maxValue <= 0.0D ? 0.0D : Math.max(0.0D, Math.min(1.0D, value / maxValue));
         int charge = (int) Math.floor(percent * 10_000.0D);
@@ -259,6 +279,10 @@ public final class LegacyLookOverlayLines {
 
     public static List<Component> energyStorage(long power, long maxPower) {
         return List.of(energyStored(power, maxPower), chargePercent(power, maxPower));
+    }
+
+    public static List<Component> legacyBatteryEnergyStorage(long power, long maxPower) {
+        return List.of(energyStored(power, maxPower), legacyUnclampedChargePercent(power, maxPower));
     }
 
     public static List<Component> fluidNames(FluidType... types) {

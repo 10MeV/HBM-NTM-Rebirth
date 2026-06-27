@@ -1,8 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.fuel.LegacyBurnTimeModule;
@@ -42,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FireboxHeaterBlockEntity extends BlockEntity
-        implements MenuProvider, HeatSource, LegacyLookOverlayProvider, HbmLegacyLoadedTile {
+        implements MenuProvider, HeatSource, HbmLegacyLoadedTile {
     public static final int SLOT_COUNT = 2;
 
     private static final String TAG_MAX_BURN_TIME = "maxBurnTime";
@@ -142,8 +139,7 @@ public class FireboxHeaterBlockEntity extends BlockEntity
         }
 
         firebox.networkPackNT(50);
-        if (oldWasOn != firebox.wasOn || oldHeat != firebox.heatEnergy || oldBurn != firebox.burnTime
-                || level.getGameTime() % 20L == 0L) {
+        if (oldWasOn != firebox.wasOn || oldHeat != firebox.heatEnergy || oldBurn != firebox.burnTime) {
             firebox.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -225,13 +221,6 @@ public class FireboxHeaterBlockEntity extends BlockEntity
     public void useUpHeat(int heat) {
         heatEnergy = Math.max(0, heatEnergy - Math.max(0, heat));
         setChanged();
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.heatTu(heatEnergy),
-                Component.literal("-> " + burnHeat + " TU/t")));
     }
 
     @Override

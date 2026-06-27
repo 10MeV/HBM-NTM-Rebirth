@@ -1,7 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
@@ -180,7 +178,7 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || !oldWater.equals(slopper.waterTank.snapshot())
                 || !oldSlop.equals(slopper.slopTank.snapshot());
         slopper.networkPackNT(150);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             slopper.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -474,15 +472,6 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
             Direction portDirection) {
         return FluidPort.of(dir.getStepX() * forward + side.getStepX() * sideDistance, 0,
                 dir.getStepZ() * forward + side.getStepZ() * sideDistance, portDirection);
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.energyStored(energy.getPower(), energy.getMaxPower()),
-                LegacyLookOverlayLines.tank(true, waterTank),
-                LegacyLookOverlayLines.tank(false, slopTank),
-                Component.literal("Progress: " + (int) (progress * 100.0F) + "%")));
     }
 
     @Override

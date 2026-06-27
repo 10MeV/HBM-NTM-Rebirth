@@ -1,10 +1,11 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.obj.LegacyRenderColor;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.neutron.RBMKConsolePlanner;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.nbt.CompoundTag;
 
 public final class LegacyRbmkDisplayRenderer {
@@ -19,28 +20,28 @@ public final class LegacyRbmkDisplayRenderer {
     public static final double DOT_WIDTH = 0.03125D;
     public static final double DOT_EDGE = 0.022097D;
 
-    public static void renderDisplay(ObjRenderContext context, RBMKConsolePlanner.ColumnSnapshot[] columns) {
+    public static void renderDisplay(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, RBMKConsolePlanner.ColumnSnapshot[] columns) {
         if (columns == null || columns.length == 0) {
             return;
         }
-        PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.5D, 0.0D);
         poseStack.scale(1.0F, (float) DISPLAY_SCALE, (float) DISPLAY_SCALE);
         poseStack.translate(0.0D, -0.5D, 0.0D);
 
-        ObjRenderContext displayContext = context.fullBright().withoutTranslucency();
         for (int i = 0; i < columns.length; i++) {
             RBMKConsolePlanner.ColumnSnapshot column = columns[i];
             if (column == null) {
                 continue;
             }
-            renderColumn(displayContext, i, column);
+            renderColumn(poseStack, buffer, i, column);
         }
         poseStack.popPose();
     }
 
-    public static void renderColumn(ObjRenderContext context, int index, RBMKConsolePlanner.ColumnSnapshot column) {
+    public static void renderColumn(PoseStack poseStack, MultiBufferSource buffer, int index,
+            RBMKConsolePlanner.ColumnSnapshot column) {
         if (column == null) {
             return;
         }
@@ -49,13 +50,16 @@ public final class LegacyRbmkDisplayRenderer {
         double z = columnZ(index);
         CompoundTag data = column.data() == null ? new CompoundTag() : column.data();
         int baseColor = baseColor(index, data);
-        LegacyUntexturedQuadRenderer.xPlaneCenteredRect(context, x, y, z, COLUMN_WIDTH, COLUMN_WIDTH, baseColor, 255);
+        LegacyUntexturedQuadRenderer.xPlaneCenteredRect(poseStack, buffer,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, x, y, z, COLUMN_WIDTH, COLUMN_WIDTH, baseColor, 255);
 
         RBMKConsolePlanner.ColumnType type = column.type() == null ? RBMKConsolePlanner.ColumnType.BLANK : column.type();
         switch (type) {
-            case FUEL, FUEL_SIM -> renderFuelDot(context, x + DOT_X_OFFSET, y, z, data.getDouble("enrichment"));
-            case CONTROL -> renderControlDot(context, x + DOT_X_OFFSET, y, z, data.getDouble("level"));
-            case CONTROL_AUTO -> renderControlAutoDot(context, x + DOT_X_OFFSET, y, z, data.getDouble("level"));
+            case FUEL, FUEL_SIM -> renderFuelDot(poseStack, buffer, x + DOT_X_OFFSET, y, z,
+                    data.getDouble("enrichment"));
+            case CONTROL -> renderControlDot(poseStack, buffer, x + DOT_X_OFFSET, y, z, data.getDouble("level"));
+            case CONTROL_AUTO -> renderControlAutoDot(poseStack, buffer, x + DOT_X_OFFSET, y, z,
+                    data.getDouble("level"));
             default -> {
             }
         }
@@ -87,20 +91,26 @@ public final class LegacyRbmkDisplayRenderer {
         };
     }
 
-    public static void renderFuelDot(ObjRenderContext context, double x, double y, double z, double enrichment) {
-        renderDot(context, x, y, z, LegacyRenderColor.color(0.0F, 0.25F + (float) (enrichment * 0.75D), 0.0F));
+    public static void renderFuelDot(PoseStack poseStack, MultiBufferSource buffer,
+            double x, double y, double z, double enrichment) {
+        renderDot(poseStack, buffer, x, y, z,
+                LegacyRenderColor.color(0.0F, 0.25F + (float) (enrichment * 0.75D), 0.0F));
     }
 
-    public static void renderControlDot(ObjRenderContext context, double x, double y, double z, double level) {
-        renderDot(context, x, y, z, LegacyRenderColor.color((float) level, (float) level, 0.0F));
+    public static void renderControlDot(PoseStack poseStack, MultiBufferSource buffer,
+            double x, double y, double z, double level) {
+        renderDot(poseStack, buffer, x, y, z, LegacyRenderColor.color((float) level, (float) level, 0.0F));
     }
 
-    public static void renderControlAutoDot(ObjRenderContext context, double x, double y, double z, double level) {
-        renderDot(context, x, y, z, LegacyRenderColor.color((float) level, 0.0F, (float) level));
+    public static void renderControlAutoDot(PoseStack poseStack, MultiBufferSource buffer,
+            double x, double y, double z, double level) {
+        renderDot(poseStack, buffer, x, y, z, LegacyRenderColor.color((float) level, 0.0F, (float) level));
     }
 
-    public static void renderDot(ObjRenderContext context, double x, double y, double z, int color) {
-        LegacyUntexturedQuadRenderer.xPlaneDot(context, x, y, z, DOT_WIDTH, DOT_EDGE, color, 255);
+    public static void renderDot(PoseStack poseStack, MultiBufferSource buffer,
+            double x, double y, double z, int color) {
+        LegacyUntexturedQuadRenderer.xPlaneDot(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                x, y, z, DOT_WIDTH, DOT_EDGE, color, 255);
     }
 
     public static double columnX() {

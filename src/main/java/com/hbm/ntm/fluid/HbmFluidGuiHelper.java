@@ -1,6 +1,7 @@
 package com.hbm.ntm.fluid;
 
 import com.hbm.ntm.util.HbmMathUtil;
+import com.hbm.ntm.util.HbmMenuDataSlots;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -209,7 +210,7 @@ public final class HbmFluidGuiHelper {
     }
 
     public static final class TankData {
-        private static final int SYNC_SLOT_COUNT = 4;
+        private static final int SYNC_SLOT_COUNT = 7;
         private final HbmFluidTank tank;
         private int fill;
         private int capacity;
@@ -294,39 +295,15 @@ public final class HbmFluidGuiHelper {
 
         private void addTo(DataSlotSink sink, BooleanSupplier visible) {
             BooleanSupplier guard = visible == null ? () -> true : visible;
-            sink.add(new DataSlot() {
-                @Override
-                public int get() {
-                    return guard.getAsBoolean() ? tank.getFill() : 0;
-                }
-
-                @Override
-                public void set(int value) {
-                    fill = value;
-                }
-            });
-            sink.add(new DataSlot() {
-                @Override
-                public int get() {
-                    return guard.getAsBoolean() ? tank.getMaxFill() : 0;
-                }
-
-                @Override
-                public void set(int value) {
-                    capacity = value;
-                }
-            });
-            sink.add(new DataSlot() {
-                @Override
-                public int get() {
-                    return guard.getAsBoolean() ? tank.getTankType().getId() : HbmFluids.NONE.getId();
-                }
-
-                @Override
-                public void set(int value) {
-                    typeId = value;
-                }
-            });
+            HbmMenuDataSlots.addInt(sink::add,
+                    () -> guard.getAsBoolean() ? tank.getFill() : 0,
+                    value -> fill = Math.max(0, value));
+            HbmMenuDataSlots.addInt(sink::add,
+                    () -> guard.getAsBoolean() ? tank.getMaxFill() : 0,
+                    value -> capacity = Math.max(0, value));
+            HbmMenuDataSlots.addInt(sink::add,
+                    () -> guard.getAsBoolean() ? tank.getTankType().getId() : HbmFluids.NONE.getId(),
+                    value -> typeId = Math.max(0, value));
             sink.add(new DataSlot() {
                 @Override
                 public int get() {

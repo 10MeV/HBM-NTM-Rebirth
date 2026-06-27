@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:electrolyzer_fluid",
+  "input": { "fluid": "ALUMINA", "amount": 200 },
+  "output1": { "fluid": "CARBONDIOXIDE", "amount": 100 },
+  "output2": { "fluid": "NONE", "amount": 0 },
+  "byproducts": [
+    { "item": "hbm_ntm_rebirth:powder_aluminium", "count": 7 },
+    { "item": "hbm_ntm_rebirth:fluorite", "count": 2 }
+  ],
+  "duration": 40
+}

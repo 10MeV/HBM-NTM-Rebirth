@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:compressor",
+  "input": {
+    "fluid": "hbm:petroleum",
+    "amount": 2000,
+    "pressure": 1
+  },
+  "output": {
+    "fluid": "hbm:lpg",
+    "amount": 1000,
+    "pressure": 0
+  },
+  "duration": 20
+}

@@ -1,8 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -34,7 +31,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RtgBlockEntity extends HbmEnergyBlockEntity implements MenuProvider, LegacyLookOverlayProvider {
+public class RtgBlockEntity extends HbmEnergyBlockEntity implements MenuProvider {
     public static final int SLOT_COUNT = 15;
     public static final long POWER_MAX = 100_000L;
     private static final String TAG_ITEMS = "items";
@@ -78,7 +75,7 @@ public class RtgBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
         rtg.heat = Math.min(rtg.calculateHeat(), RtgPelletRuntime.heatMax());
         rtg.setPower(rtg.getPower() + rtg.heat * 5L);
 
-        if (oldPower != rtg.getPower() || oldHeat != rtg.heat || level.getGameTime() % 20L == 0L) {
+        if (oldPower != rtg.getPower() || oldHeat != rtg.heat) {
             rtg.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -188,15 +185,6 @@ public class RtgBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
         super.provideExtraInfo(data);
         data.putBoolean(CompatEnergyControl.B_ACTIVE, heat > 0);
         data.putDouble(CompatEnergyControl.D_OUTPUT_HE, getProduction());
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        List<Component> lines = new ArrayList<>();
-        lines.add(Component.literal(heat + " heat"));
-        lines.add(Component.literal(getProduction() + "HE/t"));
-        lines.add(LegacyLookOverlayLines.percent(getPower(), POWER_MAX));
-        return LegacyLookOverlay.forBlock(this, lines);
     }
 
     private int calculateHeat() {

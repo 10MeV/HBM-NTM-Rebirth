@@ -1,5 +1,7 @@
 package com.hbm.ntm.client.particle;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
@@ -41,6 +43,15 @@ public class LegacyAuraParticle extends TextureSheetParticle {
         if (!this.removed) {
             this.setSpriteFromAge(sprites);
         }
+    }
+
+    @Override
+    public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(consumer, camera, partialTick,
+                this.xo, this.yo, this.zo, this.x, this.y, this.z,
+                this.oRoll, this.roll, this.getQuadSize(partialTick),
+                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
     }
 
     @Override

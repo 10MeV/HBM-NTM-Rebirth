@@ -38,15 +38,15 @@ public class FluidCounterValveBlockEntity extends FluidValveBlockEntity
             return;
         }
         counterValve.refreshFluidNode();
+        long oldCounter = counterValve.counter;
         if (counterValve.getFluidType() != HbmFluids.NONE) {
             HbmFluidNet net = counterValve.getFluidNet();
             if (net != null) {
                 counterValve.counter = Math.max(0L, counterValve.counter + net.getFluidTracker());
             }
         }
-        if (level.getGameTime() % 25L == 0L) {
+        if (counterValve.counter != oldCounter && level.getGameTime() % 25L == 0L) {
             counterValve.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
         counterValve.networkPackNT(25);
     }

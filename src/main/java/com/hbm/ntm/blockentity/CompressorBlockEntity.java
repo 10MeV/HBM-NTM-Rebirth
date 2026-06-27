@@ -9,7 +9,6 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidCompressorRecipes;
-import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -162,7 +161,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
             compressor.setChanged();
         }
         compressor.networkPackNT(100);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -266,11 +265,10 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         HbmFluidTank pasteTarget = getTankToPasteFluidSettings();
         if (pasteTarget != null && tag != null && tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
-            int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
-            if (ids.length > 0) {
-                int safeIndex = index >= 0 && index < ids.length ? index : 0;
+            java.util.OptionalInt id = HbmFluidCopiable.copiedFluidIdAt(tag, index);
+            if (id.isPresent()) {
                 FluidType before = pasteTarget.getTankType();
-                pasteTarget.setTankType(HbmFluids.fromId(ids[safeIndex]));
+                pasteTarget.setTankType(HbmFluids.fromId(id.getAsInt()));
                 changed |= pasteTarget.getTankType() != before;
             }
         }
@@ -311,8 +309,8 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
             return true;
         }
         progress = 0;
-        int inputAmount = HbmFluidCompressorRecipes.inputAmountFor(inputTank.getTankType(), inputTank.getPressure());
-        HbmFluidStack output = HbmFluidCompressorRecipes.outputFor(inputTank.getTankType(), inputTank.getPressure());
+        int inputAmount = HbmFluidCompressorRecipes.inputAmountFor(level, inputTank.getTankType(), inputTank.getPressure());
+        HbmFluidStack output = HbmFluidCompressorRecipes.outputFor(level, inputTank.getTankType(), inputTank.getPressure());
         inputTank.drain(inputAmount, false);
         outputTank.fill(output.type(), output.amount(), output.pressure(), false);
         return true;
@@ -322,15 +320,15 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (energy.getPower() <= powerRequirement || inputTank.getTankType() == HbmFluids.NONE) {
             return false;
         }
-        int inputAmount = HbmFluidCompressorRecipes.inputAmountFor(inputTank.getTankType(), inputTank.getPressure());
-        HbmFluidStack output = HbmFluidCompressorRecipes.outputFor(inputTank.getTankType(), inputTank.getPressure());
+        int inputAmount = HbmFluidCompressorRecipes.inputAmountFor(level, inputTank.getTankType(), inputTank.getPressure());
+        HbmFluidStack output = HbmFluidCompressorRecipes.outputFor(level, inputTank.getTankType(), inputTank.getPressure());
         return inputTank.getFill() >= inputAmount
                 && outputTank.canAccept(output.type(), output.pressure())
                 && outputTank.getFill() + output.amount() <= outputTank.getMaxFill();
     }
 
     private void setupOutputTank() {
-        HbmFluidStack output = HbmFluidCompressorRecipes.outputFor(inputTank.getTankType(), inputTank.getPressure());
+        HbmFluidStack output = HbmFluidCompressorRecipes.outputFor(level, inputTank.getTankType(), inputTank.getPressure());
         outputTank.conform(new HbmFluidStack(output.type(), 0, output.pressure()));
     }
 
@@ -341,7 +339,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
         int powerLevel = levels.getLevel(UpgradeType.POWER);
         int overLevel = levels.getLevel(UpgradeType.OVERDRIVE);
         HbmFluidCompressorRecipes.Recipe recipe =
-                HbmFluidCompressorRecipes.find(inputTank.getTankType(), inputTank.getPressure());
+                HbmFluidCompressorRecipes.find(level, inputTank.getTankType(), inputTank.getPressure());
 
         int timeBase = recipe == null ? PROCESS_TIME_BASE : recipe.duration();
         if (recipe == null) {
@@ -371,8 +369,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private void refreshFluidPorts() {
-        HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, getFluidPorts(),
-                List.of(inputTank), List.of(outputTank), this);
+        refreshTrackedTransceiverFluidPortsReport(List.of(inputTank), List.of(outputTank), this);
     }
 
     @Override

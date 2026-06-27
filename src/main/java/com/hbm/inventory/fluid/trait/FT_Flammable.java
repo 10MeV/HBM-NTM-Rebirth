@@ -61,7 +61,7 @@ public class FT_Flammable extends FlammableFluidTrait {
 
     public void deserializeJSON(JsonObject object) {
         if (object != null && object.has("energy")) {
-            this.energy = object.get("energy").getAsLong();
+            this.energy = LegacyFluidTraitJson.longValue(object, "energy", 0L);
         }
     }
 }

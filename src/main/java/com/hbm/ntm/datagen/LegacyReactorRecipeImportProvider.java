@@ -35,11 +35,14 @@ public final class LegacyReactorRecipeImportProvider implements DataProvider {
     private final PackOutput.PathProvider recipePathProvider;
     private final Path reportPath;
     private final Path legacyRecipeDir;
+    private final Path mainRecipeDir;
 
     public LegacyReactorRecipeImportProvider(PackOutput output, Path projectRoot) {
         this.recipePathProvider = output.createPathProvider(PackOutput.Target.DATA_PACK, "recipes");
         this.reportPath = projectRoot.resolve("reports").resolve("legacy_reactor_recipe_import_report.json");
         this.legacyRecipeDir = projectRoot.resolve("legacy_recipes");
+        this.mainRecipeDir = projectRoot.resolve("src").resolve("main").resolve("resources")
+                .resolve("data").resolve(HbmNtm.MOD_ID).resolve("recipes");
     }
 
     @Override
@@ -103,7 +106,7 @@ public final class LegacyReactorRecipeImportProvider implements DataProvider {
 
         Path source = resolveLegacyFile(legacyFile.fileName());
         if (source == null) {
-            handler.addProperty("status", "missing_template");
+            reportMainResourceFallback(handler, legacyFile);
             return saves;
         }
         handler.addProperty("source", reportPath(source));
@@ -246,6 +249,29 @@ public final class LegacyReactorRecipeImportProvider implements DataProvider {
             return template;
         }
         return null;
+    }
+
+    private void reportMainResourceFallback(JsonObject handler, LegacyFile legacyFile) {
+        Path recipeDir = mainRecipeDir.resolve(legacyFile.modernType());
+        int count = countJsonFiles(recipeDir);
+        handler.addProperty("status", count > 0 ? "main_resources_only" : "missing_template");
+        handler.addProperty("external_template_status", "missing");
+        handler.addProperty("main_resource_recipe_dir", reportPath(recipeDir));
+        handler.addProperty("main_resource_recipe_count", count);
+    }
+
+    private static int countJsonFiles(Path dir) {
+        if (!Files.isDirectory(dir)) {
+            return 0;
+        }
+        try (var files = Files.walk(dir)) {
+            return (int) files
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().endsWith(".json"))
+                    .count();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to count main-resource recipes in " + dir, exception);
+        }
     }
 
     private static String reportPath(Path path) {

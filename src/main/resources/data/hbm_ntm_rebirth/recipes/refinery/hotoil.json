@@ -1,0 +1,26 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:refinery",
+    "output0":  {
+                    "fluid":  "hbm_ntm_rebirth:heavyoil",
+                    "amount":  50
+                },
+    "output1":  {
+                    "fluid":  "hbm_ntm_rebirth:naphtha",
+                    "amount":  25
+                },
+    "output2":  {
+                    "fluid":  "hbm_ntm_rebirth:lightoil",
+                    "amount":  15
+                },
+    "output3":  {
+                    "fluid":  "hbm_ntm_rebirth:petroleum",
+                    "amount":  10
+                },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:hotoil",
+                  "amount":  100
+              },
+    "solid":  {
+                  "item":  "hbm_ntm_rebirth:sulfur"
+              }
+}

@@ -1,0 +1,14 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:coker",
+    "output":  {
+                   "item":  "minecraft:iron_ingot"
+               },
+    "byproduct":  {
+                      "fluid":  "hbm_ntm_rebirth:mercury",
+                      "amount":  50
+                  },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:redmud",
+                  "amount":  450
+              }
+}

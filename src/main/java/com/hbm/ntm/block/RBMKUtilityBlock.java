@@ -8,9 +8,13 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.CoolableFluidTrait;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait;
 import com.hbm.ntm.registry.ModBlockEntities;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -33,6 +37,17 @@ public class RBMKUtilityBlock extends BaseEntityBlock implements HbmFluidConnect
 
     public Kind kind() {
         return kind;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        LegacyStandardInfoTooltip.append(tooltip, switch (kind) {
+            case LOADER -> "rbmk_loader";
+            case STEAM_INLET -> "rbmk_steam_inlet";
+            case STEAM_OUTLET -> "rbmk_steam_outlet";
+        });
     }
 
     @Override

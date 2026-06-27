@@ -1,0 +1,10 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:solidifier",
+    "output":  {
+                   "item":  "minecraft:ice"
+               },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:water",
+                  "amount":  1000
+              }
+}

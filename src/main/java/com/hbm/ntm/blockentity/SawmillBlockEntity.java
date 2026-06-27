@@ -16,12 +16,15 @@ import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
@@ -129,8 +132,7 @@ public class SawmillBlockEntity extends BlockEntity
 
         sawmill.networkPackNT(150);
         sawmill.heat = 0;
-        if (oldHeat != sawmill.heat || oldProgress != sawmill.progress || oldBlade != sawmill.hasBlade
-                || level.getGameTime() % 20L == 0L) {
+        if (oldHeat != sawmill.heat || oldProgress != sawmill.progress || oldBlade != sawmill.hasBlade) {
             sawmill.setChangedAndUpdate();
         }
     }
@@ -337,11 +339,10 @@ public class SawmillBlockEntity extends BlockEntity
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        List<net.minecraft.network.chat.Component> lines = new ArrayList<>();
-        lines.add(net.minecraft.network.chat.Component.literal(heat + "TU/t"));
-        lines.add(LegacyLookOverlayLines.percent(heat, MAX_HEAT));
-        lines.add(net.minecraft.network.chat.Component.literal("Progress: ")
-                .append(LegacyLookOverlayLines.percent(progress, PROCESSING_TIME)));
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.literal(heat + "TU/t"));
+        lines.add(legacyHeatPercent(heat));
+        lines.add(progressBar(progress, PROCESSING_TIME));
         for (int slot = 0; slot < SLOT_COUNT; slot++) {
             ItemStack stack = items.getStackInSlot(slot);
             if (!stack.isEmpty()) {
@@ -355,6 +356,31 @@ public class SawmillBlockEntity extends BlockEntity
             lines.add(LegacyLookOverlayLines.error("Blade missing!"));
         }
         return LegacyLookOverlay.forBlock(this, lines);
+    }
+
+    private static Component legacyHeatPercent(int heat) {
+        double percent = (double) heat / (double) MAX_HEAT;
+        int color = ((int) (0xFF - 0xFF * percent)) << 16 | ((int) (0xFF * percent) << 8);
+        if (percent > 1.0D) {
+            color = 0xFF0000;
+        }
+        double shown = (heat * 1000 / MAX_HEAT) / 10.0D;
+        final int textColor = color;
+        return Component.literal(shown + "%").withStyle(style -> style.withColor(textColor));
+    }
+
+    private static Component progressBar(int progress, int processingTime) {
+        int limiter = processingTime <= 0 ? 0 : progress * 26 / processingTime;
+        MutableComponent bar = Component.literal("[ ").withStyle(ChatFormatting.GREEN);
+        for (int i = 0; i < 25; i++) {
+            if (i == limiter) {
+                bar.append(Component.literal("▏").withStyle(ChatFormatting.RESET));
+            } else {
+                bar.append(Component.literal("▏").withStyle(i < limiter ? ChatFormatting.GREEN : ChatFormatting.RESET));
+            }
+        }
+        bar.append(Component.literal(" ]").withStyle(ChatFormatting.GREEN));
+        return bar;
     }
 
     @Override

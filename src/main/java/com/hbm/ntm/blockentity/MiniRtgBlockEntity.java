@@ -1,26 +1,20 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.MiniRtgBlock;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
-import java.util.ArrayList;
-import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class MiniRtgBlockEntity extends HbmEnergyBlockEntity implements LegacyLookOverlayProvider {
+public class MiniRtgBlockEntity extends HbmEnergyBlockEntity {
     private static final String TAG_POWER = "power";
     private final MiniRtgBlock.Kind kind;
 
@@ -40,7 +34,7 @@ public class MiniRtgBlockEntity extends HbmEnergyBlockEntity implements LegacyLo
         long oldPower = rtg.getPower();
         rtg.setPower(rtg.getPower() + rtg.getOutput());
         HbmEnergyUtil.tryProvideToAllNeighbors(level, pos, rtg.energy);
-        if (oldPower != rtg.getPower() || level.getGameTime() % 20L == 0L) {
+        if (oldPower != rtg.getPower()) {
             rtg.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -89,14 +83,6 @@ public class MiniRtgBlockEntity extends HbmEnergyBlockEntity implements LegacyLo
         super.provideExtraInfo(data);
         data.putBoolean(CompatEnergyControl.B_ACTIVE, true);
         data.putDouble(CompatEnergyControl.D_OUTPUT_HE, getOutput());
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        List<Component> lines = new ArrayList<>();
-        lines.add(Component.literal(getOutput() + "HE/t"));
-        lines.add(LegacyLookOverlayLines.percent(getPower(), getMaxPower()));
-        return LegacyLookOverlay.forBlock(this, lines);
     }
 
     private static MiniRtgBlock.Kind kindFor(BlockState state) {

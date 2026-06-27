@@ -1,6 +1,8 @@
 package com.hbm.ntm.fluid;
 
 import com.hbm.ntm.block.HbmFluidNodeBlock;
+import com.hbm.ntm.network.LoadedTileAccessCache;
+import com.hbm.ntm.util.HbmMachinePerformanceCounters;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -78,7 +80,21 @@ public final class HbmFluidUtil {
 
     public static PortSubscribeReport subscribeProviderToPortsReport(Level level, BlockPos origin,
             Iterable<FluidPort> ports, FluidType type, HbmFluidProvider provider) {
-        return subscribeProviderToPortsDetailedReport(level, origin, ports, type, provider).summary();
+        if (ports == null) {
+            return PortSubscribeReport.empty();
+        }
+        int attempted = 0;
+        int subscribed = 0;
+        for (FluidPort port : ports) {
+            attempted++;
+            HbmMachinePerformanceCounters.fluidPortCheck();
+            boolean added = subscribeProviderToPort(level, origin, port, type, provider);
+            HbmMachinePerformanceCounters.fluidPortSubscription(added);
+            if (added) {
+                subscribed++;
+            }
+        }
+        return new PortSubscribeReport(attempted, subscribed);
     }
 
     public static PortSubscribeDetailReport subscribeProviderToPortsDetailedReport(Level level, BlockPos origin,
@@ -100,7 +116,21 @@ public final class HbmFluidUtil {
 
     public static PortSubscribeReport subscribeReceiverToPortsReport(Level level, BlockPos origin,
             Iterable<FluidPort> ports, FluidType type, HbmFluidReceiver receiver) {
-        return subscribeReceiverToPortsDetailedReport(level, origin, ports, type, receiver).summary();
+        if (ports == null) {
+            return PortSubscribeReport.empty();
+        }
+        int attempted = 0;
+        int subscribed = 0;
+        for (FluidPort port : ports) {
+            attempted++;
+            HbmMachinePerformanceCounters.fluidPortCheck();
+            boolean added = subscribeReceiverToPort(level, origin, port, type, receiver);
+            HbmMachinePerformanceCounters.fluidPortSubscription(added);
+            if (added) {
+                subscribed++;
+            }
+        }
+        return new PortSubscribeReport(attempted, subscribed);
     }
 
     public static PortSubscribeDetailReport subscribeReceiverToPortsDetailedReport(Level level, BlockPos origin,
@@ -166,7 +196,19 @@ public final class HbmFluidUtil {
 
     public static PortDetachReport unsubscribeProviderFromPortsReport(Level level, BlockPos origin,
             Iterable<FluidPort> ports, FluidType type, HbmFluidProvider provider) {
-        return unsubscribeProviderFromPortsDetailedReport(level, origin, ports, type, provider).summary();
+        if (ports == null) {
+            return PortDetachReport.empty();
+        }
+        int attempted = 0;
+        int unsubscribed = 0;
+        for (FluidPort port : ports) {
+            attempted++;
+            HbmMachinePerformanceCounters.fluidPortCheck();
+            if (unsubscribeProviderFromPort(level, origin, port, type, provider)) {
+                unsubscribed++;
+            }
+        }
+        return new PortDetachReport(attempted, unsubscribed);
     }
 
     public static PortDetachDetailReport unsubscribeProviderFromPortsDetailedReport(Level level, BlockPos origin,
@@ -188,7 +230,19 @@ public final class HbmFluidUtil {
 
     public static PortDetachReport unsubscribeReceiverFromPortsReport(Level level, BlockPos origin,
             Iterable<FluidPort> ports, FluidType type, HbmFluidReceiver receiver) {
-        return unsubscribeReceiverFromPortsDetailedReport(level, origin, ports, type, receiver).summary();
+        if (ports == null) {
+            return PortDetachReport.empty();
+        }
+        int attempted = 0;
+        int unsubscribed = 0;
+        for (FluidPort port : ports) {
+            attempted++;
+            HbmMachinePerformanceCounters.fluidPortCheck();
+            if (unsubscribeReceiverFromPort(level, origin, port, type, receiver)) {
+                unsubscribed++;
+            }
+        }
+        return new PortDetachReport(attempted, unsubscribed);
     }
 
     public static PortDetachDetailReport unsubscribeReceiverFromPortsDetailedReport(Level level, BlockPos origin,
@@ -232,7 +286,27 @@ public final class HbmFluidUtil {
 
     public static PortTransferReport tryProvideToPortsReport(Level level, BlockPos origin, Iterable<FluidPort> ports,
             FluidType type, int pressure, HbmFluidProvider provider) {
-        return tryProvideToPortsDetailedReport(level, origin, ports, type, pressure, provider).summary();
+        if (ports == null) {
+            return PortTransferReport.empty();
+        }
+        int touched = 0;
+        int subscribed = 0;
+        long transferred = 0L;
+        for (FluidPort port : ports) {
+            HbmMachinePerformanceCounters.fluidPortCheck();
+            boolean added = subscribeProviderToPort(level, origin, port, type, provider);
+            HbmMachinePerformanceCounters.fluidPortSubscription(added);
+            long moved = provideDirectlyToPort(level, origin, port, type, pressure, provider);
+            HbmMachinePerformanceCounters.fluidPortTransfer(moved);
+            if (added) {
+                subscribed++;
+            }
+            if (added || moved > 0L) {
+                touched++;
+            }
+            transferred += moved;
+        }
+        return new PortTransferReport(touched, subscribed, transferred);
     }
 
     public static PortTransferDetailReport tryProvideToPortsDetailedReport(Level level, BlockPos origin,
@@ -327,7 +401,7 @@ public final class HbmFluidUtil {
         if (!isLoadedBlock(level, connectorPos)) {
             return null;
         }
-        BlockEntity connector = level.getBlockEntity(connectorPos);
+        BlockEntity connector = LoadedTileAccessCache.getBlockEntity(level, connectorPos);
         if (!(connector instanceof HbmFluidConnector fluidConnector) || !fluidConnector.canConnectFluid(type, connectorSide)) {
             return null;
         }
@@ -553,17 +627,21 @@ public final class HbmFluidUtil {
         if (!endpoint.loaded() || type == null || type == HbmFluids.NONE || provider == null) {
             return new PortTransferDetail(port, endpoint, subscribed, false, false, 0L, null, null);
         }
-        BlockEntity target = level.getBlockEntity(endpoint.pos());
-        if (target instanceof HbmFluidConnector connector && !connector.canConnectFluid(type, endpoint.side())) {
+        BlockEntity target = LoadedTileAccessCache.getBlockEntity(level, endpoint.pos());
+        boolean hbmReceiver = target instanceof HbmFluidReceiver;
+        boolean connectorTarget = target instanceof HbmFluidConnector;
+        if (connectorTarget && !((HbmFluidConnector) target).canConnectFluid(type, endpoint.side())) {
             return new PortTransferDetail(port, endpoint, subscribed, false, false, 0L, null, null);
         }
-        if (!(target instanceof HbmFluidReceiver receiver)
-                || receiver == provider
-                || !(target instanceof HbmFluidConnector)) {
+        if (!hbmReceiver) {
             ForgeFluidTransferReport forgeTransfer = tryProvideToForgeHandlerReport(
                     target, endpoint.side(), type, pressure, provider);
             return new PortTransferDetail(port, endpoint, subscribed, false, true,
                     forgeTransfer.acceptedMb(), null, forgeTransfer);
+        }
+        HbmFluidReceiver receiver = (HbmFluidReceiver) target;
+        if (receiver == provider || (!connectorTarget && endpoint.side() == null)) {
+            return new PortTransferDetail(port, endpoint, subscribed, false, false, 0L, null, null);
         }
         HbmFluidTransferReport hbmTransfer = tryProvideToReceiverReport(type, pressure, provider, receiver);
         return new PortTransferDetail(port, endpoint, subscribed, true, false,
@@ -572,7 +650,26 @@ public final class HbmFluidUtil {
 
     private static long provideDirectlyToPort(Level level, BlockPos origin, FluidPort port, FluidType type, int pressure,
             HbmFluidProvider provider) {
-        return tryProvideToPortDetailedReport(level, origin, port, type, pressure, provider).transferredMb();
+        FluidType normalizedType = type == null ? HbmFluids.NONE : type;
+        if (level == null || origin == null || port == null || normalizedType == HbmFluids.NONE || provider == null) {
+            return 0L;
+        }
+        if (!isLoadedPort(level, origin, port)) {
+            return 0L;
+        }
+        BlockPos targetPos = port.connectorPos(origin);
+        Direction targetSide = port.connectorSide();
+        BlockEntity target = LoadedTileAccessCache.getBlockEntity(level, targetPos);
+        if (target instanceof HbmFluidConnector connector && !connector.canConnectFluid(normalizedType, targetSide)) {
+            return 0L;
+        }
+        if (target instanceof HbmFluidReceiver receiver) {
+            if (receiver == provider || (!(target instanceof HbmFluidConnector) && targetSide == null)) {
+                return 0L;
+            }
+            return tryProvideToReceiverReport(normalizedType, pressure, provider, receiver).acceptedMb();
+        }
+        return tryProvideToForgeHandlerReport(target, targetSide, normalizedType, pressure, provider).acceptedMb();
     }
 
     private static ForgeFluidTransferReport provideToForgeHandlerReport(BlockEntity target, Direction targetSide,

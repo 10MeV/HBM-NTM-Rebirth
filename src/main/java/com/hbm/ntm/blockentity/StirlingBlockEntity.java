@@ -15,6 +15,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -98,8 +99,7 @@ public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPers
             stirling.tryProvideEnergyToPorts();
         }
 
-        if (oldPower != stirling.powerBuffer || oldHeat != stirling.heat || oldCog != stirling.hasCog
-                || level.getGameTime() % 20L == 0L) {
+        if (oldPower != stirling.powerBuffer || oldHeat != stirling.heat || oldCog != stirling.hasCog) {
             stirling.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -194,7 +194,7 @@ public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPers
         lines.add(Component.literal((hasCog ? powerBuffer : 0L) + "HE/t"));
         if (!kind().creative()) {
             int maxHeat = maxHeat();
-            lines.add(LegacyLookOverlayLines.percent(heat, maxHeat));
+            lines.add(legacyHeatPercent(heat, maxHeat));
             if (heat > maxHeat) {
                 lines.add(LegacyLookOverlayLines.blinkingWarning("OVERSPEED"));
             }
@@ -203,6 +203,20 @@ public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPers
             }
         }
         return LegacyLookOverlay.forBlock(this, lines);
+    }
+
+    private static Component legacyHeatPercent(int heat, int maxHeat) {
+        if (maxHeat <= 0) {
+            return Component.literal("0.0%").withStyle(ChatFormatting.RED);
+        }
+        double percent = (double) heat / (double) maxHeat;
+        int color = ((int) (0xFF - 0xFF * percent)) << 16 | ((int) (0xFF * percent) << 8);
+        if (percent > 1.0D) {
+            color = 0xFF0000;
+        }
+        double shown = (heat * 1000 / maxHeat) / 10.0D;
+        final int textColor = color;
+        return Component.literal(shown + "%").withStyle(style -> style.withColor(textColor));
     }
 
     private Direction facing() {

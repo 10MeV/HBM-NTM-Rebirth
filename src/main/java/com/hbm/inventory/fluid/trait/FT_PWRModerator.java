@@ -46,6 +46,13 @@ public class FT_PWRModerator extends PwrModeratorFluidTrait {
                 .withStyle(ChatFormatting.BLUE));
     }
 
+    public void addInfoHidden(List<String> info) {
+        if (info != null) {
+            int percent = (int) (multiplier * 100.0D - 100.0D);
+            info.add(ChatFormatting.BLUE + "Core flux " + (percent >= 0 ? "+" : "") + percent + "%");
+        }
+    }
+
     @Override
     public void writeJson(JsonObject object) {
         object.addProperty("multiplier", multiplier);
@@ -57,7 +64,7 @@ public class FT_PWRModerator extends PwrModeratorFluidTrait {
 
     public void deserializeJSON(JsonObject object) {
         if (object != null && object.has("multiplier")) {
-            this.multiplier = object.get("multiplier").getAsDouble();
+            this.multiplier = LegacyFluidTraitJson.doubleValue(object, "multiplier", 1.0D);
         }
     }
 }

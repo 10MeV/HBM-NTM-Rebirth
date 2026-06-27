@@ -1,7 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
@@ -395,7 +393,7 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
 
     @Override
     protected boolean showsLegacyFluidLookOverlay() {
-        return true;
+        return false;
     }
 
     @Override
@@ -482,11 +480,6 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
 
     public List<ItemStack> getDrops() {
         return HbmInventoryMenuHelper.clearToDrops(items);
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.allFluidUserTanks(this));
     }
 
     @Override

@@ -3,11 +3,12 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.BreedingReactorBlockEntity;
 import com.hbm.ntm.client.obj.LegacySparkRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjReactorModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -39,23 +40,27 @@ public class BreedingReactorRenderer implements BlockEntityRenderer<BreedingReac
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
-        renderLegacySparks(blockEntity, poseStack, buffer, state, packedOverlay);
         ObjReactorModels.BREEDER.renderAll(ObjReactorModels.BREEDER_TEXTURE, poseStack, buffer, light, packedOverlay);
+        enqueueLegacySparks(blockEntity, poseStack, buffer);
         poseStack.popPose();
     }
 
-    private static void renderLegacySparks(BreedingReactorBlockEntity blockEntity, PoseStack poseStack,
-            MultiBufferSource buffer, BlockState state, int packedOverlay) {
+    private static void enqueueLegacySparks(BreedingReactorBlockEntity blockEntity, PoseStack poseStack,
+            MultiBufferSource buffer) {
         if (blockEntity.getProgress() <= 0.0F) {
             return;
         }
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, LightTexture.FULL_BRIGHT,
-                packedOverlay).withAdditiveTranslucency();
         int seed = (int) ((System.currentTimeMillis() % 10_000L) / 100L);
+        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                queuedPose -> renderLegacySparks(seed, queuedPose, buffer));
+    }
+
+    private static void renderLegacySparks(int seed, PoseStack poseStack, MultiBufferSource buffer) {
         for (int i = 0; i < 3; i++) {
             poseStack.pushPose();
             poseStack.mulPose(Axis.YP.rotationDegrees((float) (Math.PI * i)));
-            LegacySparkRenderer.renderSpark(context, seed + i, 0.0D, 1.5625D, 0.0D,
+            LegacySparkRenderer.renderSpark(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                    seed + i, 0.0D, 1.5625D, 0.0D,
                     0.15F, 3, 4, 0x00FF00, 0xFFFFFF);
             poseStack.popPose();
         }

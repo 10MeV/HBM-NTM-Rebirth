@@ -1,0 +1,9 @@
+{
+  "variants": {
+    "variant=0": { "model": "hbm_ntm_rebirth:block/ore_basalt_sulfur" },
+    "variant=1": { "model": "hbm_ntm_rebirth:block/ore_basalt_fluorite" },
+    "variant=2": { "model": "hbm_ntm_rebirth:block/ore_basalt_asbestos" },
+    "variant=3": { "model": "hbm_ntm_rebirth:block/ore_basalt_gem" },
+    "variant=4": { "model": "hbm_ntm_rebirth:block/ore_basalt_molysite" }
+  }
+}

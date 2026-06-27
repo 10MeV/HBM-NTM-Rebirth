@@ -24,14 +24,14 @@ public class ArtilleryRocketRenderer extends EntityRenderer<ArtilleryRocketEntit
             MultiBufferSource buffer, int packedLight) {
         LegacyArtilleryAmmoCatalog.HimarsRocket rocket = entity.ammoType();
         ResourceLocation texture = himarsRocketTexture(rocket);
-        String part = rocket.modelType() == 1 ? "RocketSingle" : "RocketStandard";
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F));
         poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(partialTick, entity.xRotO, entity.getXRot()) - 90.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
         poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-        ObjTurretModels.renderPart(ObjTurretModels.HIMARS, part, texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        ObjTurretModels.renderHimarsRocket(rocket.modelType(), texture, poseStack, buffer, packedLight,
+                OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
     }

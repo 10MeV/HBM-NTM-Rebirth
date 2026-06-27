@@ -4,8 +4,6 @@ import com.hbm.ntm.block.ChargerBlock;
 import com.hbm.ntm.blockentity.ChargerBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
-import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -43,30 +41,27 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
     public void render(ChargerBlockEntity charger, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = charger.getBlockState();
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(charger, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         orient(poseStack, state.hasProperty(ChargerBlock.FACING) ? state.getValue(ChargerBlock.FACING) : Direction.NORTH);
         poseStack.translate(-0.5D, -0.5D, -0.5D);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
         float time = charger.getSlide(partialTick);
         double extend = Math.min(1.0D, time * 2.0D);
         double swivel = Math.max(0.0D, (time - 0.5D) * 2.0D);
 
-        renderPart(BASE, context);
+        renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
         poseStack.pushPose();
         applySlideFrame(poseStack, extend);
-        renderArm(poseStack, context, LEFT, 30.0D * swivel);
-        renderArm(poseStack, context, RIGHT, -30.0D * swivel);
+        renderArm(poseStack, buffer, modelLight, packedOverlay, LEFT, 30.0D * swivel);
+        renderArm(poseStack, buffer, modelLight, packedOverlay, RIGHT, -30.0D * swivel);
         poseStack.popPose();
 
-        ObjMachineModels.CHARGER.renderOnlyUntextured(
-                context.fullBright().withRgb(255, 191, 0)
-                        .withRenderMode(LegacyTexturedRenderMode.CUTOUT_NO_CULL),
-                LIGHT);
+        ObjMachineModels.CHARGER.renderOnlyUntextured(poseStack, buffer, 255, 191, 0, 255, LIGHT);
 
         poseStack.pushPose();
         applySlideFrame(poseStack, extend);
-        renderPart(SLIDE, context);
+        renderPart(SLIDE, poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
         poseStack.popPose();
     }
@@ -78,18 +73,20 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
         poseStack.translate(0.0D, -0.25D * extend, 0.0D);
     }
 
-    private static void renderArm(PoseStack poseStack, ObjRenderContext context,
+    private static void renderArm(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             LegacyWavefrontModel.SelectionHandle part, double angle) {
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.28D, 0.0D);
         poseStack.mulPose(Axis.XP.rotationDegrees((float) angle));
         poseStack.translate(0.0D, -0.28D, 0.0D);
-        renderPart(part, context);
+        renderPart(part, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
-    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
-        ObjMachineModels.CHARGER.renderOnlyInCallOrder(ObjMachineModels.CHARGER_TEXTURE, context, handle);
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ObjMachineModels.CHARGER.renderOnlyInCallOrder(ObjMachineModels.CHARGER_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay, handle);
     }
 
     private static void orient(PoseStack poseStack, Direction facing) {

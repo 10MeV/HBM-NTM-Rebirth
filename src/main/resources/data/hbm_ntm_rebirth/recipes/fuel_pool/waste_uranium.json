@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:fuel_pool",
+  "input": {
+    "count": 1,
+    "exact_stack": {
+      "item": "hbm_ntm_rebirth:waste_uranium",
+      "nbt": "{Damage:1}"
+    },
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:waste_uranium"
+    }
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:waste_uranium",
+    "nbt": "{Damage:0}"
+  }
+}

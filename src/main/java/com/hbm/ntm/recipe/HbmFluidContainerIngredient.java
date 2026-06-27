@@ -2,10 +2,10 @@ package com.hbm.ntm.recipe;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import java.util.stream.Stream;
 import net.minecraft.network.FriendlyByteBuf;
@@ -87,11 +87,8 @@ public final class HbmFluidContainerIngredient extends AbstractIngredient {
 
         @Override
         public HbmFluidContainerIngredient parse(JsonObject json) {
-            String fluidName = GsonHelper.getAsString(json, "fluid");
-            FluidType fluid = HbmFluids.fromName(fluidName.contains(":") ? new ResourceLocation(fluidName).getPath() : fluidName);
-            if (fluid == HbmFluids.NONE) {
-                throw new JsonSyntaxException("Unknown HBM fluid container ingredient fluid '" + fluidName + "'");
-            }
+            FluidType fluid = HbmFluidJsonUtil.requireFluidReference(json.get("fluid"),
+                    "fluid container ingredient");
             return new HbmFluidContainerIngredient(fluid, GsonHelper.getAsInt(json, "amount"));
         }
 

@@ -1,0 +1,91 @@
+{
+  "found_template_count": 0,
+  "handlers": [
+    {
+      "legacy_class": "RefineryRecipes",
+      "legacy_file": "hbmRefinery.json",
+      "modern_recipe_type": "refinery",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "VacuumRefineryRecipes",
+      "legacy_file": "hbmVacRefinery.json",
+      "modern_recipe_type": "vacuum_distill",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "FractionRecipes",
+      "legacy_file": "hbmFractions.json",
+      "modern_recipe_type": "fraction_tower",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "CrackingRecipes",
+      "legacy_file": "hbmCracking.json",
+      "modern_recipe_type": "catalytic_cracker",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "ReformingRecipes",
+      "legacy_file": "hbmReforming.json",
+      "modern_recipe_type": "catalytic_reformer",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "HydrotreatingRecipes",
+      "legacy_file": "hbmHydrotreating.json",
+      "modern_recipe_type": "hydrotreater",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "LiquefactionRecipes",
+      "legacy_file": "hbmLiquefactor.json",
+      "modern_recipe_type": "liquefaction",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "SolidificationRecipes",
+      "legacy_file": "hbmSolidifier.json",
+      "modern_recipe_type": "solidifier",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "CokerRecipes",
+      "legacy_file": "hbmCoker.json",
+      "modern_recipe_type": "coker",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "CompressorRecipes",
+      "legacy_file": "hbmCompressor.json",
+      "modern_recipe_type": "compressor",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "ElectrolyserFluidRecipes",
+      "legacy_file": "hbmElectrolyzerFluid.json",
+      "modern_recipe_type": "electrolyzer_fluid",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "ElectrolyserMetalRecipes",
+      "legacy_file": "hbmElectrolyzerMetal.json",
+      "modern_recipe_type": "electrolyzer_metal",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "PyroOvenRecipes",
+      "legacy_file": "hbmPyrolysis.json",
+      "modern_recipe_type": "pyro_oven",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "MixerRecipes",
+      "legacy_file": "hbmMixer.json",
+      "modern_recipe_type": "mixer",
+      "status": "missing_template"
+    }
+  ],
+  "imported_recipe_count": 0,
+  "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes"
+}

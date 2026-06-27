@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:liquefaction",
+  "ingredient": {
+    "tag": "forge:tar/coal"
+  },
+  "output": {
+    "amount": 50,
+    "fluid": "BITUMEN",
+    "pressure": 0
+  }
+}

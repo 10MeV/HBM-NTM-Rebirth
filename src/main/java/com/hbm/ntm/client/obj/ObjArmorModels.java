@@ -157,7 +157,7 @@ public final class ObjArmorModels {
     public static LegacyWavefrontModel model(String modelName, ResourceLocation texture) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/armor/" + modelName + ".obj"),
-                texture);
+                texture).asVBO();
     }
 
     public static LegacyWavefrontModel model(String modelName, String textureName) {
@@ -176,8 +176,7 @@ public final class ObjArmorModels {
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyWavefrontModel.SelectionHandle handle = handle(model, partName);
         if (handle != null) {
-            model.renderOnlyInCallOrder(texture,
-                    new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay), handle);
+            model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle);
             return;
         }
         model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
@@ -204,24 +203,15 @@ public final class ObjArmorModels {
                 LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
     }
 
-    public static void renderPartUntextured(LegacyWavefrontModel model, String partName, ObjRenderContext context) {
+    public static void renderPartUntextured(LegacyWavefrontModel model, String partName,
+            PoseStack poseStack, MultiBufferSource buffer, int red, int green, int blue, int alpha,
+            LegacyTexturedRenderMode renderMode) {
         LegacyWavefrontModel.SelectionHandle handle = handle(model, partName);
         if (handle != null) {
-            model.renderOnlyUntextured(context, handle);
+            model.renderOnlyUntextured(poseStack, buffer, red, green, blue, alpha, renderMode, handle);
             return;
         }
-        model.renderPartUntextured(partName, context);
-    }
-
-    public static void renderPartUntexturedAdditive(LegacyWavefrontModel model, String partName,
-            ObjRenderContext context) {
-        LegacyWavefrontModel.SelectionHandle handle = handle(model, partName);
-        ObjRenderContext additive = context.withRenderMode(LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
-        if (handle != null) {
-            model.renderOnlyUntextured(additive, handle);
-            return;
-        }
-        model.renderPartUntexturedAdditive(partName, context);
+        model.renderPartUntextured(partName, poseStack, buffer, red, green, blue, alpha, renderMode);
     }
 
     private static void renderPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
@@ -229,10 +219,8 @@ public final class ObjArmorModels {
             int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
         LegacyWavefrontModel.SelectionHandle handle = handle(model, partName);
         if (handle != null) {
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
-                    .withRgba(red, green, blue, alpha)
-                    .withRenderMode(renderMode);
-            model.renderOnlyInCallOrder(texture, context, handle);
+            model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha, false, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT, handle);
             return;
         }
         if (renderMode == LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE) {

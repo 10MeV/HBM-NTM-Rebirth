@@ -13,9 +13,13 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public final class LegacyTexturedQuadRenderer {
     public static final int INHERIT_LIGHT = -1;
     public static final int INHERIT_OVERLAY = -1;
+    private static final Map<ResourceLocation, TextureAtlasSprite> BLOCK_SPRITE_CACHE = new ConcurrentHashMap<>();
 
     public static Vertex vertex(double x, double y, double z, double u, double v) {
         return new Vertex(x, y, z, (float) u, (float) v, 0xFFFFFF, 255, INHERIT_LIGHT, INHERIT_OVERLAY);
@@ -101,63 +105,31 @@ public final class LegacyTexturedQuadRenderer {
     }
 
     public static TextureAtlasSprite blockSprite(ResourceLocation textureLocation) {
+        return BLOCK_SPRITE_CACHE.computeIfAbsent(textureLocation, LegacyTexturedQuadRenderer::resolveBlockSprite);
+    }
+
+    public static void clearSpriteCache() {
+        BLOCK_SPRITE_CACHE.clear();
+    }
+
+    private static TextureAtlasSprite resolveBlockSprite(ResourceLocation textureLocation) {
         return Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(textureLocation);
     }
 
-    public static void quad(ResourceLocation texture, ObjRenderContext context, Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        quad(texture, context, 0.0F, 1.0F, 0.0F, v0, v1, v2, v3);
-    }
-
-    public static void quad(ResourceLocation texture, ObjRenderContext context,
+    public static void quad(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
             float normalX, float normalY, float normalZ, Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
         Vertex[] vertices = {v0, v1, v2, v3};
-        VertexConsumer consumer = context.buffer().getBuffer(renderMode(context, vertices).renderType(texture));
-        emitQuad(consumer, context.poseStack().last(), context, normalX, normalY, normalZ, vertices);
+        if (tryTransientQuad(texture, poseStack, buffer, packedLight, packedOverlay, renderMode, normalX, normalY,
+                normalZ, vertices)) {
+            return;
+        }
+        VertexConsumer consumer = buffer.getBuffer(renderMode(renderMode, vertices).renderType(texture));
+        emitQuad(consumer, poseStack.last(), normalX, normalY, normalZ, packedLight, packedOverlay, vertices);
     }
 
-    public static void quad(ResourceLocation texture, ObjRenderContext context,
-            double x0, double y0, double z0, double u0, double v0,
-            double x1, double y1, double z1, double u1, double v1,
-            double x2, double y2, double z2, double u2, double v2,
-            double x3, double y3, double z3, double u3, double v3,
-            int color, int alpha) {
-        quad(texture, context,
-                vertex(x0, y0, z0, u0, v0, color, alpha),
-                vertex(x1, y1, z1, u1, v1, color, alpha),
-                vertex(x2, y2, z2, u2, v2, color, alpha),
-                vertex(x3, y3, z3, u3, v3, color, alpha));
-    }
-
-    public static void quad(ResourceLocation texture, ObjRenderContext context,
-            float normalX, float normalY, float normalZ,
-            double x0, double y0, double z0, double u0, double v0,
-            double x1, double y1, double z1, double u1, double v1,
-            double x2, double y2, double z2, double u2, double v2,
-            double x3, double y3, double z3, double u3, double v3,
-            int color, int alpha) {
-        quad(texture, context, normalX, normalY, normalZ,
-                vertex(x0, y0, z0, u0, v0, color, alpha),
-                vertex(x1, y1, z1, u1, v1, color, alpha),
-                vertex(x2, y2, z2, u2, v2, color, alpha),
-                vertex(x3, y3, z3, u3, v3, color, alpha));
-    }
-
-    public static void pixelQuad(ResourceLocation texture, ObjRenderContext context,
-            double textureWidth, double textureHeight,
-            double x0, double y0, double z0, double pixelU0, double pixelV0,
-            double x1, double y1, double z1, double pixelU1, double pixelV1,
-            double x2, double y2, double z2, double pixelU2, double pixelV2,
-            double x3, double y3, double z3, double pixelU3, double pixelV3,
-            int color, int alpha) {
-        pixelQuad(texture, context, 0.0F, 1.0F, 0.0F, textureWidth, textureHeight,
-                x0, y0, z0, pixelU0, pixelV0,
-                x1, y1, z1, pixelU1, pixelV1,
-                x2, y2, z2, pixelU2, pixelV2,
-                x3, y3, z3, pixelU3, pixelV3,
-                color, alpha);
-    }
-
-    public static void pixelQuad(ResourceLocation texture, ObjRenderContext context,
+    public static void pixelQuad(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
             float normalX, float normalY, float normalZ, double textureWidth, double textureHeight,
             double x0, double y0, double z0, double pixelU0, double pixelV0,
             double x1, double y1, double z1, double pixelU1, double pixelV1,
@@ -167,414 +139,204 @@ public final class LegacyTexturedQuadRenderer {
         if (textureWidth == 0.0D || textureHeight == 0.0D) {
             return;
         }
-        quad(texture, context, normalX, normalY, normalZ,
-                x0, y0, z0, pixelU0 / textureWidth, pixelV0 / textureHeight,
-                x1, y1, z1, pixelU1 / textureWidth, pixelV1 / textureHeight,
-                x2, y2, z2, pixelU2 / textureWidth, pixelV2 / textureHeight,
-                x3, y3, z3, pixelU3 / textureWidth, pixelV3 / textureHeight,
+        quad(texture, poseStack, buffer, packedLight, packedOverlay, renderMode, normalX, normalY, normalZ,
+                vertex(x0, y0, z0, pixelU0 / textureWidth, pixelV0 / textureHeight, color, alpha),
+                vertex(x1, y1, z1, pixelU1 / textureWidth, pixelV1 / textureHeight, color, alpha),
+                vertex(x2, y2, z2, pixelU2 / textureWidth, pixelV2 / textureHeight, color, alpha),
+                vertex(x3, y3, z3, pixelU3 / textureWidth, pixelV3 / textureHeight, color, alpha));
+    }
+
+    public static void quadWithComputedNormal(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
+            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
+        Vector3f normal = computedNormal(v0, v1, v2);
+        quad(texture, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                normal.x(), normal.y(), normal.z(), v0, v1, v2, v3);
+    }
+
+    public static void quadWithComputedNormalAndVertexAlpha(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
+            double x0, double y0, double z0, double u0, double v0, int alpha0,
+            double x1, double y1, double z1, double u1, double v1, int alpha1,
+            double x2, double y2, double z2, double u2, double v2, int alpha2,
+            double x3, double y3, double z3, double u3, double v3, int alpha3,
+            int color) {
+        quadWithComputedNormal(texture, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                vertex(x0, y0, z0, u0, v0, color, alpha0),
+                vertex(x1, y1, z1, u1, v1, color, alpha1),
+                vertex(x2, y2, z2, u2, v2, color, alpha2),
+                vertex(x3, y3, z3, u3, v3, color, alpha3));
+    }
+
+    public static void spriteQuad(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
+            float normalX, float normalY, float normalZ, Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
+        spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                normalX, normalY, normalZ, false, v0, v1, v2, v3);
+    }
+
+    private static void spriteQuad(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
+            float normalX, float normalY, float normalZ, boolean unitUv, Vertex v0, Vertex v1, Vertex v2,
+            Vertex v3) {
+        Vertex[] vertices = {v0, v1, v2, v3};
+        if (tryTransientSpriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay, renderMode, normalX,
+                normalY, normalZ, unitUv, vertices)) {
+            return;
+        }
+        VertexConsumer consumer = buffer.getBuffer(renderMode(renderMode, vertices).renderType(InventoryMenu.BLOCK_ATLAS));
+        emitSpriteQuad(consumer, poseStack.last(), sprite, normalX, normalY, normalZ, unitUv, packedLight,
+                packedOverlay, vertices);
+    }
+
+    private static void emitQuad(VertexConsumer consumer, PoseStack.Pose pose,
+            float normalX, float normalY, float normalZ, int packedLight, int packedOverlay, Vertex[] vertices) {
+        Matrix4f position = pose.pose();
+        Matrix3f normal = pose.normal();
+        for (Vertex vertex : vertices) {
+            emitVertex(consumer, position, normal, normalX, normalY, normalZ, packedLight, packedOverlay, vertex);
+        }
+    }
+
+    private static void emitSpriteQuad(VertexConsumer consumer, PoseStack.Pose pose, TextureAtlasSprite sprite,
+            float normalX, float normalY, float normalZ, boolean unitUv, int packedLight, int packedOverlay,
+            Vertex[] vertices) {
+        Matrix4f position = pose.pose();
+        Matrix3f normal = pose.normal();
+        for (Vertex vertex : vertices) {
+            emitSpriteVertex(consumer, position, normal, sprite, normalX, normalY, normalZ, unitUv,
+                    packedLight, packedOverlay, vertex);
+        }
+    }
+
+    public static void emitPositionColorTexLightmapQuadIdentity(VertexConsumer consumer, int packedLight,
+            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
+        emitPositionColorTexLightmapVertexIdentity(consumer, packedLight, v0);
+        emitPositionColorTexLightmapVertexIdentity(consumer, packedLight, v1);
+        emitPositionColorTexLightmapVertexIdentity(consumer, packedLight, v2);
+        emitPositionColorTexLightmapVertexIdentity(consumer, packedLight, v3);
+    }
+
+    public static void emitParticleQuadIdentity(VertexConsumer consumer, int packedLight,
+            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
+        emitParticleVertexIdentity(consumer, packedLight, v0);
+        emitParticleVertexIdentity(consumer, packedLight, v1);
+        emitParticleVertexIdentity(consumer, packedLight, v2);
+        emitParticleVertexIdentity(consumer, packedLight, v3);
+    }
+
+    private static void emitPositionColorTexLightmapVertexIdentity(VertexConsumer consumer, int packedLight,
+            Vertex vertex) {
+        consumer.vertex(vertex.x(), vertex.y(), vertex.z())
+                .color(vertex.color() >> 16 & 255, vertex.color() >> 8 & 255, vertex.color() & 255,
+                        clampAlpha(vertex.alpha()))
+                .uv(vertex.u(), vertex.v())
+                .uv2(packedLight(packedLight, vertex))
+                .endVertex();
+    }
+
+    private static void emitParticleVertexIdentity(VertexConsumer consumer, int packedLight, Vertex vertex) {
+        consumer.vertex(vertex.x(), vertex.y(), vertex.z())
+                .uv(vertex.u(), vertex.v())
+                .color(vertex.color() >> 16 & 255, vertex.color() >> 8 & 255, vertex.color() & 255,
+                        clampAlpha(vertex.alpha()))
+                .uv2(packedLight(packedLight, vertex))
+                .endVertex();
+    }
+
+    private static void emitVertex(VertexConsumer consumer, Matrix4f position, Matrix3f normal,
+            float normalX, float normalY, float normalZ, int packedLight, int packedOverlay, Vertex vertex) {
+        consumer.vertex(position, (float) vertex.x(), (float) vertex.y(), (float) vertex.z())
+                .color(vertex.color() >> 16 & 255, vertex.color() >> 8 & 255, vertex.color() & 255,
+                        clampAlpha(vertex.alpha()))
+                .uv(vertex.u(), vertex.v())
+                .overlayCoords(packedOverlay(packedOverlay, vertex))
+                .uv2(packedLight(packedLight, vertex))
+                .normal(normal, normalX, normalY, normalZ)
+                .endVertex();
+    }
+
+    private static void emitSpriteVertex(VertexConsumer consumer, Matrix4f position, Matrix3f normal,
+            TextureAtlasSprite sprite, float normalX, float normalY, float normalZ, boolean unitUv, int packedLight,
+            int packedOverlay, Vertex vertex) {
+        float pixelScale = unitUv ? 16.0F : 1.0F;
+        consumer.vertex(position, (float) vertex.x(), (float) vertex.y(), (float) vertex.z())
+                .color(vertex.color() >> 16 & 255, vertex.color() >> 8 & 255, vertex.color() & 255,
+                        clampAlpha(vertex.alpha()))
+                .uv(sprite.getU(vertex.u() * pixelScale), sprite.getV(vertex.v() * pixelScale))
+                .overlayCoords(packedOverlay(packedOverlay, vertex))
+                .uv2(packedLight(packedLight, vertex))
+                .normal(normal, normalX, normalY, normalZ)
+                .endVertex();
+    }
+
+    private static boolean tryTransientQuad(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
+            float normalX, float normalY, float normalZ, Vertex[] vertices) {
+        Vertex first = vertices[0];
+        int color = first.color() & 0xFFFFFF;
+        int alpha = clampAlpha(first.alpha());
+        int resolvedLight = packedLight(packedLight, first);
+        int resolvedOverlay = packedOverlay(packedOverlay, first);
+        for (int i = 1; i < vertices.length; i++) {
+            Vertex vertex = vertices[i];
+            if ((vertex.color() & 0xFFFFFF) != color || clampAlpha(vertex.alpha()) != alpha
+                    || packedLight(packedLight, vertex) != resolvedLight
+                    || packedOverlay(packedOverlay, vertex) != resolvedOverlay) {
+                return false;
+            }
+        }
+        return LegacyWavefrontModel.renderTexturedTransientQuad(texture, poseStack, buffer, resolvedLight,
+                resolvedOverlay, renderMode, normalX, normalY, normalZ,
+                first.x(), first.y(), first.z(), first.u(), first.v(),
+                vertices[1].x(), vertices[1].y(), vertices[1].z(), vertices[1].u(), vertices[1].v(),
+                vertices[2].x(), vertices[2].y(), vertices[2].z(), vertices[2].u(), vertices[2].v(),
+                vertices[3].x(), vertices[3].y(), vertices[3].z(), vertices[3].u(), vertices[3].v(),
                 color, alpha);
     }
 
-    public static void quadWithVertexAlpha(ResourceLocation texture, ObjRenderContext context,
-            double x0, double y0, double z0, double u0, double v0, int alpha0,
-            double x1, double y1, double z1, double u1, double v1, int alpha1,
-            double x2, double y2, double z2, double u2, double v2, int alpha2,
-            double x3, double y3, double z3, double u3, double v3, int alpha3,
-            int color) {
-        quad(texture, context,
-                vertex(x0, y0, z0, u0, v0, color, alpha0),
-                vertex(x1, y1, z1, u1, v1, color, alpha1),
-                vertex(x2, y2, z2, u2, v2, color, alpha2),
-                vertex(x3, y3, z3, u3, v3, color, alpha3));
+    private static boolean tryTransientSpriteQuad(TextureAtlasSprite sprite, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
+            float normalX, float normalY, float normalZ, boolean unitUv, Vertex[] vertices) {
+        Vertex first = vertices[0];
+        int color = first.color() & 0xFFFFFF;
+        int alpha = clampAlpha(first.alpha());
+        int resolvedLight = packedLight(packedLight, first);
+        int resolvedOverlay = packedOverlay(packedOverlay, first);
+        for (int i = 1; i < vertices.length; i++) {
+            Vertex vertex = vertices[i];
+            if ((vertex.color() & 0xFFFFFF) != color || clampAlpha(vertex.alpha()) != alpha
+                    || packedLight(packedLight, vertex) != resolvedLight
+                    || packedOverlay(packedOverlay, vertex) != resolvedOverlay) {
+                return false;
+            }
+        }
+        return LegacyWavefrontModel.renderSpriteTransientQuad(sprite, poseStack, buffer, resolvedLight,
+                resolvedOverlay, renderMode, normalX, normalY, normalZ, unitUv,
+                first.x(), first.y(), first.z(), first.u(), first.v(),
+                vertices[1].x(), vertices[1].y(), vertices[1].z(), vertices[1].u(), vertices[1].v(),
+                vertices[2].x(), vertices[2].y(), vertices[2].z(), vertices[2].u(), vertices[2].v(),
+                vertices[3].x(), vertices[3].y(), vertices[3].z(), vertices[3].u(), vertices[3].v(),
+                color, alpha);
     }
 
-    public static void quadWithComputedNormal(ResourceLocation texture, ObjRenderContext context,
-            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        Vector3f normal = computedNormal(v0, v1, v2);
-        quad(texture, context, normal.x(), normal.y(), normal.z(), v0, v1, v2, v3);
-    }
-
-    public static void quadWithComputedNormal(ResourceLocation texture, ObjRenderContext context,
-            double x0, double y0, double z0, double u0, double v0,
-            double x1, double y1, double z1, double u1, double v1,
-            double x2, double y2, double z2, double u2, double v2,
-            double x3, double y3, double z3, double u3, double v3,
-            int color, int alpha) {
-        quadWithComputedNormal(texture, context,
-                vertex(x0, y0, z0, u0, v0, color, alpha),
-                vertex(x1, y1, z1, u1, v1, color, alpha),
-                vertex(x2, y2, z2, u2, v2, color, alpha),
-                vertex(x3, y3, z3, u3, v3, color, alpha));
-    }
-
-    public static void quadWithComputedNormalAndVertexAlpha(ResourceLocation texture, ObjRenderContext context,
-            double x0, double y0, double z0, double u0, double v0, int alpha0,
-            double x1, double y1, double z1, double u1, double v1, int alpha1,
-            double x2, double y2, double z2, double u2, double v2, int alpha2,
-            double x3, double y3, double z3, double u3, double v3, int alpha3,
-            int color) {
-        quadWithComputedNormal(texture, context,
-                vertex(x0, y0, z0, u0, v0, color, alpha0),
-                vertex(x1, y1, z1, u1, v1, color, alpha1),
-                vertex(x2, y2, z2, u2, v2, color, alpha2),
-                vertex(x3, y3, z3, u3, v3, color, alpha3));
-    }
-
-    public static void spriteQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        spriteQuad(sprite, context, 0.0F, 1.0F, 0.0F, v0, v1, v2, v3);
-    }
-
-    public static void spriteQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            float normalX, float normalY, float normalZ, Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        spriteQuad(sprite, context, normalX, normalY, normalZ, false, v0, v1, v2, v3);
-    }
-
-    public static void spriteQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            double x0, double y0, double z0, double pixelU0, double pixelV0,
-            double x1, double y1, double z1, double pixelU1, double pixelV1,
-            double x2, double y2, double z2, double pixelU2, double pixelV2,
-            double x3, double y3, double z3, double pixelU3, double pixelV3,
-            int color, int alpha) {
-        spriteQuad(sprite, context,
-                spritePixelVertex(x0, y0, z0, pixelU0, pixelV0, color, alpha),
-                spritePixelVertex(x1, y1, z1, pixelU1, pixelV1, color, alpha),
-                spritePixelVertex(x2, y2, z2, pixelU2, pixelV2, color, alpha),
-                spritePixelVertex(x3, y3, z3, pixelU3, pixelV3, color, alpha));
-    }
-
-    public static void spriteQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            float normalX, float normalY, float normalZ,
-            double x0, double y0, double z0, double pixelU0, double pixelV0,
-            double x1, double y1, double z1, double pixelU1, double pixelV1,
-            double x2, double y2, double z2, double pixelU2, double pixelV2,
-            double x3, double y3, double z3, double pixelU3, double pixelV3,
-            int color, int alpha) {
-        spriteQuad(sprite, context, normalX, normalY, normalZ,
-                spritePixelVertex(x0, y0, z0, pixelU0, pixelV0, color, alpha),
-                spritePixelVertex(x1, y1, z1, pixelU1, pixelV1, color, alpha),
-                spritePixelVertex(x2, y2, z2, pixelU2, pixelV2, color, alpha),
-                spritePixelVertex(x3, y3, z3, pixelU3, pixelV3, color, alpha));
-    }
-
-    public static void spriteQuadWithVertexAlpha(TextureAtlasSprite sprite, ObjRenderContext context,
-            double x0, double y0, double z0, double pixelU0, double pixelV0, int alpha0,
-            double x1, double y1, double z1, double pixelU1, double pixelV1, int alpha1,
-            double x2, double y2, double z2, double pixelU2, double pixelV2, int alpha2,
-            double x3, double y3, double z3, double pixelU3, double pixelV3, int alpha3,
-            int color) {
-        spriteQuad(sprite, context,
-                spritePixelVertex(x0, y0, z0, pixelU0, pixelV0, color, alpha0),
-                spritePixelVertex(x1, y1, z1, pixelU1, pixelV1, color, alpha1),
-                spritePixelVertex(x2, y2, z2, pixelU2, pixelV2, color, alpha2),
-                spritePixelVertex(x3, y3, z3, pixelU3, pixelV3, color, alpha3));
-    }
-
-    public static void fullSpriteQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            double x0, double y0, double z0, double x1, double y1, double z1,
-            double x2, double y2, double z2, double x3, double y3, double z3) {
-        fullSpriteQuad(sprite, context, 0.0F, 1.0F, 0.0F,
-                x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3, 0xFFFFFF, 255);
-    }
-
-    public static void fullSpriteQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            float normalX, float normalY, float normalZ,
-            double x0, double y0, double z0, double x1, double y1, double z1,
-            double x2, double y2, double z2, double x3, double y3, double z3,
-            int color, int alpha) {
-        spriteQuad(sprite, context, normalX, normalY, normalZ,
-                spritePixelVertex(x0, y0, z0, 0.0D, 16.0D, color, alpha),
-                spritePixelVertex(x1, y1, z1, 16.0D, 16.0D, color, alpha),
-                spritePixelVertex(x2, y2, z2, 16.0D, 0.0D, color, alpha),
-                spritePixelVertex(x3, y3, z3, 0.0D, 0.0D, color, alpha));
-    }
-
-    public static void spriteUnitQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        spriteUnitQuad(sprite, context, 0.0F, 1.0F, 0.0F, v0, v1, v2, v3);
-    }
-
-    public static void spriteUnitQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            float normalX, float normalY, float normalZ, Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        spriteQuad(sprite, context, normalX, normalY, normalZ, true, v0, v1, v2, v3);
-    }
-
-    public static void spriteUnitQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            double x0, double y0, double z0, double u0, double v0,
-            double x1, double y1, double z1, double u1, double v1,
-            double x2, double y2, double z2, double u2, double v2,
-            double x3, double y3, double z3, double u3, double v3,
-            int color, int alpha) {
-        spriteUnitQuad(sprite, context,
-                spriteUnitVertex(x0, y0, z0, u0, v0, color, alpha),
-                spriteUnitVertex(x1, y1, z1, u1, v1, color, alpha),
-                spriteUnitVertex(x2, y2, z2, u2, v2, color, alpha),
-                spriteUnitVertex(x3, y3, z3, u3, v3, color, alpha));
-    }
-
-    public static void spriteUnitQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            float normalX, float normalY, float normalZ,
-            double x0, double y0, double z0, double u0, double v0,
-            double x1, double y1, double z1, double u1, double v1,
-            double x2, double y2, double z2, double u2, double v2,
-            double x3, double y3, double z3, double u3, double v3,
-            int color, int alpha) {
-        spriteUnitQuad(sprite, context, normalX, normalY, normalZ,
-                spriteUnitVertex(x0, y0, z0, u0, v0, color, alpha),
-                spriteUnitVertex(x1, y1, z1, u1, v1, color, alpha),
-                spriteUnitVertex(x2, y2, z2, u2, v2, color, alpha),
-                spriteUnitVertex(x3, y3, z3, u3, v3, color, alpha));
-    }
-
-    public static void spriteUnitQuadWithVertexAlpha(TextureAtlasSprite sprite, ObjRenderContext context,
-            double x0, double y0, double z0, double u0, double v0, int alpha0,
-            double x1, double y1, double z1, double u1, double v1, int alpha1,
-            double x2, double y2, double z2, double u2, double v2, int alpha2,
-            double x3, double y3, double z3, double u3, double v3, int alpha3,
-            int color) {
-        spriteUnitQuad(sprite, context,
-                spriteUnitVertex(x0, y0, z0, u0, v0, color, alpha0),
-                spriteUnitVertex(x1, y1, z1, u1, v1, color, alpha1),
-                spriteUnitVertex(x2, y2, z2, u2, v2, color, alpha2),
-                spriteUnitVertex(x3, y3, z3, u3, v3, color, alpha3));
-    }
-
-    private static void spriteQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            float normalX, float normalY, float normalZ, boolean unitUv, Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        Vertex[] vertices = {v0, v1, v2, v3};
-        VertexConsumer consumer = context.buffer().getBuffer(renderMode(context, vertices).renderType(InventoryMenu.BLOCK_ATLAS));
-        emitSpriteQuad(consumer, context.poseStack().last(), context, sprite, normalX, normalY, normalZ, unitUv, vertices);
-    }
-
-    public static void spriteQuadWithComputedNormal(TextureAtlasSprite sprite, ObjRenderContext context,
-            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        Vector3f normal = computedNormal(v0, v1, v2);
-        spriteQuad(sprite, context, normal.x(), normal.y(), normal.z(), v0, v1, v2, v3);
-    }
-
-    public static void spriteQuadWithComputedNormal(TextureAtlasSprite sprite, ObjRenderContext context,
-            double x0, double y0, double z0, double pixelU0, double pixelV0,
-            double x1, double y1, double z1, double pixelU1, double pixelV1,
-            double x2, double y2, double z2, double pixelU2, double pixelV2,
-            double x3, double y3, double z3, double pixelU3, double pixelV3,
-            int color, int alpha) {
-        spriteQuadWithComputedNormal(sprite, context,
-                spritePixelVertex(x0, y0, z0, pixelU0, pixelV0, color, alpha),
-                spritePixelVertex(x1, y1, z1, pixelU1, pixelV1, color, alpha),
-                spritePixelVertex(x2, y2, z2, pixelU2, pixelV2, color, alpha),
-                spritePixelVertex(x3, y3, z3, pixelU3, pixelV3, color, alpha));
-    }
-
-    public static void spriteQuadWithComputedNormalAndVertexAlpha(TextureAtlasSprite sprite, ObjRenderContext context,
-            double x0, double y0, double z0, double pixelU0, double pixelV0, int alpha0,
-            double x1, double y1, double z1, double pixelU1, double pixelV1, int alpha1,
-            double x2, double y2, double z2, double pixelU2, double pixelV2, int alpha2,
-            double x3, double y3, double z3, double pixelU3, double pixelV3, int alpha3,
-            int color) {
-        spriteQuadWithComputedNormal(sprite, context,
-                spritePixelVertex(x0, y0, z0, pixelU0, pixelV0, color, alpha0),
-                spritePixelVertex(x1, y1, z1, pixelU1, pixelV1, color, alpha1),
-                spritePixelVertex(x2, y2, z2, pixelU2, pixelV2, color, alpha2),
-                spritePixelVertex(x3, y3, z3, pixelU3, pixelV3, color, alpha3));
-    }
-
-    public static void spriteUnitQuadWithComputedNormal(TextureAtlasSprite sprite, ObjRenderContext context,
-            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        Vector3f normal = computedNormal(v0, v1, v2);
-        spriteUnitQuad(sprite, context, normal.x(), normal.y(), normal.z(), v0, v1, v2, v3);
-    }
-
-    public static void spriteUnitQuadWithComputedNormal(TextureAtlasSprite sprite, ObjRenderContext context,
-            double x0, double y0, double z0, double u0, double v0,
-            double x1, double y1, double z1, double u1, double v1,
-            double x2, double y2, double z2, double u2, double v2,
-            double x3, double y3, double z3, double u3, double v3,
-            int color, int alpha) {
-        spriteUnitQuadWithComputedNormal(sprite, context,
-                spriteUnitVertex(x0, y0, z0, u0, v0, color, alpha),
-                spriteUnitVertex(x1, y1, z1, u1, v1, color, alpha),
-                spriteUnitVertex(x2, y2, z2, u2, v2, color, alpha),
-                spriteUnitVertex(x3, y3, z3, u3, v3, color, alpha));
-    }
-
-    public static void spriteUnitQuadWithComputedNormalAndVertexAlpha(TextureAtlasSprite sprite, ObjRenderContext context,
-            double x0, double y0, double z0, double u0, double v0, int alpha0,
-            double x1, double y1, double z1, double u1, double v1, int alpha1,
-            double x2, double y2, double z2, double u2, double v2, int alpha2,
-            double x3, double y3, double z3, double u3, double v3, int alpha3,
-            int color) {
-        spriteUnitQuadWithComputedNormal(sprite, context,
-                spriteUnitVertex(x0, y0, z0, u0, v0, color, alpha0),
-                spriteUnitVertex(x1, y1, z1, u1, v1, color, alpha1),
-                spriteUnitVertex(x2, y2, z2, u2, v2, color, alpha2),
-                spriteUnitVertex(x3, y3, z3, u3, v3, color, alpha3));
-    }
-
-    public static void doubleSidedQuad(ResourceLocation texture, ObjRenderContext context,
-            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        doubleSidedQuad(texture, context, 0.0F, 1.0F, 0.0F, v0, v1, v2, v3);
-    }
-
-    public static void doubleSidedQuad(ResourceLocation texture, ObjRenderContext context,
-            float normalX, float normalY, float normalZ, Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        quad(texture, context, normalX, normalY, normalZ, v0, v1, v2, v3);
-        quad(texture, context, -normalX, -normalY, -normalZ, v3, v2, v1, v0);
-    }
-
-    public static void doubleSidedQuadWithComputedNormal(ResourceLocation texture, ObjRenderContext context,
-            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        Vector3f normal = computedNormal(v0, v1, v2);
-        doubleSidedQuad(texture, context, normal.x(), normal.y(), normal.z(), v0, v1, v2, v3);
-    }
-
-    public static void doubleSidedSpriteQuad(TextureAtlasSprite sprite, ObjRenderContext context,
-            float normalX, float normalY, float normalZ, Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        spriteQuad(sprite, context, normalX, normalY, normalZ, v0, v1, v2, v3);
-        spriteQuad(sprite, context, -normalX, -normalY, -normalZ, v3, v2, v1, v0);
-    }
-
-    public static void doubleSidedSpriteQuadWithComputedNormal(TextureAtlasSprite sprite, ObjRenderContext context,
-            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        Vector3f normal = computedNormal(v0, v1, v2);
-        doubleSidedSpriteQuad(sprite, context, normal.x(), normal.y(), normal.z(), v0, v1, v2, v3);
-    }
-
-    public static void quad(VertexConsumer consumer, PoseStack.Pose pose, ObjRenderContext context,
-            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        emitQuad(consumer, pose, context, 0.0F, 1.0F, 0.0F, new Vertex[] {v0, v1, v2, v3});
-    }
-
-    public static VertexConsumer consumer(ResourceLocation texture, ObjRenderContext context) {
-        return context.buffer().getBuffer(context.renderMode().withAlpha(context.alpha()).renderType(texture));
-    }
-
-    public static VertexConsumer consumer(ResourceLocation texture, ObjRenderContext context, Vertex... vertices) {
-        return context.buffer().getBuffer(renderMode(context, vertices).renderType(texture));
-    }
-
-    public static VertexConsumer atlasConsumer(ObjRenderContext context, Vertex... vertices) {
-        return context.buffer().getBuffer(renderMode(context, vertices).renderType(InventoryMenu.BLOCK_ATLAS));
-    }
-
-    private static void emitQuad(VertexConsumer consumer, PoseStack.Pose pose, ObjRenderContext context,
-            float normalX, float normalY, float normalZ, Vertex[] vertices) {
-        Matrix4f position = pose.pose();
-        Matrix3f normal = pose.normal();
-        float averageU = averageU(vertices);
-        float averageV = averageV(vertices);
+    private static LegacyTexturedRenderMode renderMode(LegacyTexturedRenderMode renderMode, Vertex[] vertices) {
+        int alpha = 255;
         for (Vertex vertex : vertices) {
-            emitVertex(consumer, position, normal, context, normalX, normalY, normalZ, averageU, averageV, vertex);
+            alpha = Math.min(alpha, clampAlpha(vertex.alpha()));
         }
+        return renderMode.withAlpha(alpha);
     }
 
-    private static void emitSpriteQuad(VertexConsumer consumer, PoseStack.Pose pose, ObjRenderContext context,
-            TextureAtlasSprite sprite, float normalX, float normalY, float normalZ, boolean unitUv, Vertex[] vertices) {
-        Matrix4f position = pose.pose();
-        Matrix3f normal = pose.normal();
-        float averageU = averageU(vertices);
-        float averageV = averageV(vertices);
-        for (Vertex vertex : vertices) {
-            emitSpriteVertex(consumer, position, normal, context, sprite, normalX, normalY, normalZ,
-                    averageU, averageV, unitUv, vertex);
-        }
+    private static int packedLight(int packedLight, Vertex vertex) {
+        return vertex.packedLight() == INHERIT_LIGHT ? packedLight : vertex.packedLight();
     }
 
-    private static void emitVertex(VertexConsumer consumer, Matrix4f position, Matrix3f normal, ObjRenderContext context,
-            float normalX, float normalY, float normalZ, float averageU, float averageV, Vertex vertex) {
-        int color = multipliedColor(context, vertex.color());
-        consumer.vertex(position, (float) vertex.x(), (float) vertex.y(), (float) vertex.z())
-                .color(color >> 16 & 255, color >> 8 & 255, color & 255, multipliedAlpha(context, vertex.alpha()))
-                .uv(transformU(context, vertex.u(), vertex.v(), averageU), transformV(context, vertex.u(), vertex.v(), averageV))
-                .overlayCoords(packedOverlay(context, vertex))
-                .uv2(packedLight(context, vertex))
-                .normal(normal, normalX, normalY, normalZ)
-                .endVertex();
-    }
-
-    private static void emitSpriteVertex(VertexConsumer consumer, Matrix4f position, Matrix3f normal, ObjRenderContext context,
-            TextureAtlasSprite sprite, float normalX, float normalY, float normalZ, float averageU, float averageV,
-            boolean unitUv, Vertex vertex) {
-        int color = multipliedColor(context, vertex.color());
-        float u = transformU(context, vertex.u(), vertex.v(), averageU);
-        float v = transformV(context, vertex.u(), vertex.v(), averageV);
-        float pixelScale = unitUv ? 16.0F : 1.0F;
-        consumer.vertex(position, (float) vertex.x(), (float) vertex.y(), (float) vertex.z())
-                .color(color >> 16 & 255, color >> 8 & 255, color & 255, multipliedAlpha(context, vertex.alpha()))
-                .uv(sprite.getU(u * pixelScale), sprite.getV(v * pixelScale))
-                .overlayCoords(packedOverlay(context, vertex))
-                .uv2(packedLight(context, vertex))
-                .normal(normal, normalX, normalY, normalZ)
-                .endVertex();
-    }
-
-    private static LegacyTexturedRenderMode renderMode(ObjRenderContext context, Vertex[] vertices) {
-        int alpha = context.alpha();
-        for (Vertex vertex : vertices) {
-            alpha = Math.min(alpha, multipliedAlpha(context, vertex.alpha()));
-        }
-        return context.renderMode().withAlpha(alpha);
-    }
-
-    private static int multipliedColor(ObjRenderContext context, int vertexColor) {
-        if (!context.hasColor()) {
-            return vertexColor & 0xFFFFFF;
-        }
-        int contextColor = context.color();
-        int red = (contextColor >> 16 & 255) * (vertexColor >> 16 & 255) / 255;
-        int green = (contextColor >> 8 & 255) * (vertexColor >> 8 & 255) / 255;
-        int blue = (contextColor & 255) * (vertexColor & 255) / 255;
-        return red << 16 | green << 8 | blue;
-    }
-
-    private static int multipliedAlpha(ObjRenderContext context, int vertexAlpha) {
-        return clampAlpha(context.alpha() * clampAlpha(vertexAlpha) / 255);
-    }
-
-    private static int packedLight(ObjRenderContext context, Vertex vertex) {
-        return vertex.packedLight() == INHERIT_LIGHT ? context.packedLight() : vertex.packedLight();
-    }
-
-    private static int packedOverlay(ObjRenderContext context, Vertex vertex) {
-        int overlay = vertex.packedOverlay() == INHERIT_OVERLAY ? context.packedOverlay() : vertex.packedOverlay();
+    private static int packedOverlay(int packedOverlay, Vertex vertex) {
+        int overlay = vertex.packedOverlay() == INHERIT_OVERLAY ? packedOverlay : vertex.packedOverlay();
         return overlay == 0 ? OverlayTexture.NO_OVERLAY : overlay;
     }
 
-    private static float transformU(ObjRenderContext context, float u, float v, float averageU) {
-        return u * context.uScale()
-                + v * context.uFromV()
-                + context.uOffset()
-                + legacyTextureOffset(u, averageU, context.legacyTextureOffset());
-    }
-
-    private static float transformV(ObjRenderContext context, float u, float v, float averageV) {
-        return u * context.vFromU()
-                + v * context.vScale()
-                + context.vOffset()
-                + legacyTextureOffset(v, averageV, context.legacyTextureOffset());
-    }
-
-    private static float legacyTextureOffset(float value, float average, float textureOffset) {
-        if (textureOffset == 0.0F) {
-            return 0.0F;
-        }
-        return value > average ? -textureOffset : textureOffset;
-    }
-
-    private static float averageU(Vertex[] vertices) {
-        float total = 0.0F;
-        for (Vertex vertex : vertices) {
-            total += vertex.u();
-        }
-        return total / vertices.length;
-    }
-
-    private static float averageV(Vertex[] vertices) {
-        float total = 0.0F;
-        for (Vertex vertex : vertices) {
-            total += vertex.v();
-        }
-        return total / vertices.length;
-    }
 
     private static int clampAlpha(int alpha) {
         return Math.max(0, Math.min(255, alpha));
@@ -601,7 +363,11 @@ public final class LegacyTexturedQuadRenderer {
     }
 
     public static int legacyLightmap(float lightmapX, float lightmapY) {
-        return ObjRenderContext.legacyLightmap(lightmapX, lightmapY);
+        return clampLightmapCoord(Math.round(lightmapY)) << 16 | clampLightmapCoord(Math.round(lightmapX));
+    }
+
+    private static int clampLightmapCoord(int value) {
+        return Math.max(0, Math.min(65535, value));
     }
 
     public static Vector3f normal(float x, float y, float z) {

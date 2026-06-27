@@ -3,9 +3,9 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.LegacyLargeTurbineBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.LightTexture;
@@ -56,9 +56,9 @@ public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLar
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z + plan.translateZ());
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay)
-                .withRenderMode(LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
-        MODEL.renderOnlyInCallOrder(definition.textureLocation(), context, BODY);
+        LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
+        MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay, BODY,
+                renderMode);
 
         LegacyTileRenderPlans.RotatingModelPartPlan blades = plan.blades();
         poseStack.pushPose();
@@ -67,20 +67,21 @@ public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLar
         poseStack.translate(-blades.pivotX(), -blades.pivotY(), -blades.pivotZ());
         MODEL.renderOnlyInCallOrder(
                 definition.partTextures().getOrDefault(blades.partName(), definition.textureLocation()),
-                context.withPackedLight(LightTexture.FULL_BRIGHT), BLADES);
+                poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay, BLADES, renderMode);
         poseStack.popPose();
 
         poseStack.popPose();
     }
 
     static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
-            ObjRenderContext context) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
         LegacyWavefrontModel.SelectionHandle handle = sameModel(model) ? handle(partName) : null;
         if (handle != null) {
-            MODEL.renderOnlyInCallOrder(texture, context, handle);
+            MODEL.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle, renderMode);
             return;
         }
-        model.renderPart(partName, texture, context);
+        model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static boolean sameModel(LegacyWavefrontModel model) {

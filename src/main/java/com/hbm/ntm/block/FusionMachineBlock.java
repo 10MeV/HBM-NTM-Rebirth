@@ -13,11 +13,14 @@ import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -27,6 +30,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 @SuppressWarnings("deprecation")
 public class FusionMachineBlock extends LegacyVisibleMultiblockMachineBlock {
@@ -39,6 +44,17 @@ public class FusionMachineBlock extends LegacyVisibleMultiblockMachineBlock {
 
     public Kind kind() {
         return kind;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        if (!kind.hasLegacyStandardInfo()) {
+            return;
+        }
+
+        LegacyStandardInfoTooltip.append(tooltip, kind.tooltipId());
     }
 
     @Nullable
@@ -167,6 +183,24 @@ public class FusionMachineBlock extends LegacyVisibleMultiblockMachineBlock {
         BOILER,
         COUPLER,
         MHDT,
-        PLASMA_FORGE
+        PLASMA_FORGE;
+
+        private boolean hasLegacyStandardInfo() {
+            return this != PLASMA_FORGE;
+        }
+
+        private String tooltipId() {
+            return switch (this) {
+                case TORUS -> "fusion_torus";
+                case KLYSTRON -> "fusion_klystron";
+                case KLYSTRON_CREATIVE -> "fusion_klystron_creative";
+                case BREEDER -> "fusion_breeder";
+                case COLLECTOR -> "fusion_collector";
+                case BOILER -> "fusion_boiler";
+                case COUPLER -> "fusion_coupler";
+                case MHDT -> "fusion_mhdt";
+                case PLASMA_FORGE -> "fusion_plasma_forge";
+            };
+        }
     }
 }

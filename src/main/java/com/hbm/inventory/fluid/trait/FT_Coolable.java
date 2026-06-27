@@ -2,8 +2,8 @@ package com.hbm.inventory.fluid.trait;
 
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
-import com.hbm.inventory.fluid.Fluids;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.CoolableFluidTrait;
 import java.io.IOException;
@@ -95,6 +95,20 @@ public class FT_Coolable extends CoolableFluidTrait {
         }
     }
 
+    public void addInfoHidden(List<String> info) {
+        if (info == null) {
+            return;
+        }
+        info.add(ChatFormatting.RED + "Thermal capacity: " + heatEnergy + " TU per " + amountReq + "mB");
+        for (CoolingType type : CoolingType.values()) {
+            double eff = getEfficiency(type);
+            if (eff > 0.0D) {
+                info.add(ChatFormatting.YELLOW + "[" + type.displayName + "] " + ChatFormatting.AQUA
+                        + "Efficiency: " + (int) (eff * 100.0D) + "%");
+            }
+        }
+    }
+
     @Override
     public void writeJson(JsonObject object) {
         object.addProperty("coolsTo", coolsTo.getName());
@@ -126,15 +140,26 @@ public class FT_Coolable extends CoolableFluidTrait {
         if (object == null) {
             return;
         }
-        this.coolsTo = object.has("coolsTo") ? Fluids.fromName(object.get("coolsTo").getAsString()) : HbmFluids.NONE;
-        this.amountReq = object.has("amountReq") ? object.get("amountReq").getAsInt() : 0;
-        this.amountProduced = object.has("amountProd") ? object.get("amountProd").getAsInt() : 0;
-        this.heatEnergy = object.has("heatEnergy") ? object.get("heatEnergy").getAsInt() : 0;
+        this.coolsTo = fluidValue(object, "coolsTo", "NONE");
+        this.amountReq = LegacyFluidTraitJson.intValue(object, "amountReq", 0);
+        this.amountProduced = LegacyFluidTraitJson.intValue(object, "amountProd", 0);
+        this.heatEnergy = LegacyFluidTraitJson.intValue(object, "heatEnergy", 0);
         for (CoolingType type : CoolingType.values()) {
             if (object.has(type.name())) {
-                setEff(type, object.get(type.name()).getAsDouble());
+                setEff(type, LegacyFluidTraitJson.doubleValue(object, type.name(), 0.0D));
             }
         }
+    }
+
+    private static FluidType fluidValue(JsonObject object, String key, String fallback) {
+        if (!object.has(key)) {
+            return HbmFluidJsonUtil.readFluidReference(fallback);
+        }
+        FluidType type = HbmFluidJsonUtil.readFluidReference(object.get(key));
+        if (type == HbmFluids.NONE && !HbmFluidJsonUtil.isExplicitNoneReference(object.get(key))) {
+            throw HbmFluidJsonUtil.unknownFluidReference(key, object.get(key));
+        }
+        return type;
     }
 
     public enum CoolingType {

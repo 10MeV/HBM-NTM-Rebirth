@@ -1,5 +1,5 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "hbm_ntm_rebirth:shaped_nbt",
   "category": "redstone",
   "key": {
     "A": { "item": "hbm_ntm_rebirth:plate_aluminium" },

@@ -34,8 +34,13 @@ public class ReactorControlBlock extends HorizontalMachineBlock implements Entit
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && !player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof ReactorControlBlockEntity control) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
+        if (!(level.getBlockEntity(pos) instanceof ReactorControlBlockEntity control)) {
+            return InteractionResult.PASS;
+        }
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             NetworkHooks.openScreen(serverPlayer, control, control.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

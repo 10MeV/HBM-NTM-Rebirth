@@ -322,16 +322,16 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipes(FUSION_FLUID_BREEDER,
                 recipeManager.getAllRecipesFor(ModRecipes.FUSION_FLUID_BREEDER.type().get()));
         registration.addRecipes(PRESS, recipeManager.getAllRecipesFor(ModRecipes.PRESS.type().get()));
-        registration.addRecipes(REFINERY, HbmOilRecipe.refineryRecipes());
-        registration.addRecipes(CATALYTIC_CRACKER, HbmOilRecipe.crackingRecipes());
-        registration.addRecipes(CATALYTIC_REFORMER, HbmOilRecipe.reformingRecipes());
-        registration.addRecipes(VACUUM_DISTILL, HbmOilRecipe.vacuumRecipes());
-        registration.addRecipes(FRACTION_TOWER, HbmOilRecipe.fractioningRecipes());
-        registration.addRecipes(HYDROTREATER, HbmOilRecipe.hydrotreatingRecipes());
-        registration.addRecipes(COKER, HbmOilRecipe.cokingRecipes());
-        registration.addRecipes(SOLIDIFIER, HbmOilRecipe.solidificationRecipes());
+        registration.addRecipes(REFINERY, HbmOilRecipe.refineryRecipes(recipeManager));
+        registration.addRecipes(CATALYTIC_CRACKER, HbmOilRecipe.crackingRecipes(recipeManager));
+        registration.addRecipes(CATALYTIC_REFORMER, HbmOilRecipe.reformingRecipes(recipeManager));
+        registration.addRecipes(VACUUM_DISTILL, HbmOilRecipe.vacuumRecipes(recipeManager));
+        registration.addRecipes(FRACTION_TOWER, HbmOilRecipe.fractioningRecipes(recipeManager));
+        registration.addRecipes(HYDROTREATER, HbmOilRecipe.hydrotreatingRecipes(recipeManager));
+        registration.addRecipes(COKER, HbmOilRecipe.cokingRecipes(recipeManager));
+        registration.addRecipes(SOLIDIFIER, HbmOilRecipe.solidificationRecipes(recipeManager));
         registration.addRecipes(LIQUEFACTION, recipeManager.getAllRecipesFor(ModRecipes.LIQUEFACTION.type().get()));
-        registration.addRecipes(COMPRESSOR, HbmFluidCompressorRecipes.recipes());
+        registration.addRecipes(COMPRESSOR, HbmFluidCompressorRecipes.recipes(recipeManager));
         registration.addRecipes(PYRO_OVEN, recipeManager.getAllRecipesFor(ModRecipes.PYRO_OVEN.type().get()));
         registration.addRecipes(COMBINATION_OVEN, sortedCombination(recipeManager.getAllRecipesFor(ModRecipes.COMBINATION_OVEN.type().get())));
         registration.addRecipes(BLAST_FURNACE, sortedBlastFurnace(recipeManager.getAllRecipesFor(ModRecipes.BLAST_FURNACE.type().get())));
@@ -348,8 +348,8 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipes(SILEX, SilexRecipeRuntime.displayRecipes());
         registration.addRecipes(ROTARY_FURNACE, RotaryFurnaceRecipeRuntime.recipes());
         registration.addRecipes(CRUCIBLE, CrucibleRecipeRuntime.recipes());
-        registration.addRecipes(RADIOLYSIS, RadiolysisRecipes.displayRecipes());
-        registration.addRecipes(ELECTROLYSER, ElectrolyserRecipeRuntime.displayRecipes());
+        registration.addRecipes(RADIOLYSIS, RadiolysisRecipes.displayRecipes(recipeManager));
+        registration.addRecipes(ELECTROLYSER, ElectrolyserRecipeRuntime.displayRecipes(recipeManager));
         registration.addRecipes(DEUTERIUM_TOWER, DeuteriumTowerRecipeRuntime.displayRecipes());
         registration.addRecipes(ORE_SLOPPER, OreSlopperRecipeRuntime.displayRecipes());
         registration.addRecipes(RADGEN, RadGenRecipeRuntime.recipes());

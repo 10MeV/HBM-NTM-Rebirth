@@ -1,6 +1,9 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
@@ -10,6 +13,7 @@ import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmExtinguishType;
 import com.hbm.ntm.fluid.HbmFluidOverpressurable;
+import com.hbm.ntm.fluid.HbmFluidReleaseEffects;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidRepairMaterials;
 import com.hbm.ntm.fluid.HbmFluidRepairMaterials.HbmRepairMaterial;
@@ -62,7 +66,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         implements MenuProvider, HbmStandardFluidReceiver, HbmStandardFluidSender, HbmLegacyButtonReceiver,
-        HbmPersistentBlockState, RORValueProvider, RORInteractive, HbmFluidOverpressurable, HbmFluidRepairable {
+        HbmPersistentBlockState, RORValueProvider, RORInteractive, HbmFluidOverpressurable, HbmFluidRepairable,
+        LegacyLookOverlayProvider {
     public static final int SLOT_TYPE_INPUT = 0;
     public static final int SLOT_TYPE_OUTPUT = 1;
     public static final int SLOT_LOAD_INPUT = 2;
@@ -226,10 +231,10 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
             return false;
         }
         FluidReleaseType release = getDamagedTankPollutionRelease(type);
-        if (release != FluidReleaseType.VOID) {
-            tank.release(level, pos, leaking, release, false);
-        } else {
-            tank.drain(leaking, false);
+        HbmFluidReleaseEffects.applyLegacyTraitRelease(level, pos, type, leaking, release);
+        tank.drain(leaking, false);
+        if (release != FluidReleaseType.VOID && level.getGameTime() % 5L == 0L) {
+            HbmFluidReleaseEffects.applyLegacyPollutingRelease(level, pos, type, release, leaking * 5.0F);
         }
         return true;
     }
@@ -393,6 +398,15 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public List<HbmRepairMaterial> getFluidRepairMaterials() {
         return List.of(HbmFluidRepairMaterials.item(ModItems.STEEL_PLATE.get(), 6));
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, Player player, BlockPos viewedPos) {
+        if (player == null || !player.getMainHandItem().is(ModItems.BLOWTORCH.get())
+                || !isDamagedForFluidRepair()) {
+            return null;
+        }
+        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.repairMaterials(getFluidRepairMaterials()));
     }
 
     @Override

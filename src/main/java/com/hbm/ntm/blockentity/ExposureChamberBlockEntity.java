@@ -128,7 +128,7 @@ public class ExposureChamberBlockEntity extends HbmEnergyBlockEntity implements 
                 || oldSaved != chamber.savedParticles
                 || oldOn != chamber.isOn;
         chamber.networkPackNT(50);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             chamber.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

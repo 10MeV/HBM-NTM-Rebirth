@@ -58,11 +58,13 @@ public class DrainBlockEntity extends HbmFluidNetworkBlockEntity implements HbmS
             }
             FluidType spilledType = drain.tank.getTankType();
             int toSpill = Math.max(drain.tank.getFill() / 2, 1);
-            drain.tank.release(level, pos, toSpill, FluidReleaseType.SPILL, false);
+            drain.tank.drain(toSpill, false);
+            com.hbm.ntm.fluid.HbmFluidReleaseEffects.applyLegacyPollutingRelease(level, pos, spilledType,
+                    FluidReleaseType.SPILL, toSpill);
             drain.tryPlaceOilSpill(level, pos, spilledType, toSpill);
         }
 
-        if (previousFill != drain.tank.getFill() || level.getGameTime() % 20L == 0L) {
+        if (previousFill != drain.tank.getFill()) {
             drain.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

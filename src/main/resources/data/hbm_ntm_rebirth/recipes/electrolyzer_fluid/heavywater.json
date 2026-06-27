@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:electrolyzer_fluid",
+  "input": { "fluid": "HEAVYWATER", "amount": 2000 },
+  "output1": { "fluid": "DEUTERIUM", "amount": 200 },
+  "output2": { "fluid": "OXYGEN", "amount": 200 },
+  "duration": 10
+}

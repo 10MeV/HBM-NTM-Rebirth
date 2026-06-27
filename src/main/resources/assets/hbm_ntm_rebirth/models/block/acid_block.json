@@ -1,0 +1,13 @@
+{
+  "parent": "minecraft:block/cube",
+  "render_type": "translucent",
+  "textures": {
+    "down": "hbm_ntm_rebirth:block/acid_still",
+    "up": "hbm_ntm_rebirth:block/acid_still",
+    "north": "hbm_ntm_rebirth:block/acid_flowing",
+    "south": "hbm_ntm_rebirth:block/acid_flowing",
+    "west": "hbm_ntm_rebirth:block/acid_flowing",
+    "east": "hbm_ntm_rebirth:block/acid_flowing",
+    "particle": "hbm_ntm_rebirth:block/acid_still"
+  }
+}

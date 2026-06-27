@@ -1,0 +1,10 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:solidifier",
+    "output":  {
+                   "item":  "hbm_ntm_rebirth:ingot_lead"
+               },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:lead",
+                  "amount":  100
+              }
+}

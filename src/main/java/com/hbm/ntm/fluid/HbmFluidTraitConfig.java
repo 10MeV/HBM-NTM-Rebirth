@@ -21,6 +21,8 @@ import com.hbm.ntm.fluid.trait.PwrModeratorFluidTrait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
 import com.hbm.ntm.fluid.trait.ToxinFluidTrait;
 import com.hbm.ntm.fluid.trait.VentRadiationFluidTrait;
+import com.hbm.ntm.radiation.ModDamageSources;
+import com.hbm.ntm.registry.ModEffects;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -111,11 +113,9 @@ public final class HbmFluidTraitConfig {
         }
 
         for (Map.Entry<String, JsonElement> fluidEntry : root.entrySet()) {
-            FluidType type = HbmFluids.fromName(fluidEntry.getKey());
-            if (type == HbmFluids.NONE && !HbmFluids.NONE.getName().equalsIgnoreCase(fluidEntry.getKey())) {
-                skipped++;
-                warnings.add("unknown fluid " + fluidEntry.getKey());
-                continue;
+            FluidType type = HbmFluidJsonUtil.readFluidReference(fluidEntry.getKey());
+            if (type == HbmFluids.NONE && !HbmFluidJsonUtil.isExplicitNoneReference(fluidEntry.getKey())) {
+                throw new IllegalArgumentException("unknown fluid " + fluidEntry.getKey());
             }
             if (!fluidEntry.getValue().isJsonObject()) {
                 skipped++;
@@ -123,33 +123,53 @@ public final class HbmFluidTraitConfig {
                 continue;
             }
 
-            List<FluidTrait> parsedTraits = new ArrayList<>();
             JsonObject traitRoot = fluidEntry.getValue().getAsJsonObject();
-            for (Map.Entry<String, JsonElement> traitEntry : traitRoot.entrySet()) {
-                if (!traitEntry.getValue().isJsonObject()) {
-                    skipped++;
-                    warnings.add(type.getName() + "." + traitEntry.getKey() + " is not an object");
-                    continue;
-                }
-                try {
-                    FluidTrait trait = readTrait(traitEntry.getKey(), traitEntry.getValue().getAsJsonObject());
-                    if (trait == null) {
-                        skipped++;
-                        warnings.add(type.getName() + "." + traitEntry.getKey() + " is unsupported");
-                        continue;
-                    }
-                    parsedTraits.add(trait);
-                    traits++;
-                } catch (RuntimeException ex) {
-                    skipped++;
-                    warnings.add(type.getName() + "." + traitEntry.getKey() + " failed: " + ex.getMessage());
-                }
-            }
-            type.setTraits(parsedTraits);
+            TraitParseResult parsed = readTraitBlock(type.getName(), traitRoot);
+            warnings.addAll(parsed.warnings());
+            skipped += parsed.skipped();
+            traits += parsed.traitCount();
+            type.setTraits(parsed.traits());
             fluids++;
         }
 
         return new LoadReport(true, fluids, traits, skipped, warnings);
+    }
+
+    static TraitParseResult readTraitBlock(String fluidName, JsonObject traitRoot) {
+        List<String> warnings = new ArrayList<>();
+        List<FluidTrait> parsedTraits = new ArrayList<>();
+        int traits = 0;
+        int skipped = 0;
+
+        if (traitRoot == null) {
+            return new TraitParseResult(List.of(), 0, 0, List.of("empty trait block for " + fluidName));
+        }
+
+        for (Map.Entry<String, JsonElement> traitEntry : traitRoot.entrySet()) {
+            if (!traitEntry.getValue().isJsonObject()) {
+                skipped++;
+                warnings.add(fluidName + "." + traitEntry.getKey() + " is not an object");
+                continue;
+            }
+            try {
+                FluidTrait trait = readTrait(traitEntry.getKey(), traitEntry.getValue().getAsJsonObject());
+                if (trait == null) {
+                    skipped++;
+                    warnings.add(fluidName + "." + traitEntry.getKey() + " is unsupported");
+                    continue;
+                }
+                parsedTraits.add(trait);
+                traits++;
+            } catch (RuntimeException ex) {
+                if (ex instanceof HbmFluidJsonUtil.UnknownFluidReferenceException) {
+                    throw ex;
+                }
+                skipped++;
+                warnings.add(fluidName + "." + traitEntry.getKey() + " failed: " + ex.getMessage());
+            }
+        }
+
+        return new TraitParseResult(List.copyOf(parsedTraits), traits, skipped, List.copyOf(warnings));
     }
 
     @Nullable
@@ -176,11 +196,27 @@ public final class HbmFluidTraitConfig {
             case "plasma" -> SimpleFluidTraits.PLASMA;
             case "amat" -> SimpleFluidTraits.ANTIMATTER;
             case "leadcontainer" -> SimpleFluidTraits.LEAD_CONTAINER;
+            case "delicious" -> SimpleFluidTraits.DELICIOUS;
             case "noid" -> SimpleFluidTraits.NO_ID;
             case "nocontainer" -> SimpleFluidTraits.NO_CONTAINER;
             case "unsiphonable" -> SimpleFluidTraits.UNSIPHONABLE;
-            default -> null;
+            default -> readLegacyTrait(name, object);
         };
+    }
+
+    @Nullable
+    private static FluidTrait readLegacyTrait(String name, JsonObject object) {
+        Class<? extends FluidTrait> traitClass = com.hbm.inventory.fluid.trait.FluidTrait.traitNameMap.get(normalize(name));
+        if (traitClass == null) {
+            return null;
+        }
+        try {
+            FluidTrait trait = traitClass.getDeclaredConstructor().newInstance();
+            trait.deserializeJSON(object);
+            return trait;
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalArgumentException("legacy trait " + name + " could not be constructed", ex);
+        }
     }
 
     private static PollutingFluidTrait readPolluting(JsonObject object) {
@@ -224,7 +260,7 @@ public final class HbmFluidTraitConfig {
                 trait.addStep(
                         intValue(step, "heatReq", 0),
                         intValue(step, "amountReq", 0),
-                        HbmFluids.fromName(stringValue(step, "typeProduced", "NONE")),
+                        fluidValue(step, "typeProduced", "NONE"),
                         intValue(step, "amountProd", 0));
             }
         }
@@ -239,7 +275,7 @@ public final class HbmFluidTraitConfig {
 
     private static CoolableFluidTrait readCoolable(JsonObject object) {
         CoolableFluidTrait trait = new CoolableFluidTrait(
-                HbmFluids.fromName(stringValue(object, "coolsTo", "NONE")),
+                fluidValue(object, "coolsTo", "NONE"),
                 intValue(object, "amountReq", 0),
                 intValue(object, "amountProd", 0),
                 intValue(object, "heatEnergy", 0));
@@ -268,7 +304,7 @@ public final class HbmFluidTraitConfig {
             boolean fullBody = booleanValue(entry, "hazmat", false);
             if ("directdamage".equals(type)) {
                 trait.addEntry(new ToxinFluidTrait.DirectDamage(
-                        resource(stringValue(entry, "source", HbmNtm.MOD_ID + ":cloud")),
+                        damageId(stringValue(entry, "source", "cloud")),
                         floatValue(entry, "amount", 0.0F),
                         intValue(entry, "delay", 20),
                         hazardClass,
@@ -341,8 +377,16 @@ public final class HbmFluidTraitConfig {
             case 18 -> new ResourceLocation("minecraft", "weakness");
             case 19 -> new ResourceLocation("minecraft", "poison");
             case 20 -> new ResourceLocation("minecraft", "wither");
+            case 72 -> ModEffects.POTION_SICKNESS.getId();
+            case 73 -> ModEffects.DEATH.getId();
             default -> new ResourceLocation("minecraft", "poison");
         };
+    }
+
+    private static ResourceLocation damageId(String value) {
+        return ModDamageSources.legacyKey(value)
+                .map(key -> key.location())
+                .orElseGet(() -> resource(value == null || value.isBlank() ? HbmNtm.MOD_ID + ":cloud" : value));
     }
 
     private static ResourceLocation resource(String value) {
@@ -372,7 +416,14 @@ public final class HbmFluidTraitConfig {
 
     private static Integer intValueOrNull(JsonObject object, String key) {
         JsonElement element = object.get(key);
-        return element == null ? null : element.getAsInt();
+        return element == null ? null : intValue(element);
+    }
+
+    private static int intValue(JsonElement element) {
+        if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
+            return Integer.decode(element.getAsString());
+        }
+        return element.getAsInt();
     }
 
     private static long longValue(JsonObject object, String key, long fallback) {
@@ -407,6 +458,18 @@ public final class HbmFluidTraitConfig {
         return element == null ? fallback : element.getAsBoolean();
     }
 
+    private static FluidType fluidValue(JsonObject object, String key, String fallback) {
+        JsonElement element = object.get(key);
+        if (element == null) {
+            return HbmFluidJsonUtil.readFluidReference(fallback);
+        }
+        FluidType type = HbmFluidJsonUtil.readFluidReference(element);
+        if (type == HbmFluids.NONE && !HbmFluidJsonUtil.isExplicitNoneReference(element)) {
+            throw HbmFluidJsonUtil.unknownFluidReference(key, element);
+        }
+        return type;
+    }
+
     private static <E extends Enum<E>> E enumValue(Class<E> type, String value, E fallback) {
         if (value == null) {
             return fallback;
@@ -426,6 +489,9 @@ public final class HbmFluidTraitConfig {
         public String summary() {
             return "fluid traits loadedConfig=" + loadedConfig + " fluids=" + fluids + " traits=" + traits + " skipped=" + skipped;
         }
+    }
+
+    public record TraitParseResult(List<FluidTrait> traits, int traitCount, int skipped, List<String> warnings) {
     }
 
     private HbmFluidTraitConfig() {

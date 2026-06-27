@@ -1,0 +1,48 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:sulfur",
+          "conditions": [
+            { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "0" } }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluorite",
+          "conditions": [
+            { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "1" } }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:ingot_asbestos",
+          "conditions": [
+            { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "2" } }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:gem_volcanic",
+          "conditions": [
+            { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "3" } }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:powder_molysite",
+          "conditions": [
+            { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "4" } }
+          ]
+        }
+      ]
+    }
+  ]
+}

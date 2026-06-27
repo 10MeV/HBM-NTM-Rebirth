@@ -4,9 +4,9 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.FensuBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -43,27 +43,27 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
             int packedLight, int packedOverlay) {
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(fensu, packedLight);
         BlockState state = fensu.getBlockState();
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYRotation(state)));
 
-        renderPart(BASE, context);
+        renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 2.5D, 0.0D);
         poseStack.mulPose(Axis.XP.rotationDegrees(fensu.getInterpolatedRotation(partialTick)));
         poseStack.translate(0.0D, -2.5D, 0.0D);
-        renderPart(DISC, context);
+        renderPart(DISC, poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
-        renderPart(LIGHTS, context.fullBright());
+        renderPart(LIGHTS, poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay);
         poseStack.popPose();
     }
 
-    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
-        MODEL.renderOnlyInCallOrder(TEXTURE, context, handle);
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        MODEL.renderOnlyInCallOrder(TEXTURE, poseStack, buffer, packedLight, packedOverlay, handle);
     }
 
     private static float legacyYRotation(BlockState state) {

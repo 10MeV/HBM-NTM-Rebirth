@@ -30,8 +30,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
@@ -66,6 +64,9 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot == SLOT_IDENTIFIER) {
+                identifierTankDirty = true;
+            }
         }
 
         @Override
@@ -96,6 +97,9 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
     private long heatup;
     private int consumption;
     private int output;
+    private boolean identifierTankDirty = true;
+    private Direction cachedFluidPortFacing;
+    private List<FluidPort> cachedFluidPorts = List.of();
 
     public ICFReactorBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmFluidTank(HbmFluids.SODIUM, COOLANT_CAPACITY),
@@ -112,13 +116,12 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ICFReactorBlockEntity reactor) {
-        boolean changed = reactor.updateIdentifierTankType();
+        boolean changed = reactor.shouldRefreshIdentifierTankType(level) && reactor.updateIdentifierTankType();
         HbmFluidNetworkBlockEntity.serverTick(level, pos, state, reactor);
         changed |= reactor.tickServer(level);
         reactor.networkPackNT(150);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             reactor.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
         reactor.clearLaserPulse();
     }
@@ -173,8 +176,31 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
         data.putBoolean(CompatEnergyControl.B_ACTIVE, heatup > 0L);
         data.putLong(CompatEnergyControl.L_CAPACITY_TU, MAX_HEAT);
         data.putLong(CompatEnergyControl.L_ENERGY_TU, heat);
+        data.putLong(CompatEnergyControl.L_ICF_HEATING_RATE_TU, heatup);
+        data.putLong(CompatEnergyControl.L_ICF_LASER_TU, laser);
+        data.putLong(CompatEnergyControl.L_ICF_MAX_LASER_TU, maxLaser);
         data.putDouble(CompatEnergyControl.D_CONSUMPTION_MB, consumption);
         data.putDouble(CompatEnergyControl.D_OUTPUT_MB, output);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_ICF_COOLANT, coolantTank);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_ICF_HOT_COOLANT, hotCoolantTank);
+        CompatEnergyControl.putTankAmountInfo(data, CompatEnergyControl.S_ICF_STELLAR_FLUX, stellarFluxTank);
+        putPelletInfo(data, items.getStackInSlot(SLOT_ACTIVE));
+    }
+
+    private static void putPelletInfo(CompoundTag data, ItemStack stack) {
+        if (stack.is(ModItems.ICF_PELLET.get())) {
+            data.putLong(CompatEnergyControl.L_ICF_PELLET_DEPLETION, ICFPelletItem.getDepletion(stack));
+            data.putLong(CompatEnergyControl.L_ICF_PELLET_MAX_DEPLETION, ICFPelletItem.getMaxDepletion(stack));
+            data.putLong(CompatEnergyControl.L_ICF_PELLET_FUSING_DIFFICULTY, ICFPelletItem.getFusingDifficulty(stack));
+            data.putString(CompatEnergyControl.S_ICF_PELLET_PRIMARY, ICFPelletItem.type(stack, true).name());
+            data.putString(CompatEnergyControl.S_ICF_PELLET_SECONDARY, ICFPelletItem.type(stack, false).name());
+        } else {
+            data.putLong(CompatEnergyControl.L_ICF_PELLET_DEPLETION, 0L);
+            data.putLong(CompatEnergyControl.L_ICF_PELLET_MAX_DEPLETION, 0L);
+            data.putLong(CompatEnergyControl.L_ICF_PELLET_FUSING_DIFFICULTY, 0L);
+            data.putString(CompatEnergyControl.S_ICF_PELLET_PRIMARY, "");
+            data.putString(CompatEnergyControl.S_ICF_PELLET_SECONDARY, "");
+        }
     }
 
     public List<ItemStack> getDrops() {
@@ -359,6 +385,9 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
         boolean changed = false;
         changed |= ejectDepletedPellet();
         changed |= insertFreshPellet();
+        FluidType previousHotType = hotCoolantTank.getTankType();
+        int previousHotFill = hotCoolantTank.getFill();
+        int previousFluxFill = stellarFluxTank.getFill();
         heatup = 0L;
         ItemStack active = items.getStackInSlot(SLOT_ACTIVE);
         if (active.is(ModItems.ICF_PELLET.get()) && ICFPelletItem.getFusingDifficulty(active) <= laser) {
@@ -382,8 +411,17 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
             heat += (long) (laser * 0.25D);
         }
         coolWithLegacyFormula();
-        tryProvideFluidToPorts(hotCoolantTank.getTankType(), hotCoolantTank.getPressure(), this);
-        tryProvideFluidToPorts(stellarFluxTank.getTankType(), stellarFluxTank.getPressure(), this);
+        if (hotCoolantTank.getFill() > 0) {
+            tryProvideFluidToPorts(hotCoolantTank.getTankType(), hotCoolantTank.getPressure(), this);
+        }
+        if (stellarFluxTank.getFill() > 0) {
+            tryProvideFluidToPorts(stellarFluxTank.getTankType(), stellarFluxTank.getPressure(), this);
+        }
+        if (previousHotType != hotCoolantTank.getTankType()
+                || (previousHotFill <= 0) != (hotCoolantTank.getFill() <= 0)
+                || (previousFluxFill <= 0) != (stellarFluxTank.getFill() <= 0)) {
+            markTankTypesDirty();
+        }
         heat = (long) (heat * 0.999D);
         if (heat > MAX_HEAT) {
             heat = MAX_HEAT;
@@ -392,8 +430,17 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private boolean updateIdentifierTankType() {
-        return setFluidTankTypeFromIdentifierSlotReport(items, SLOT_IDENTIFIER, SLOT_IDENTIFIER, coolantTank,
+        identifierTankDirty = false;
+        boolean changed = setFluidTankTypeFromIdentifierSlotReport(items, SLOT_IDENTIFIER, SLOT_IDENTIFIER, coolantTank,
                 0, false).changed();
+        if (changed) {
+            markTankTypesDirty();
+        }
+        return changed;
+    }
+
+    private boolean shouldRefreshIdentifierTankType(Level level) {
+        return identifierTankDirty || level.getGameTime() % 20L == Math.floorMod(worldPosition.hashCode(), 20);
     }
 
     private void clearLaserPulse() {
@@ -452,8 +499,12 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     private List<FluidPort> fluidPorts() {
         Direction facing = getBlockState().getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING);
+        if (facing == cachedFluidPortFacing && !cachedFluidPorts.isEmpty()) {
+            return cachedFluidPorts;
+        }
         Direction rot = facing.getClockWise();
-        return List.of(
+        cachedFluidPortFacing = facing;
+        cachedFluidPorts = List.of(
                 FluidPort.of(0, 6, 0, Direction.UP),
                 FluidPort.of(0, -1, 0, Direction.DOWN),
                 FluidPort.of(facing.getStepX() * 3 + rot.getStepX() * 6, 3,
@@ -464,6 +515,7 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
                         -facing.getStepZ() * 3 + rot.getStepZ() * 6, facing.getOpposite()),
                 FluidPort.of(-facing.getStepX() * 3 - rot.getStepX() * 6, 3,
                         -facing.getStepZ() * 3 - rot.getStepZ() * 6, facing.getOpposite()));
+        return cachedFluidPorts;
     }
 
     private static void writeTank(FriendlyByteBuf data, HbmFluidTank tank) {

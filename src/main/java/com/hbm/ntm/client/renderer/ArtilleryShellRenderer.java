@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjProjectileModels;
 import com.hbm.ntm.entity.projectile.ArtilleryShellEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -12,6 +13,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 public class ArtilleryShellRenderer extends EntityRenderer<ArtilleryShellEntity> {
+    private static final LegacyWavefrontModel.SelectionHandle GRENADE =
+            ObjProjectileModels.PROJECTILES.prepareRenderOnlyInCallOrder("Grenade");
+
     public ArtilleryShellRenderer(EntityRendererProvider.Context context) {
         super(context);
         shadowRadius = 0.0F;
@@ -24,8 +28,8 @@ public class ArtilleryShellRenderer extends EntityRenderer<ArtilleryShellEntity>
         poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F));
         poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(partialTick, entity.xRotO, entity.getXRot()) - 90.0F));
         poseStack.scale(2.5F, 5.0F, 2.5F);
-        ObjProjectileModels.PROJECTILES.renderPart("Grenade", ObjProjectileModels.GRENADE_TEXTURE,
-                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        ObjProjectileModels.PROJECTILES.renderOnlyInCallOrder(ObjProjectileModels.GRENADE_TEXTURE,
+                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, GRENADE);
         poseStack.popPose();
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
     }

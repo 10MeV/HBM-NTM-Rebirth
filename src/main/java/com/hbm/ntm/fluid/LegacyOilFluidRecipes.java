@@ -2,15 +2,20 @@ package com.hbm.ntm.fluid;
 
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
+import com.hbm.ntm.recipe.ModRecipes;
+import com.hbm.ntm.recipe.OilProcessingRecipe;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 public final class LegacyOilFluidRecipes {
@@ -133,8 +138,24 @@ public final class LegacyOilFluidRecipes {
     }
 
     @Nullable
+    public static PairRecipe getCracking(@Nullable Level level, FluidType input) {
+        Optional<OilProcessingRecipe> recipe = findRecipe(level, OilProcessingRecipe.Machine.CATALYTIC_CRACKER, input);
+        return recipe.isPresent() ? toPair(recipe.get()) : datapackPresent(level, OilProcessingRecipe.Machine.CATALYTIC_CRACKER)
+                ? null
+                : getCracking(input);
+    }
+
+    @Nullable
     public static PairRecipe getFractioning(FluidType input) {
         return FRACTIONING.get(input);
+    }
+
+    @Nullable
+    public static PairRecipe getFractioning(@Nullable Level level, FluidType input) {
+        Optional<OilProcessingRecipe> recipe = findRecipe(level, OilProcessingRecipe.Machine.FRACTION_TOWER, input);
+        return recipe.isPresent() ? toPair(recipe.get()) : datapackPresent(level, OilProcessingRecipe.Machine.FRACTION_TOWER)
+                ? null
+                : getFractioning(input);
     }
 
     @Nullable
@@ -143,8 +164,22 @@ public final class LegacyOilFluidRecipes {
     }
 
     @Nullable
+    public static TripleRecipe getHydrotreating(@Nullable Level level, FluidType input) {
+        Optional<OilProcessingRecipe> recipe = findRecipe(level, OilProcessingRecipe.Machine.HYDROTREATER, input);
+        return recipe.isPresent() ? toHydrotreating(recipe.get())
+                : datapackPresent(level, OilProcessingRecipe.Machine.HYDROTREATER) ? null : getHydrotreating(input);
+    }
+
+    @Nullable
     public static TripleRecipe getReforming(FluidType input) {
         return REFORMING.get(input);
+    }
+
+    @Nullable
+    public static TripleRecipe getReforming(@Nullable Level level, FluidType input) {
+        Optional<OilProcessingRecipe> recipe = findRecipe(level, OilProcessingRecipe.Machine.CATALYTIC_REFORMER, input);
+        return recipe.isPresent() ? toTriple(recipe.get())
+                : datapackPresent(level, OilProcessingRecipe.Machine.CATALYTIC_REFORMER) ? null : getReforming(input);
     }
 
     @Nullable
@@ -153,8 +188,22 @@ public final class LegacyOilFluidRecipes {
     }
 
     @Nullable
+    public static VacuumRecipe getVacuum(@Nullable Level level, FluidType input) {
+        Optional<OilProcessingRecipe> recipe = findRecipe(level, OilProcessingRecipe.Machine.VACUUM_DISTILL, input);
+        return recipe.isPresent() ? toVacuum(recipe.get())
+                : datapackPresent(level, OilProcessingRecipe.Machine.VACUUM_DISTILL) ? null : getVacuum(input);
+    }
+
+    @Nullable
     public static RefineryRecipe getRefinery(FluidType input) {
         return REFINERY.get(input);
+    }
+
+    @Nullable
+    public static RefineryRecipe getRefinery(@Nullable Level level, FluidType input) {
+        Optional<OilProcessingRecipe> recipe = findRecipe(level, OilProcessingRecipe.Machine.REFINERY, input);
+        return recipe.isPresent() ? toRefinery(recipe.get())
+                : datapackPresent(level, OilProcessingRecipe.Machine.REFINERY) ? null : getRefinery(input);
     }
 
     @Nullable
@@ -163,40 +212,119 @@ public final class LegacyOilFluidRecipes {
     }
 
     @Nullable
+    public static SolidificationRecipe getSolidification(@Nullable Level level, FluidType input) {
+        Optional<OilProcessingRecipe> recipe = findRecipe(level, OilProcessingRecipe.Machine.SOLIDIFIER, input);
+        return recipe.isPresent() ? toSolidification(recipe.get())
+                : datapackPresent(level, OilProcessingRecipe.Machine.SOLIDIFIER) ? null : getSolidification(input);
+    }
+
+    @Nullable
     public static CokerRecipe getCoking(FluidType input) {
         return coking().get(input);
+    }
+
+    @Nullable
+    public static CokerRecipe getCoking(@Nullable Level level, FluidType input) {
+        Optional<OilProcessingRecipe> recipe = findRecipe(level, OilProcessingRecipe.Machine.COKER, input);
+        return recipe.isPresent() ? toCoker(recipe.get())
+                : datapackPresent(level, OilProcessingRecipe.Machine.COKER) ? null : getCoking(input);
     }
 
     public static List<Map.Entry<FluidType, RefineryRecipe>> refineryRecipes() {
         return List.copyOf(REFINERY.entrySet());
     }
 
+    public static List<Map.Entry<FluidType, RefineryRecipe>> refineryRecipes(@Nullable RecipeManager recipeManager) {
+        List<OilProcessingRecipe> recipes = recipes(recipeManager, OilProcessingRecipe.Machine.REFINERY);
+        return recipes.isEmpty() ? refineryRecipes() : recipes.stream()
+                .map(recipe -> entry(recipe.primaryInput().type(), toRefinery(recipe)))
+                .filter(entry -> entry.getValue() != null)
+                .toList();
+    }
+
     public static List<Map.Entry<FluidType, PairRecipe>> crackingRecipes() {
         return List.copyOf(CRACKING.entrySet());
+    }
+
+    public static List<Map.Entry<FluidType, PairRecipe>> crackingRecipes(@Nullable RecipeManager recipeManager) {
+        List<OilProcessingRecipe> recipes = recipes(recipeManager, OilProcessingRecipe.Machine.CATALYTIC_CRACKER);
+        return recipes.isEmpty() ? crackingRecipes() : recipes.stream()
+                .map(recipe -> entry(recipe.primaryInput().type(), toPair(recipe)))
+                .filter(entry -> entry.getValue() != null)
+                .toList();
     }
 
     public static List<Map.Entry<FluidType, PairRecipe>> fractioningRecipes() {
         return List.copyOf(FRACTIONING.entrySet());
     }
 
+    public static List<Map.Entry<FluidType, PairRecipe>> fractioningRecipes(@Nullable RecipeManager recipeManager) {
+        List<OilProcessingRecipe> recipes = recipes(recipeManager, OilProcessingRecipe.Machine.FRACTION_TOWER);
+        return recipes.isEmpty() ? fractioningRecipes() : recipes.stream()
+                .map(recipe -> entry(recipe.primaryInput().type(), toPair(recipe)))
+                .filter(entry -> entry.getValue() != null)
+                .toList();
+    }
+
     public static List<Map.Entry<FluidType, TripleRecipe>> hydrotreatingRecipes() {
         return List.copyOf(HYDROTREATING.entrySet());
+    }
+
+    public static List<Map.Entry<FluidType, TripleRecipe>> hydrotreatingRecipes(@Nullable RecipeManager recipeManager) {
+        List<OilProcessingRecipe> recipes = recipes(recipeManager, OilProcessingRecipe.Machine.HYDROTREATER);
+        return recipes.isEmpty() ? hydrotreatingRecipes() : recipes.stream()
+                .map(recipe -> entry(recipe.primaryInput().type(), toHydrotreating(recipe)))
+                .filter(entry -> entry.getValue() != null)
+                .toList();
     }
 
     public static List<Map.Entry<FluidType, TripleRecipe>> reformingRecipes() {
         return List.copyOf(REFORMING.entrySet());
     }
 
+    public static List<Map.Entry<FluidType, TripleRecipe>> reformingRecipes(@Nullable RecipeManager recipeManager) {
+        List<OilProcessingRecipe> recipes = recipes(recipeManager, OilProcessingRecipe.Machine.CATALYTIC_REFORMER);
+        return recipes.isEmpty() ? reformingRecipes() : recipes.stream()
+                .map(recipe -> entry(recipe.primaryInput().type(), toTriple(recipe)))
+                .filter(entry -> entry.getValue() != null)
+                .toList();
+    }
+
     public static List<Map.Entry<FluidType, VacuumRecipe>> vacuumRecipes() {
         return List.copyOf(VACUUM.entrySet());
+    }
+
+    public static List<Map.Entry<FluidType, VacuumRecipe>> vacuumRecipes(@Nullable RecipeManager recipeManager) {
+        List<OilProcessingRecipe> recipes = recipes(recipeManager, OilProcessingRecipe.Machine.VACUUM_DISTILL);
+        return recipes.isEmpty() ? vacuumRecipes() : recipes.stream()
+                .map(recipe -> entry(recipe.primaryInput().type(), toVacuum(recipe)))
+                .filter(entry -> entry.getValue() != null)
+                .toList();
     }
 
     public static List<Map.Entry<FluidType, SolidificationRecipe>> solidificationRecipes() {
         return List.copyOf(solidification().entrySet());
     }
 
+    public static List<Map.Entry<FluidType, SolidificationRecipe>> solidificationRecipes(
+            @Nullable RecipeManager recipeManager) {
+        List<OilProcessingRecipe> recipes = recipes(recipeManager, OilProcessingRecipe.Machine.SOLIDIFIER);
+        return recipes.isEmpty() ? solidificationRecipes() : recipes.stream()
+                .map(recipe -> entry(recipe.primaryInput().type(), toSolidification(recipe)))
+                .filter(entry -> entry.getValue() != null)
+                .toList();
+    }
+
     public static List<Map.Entry<FluidType, CokerRecipe>> cokingRecipes() {
         return List.copyOf(coking().entrySet());
+    }
+
+    public static List<Map.Entry<FluidType, CokerRecipe>> cokingRecipes(@Nullable RecipeManager recipeManager) {
+        List<OilProcessingRecipe> recipes = recipes(recipeManager, OilProcessingRecipe.Machine.COKER);
+        return recipes.isEmpty() ? cokingRecipes() : recipes.stream()
+                .map(recipe -> entry(recipe.primaryInput().type(), toCoker(recipe)))
+                .filter(entry -> entry.getValue() != null)
+                .toList();
     }
 
     private static Map<FluidType, SolidificationRecipe> solidification() {
@@ -211,6 +339,75 @@ public final class LegacyOilFluidRecipes {
             coking = buildCokingRecipes();
         }
         return coking;
+    }
+
+    private static Optional<OilProcessingRecipe> findRecipe(@Nullable Level level, OilProcessingRecipe.Machine machine,
+            FluidType input) {
+        if (level == null || input == null || input == HbmFluids.NONE) {
+            return Optional.empty();
+        }
+        return recipes(level.getRecipeManager(), machine).stream()
+                .filter(recipe -> recipe.primaryInput().type() == input)
+                .findFirst();
+    }
+
+    private static boolean datapackPresent(@Nullable Level level, OilProcessingRecipe.Machine machine) {
+        return level != null && !recipes(level.getRecipeManager(), machine).isEmpty();
+    }
+
+    private static List<OilProcessingRecipe> recipes(@Nullable RecipeManager recipeManager,
+            OilProcessingRecipe.Machine machine) {
+        if (recipeManager == null) {
+            return List.of();
+        }
+        return recipeManager.getAllRecipesFor(machine.type());
+    }
+
+    @Nullable
+    private static PairRecipe toPair(OilProcessingRecipe recipe) {
+        List<HbmFluidStack> outputs = recipe.fluidOutputs();
+        return outputs.size() < 2 ? null : pair(outputs.get(0), outputs.get(1));
+    }
+
+    @Nullable
+    private static TripleRecipe toHydrotreating(OilProcessingRecipe recipe) {
+        List<HbmFluidStack> inputs = recipe.fluidInputs();
+        List<HbmFluidStack> outputs = recipe.fluidOutputs();
+        return inputs.size() < 2 || outputs.size() < 2 ? null : triple(inputs.get(1), outputs.get(0), outputs.get(1));
+    }
+
+    @Nullable
+    private static TripleRecipe toTriple(OilProcessingRecipe recipe) {
+        List<HbmFluidStack> outputs = recipe.fluidOutputs();
+        return outputs.size() < 3 ? null : triple(outputs.get(0), outputs.get(1), outputs.get(2));
+    }
+
+    @Nullable
+    private static VacuumRecipe toVacuum(OilProcessingRecipe recipe) {
+        List<HbmFluidStack> outputs = recipe.fluidOutputs();
+        return outputs.size() < 4 ? null : vacuum(outputs.get(0), outputs.get(1), outputs.get(2), outputs.get(3));
+    }
+
+    @Nullable
+    private static RefineryRecipe toRefinery(OilProcessingRecipe recipe) {
+        List<HbmFluidStack> outputs = recipe.fluidOutputs();
+        return outputs.size() < 4 ? null : refinery(outputs.get(0), outputs.get(1), outputs.get(2), outputs.get(3),
+                recipe::itemOutput);
+    }
+
+    @Nullable
+    private static SolidificationRecipe toSolidification(OilProcessingRecipe recipe) {
+        ItemStack output = recipe.itemOutput();
+        return output.isEmpty() ? null : new SolidificationRecipe(recipe.primaryInput().amount(), () -> output);
+    }
+
+    @Nullable
+    private static CokerRecipe toCoker(OilProcessingRecipe recipe) {
+        ItemStack output = recipe.itemOutput();
+        List<HbmFluidStack> outputs = recipe.fluidOutputs();
+        HbmFluidStack byproduct = outputs.isEmpty() || outputs.get(0).isEmpty() ? null : outputs.get(0);
+        return output.isEmpty() && byproduct == null ? null
+                : new CokerRecipe(recipe.primaryInput().amount(), () -> output, byproduct);
     }
 
     private static Map<FluidType, SolidificationRecipe> buildSolidificationRecipes() {
@@ -309,6 +506,10 @@ public final class LegacyOilFluidRecipes {
         return new PairRecipe(new HbmFluidStack(leftType, leftAmount), new HbmFluidStack(rightType, rightAmount));
     }
 
+    private static PairRecipe pair(HbmFluidStack left, HbmFluidStack right) {
+        return new PairRecipe(left, right);
+    }
+
     private static HbmFluidStack stack(FluidType type, int amount) {
         return new HbmFluidStack(type, amount);
     }
@@ -343,7 +544,7 @@ public final class LegacyOilFluidRecipes {
     }
 
     private static <T> Map.Entry<FluidType, T> entry(FluidType type, T recipe) {
-        return Map.entry(type, recipe);
+        return new java.util.AbstractMap.SimpleImmutableEntry<>(type, recipe);
     }
 
     private static <T> Map<FluidType, T> linkedMap(List<Map.Entry<FluidType, T>> entries) {

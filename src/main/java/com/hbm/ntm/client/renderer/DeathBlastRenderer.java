@@ -1,16 +1,15 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.ObjEffectModels;
 import com.hbm.ntm.entity.logic.DeathBlastEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import org.joml.Matrix4f;
 
 public class DeathBlastRenderer extends EntityRenderer<DeathBlastEntity> {
     private static final double BEAM_HEIGHT = 250.0D;
@@ -30,8 +29,7 @@ public class DeathBlastRenderer extends EntityRenderer<DeathBlastEntity> {
 
     private static void renderBeam(PoseStack poseStack, MultiBufferSource buffer, float radius,
             int red, int green, int blue, int alpha) {
-        VertexConsumer consumer = buffer.getBuffer(RenderType.lightning());
-        Matrix4f pose = poseStack.last().pose();
+        int color = (red << 16) | (green << 8) | blue;
         for (int i = 0; i < 8; i++) {
             double first = Math.toRadians(i * 45.0D);
             double second = Math.toRadians((i + 1) * 45.0D);
@@ -39,18 +37,13 @@ public class DeathBlastRenderer extends EntityRenderer<DeathBlastEntity> {
             float z1 = Mth.sin((float) first) * radius;
             float x2 = Mth.cos((float) second) * radius;
             float z2 = Mth.sin((float) second) * radius;
-            putColorVertex(consumer, pose, x1, (float) BEAM_HEIGHT, z1, red, green, blue, alpha);
-            putColorVertex(consumer, pose, x1, 0.0F, z1, red, green, blue, alpha);
-            putColorVertex(consumer, pose, x2, 0.0F, z2, red, green, blue, alpha);
-            putColorVertex(consumer, pose, x2, (float) BEAM_HEIGHT, z2, red, green, blue, alpha);
+            LegacyUntexturedQuadRenderer.quad(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                    x1, BEAM_HEIGHT, z1,
+                    x1, 0.0D, z1,
+                    x2, 0.0D, z2,
+                    x2, BEAM_HEIGHT, z2,
+                    color, alpha, alpha, alpha, alpha);
         }
-    }
-
-    private static void putColorVertex(VertexConsumer consumer, Matrix4f pose, float x, float y, float z,
-            int red, int green, int blue, int alpha) {
-        consumer.vertex(pose, x, y, z)
-                .color(red, green, blue, alpha)
-                .endVertex();
     }
 
     private static void renderOrb(DeathBlastEntity entity, float partialTick, PoseStack poseStack,

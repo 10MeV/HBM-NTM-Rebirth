@@ -24,6 +24,8 @@ public final class ModRecipes {
             SERIALIZERS.register("rbmk_fuel_disassembly",
                     () -> new net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer<>(
                             RBMKFuelDisassemblyRecipe::new));
+    public static final RegistryObject<RecipeSerializer<LegacyNbtShapedRecipe>> LEGACY_NBT_SHAPED =
+            SERIALIZERS.register("shaped_nbt", LegacyNbtShapedRecipe.Serializer::new);
     public static final RecipeHolder<PressRecipe> PRESS = register("press", PressRecipe.Serializer::new);
     public static final RecipeHolder<GenericMachineRecipe> CHEMICAL_PLANT =
             register("chemical_plant", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.CHEMICAL_PLANT));
@@ -42,7 +44,33 @@ public final class ModRecipes {
     public static final RecipeHolder<GenericMachineRecipe> PLASMA_FORGE =
             register("plasma_forge", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.PLASMA_FORGE));
     public static final RecipeHolder<LiquefactionRecipe> LIQUEFACTION = register("liquefaction", LiquefactionRecipe.Serializer::new);
+    public static final RecipeHolder<CompressorRecipe> COMPRESSOR =
+            register("compressor", CompressorRecipe.Serializer::new);
+    public static final RecipeHolder<ElectrolyserFluidRecipe> ELECTROLYZER_FLUID =
+            register("electrolyzer_fluid", ElectrolyserFluidRecipe.Serializer::new);
+    public static final RecipeHolder<ElectrolyserMetalRecipe> ELECTROLYZER_METAL =
+            register("electrolyzer_metal", ElectrolyserMetalRecipe.Serializer::new);
     public static final RecipeHolder<PyroOvenRecipe> PYRO_OVEN = register("pyro_oven", PyroOvenRecipe.Serializer::new);
+    public static final RecipeHolder<OilProcessingRecipe> REFINERY =
+            register("refinery", () -> new OilProcessingRecipe.Serializer(OilProcessingRecipe.Machine.REFINERY));
+    public static final RecipeHolder<OilProcessingRecipe> CATALYTIC_CRACKER =
+            register("catalytic_cracker",
+                    () -> new OilProcessingRecipe.Serializer(OilProcessingRecipe.Machine.CATALYTIC_CRACKER));
+    public static final RecipeHolder<OilProcessingRecipe> CATALYTIC_REFORMER =
+            register("catalytic_reformer",
+                    () -> new OilProcessingRecipe.Serializer(OilProcessingRecipe.Machine.CATALYTIC_REFORMER));
+    public static final RecipeHolder<OilProcessingRecipe> VACUUM_DISTILL =
+            register("vacuum_distill",
+                    () -> new OilProcessingRecipe.Serializer(OilProcessingRecipe.Machine.VACUUM_DISTILL));
+    public static final RecipeHolder<OilProcessingRecipe> FRACTION_TOWER =
+            register("fraction_tower",
+                    () -> new OilProcessingRecipe.Serializer(OilProcessingRecipe.Machine.FRACTION_TOWER));
+    public static final RecipeHolder<OilProcessingRecipe> HYDROTREATER =
+            register("hydrotreater", () -> new OilProcessingRecipe.Serializer(OilProcessingRecipe.Machine.HYDROTREATER));
+    public static final RecipeHolder<OilProcessingRecipe> SOLIDIFIER =
+            register("solidifier", () -> new OilProcessingRecipe.Serializer(OilProcessingRecipe.Machine.SOLIDIFIER));
+    public static final RecipeHolder<OilProcessingRecipe> COKER =
+            register("coker", () -> new OilProcessingRecipe.Serializer(OilProcessingRecipe.Machine.COKER));
     public static final RecipeHolder<CombinationOvenRecipe> COMBINATION_OVEN =
             register("combination_oven", CombinationOvenRecipe.Serializer::new);
     public static final RecipeHolder<BlastFurnaceRecipe> BLAST_FURNACE =

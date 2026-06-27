@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:compressor",
+  "input": {
+    "fluid": "hbm:blood",
+    "amount": 1000,
+    "pressure": 3
+  },
+  "output": {
+    "fluid": "hbm:heavyoil",
+    "amount": 250,
+    "pressure": 0
+  },
+  "duration": 200
+}

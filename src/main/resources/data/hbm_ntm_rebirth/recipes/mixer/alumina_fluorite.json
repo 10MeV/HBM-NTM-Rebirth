@@ -7,5 +7,6 @@
     "count": 3,
     "legacy_ore": "dustFluorite"
   },
-  "duration": 40
+  "duration": 40,
+  "source_order": 0
 }

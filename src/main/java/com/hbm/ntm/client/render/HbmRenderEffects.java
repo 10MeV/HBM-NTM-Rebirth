@@ -1,6 +1,8 @@
 package com.hbm.ntm.client.render;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.obj.LegacyLineRenderer;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.config.HbmClientConfig;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
@@ -183,7 +185,7 @@ public final class HbmRenderEffects {
             BufferUploader.drawWithShader(builder.end());
 
             if (debugWireframe) {
-                renderDebugWireframe(tesselator, builder, centerX, centerY, centerZ, radius, rings, segments, alpha);
+                renderDebugWireframe(tesselator, centerX, centerY, centerZ, radius, rings, segments, alpha);
                 RenderSystem.setShader(() -> warpWorldShader);
             }
         }
@@ -254,21 +256,20 @@ public final class HbmRenderEffects {
                 .endVertex();
     }
 
-    private static void renderDebugWireframe(Tesselator tesselator, BufferBuilder builder, float centerX, float centerY,
+    private static void renderDebugWireframe(Tesselator tesselator, float centerX, float centerY,
             float centerZ, float radius, int rings, int segments, float alpha) {
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        builder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
         int colorAlpha = Mth.clamp((int) (alpha * 180.0F), 32, 180);
+        List<LegacyWavefrontModel.UntexturedLineTransient> lines = new ArrayList<>(rings * segments + segments * 2);
 
         for (int ring = 1; ring < rings; ring++) {
             float theta = (float) (Math.PI * ring / (float) rings);
             for (int segment = 0; segment < segments; segment++) {
                 float phi0 = (float) (Math.PI * 2.0D * segment / (float) segments);
                 float phi1 = (float) (Math.PI * 2.0D * (segment + 1) / (float) segments);
-                putDebugLineVertex(builder, centerX, centerY, centerZ, radius, theta, phi0, colorAlpha);
-                putDebugLineVertex(builder, centerX, centerY, centerZ, radius, theta, phi1, colorAlpha);
+                addDebugLine(lines, centerX, centerY, centerZ, radius, theta, phi0, theta, phi1, colorAlpha);
             }
         }
 
@@ -277,23 +278,29 @@ public final class HbmRenderEffects {
             for (int ring = 0; ring < rings; ring++) {
                 float theta0 = (float) (Math.PI * ring / (float) rings);
                 float theta1 = (float) (Math.PI * (ring + 1) / (float) rings);
-                putDebugLineVertex(builder, centerX, centerY, centerZ, radius, theta0, phi, colorAlpha);
-                putDebugLineVertex(builder, centerX, centerY, centerZ, radius, theta1, phi, colorAlpha);
+                addDebugLine(lines, centerX, centerY, centerZ, radius, theta0, phi, theta1, phi, colorAlpha);
             }
         }
 
-        tesselator.end();
+        LegacyLineRenderer.drawPositionColorLines(tesselator, lines);
     }
 
-    private static void putDebugLineVertex(BufferBuilder builder, float centerX, float centerY, float centerZ,
-            float radius, float theta, float phi, int alpha) {
+    private static void addDebugLine(List<LegacyWavefrontModel.UntexturedLineTransient> lines,
+            float centerX, float centerY, float centerZ, float radius,
+            float theta0, float phi0, float theta1, float phi1, int alpha) {
+        Vec3 from = debugLinePoint(centerX, centerY, centerZ, radius, theta0, phi0);
+        Vec3 to = debugLinePoint(centerX, centerY, centerZ, radius, theta1, phi1);
+        lines.add(new LegacyWavefrontModel.UntexturedLineTransient(
+                from.x, from.y, from.z, to.x, to.y, to.z, 0x5ADCFF, alpha));
+    }
+
+    private static Vec3 debugLinePoint(float centerX, float centerY, float centerZ,
+            float radius, float theta, float phi) {
         float sinTheta = Mth.sin(theta);
         float nx = sinTheta * Mth.cos(phi);
         float ny = Mth.cos(theta);
         float nz = sinTheta * Mth.sin(phi);
-        builder.vertex(centerX + nx * radius, centerY + ny * radius, centerZ + nz * radius)
-                .color(90, 220, 255, alpha)
-                .endVertex();
+        return new Vec3(centerX + nx * radius, centerY + ny * radius, centerZ + nz * radius);
     }
 
     private static void setUniform(String name, int value) {

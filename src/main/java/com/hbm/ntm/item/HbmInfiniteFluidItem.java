@@ -2,6 +2,7 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -32,7 +33,7 @@ public class HbmInfiniteFluidItem extends HbmFluidContainerItem {
     }
 
     public boolean allowPressure(int pressure) {
-        return fluidType == null || pressure == 0;
+        return this == ModItems.FLUID_BARREL_INFINITE.get() || pressure == 0;
     }
 
     @Override

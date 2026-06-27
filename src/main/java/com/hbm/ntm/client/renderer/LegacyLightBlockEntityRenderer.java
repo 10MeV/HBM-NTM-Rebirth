@@ -4,13 +4,14 @@ import com.hbm.ntm.block.LegacyDirectionalShapeBlock;
 import com.hbm.ntm.block.LegacySpotlightBlock;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjLightModels;
 import com.hbm.ntm.client.obj.ObjModelPart;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.core.Direction;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -34,12 +35,13 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         if (!(state.getBlock() instanceof LegacyDirectionalShapeBlock block)) {
             return;
         }
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
         Direction face = state.getValue(LegacyDirectionalShapeBlock.FACE);
         if (block.kind() == LegacyDirectionalShapeBlock.Kind.FLOODLIGHT) {
-            renderFloodlight(blockEntity, face, state, poseStack, buffer, packedLight, packedOverlay);
+            renderFloodlight(blockEntity, face, state, poseStack, buffer, modelLight, packedOverlay);
         } else {
-            renderSpotlight(block.kind(), face, state, poseStack, buffer, packedLight, packedOverlay);
+            renderSpotlight(block.kind(), face, state, poseStack, buffer, modelLight, packedOverlay);
         }
     }
 
@@ -58,11 +60,11 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
                 0.5D - face.getStepZ() * 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(LegacyObjTransforms.yawDegrees(face)));
         poseStack.mulPose(Axis.ZP.rotationDegrees(-LegacyObjTransforms.pitchDegrees(face)));
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
         if (state.getBlock() instanceof LegacySpotlightBlock spotlight && !spotlight.isActive()) {
-            context = context.withColor(0x404040);
+            model.render(poseStack, buffer, state, packedLight, packedOverlay, 0x404040);
+        } else {
+            model.render(poseStack, buffer, state, packedLight, packedOverlay);
         }
-        model.render(context);
         poseStack.popPose();
     }
 
@@ -77,8 +79,7 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
             poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
         }
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        renderFloodlightPart(FLOODLIGHT_BASE, context);
+        renderFloodlightPart(FLOODLIGHT_BASE, poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF);
 
         float rotation = blockEntity.rotation();
         if (face == Direction.DOWN) {
@@ -92,19 +93,21 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         poseStack.translate(0.0D, 0.5D, 0.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
         poseStack.translate(0.0D, -0.5D, 0.0D);
-        ObjRenderContext angledContext = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        renderFloodlightPart(FLOODLIGHT_LIGHTS, angledContext);
-        renderFloodlightPart(FLOODLIGHT_LAMPS, blockEntity.isOn()
-                ? angledContext.fullBright()
-                : angledContext.withColor(0x404040));
+        renderFloodlightPart(FLOODLIGHT_LIGHTS, poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF);
+        renderFloodlightPart(FLOODLIGHT_LAMPS, poseStack, buffer,
+                blockEntity.isOn() ? LightTexture.FULL_BRIGHT : packedLight, packedOverlay,
+                blockEntity.isOn() ? 0xFFFFFF : 0x404040);
         poseStack.popPose();
 
         poseStack.popPose();
     }
 
-    private static void renderFloodlightPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
+    private static void renderFloodlightPart(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, int color) {
         ObjLightModels.FLOODLIGHT_LEGACY.renderOnlyInCallOrder(ObjLightModels.FLOODLIGHT_LEGACY.textureLocation(),
-                context, handle);
+                poseStack, buffer, packedLight, packedOverlay,
+                color >> 16 & 255, color >> 8 & 255, color & 255, 255, false,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, LegacyWavefrontModel.UvTransform.DEFAULT, handle);
     }
 
     private static void applyFloodlightBaseRotation(PoseStack poseStack, Direction face) {

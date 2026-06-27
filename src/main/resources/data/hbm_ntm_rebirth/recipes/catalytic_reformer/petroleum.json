@@ -1,0 +1,19 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:catalytic_reformer",
+    "output3":  {
+                    "fluid":  "hbm_ntm_rebirth:hydrogen",
+                    "amount":  5
+                },
+    "output1":  {
+                    "fluid":  "hbm_ntm_rebirth:unsaturateds",
+                    "amount":  85
+                },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:petroleum",
+                  "amount":  100
+              },
+    "output2":  {
+                    "fluid":  "hbm_ntm_rebirth:reformgas",
+                    "amount":  10
+                }
+}

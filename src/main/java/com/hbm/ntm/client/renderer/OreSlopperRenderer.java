@@ -4,9 +4,9 @@ import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.OreSlopperBlockEntity;
 import com.hbm.ntm.blockentity.OreSlopperBlockEntity.SlopperAnimation;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.item.BedrockOreItem;
 import com.hbm.ntm.item.BedrockOreItem.BedrockOreGrade;
 import com.hbm.ntm.item.BedrockOreItem.BedrockOreType;
@@ -71,20 +71,19 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay)
-                .withRenderMode(LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
-        renderPart(BASE, definition, context);
+        LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
+        renderPart(BASE, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, blockEntity.getSlider(partialTick) * -3.0D);
-        renderPart(SLIDER, definition, context);
+        renderPart(SLIDER, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
 
         poseStack.pushPose();
         double extend = blockEntity.getBucket(partialTick) * 1.5D;
         poseStack.translate(0.0D, -Mth.clamp(extend - 0.25D, 0.0D, 1.25D), 0.0D);
-        renderPart(HYDRAULICS, definition, context);
+        renderPart(HYDRAULICS, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
         poseStack.translate(0.0D, -Mth.clamp(extend, 0.0D, 1.25D), 0.0D);
-        renderPart(BUCKET, definition, context);
+        renderPart(BUCKET, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
         if (blockEntity.getAnimation() == SlopperAnimation.LIFTING) {
             renderBucketOre(blockEntity, poseStack, buffer, packedLight);
         }
@@ -96,29 +95,31 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
         poseStack.translate(0.375D, 2.75D, 0.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) blades));
         poseStack.translate(-0.375D, -2.75D, 0.0D);
-        renderPart(BLADES_LEFT, definition, context);
+        renderPart(BLADES_LEFT, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(-0.375D, 2.75D, 0.0D);
         poseStack.mulPose(Axis.ZN.rotationDegrees((float) blades));
         poseStack.translate(0.375D, -2.75D, 0.0D);
-        renderPart(BLADES_RIGHT, definition, context);
+        renderPart(BLADES_RIGHT, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 1.875D, -1.0D);
         poseStack.mulPose(Axis.XN.rotationDegrees((float) blockEntity.getFan(partialTick)));
         poseStack.translate(0.0D, -1.875D, 1.0D);
-        renderPart(FAN, definition, context);
+        renderPart(FAN, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
         poseStack.popPose();
 
         poseStack.popPose();
     }
 
     private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, LegacyMachineDefinition definition,
-            ObjRenderContext context) {
-        MODEL.renderOnlyInCallOrder(definition.textureLocation(), context, handle);
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
+        MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
+                handle, renderMode);
     }
 
     private static void renderBucketOre(OreSlopperBlockEntity blockEntity, PoseStack poseStack,

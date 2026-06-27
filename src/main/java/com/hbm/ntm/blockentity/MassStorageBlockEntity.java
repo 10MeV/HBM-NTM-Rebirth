@@ -1,5 +1,8 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.MassStorageBlock;
 import com.hbm.ntm.item.KeyPinItem;
 import com.hbm.ntm.item.PadlockItem;
@@ -20,6 +23,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -33,8 +37,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-public class MassStorageBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyControlReceiver {
+public class MassStorageBlockEntity extends BlockEntity
+        implements MenuProvider, HbmLegacyControlReceiver, LegacyLookOverlayProvider {
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_FILTER = 1;
     public static final int SLOT_OUTPUT = 2;
@@ -469,6 +475,18 @@ public class MassStorageBlockEntity extends BlockEntity implements MenuProvider,
     @Override
     public Component getDisplayName() {
         return Component.translatable("container.massStorage");
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        ItemStack type = type();
+        if (type.isEmpty()) {
+            return LegacyLookOverlay.titleOnly(Component.literal("Empty"), 0x00FFFF, 0x004040);
+        }
+        int capacity = capacity();
+        return LegacyLookOverlay.withTitle(Component.literal(type.getHoverName().getString()), 0xFFFF00, 0x404000,
+                List.of(Component.literal(String.format(Locale.US, "%,d / %,d", stockpile(), capacity)),
+                        LegacyLookOverlayLines.legacyUnclampedPercent(stockpile(), capacity)));
     }
 
     @Nullable

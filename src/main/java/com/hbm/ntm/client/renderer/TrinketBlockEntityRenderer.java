@@ -4,7 +4,6 @@ import com.hbm.ntm.block.TrinketVariant;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
 import com.hbm.ntm.client.obj.ObjModelPart;
 import com.hbm.ntm.client.obj.ObjTrinketModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -14,6 +13,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -61,79 +61,85 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
         if (variant <= 0) {
             return;
         }
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YN.rotationDegrees(blockEntity.yawDegrees() + 90.0F));
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, blockEntity.getBlockState(), packedLight, packedOverlay);
-        renderTrinket(kind, variant, blockEntity.squishTimer(), partialTick, context);
+        renderTrinket(kind, variant, blockEntity.squishTimer(), partialTick, poseStack, buffer,
+                blockEntity.getBlockState(), modelLight, packedOverlay);
 
         poseStack.popPose();
     }
 
-    public static void renderTrinket(TrinketVariant.Kind kind, int variant, int squishTimer, float partialTick, ObjRenderContext context) {
+    public static void renderTrinket(TrinketVariant.Kind kind, int variant, int squishTimer, float partialTick,
+            PoseStack poseStack, MultiBufferSource buffer, BlockState state, int packedLight, int packedOverlay) {
         switch (kind) {
-            case BOBBLEHEAD -> renderBobblehead(variant, context);
-            case SNOWGLOBE -> renderSnowglobe(variant, context);
-            case PLUSHIE -> renderPlushie(squishTimer, partialTick, variant, context);
+            case BOBBLEHEAD -> renderBobblehead(variant, poseStack, buffer, state, packedLight, packedOverlay);
+            case SNOWGLOBE -> renderSnowglobe(variant, poseStack, buffer, state, packedLight, packedOverlay);
+            case PLUSHIE -> renderPlushie(squishTimer, partialTick, variant, poseStack, buffer, state, packedLight,
+                    packedOverlay);
         }
     }
 
-    private static void renderBobblehead(int variant, ObjRenderContext context) {
-        context.poseStack().pushPose();
-        context.poseStack().scale(0.25F, 0.25F, 0.25F);
-        BOBBLEHEAD_SOCKET.render(context);
+    private static void renderBobblehead(int variant, PoseStack poseStack, MultiBufferSource buffer, BlockState state,
+            int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        poseStack.scale(0.25F, 0.25F, 0.25F);
+        renderPart(BOBBLEHEAD_SOCKET, poseStack, buffer, state, packedLight, packedOverlay);
         String type = TrinketVariant.name(TrinketVariant.Kind.BOBBLEHEAD, variant);
         switch (type) {
-            case "PU238" -> BOBBLEHEAD_PELLET.render(context);
-            case "UFFR" -> BOBBLEHEAD_FUMO.render(context);
-            case "DRILLGON" -> BOBBLEHEAD_DRILLGON.render(context);
+            case "PU238" -> renderPart(BOBBLEHEAD_PELLET, poseStack, buffer, state, packedLight, packedOverlay);
+            case "UFFR" -> renderPart(BOBBLEHEAD_FUMO, poseStack, buffer, state, packedLight, packedOverlay);
+            case "DRILLGON" -> renderPart(BOBBLEHEAD_DRILLGON, poseStack, buffer, state, packedLight, packedOverlay);
             default -> {
                 ObjModelPart model = BOBBLEHEAD_MODELS.get(TrinketVariant.texture(TrinketVariant.Kind.BOBBLEHEAD, variant));
                 if (model != null) {
-                    model.render(context);
+                    renderPart(model, poseStack, buffer, state, packedLight, packedOverlay);
                 }
             }
         }
-        context.poseStack().popPose();
+        poseStack.popPose();
     }
 
-    private static void renderSnowglobe(int variant, ObjRenderContext context) {
-        context.poseStack().pushPose();
-        context.poseStack().scale(0.0625F, 0.0625F, 0.0625F);
-        SNOWGLOBE_SOCKET.render(context);
+    private static void renderSnowglobe(int variant, PoseStack poseStack, MultiBufferSource buffer, BlockState state,
+            int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        poseStack.scale(0.0625F, 0.0625F, 0.0625F);
+        renderPart(SNOWGLOBE_SOCKET, poseStack, buffer, state, packedLight, packedOverlay);
         ObjModelPart feature = SNOWGLOBE_FEATURES.get(TrinketVariant.modelSuffix(TrinketVariant.Kind.SNOWGLOBE, variant));
         if (feature != null) {
-            feature.render(context);
+            renderPart(feature, poseStack, buffer, state, packedLight, packedOverlay);
         }
-        renderSnowglobeLabel(variant, context);
-        SNOWGLOBE_GLASS.render(context);
-        context.poseStack().popPose();
+        renderSnowglobeLabel(variant, poseStack, buffer);
+        renderPart(SNOWGLOBE_GLASS, poseStack, buffer, state, packedLight, packedOverlay);
+        poseStack.popPose();
     }
 
-    private static void renderSnowglobeLabel(int variant, ObjRenderContext context) {
+    private static void renderSnowglobeLabel(int variant, PoseStack poseStack, MultiBufferSource buffer) {
         String label = TrinketVariant.snowglobeLabel(variant);
         if ("NONE".equals(label)) {
             return;
         }
         Font font = Minecraft.getInstance().font;
-        context.poseStack().pushPose();
-        context.poseStack().translate(4.025D, 0.5D, 0.0D);
-        context.poseStack().scale(0.05F, -0.05F, 0.05F);
-        context.poseStack().translate(0.0D, -font.lineHeight / 2.0D, font.width(label) * 0.5D);
-        context.poseStack().mulPose(Axis.YP.rotationDegrees(90.0F));
-        context.poseStack().translate(0.0D, 1.0D, 0.0D);
-        font.drawInBatch(label, 0.0F, 0.0F, 0xFFFFFF, false, context.poseStack().last().pose(),
-                context.buffer(), Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
-        context.poseStack().popPose();
+        poseStack.pushPose();
+        poseStack.translate(4.025D, 0.5D, 0.0D);
+        poseStack.scale(0.05F, -0.05F, 0.05F);
+        poseStack.translate(0.0D, -font.lineHeight / 2.0D, font.width(label) * 0.5D);
+        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        poseStack.translate(0.0D, 1.0D, 0.0D);
+        font.drawInBatch(label, 0.0F, 0.0F, 0xFFFFFF, false, poseStack.last().pose(),
+                buffer, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+        poseStack.popPose();
     }
 
-    private static void renderPlushie(int squishTimer, float partialTick, int variant, ObjRenderContext context) {
-        context.poseStack().pushPose();
+    private static void renderPlushie(int squishTimer, float partialTick, int variant, PoseStack poseStack,
+            MultiBufferSource buffer, BlockState state, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
         if (squishTimer > 0) {
             double squish = Math.max(0.0D, squishTimer - partialTick);
-            context.poseStack().scale(1.0F, (float) (1.0D + (-(Math.sin(squish)) * squish) * 0.025D), 1.0F);
+            poseStack.scale(1.0F, (float) (1.0D + (-(Math.sin(squish)) * squish) * 0.025D), 1.0F);
         }
 
         String suffix = TrinketVariant.modelSuffix(TrinketVariant.Kind.PLUSHIE, variant).toLowerCase(Locale.ROOT);
@@ -142,13 +148,18 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
             case "numbernine" -> 0.75F;
             default -> 1.0F;
         };
-        context.poseStack().scale(scale, scale, scale);
+        poseStack.scale(scale, scale, scale);
 
         ObjModelPart model = PLUSHIE_MODELS.get(suffix);
         if (model != null) {
-            model.render(context);
+            renderPart(model, poseStack, buffer, state, packedLight, packedOverlay);
         }
-        context.poseStack().popPose();
+        poseStack.popPose();
+    }
+
+    private static void renderPart(ObjModelPart model, PoseStack poseStack, MultiBufferSource buffer, BlockState state,
+            int packedLight, int packedOverlay) {
+        model.render(poseStack, buffer, state, packedLight, packedOverlay);
     }
 
     private static ObjModelPart trinketPart(String name, RenderType renderType) {

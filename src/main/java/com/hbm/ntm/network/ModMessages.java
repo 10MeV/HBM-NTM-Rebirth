@@ -46,6 +46,7 @@ import com.hbm.ntm.network.packet.TypedMenuActionPacket;
 import com.hbm.ntm.player.HbmExtendedProperties;
 import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.player.HbmPlayerProperties;
+import com.hbm.ntm.util.HbmMachinePerformanceCounters;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -3401,7 +3402,9 @@ public final class ModMessages {
         if (level == null || level.isClientSide) {
             return false;
         }
-        return syncState == null || syncState.shouldSend(payload, level.getGameTime());
+        boolean sent = syncState == null || syncState.shouldSend(payload, level.getGameTime());
+        HbmMachinePerformanceCounters.networkPack(payload == null ? 0 : payload.length, sent);
+        return sent;
     }
 
     private static double legacyBiomeSyncY(ServerLevel level) {

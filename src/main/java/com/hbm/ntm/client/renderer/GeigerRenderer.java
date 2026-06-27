@@ -18,11 +18,12 @@ public class GeigerRenderer implements BlockEntityRenderer<GeigerBlockEntity> {
     public void render(GeigerBlockEntity geiger, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         Direction facing = geiger.getBlockState().getValue(GeigerBlock.FACING);
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(geiger, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation(facing)));
         ObjUtilityModels.GEIGER_COUNTER.renderAll(ObjUtilityModels.GEIGER_TEXTURE,
-                poseStack, buffer, packedLight, packedOverlay);
+                poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
     }
 

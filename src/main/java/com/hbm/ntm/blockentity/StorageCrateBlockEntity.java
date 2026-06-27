@@ -2,6 +2,8 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.CrateBlock;
 import api.hbm.block.ILaserable;
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.item.KeyPinItem;
 import com.hbm.ntm.item.PadlockItem;
 import com.hbm.ntm.menu.CrateMenu;
@@ -24,6 +26,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.particles.ParticleTypes;
@@ -38,7 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider, ILaserable {
+public class StorageCrateBlockEntity extends BlockEntity
+        implements MenuProvider, ILaserable, LegacyLookOverlayProvider {
     public static final String LEGACY_NAME_TAG = "name";
     public static final String LEGACY_LOCK_TAG = "lock";
     public static final String LEGACY_LOCKED_TAG = "isLocked";
@@ -377,6 +381,14 @@ public class StorageCrateBlockEntity extends BlockEntity implements MenuProvider
         return customName != null && !customName.isBlank()
                 ? Component.literal(customName)
                 : Component.translatable(kind.titleKey());
+    }
+
+    @Nullable
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        return customName != null && !customName.isBlank()
+                ? LegacyLookOverlay.titleOnly(Component.literal(customName))
+                : null;
     }
 
     @Nullable

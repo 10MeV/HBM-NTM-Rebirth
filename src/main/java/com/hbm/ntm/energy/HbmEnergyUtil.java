@@ -1,6 +1,8 @@
 package com.hbm.ntm.energy;
 
 import com.hbm.ntm.world.DirPos;
+import com.hbm.ntm.network.LoadedTileAccessCache;
+import com.hbm.ntm.util.HbmMachinePerformanceCounters;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
@@ -133,7 +135,7 @@ public final class HbmEnergyUtil {
         if (!isLoadedBlock(level, neighborPos)) {
             return 0L;
         }
-        BlockEntity neighbor = level.getBlockEntity(neighborPos);
+        BlockEntity neighbor = LoadedTileAccessCache.getBlockEntity(level, neighborPos);
         if (neighbor == null) {
             return 0L;
         }
@@ -151,7 +153,7 @@ public final class HbmEnergyUtil {
         if (!isLoadedBlock(level, neighborPos)) {
             return 0L;
         }
-        BlockEntity neighbor = level.getBlockEntity(neighborPos);
+        BlockEntity neighbor = LoadedTileAccessCache.getBlockEntity(level, neighborPos);
         if (neighbor == null) {
             return 0L;
         }
@@ -235,7 +237,9 @@ public final class HbmEnergyUtil {
         }
         int subscribed = 0;
         for (EnergyPort port : ports) {
+            HbmMachinePerformanceCounters.energyPortCheck();
             if (subscribeProviderToPort(level, origin, port, provider)) {
+                HbmMachinePerformanceCounters.energyPortSubscription(true);
                 subscribed++;
             }
         }
@@ -248,7 +252,9 @@ public final class HbmEnergyUtil {
         }
         int subscribed = 0;
         for (EnergyPort port : ports) {
+            HbmMachinePerformanceCounters.energyPortCheck();
             if (subscribeReceiverToPort(level, origin, port, receiver)) {
+                HbmMachinePerformanceCounters.energyPortSubscription(true);
                 subscribed++;
             }
         }
@@ -514,7 +520,7 @@ public final class HbmEnergyUtil {
         if (!isLoadedPort(level, origin, port)) {
             return 0L;
         }
-        BlockEntity target = level.getBlockEntity(targetPos);
+        BlockEntity target = LoadedTileAccessCache.getBlockEntity(level, targetPos);
         if (target == null) {
             return 0L;
         }
@@ -582,7 +588,7 @@ public final class HbmEnergyUtil {
                     false, false, false, false,
                     0, 0, 0, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
         }
-        BlockEntity conductor = level.getBlockEntity(conductorPos);
+        BlockEntity conductor = LoadedTileAccessCache.getBlockEntity(level, conductorPos);
         boolean connectorPresent = conductor instanceof HbmEnergyConnector;
         boolean connectable = connectorPresent
                 && ((HbmEnergyConnector) conductor).canConnectEnergy(conductorSide);
@@ -645,7 +651,7 @@ public final class HbmEnergyUtil {
         if (!isLoadedBlock(level, conductorPos)) {
             return null;
         }
-        BlockEntity conductor = level.getBlockEntity(conductorPos);
+        BlockEntity conductor = LoadedTileAccessCache.getBlockEntity(level, conductorPos);
         if (!(conductor instanceof HbmEnergyConnector connector) || !connector.canConnectEnergy(conductorSide)) {
             return null;
         }
@@ -717,7 +723,7 @@ public final class HbmEnergyUtil {
         if (!isLoadedBlock(level, neighborPos)) {
             return 0L;
         }
-        BlockEntity neighbor = level.getBlockEntity(neighborPos);
+        BlockEntity neighbor = LoadedTileAccessCache.getBlockEntity(level, neighborPos);
         if (!(neighbor instanceof HbmEnergyReceiver receiver)
                 || !(neighbor instanceof HbmEnergyConnector connector)
                 || receiver == provider
@@ -742,7 +748,7 @@ public final class HbmEnergyUtil {
             return 0L;
         }
         Direction targetSide = port.conductorSide();
-        BlockEntity target = level.getBlockEntity(targetPos);
+        BlockEntity target = LoadedTileAccessCache.getBlockEntity(level, targetPos);
         if (target instanceof HbmEnergyReceiver receiver
                 && target instanceof HbmEnergyConnector connector
                 && receiver != provider
@@ -763,7 +769,7 @@ public final class HbmEnergyUtil {
             return 0L;
         }
         Direction targetSide = port.getDir().getOpposite();
-        BlockEntity target = level.getBlockEntity(port);
+        BlockEntity target = LoadedTileAccessCache.getBlockEntity(level, port);
         if (target instanceof HbmEnergyReceiver receiver
                 && target instanceof HbmEnergyConnector connector
                 && receiver != provider

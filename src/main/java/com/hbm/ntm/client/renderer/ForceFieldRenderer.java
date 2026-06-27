@@ -2,16 +2,19 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.ForceFieldBlockEntity;
 import com.hbm.ntm.client.obj.LegacyLineRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.ObjUtilityModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEntity> {
     public ForceFieldRenderer(BlockEntityRendererProvider.Context context) {
@@ -20,11 +23,12 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
     @Override
     public void render(ForceFieldBlockEntity forceField, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(forceField, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
         ObjModelLibrary.MACHINE_RADAR_BODY_LEGACY.renderAll(ObjUtilityModels.FORCEFIELD_BASE_TEXTURE,
-                poseStack, buffer, packedLight, packedOverlay);
+                poseStack, buffer, modelLight, packedOverlay);
 
         poseStack.translate(0.0D, 0.5D, 0.0D);
         if (forceField.isOn() && forceField.getHealth() > 0 && forceField.getPower() > 0
@@ -37,7 +41,7 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
 
         poseStack.translate(0.0D, 0.5D, 0.0D);
         ObjUtilityModels.FORCEFIELD_TOP.renderAll(ObjUtilityModels.FORCEFIELD_TOP_TEXTURE,
-                poseStack, buffer, packedLight, packedOverlay);
+                poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
     }
 
@@ -53,17 +57,16 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
 
     private static void renderSphere(PoseStack poseStack, MultiBufferSource buffer, int latitudes, int segments,
             float radius, int color) {
-        VertexConsumer consumer = buffer.getBuffer(RenderType.lines());
-        PoseStack.Pose pose = poseStack.last();
         double segmentRot = Math.PI * 2.0D / segments;
         double latitudeRot = Math.PI / latitudes;
+        List<LegacyWavefrontModel.UntexturedLineTransient> lines = new ArrayList<>(segments * latitudes * 2);
 
         for (int k = 0; k < segments; k++) {
             double yaw = segmentRot * (k + 1);
             Vec3 prev = rotateY(new Vec3(0.0D, radius, 0.0D), yaw);
             for (int i = 0; i < latitudes; i++) {
                 Vec3 next = rotateY(rotateX(new Vec3(0.0D, radius, 0.0D), latitudeRot * (i + 1)), yaw);
-                LegacyLineRenderer.line(consumer, pose, prev.x, prev.y, prev.z, next.x, next.y, next.z, color, 255);
+                lines.add(line(prev, next, color));
                 prev = next;
             }
         }
@@ -74,10 +77,17 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
             Vec3 prev = ring;
             for (int i = 0; i < segments; i++) {
                 Vec3 next = rotateY(ring, segmentRot * (i + 1));
-                LegacyLineRenderer.line(consumer, pose, prev.x, prev.y, prev.z, next.x, next.y, next.z, color, 255);
+                lines.add(line(prev, next, color));
                 prev = next;
             }
         }
+        LegacyLineRenderer.lines(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                LegacyLineRenderer.DEFAULT_LINE_WIDTH, lines);
+    }
+
+    private static LegacyWavefrontModel.UntexturedLineTransient line(Vec3 start, Vec3 end, int color) {
+        return new LegacyWavefrontModel.UntexturedLineTransient(
+                start.x, start.y, start.z, end.x, end.y, end.z, color, 255);
     }
 
     private static Vec3 rotateX(Vec3 vec, double angle) {

@@ -29,10 +29,11 @@ public class HexafluorideTankRenderer implements BlockEntityRenderer<Hexafluorid
         if (!(state.getBlock() instanceof HexafluorideTankBlock block)) {
             return;
         }
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyRotation(state)));
-        ObjMachineModels.TANK.renderAll(texture(block.kind()), poseStack, buffer, packedLight, packedOverlay);
+        ObjMachineModels.TANK.renderAll(texture(block.kind()), poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
     }
 

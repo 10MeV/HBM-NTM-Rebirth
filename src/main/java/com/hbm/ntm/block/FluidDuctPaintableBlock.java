@@ -5,13 +5,16 @@ import com.hbm.ntm.blockentity.FluidDuctPaintableBlockEntity;
 import com.hbm.ntm.blockentity.PaintableDuctBlockEntity;
 import com.hbm.ntm.item.FluidDuctVariantBlockItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -77,7 +80,7 @@ public class FluidDuctPaintableBlock extends FluidPipeBlock implements Toolable 
                 && !paintable.hasPaintedState()
                 && canPaintWith(level, pos, blockItem.getBlock(), this)) {
             if (!level.isClientSide) {
-                paintable.setPaintedState(blockItem.getBlock().defaultBlockState(), legacyPaintMeta(held));
+                paintable.setPaintedState(paintStateFromStack(blockItem, held), legacyPaintMeta(held));
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
@@ -108,6 +111,17 @@ public class FluidDuctPaintableBlock extends FluidPipeBlock implements Toolable 
         return false;
     }
 
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        LegacyStandardInfoTooltip.append(tooltip, paintableTooltipId());
+    }
+
+    protected String paintableTooltipId() {
+        return "fluid_duct_paintable";
+    }
+
     public static boolean canPaintWith(BlockGetter level, BlockPos pos, Block paint, Block target) {
         if (paint == target || paint == Blocks.AIR || paint == Blocks.GRASS_BLOCK) {
             return false;
@@ -124,6 +138,16 @@ public class FluidDuctPaintableBlock extends FluidPipeBlock implements Toolable 
             return stateItem.getVariant(stack) & 15;
         }
         return stack.getDamageValue() & 15;
+    }
+
+    private static BlockState paintStateFromStack(BlockItem blockItem, ItemStack stack) {
+        if (stack.getItem() instanceof FluidDuctVariantBlockItem duct) {
+            return duct.stateForStack(stack);
+        }
+        if (stack.getItem() instanceof LegacyStateBlockItem stateItem) {
+            return stateItem.stateForStack(stack);
+        }
+        return blockItem.getBlock().defaultBlockState();
     }
 
     @Override

@@ -1,13 +1,13 @@
 package com.hbm.ntm.client.render;
 
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
+import com.hbm.ntm.client.obj.LegacyLineRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.multiblock.MultiblockCoreBlock;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -20,13 +20,14 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderHighlightEvent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @OnlyIn(Dist.CLIENT)
 public final class LegacyMultiblockHighlightRenderer {
     private static final double EXPAND = 0.002D;
-    private static final float RED = 0.0F;
-    private static final float GREEN = 0.0F;
-    private static final float BLUE = 0.0F;
-    private static final float ALPHA = 0.4F;
+    private static final int COLOR = 0x000000;
+    private static final int ALPHA = 102;
 
     public static void render(RenderHighlightEvent.Block event) {
         Minecraft minecraft = Minecraft.getInstance();
@@ -89,11 +90,14 @@ public final class LegacyMultiblockHighlightRenderer {
         double offsetZ = corePos.getZ() - cameraPos.z;
 
         PoseStack poseStack = event.getPoseStack();
-        VertexConsumer consumer = event.getMultiBufferSource().getBuffer(RenderType.lines());
+        List<LegacyWavefrontModel.UntexturedLineTransient> lines = new ArrayList<>();
         for (AABB box : shape.toAabbs()) {
-            LevelRenderer.renderLineBox(poseStack, consumer, box.inflate(EXPAND).move(offsetX, offsetY, offsetZ),
-                    RED, GREEN, BLUE, ALPHA);
+            AABB moved = box.inflate(EXPAND).move(offsetX, offsetY, offsetZ);
+            lines.addAll(LegacyLineRenderer.boxLines(moved.minX, moved.minY, moved.minZ,
+                    moved.maxX, moved.maxY, moved.maxZ, COLOR, ALPHA));
         }
+        LegacyLineRenderer.lines(poseStack, event.getMultiBufferSource(), LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                LegacyLineRenderer.DEFAULT_LINE_WIDTH, lines);
     }
 
     private LegacyMultiblockHighlightRenderer() {

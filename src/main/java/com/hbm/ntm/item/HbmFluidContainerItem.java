@@ -5,6 +5,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerItemCapabilityProvider;
 import com.hbm.ntm.fluid.HbmFluidContainerRules;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmForgeFluidInterop;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
@@ -26,6 +27,9 @@ public class HbmFluidContainerItem extends Item implements IFillableItem, HbmFor
     private static final String TAG_FLUID = "hbm_fluid";
     private static final String TAG_AMOUNT = "hbm_fluid_amount";
     private static final String TAG_PRESSURE = "hbm_fluid_pressure";
+    private static final String LEGACY_TAG_TYPE = "type";
+    private static final String LEGACY_TAG_AMOUNT = "fill";
+    private static final String LEGACY_TAG_PRESSURE = "pressure";
 
     private final HbmFluidContainerRules.ContainerKind kind;
     private final int capacity;
@@ -63,7 +67,11 @@ public class HbmFluidContainerItem extends Item implements IFillableItem, HbmFor
 
     @Override
     public boolean providesFluid(FluidType type, ItemStack stack) {
-        return type != null && type != HbmFluids.NONE && getFirstFluidType(stack) == type && getFill(stack) > 0;
+        return type != null
+                && type != HbmFluids.NONE
+                && HbmFluidContainerRules.accepts(kind, type)
+                && getFirstFluidType(stack) == type
+                && getFill(stack) > 0;
     }
 
     @Override
@@ -84,17 +92,25 @@ public class HbmFluidContainerItem extends Item implements IFillableItem, HbmFor
     @Override
     public FluidType getFirstFluidType(ItemStack stack) {
         CompoundTag tag = stack.getTag();
-        if (tag == null || !tag.contains(TAG_FLUID)) {
+        if (tag == null) {
             return HbmFluids.NONE;
         }
-        FluidType type = HbmFluids.fromName(tag.getString(TAG_FLUID));
+        FluidType type = tag.contains(TAG_FLUID)
+                ? HbmFluidJsonUtil.readFluidReference(tag.getString(TAG_FLUID))
+                : tag.contains(LEGACY_TAG_TYPE)
+                        ? HbmFluids.fromId(tag.getInt(LEGACY_TAG_TYPE))
+                        : HbmFluids.NONE;
         return type == null ? HbmFluids.NONE : type;
     }
 
     @Override
     public int getFill(ItemStack stack) {
         CompoundTag tag = stack.getTag();
-        return tag == null ? 0 : Math.max(0, Math.min(capacity, tag.getInt(TAG_AMOUNT)));
+        if (tag == null) {
+            return 0;
+        }
+        String key = tag.contains(TAG_AMOUNT) ? TAG_AMOUNT : LEGACY_TAG_AMOUNT;
+        return Math.max(0, Math.min(capacity, tag.getInt(key)));
     }
 
     public ItemStack createFilledStack(FluidType type) {
@@ -109,7 +125,7 @@ public class HbmFluidContainerItem extends Item implements IFillableItem, HbmFor
 
     public void addCreativeStacks(CreativeModeTab.Output output) {
         for (FluidType type : HbmFluids.all()) {
-            if (type == HbmFluids.NONE || !HbmFluidContainerRules.accepts(kind, type)) {
+            if (type == HbmFluids.NONE || !HbmFluidContainerRules.canRepresentContainedFluid(kind, type)) {
                 continue;
             }
             output.accept(createFilledStack(type));
@@ -155,17 +171,23 @@ public class HbmFluidContainerItem extends Item implements IFillableItem, HbmFor
 
     @Override
     public boolean hasCraftingRemainingItem(ItemStack stack) {
+        if (kind == HbmFluidContainerRules.ContainerKind.FLUID_PACK && getFill(stack) > 0) {
+            return true;
+        }
         return !HbmFluidContainerRegistry.getCraftingRemainder(stack).isEmpty();
     }
 
     @Override
     public ItemStack getCraftingRemainingItem(ItemStack stack) {
+        if (kind == HbmFluidContainerRules.ContainerKind.FLUID_PACK && getFill(stack) > 0) {
+            return HbmFluidContainerRegistry.emptyContainer(kind);
+        }
         return HbmFluidContainerRegistry.getCraftingRemainder(stack);
     }
 
     @Override
     public @Nullable ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
-        if (this instanceof HbmInfiniteFluidItem) {
+        if (this instanceof HbmInfiniteFluidItem || kind == HbmFluidContainerRules.ContainerKind.FLUID_PACK) {
             return super.initCapabilities(stack, nbt);
         }
         return new HbmFluidContainerItemCapabilityProvider(stack, this);
@@ -192,7 +214,11 @@ public class HbmFluidContainerItem extends Item implements IFillableItem, HbmFor
 
     public int getPressure(ItemStack stack) {
         CompoundTag tag = stack.getTag();
-        return tag == null ? 0 : HbmFluidTank.clampPressure(tag.getInt(TAG_PRESSURE));
+        if (tag == null) {
+            return 0;
+        }
+        String key = tag.contains(TAG_PRESSURE) ? TAG_PRESSURE : LEGACY_TAG_PRESSURE;
+        return HbmFluidTank.clampPressure(tag.getInt(key));
     }
 
     public void setFluid(ItemStack stack, FluidType type, int amount, int pressure) {
@@ -204,6 +230,9 @@ public class HbmFluidContainerItem extends Item implements IFillableItem, HbmFor
         tag.putString(TAG_FLUID, type.getName());
         tag.putInt(TAG_AMOUNT, Math.min(amount, capacity));
         tag.putInt(TAG_PRESSURE, HbmFluidTank.clampPressure(pressure));
+        tag.remove(LEGACY_TAG_TYPE);
+        tag.remove(LEGACY_TAG_AMOUNT);
+        tag.remove(LEGACY_TAG_PRESSURE);
     }
 
     public void clearFluid(ItemStack stack) {
@@ -214,6 +243,9 @@ public class HbmFluidContainerItem extends Item implements IFillableItem, HbmFor
         tag.remove(TAG_FLUID);
         tag.remove(TAG_AMOUNT);
         tag.remove(TAG_PRESSURE);
+        tag.remove(LEGACY_TAG_TYPE);
+        tag.remove(LEGACY_TAG_AMOUNT);
+        tag.remove(LEGACY_TAG_PRESSURE);
         if (tag.isEmpty()) {
             stack.setTag(null);
         }

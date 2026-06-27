@@ -7,7 +7,7 @@ import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.fluid.HbmFluidDuctVariants;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.item.FluidDuctVariantBlockItem;
 import com.hbm.ntm.item.FluidPipeStyleBlockItem;
@@ -23,18 +23,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 
 public class FluidDuctItemRenderer extends BlockEntityWithoutLevelRenderer {
-    private static final String[] PIPE_BASE_TEXTURES = {"pipe_neo", "pipe_silver", "pipe_colored"};
-    private static final String[] PIPE_OVERLAY_TEXTURES = {"pipe_neo_overlay", "pipe_silver_overlay", "pipe_colored_overlay"};
-    private static final String[] BOX_MATERIALS = {"silver", "copper", "white"};
     private static final String[] PIPE_INVENTORY_PARTS = {"pX", "nX", "pZ", "nZ"};
-    private static final ResourceLocation[] PIPE_BASE_TEXTURE_LOCATIONS = buildPipeTextures(PIPE_BASE_TEXTURES);
-    private static final ResourceLocation[] PIPE_OVERLAY_TEXTURE_LOCATIONS = buildPipeTextures(PIPE_OVERLAY_TEXTURES);
+    private static final ResourceLocation[] PIPE_BASE_TEXTURE_LOCATIONS = buildPipeTextures(false);
+    private static final ResourceLocation[] PIPE_OVERLAY_TEXTURE_LOCATIONS = buildPipeTextures(true);
     private static final LegacyWavefrontModel.SelectionHandle PIPE_INVENTORY_HANDLE =
             ObjBlockModels.PIPE_NEO.prepareRenderOnlyInCallOrder(PIPE_INVENTORY_PARTS);
+    private static final BoxDuctItemTextures[] BOX_ITEM_TEXTURES_BY_METADATA = buildBoxItemTextures(false);
+    private static final BoxDuctItemTextures[] EXHAUST_ITEM_TEXTURES_BY_METADATA = buildBoxItemTextures(true);
 
     public static final FluidDuctItemRenderer INSTANCE = new FluidDuctItemRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(),
@@ -61,35 +58,32 @@ public class FluidDuctItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderPipeItem(int style, ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        int clampedStyle = Math.max(0, Math.min(PIPE_BASE_TEXTURES.length - 1, style));
+        int clampedStyle = HbmFluidDuctVariants.clampStandardStyle(style);
         int color = HbmFluids.NONE.getColor();
         poseStack.pushPose();
         applyCenteredDisplay(displayContext, poseStack);
         poseStack.scale(1.25F, 1.25F, 1.25F);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(),
-                packedLight, packedOverlay);
-        ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(PIPE_BASE_TEXTURE_LOCATIONS[clampedStyle], context,
-                PIPE_INVENTORY_HANDLE);
+        ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(PIPE_BASE_TEXTURE_LOCATIONS[clampedStyle], poseStack, buffer,
+                packedLight, packedOverlay, PIPE_INVENTORY_HANDLE);
         ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(PIPE_OVERLAY_TEXTURE_LOCATIONS[clampedStyle],
-                context.withColor(color), PIPE_INVENTORY_HANDLE);
+                poseStack, buffer, packedLight, packedOverlay,
+                color >> 16 & 255, color >> 8 & 255, color & 255, 255, false, PIPE_INVENTORY_HANDLE);
         poseStack.popPose();
     }
 
     private static void renderBoxDuctItem(int metadata, boolean exhaust, ItemDisplayContext displayContext,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         int clampedMetadata = FluidDuctBoxBlock.clampLegacyMetadata(metadata);
-        String prefix = exhaust ? "boxduct_exhaust"
-                : "boxduct_" + BOX_MATERIALS[FluidDuctBoxBlock.rectifyLegacyMaterial(clampedMetadata)];
-        TextureAtlasSprite straight = sprite(prefix + "_straight");
-        TextureAtlasSprite end = sprite(prefix + "_end");
+        BoxDuctItemTextures textures = exhaust ? EXHAUST_ITEM_TEXTURES_BY_METADATA[clampedMetadata]
+                : BOX_ITEM_TEXTURES_BY_METADATA[clampedMetadata];
         FluidDuctBoxBlock.DuctBounds bounds = FluidDuctBoxBlock.boundsFor(clampedMetadata);
-        BlockState state = Blocks.AIR.defaultBlockState();
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
 
         poseStack.pushPose();
         applyBlockDisplay(displayContext, poseStack);
-        LegacyAtlasCuboidRenderer.croppedCuboid(straight, straight, end, end, straight, straight,
-                context, bounds.lower(), bounds.lower(), 0.0D, bounds.upper(), bounds.upper(), 1.0D);
+        LegacyAtlasCuboidRenderer.croppedCuboid(textures.straight(), textures.straight(), textures.end(),
+                textures.end(), textures.straight(), textures.straight(),
+                poseStack, buffer, packedLight, packedOverlay, bounds.lower(), bounds.lower(), 0.0D,
+                bounds.upper(), bounds.upper(), 1.0D);
         poseStack.popPose();
     }
 
@@ -120,11 +114,26 @@ public class FluidDuctItemRenderer extends BlockEntityWithoutLevelRenderer {
         return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + texture));
     }
 
-    private static ResourceLocation[] buildPipeTextures(String[] names) {
-        ResourceLocation[] textures = new ResourceLocation[names.length];
-        for (int i = 0; i < names.length; i++) {
-            textures[i] = ObjBlockModels.texture(names[i]);
+    private static ResourceLocation[] buildPipeTextures(boolean overlay) {
+        ResourceLocation[] textures = new ResourceLocation[HbmFluidDuctVariants.STANDARD_STYLE_COUNT];
+        for (int i = 0; i < textures.length; i++) {
+            textures[i] = ObjBlockModels.texture(overlay
+                    ? HbmFluidDuctVariants.standardOverlayTexture(i)
+                    : HbmFluidDuctVariants.standardParticleTexture(i));
         }
         return textures;
+    }
+
+    private static BoxDuctItemTextures[] buildBoxItemTextures(boolean exhaust) {
+        BoxDuctItemTextures[] textures = new BoxDuctItemTextures[HbmFluidDuctVariants.BOX_METADATA_COUNT];
+        for (int metadata = 0; metadata < textures.length; metadata++) {
+            String prefix = exhaust ? "boxduct_exhaust"
+                    : "boxduct_" + HbmFluidDuctVariants.boxMaterialTexture(metadata);
+            textures[metadata] = new BoxDuctItemTextures(sprite(prefix + "_straight"), sprite(prefix + "_end"));
+        }
+        return textures;
+    }
+
+    private record BoxDuctItemTextures(TextureAtlasSprite straight, TextureAtlasSprite end) {
     }
 }

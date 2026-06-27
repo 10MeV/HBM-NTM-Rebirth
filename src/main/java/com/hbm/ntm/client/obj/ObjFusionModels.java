@@ -1,6 +1,8 @@
 package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
@@ -79,10 +81,7 @@ public final class ObjFusionModels {
     private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_JET_HANDLE =
             PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder("Jet");
     private static final LegacyWavefrontModel.SelectionHandle PLASMA_FORGE_ITEM_BODY_HANDLE =
-            PLASMA_FORGE_LEGACY.prepareRenderOnlyInCallOrder(
-                    "SliderStriker", "ArmLowerStriker", "ArmUpperStriker", "StrikerMount",
-                    "StrikerLeft", "StrikerRight", "PistonLeft", "PistonRight",
-                    "SliderJet", "ArmLowerJet", "ArmUpperJet", "Jet", "Body");
+            PLASMA_FORGE_LEGACY.prepareRenderAllExcept("Plasma");
 
     public static final ObjModelPart TORUS = part("fusion_torus");
     public static final ObjModelPart TORUS_BODY = part("fusion_torus_torus");
@@ -188,95 +187,166 @@ public final class ObjFusionModels {
     public static LegacyWavefrontModel legacyModel(String name) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/fusion/" + name + ".obj"),
-                texture(name));
+                texture(name)).asVBO();
     }
 
     public static ResourceLocation texture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/fusion/" + name + ".png");
     }
 
-    public static void renderTorusPart(ResourceLocation texture, ObjRenderContext context, String partName) {
-        renderTorusPart(TORUS_LEGACY, texture, context, partName);
+    public static void renderTorusPart(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode, String partName) {
+        renderTorusPart(TORUS_LEGACY, texture, poseStack, buffer, packedLight, packedOverlay, renderMode, partName);
     }
 
-    public static void renderTorusPart(LegacyWavefrontModel model, ResourceLocation texture, ObjRenderContext context,
+    public static void renderTorusPart(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
+            LegacyTexturedRenderMode renderMode, LegacyWavefrontModel.UvTransform uvTransform, String partName) {
+        renderTorusPart(TORUS_LEGACY, texture, poseStack, buffer, packedLight, packedOverlay, red, green, blue,
+                alpha, legacyShadow, renderMode, uvTransform, partName);
+    }
+
+    public static void renderTorusPart(LegacyWavefrontModel model, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
             String partName) {
         LegacyWavefrontModel.SelectionHandle handle = sameModel(model, TORUS_LEGACY) ? torusHandle(partName) : null;
         if (handle != null) {
-            TORUS_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            TORUS_LEGACY.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle,
+                    renderMode);
             return;
         }
-        model.renderPart(partName, texture, context);
+        renderOnly(model, texture, poseStack, buffer, packedLight, packedOverlay, renderMode, partName);
     }
 
-    public static void renderKlystronPart(ResourceLocation texture, ObjRenderContext context, String partName) {
-        renderKlystronPart(KLYSTRON_LEGACY, texture, context, partName);
+    public static void renderTorusPart(LegacyWavefrontModel model, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+            boolean legacyShadow, LegacyTexturedRenderMode renderMode, LegacyWavefrontModel.UvTransform uvTransform,
+            String partName) {
+        LegacyWavefrontModel.SelectionHandle handle = sameModel(model, TORUS_LEGACY) ? torusHandle(partName) : null;
+        if (handle != null) {
+            TORUS_LEGACY.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha, legacyShadow, renderMode, uvTransform, handle);
+            return;
+        }
+        model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay,
+                red, green, blue, alpha, legacyShadow, renderMode, uvTransform);
     }
 
-    public static void renderKlystronPart(LegacyWavefrontModel model, ResourceLocation texture, ObjRenderContext context,
+    public static void renderKlystronPart(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode, String partName) {
+        renderKlystronPart(KLYSTRON_LEGACY, texture, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                partName);
+    }
+
+    public static void renderKlystronPart(LegacyWavefrontModel model, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
             String partName) {
         LegacyWavefrontModel.SelectionHandle handle = sameModel(model, KLYSTRON_LEGACY) ? klystronHandle(partName) : null;
         if (handle != null) {
-            KLYSTRON_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            KLYSTRON_LEGACY.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle,
+                    renderMode);
             return;
         }
-        model.renderPart(partName, texture, context);
+        renderOnly(model, texture, poseStack, buffer, packedLight, packedOverlay, renderMode, partName);
     }
 
-    public static void renderBreederPart(ResourceLocation texture, ObjRenderContext context, String partName) {
-        renderBreederPart(BREEDER_LEGACY, texture, context, partName);
+    public static void renderBreederPart(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode, String partName) {
+        renderBreederPart(BREEDER_LEGACY, texture, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                partName);
     }
 
-    public static void renderBreederPart(LegacyWavefrontModel model, ResourceLocation texture, ObjRenderContext context,
+    public static void renderBreederPart(LegacyWavefrontModel model, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
             String partName) {
         LegacyWavefrontModel.SelectionHandle handle = sameModel(model, BREEDER_LEGACY) ? breederHandle(partName) : null;
         if (handle != null) {
-            BREEDER_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            BREEDER_LEGACY.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle,
+                    renderMode);
             return;
         }
-        model.renderPart(partName, texture, context);
+        renderOnly(model, texture, poseStack, buffer, packedLight, packedOverlay, renderMode, partName);
     }
 
-    public static void renderMhdtPart(ResourceLocation texture, ObjRenderContext context, String partName) {
-        renderMhdtPart(MHDT_LEGACY, texture, context, partName);
+    public static void renderMhdtPart(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode, String partName) {
+        renderMhdtPart(MHDT_LEGACY, texture, poseStack, buffer, packedLight, packedOverlay, renderMode, partName);
     }
 
-    public static void renderMhdtPart(LegacyWavefrontModel model, ResourceLocation texture, ObjRenderContext context,
+    public static void renderMhdtPart(LegacyWavefrontModel model, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
             String partName) {
         LegacyWavefrontModel.SelectionHandle handle = sameModel(model, MHDT_LEGACY) ? mhdtHandle(partName) : null;
         if (handle != null) {
-            MHDT_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            MHDT_LEGACY.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle,
+                    renderMode);
             return;
         }
-        model.renderPart(partName, texture, context);
+        renderOnly(model, texture, poseStack, buffer, packedLight, packedOverlay, renderMode, partName);
     }
 
-    public static void renderPlasmaForgePart(ResourceLocation texture, ObjRenderContext context, String partName) {
-        renderPlasmaForgePart(PLASMA_FORGE_LEGACY, texture, context, partName);
+    public static void renderPlasmaForgePart(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode, String partName) {
+        renderPlasmaForgePart(PLASMA_FORGE_LEGACY, texture, poseStack, buffer, packedLight, packedOverlay,
+                renderMode, partName);
     }
 
-    public static void renderPlasmaForgeItemBody(ResourceLocation texture, ObjRenderContext context) {
-        PLASMA_FORGE_LEGACY.renderOnlyInCallOrder(texture, context, PLASMA_FORGE_ITEM_BODY_HANDLE);
+    public static void renderPlasmaForgePart(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
+            LegacyTexturedRenderMode renderMode, LegacyWavefrontModel.UvTransform uvTransform, String partName) {
+        renderPlasmaForgePart(PLASMA_FORGE_LEGACY, texture, poseStack, buffer, packedLight, packedOverlay,
+                red, green, blue, alpha, legacyShadow, renderMode, uvTransform, partName);
+    }
+
+    private static void renderOnly(LegacyWavefrontModel model, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
+            String partName) {
+        model.renderOnly(texture, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255, false,
+                renderMode, LegacyWavefrontModel.UvTransform.DEFAULT, partName);
+    }
+
+    public static void renderPlasmaForgeItemBody(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
+        PLASMA_FORGE_LEGACY.renderAllExcept(texture, poseStack, buffer, packedLight, packedOverlay,
+                PLASMA_FORGE_ITEM_BODY_HANDLE, renderMode);
     }
 
     public static void renderPlasmaForgePart(LegacyWavefrontModel model, ResourceLocation texture,
-            ObjRenderContext context, String partName) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode, String partName) {
         LegacyWavefrontModel.SelectionHandle handle =
                 sameModel(model, PLASMA_FORGE_LEGACY) ? plasmaForgeHandle(partName) : null;
         if (handle != null) {
-            PLASMA_FORGE_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            PLASMA_FORGE_LEGACY.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle,
+                    renderMode);
             return;
         }
-        model.renderPart(partName, texture, context);
+        renderOnly(model, texture, poseStack, buffer, packedLight, packedOverlay, renderMode, partName);
     }
 
-    public static void renderPlasmaForgePartUntextured(ObjRenderContext context, String partName) {
-        LegacyWavefrontModel.SelectionHandle handle = plasmaForgeHandle(partName);
+    public static void renderPlasmaForgePart(LegacyWavefrontModel model, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            int red, int green, int blue, int alpha, boolean legacyShadow, LegacyTexturedRenderMode renderMode,
+            LegacyWavefrontModel.UvTransform uvTransform, String partName) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, PLASMA_FORGE_LEGACY) ? plasmaForgeHandle(partName) : null;
         if (handle != null) {
-            PLASMA_FORGE_LEGACY.renderOnlyUntextured(context, handle);
+            PLASMA_FORGE_LEGACY.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha, legacyShadow, renderMode, uvTransform, handle);
             return;
         }
-        PLASMA_FORGE_LEGACY.renderPartUntextured(partName, context);
+        model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay,
+                red, green, blue, alpha, legacyShadow, renderMode, uvTransform);
+    }
+
+    public static void renderPlasmaForgePartUntextured(PoseStack poseStack, MultiBufferSource buffer,
+            int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode, String partName) {
+        LegacyWavefrontModel.SelectionHandle handle = plasmaForgeHandle(partName);
+        if (handle != null) {
+            PLASMA_FORGE_LEGACY.renderOnlyUntextured(poseStack, buffer, red, green, blue, alpha, renderMode, handle);
+            return;
+        }
+        PLASMA_FORGE_LEGACY.renderPartUntextured(partName, poseStack, buffer, red, green, blue, alpha, renderMode);
     }
 
     private static LegacyWavefrontModel.SelectionHandle torusHandle(String partName) {

@@ -5,16 +5,13 @@ import com.hbm.ntm.block.RadioboxBlock;
 import com.hbm.ntm.block.RadioReceiverBlock;
 import com.hbm.ntm.blockentity.RadioboxBlockEntity;
 import com.hbm.ntm.blockentity.RadioReceiverBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -23,9 +20,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class RadioDecoRenderer<T extends BlockEntity> implements BlockEntityRenderer<T> {
     private static final ResourceLocation RADIOBOX_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/ModelRadio.png");
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/model_radio.png");
     private static final ResourceLocation RADIOREC_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/ModelRadioReceiver.png");
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/model_radio_receiver.png");
 
     public RadioDecoRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -69,31 +66,29 @@ public class RadioDecoRenderer<T extends BlockEntity> implements BlockEntityRend
         Direction facing = state.hasProperty(RadioReceiverBlock.FACING)
                 ? state.getValue(RadioReceiverBlock.FACING)
                 : Direction.SOUTH;
-        VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutout(RADIOREC_TEXTURE));
 
         poseStack.pushPose();
         applyLegacyRoot(poseStack, radioReceiverYaw(facing));
-        cube(poseStack, consumer, packedLight, packedOverlay, 0, 0, 14, 14, -4, 14, 10, 8);
-        cube(poseStack, consumer, packedLight, packedOverlay, 4, 21, 11, 11, -1, 2, 3, 2);
-        cube(poseStack, consumer, packedLight, packedOverlay, 0, 18, -4.5F, 0, -0.5F, 1, 11, 1);
-        cube(poseStack, consumer, packedLight, packedOverlay, 4, 18, 2, 12, -0.5F, 3, 2, 1);
+        cube(RADIOREC_TEXTURE, poseStack, buffer, packedLight, packedOverlay, 0, 0, 14, 14, -4, 14, 10, 8);
+        cube(RADIOREC_TEXTURE, poseStack, buffer, packedLight, packedOverlay, 4, 21, 11, 11, -1, 2, 3, 2);
+        cube(RADIOREC_TEXTURE, poseStack, buffer, packedLight, packedOverlay, 0, 18, -4.5F, 0, -0.5F, 1, 11, 1);
+        cube(RADIOREC_TEXTURE, poseStack, buffer, packedLight, packedOverlay, 4, 18, 2, 12, -0.5F, 3, 2, 1);
         poseStack.popPose();
     }
 
     private static void renderRadiobox(BlockState state, boolean active, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
         Direction facing = state.hasProperty(RadioboxBlock.FACING) ? state.getValue(RadioboxBlock.FACING) : Direction.SOUTH;
-        VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutout(RADIOBOX_TEXTURE));
 
         poseStack.pushPose();
         applyLegacyRoot(poseStack, radioboxYaw(facing));
         poseStack.translate(0.0D, 0.0D, 16.0D);
-        cube(poseStack, consumer, packedLight, packedOverlay, 0, 0, -4, 9, -12, 8, 14, 4);
-        cube(poseStack, consumer, packedLight, packedOverlay, 0, 18, -3.5F, 9.5F, -12.5F, 7, 13, 1);
+        cube(RADIOBOX_TEXTURE, poseStack, buffer, packedLight, packedOverlay, 0, 0, -4, 9, -12, 8, 14, 4);
+        cube(RADIOBOX_TEXTURE, poseStack, buffer, packedLight, packedOverlay, 0, 18, -3.5F, 9.5F, -12.5F, 7, 13, 1);
         poseStack.pushPose();
         poseStack.translate(4.0D, 16.0D, -10.0D);
         poseStack.mulPose(Axis.XP.rotationDegrees(active ? -160.0F : -20.0F));
-        cube(poseStack, consumer, packedLight, packedOverlay, 16, 18, 0, -1, -1, 2, 8, 2);
+        cube(RADIOBOX_TEXTURE, poseStack, buffer, packedLight, packedOverlay, 16, 18, 0, -1, -1, 2, 8, 2);
         poseStack.popPose();
         poseStack.popPose();
     }
@@ -127,7 +122,8 @@ public class RadioDecoRenderer<T extends BlockEntity> implements BlockEntityRend
         return state.hasProperty(RadioboxBlock.ACTIVE) && state.getValue(RadioboxBlock.ACTIVE);
     }
 
-    private static void cube(PoseStack poseStack, VertexConsumer consumer, int light, int overlay,
+    private static void cube(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int light, int overlay,
             int u, int v, float x, float y, float z, float width, float height, float depth) {
         float x2 = x + width;
         float y2 = y + height;
@@ -135,39 +131,30 @@ public class RadioDecoRenderer<T extends BlockEntity> implements BlockEntityRend
         float texW = 64.0F;
         float texH = 32.0F;
 
-        face(poseStack, consumer, light, overlay, x, y, z2, x2, y2, z2, 0, 0, 1, u + depth + width, v + depth,
+        face(texture, poseStack, buffer, light, overlay, x, y, z2, x2, y2, z2, 0, 0, 1, u + depth + width, v + depth,
                 u + depth + width + width, v + depth + height, texW, texH);
-        face(poseStack, consumer, light, overlay, x2, y, z, x, y2, z, 0, 0, -1, u + depth + width + depth, v + depth,
+        face(texture, poseStack, buffer, light, overlay, x2, y, z, x, y2, z, 0, 0, -1, u + depth + width + depth, v + depth,
                 u + depth + width + depth + width, v + depth + height, texW, texH);
-        face(poseStack, consumer, light, overlay, x, y, z, x, y2, z2, -1, 0, 0, u, v + depth,
+        face(texture, poseStack, buffer, light, overlay, x, y, z, x, y2, z2, -1, 0, 0, u, v + depth,
                 u + depth, v + depth + height, texW, texH);
-        face(poseStack, consumer, light, overlay, x2, y, z2, x2, y2, z, 1, 0, 0, u + depth + width, v + depth,
+        face(texture, poseStack, buffer, light, overlay, x2, y, z2, x2, y2, z, 1, 0, 0, u + depth + width, v + depth,
                 u + depth + width + depth, v + depth + height, texW, texH);
-        face(poseStack, consumer, light, overlay, x, y, z, x2, y, z2, 0, -1, 0, u + depth, v,
+        face(texture, poseStack, buffer, light, overlay, x, y, z, x2, y, z2, 0, -1, 0, u + depth, v,
                 u + depth + width, v + depth, texW, texH);
-        face(poseStack, consumer, light, overlay, x, y2, z2, x2, y2, z, 0, 1, 0, u + depth + width, v,
+        face(texture, poseStack, buffer, light, overlay, x, y2, z2, x2, y2, z, 0, 1, 0, u + depth + width, v,
                 u + depth + width + width, v + depth, texW, texH);
     }
 
-    private static void face(PoseStack poseStack, VertexConsumer consumer, int light, int overlay,
+    private static void face(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int light, int overlay,
             float x1, float y1, float z1, float x2, float y2, float z2, float nx, float ny, float nz,
             float u1, float v1, float u2, float v2, float texW, float texH) {
-        Matrix4f pose = poseStack.last().pose();
-        Matrix3f normal = poseStack.last().normal();
-        vertex(consumer, pose, normal, x1, y1, z1, u1 / texW, v1 / texH, nx, ny, nz, light, overlay);
-        vertex(consumer, pose, normal, x2, y1, z1, u2 / texW, v1 / texH, nx, ny, nz, light, overlay);
-        vertex(consumer, pose, normal, x2, y2, z2, u2 / texW, v2 / texH, nx, ny, nz, light, overlay);
-        vertex(consumer, pose, normal, x1, y2, z2, u1 / texW, v2 / texH, nx, ny, nz, light, overlay);
-    }
-
-    private static void vertex(VertexConsumer consumer, Matrix4f pose, Matrix3f normal, float x, float y, float z,
-            float u, float v, float nx, float ny, float nz, int light, int overlay) {
-        consumer.vertex(pose, x, y, z)
-                .color(255, 255, 255, 255)
-                .uv(u, v)
-                .overlayCoords(overlay == 0 ? OverlayTexture.NO_OVERLAY : overlay)
-                .uv2(light)
-                .normal(normal, nx, ny, nz)
-                .endVertex();
+        LegacyTexturedQuadRenderer.pixelQuad(texture, poseStack, buffer, light, overlay,
+                LegacyTexturedRenderMode.CUTOUT_CULL, nx, ny, nz, texW, texH,
+                x1, y1, z1, u1, v1,
+                x2, y1, z1, u2, v1,
+                x2, y2, z2, u2, v2,
+                x1, y2, z2, u1, v2,
+                0xFFFFFF, 255);
     }
 }

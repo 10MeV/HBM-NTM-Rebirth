@@ -33,14 +33,14 @@ public class ICFPressMenu extends AbstractContainerMenu {
     public ICFPressMenu(int containerId, Inventory playerInventory, ICFPressBlockEntity blockEntity) {
         super(ModMenuTypes.ICF_PRESS.get(), containerId);
         this.blockEntity = blockEntity;
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_EMPTY, 98, 18));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_EMPTY, 98, 18));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_OUTPUT, 98, 54));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_MUON, 8, 18));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_MUON, 8, 18));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_MUON_OUT, 8, 54));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_FUEL_1, 62, 54));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_FUEL_2, 134, 54));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_FLUID_ID_1, 62, 18));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_FLUID_ID_2, 134, 18));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_FUEL_1, 62, 54));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_FUEL_2, 134, 54));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_FLUID_ID_1, 62, 18));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ICFPressBlockEntity.SLOT_FLUID_ID_2, 134, 18));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 97, 155);
         deuteriumTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getDeuteriumTank());
         tritiumTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getTritiumTank());

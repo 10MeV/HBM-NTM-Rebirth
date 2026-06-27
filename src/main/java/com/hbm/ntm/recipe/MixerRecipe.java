@@ -2,6 +2,7 @@ package com.hbm.ntm.recipe;
 
 import com.google.gson.JsonObject;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModBlocks;
@@ -27,15 +28,17 @@ public class MixerRecipe implements Recipe<Container> {
     private final Optional<HbmFluidStack> input2;
     private final Optional<HbmIngredient> solidInput;
     private final int duration;
+    private final int sourceOrder;
 
     public MixerRecipe(ResourceLocation id, HbmFluidStack output, Optional<HbmFluidStack> input1,
-            Optional<HbmFluidStack> input2, Optional<HbmIngredient> solidInput, int duration) {
+            Optional<HbmFluidStack> input2, Optional<HbmIngredient> solidInput, int duration, int sourceOrder) {
         this.id = id;
         this.output = output == null ? new HbmFluidStack(HbmFluids.NONE, 0) : output;
         this.input1 = input1 == null ? Optional.empty() : input1;
         this.input2 = input2 == null ? Optional.empty() : input2;
         this.solidInput = solidInput == null ? Optional.empty() : solidInput;
         this.duration = Math.max(1, duration);
+        this.sourceOrder = sourceOrder;
         if (this.output.isEmpty()) {
             throw new IllegalArgumentException("Mixer recipe must have a fluid output");
         }
@@ -59,6 +62,10 @@ public class MixerRecipe implements Recipe<Container> {
 
     public int duration() {
         return duration;
+    }
+
+    public int sourceOrder() {
+        return sourceOrder;
     }
 
     @Override
@@ -127,7 +134,8 @@ public class MixerRecipe implements Recipe<Container> {
                     ? Optional.of(HbmIngredient.fromJson(GsonHelper.getAsJsonObject(json, "solid_input")))
                     : Optional.empty();
             int duration = GsonHelper.getAsInt(json, "duration", 20);
-            return new MixerRecipe(id, output, input1, input2, solidInput, duration);
+            int sourceOrder = GsonHelper.getAsInt(json, "source_order", Integer.MAX_VALUE);
+            return new MixerRecipe(id, output, input1, input2, solidInput, duration, sourceOrder);
         }
 
         @Nullable
@@ -144,7 +152,8 @@ public class MixerRecipe implements Recipe<Container> {
                     ? Optional.of(HbmIngredient.fromNetwork(buffer))
                     : Optional.empty();
             int duration = buffer.readVarInt();
-            return new MixerRecipe(id, output, input1, input2, solidInput, duration);
+            int sourceOrder = buffer.readVarInt();
+            return new MixerRecipe(id, output, input1, input2, solidInput, duration, sourceOrder);
         }
 
         @Override
@@ -157,13 +166,11 @@ public class MixerRecipe implements Recipe<Container> {
             buffer.writeBoolean(recipe.solidInput.isPresent());
             recipe.solidInput.ifPresent(input -> input.toNetwork(buffer));
             buffer.writeVarInt(recipe.duration);
+            buffer.writeVarInt(recipe.sourceOrder);
         }
 
         private static HbmFluidStack readFluidStack(JsonObject object) {
-            FluidType fluid = HbmFluids.fromName(normalizeFluidName(GsonHelper.getAsString(object, "fluid")));
-            int amount = GsonHelper.getAsInt(object, "amount");
-            int pressure = GsonHelper.getAsInt(object, "pressure", 0);
-            return new HbmFluidStack(fluid, amount, pressure);
+            return HbmFluidJsonUtil.readFluidStack(object, "mixer fluid stack");
         }
 
         private static HbmFluidStack readFluidStack(FriendlyByteBuf buffer) {
@@ -174,14 +181,6 @@ public class MixerRecipe implements Recipe<Container> {
             buffer.writeUtf(stack.type().getName());
             buffer.writeVarInt(stack.amount());
             buffer.writeVarInt(stack.pressure());
-        }
-
-        private static String normalizeFluidName(String name) {
-            if (name.indexOf(':') < 0) {
-                return name;
-            }
-            ResourceLocation id = ResourceLocation.tryParse(name);
-            return id == null ? name : id.getPath();
         }
     }
 }

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "key": {
+    "C": {
+      "tag": "forge:circuits/advanced"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "S": {
+      "tag": "forge:plates/steel"
+    },
+    "W": {
+      "tag": "forge:wires/gold"
+    }
+  },
+  "pattern": [
+    "SWS",
+    " G ",
+    "PCP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:survey_scanner"
+  },
+  "show_notification": true
+}

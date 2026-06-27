@@ -1,7 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
@@ -184,7 +182,7 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || !ItemStack.isSameItemSameTags(oldDisplay, station.displayStack)
                 || oldDisplay.getCount() != station.displayStack.getCount();
         station.networkPackNT(25);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             station.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -424,15 +422,7 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected boolean showsLegacyFluidLookOverlay() {
-        return true;
-    }
-
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.energyStored(energy.getPower(), energy.getMaxPower()),
-                LegacyLookOverlayLines.tank(true, tank),
-                Component.literal("Consumption: " + consumption + " HE/t")));
+        return false;
     }
 
     @Override

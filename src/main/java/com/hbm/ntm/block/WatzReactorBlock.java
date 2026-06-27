@@ -34,8 +34,14 @@ public class WatzReactorBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && !player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
-                && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof WatzReactorBlockEntity watz) {
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(level, pos);
+        if (!(blockEntity instanceof WatzReactorBlockEntity watz)) {
+            return InteractionResult.PASS;
+        }
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             NetworkHooks.openScreen(serverPlayer, watz, watz.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

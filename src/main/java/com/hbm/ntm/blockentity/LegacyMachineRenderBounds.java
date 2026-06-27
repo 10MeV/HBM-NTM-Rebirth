@@ -6,6 +6,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 public final class LegacyMachineRenderBounds {
+    public static final AABB INFINITE_EXTENT_AABB = new AABB(
+            Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY,
+            Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+
     private LegacyMachineRenderBounds() {
     }
 

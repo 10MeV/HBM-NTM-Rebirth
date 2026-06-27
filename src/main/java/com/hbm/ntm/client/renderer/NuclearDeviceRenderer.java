@@ -5,7 +5,6 @@ import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjNukeModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.GraphicsStatus;
@@ -18,6 +17,16 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceBlockEntity> {
+    private static final ResourceLocation GADGET_TEXTURE = ObjNukeModels.texture("gadget");
+    private static final ResourceLocation BOY_TEXTURE = ObjNukeModels.texture("boy");
+    private static final ResourceLocation MAN_TEXTURE = ObjNukeModels.texture("man");
+    private static final ResourceLocation TSAR_TEXTURE = ObjNukeModels.texture("tsar");
+    private static final ResourceLocation MIKE_TEXTURE = ObjNukeModels.texture("mike");
+    private static final ResourceLocation PROTOTYPE_TEXTURE = ObjNukeModels.texture("prototype");
+    private static final ResourceLocation FLEIJA_TEXTURE = ObjNukeModels.texture("fleija");
+    private static final ResourceLocation SOLINIUM_TEXTURE = ObjNukeModels.texture("solinium");
+    private static final ResourceLocation N2_TEXTURE = ObjNukeModels.texture("n2");
+
     public NuclearDeviceRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -28,28 +37,30 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
         Direction facing = state.hasProperty(NuclearDeviceBlock.FACING)
                 ? state.getValue(NuclearDeviceBlock.FACING)
                 : Direction.SOUTH;
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(NuclearDeviceBlock.legacyRenderYaw(blockEntity.kind(), facing)));
         applyLegacyBlockTranslation(blockEntity.kind(), poseStack);
-        renderKind(blockEntity.kind(), poseStack, buffer, packedLight, packedOverlay);
+        renderKind(blockEntity.kind(), poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
     }
 
     public static void renderKind(NuclearDeviceBlock.Kind kind, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
-                .withRenderMode(renderMode(kind));
+        LegacyTexturedRenderMode renderMode = renderMode(kind);
         if (kind == NuclearDeviceBlock.Kind.GADGET) {
             ResourceLocation gadgetTexture = texture(kind);
-            ObjNukeModels.renderGadgetPart(gadgetTexture, context, "Body");
+            ObjNukeModels.renderGadgetPart(gadgetTexture, poseStack, buffer, packedLight, packedOverlay,
+                    renderMode, "Body");
             if (fancyGraphics()) {
-                ObjNukeModels.renderGadgetPart(gadgetTexture, context, "Wires");
+                ObjNukeModels.renderGadgetPart(gadgetTexture, poseStack, buffer, packedLight, packedOverlay,
+                        renderMode, "Wires");
             }
             return;
         }
-        model(kind).renderAll(texture(kind), context);
+        model(kind).renderAll(texture(kind), poseStack, buffer, packedLight, packedOverlay, renderMode);
     }
 
     public static LegacyWavefrontModel model(NuclearDeviceBlock.Kind kind) {
@@ -68,21 +79,21 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
 
     public static ResourceLocation texture(NuclearDeviceBlock.Kind kind) {
         return switch (kind) {
-            case GADGET -> ObjNukeModels.texture("gadget");
-            case BOY -> ObjNukeModels.texture("boy");
-            case MAN -> ObjNukeModels.texture("man");
-            case TSAR -> ObjNukeModels.texture("tsar");
-            case MIKE -> ObjNukeModels.texture("mike");
-            case PROTOTYPE -> ObjNukeModels.texture("prototype");
-            case FLEIJA -> ObjNukeModels.texture("fleija");
-            case SOLINIUM -> ObjNukeModels.texture("solinium");
-            case N2 -> ObjNukeModels.texture("n2");
+            case GADGET -> GADGET_TEXTURE;
+            case BOY -> BOY_TEXTURE;
+            case MAN -> MAN_TEXTURE;
+            case TSAR -> TSAR_TEXTURE;
+            case MIKE -> MIKE_TEXTURE;
+            case PROTOTYPE -> PROTOTYPE_TEXTURE;
+            case FLEIJA -> FLEIJA_TEXTURE;
+            case SOLINIUM -> SOLINIUM_TEXTURE;
+            case N2 -> N2_TEXTURE;
         };
     }
 
     public static void renderCustomNuke(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
-        ObjNukeModels.BOY.renderAll(ObjNukeModels.CUSTOM_NUKE_TEXTURE, context);
+        ObjNukeModels.BOY.renderAll(ObjNukeModels.CUSTOM_NUKE_TEXTURE, poseStack, buffer, packedLight,
+                packedOverlay);
     }
 
     public static void applyCustomNukeLegacyItemCommon(PoseStack poseStack) {

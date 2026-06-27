@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.obj;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import org.joml.Vector3d;
 
@@ -62,17 +61,15 @@ public final class LegacyBeamRenderer {
         Vector3d axisY = new Vector3d(skeleton).normalize();
         Vector3d axisX = perpendicular(axisY);
         Vector3d axisZ = new Vector3d(axisY).cross(axisX).normalize();
-        VertexConsumer consumer = buffer.getBuffer(depthWrite
-                ? LegacyUntexturedQuadRenderer.additiveDepthWriteNoCullType()
-                : LegacyUntexturedQuadRenderer.additiveNoCullType());
-        PoseStack.Pose pose = poseStack.last();
+        LegacyTexturedRenderMode renderMode = solidBeamRenderMode(depthWrite);
 
         double segmentLength = length / segments;
         List<BeamPoint> points = beamPoints(axisY, axisX, axisZ, segmentLength, size, wave, start, segments);
         for (int i = 1; i < points.size(); i++) {
             Vector3d previous = points.get(i - 1).asVector();
             Vector3d current = points.get(i).asVector();
-            renderSegment(consumer, pose, previous, current, axisX, axisZ, outerColor, innerColor, layers, thickness);
+            renderSegment(poseStack, buffer, renderMode, previous, current, axisX, axisZ, outerColor, innerColor,
+                    layers, thickness);
         }
     }
 
@@ -93,18 +90,17 @@ public final class LegacyBeamRenderer {
         Vector3d axisY = new Vector3d(skeleton).normalize();
         Vector3d axisX = perpendicular(axisY);
         Vector3d axisZ = new Vector3d(axisY).cross(axisX).normalize();
-        VertexConsumer consumer = LegacyLineRenderer.consumer(buffer, LegacyLineRenderer.DEFAULT_LINE_WIDTH,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
-        PoseStack.Pose pose = poseStack.last();
-
         double segmentLength = length / segments;
         List<BeamPoint> points = beamPoints(axisY, axisX, axisZ, segmentLength, size, wave, start, segments);
+        List<LegacyWavefrontModel.UntexturedLineTransient> lines = new ArrayList<>(points.size());
         for (int i = 1; i < points.size(); i++) {
             Vector3d previous = points.get(i - 1).asVector();
             Vector3d current = points.get(i).asVector();
-            line(consumer, pose, previous, current, outerColor);
+            lines.add(line(previous, current, outerColor));
         }
-        line(consumer, pose, new Vector3d(), skeleton, innerColor);
+        lines.add(line(new Vector3d(), skeleton, innerColor));
+        LegacyLineRenderer.lines(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                LegacyLineRenderer.DEFAULT_LINE_WIDTH, lines);
     }
 
     private static void solidBeam(PoseStack poseStack, MultiBufferSource buffer, BeamPlan plan) {
@@ -112,16 +108,11 @@ public final class LegacyBeamRenderer {
             return;
         }
 
-        VertexConsumer consumer = buffer.getBuffer(plan.depthWrite()
-                ? LegacyUntexturedQuadRenderer.additiveDepthWriteNoCullType()
-                : LegacyUntexturedQuadRenderer.additiveNoCullType());
-        PoseStack.Pose pose = poseStack.last();
+        LegacyTexturedRenderMode renderMode = solidBeamRenderMode(plan.depthWrite());
 
         for (BeamSegmentPlan segment : plan.solidSegments()) {
             for (BeamLayerPlan layer : segment.layers()) {
-                for (BeamQuadPlan quad : layer.quads()) {
-                    quad(consumer, pose, quad.v0(), quad.v1(), quad.v2(), quad.v3(), layer.color());
-                }
+                renderBeamQuads(poseStack, buffer, renderMode, layer.color(), layer.quads());
             }
         }
     }
@@ -132,16 +123,16 @@ public final class LegacyBeamRenderer {
             return;
         }
 
-        VertexConsumer consumer = LegacyLineRenderer.consumer(buffer, LegacyLineRenderer.DEFAULT_LINE_WIDTH,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
-        PoseStack.Pose pose = poseStack.last();
-
+        List<LegacyWavefrontModel.UntexturedLineTransient> lines = new ArrayList<>(
+                plan.lineSegments().size() + (plan.centralLine() == null ? 0 : 1));
         for (BeamLinePlan line : plan.lineSegments()) {
-            line(consumer, pose, line.start(), line.end(), line.color());
+            lines.add(line(line.start(), line.end(), line.color()));
         }
         if (plan.centralLine() != null) {
-            line(consumer, pose, plan.centralLine().start(), plan.centralLine().end(), plan.centralLine().color());
+            lines.add(line(plan.centralLine().start(), plan.centralLine().end(), plan.centralLine().color()));
         }
+        LegacyLineRenderer.lines(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                LegacyLineRenderer.DEFAULT_LINE_WIDTH, lines);
     }
 
     public static List<BeamPoint> beamPoints(double x, double y, double z,
@@ -308,7 +299,8 @@ public final class LegacyBeamRenderer {
         return new BeamLinePlan(-1, new BeamVector(0.0D, 0.0D, 0.0D), new BeamVector(x, y, z), color & 0xFFFFFF);
     }
 
-    private static void renderSegment(VertexConsumer consumer, PoseStack.Pose pose,
+    private static void renderSegment(PoseStack poseStack, MultiBufferSource buffer,
+                                      LegacyTexturedRenderMode renderMode,
                                       Vector3d previous, Vector3d current,
                                       Vector3d axisX, Vector3d axisZ,
                                       int outerColor, int innerColor,
@@ -321,65 +313,81 @@ public final class LegacyBeamRenderer {
             Vector3d xOffset = new Vector3d(axisX).mul(offset);
             Vector3d zOffset = new Vector3d(axisZ).mul(offset);
 
-            quad(consumer, pose,
+            renderTransientBeamQuads(poseStack, buffer, renderMode, color, List.of(
+                    transientQuad(
                     new Vector3d(previous).add(xOffset).add(zOffset),
                     new Vector3d(previous).add(xOffset).sub(zOffset),
                     new Vector3d(current).add(xOffset).sub(zOffset),
-                    new Vector3d(current).add(xOffset).add(zOffset),
-                    color);
-            quad(consumer, pose,
+                    new Vector3d(current).add(xOffset).add(zOffset)),
+                    transientQuad(
                     new Vector3d(previous).sub(xOffset).add(zOffset),
                     new Vector3d(previous).sub(xOffset).sub(zOffset),
                     new Vector3d(current).sub(xOffset).sub(zOffset),
-                    new Vector3d(current).sub(xOffset).add(zOffset),
-                    color);
-            quad(consumer, pose,
+                    new Vector3d(current).sub(xOffset).add(zOffset)),
+                    transientQuad(
                     new Vector3d(previous).add(xOffset).add(zOffset),
                     new Vector3d(previous).sub(xOffset).add(zOffset),
                     new Vector3d(current).sub(xOffset).add(zOffset),
-                    new Vector3d(current).add(xOffset).add(zOffset),
-                    color);
-            quad(consumer, pose,
+                    new Vector3d(current).add(xOffset).add(zOffset)),
+                    transientQuad(
                     new Vector3d(previous).add(xOffset).sub(zOffset),
                     new Vector3d(previous).sub(xOffset).sub(zOffset),
                     new Vector3d(current).sub(xOffset).sub(zOffset),
-                    new Vector3d(current).add(xOffset).sub(zOffset),
-                    color);
+                    new Vector3d(current).add(xOffset).sub(zOffset))));
         }
     }
 
-    private static void quad(VertexConsumer consumer, PoseStack.Pose pose,
-                             Vector3d v0, Vector3d v1, Vector3d v2, Vector3d v3, int color) {
-        LegacyUntexturedQuadRenderer.quad(
-                consumer,
-                pose,
+    private static LegacyTexturedRenderMode solidBeamRenderMode(boolean depthWrite) {
+        return depthWrite ? LegacyTexturedRenderMode.ADDITIVE_DEPTH_WRITE
+                : LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE;
+    }
+
+    private static void renderBeamQuads(PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTexturedRenderMode renderMode, int color, List<BeamQuadPlan> quads) {
+        if (quads.isEmpty()) {
+            return;
+        }
+        List<LegacyWavefrontModel.UntexturedTransientQuad> transientQuads = new ArrayList<>(quads.size());
+        for (BeamQuadPlan quad : quads) {
+            transientQuads.add(transientQuad(quad.v0(), quad.v1(), quad.v2(), quad.v3()));
+        }
+        LegacyWavefrontModel.renderUntexturedTransientQuads(poseStack, buffer, renderMode, transientQuads,
+                color & 0xFFFFFF, 255);
+    }
+
+    private static void renderTransientBeamQuads(PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTexturedRenderMode renderMode, int color,
+            List<LegacyWavefrontModel.UntexturedTransientQuad> quads) {
+        LegacyWavefrontModel.renderUntexturedTransientQuads(poseStack, buffer, renderMode, quads,
+                color & 0xFFFFFF, 255);
+    }
+
+    private static LegacyWavefrontModel.UntexturedTransientQuad transientQuad(
+            Vector3d v0, Vector3d v1, Vector3d v2, Vector3d v3) {
+        return new LegacyWavefrontModel.UntexturedTransientQuad(
                 v0.x, v0.y, v0.z,
                 v1.x, v1.y, v1.z,
                 v2.x, v2.y, v2.z,
-                v3.x, v3.y, v3.z,
-                red(color), green(color), blue(color),
-                255, 255, 255, 255);
+                v3.x, v3.y, v3.z);
     }
 
-    private static void quad(VertexConsumer consumer, PoseStack.Pose pose,
-                             BeamVector v0, BeamVector v1, BeamVector v2, BeamVector v3, int color) {
-        LegacyUntexturedQuadRenderer.quad(
-                consumer,
-                pose,
+    private static LegacyWavefrontModel.UntexturedTransientQuad transientQuad(
+            BeamVector v0, BeamVector v1, BeamVector v2, BeamVector v3) {
+        return new LegacyWavefrontModel.UntexturedTransientQuad(
                 v0.x, v0.y, v0.z,
                 v1.x, v1.y, v1.z,
                 v2.x, v2.y, v2.z,
-                v3.x, v3.y, v3.z,
-                red(color), green(color), blue(color),
-                255, 255, 255, 255);
+                v3.x, v3.y, v3.z);
     }
 
-    private static void line(VertexConsumer consumer, PoseStack.Pose pose, Vector3d start, Vector3d end, int color) {
-        LegacyLineRenderer.line(consumer, pose, start.x, start.y, start.z, end.x, end.y, end.z, color, 255);
+    private static LegacyWavefrontModel.UntexturedLineTransient line(Vector3d start, Vector3d end, int color) {
+        return new LegacyWavefrontModel.UntexturedLineTransient(
+                start.x, start.y, start.z, end.x, end.y, end.z, color, 255);
     }
 
-    private static void line(VertexConsumer consumer, PoseStack.Pose pose, BeamVector start, BeamVector end, int color) {
-        LegacyLineRenderer.line(consumer, pose, start.x, start.y, start.z, end.x, end.y, end.z, color, 255);
+    private static LegacyWavefrontModel.UntexturedLineTransient line(BeamVector start, BeamVector end, int color) {
+        return new LegacyWavefrontModel.UntexturedLineTransient(
+                start.x, start.y, start.z, end.x, end.y, end.z, color, 255);
     }
 
     public static int interpolateColor(int outerColor, int innerColor, float inter) {

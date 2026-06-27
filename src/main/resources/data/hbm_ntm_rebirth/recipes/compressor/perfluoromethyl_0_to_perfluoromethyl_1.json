@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:compressor",
+  "input": {
+    "fluid": "hbm:perfluoromethyl",
+    "amount": 1000,
+    "pressure": 0
+  },
+  "output": {
+    "fluid": "hbm:perfluoromethyl",
+    "amount": 1000,
+    "pressure": 1
+  },
+  "duration": 50
+}

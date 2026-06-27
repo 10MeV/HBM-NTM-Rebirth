@@ -9,6 +9,7 @@ import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.CorrosiveFluidTrait;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.world.saveddata.TomImpactSavedData;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,6 +18,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.items.IItemHandler;
@@ -60,10 +62,18 @@ public class FluidBarrelBlockEntity extends FluidTankBlockEntity {
             return true;
         }
 
+        if (isWaterInTomFirestorm()) {
+            explodeTomWaterBarrel();
+            return true;
+        }
+
         if (variant == FluidBarrelBlock.Variant.CORRODED) {
             boolean changed = false;
             if (level.random.nextInt(3) == 0) {
-                getTank().release(level, worldPosition, 1, FluidReleaseType.SPILL, false);
+                FluidType releasedType = getTank().getTankType();
+                getTank().drain(1, false);
+                com.hbm.ntm.fluid.HbmFluidReleaseEffects.applyLegacyPollutingRelease(level, worldPosition,
+                        releasedType, FluidReleaseType.SPILL, 1.0F);
                 changed = true;
             }
             if (level.random.nextInt(3 * 60 * 20) == 0) {
@@ -75,6 +85,29 @@ public class FluidBarrelBlockEntity extends FluidTankBlockEntity {
         }
 
         return false;
+    }
+
+    private boolean isWaterInTomFirestorm() {
+        if (level == null || getTank().getTankType() != HbmFluids.WATER) {
+            return false;
+        }
+        if (level.getBrightness(LightLayer.SKY, worldPosition) <= 7) {
+            return false;
+        }
+        return TomImpactSavedData.forLevel(level)
+                .map(data -> data.fire() > 1.0e-5F)
+                .orElse(false);
+    }
+
+    private void explodeTomWaterBarrel() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        dropInventoryItems();
+        level.destroyBlock(worldPosition, false);
+        getTank().setFill(0);
+        level.explode(null, worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D, 5.0F, true, Level.ExplosionInteraction.BLOCK);
     }
 
     @Override

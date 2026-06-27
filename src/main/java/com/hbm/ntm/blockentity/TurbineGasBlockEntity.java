@@ -1,7 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.block.LegacyLookOverlayPorts;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.block.HorizontalMachineBlock;
@@ -199,7 +199,7 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldSlider != turbine.sliderPos
                 || oldAuto != turbine.autoMode;
         turbine.networkPackNT(150);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             turbine.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -392,8 +392,8 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     private List<EnergyPort> energyPorts() {
         Direction facing = facing();
         Direction side = LegacyMultiblockOffsets.legacyUpSide(facing);
-        BlockPos offset = LegacyMultiblockOffsets.relative(facing, side, 0, -5, 1);
-        return List.of(EnergyPort.of(offset.getX(), offset.getY(), offset.getZ(), side.getOpposite()));
+        BlockPos offset = LegacyMultiblockOffsets.relative(facing, side, 0, 4, 1);
+        return List.of(EnergyPort.of(offset.getX(), offset.getY(), offset.getZ(), side));
     }
 
     private List<FluidPort> fluidPorts() {
@@ -423,7 +423,7 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private List<FluidPort> steamFluidPorts(Direction side) {
-        return List.of(fluidPort(relative(0, 4, 1), side.getOpposite()));
+        return List.of(fluidPort(relative(0, -5, 1), side.getOpposite()));
     }
 
     private static FluidPort fluidPort(BlockPos offset, Direction side) {
@@ -432,9 +432,9 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private void refreshLegacyPortSubscriptions(Level level, BlockPos pos) {
         Direction facing = facing();
-        fuelLubePortSubscriptions.refreshReceiverDetailed(level, pos, fuelLubeFluidPorts(facing),
+        fuelLubePortSubscriptions.refreshReceiver(level, pos, fuelLubeFluidPorts(facing),
                 List.of(fuelTank, lubricantTank), this);
-        waterPortSubscriptions.refreshReceiverDetailed(level, pos, waterFluidPorts(facing),
+        waterPortSubscriptions.refreshReceiver(level, pos, waterFluidPorts(facing),
                 List.of(waterTank), this);
     }
 
@@ -443,7 +443,7 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
             return;
         }
         Direction side = LegacyMultiblockOffsets.legacyUpSide(facing());
-        HbmFluidUtil.tryProvideToPortsDetailedReport(level, pos, steamFluidPorts(side),
+        HbmFluidUtil.tryProvideToPorts(level, pos, steamFluidPorts(side),
                 steamTank.getTankType(), steamTank.getPressure(), this);
     }
 
@@ -614,17 +614,12 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.energyStored(energy.getPower(), energy.getMaxPower()),
-                LegacyLookOverlayLines.tank(true, fuelTank),
-                LegacyLookOverlayLines.tank(true, lubricantTank),
-                LegacyLookOverlayLines.tank(true, waterTank),
-                LegacyLookOverlayLines.tank(false, steamTank)));
+        return LegacyLookOverlayPorts.turbineGasPort(this, viewedPos);
     }
 
     @Override
     protected boolean showsLegacyFluidLookOverlay() {
-        return true;
+        return false;
     }
 
     @Override
@@ -679,12 +674,19 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void provideExtraInfo(CompoundTag data) {
         super.provideExtraInfo(data);
         data.putBoolean(CompatEnergyControl.B_ACTIVE, state == 1);
+        data.putInt(CompatEnergyControl.I_STATE, state);
+        data.putBoolean(CompatEnergyControl.B_AUTO_MODE, autoMode);
+        data.putInt(CompatEnergyControl.I_THROTTLE, throttle);
         data.putDouble(CompatEnergyControl.D_HEAT_C, getTemperature());
         data.putDouble(CompatEnergyControl.D_TURBINE_PERCENT, sliderPos * 100.0D / 60.0D);
         data.putInt(CompatEnergyControl.I_TURBINE_SPEED, rpm);
         data.putDouble(CompatEnergyControl.D_OUTPUT_HE, instantPowerOutput);
         data.putDouble(CompatEnergyControl.D_CONSUMPTION_MB, waterToBoil);
         data.putDouble(CompatEnergyControl.D_OUTPUT_MB, waterToBoil * 10.0D);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_GAS_TURBINE_FUEL, fuelTank);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_GAS_TURBINE_LUBRICANT, lubricantTank);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_GAS_TURBINE_WATER, waterTank);
+        CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_GAS_TURBINE_STEAM, steamTank);
     }
 
     @Override

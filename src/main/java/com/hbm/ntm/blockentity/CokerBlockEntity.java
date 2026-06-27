@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -94,7 +93,7 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
 
         boolean oldWasOn = wasOn;
         wasOn = false;
-        CokerRecipe recipe = LegacyOilFluidRecipes.getCoking(inputTank.getTankType());
+        CokerRecipe recipe = LegacyOilFluidRecipes.getCoking(level, inputTank.getTankType());
         changed |= setupRecipeTank(recipe);
         if (canProcess(recipe)) {
             int burn = heat / 100;
@@ -140,10 +139,7 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.heatTu(heat),
-                LegacyLookOverlayLines.compactTank(true, inputTank),
-                LegacyLookOverlayLines.compactTank(false, outputTank)));
+        return null;
     }
 
     @Override

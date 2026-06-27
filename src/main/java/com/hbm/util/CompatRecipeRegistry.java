@@ -1,6 +1,7 @@
 package com.hbm.util;
 
 import com.google.gson.JsonObject;
+import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.recipe.AnvilConstructionRecipe;
@@ -567,6 +568,26 @@ public final class CompatRecipeRegistry {
             ItemStack outputItem, HbmFluidStack outputFluid) {
         return com.hbm.ntm.compat.CompatRecipeRegistry.registerFusionReactor(sink, name, duration, power, klystron,
                 plasma, neutrons, inputFluids, outputItem, outputFluid);
+    }
+
+    public static JsonObject createElectrolyzerMetal(HbmIngredient input, MaterialStack output1,
+            MaterialStack output2, ItemStack[] byproducts, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.createElectrolyzerMetal(input, output1, output2, byproducts,
+                duration);
+    }
+
+    public static ResourceLocation registerElectrolyzerMetal(com.hbm.ntm.api.recipe.RecipeSink sink,
+            ResourceLocation id, HbmIngredient input, MaterialStack output1, MaterialStack output2,
+            ItemStack[] byproducts, int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerElectrolyzerMetal(sink, id, input, output1,
+                output2, byproducts, duration);
+    }
+
+    public static ResourceLocation registerElectrolyzerMetal(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmIngredient input, MaterialStack output1, MaterialStack output2, ItemStack[] byproducts,
+            int duration) {
+        return com.hbm.ntm.compat.CompatRecipeRegistry.registerElectrolyzerMetal(sink, name, input, output1,
+                output2, byproducts, duration);
     }
 
     public static JsonObject createBreeder(HbmIngredient input, ItemStack output, int flux) {

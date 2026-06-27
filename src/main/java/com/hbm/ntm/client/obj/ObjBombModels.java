@@ -1,6 +1,8 @@
 package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
 public final class ObjBombModels {
@@ -38,13 +40,13 @@ public final class ObjBombModels {
     public static LegacyWavefrontModel model(String modelName, ResourceLocation texture) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/bombs/" + modelName + ".obj"),
-                texture);
+                texture).asVBO();
     }
 
     public static LegacyWavefrontModel rootModel(String modelName, ResourceLocation texture) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/" + modelName + ".obj"),
-                texture);
+                texture).asVBO();
     }
 
     public static ResourceLocation texture(String name) {
@@ -55,8 +57,10 @@ public final class ObjBombModels {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + name + ".png");
     }
 
-    public static void renderFstbmbBody(ObjRenderContext context) {
-        FSTBMB.renderOnlyInCallOrder(texture("fstbmb"), context, FSTBMB_BODY_BALEFIRE);
+    public static void renderFstbmbBody(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, LegacyTexturedRenderMode renderMode) {
+        FSTBMB.renderOnlyInCallOrder(FSTBMB.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
+                FSTBMB_BODY_BALEFIRE, renderMode);
     }
 
     private ObjBombModels() {

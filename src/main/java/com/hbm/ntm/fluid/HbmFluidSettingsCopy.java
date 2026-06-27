@@ -36,7 +36,13 @@ public final class HbmFluidSettingsCopy {
         BlockEntity blockEntity = level.isClientSide
                 ? MultiblockHelper.resolveCoreBlockEntity(level, pos)
                 : MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
-        return blockEntity instanceof HbmFluidCopiable copiable ? Optional.of(copiable) : Optional.empty();
+        return blockEntity instanceof HbmFluidCopiable copiable && hasCopySurface(copiable)
+                ? Optional.of(copiable)
+                : Optional.empty();
+    }
+
+    private static boolean hasCopySurface(HbmFluidCopiable copiable) {
+        return copiable.supportsFluidSettingsCopy();
     }
 
     private HbmFluidSettingsCopy() {

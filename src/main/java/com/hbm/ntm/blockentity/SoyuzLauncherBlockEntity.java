@@ -135,7 +135,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
             launcher.setChanged();
         }
         launcher.networkPackNT(250);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }

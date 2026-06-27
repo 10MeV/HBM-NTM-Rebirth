@@ -3,8 +3,9 @@ package com.hbm.inventory.fluid.trait;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
-import com.hbm.inventory.fluid.Fluids;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait;
 import java.io.IOException;
 import java.util.List;
@@ -55,6 +56,24 @@ public class FT_Heatable extends HeatableFluidTrait {
         }
     }
 
+    public void addInfoHidden(List<String> info) {
+        if (info == null) {
+            return;
+        }
+        HeatableFluidTrait.HeatingStep first = getFirstStep();
+        if (first != null) {
+            info.add(ChatFormatting.RED + "Thermal capacity: " + first.heatRequired() + " TU per "
+                    + first.amountRequired() + "mB");
+        }
+        for (HeatingType type : HeatingType.values()) {
+            double eff = getEfficiency(type);
+            if (eff > 0.0D) {
+                info.add(ChatFormatting.YELLOW + "[" + type.displayName + "] " + ChatFormatting.AQUA
+                        + "Efficiency: " + (int) (eff * 100.0D) + "%");
+            }
+        }
+    }
+
     public void serializeJSON(JsonWriter writer) throws IOException {
         writer.name("steps").beginArray();
         for (HeatableFluidTrait.HeatingStep step : getSteps()) {
@@ -81,15 +100,27 @@ public class FT_Heatable extends HeatableFluidTrait {
         JsonArray steps = object.has("steps") ? object.getAsJsonArray("steps") : new JsonArray();
         for (int i = 0; i < steps.size(); i++) {
             JsonObject step = steps.get(i).getAsJsonObject();
-            addStep(step.get("heatReq").getAsInt(), step.get("amountReq").getAsInt(),
-                    Fluids.fromName(step.get("typeProduced").getAsString()),
-                    step.get("amountProd").getAsInt());
+            addStep(LegacyFluidTraitJson.intValue(step, "heatReq", 0),
+                    LegacyFluidTraitJson.intValue(step, "amountReq", 0),
+                    fluidValue(step, "typeProduced", "NONE"),
+                    LegacyFluidTraitJson.intValue(step, "amountProd", 0));
         }
         for (HeatingType type : HeatingType.values()) {
             if (object.has(type.name())) {
-                setEff(type, object.get(type.name()).getAsDouble());
+                setEff(type, LegacyFluidTraitJson.doubleValue(object, type.name(), 0.0D));
             }
         }
+    }
+
+    private static FluidType fluidValue(JsonObject object, String key, String fallback) {
+        if (!object.has(key)) {
+            return HbmFluidJsonUtil.readFluidReference(fallback);
+        }
+        FluidType type = HbmFluidJsonUtil.readFluidReference(object.get(key));
+        if (type == HbmFluids.NONE && !HbmFluidJsonUtil.isExplicitNoneReference(object.get(key))) {
+            throw HbmFluidJsonUtil.unknownFluidReference(key, object.get(key));
+        }
+        return type;
     }
 
     public enum HeatingType {

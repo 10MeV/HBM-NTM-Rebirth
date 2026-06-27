@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "G": {
+      "tag": "forge:glass/colorless"
+    },
+    "R": {
+      "tag": "forge:ingots/any_rubber"
+    }
+  },
+  "pattern": [
+    " GR",
+    " GR",
+    " G "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:siphon"
+  },
+  "show_notification": true
+}

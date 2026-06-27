@@ -4,10 +4,11 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.ParticleAcceleratorBlock;
 import com.hbm.ntm.blockentity.PABeamlineBlockEntity;
 import com.hbm.ntm.blockentity.PABlockEntity;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjParticleAcceleratorModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -45,29 +46,30 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
         LegacyWavefrontModel model = model(variant);
         ResourceLocation texture = texture(variant);
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay)
-                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL);
         if (blockEntity instanceof PABeamlineBlockEntity beamline) {
-            renderBeamline(beamline, partialTick, model, texture, context);
+            renderBeamline(beamline, partialTick, texture, poseStack, buffer, modelLight, packedOverlay);
         } else {
-            model.renderAll(texture, context);
+            model.renderAll(texture, poseStack, buffer, modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
         }
         poseStack.popPose();
     }
 
-    private static void renderBeamline(PABeamlineBlockEntity beamline, float partialTick, LegacyWavefrontModel model,
-            ResourceLocation texture, ObjRenderContext context) {
+    private static void renderBeamline(PABeamlineBlockEntity beamline, float partialTick, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!beamline.hasWindow()) {
-            ObjParticleAcceleratorModels.renderBeamlinePart("Beamline", texture, context);
+            ObjParticleAcceleratorModels.renderBeamlinePart("Beamline", texture, poseStack, buffer, packedLight,
+                    packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
             return;
         }
-        ObjParticleAcceleratorModels.renderBeamlinePart("BeamlineWindow", texture, context);
+        ObjParticleAcceleratorModels.renderBeamlinePart("BeamlineWindow", texture, poseStack, buffer, packedLight,
+                packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
         float flash = Math.max(0.0F, beamline.getFlash(partialTick));
         if (flash > 0.0F) {
             int color = Math.min(255, (int) (230.0F * flash));
-            ObjParticleAcceleratorModels.renderBeamlinePartUntextured("BeamlineGlass", context.fullBright()
-                    .withRenderMode(LegacyTexturedRenderMode.ADDITIVE_CULL_NO_DEPTH_WRITE)
-                    .withRgba(color, color, 255, 180));
+            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                    queuedPose -> ObjParticleAcceleratorModels.renderBeamlinePartUntextured("BeamlineGlass",
+                            queuedPose, buffer, color, color, 255, 180,
+                            LegacyTexturedRenderMode.ADDITIVE_CULL_NO_DEPTH_WRITE));
         }
     }
 

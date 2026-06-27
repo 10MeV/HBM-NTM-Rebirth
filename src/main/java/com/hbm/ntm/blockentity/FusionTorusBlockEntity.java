@@ -7,6 +7,7 @@ import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -31,7 +32,6 @@ import com.hbm.ntm.uninos.networkproviders.PlasmaNetwork;
 import com.hbm.ntm.uninos.networkproviders.PlasmaNode;
 import com.hbm.ntm.uninos.networkproviders.PlasmaNodespace;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -164,7 +164,7 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, torus);
         boolean changed = torus.tickServer(level);
         torus.networkPackNT(150);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             torus.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -290,6 +290,11 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of(hotCoolantTank, recipeTanks[3]);
+    }
+
+    @Override
+    public boolean supportsFluidSettingsCopy() {
+        return false;
     }
 
     @Override
@@ -553,6 +558,26 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         return null;
     }
 
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        super.provideExtraInfo(data);
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, didProcess);
+        data.putLong(CompatEnergyControl.L_KLYSTRON_TU, klystronEnergy);
+        data.putLong(CompatEnergyControl.L_PLASMA_TU, plasmaEnergy);
+        data.putDouble(CompatEnergyControl.D_FUSION_CONSUMPTION_PERCENT, fuelConsumption * 100.0D);
+        data.putInt(CompatEnergyControl.I_PROGRESS, (int) Math.round(progress * 100.0D));
+        data.putDouble(CompatEnergyControl.D_BONUS_PERCENT, bonus * 100.0D);
+        for (int i = 0; i < recipeTanks.length; i++) {
+            CompatEnergyControl.putTypedTankInfo(data, CompatEnergyControl.S_FUSION_RECIPE_TANK_PREFIX + i,
+                    recipeTanks[i]);
+        }
+        CompatEnergyControl.putTankAmountInfo(data, CompatEnergyControl.S_FUSION_COOLANT, coolantTank);
+        CompatEnergyControl.putTankAmountInfo(data, CompatEnergyControl.S_FUSION_HOT_COOLANT, hotCoolantTank);
+        data.putDouble(CompatEnergyControl.D_FUSION_CONSUMPTION_RAW, fuelConsumption);
+        data.putDouble(CompatEnergyControl.D_FUSION_PROGRESS_RAW, progress);
+        data.putDouble(CompatEnergyControl.D_FUSION_BONUS_RAW, bonus);
+    }
+
     private boolean tickServer(Level level) {
         ensureNodes(level);
         HbmBatteryTransfer.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, getMaxPower());
@@ -563,12 +588,13 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
             PlasmaNetwork net = plasmaNodes[i] == null ? null : plasmaNodes[i].getPlasmaNet();
             connections[i] = false;
             if (klystronNodes[i] != null && klystronNodes[i].getKlystronNet() != null
-                    && !klystronNodes[i].getKlystronNet().providerEntries.isEmpty()) {
+                    && klystronNodes[i].getKlystronNet().getProviderCount() > 0) {
                 connections[i] = true;
             }
-            if (net != null && !net.receiverEntries.isEmpty()) {
+            List<?> plasmaReceivers = net == null ? List.of() : net.receiverSnapshot();
+            if (!plasmaReceivers.isEmpty()) {
                 connections[i] = true;
-                for (Object receiver : new ArrayList<>(net.receiverEntries.keySet())) {
+                for (Object receiver : plasmaReceivers) {
                     if (receiver instanceof FusionPowerReceiver fusionReceiver && fusionReceiver.receivesFusionPower()) {
                         receiverCount++;
                     }
@@ -803,7 +829,7 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
             if (net == null) {
                 continue;
             }
-            for (Object receiver : new ArrayList<>(net.receiverEntries.keySet())) {
+            for (Object receiver : net.receiverSnapshot()) {
                 if (receiver instanceof FusionPowerReceiver fusionReceiver) {
                     fusionReceiver.receiveFusionPower((long) Math.ceil(plasmaEnergy * intensity),
                             neutronFlux, plasmaR, plasmaG, plasmaB);

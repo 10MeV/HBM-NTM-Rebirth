@@ -1,0 +1,26 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:refinery",
+    "output0":  {
+                    "fluid":  "hbm_ntm_rebirth:naphtha_ds",
+                    "amount":  35
+                },
+    "output1":  {
+                    "fluid":  "hbm_ntm_rebirth:lightoil_ds",
+                    "amount":  35
+                },
+    "output2":  {
+                    "fluid":  "hbm_ntm_rebirth:aromatics",
+                    "amount":  15
+                },
+    "output3":  {
+                    "fluid":  "hbm_ntm_rebirth:unsaturateds",
+                    "amount":  15
+                },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:hotcrackoil_ds",
+                  "amount":  100
+              },
+    "solid":  {
+                  "item":  "hbm_ntm_rebirth:oil_tar_paraffin"
+              }
+}

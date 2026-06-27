@@ -12,6 +12,7 @@ public final class SimpleFluidTraits {
     public static final Plasma PLASMA = new Plasma();
     public static final Antimatter ANTIMATTER = new Antimatter();
     public static final LeadContainer LEAD_CONTAINER = new LeadContainer();
+    public static final Delicious DELICIOUS = new Delicious();
     public static final NoId NO_ID = new NoId();
     public static final NoContainer NO_CONTAINER = new NoContainer();
     public static final Unsiphonable UNSIPHONABLE = new Unsiphonable();
@@ -62,6 +63,13 @@ public final class SimpleFluidTraits {
         @Override
         public void addInfo(List<Component> info) {
             info.add(Component.literal("[Requires hazardous material tank to hold]").withStyle(ChatFormatting.DARK_RED));
+        }
+    }
+
+    public static class Delicious extends FluidTrait {
+        @Override
+        public void addHiddenInfo(List<Component> info) {
+            info.add(Component.literal("[Delicious]").withStyle(ChatFormatting.DARK_GREEN));
         }
     }
 

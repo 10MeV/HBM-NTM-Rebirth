@@ -2,7 +2,6 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.RBMKCraneConsoleBlock;
 import com.hbm.ntm.blockentity.RBMKCraneConsoleBlockEntity;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -28,8 +27,8 @@ public class RBMKCraneConsoleRenderer implements BlockEntityRenderer<RBMKCraneCo
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, light, packedOverlay);
-        LegacyRbmkMachineRenderer.renderCraneConsole(context, console.consoleRenderState(), partialTick,
+        LegacyRbmkMachineRenderer.renderCraneConsole(poseStack, buffer, light, packedOverlay,
+                console.consoleRenderState(), partialTick,
                 System.currentTimeMillis());
         poseStack.popPose();
 
@@ -40,7 +39,7 @@ public class RBMKCraneConsoleRenderer implements BlockEntityRenderer<RBMKCraneCo
             poseStack.translate(center.getX() - pos.getX() + 0.5D, center.getY() - pos.getY(),
                     center.getZ() - pos.getZ() + 0.5D);
             poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
-            LegacyRbmkMachineRenderer.renderCrane(new ObjRenderContext(poseStack, buffer, state, light, packedOverlay),
+            LegacyRbmkMachineRenderer.renderCrane(poseStack, buffer, light, packedOverlay,
                     console.craneRenderState(), partialTick);
             poseStack.popPose();
         }

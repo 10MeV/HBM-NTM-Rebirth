@@ -3,7 +3,6 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyDirectionalShapeBlock;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjLightModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -14,7 +13,6 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Blocks;
 
 public class LegacyFloodlightItemRenderer extends BlockEntityWithoutLevelRenderer {
     public static final LegacyFloodlightItemRenderer INSTANCE = new LegacyFloodlightItemRenderer(
@@ -42,25 +40,22 @@ public class LegacyFloodlightItemRenderer extends BlockEntityWithoutLevelRendere
 
         poseStack.pushPose();
         applyDisplay(displayContext, poseStack);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(),
-                packedLight, packedOverlay);
-        renderPart(BASE, context);
+        renderPart(BASE, poseStack, buffer, packedLight, packedOverlay);
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.5D, 0.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees(-30.0F));
         poseStack.translate(0.0D, -0.5D, 0.0D);
-        ObjRenderContext angledContext = new ObjRenderContext(poseStack, buffer, Blocks.AIR.defaultBlockState(),
-                packedLight, packedOverlay);
-        renderPart(LIGHTS, angledContext);
-        renderPart(LAMPS, angledContext);
+        renderPart(LIGHTS, poseStack, buffer, packedLight, packedOverlay);
+        renderPart(LAMPS, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
 
         poseStack.popPose();
     }
 
-    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, ObjRenderContext context) {
-        ObjLightModels.FLOODLIGHT_LEGACY.renderOnlyInCallOrder(context, handle);
+    private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ObjLightModels.FLOODLIGHT_LEGACY.renderOnlyInCallOrder(poseStack, buffer, packedLight, packedOverlay, handle);
     }
 
     private static void applyDisplay(ItemDisplayContext displayContext, PoseStack poseStack) {

@@ -5,7 +5,7 @@ import com.hbm.ntm.block.FluidPipeBlock;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.fluid.HbmFluidDuctVariants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -17,10 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEntity> {
-    private static final String[] BASE_TEXTURES = {"pipe_neo", "pipe_silver", "pipe_colored"};
-    private static final String[] OVERLAY_TEXTURES = {"pipe_neo_overlay", "pipe_silver_overlay", "pipe_colored_overlay"};
-    private static final ResourceLocation[] BASE_TEXTURE_LOCATIONS = buildTextures(BASE_TEXTURES);
-    private static final ResourceLocation[] OVERLAY_TEXTURE_LOCATIONS = buildTextures(OVERLAY_TEXTURES);
+    private static final ResourceLocation[] BASE_TEXTURE_LOCATIONS = buildTextures(false);
+    private static final ResourceLocation[] OVERLAY_TEXTURE_LOCATIONS = buildTextures(true);
     private static final String[][] PARTS_BY_MASK = buildPartsByMask();
     private static final LegacyWavefrontModel.SelectionHandle[] PART_HANDLES = buildPartHandles(PARTS_BY_MASK);
 
@@ -62,7 +60,7 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
 
-        renderParts(mask, state, style, color, poseStack, buffer, modelLight, packedOverlay);
+        renderParts(mask, style, color, poseStack, buffer, modelLight, packedOverlay);
 
         poseStack.popPose();
     }
@@ -76,19 +74,21 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
                 && state.hasProperty(HbmFluidNodeBlock.DOWN);
     }
 
-    private static void renderParts(int mask, BlockState state, int style, int color, PoseStack poseStack,
+    private static void renderParts(int mask, int style, int color, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
-                .withLegacyShadow();
         LegacyWavefrontModel.SelectionHandle handle = PART_HANDLES[mask];
-        ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(BASE_TEXTURE_LOCATIONS[style], context, handle);
-        ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(OVERLAY_TEXTURE_LOCATIONS[style], context.withColor(color), handle);
+        ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(BASE_TEXTURE_LOCATIONS[style], poseStack, buffer,
+                packedLight, packedOverlay, 255, 255, 255, 255, true, handle);
+        ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(OVERLAY_TEXTURE_LOCATIONS[style], poseStack, buffer,
+                packedLight, packedOverlay, color >> 16 & 255, color >> 8 & 255, color & 255, 255, true, handle);
     }
 
-    private static ResourceLocation[] buildTextures(String[] names) {
-        ResourceLocation[] textures = new ResourceLocation[names.length];
-        for (int i = 0; i < names.length; i++) {
-            textures[i] = ObjBlockModels.texture(names[i]);
+    private static ResourceLocation[] buildTextures(boolean overlay) {
+        ResourceLocation[] textures = new ResourceLocation[HbmFluidDuctVariants.STANDARD_STYLE_COUNT];
+        for (int i = 0; i < textures.length; i++) {
+            textures[i] = ObjBlockModels.texture(overlay
+                    ? HbmFluidDuctVariants.standardOverlayTexture(i)
+                    : HbmFluidDuctVariants.standardParticleTexture(i));
         }
         return textures;
     }

@@ -3,13 +3,11 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.entity.effect.FalloutRainEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.GraphicsStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.core.BlockPos;
@@ -18,8 +16,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 import java.util.Random;
 
@@ -57,10 +53,6 @@ public class FalloutRainRenderer extends EntityRenderer<FalloutRainEntity> {
         double originY = Mth.lerp(partialTick, entity.yOld, entity.getY());
         double originZ = Mth.lerp(partialTick, entity.zOld, entity.getZ());
 
-        VertexConsumer consumer = buffer.getBuffer(RenderType.entityTranslucent(TEXTURE));
-        Matrix4f pose = poseStack.last().pose();
-        Matrix3f normal = poseStack.last().normal();
-
         for (int z = centerZ - range; z <= centerZ + range; z++) {
             for (int x = centerX - range; x <= centerX + range; x++) {
                 int coord = LegacyFalloutRainRenderer.rainCoordIndex(x, z, centerX, centerZ);
@@ -80,8 +72,8 @@ public class FalloutRainRenderer extends EntityRenderer<FalloutRainEntity> {
                 int lightY = LegacyFalloutRainRenderer.sampleLightY(groundY, centerY);
                 int light = LegacyFalloutRainRenderer.blendLegacyLight(
                         LevelRenderer.getLightColor(level, new BlockPos(x, lightY, z)));
-                LegacyFalloutRainRenderer.renderColumn(consumer, pose, normal, x, z, height, rainX, rainZ, style,
-                        light, originX, originY, originZ);
+                LegacyFalloutRainRenderer.renderColumn(TEXTURE, poseStack, buffer, x, z, height, rainX, rainZ,
+                        style, light, originX, originY, originZ);
             }
         }
     }

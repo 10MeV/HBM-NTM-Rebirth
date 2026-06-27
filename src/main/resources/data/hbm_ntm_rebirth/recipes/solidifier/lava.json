@@ -1,0 +1,10 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:solidifier",
+    "output":  {
+                   "item":  "minecraft:obsidian"
+               },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:lava",
+                  "amount":  1000
+              }
+}

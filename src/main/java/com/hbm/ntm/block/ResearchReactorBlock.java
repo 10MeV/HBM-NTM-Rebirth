@@ -37,8 +37,14 @@ public class ResearchReactorBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && !player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
-                && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof ResearchReactorBlockEntity reactor) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(level, pos);
+        if (!(blockEntity instanceof ResearchReactorBlockEntity reactor)) {
+            return InteractionResult.PASS;
+        }
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             NetworkHooks.openScreen(serverPlayer, reactor, reactor.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

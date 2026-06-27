@@ -6,6 +6,7 @@ import com.hbm.ntm.fluid.FluidSymbol;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmCompatFluidRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
+import com.hbm.render.util.EnumSymbol;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -21,8 +22,18 @@ public final class CompatFluidRegistry {
     }
 
     public static FluidType registerFluid(String name, int id, int color, int p, int f, int r,
+            EnumSymbol symbol, ResourceLocation texture) {
+        return registerFluid(name, id, color, p, f, r, modern(symbol), texture);
+    }
+
+    public static FluidType registerFluid(String name, int id, int color, int p, int f, int r,
             FluidSymbol symbol, String texture) {
         return com.hbm.ntm.compat.CompatFluidRegistry.registerFluid(name, id, color, p, f, r, symbol, texture);
+    }
+
+    public static FluidType registerFluid(String name, int id, int color, int p, int f, int r,
+            EnumSymbol symbol, String texture) {
+        return registerFluid(name, id, color, p, f, r, modern(symbol), texture);
     }
 
     public static FluidType registerFluid(String name, int id, int color, int p, int f, int r,
@@ -37,9 +48,19 @@ public final class CompatFluidRegistry {
     }
 
     public static FluidType registerFluid(String name, int id, int color, int p, int f, int r,
+            EnumSymbol symbol, ResourceLocation texture, ResourceLocation forgeFluidId) {
+        return registerFluid(name, id, color, p, f, r, modern(symbol), texture, forgeFluidId);
+    }
+
+    public static FluidType registerFluid(String name, int id, int color, int p, int f, int r,
             FluidSymbol symbol, String texture, String forgeFluidId) {
         return com.hbm.ntm.compat.CompatFluidRegistry.registerFluid(name, id, color, p, f, r, symbol, texture,
                 forgeFluidId);
+    }
+
+    public static FluidType registerFluid(String name, int id, int color, int p, int f, int r,
+            EnumSymbol symbol, String texture, String forgeFluidId) {
+        return registerFluid(name, id, color, p, f, r, modern(symbol), texture, forgeFluidId);
     }
 
     public static FluidType registerFluid(String name, int id, int color, int p, int f, int r,
@@ -52,6 +73,11 @@ public final class CompatFluidRegistry {
             FluidSymbol symbol, ResourceLocation texture, Fluid forgeFluid) {
         return com.hbm.ntm.compat.CompatFluidRegistry.registerFluid(name, id, color, p, f, r, symbol, texture,
                 forgeFluid);
+    }
+
+    public static FluidType registerFluid(String name, int id, int color, int p, int f, int r,
+            EnumSymbol symbol, ResourceLocation texture, Fluid forgeFluid) {
+        return registerFluid(name, id, color, p, f, r, modern(symbol), texture, forgeFluid);
     }
 
     public static void registerFluidRegisterListener(HbmFluidRegisterListener listener) {
@@ -113,6 +139,10 @@ public final class CompatFluidRegistry {
 
     public static HbmFluidContainerRegistry.Diagnostics containerDiagnostics() {
         return com.hbm.ntm.compat.CompatFluidRegistry.containerDiagnostics();
+    }
+
+    private static FluidSymbol modern(EnumSymbol symbol) {
+        return symbol == null ? FluidSymbol.NONE : symbol.modern();
     }
 
     private CompatFluidRegistry() {

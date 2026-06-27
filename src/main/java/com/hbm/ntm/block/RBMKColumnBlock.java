@@ -1,5 +1,7 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayBlockProvider;
 import com.hbm.ntm.api.block.Toolable;
 import com.hbm.ntm.blockentity.RBMKColumnBlockEntity;
 import com.hbm.ntm.item.RBMKFuelRodItem;
@@ -56,7 +58,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, MultiblockCoreBlock, LegacyMultiblockPlaceable {
+public class RBMKColumnBlock extends BaseEntityBlock
+        implements Toolable, MultiblockCoreBlock, LegacyMultiblockPlaceable, LegacyLookOverlayBlockProvider {
     public static final EnumProperty<LidType> LID = EnumProperty.create("lid", LidType.class);
 
     private final Kind kind;
@@ -138,6 +141,13 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
     @Override
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
+    }
+
+    @Nullable
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos, BlockState viewedState) {
+        CoreColumnLookup core = resolveOperationalColumn(level, viewedPos);
+        return core == null ? null : core.entity().getLookOverlay(level, viewedPos);
     }
 
     @Override
@@ -248,6 +258,9 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
         }
 
         LidType lid = lidForStack(held);
+        if (lid == LidType.NONE && player.isShiftKeyDown() && opensLegacyColumnGui(coreKind)) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (coreKind.storage() && lid == LidType.NONE) {
             if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
                 NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
@@ -476,6 +489,11 @@ public class RBMKColumnBlock extends BaseEntityBlock implements Toolable, Multib
             return LidType.GLASS;
         }
         return LidType.NONE;
+    }
+
+    private static boolean opensLegacyColumnGui(Kind kind) {
+        return kind.storage() || kind.rod() || kind.control()
+                || kind == Kind.HEATER || kind == Kind.BOILER || kind == Kind.OUTGASSER;
     }
 
     private static void setLid(Level level, BlockPos pos, BlockState state, LidType lid) {

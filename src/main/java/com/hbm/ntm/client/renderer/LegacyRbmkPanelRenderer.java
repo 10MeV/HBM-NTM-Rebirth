@@ -3,9 +3,9 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.client.obj.LegacyLineRenderer;
 import com.hbm.ntm.client.obj.LegacyRenderColor;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjRbmkModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.hbm.ntm.util.HbmMathUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -13,6 +13,8 @@ import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 public final class LegacyRbmkPanelRenderer {
@@ -117,7 +119,8 @@ public final class LegacyRbmkPanelRenderer {
     public static final double GRAPH_LABEL_Y = 0.3125D;
     public static final double GRAPH_LABEL_MAX_WIDTH = 0.75D;
 
-    public static void renderGauges(ObjRenderContext context, RBMKPanelPlanner.GaugeUnit[] gauges, float partialTick) {
+    public static void renderGauges(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, RBMKPanelPlanner.GaugeUnit[] gauges, float partialTick) {
         if (gauges == null) {
             return;
         }
@@ -127,16 +130,16 @@ public final class LegacyRbmkPanelRenderer {
             if (unit == null || !unit.active()) {
                 continue;
             }
-            renderGauge(context, unit, i, partialTick);
+            renderGauge(poseStack, buffer, packedLight, packedOverlay, unit, i, partialTick);
         }
     }
 
-    public static void renderGauge(ObjRenderContext context, RBMKPanelPlanner.GaugeUnit unit,
-            int index, float partialTick) {
-        PoseStack poseStack = context.poseStack();
+    public static void renderGauge(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            RBMKPanelPlanner.GaugeUnit unit, int index, float partialTick) {
         poseStack.pushPose();
         translateGaugeSlot(poseStack, index);
-        ObjRbmkModels.GAUGE.renderOnlyInCallOrder(ObjRbmkModels.GAUGE_TEXTURE, context, GAUGE_BODY);
+        renderPreparedTexturedSelection(ObjRbmkModels.GAUGE, ObjRbmkModels.GAUGE_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF, GAUGE_BODY);
 
         int color = unit == null ? 0xFFFFFF : unit.color();
         double angle = gaugeNeedleAngle(unit, partialTick);
@@ -144,13 +147,11 @@ public final class LegacyRbmkPanelRenderer {
         poseStack.translate(0.0D, GAUGE_PIVOT_Y, GAUGE_PIVOT_Z);
         poseStack.mulPose(Axis.XP.rotationDegrees((float) -angle));
         poseStack.translate(0.0D, -GAUGE_PIVOT_Y, -GAUGE_PIVOT_Z);
-        ObjRbmkModels.GAUGE.renderOnlyInCallOrder(ObjRbmkModels.GAUGE_TEXTURE,
-                context.fullBright().withRgb(LegacyRenderColor.red(color),
-                        LegacyRenderColor.green(color), LegacyRenderColor.blue(color)),
-                GAUGE_NEEDLE);
+        renderPreparedTexturedSelection(ObjRbmkModels.GAUGE, ObjRbmkModels.GAUGE_TEXTURE,
+                poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay, color, GAUGE_NEEDLE);
         poseStack.popPose();
-        renderGaugeLimitLabels(context, unit);
-        renderCenteredLegacyText(context, unit == null ? "" : unit.label(),
+        renderGaugeLimitLabels(poseStack, buffer, packedLight, unit);
+        renderCenteredLegacyText(poseStack, buffer, packedLight, unit == null ? "" : unit.label(),
                 GAUGE_LABEL_X, GAUGE_LABEL_Y, 0.0D, GAUGE_LABEL_MAX_WIDTH, 0x00FF00, true);
         poseStack.popPose();
     }
@@ -172,7 +173,8 @@ public final class LegacyRbmkPanelRenderer {
         return Mth.clamp(angle, 0.0D, GAUGE_NEEDLE_MAX) + GAUGE_NEEDLE_BASE_ANGLE;
     }
 
-    public static void renderIndicators(ObjRenderContext context, RBMKPanelPlanner.IndicatorUnit[] indicators) {
+    public static void renderIndicators(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, RBMKPanelPlanner.IndicatorUnit[] indicators) {
         if (indicators == null) {
             return;
         }
@@ -182,27 +184,27 @@ public final class LegacyRbmkPanelRenderer {
             if (unit == null || !unit.active()) {
                 continue;
             }
-            renderIndicator(context, unit, i);
+            renderIndicator(poseStack, buffer, packedLight, packedOverlay, unit, i);
         }
     }
 
-    public static void renderIndicator(ObjRenderContext context, RBMKPanelPlanner.IndicatorUnit unit, int index) {
-        PoseStack poseStack = context.poseStack();
+    public static void renderIndicator(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, RBMKPanelPlanner.IndicatorUnit unit, int index) {
         poseStack.pushPose();
         translateIndicatorSlot(poseStack, index);
-        ObjRbmkModels.INDICATOR.renderOnlyInCallOrder(ObjRbmkModels.INDICATOR_TEXTURE, context, INDICATOR_BASE);
+        renderPreparedTexturedSelection(ObjRbmkModels.INDICATOR, ObjRbmkModels.INDICATOR_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF, INDICATOR_BASE);
         int color = scaledColor(unit.color(), unit.light() ? 1.0F : INDICATOR_DIM_MULTIPLIER);
-        ObjRenderContext lightContext = unit.light() ? context.fullBright() : context;
-        ObjRbmkModels.INDICATOR.renderOnlyInCallOrder(ObjRbmkModels.INDICATOR_TEXTURE,
-                lightContext.withRgb(LegacyRenderColor.red(color),
-                        LegacyRenderColor.green(color), LegacyRenderColor.blue(color)),
-                INDICATOR_LIGHT);
-        renderCenteredLegacyText(context, unit.label(),
+        int light = unit.light() ? LightTexture.FULL_BRIGHT : packedLight;
+        renderPreparedTexturedSelection(ObjRbmkModels.INDICATOR, ObjRbmkModels.INDICATOR_TEXTURE,
+                poseStack, buffer, light, packedOverlay, color, INDICATOR_LIGHT);
+        renderCenteredLegacyText(poseStack, buffer, packedLight, unit.label(),
                 INDICATOR_LABEL_X, INDICATOR_LABEL_Y, 0.0D, INDICATOR_LABEL_MAX_WIDTH, 0x000000, false);
         poseStack.popPose();
     }
 
-    public static void renderLevers(ObjRenderContext context, RBMKPanelPlanner.LeverUnit[] levers, float partialTick) {
+    public static void renderLevers(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            RBMKPanelPlanner.LeverUnit[] levers, float partialTick) {
         if (levers == null) {
             return;
         }
@@ -212,22 +214,24 @@ public final class LegacyRbmkPanelRenderer {
             if (unit == null || !unit.active()) {
                 continue;
             }
-            renderLever(context, unit, i, partialTick);
+            renderLever(poseStack, buffer, packedLight, packedOverlay, unit, i, partialTick);
         }
     }
 
-    public static void renderLever(ObjRenderContext context, RBMKPanelPlanner.LeverUnit unit, int index, float partialTick) {
-        PoseStack poseStack = context.poseStack();
+    public static void renderLever(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            RBMKPanelPlanner.LeverUnit unit, int index, float partialTick) {
         poseStack.pushPose();
         translateLeverSlot(poseStack, index);
-        ObjRbmkModels.LEVER.renderOnlyInCallOrder(ObjRbmkModels.LEVER_TEXTURE, context, LEVER_BASE);
+        renderPreparedTexturedSelection(ObjRbmkModels.LEVER, ObjRbmkModels.LEVER_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF, LEVER_BASE);
         poseStack.pushPose();
         poseStack.translate(LEVER_PIVOT_X, LEVER_PIVOT_Y, 0.0D);
         poseStack.mulPose(Axis.ZP.rotationDegrees(leverAngle(unit, partialTick)));
         poseStack.translate(-LEVER_PIVOT_X, -LEVER_PIVOT_Y, 0.0D);
-        ObjRbmkModels.LEVER.renderOnlyInCallOrder(ObjRbmkModels.LEVER_TEXTURE, context, LEVER_HANDLE);
+        renderPreparedTexturedSelection(ObjRbmkModels.LEVER, ObjRbmkModels.LEVER_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF, LEVER_HANDLE);
         poseStack.popPose();
-        renderCenteredLegacyText(context, unit.label(),
+        renderCenteredLegacyText(poseStack, buffer, packedLight, unit.label(),
                 LEVER_LABEL_X, LEVER_LABEL_Y, 0.0D, LEVER_LABEL_MAX_WIDTH, 0x00FF00, true);
         poseStack.popPose();
     }
@@ -240,7 +244,8 @@ public final class LegacyRbmkPanelRenderer {
         return -180.0F * Mth.clamp(progress, 0.0F, 1.0F);
     }
 
-    public static void renderNumitrons(ObjRenderContext context, RBMKPanelPlanner.NumitronUnit[] units) {
+    public static void renderNumitrons(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, RBMKPanelPlanner.NumitronUnit[] units) {
         if (units == null) {
             return;
         }
@@ -250,23 +255,24 @@ public final class LegacyRbmkPanelRenderer {
             if (unit == null || !unit.active()) {
                 continue;
             }
-            renderNumitron(context, unit, i);
+            renderNumitron(poseStack, buffer, packedLight, packedOverlay, unit, i);
         }
     }
 
-    public static void renderNumitron(ObjRenderContext context, RBMKPanelPlanner.NumitronUnit unit, int index) {
-        PoseStack poseStack = context.poseStack();
+    public static void renderNumitron(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, RBMKPanelPlanner.NumitronUnit unit, int index) {
         poseStack.pushPose();
         translateNumitronSlot(poseStack, index);
         ObjRbmkModels.NUMITRON.renderAll(ObjRbmkModels.NUMITRON_TEXTURE,
-                poseStack, context.buffer(), context.packedLight(), context.packedOverlay());
-        renderNumitronDigits(context.fullBright(), unit);
-        renderCenteredLegacyText(context, unit.label(),
+                poseStack, buffer, packedLight, packedOverlay);
+        renderNumitronDigits(poseStack, buffer, packedOverlay, unit);
+        renderCenteredLegacyText(poseStack, buffer, packedLight, unit.label(),
                 NUMITRON_LABEL_X, NUMITRON_LABEL_Y, 0.0D, NUMITRON_LABEL_MAX_WIDTH, 0x00FF00, true);
         poseStack.popPose();
     }
 
-    public static void renderNumitronDigits(ObjRenderContext context, RBMKPanelPlanner.NumitronUnit unit) {
+    public static void renderNumitronDigits(PoseStack poseStack, MultiBufferSource buffer, int packedOverlay,
+            RBMKPanelPlanner.NumitronUnit unit) {
         String value = numitronValue(unit);
         long activeDigits = unit == null ? 0L : unit.activeDigits();
         for (int i = 0; i < NUMITRON_DIGITS; i++) {
@@ -279,17 +285,17 @@ public final class LegacyRbmkPanelRenderer {
                 continue;
             }
             double zOffset = (i - 3) * NUMITRON_DIGIT_Z_STEP;
-            LegacyTexturedQuadRenderer.quad(ObjRbmkModels.NUMITRON_LIGHTS_TEXTURE, context,
+            LegacyTexturedQuadRenderer.quad(ObjRbmkModels.NUMITRON_LIGHTS_TEXTURE, poseStack, buffer,
+                    LightTexture.FULL_BRIGHT, packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
                     0.0F, 1.0F, 0.0F,
-                    NUMITRON_DIGIT_X, -NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y, NUMITRON_DIGIT_W - zOffset,
-                    uv.u(), uv.v() + 0.5D,
-                    NUMITRON_DIGIT_X, NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y, NUMITRON_DIGIT_W - zOffset,
-                    uv.u(), uv.v(),
-                    NUMITRON_DIGIT_X, NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y, -NUMITRON_DIGIT_W - zOffset,
-                    uv.u() + 0.1D, uv.v(),
-                    NUMITRON_DIGIT_X, -NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y, -NUMITRON_DIGIT_W - zOffset,
-                    uv.u() + 0.1D, uv.v() + 0.5D,
-                    0xFFFFFF, 255);
+                    LegacyTexturedQuadRenderer.vertex(NUMITRON_DIGIT_X, -NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y,
+                            NUMITRON_DIGIT_W - zOffset, uv.u(), uv.v() + 0.5D, 0xFFFFFF, 255),
+                    LegacyTexturedQuadRenderer.vertex(NUMITRON_DIGIT_X, NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y,
+                            NUMITRON_DIGIT_W - zOffset, uv.u(), uv.v(), 0xFFFFFF, 255),
+                    LegacyTexturedQuadRenderer.vertex(NUMITRON_DIGIT_X, NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y,
+                            -NUMITRON_DIGIT_W - zOffset, uv.u() + 0.1D, uv.v(), 0xFFFFFF, 255),
+                    LegacyTexturedQuadRenderer.vertex(NUMITRON_DIGIT_X, -NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y,
+                            -NUMITRON_DIGIT_W - zOffset, uv.u() + 0.1D, uv.v() + 0.5D, 0xFFFFFF, 255));
         }
     }
 
@@ -348,7 +354,8 @@ public final class LegacyRbmkPanelRenderer {
         };
     }
 
-    public static void renderGraphs(ObjRenderContext context, RBMKPanelPlanner.GraphUnit[] graphs) {
+    public static void renderGraphs(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            RBMKPanelPlanner.GraphUnit[] graphs) {
         if (graphs == null) {
             return;
         }
@@ -358,24 +365,25 @@ public final class LegacyRbmkPanelRenderer {
             if (unit == null || !unit.active()) {
                 continue;
             }
-            renderGraph(context, unit, i);
+            renderGraph(poseStack, buffer, packedLight, packedOverlay, unit, i);
         }
     }
 
-    public static void renderGraph(ObjRenderContext context, RBMKPanelPlanner.GraphUnit unit, int index) {
-        PoseStack poseStack = context.poseStack();
+    public static void renderGraph(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            RBMKPanelPlanner.GraphUnit unit, int index) {
         poseStack.pushPose();
         translateGraphSlot(poseStack, index);
         ObjRbmkModels.NUMITRON.renderAll(ObjRbmkModels.NUMITRON_TEXTURE,
-                poseStack, context.buffer(), context.packedLight(), context.packedOverlay());
-        renderGraphLines(context.fullBright(), unit);
-        renderGraphLimitLabels(context, unit);
-        renderCenteredLegacyText(context, unit.label(),
+                poseStack, buffer, packedLight, packedOverlay);
+        renderGraphLines(poseStack, buffer, unit);
+        renderGraphLimitLabels(poseStack, buffer, unit);
+        renderCenteredLegacyText(poseStack, buffer, packedLight, unit.label(),
                 GRAPH_LABEL_X, GRAPH_LABEL_Y, 0.0D, GRAPH_LABEL_MAX_WIDTH, 0x00FF00, true);
         poseStack.popPose();
     }
 
-    public static void renderGraphLines(ObjRenderContext context, RBMKPanelPlanner.GraphUnit unit) {
+    public static void renderGraphLines(PoseStack poseStack, MultiBufferSource buffer,
+            RBMKPanelPlanner.GraphUnit unit) {
         long[] values = unit == null ? new long[0] : unit.values();
         if (values.length < 2) {
             return;
@@ -390,7 +398,8 @@ public final class LegacyRbmkPanelRenderer {
             double x1 = GRAPH_LINE_X;
             double y1 = graphY(clampLong(values[i + 1], lowest, highest), lowest, range);
             double z1 = graphZ(i + 1, values.length);
-            LegacyLineRenderer.line(context, 2.0F, x0, y0, z0, x1, y1, z1, 0x00FF00, 255);
+            LegacyLineRenderer.line(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                    2.0F, x0, y0, z0, x1, y1, z1, 0x00FF00, 255);
         }
     }
 
@@ -430,7 +439,8 @@ public final class LegacyRbmkPanelRenderer {
         return GRAPH_Z_START - index * GRAPH_Z_SPAN / Math.max(count - 1, 1);
     }
 
-    public static void renderKeys(ObjRenderContext context, RBMKPanelPlanner.KeyUnit[] keys) {
+    public static void renderKeys(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            RBMKPanelPlanner.KeyUnit[] keys) {
         if (keys == null) {
             return;
         }
@@ -440,48 +450,47 @@ public final class LegacyRbmkPanelRenderer {
             if (unit == null || !unit.active()) {
                 continue;
             }
-            renderKey(context, unit, i);
+            renderKey(poseStack, buffer, packedLight, packedOverlay, unit, i);
         }
     }
 
-    public static void renderKey(ObjRenderContext context, RBMKPanelPlanner.KeyUnit key, int index) {
-        PoseStack poseStack = context.poseStack();
+    public static void renderKey(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            RBMKPanelPlanner.KeyUnit key, int index) {
         poseStack.pushPose();
         translateKeySlot(poseStack, index);
-        ObjRbmkModels.BUTTON.renderOnlyInCallOrder(ObjRbmkModels.KEYPAD_TEXTURE, context, KEY_SOCKET);
+        renderPreparedTexturedSelection(ObjRbmkModels.BUTTON, ObjRbmkModels.KEYPAD_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF, KEY_SOCKET);
 
         poseStack.pushPose();
         if (key.isPressed()) {
             poseStack.translate(KEY_PRESSED_X_OFFSET, 0.0D, 0.0D);
         }
         int color = scaledColor(key.color(), key.isPressed() ? 1.0F : KEY_DIM_MULTIPLIER);
-        ObjRenderContext buttonContext = key.isPressed() ? context.fullBright() : context;
-        ObjRbmkModels.BUTTON.renderOnlyInCallOrder(ObjRbmkModels.KEYPAD_TEXTURE,
-                buttonContext.withRgb(LegacyRenderColor.red(color),
-                        LegacyRenderColor.green(color), LegacyRenderColor.blue(color)),
-                KEY_BUTTON);
+        int light = key.isPressed() ? LightTexture.FULL_BRIGHT : packedLight;
+        renderPreparedTexturedSelection(ObjRbmkModels.BUTTON, ObjRbmkModels.KEYPAD_TEXTURE,
+                poseStack, buffer, light, packedOverlay, color, KEY_BUTTON);
         poseStack.popPose();
-        renderCenteredLegacyText(context, key.label(),
+        renderCenteredLegacyText(poseStack, buffer, packedLight, key.label(),
                 KEY_LABEL_X, KEY_LABEL_Y, 0.0D, KEY_LABEL_MAX_WIDTH, 0x00FF00, true);
         poseStack.popPose();
     }
 
-    private static void renderGaugeLimitLabels(ObjRenderContext context, RBMKPanelPlanner.GaugeUnit unit) {
+    private static void renderGaugeLimitLabels(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            RBMKPanelPlanner.GaugeUnit unit) {
         if (unit == null) {
             return;
         }
         String lower = gaugeLimitLabel(unit.min());
         String upper = gaugeLimitLabel(unit.max());
         for (int i = 0; i < 2; i++) {
-            PoseStack poseStack = context.poseStack();
             poseStack.pushPose();
             poseStack.translate(0.0D, GAUGE_PIVOT_Y, GAUGE_PIVOT_Z);
             poseStack.mulPose(Axis.XP.rotationDegrees((float) -(GAUGE_MIN_MARK_ANGLE
                     + i * (GAUGE_MAX_MARK_ANGLE - GAUGE_MIN_MARK_ANGLE))));
             poseStack.translate(0.0D, -GAUGE_PIVOT_Y, -GAUGE_PIVOT_Z);
             poseStack.translate(GAUGE_LIMIT_LABEL_X, GAUGE_LIMIT_LABEL_Y, GAUGE_LIMIT_LABEL_Z);
-            drawLegacyText(context, i == 0 ? lower : upper, 0.0F, -font().lineHeight / 2.0F,
-                    GAUGE_LIMIT_TEXT_SCALE, 0x000000, context.packedLight());
+            drawLegacyText(poseStack, buffer, i == 0 ? lower : upper, 0.0F, -font().lineHeight / 2.0F,
+                    GAUGE_LIMIT_TEXT_SCALE, 0x000000, packedLight);
             poseStack.popPose();
         }
     }
@@ -490,50 +499,56 @@ public final class LegacyRbmkPanelRenderer {
         return value <= 10_000L ? Long.toString(value) : HbmMathUtil.getShortNumber(value);
     }
 
-    private static void renderGraphLimitLabels(ObjRenderContext context, RBMKPanelPlanner.GraphUnit unit) {
+    private static void renderPreparedTexturedSelection(LegacyWavefrontModel model, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, int color,
+            LegacyWavefrontModel.SelectionHandle handle) {
+        model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                color >> 16 & 255, color >> 8 & 255, color & 255, 255, false,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, LegacyWavefrontModel.UvTransform.DEFAULT, handle);
+    }
+
+    private static void renderGraphLimitLabels(PoseStack poseStack, MultiBufferSource buffer,
+            RBMKPanelPlanner.GraphUnit unit) {
         long lowest = graphLowest(unit);
         long highest = graphHighest(unit);
         Font font = font();
         String lower = Long.toString(lowest);
         String upper = Long.toString(highest);
-        PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.translate(GRAPH_LIMIT_LABEL_X, GRAPH_LIMIT_LABEL_Y, GRAPH_LIMIT_LABEL_Z);
-        drawLegacyText(context, lower, -font.width(lower), -font.lineHeight / 2.0F,
+        drawLegacyText(poseStack, buffer, lower, -font.width(lower), -font.lineHeight / 2.0F,
                 GRAPH_LIMIT_TEXT_SCALE, 0x00FF00, LightTexture.FULL_BRIGHT);
         poseStack.translate(0.0D, GRAPH_LIMIT_LABEL_STEP_Y, 0.0D);
-        drawLegacyText(context, upper, -font.width(upper), -font.lineHeight / 2.0F,
+        drawLegacyText(poseStack, buffer, upper, -font.width(upper), -font.lineHeight / 2.0F,
                 GRAPH_LIMIT_TEXT_SCALE, 0x00FF00, LightTexture.FULL_BRIGHT);
         poseStack.popPose();
     }
 
-    private static void renderCenteredLegacyText(ObjRenderContext context, String text,
-            double x, double y, double z, double maxWidth, int color, boolean fullBright) {
+    private static void renderCenteredLegacyText(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            String text, double x, double y, double z, double maxWidth, int color, boolean fullBright) {
         if (text == null || text.isEmpty()) {
             return;
         }
         Font font = font();
         int width = font.width(text);
         float scale = (float) Math.min(0.0125D, maxWidth / Math.max(width, 1));
-        PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.translate(x, y, z);
-        drawLegacyText(context, text, -width / 2.0F, -font.lineHeight / 2.0F,
-                scale, color, fullBright ? LightTexture.FULL_BRIGHT : context.packedLight());
+        drawLegacyText(poseStack, buffer, text, -width / 2.0F, -font.lineHeight / 2.0F,
+                scale, color, fullBright ? LightTexture.FULL_BRIGHT : packedLight);
         poseStack.popPose();
     }
 
-    private static void drawLegacyText(ObjRenderContext context, String text, float x, float y,
+    private static void drawLegacyText(PoseStack poseStack, MultiBufferSource buffer, String text, float x, float y,
             double scale, int color, int packedLight) {
         if (text == null || text.isEmpty()) {
             return;
         }
-        PoseStack poseStack = context.poseStack();
         poseStack.pushPose();
         poseStack.scale((float) scale, (float) -scale, (float) scale);
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
         font().drawInBatch(text, x, y, color, false,
-                poseStack.last().pose(), context.buffer(), Font.DisplayMode.NORMAL, 0, packedLight);
+                poseStack.last().pose(), buffer, Font.DisplayMode.NORMAL, 0, packedLight);
         poseStack.popPose();
     }
 

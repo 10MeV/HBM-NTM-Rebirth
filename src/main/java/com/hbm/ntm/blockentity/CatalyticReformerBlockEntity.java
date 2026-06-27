@@ -144,7 +144,7 @@ public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockE
     }
 
     private boolean reform() {
-        TripleRecipe recipe = LegacyOilFluidRecipes.getReforming(inputTank.getTankType());
+        TripleRecipe recipe = LegacyOilFluidRecipes.getReforming(level, inputTank.getTankType());
         boolean changed = setupRecipeTanks(recipe);
         if (recipe == null || !hasCatalyst()) {
             return changed;

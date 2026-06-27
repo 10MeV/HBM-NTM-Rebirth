@@ -1,10 +1,10 @@
 package com.hbm.ntm.client.obj;
 
-import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.InventoryMenu;
 import org.joml.Vector3f;
 
 /**
@@ -13,55 +13,24 @@ import org.joml.Vector3f;
 public final class LegacyIsbrhObjRenderer {
     public static final Direction LEGACY_MODEL_FACING = Direction.EAST;
 
-    public static void renderWithTexture(LegacyWavefrontModel model, ResourceLocation spriteTexture, ObjRenderContext context) {
-        renderWithTexture(model, spriteTexture, context, 0.0F, 0.0F, 0.0F);
-    }
-
-    public static void renderWithTexture(LegacyWavefrontModel model, ResourceLocation spriteTexture, ObjRenderContext context,
+    public static void renderWithTexture(LegacyWavefrontModel model, ResourceLocation spriteTexture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             float yawRadians, float pitchRadians, float rollRadians) {
-        model.renderWithSprite(sprite(spriteTexture), context, yawRadians, pitchRadians, rollRadians);
-    }
-
-    public static void renderWithTexture(LegacyWavefrontModel model, ObjUtilIconPlan plan, ObjRenderContext context) {
-        model.renderWithSprite(sprite(plan.spriteTexture()), applyPlan(context, plan), plan.yawRadians(), plan.pitchRadians(), plan.rollRadians());
-    }
-
-    public static void renderWithTextureAdditive(LegacyWavefrontModel model, ResourceLocation spriteTexture, ObjRenderContext context) {
-        renderWithTextureAdditive(model, spriteTexture, context, 0.0F, 0.0F, 0.0F);
-    }
-
-    public static void renderWithTextureAdditive(LegacyWavefrontModel model, ResourceLocation spriteTexture, ObjRenderContext context,
-            float yawRadians, float pitchRadians, float rollRadians) {
-        renderWithTexture(model, spriteTexture, context.withAdditiveTranslucency(), yawRadians, pitchRadians, rollRadians);
+        model.renderWithSprite(sprite(spriteTexture), poseStack, buffer, packedLight, packedOverlay,
+                yawRadians, pitchRadians, rollRadians, 255, 255, 255, 255, false,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, LegacyWavefrontModel.UvTransform.DEFAULT);
     }
 
     public static void renderPartWithTexture(LegacyWavefrontModel model, String partName, ResourceLocation spriteTexture,
-            ObjRenderContext context) {
-        renderPartWithTexture(model, partName, spriteTexture, context, 0.0F, 0.0F, 0.0F);
-    }
-
-    public static void renderPartWithTexture(LegacyWavefrontModel model, String partName, ResourceLocation spriteTexture,
-            ObjRenderContext context, float yawRadians, float pitchRadians, float rollRadians) {
-        model.renderPartWithSprite(partName, sprite(spriteTexture), context, yawRadians, pitchRadians, rollRadians);
-    }
-
-    public static void renderPartWithTexture(LegacyWavefrontModel model, String partName, ObjUtilIconPlan plan, ObjRenderContext context) {
-        model.renderPartWithSprite(partName, sprite(plan.spriteTexture()), applyPlan(context, plan.asPartBrightness()),
-                plan.yawRadians(), plan.pitchRadians(), plan.rollRadians());
-    }
-
-    public static void renderPartWithTextureAdditive(LegacyWavefrontModel model, String partName, ResourceLocation spriteTexture,
-            ObjRenderContext context) {
-        renderPartWithTextureAdditive(model, partName, spriteTexture, context, 0.0F, 0.0F, 0.0F);
-    }
-
-    public static void renderPartWithTextureAdditive(LegacyWavefrontModel model, String partName, ResourceLocation spriteTexture,
-            ObjRenderContext context, float yawRadians, float pitchRadians, float rollRadians) {
-        renderPartWithTexture(model, partName, spriteTexture, context.withAdditiveTranslucency(), yawRadians, pitchRadians, rollRadians);
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            float yawRadians, float pitchRadians, float rollRadians) {
+        model.renderPartWithSprite(partName, sprite(spriteTexture), poseStack, buffer, packedLight, packedOverlay,
+                yawRadians, pitchRadians, rollRadians, 255, 255, 255, 255, false,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, LegacyWavefrontModel.UvTransform.DEFAULT);
     }
 
     public static TextureAtlasSprite sprite(ResourceLocation textureLocation) {
-        return Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(textureLocation);
+        return LegacyTexturedQuadRenderer.blockSprite(textureLocation);
     }
 
     public static ObjUtilIconPlan allPlan(ResourceLocation spriteTexture, float yawRadians, boolean shadow) {
@@ -120,12 +89,6 @@ public final class LegacyIsbrhObjRenderer {
 
     public static LegacyObjTransforms.ObjUtilRotationPlan transformPlan(Direction direction, float rollRadians) {
         return LegacyObjTransforms.objUtilRotationPlan(direction, rollRadians);
-    }
-
-    private static ObjRenderContext applyPlan(ObjRenderContext context, ObjUtilIconPlan plan) {
-        ObjRenderContext effective = context.withRenderMode(plan.renderMode());
-        effective = plan.shadow() ? effective.withLegacyShadow() : effective.withoutLegacyShadow();
-        return plan.hasColor() ? effective.withColor(plan.color()) : effective;
     }
 
     private LegacyIsbrhObjRenderer() {

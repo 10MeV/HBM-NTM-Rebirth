@@ -205,14 +205,6 @@ public final class LegacyUntexturedQuadRenderer {
         return buffer.getBuffer(type(renderMode, alpha));
     }
 
-    public static VertexConsumer consumer(ObjRenderContext context) {
-        return consumer(context.buffer(), context.renderMode(), context.alpha());
-    }
-
-    public static VertexConsumer consumer(ObjRenderContext context, int... vertexAlphas) {
-        return consumer(context.buffer(), context.renderMode(), minimumMultipliedAlpha(context, vertexAlphas));
-    }
-
     public static RenderType additiveNoCullType() {
         return LEGACY_ADDITIVE_NO_CULL;
     }
@@ -328,27 +320,38 @@ public final class LegacyUntexturedQuadRenderer {
                 color >> 16 & 255, color >> 8 & 255, color & 255, alpha0, alpha1, alpha2, alpha3);
     }
 
-    public static void quad(ObjRenderContext context,
+    public static void quad(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
                             double x0, double y0, double z0,
                             double x1, double y1, double z1,
                             double x2, double y2, double z2,
                             double x3, double y3, double z3,
                             int color,
                             int alpha0, int alpha1, int alpha2, int alpha3) {
-        quad(consumer(context, alpha0, alpha1, alpha2, alpha3), context.poseStack().last(),
+        if (alpha0 == alpha1 && alpha0 == alpha2 && alpha0 == alpha3
+                && LegacyWavefrontModel.renderUntexturedTransientQuad(poseStack, buffer, renderMode,
+                x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3, color, clampAlpha(alpha0))) {
+            return;
+        }
+        if (LegacyWavefrontModel.renderUntexturedVertexColorTransientQuad(poseStack, buffer, renderMode,
+                x0, y0, z0, color, clampAlpha(alpha0),
+                x1, y1, z1, color, clampAlpha(alpha1),
+                x2, y2, z2, color, clampAlpha(alpha2),
+                x3, y3, z3, color, clampAlpha(alpha3))) {
+            return;
+        }
+        quad(consumer(buffer, renderMode, minimumAlpha(alpha0, alpha1, alpha2, alpha3)), poseStack.last(),
                 x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3,
-                multipliedColor(context, color), multipliedAlpha(context, alpha0), multipliedAlpha(context, alpha1),
-                multipliedAlpha(context, alpha2), multipliedAlpha(context, alpha3));
+                color, clampAlpha(alpha0), clampAlpha(alpha1), clampAlpha(alpha2), clampAlpha(alpha3));
     }
 
-    public static void quadRgbaF(ObjRenderContext context,
+    public static void quadRgbaF(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
                             double x0, double y0, double z0,
                             double x1, double y1, double z1,
                             double x2, double y2, double z2,
                             double x3, double y3, double z3,
                             float red, float green, float blue,
                             float alpha0, float alpha1, float alpha2, float alpha3) {
-        quad(context, x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3,
+        quad(poseStack, buffer, renderMode, x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3,
                 rgb(red, green, blue), alpha(alpha0), alpha(alpha1), alpha(alpha2), alpha(alpha3));
     }
 
@@ -363,36 +366,40 @@ public final class LegacyUntexturedQuadRenderer {
         quad(consumer, pose, x3, y3, z3, x2, y2, z2, x1, y1, z1, x0, y0, z0, red, green, blue, alpha3, alpha2, alpha1, alpha0);
     }
 
-    public static void doubleSidedQuad(ObjRenderContext context,
+    public static void doubleSidedQuad(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
                                        double x0, double y0, double z0,
                                        double x1, double y1, double z1,
                                        double x2, double y2, double z2,
                                        double x3, double y3, double z3,
                                        int color,
                                        int alpha0, int alpha1, int alpha2, int alpha3) {
-        VertexConsumer consumer = consumer(context, alpha0, alpha1, alpha2, alpha3);
-        PoseStack.Pose pose = context.poseStack().last();
-        int multipliedColor = multipliedColor(context, color);
+        if (alpha0 == alpha1 && alpha0 == alpha2 && alpha0 == alpha3) {
+            int alpha = clampAlpha(alpha0);
+            boolean front = LegacyWavefrontModel.renderUntexturedTransientQuad(poseStack, buffer, renderMode,
+                    x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3, color, alpha);
+            boolean back = LegacyWavefrontModel.renderUntexturedTransientQuad(poseStack, buffer, renderMode,
+                    x3, y3, z3, x2, y2, z2, x1, y1, z1, x0, y0, z0, color, alpha);
+            if (front && back) {
+                return;
+            }
+        }
+        if (LegacyWavefrontModel.renderDoubleSidedUntexturedVertexColorTransientQuad(poseStack, buffer, renderMode,
+                x0, y0, z0, color, clampAlpha(alpha0),
+                x1, y1, z1, color, clampAlpha(alpha1),
+                x2, y2, z2, color, clampAlpha(alpha2),
+                x3, y3, z3, color, clampAlpha(alpha3))) {
+            return;
+        }
+        VertexConsumer consumer = consumer(buffer, renderMode, minimumAlpha(alpha0, alpha1, alpha2, alpha3));
+        PoseStack.Pose pose = poseStack.last();
         doubleSidedQuad(consumer, pose, x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3,
-                multipliedColor >> 16 & 255, multipliedColor >> 8 & 255, multipliedColor & 255,
-                multipliedAlpha(context, alpha0), multipliedAlpha(context, alpha1),
-                multipliedAlpha(context, alpha2), multipliedAlpha(context, alpha3));
+                color >> 16 & 255, color >> 8 & 255, color & 255,
+                clampAlpha(alpha0), clampAlpha(alpha1), clampAlpha(alpha2), clampAlpha(alpha3));
     }
 
-    public static void doubleSidedQuadRgbaF(ObjRenderContext context,
-                                       double x0, double y0, double z0,
-                                       double x1, double y1, double z1,
-                                       double x2, double y2, double z2,
-                                       double x3, double y3, double z3,
-                                       float red, float green, float blue,
-                                       float alpha0, float alpha1, float alpha2, float alpha3) {
-        doubleSidedQuad(context, x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3,
-                rgb(red, green, blue), alpha(alpha0), alpha(alpha1), alpha(alpha2), alpha(alpha3));
-    }
-
-    public static void horizontalQuad(ObjRenderContext context, double y,
-            double minX, double minZ, double maxX, double maxZ, int color, int alpha) {
-        quad(context,
+    public static void horizontalQuad(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
+            double y, double minX, double minZ, double maxX, double maxZ, int color, int alpha) {
+        quad(poseStack, buffer, renderMode,
                 minX, y, minZ,
                 minX, y, maxZ,
                 maxX, y, maxZ,
@@ -400,20 +407,21 @@ public final class LegacyUntexturedQuadRenderer {
                 color, alpha, alpha, alpha, alpha);
     }
 
-    public static void horizontalSlices(ObjRenderContext context,
-            double minX, double minZ, double maxX, double maxZ,
+    public static void horizontalSlices(PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTexturedRenderMode renderMode, double minX, double minZ, double maxX, double maxZ,
             double minY, double maxY, double step, int color, int alpha) {
         if (step <= 0.0D || maxY < minY) {
             return;
         }
         for (double y = minY; y <= maxY + 1.0E-6D; y += step) {
-            horizontalQuad(context, y, minX, minZ, maxX, maxZ, color, alpha);
+            horizontalQuad(poseStack, buffer, renderMode, y, minX, minZ, maxX, maxZ, color, alpha);
         }
     }
 
-    public static void xPlaneCenteredRect(ObjRenderContext context,
-            double x, double y, double z, double halfY, double halfZ, int color, int alpha) {
-        quad(context,
+    public static void xPlaneCenteredRect(PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTexturedRenderMode renderMode, double x, double y, double z, double halfY, double halfZ,
+            int color, int alpha) {
+        quad(poseStack, buffer, renderMode,
                 x, y + halfY, z - halfZ,
                 x, y + halfY, z + halfZ,
                 x, y - halfY, z + halfZ,
@@ -421,21 +429,21 @@ public final class LegacyUntexturedQuadRenderer {
                 color, alpha, alpha, alpha, alpha);
     }
 
-    public static void xPlaneDot(ObjRenderContext context,
+    public static void xPlaneDot(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
             double x, double y, double z, double width, double edge, int color, int alpha) {
-        quad(context,
+        quad(poseStack, buffer, renderMode,
                 x, y + width, z,
                 x, y + edge, z + edge,
                 x, y, z + width,
                 x, y - edge, z + edge,
                 color, alpha, alpha, alpha, alpha);
-        quad(context,
+        quad(poseStack, buffer, renderMode,
                 x, y + edge, z - edge,
                 x, y + width, z,
                 x, y - edge, z - edge,
                 x, y, z - width,
                 color, alpha, alpha, alpha, alpha);
-        quad(context,
+        quad(poseStack, buffer, renderMode,
                 x, y + width, z,
                 x, y - edge, z + edge,
                 x, y - width, z,
@@ -443,57 +451,10 @@ public final class LegacyUntexturedQuadRenderer {
                 color, alpha, alpha, alpha, alpha);
     }
 
-    public static void verticalCrossPanels(ObjRenderContext context,
-            double yMin, double height, double halfWidth, double offset, int color, int alpha) {
-        if (height <= 0.0D) {
-            return;
-        }
-        double yMax = yMin + height;
-        quad(context,
-                -offset, yMin, -halfWidth,
-                -offset, yMax, -halfWidth,
-                -offset, yMax, halfWidth,
-                -offset, yMin, halfWidth,
-                color, alpha, alpha, alpha, alpha);
-        quad(context,
-                offset, yMin, -halfWidth,
-                offset, yMax, -halfWidth,
-                offset, yMax, halfWidth,
-                offset, yMin, halfWidth,
-                color, alpha, alpha, alpha, alpha);
-        quad(context,
-                -halfWidth, yMin, -offset,
-                -halfWidth, yMax, -offset,
-                halfWidth, yMax, -offset,
-                halfWidth, yMin, -offset,
-                color, alpha, alpha, alpha, alpha);
-        quad(context,
-                -halfWidth, yMin, offset,
-                -halfWidth, yMax, offset,
-                halfWidth, yMax, offset,
-                halfWidth, yMin, offset,
-                color, alpha, alpha, alpha, alpha);
-    }
-
-    private static int multipliedColor(ObjRenderContext context, int color) {
-        if (!context.hasColor()) {
-            return color & 0xFFFFFF;
-        }
-        int contextColor = context.color();
-        int red = (contextColor >> 16 & 255) * (color >> 16 & 255) / 255;
-        int green = (contextColor >> 8 & 255) * (color >> 8 & 255) / 255;
-        int blue = (contextColor & 255) * (color & 255) / 255;
-        return red << 16 | green << 8 | blue;
-    }
-
-    private static int multipliedAlpha(ObjRenderContext context, int alpha) {
-        return clampAlpha(context.alpha() * clampAlpha(alpha) / 255);
-    }
-
-    private static int minimumMultipliedAlpha(ObjRenderContext context, int... vertexAlphas) {
-        int alpha = context.alpha();
+    private static int minimumAlpha(int... vertexAlphas) {
+        int alpha = 255;
         for (int vertexAlpha : vertexAlphas) {
-            alpha = Math.min(alpha, multipliedAlpha(context, vertexAlpha));
+            alpha = Math.min(alpha, clampAlpha(vertexAlpha));
         }
         return alpha;
     }

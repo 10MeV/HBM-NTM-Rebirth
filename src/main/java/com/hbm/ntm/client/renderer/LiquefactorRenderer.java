@@ -1,9 +1,11 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.LiquefactorBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -53,18 +55,21 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
-        renderModelPart("Main", context);
-        renderFluid(blockEntity, context, poseStack);
-        renderTintedPart(LegacyTileRenderPlans.liquefactorGlassPlan(), context);
+        renderModelPart("Main", poseStack, buffer, modelLight, packedOverlay);
+        LegacyTileRenderPlans.ScaledModelPartPlan fluidPlan = LegacyTileRenderPlans.liquefactorFluidPlan(
+                blockEntity.getTank().getFill(), blockEntity.getTank().getMaxFill(),
+                blockEntity.getTank().getTankType().getColor());
+        LegacyTileRenderPlans.ModelPartTintPlan glassPlan = LegacyTileRenderPlans.liquefactorGlassPlan();
+        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
+            renderFluid(fluidPlan, queuedPose, buffer, modelLight, packedOverlay);
+            renderTintedPart(glassPlan, queuedPose, buffer, modelLight, packedOverlay);
+        });
 
         poseStack.popPose();
     }
 
-    private static void renderFluid(LiquefactorBlockEntity blockEntity, ObjRenderContext context, PoseStack poseStack) {
-        LegacyTileRenderPlans.ScaledModelPartPlan plan = LegacyTileRenderPlans.liquefactorFluidPlan(
-                blockEntity.getTank().getFill(), blockEntity.getTank().getMaxFill(),
-                blockEntity.getTank().getTankType().getColor());
+    private static void renderFluid(LegacyTileRenderPlans.ScaledModelPartPlan plan, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!plan.active()) {
             return;
         }
@@ -72,47 +77,78 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
         poseStack.translate(0.0D, plan.pivotY(), 0.0D);
         poseStack.scale((float) plan.scaleX(), (float) plan.scaleY(), (float) plan.scaleZ());
         poseStack.translate(0.0D, -plan.pivotY(), 0.0D);
-        renderScaledPart(plan, context);
+        renderScaledPart(plan, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
-    private static void renderScaledPart(LegacyTileRenderPlans.ScaledModelPartPlan plan, ObjRenderContext context) {
-        ObjRenderContext resolved = applyColorBlend(context, plan.color(), plan.blend());
+    private static void renderScaledPart(LegacyTileRenderPlans.ScaledModelPartPlan plan, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (plan.textured()) {
-            renderModelPart(plan.partName(), resolved);
+            renderModelPart(plan.partName(), poseStack, buffer, packedLight, packedOverlay,
+                    plan.color(), plan.blend());
         } else {
-            renderModelPartUntextured(plan.partName(), resolved);
+            renderModelPartUntextured(plan.partName(), poseStack, buffer, plan.color(), plan.blend());
         }
     }
 
-    private static void renderTintedPart(LegacyTileRenderPlans.ModelPartTintPlan plan, ObjRenderContext context) {
+    private static void renderTintedPart(LegacyTileRenderPlans.ModelPartTintPlan plan, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!plan.active()) {
             return;
         }
-        ObjRenderContext resolved = applyColorBlend(context, plan.color(), plan.blend());
         if (plan.textured()) {
-            renderModelPart(plan.partName(), resolved);
+            renderModelPart(plan.partName(), poseStack, buffer, packedLight, packedOverlay,
+                    plan.color(), plan.blend());
         } else {
-            renderModelPartUntextured(plan.partName(), resolved);
+            renderModelPartUntextured(plan.partName(), poseStack, buffer, plan.color(), plan.blend());
         }
     }
 
-    private static void renderModelPart(String partName, ObjRenderContext context) {
-        LegacyWavefrontModel.SelectionHandle handle = handle(partName);
-        if (handle != null) {
-            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderOnlyInCallOrder(context, handle);
-            return;
-        }
-        ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart(partName, context);
+    private static void renderModelPart(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        renderModelPart(partName, poseStack, buffer, packedLight, packedOverlay, null, null);
     }
 
-    private static void renderModelPartUntextured(String partName, ObjRenderContext context) {
+    private static void renderModelPart(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTileRenderPlans.RgbaPlan color,
+            LegacyTileRenderPlans.BlendStatePlan blend) {
         LegacyWavefrontModel.SelectionHandle handle = handle(partName);
+        int red = color == null ? 255 : color.redByte();
+        int green = color == null ? 255 : color.greenByte();
+        int blue = color == null ? 255 : color.blueByte();
+        int alpha = color == null ? 255 : color.alphaByte();
+        LegacyTexturedRenderMode renderMode = blend == null
+                ? LegacyTexturedRenderMode.CUTOUT_NO_CULL
+                : blend.modernRenderMode();
         if (handle != null) {
-            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderOnlyUntextured(context, handle);
+            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderOnlyInCallOrder(
+                    ObjModelLibrary.MACHINE_LIQUEFACTOR.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay, red, green, blue, alpha, false, renderMode,
+                    LegacyWavefrontModel.UvTransform.DEFAULT, handle);
             return;
         }
-        ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPartUntextured(partName, context);
+        ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart(partName,
+                ObjModelLibrary.MACHINE_LIQUEFACTOR.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
+                red, green, blue, alpha, false, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT);
+    }
+
+    private static void renderModelPartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTileRenderPlans.RgbaPlan color, LegacyTileRenderPlans.BlendStatePlan blend) {
+        LegacyWavefrontModel.SelectionHandle handle = handle(partName);
+        int red = color == null ? 255 : color.redByte();
+        int green = color == null ? 255 : color.greenByte();
+        int blue = color == null ? 255 : color.blueByte();
+        int alpha = color == null ? 255 : color.alphaByte();
+        LegacyTexturedRenderMode renderMode = blend == null
+                ? LegacyTexturedRenderMode.CUTOUT_NO_CULL
+                : blend.modernRenderMode();
+        if (handle != null) {
+            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderOnlyUntextured(poseStack, buffer,
+                    red, green, blue, alpha, renderMode, handle);
+            return;
+        }
+        ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPartUntextured(partName, poseStack, buffer,
+                red, green, blue, alpha, renderMode);
     }
 
     private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
@@ -127,15 +163,4 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
         };
     }
 
-    private static ObjRenderContext applyColorBlend(ObjRenderContext context, LegacyTileRenderPlans.RgbaPlan color,
-            LegacyTileRenderPlans.BlendStatePlan blend) {
-        ObjRenderContext resolved = context;
-        if (blend != null) {
-            resolved = resolved.withRenderMode(blend.modernRenderMode());
-        }
-        if (color != null) {
-            resolved = resolved.withRgba(color.redByte(), color.greenByte(), color.blueByte(), color.alphaByte());
-        }
-        return resolved;
-    }
 }

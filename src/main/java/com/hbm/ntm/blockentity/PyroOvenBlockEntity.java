@@ -150,7 +150,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
             oven.setChanged();
         }
         oven.networkPackNT(50);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }

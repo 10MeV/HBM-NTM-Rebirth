@@ -5,7 +5,6 @@ import com.hbm.ntm.block.CableDiodeBlock;
 import com.hbm.ntm.blockentity.CableDiodeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.energy.HbmEnergyConnectionUtil;
 import com.hbm.ntm.energy.HbmEnergyConnectorBlock;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -33,32 +32,34 @@ public class CableDiodeRenderer implements BlockEntityRenderer<CableDiodeBlockEn
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = diode.getBlockState();
         int light = LegacyRenderLighting.resolveMultiblockLight(diode, packedLight);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, light, packedOverlay);
 
-        renderBody(state, context, outputDirection(state));
-        renderWorldCableArms(diode.getLevel(), diode.getBlockPos(), state, context);
+        renderBody(poseStack, buffer, light, packedOverlay, outputDirection(state));
+        renderWorldCableArms(diode.getLevel(), diode.getBlockPos(), state, poseStack, buffer, light, packedOverlay);
     }
 
     public static void renderItem(BlockState state, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        renderBody(state, context, Direction.UP);
-        renderCableArms(context, true, true, false, true, true, true);
+        renderBody(poseStack, buffer, packedLight, packedOverlay, Direction.UP);
+        renderCableArms(poseStack, buffer, packedLight, packedOverlay, true, true, false, true, true, true);
     }
 
-    private static void renderBody(BlockState state, ObjRenderContext context, Direction output) {
-        LegacyAtlasCuboidRenderer.directionalSlab(PLATE_SPRITE, context, output, SLAB_THICKNESS);
-        LegacyAtlasCuboidRenderer.centeredCube(PAD_SPRITE, context, PAD_RADIUS);
+    private static void renderBody(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, Direction output) {
+        LegacyAtlasCuboidRenderer.directionalSlab(PLATE_SPRITE, poseStack, buffer, packedLight, packedOverlay,
+                output, SLAB_THICKNESS);
+        LegacyAtlasCuboidRenderer.centeredCube(PAD_SPRITE, poseStack, buffer, packedLight, packedOverlay,
+                PAD_RADIUS);
     }
 
-    private static void renderWorldCableArms(BlockGetter level, BlockPos pos, BlockState state, ObjRenderContext context) {
+    private static void renderWorldCableArms(BlockGetter level, BlockPos pos, BlockState state,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean posX = connects(level, pos, state, Direction.EAST);
         boolean negX = connects(level, pos, state, Direction.WEST);
         boolean posY = connects(level, pos, state, Direction.UP);
         boolean negY = connects(level, pos, state, Direction.DOWN);
         boolean posZ = connects(level, pos, state, Direction.SOUTH);
         boolean negZ = connects(level, pos, state, Direction.NORTH);
-        renderCableArms(context, posX, negX, posY, negY, posZ, negZ);
+        renderCableArms(poseStack, buffer, packedLight, packedOverlay, posX, negX, posY, negY, posZ, negZ);
     }
 
     private static boolean connects(BlockGetter level, BlockPos pos, BlockState state, Direction direction) {
@@ -66,9 +67,10 @@ public class CableDiodeRenderer implements BlockEntityRenderer<CableDiodeBlockEn
                 && HbmEnergyConnectionUtil.canConnect(level, pos, connector, direction);
     }
 
-    private static void renderCableArms(ObjRenderContext context,
-            boolean posX, boolean negX, boolean posY, boolean negY, boolean posZ, boolean negZ) {
-        RedCableRenderer.renderCableArms(context, posX, negX, posY, negY, posZ, negZ);
+    private static void renderCableArms(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, boolean posX, boolean negX, boolean posY, boolean negY, boolean posZ, boolean negZ) {
+        RedCableRenderer.renderCableArms(poseStack, buffer, packedLight, packedOverlay,
+                posX, negX, posY, negY, posZ, negZ);
     }
 
     private static Direction outputDirection(BlockState state) {

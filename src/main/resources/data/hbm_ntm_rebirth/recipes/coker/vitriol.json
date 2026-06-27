@@ -1,0 +1,14 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:coker",
+    "output":  {
+                   "item":  "hbm_ntm_rebirth:powder_iron"
+               },
+    "byproduct":  {
+                      "fluid":  "hbm_ntm_rebirth:sulfuric_acid",
+                      "amount":  500
+                  },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:vitriol",
+                  "amount":  4000
+              }
+}

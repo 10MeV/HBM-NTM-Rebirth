@@ -9,7 +9,6 @@ import com.hbm.ntm.blockentity.HbmLegacyWireNodeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedLineRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.energy.HbmLegacyWireNode;
 import com.hbm.ntm.energy.HbmLegacyWireRenderMath;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -97,22 +96,25 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(mediumRotation(facing)));
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer,
-                net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), packedLight, packedOverlay);
-        ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderOnlyInCallOrder(texture, context, MEDIUM_PYLON);
+        ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderOnlyInCallOrder(texture, poseStack, buffer,
+                packedLight, packedOverlay, MEDIUM_PYLON);
         if (kind.transformer()) {
-            ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderOnlyInCallOrder(texture, context, MEDIUM_TRANSFORMER);
+            ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderOnlyInCallOrder(texture, poseStack, buffer,
+                    packedLight, packedOverlay, MEDIUM_TRANSFORMER);
         }
         poseStack.popPose();
     }
 
-    static void renderMediumPylonPart(String partName, ResourceLocation texture, ObjRenderContext context) {
+    static void renderMediumPylonPart(String partName, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyWavefrontModel.SelectionHandle handle = mediumPylonHandle(partName);
         if (handle != null) {
-            ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderOnlyInCallOrder(texture, context, handle);
+            ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderOnlyInCallOrder(texture, poseStack, buffer,
+                    packedLight, packedOverlay, handle);
             return;
         }
-        ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderPart(partName, texture, context);
+        ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderPart(partName, texture, poseStack, buffer, packedLight,
+                packedOverlay);
     }
 
     public static void renderLargePylon(Direction facing, PoseStack poseStack,
@@ -164,8 +166,6 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
         int color = pylon.getWireConnections().color();
         ResourceLocation texture = color == 0 ? WIRE_TEXTURE : WIRE_GREYSCALE_TEXTURE;
         int wireColor = color == 0 ? 0xFFFFFF : color;
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, pylon.getBlockState(), packedLight, packedOverlay);
-
         for (BlockPos remotePos : pylon.getWireConnections().connected()) {
             BlockEntity remote = level.getBlockEntity(remotePos);
             if (!(remote instanceof HbmLegacyWireNode remoteWire)) {
@@ -188,7 +188,7 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
                 Vec3 start = startAbs.subtract(selfPos.getX(), selfPos.getY(), selfPos.getZ());
                 Vec3 remoteRelative = remoteAbs.subtract(selfPos.getX(), selfPos.getY(), selfPos.getZ());
                 Vec3 end = start.add(remoteRelative.subtract(start).scale(0.5D));
-                LegacyTexturedLineRenderer.pylonLine(texture, context,
+                LegacyTexturedLineRenderer.pylonLine(texture, poseStack, buffer, packedLight, packedOverlay,
                         start.x, start.y, start.z,
                         end.x, end.y, end.z,
                         true, wireColor);

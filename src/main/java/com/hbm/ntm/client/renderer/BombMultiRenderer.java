@@ -5,16 +5,18 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.BombMultiBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjNukeModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class BombMultiRenderer implements BlockEntityRenderer<BombMultiBlockEntity> {
+    private static final ResourceLocation BOMB_MULTI_TEXTURE = ObjNukeModels.texture("bomb_multi_legacy");
+
     public BombMultiRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -25,19 +27,19 @@ public class BombMultiRenderer implements BlockEntityRenderer<BombMultiBlockEnti
         if (!(state.getBlock() instanceof BombMultiBlock)) {
             return;
         }
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(state)));
-        renderModel(poseStack, buffer, packedLight, packedOverlay);
+        renderModel(poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
     }
 
     public static void renderModel(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
-                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_NO_CULL);
-        ObjNukeModels.BOMB_MULTI_LEGACY.renderAll(ObjNukeModels.texture("bomb_multi_legacy"), context);
+        ObjNukeModels.BOMB_MULTI_LEGACY.renderAll(BOMB_MULTI_TEXTURE, poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
     }
 
     public static void applyLegacyItemCommon(PoseStack poseStack) {

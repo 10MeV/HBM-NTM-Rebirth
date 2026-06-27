@@ -62,10 +62,10 @@ public final class ObjMachineModels {
     public static final ObjPartModel PRESS = new ObjPartModel()
             .part("Cube.001_Cube.002", PRESS_HEAD, "Head")
             .legacyOrder("Cube_Cube.000", "Cube.001_Cube.002");
-    public static final LegacyWavefrontModel PRESS_BODY_LEGACY = legacyModel("press_body");
-    public static final LegacyWavefrontModel PRESS_HEAD_LEGACY = legacyModel("press_head");
-    public static final LegacyWavefrontModel EPRESS_BODY = legacyModel("epress_body");
-    public static final LegacyWavefrontModel EPRESS_HEAD = legacyModel("epress_head");
+    public static final LegacyWavefrontModel PRESS_BODY_LEGACY = legacyModel("press_body").asVBO();
+    public static final LegacyWavefrontModel PRESS_HEAD_LEGACY = legacyModel("press_head").asVBO();
+    public static final LegacyWavefrontModel EPRESS_BODY = legacyModel("epress_body").asVBO();
+    public static final LegacyWavefrontModel EPRESS_HEAD = legacyModel("epress_head").asVBO();
     public static final LegacyWavefrontModel VENDING_MACHINE = legacyModel("vending_machine").noSmooth().asVBO();
     public static final LegacyWavefrontModel ASSEMBLY_MACHINE_LEGACY = legacyModel("assembly_machine").asVBO();
     public static final ObjModelPart BATTERY_SOCKET_SOCKET = directPart("battery_socket_socket")
@@ -286,7 +286,7 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel RADAR_LEGACY = legacyModel("radar", "radar_base").noSmooth().asVBO();
     public static final LegacyWavefrontModel RADAR_LARGE_LEGACY = legacyModel("radar_large").noSmooth().asVBO();
     public static final LegacyWavefrontModel RADAR_SCREEN_LEGACY = legacyModel("radar_screen").noSmooth().asVBO();
-    public static final LegacyWavefrontModel SOLAR_MIRROR_LEGACY = legacyModel("solar_mirror").noSmooth();
+    public static final LegacyWavefrontModel SOLAR_MIRROR_LEGACY = legacyModel("solar_mirror").noSmooth().asVBO();
     public static final LegacyWavefrontModel TELEX_LEGACY = legacyModel("telex").asVBO();
     public static final LegacyWavefrontModel AUTOCAL_LEGACY = legacyModel("autocal").asVBO();
     public static final LegacyWavefrontModel ARC_WELDER = legacyModel("arc_welder").noSmooth().asVBO();
@@ -311,20 +311,24 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel ROTARY_FURNACE = legacyModel("rotary_furnace").asVBO();
     public static final LegacyWavefrontModel ELECTROLYSER = legacyModel("electrolyser").asVBO();
     public static final LegacyWavefrontModel CHARGER = legacyModel("charger").asVBO();
-    public static final LegacyWavefrontModel REFUELER = legacyModel("refueler");
+    public static final LegacyWavefrontModel REFUELER = legacyModel("refueler").asVBO();
     public static final LegacyWavefrontModel SOLAR_BOILER = legacyModel("solar_boiler").asVBO();
-    public static final LegacyWavefrontModel DFC_EMITTER = legacyModel("core_emitter");
-    public static final LegacyWavefrontModel DFC_RECEIVER = legacyModel("core_receiver");
-    public static final LegacyWavefrontModel DFC_INJECTOR = legacyModel("core_injector");
+    public static final LegacyWavefrontModel DFC_EMITTER = legacyModel("core_emitter").asVBO();
+    public static final LegacyWavefrontModel DFC_RECEIVER = legacyModel("core_receiver").asVBO();
+    public static final LegacyWavefrontModel DFC_INJECTOR = legacyModel("core_injector").asVBO();
+    public static final ResourceLocation DFC_STABILIZER_TEXTURE = machineTexture("core_stabilizer");
+    public static final LegacyWavefrontModel FURNACE_IRON_LEGACY = new LegacyWavefrontModel(
+            new ResourceLocation(HbmNtm.MOD_ID, "models/machines/furnace_iron.obj"),
+            machineTexture("furnace_iron")).asVBO();
     public static final LegacyWavefrontModel STIRLING = legacyModel("stirling").asVBO();
     public static final LegacyWavefrontModel SAWMILL = legacyModel("sawmill").asVBO();
-    public static final LegacyWavefrontModel STRAND_CASTER = legacyModel("strand_caster");
+    public static final LegacyWavefrontModel STRAND_CASTER = legacyModel("strand_caster").asVBO();
     public static final LegacyWavefrontModel FURNACE_STEEL = legacyModel("furnace_steel").asVBO();
-    public static final LegacyWavefrontModel CONVEYOR_PRESS = legacyModel("conveyor_press");
+    public static final LegacyWavefrontModel CONVEYOR_PRESS = legacyModel("conveyor_press").asVBO();
     public static final LegacyWavefrontModel MICROWAVE = legacyModel("microwave").asVBO();
-    public static final LegacyWavefrontModel PISTON_INSERTER = legacyModel("piston_inserter");
-    public static final LegacyWavefrontModel IGEN = legacyModel("igen");
-    public static final LegacyWavefrontModel DELIVERY_DRONE = legacyModel("drone");
+    public static final LegacyWavefrontModel PISTON_INSERTER = legacyModel("piston_inserter").asVBO();
+    public static final LegacyWavefrontModel IGEN = legacyModel("igen").asVBO();
+    public static final LegacyWavefrontModel DELIVERY_DRONE = legacyModel("drone").asVBO();
 
     public static final ResourceLocation FLUIDTANK_INNER_TEXTURE = machineTexture("fluidtank_inner");
     public static final ResourceLocation LEGACY_FLUIDTANK_INNER_TEXTURE =
@@ -442,7 +446,7 @@ public final class ObjMachineModels {
 
     public static ResourceLocation machineTexture(String name) {
         switch (name) {
-            case "core_emitter", "core_injector", "core_receiver", "epress_body", "epress_head",
+            case "core_emitter", "core_injector", "core_receiver", "core_stabilizer", "epress_body", "epress_head",
                     "press_body", "press_head", "radiolysis", "refinery", "tank" -> {
                 return new ResourceLocation(HbmNtm.MOD_ID, "textures/models/" + name + ".png");
             }

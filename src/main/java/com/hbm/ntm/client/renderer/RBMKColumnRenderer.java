@@ -5,9 +5,11 @@ import com.hbm.ntm.block.RBMKColumnBlock;
 import com.hbm.ntm.blockentity.RBMKColumnBlockEntity;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.ObjRbmkModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.neutron.RBMKControlRodPlanner;
 import com.hbm.ntm.neutron.RBMKStructureDimensions;
@@ -32,6 +34,19 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
     private static final double PIPE_PAD_MAX_HIGH = 0.9375D;
     private static final double PIPE_PAD_MIN_Y = 1.0D;
     private static final double PIPE_PAD_MAX_Y = 1.125D;
+    private static final FuelChannelSprites RBMK_ELEMENT_TEXTURES = fuelChannelSprites("rbmk_element");
+    private static final FuelChannelSprites RBMK_ELEMENT_MOD_TEXTURES = fuelChannelSprites("rbmk_element_mod");
+    private static final FuelChannelSprites RBMK_ELEMENT_REASIM_TEXTURES = fuelChannelSprites("rbmk_element_reasim");
+    private static final FuelChannelSprites RBMK_ELEMENT_REASIM_MOD_TEXTURES =
+            fuelChannelSprites("rbmk_element_reasim_mod");
+    private static final PipePadSprites RBMK_BOILER_PIPE_TEXTURES = pipePadSprites("rbmk_boiler");
+    private static final PipePadSprites RBMK_HEATER_PIPE_TEXTURES = pipePadSprites("rbmk_heater");
+    private static final PipePadSprites RBMK_CONTROL_PIPE_TEXTURES = pipePadSprites("rbmk_control");
+    private static final PipePadSprites RBMK_CONTROL_MOD_PIPE_TEXTURES = pipePadSprites("rbmk_control_mod");
+    private static final PipePadSprites RBMK_CONTROL_AUTO_PIPE_TEXTURES = pipePadSprites("rbmk_control_auto");
+    private static final PipePadSprites RBMK_CONTROL_REASIM_PIPE_TEXTURES = pipePadSprites("rbmk_control_reasim");
+    private static final PipePadSprites RBMK_CONTROL_REASIM_AUTO_PIPE_TEXTURES =
+            pipePadSprites("rbmk_control_reasim_auto");
     private static volatile ColumnRenderArrays columnRenderArrays =
             new ColumnRenderArrays(-1, new boolean[0], new int[0]);
 
@@ -128,13 +143,14 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
             int red = color >> 16 & 255;
             int green = color >> 8 & 255;
             int blue = color & 255;
-            ObjRbmkModels.renderFuelRodPart(plan.part(), ObjRbmkModels.ELEMENT_FUEL_TEXTURE,
-                    new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
-                            .withRgb(red, green, blue));
+            ObjRbmkModels.renderFuelRodPart(plan.part(), ObjRbmkModels.ELEMENT_FUEL_TEXTURE, poseStack, buffer,
+                    packedLight, packedOverlay, red, green, blue);
         }
         if (plan.cherenkov()) {
-            renderCherenkovSegment(new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay),
-                    segmentIndex, plan.columnOffset());
+            int frozenSegmentIndex = segmentIndex;
+            int frozenColumnOffset = plan.columnOffset();
+            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                    queuedPose -> renderCherenkovSegment(queuedPose, buffer, frozenSegmentIndex, frozenColumnOffset));
         }
         poseStack.popPose();
     }
@@ -157,19 +173,19 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
 
         poseStack.pushPose();
         poseStack.translate(0.5D, plan.lidWorldY() - segmentIndex, 0.5D);
-        ObjRbmkModels.renderControlRodPart(plan.part(), texture,
-                new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay));
+        ObjRbmkModels.renderControlRodPart(plan.part(), texture, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
-    private static void renderCherenkovSegment(ObjRenderContext context, int segmentIndex, int columnOffset) {
+    private static void renderCherenkovSegment(PoseStack poseStack, MultiBufferSource buffer,
+            int segmentIndex, int columnOffset) {
         double globalMax = columnOffset + ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_START_Y;
         double localMin = Math.max(0.0D, ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_START_Y - segmentIndex);
         double localMax = Math.min(1.0D, globalMax - segmentIndex);
         if (localMax < localMin) {
             return;
         }
-        LegacyUntexturedQuadRenderer.horizontalSlices(context.withAdditiveTranslucency(),
+        LegacyUntexturedQuadRenderer.horizontalSlices(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
                 -0.5D, -0.5D, 0.5D, 0.5D,
                 localMin, localMax, ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_STEP,
                 ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_COLOR, ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_ALPHA);
@@ -177,64 +193,66 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
 
     private static void renderFuelChannelStaticSegment(RBMKColumnBlock.Kind kind, BlockState state,
             boolean topSegment, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        String prefix = fuelChannelTexturePrefix(kind);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight,
-                OverlayTexture.NO_OVERLAY);
-        renderFuelChannelSideShell(blockSprite(prefix + "_side"), context);
+        FuelChannelSprites sprites = fuelChannelTextures(kind);
+        renderFuelChannelSideShell(sprites.side(), poseStack, buffer, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        ObjRenderContext centeredContext = new ObjRenderContext(poseStack, buffer, state, packedLight,
-                OverlayTexture.NO_OVERLAY).withLegacyShadow();
-        ObjRbmkModels.ELEMENT.renderPartWithSprite("Cap", blockSprite(prefix + "_top"), centeredContext,
-                0.0F, 0.0F, 0.0F);
-        ObjRbmkModels.ELEMENT.renderPartWithSprite("Inner", blockSprite(prefix + "_inner"), centeredContext,
-                0.0F, 0.0F, 0.0F);
+        ObjRbmkModels.ELEMENT.renderPartWithSprite("Cap", sprites.top(), poseStack, buffer, packedLight,
+                OverlayTexture.NO_OVERLAY, 0.0F, 0.0F, 0.0F, 255, 255, 255, 255, true);
+        ObjRbmkModels.ELEMENT.renderPartWithSprite("Inner", sprites.inner(), poseStack, buffer, packedLight,
+                OverlayTexture.NO_OVERLAY, 0.0F, 0.0F, 0.0F, 255, 255, 255, 255, true);
         poseStack.popPose();
 
         if (topSegment && state.getValue(RBMKColumnBlock.LID).hasLid()) {
-            renderFuelChannelLidSlab(prefix, state.getValue(RBMKColumnBlock.LID), context);
+            renderFuelChannelLidSlab(sprites, state.getValue(RBMKColumnBlock.LID),
+                    poseStack, buffer, packedLight);
         }
     }
 
-    private static void renderFuelChannelSideShell(TextureAtlasSprite side, ObjRenderContext context) {
-        LegacyTexturedQuadRenderer.spriteQuad(side, context, 0.0F, 0.0F, 1.0F,
+    private static void renderFuelChannelSideShell(TextureAtlasSprite side, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight) {
+        LegacyTexturedQuadRenderer.spriteQuad(side, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, 0.0F, 1.0F,
                 LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 1.0D, 1.0D, 16.0D, 0.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 1.0D, 1.0D, 0.0D, 0.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 0.0D, 1.0D, 0.0D, 16.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 0.0D, 1.0D, 16.0D, 16.0D));
-        LegacyTexturedQuadRenderer.spriteQuad(side, context, 1.0F, 0.0F, 0.0F,
+        LegacyTexturedQuadRenderer.spriteQuad(side, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 1.0F, 0.0F, 0.0F,
                 LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 1.0D, 1.0D, 16.0D, 0.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 1.0D, 0.0D, 0.0D, 0.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 0.0D, 0.0D, 0.0D, 16.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 0.0D, 1.0D, 16.0D, 16.0D));
-        LegacyTexturedQuadRenderer.spriteQuad(side, context, 0.0F, 0.0F, -1.0F,
+        LegacyTexturedQuadRenderer.spriteQuad(side, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, 0.0F, -1.0F,
                 LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 1.0D, 0.0D, 16.0D, 0.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 1.0D, 0.0D, 0.0D, 0.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 0.0D, 0.0D, 0.0D, 16.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 0.0D, 0.0D, 16.0D, 16.0D));
-        LegacyTexturedQuadRenderer.spriteQuad(side, context, -1.0F, 0.0F, 0.0F,
+        LegacyTexturedQuadRenderer.spriteQuad(side, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, -1.0F, 0.0F, 0.0F,
                 LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 1.0D, 0.0D, 16.0D, 0.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 1.0D, 1.0D, 0.0D, 0.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 0.0D, 1.0D, 0.0D, 16.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 0.0D, 0.0D, 16.0D, 16.0D));
     }
 
-    private static void renderFuelChannelLidSlab(String prefix, RBMKColumnBlock.LidType lid,
-            ObjRenderContext context) {
-        String suffix = lid == RBMKColumnBlock.LidType.GLASS ? "_glass" : "_cover";
-        TextureAtlasSprite top = blockSprite(prefix + suffix + "_top");
-        TextureAtlasSprite side = blockSprite(prefix + suffix + "_side");
-        LegacyAtlasCuboidRenderer.croppedCuboid(top, top, side, side, side, side, context,
-                0.0D, 1.0D, 0.0D, 1.0D, 1.25D, 1.0D);
+    private static void renderFuelChannelLidSlab(FuelChannelSprites sprites, RBMKColumnBlock.LidType lid,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        TextureAtlasSprite top = lid == RBMKColumnBlock.LidType.GLASS ? sprites.glassTop() : sprites.coverTop();
+        TextureAtlasSprite side = lid == RBMKColumnBlock.LidType.GLASS ? sprites.glassSide() : sprites.coverSide();
+        LegacyAtlasCuboidRenderer.croppedCuboid(top, top, side, side, side, side,
+                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFF, 255,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0D, 1.0D, 0.0D, 1.0D, 1.25D, 1.0D);
     }
 
-    private static String fuelChannelTexturePrefix(RBMKColumnBlock.Kind kind) {
+    private static FuelChannelSprites fuelChannelTextures(RBMKColumnBlock.Kind kind) {
         return switch (kind) {
-            case ROD_MOD -> "rbmk_element_mod";
-            case ROD_REASIM -> "rbmk_element_reasim";
-            case ROD_REASIM_MOD -> "rbmk_element_reasim_mod";
-            default -> "rbmk_element";
+            case ROD_MOD -> RBMK_ELEMENT_MOD_TEXTURES;
+            case ROD_REASIM -> RBMK_ELEMENT_REASIM_TEXTURES;
+            case ROD_REASIM_MOD -> RBMK_ELEMENT_REASIM_MOD_TEXTURES;
+            default -> RBMK_ELEMENT_TEXTURES;
         };
     }
 
@@ -248,23 +266,26 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
         if (!hasLegacyTopPipePads(kind, lid)) {
             return;
         }
-        String textureBase = pipeTextureBase(kind);
-        if (textureBase == null) {
+        PipePadSprites sprites = pipePadTextures(kind);
+        if (sprites == null) {
             return;
         }
-        TextureAtlasSprite top = blockSprite(textureBase + "_pipe_top");
-        TextureAtlasSprite side = blockSprite(textureBase + "_pipe_side");
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight,
-                OverlayTexture.NO_OVERLAY);
-        renderPipePad(top, side, context, PIPE_PAD_MIN_LOW, PIPE_PAD_MIN_LOW, PIPE_PAD_MAX_LOW, PIPE_PAD_MAX_LOW);
-        renderPipePad(top, side, context, PIPE_PAD_MIN_LOW, PIPE_PAD_MIN_HIGH, PIPE_PAD_MAX_LOW, PIPE_PAD_MAX_HIGH);
-        renderPipePad(top, side, context, PIPE_PAD_MIN_HIGH, PIPE_PAD_MIN_HIGH, PIPE_PAD_MAX_HIGH, PIPE_PAD_MAX_HIGH);
-        renderPipePad(top, side, context, PIPE_PAD_MIN_HIGH, PIPE_PAD_MIN_LOW, PIPE_PAD_MAX_HIGH, PIPE_PAD_MAX_LOW);
+        renderPipePad(sprites.top(), sprites.side(), poseStack, buffer, packedLight,
+                PIPE_PAD_MIN_LOW, PIPE_PAD_MIN_LOW, PIPE_PAD_MAX_LOW, PIPE_PAD_MAX_LOW);
+        renderPipePad(sprites.top(), sprites.side(), poseStack, buffer, packedLight,
+                PIPE_PAD_MIN_LOW, PIPE_PAD_MIN_HIGH, PIPE_PAD_MAX_LOW, PIPE_PAD_MAX_HIGH);
+        renderPipePad(sprites.top(), sprites.side(), poseStack, buffer, packedLight,
+                PIPE_PAD_MIN_HIGH, PIPE_PAD_MIN_HIGH, PIPE_PAD_MAX_HIGH, PIPE_PAD_MAX_HIGH);
+        renderPipePad(sprites.top(), sprites.side(), poseStack, buffer, packedLight,
+                PIPE_PAD_MIN_HIGH, PIPE_PAD_MIN_LOW, PIPE_PAD_MAX_HIGH, PIPE_PAD_MAX_LOW);
     }
 
     private static void renderPipePad(TextureAtlasSprite top, TextureAtlasSprite side,
-            ObjRenderContext context, double minX, double minZ, double maxX, double maxZ) {
-        LegacyAtlasCuboidRenderer.croppedCuboid(top, top, side, side, side, side, context,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            double minX, double minZ, double maxX, double maxZ) {
+        LegacyAtlasCuboidRenderer.croppedCuboid(top, top, side, side, side, side,
+                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFF, 255,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL,
                 minX, PIPE_PAD_MIN_Y, minZ, maxX, PIPE_PAD_MAX_Y, maxZ);
     }
 
@@ -273,17 +294,32 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
                 "block/rbmk/icons/" + name));
     }
 
-    private static String pipeTextureBase(RBMKColumnBlock.Kind kind) {
+    private static PipePadSprites pipePadTextures(RBMKColumnBlock.Kind kind) {
         return switch (kind) {
-            case BOILER -> "rbmk_boiler";
-            case HEATER -> "rbmk_heater";
-            case CONTROL -> "rbmk_control";
-            case CONTROL_MOD -> "rbmk_control_mod";
-            case CONTROL_AUTO -> "rbmk_control_auto";
-            case CONTROL_REASIM -> "rbmk_control_reasim";
-            case CONTROL_REASIM_AUTO -> "rbmk_control_reasim_auto";
+            case BOILER -> RBMK_BOILER_PIPE_TEXTURES;
+            case HEATER -> RBMK_HEATER_PIPE_TEXTURES;
+            case CONTROL -> RBMK_CONTROL_PIPE_TEXTURES;
+            case CONTROL_MOD -> RBMK_CONTROL_MOD_PIPE_TEXTURES;
+            case CONTROL_AUTO -> RBMK_CONTROL_AUTO_PIPE_TEXTURES;
+            case CONTROL_REASIM -> RBMK_CONTROL_REASIM_PIPE_TEXTURES;
+            case CONTROL_REASIM_AUTO -> RBMK_CONTROL_REASIM_AUTO_PIPE_TEXTURES;
             default -> null;
         };
+    }
+
+    private static FuelChannelSprites fuelChannelSprites(String prefix) {
+        return new FuelChannelSprites(
+                blockSprite(prefix + "_side"),
+                blockSprite(prefix + "_top"),
+                blockSprite(prefix + "_inner"),
+                blockSprite(prefix + "_cover_top"),
+                blockSprite(prefix + "_cover_side"),
+                blockSprite(prefix + "_glass_top"),
+                blockSprite(prefix + "_glass_side"));
+    }
+
+    private static PipePadSprites pipePadSprites(String prefix) {
+        return new PipePadSprites(blockSprite(prefix + "_pipe_top"), blockSprite(prefix + "_pipe_side"));
     }
 
     private static ResourceLocation controlTexture(boolean automatic, RBMKControlRodPlanner.RBMKColor color) {
@@ -313,5 +349,13 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
     }
 
     private record ColumnRenderArrays(int heightAbove, boolean[] sameColumnAbove, int[] emptyMetadataAbove) {
+    }
+
+    private record FuelChannelSprites(TextureAtlasSprite side, TextureAtlasSprite top, TextureAtlasSprite inner,
+            TextureAtlasSprite coverTop, TextureAtlasSprite coverSide, TextureAtlasSprite glassTop,
+            TextureAtlasSprite glassSide) {
+    }
+
+    private record PipePadSprites(TextureAtlasSprite top, TextureAtlasSprite side) {
     }
 }

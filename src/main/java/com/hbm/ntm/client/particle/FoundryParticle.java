@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.particle;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -125,18 +126,12 @@ public class FoundryParticle extends Particle {
     private void quad(VertexConsumer consumer, double pX, double pY, double pZ,
             double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4, double z4,
             double uMax, double vMax, double uMin, double vMin) {
-        vertex(consumer, pX + x1, pY + y1, pZ + z1, uMax, vMax);
-        vertex(consumer, pX + x2, pY + y2, pZ + z2, uMin, vMax);
-        vertex(consumer, pX + x3, pY + y3, pZ + z3, uMin, vMin);
-        vertex(consumer, pX + x4, pY + y4, pZ + z4, uMax, vMin);
-    }
-
-    private void vertex(VertexConsumer consumer, double x, double y, double z, double u, double v) {
-        consumer.vertex(x, y, z)
-                .color(red, green, blue, 255)
-                .uv((float) u, (float) v)
-                .uv2(LightTexture.FULL_BRIGHT)
-                .endVertex();
+        int color = LegacyTexturedQuadRenderer.rgb(red, green, blue);
+        LegacyTexturedQuadRenderer.emitPositionColorTexLightmapQuadIdentity(consumer, LightTexture.FULL_BRIGHT,
+                LegacyTexturedQuadRenderer.vertex(pX + x1, pY + y1, pZ + z1, uMax, vMax, color, 255),
+                LegacyTexturedQuadRenderer.vertex(pX + x2, pY + y2, pZ + z2, uMin, vMax, color, 255),
+                LegacyTexturedQuadRenderer.vertex(pX + x3, pY + y3, pZ + z3, uMin, vMin, color, 255),
+                LegacyTexturedQuadRenderer.vertex(pX + x4, pY + y4, pZ + z4, uMax, vMin, color, 255));
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
@@ -13,13 +15,16 @@ import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
@@ -38,7 +43,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity implements HbmStandardFluidReceiver {
+public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity
+        implements HbmStandardFluidReceiver, LegacyLookOverlayProvider {
     private static final int MIN_DIST = 2;
     private static final int MAX_DIST = 9;
     private static final int FELL_HORIZONTAL_RANGE = 10;
@@ -108,7 +114,7 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity implements Hb
             autosaw.runSaw(level, pos);
         }
         autosaw.networkPackNT(20);
-        if (oldOn != autosaw.on || oldFill != autosaw.tank.getFill() || level.getGameTime() % 20L == 0L) {
+        if (oldOn != autosaw.on || oldFill != autosaw.tank.getFill()) {
             autosaw.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -528,17 +534,32 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity implements Hb
         if (tag == null || !tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
             return false;
         }
-        int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
-        if (ids.length == 0) {
+        java.util.OptionalInt id = HbmFluidCopiable.copiedFluidIdAt(tag, index);
+        if (id.isEmpty()) {
             return false;
         }
-        FluidType type = HbmFluids.fromId(ids[Math.max(0, Math.min(index, ids.length - 1))]);
+        FluidType type = HbmFluids.fromId(id.getAsInt());
         if (!acceptsFuel(type)) {
             return false;
         }
         tank.setTankType(type);
         onFluidContentsChanged();
         return true;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        List<Component> lines = new ArrayList<>();
+        lines.add(tank.getTankType().getDisplayName().copy()
+                .append(Component.literal(": " + tank.getFill() + "/" + tank.getMaxFill() + "mB")
+                        .withStyle(ChatFormatting.RESET)));
+        if (suspended) {
+            lines.add(Component.literal("! ")
+                    .append(Component.translatable("block.hbm_ntm_rebirth.machine_autosaw.suspended"))
+                    .append(Component.literal(" !"))
+                    .withStyle(ChatFormatting.RED));
+        }
+        return LegacyLookOverlay.forBlock(this, lines);
     }
 
     @Override

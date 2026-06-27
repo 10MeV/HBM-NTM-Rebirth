@@ -35,7 +35,7 @@ public abstract class RadioTorchDeviceBlockEntity extends RadioTorchBlockEntity 
         if (!radio.channel().isEmpty()) {
             lines.add(LegacyLookOverlayLines.freq(radio.channel()));
         }
-        lines.add(LegacyLookOverlayLines.signal(0, radio.lastState()));
+        lines.add(LegacyLookOverlayLines.signal(radio.lastState()));
         return LegacyLookOverlay.forBlock(this, lines);
     }
 

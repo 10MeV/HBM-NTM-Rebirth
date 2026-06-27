@@ -1,12 +1,14 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUvAnimation;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 import java.util.Random;
 
@@ -82,40 +84,33 @@ public final class LegacyFalloutRainRenderer {
         return (packedLight * 3 + LightTexture.FULL_BRIGHT) / 4;
     }
 
-    public static void renderColumn(VertexConsumer consumer, Matrix4f pose, Matrix3f normal,
+    public static void renderColumn(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
             int layerX, int layerZ, HeightSpan height, float rainX, float rainZ,
             ColumnStyle style, int packedLight, double originX, double originY, double originZ) {
-        if (consumer == null || height == null || style == null || height.minY() == height.maxY()) {
+        if (texture == null || poseStack == null || buffer == null || height == null || style == null
+                || height.minY() == height.maxY()) {
             return;
         }
         double u0 = LegacyUvAnimation.falloutRainU(0.0D, style.fallVariation(), FALL_SPEED);
         double u1 = LegacyUvAnimation.falloutRainU(1.0D, style.fallVariation(), FALL_SPEED);
         double minV = LegacyUvAnimation.falloutRainV(height.minY(), style.swayLoop(), style.swayVariation(), FALL_SPEED);
         double maxV = LegacyUvAnimation.falloutRainV(height.maxY(), style.swayLoop(), style.swayVariation(), FALL_SPEED);
+        int alpha = LegacyTexturedQuadRenderer.alpha(style.alpha());
 
-        putVertex(consumer, pose, normal,
+        LegacyTexturedQuadRenderer.quad(texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
+                LegacyTexturedRenderMode.TRANSLUCENT, 0.0F, 1.0F, 0.0F,
+                LegacyTexturedQuadRenderer.vertex(
                 layerX - rainX + 0.5D - originX, height.minY() - originY, layerZ - rainZ + 0.5D - originZ,
-                u0, minV, style.alpha(), packedLight);
-        putVertex(consumer, pose, normal,
+                        u0, minV, 0xFFFFFF, alpha),
+                LegacyTexturedQuadRenderer.vertex(
                 layerX + rainX + 0.5D - originX, height.minY() - originY, layerZ + rainZ + 0.5D - originZ,
-                u1, minV, style.alpha(), packedLight);
-        putVertex(consumer, pose, normal,
+                        u1, minV, 0xFFFFFF, alpha),
+                LegacyTexturedQuadRenderer.vertex(
                 layerX + rainX + 0.5D - originX, height.maxY() - originY, layerZ + rainZ + 0.5D - originZ,
-                u1, maxV, style.alpha(), packedLight);
-        putVertex(consumer, pose, normal,
+                        u1, maxV, 0xFFFFFF, alpha),
+                LegacyTexturedQuadRenderer.vertex(
                 layerX - rainX + 0.5D - originX, height.maxY() - originY, layerZ - rainZ + 0.5D - originZ,
-                u0, maxV, style.alpha(), packedLight);
-    }
-
-    public static void putVertex(VertexConsumer consumer, Matrix4f pose, Matrix3f normal,
-            double x, double y, double z, double u, double v, float alpha, int packedLight) {
-        consumer.vertex(pose, (float) x, (float) y, (float) z)
-                .color(1.0F, 1.0F, 1.0F, alpha)
-                .uv((float) u, (float) v)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normal, 0.0F, 1.0F, 0.0F)
-                .endVertex();
+                        u0, maxV, 0xFFFFFF, alpha));
     }
 
     public record HeightSpan(int minY, int maxY) {

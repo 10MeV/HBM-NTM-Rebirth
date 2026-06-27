@@ -19,9 +19,9 @@ public final class ObjLightModels {
     public static final ObjModelPart DEMON_LAMP = ObjModelLibrary.directBlockPart("lamp_demon")
             .withOrigin(ObjPartTransform.IDENTITY);
 
-    public static final LegacyWavefrontModel CAGE_LAMP_LEGACY = legacyModel("cage_lamp").noSmooth();
-    public static final LegacyWavefrontModel FLUORESCENT_LAMP_LEGACY = legacyModel("fluorescent_lamp").noSmooth();
-    public static final LegacyWavefrontModel FLOOD_LAMP_LEGACY = legacyModel("flood_lamp").noSmooth();
+    public static final LegacyWavefrontModel CAGE_LAMP_LEGACY = legacyModel("cage_lamp").noSmooth().asVBO();
+    public static final LegacyWavefrontModel FLUORESCENT_LAMP_LEGACY = legacyModel("fluorescent_lamp").noSmooth().asVBO();
+    public static final LegacyWavefrontModel FLOOD_LAMP_LEGACY = legacyModel("flood_lamp").noSmooth().asVBO();
     public static final LegacyWavefrontModel FLOODLIGHT_LEGACY = blockLegacyModel("floodlight", machineTexture("floodlight")).asVBO();
     public static final LegacyWavefrontModel DEMON_LAMP_LEGACY = blockLegacyModel("demon_lamp", machineTexture("demon_lamp")).asVBO();
 
@@ -32,13 +32,13 @@ public final class ObjLightModels {
     public static LegacyWavefrontModel legacyModel(String name, ResourceLocation texture) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/lights/" + name + ".obj"),
-                texture);
+                texture).asVBO();
     }
 
     public static LegacyWavefrontModel blockLegacyModel(String name, ResourceLocation texture) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/blocks/" + name + ".obj"),
-                texture);
+                texture).asVBO();
     }
 
     public static ResourceLocation texture(String name) {

@@ -288,10 +288,8 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
             for (int pressure = range[0]; pressure <= range[1]; pressure++) {
                 long available = Math.min(Math.max(0L, provider.getFluidAvailable(type, pressure)),
                         Math.max(0L, provider.getProviderSpeed(type, pressure)));
-                if (available > 0L) {
-                    result.providers[pressure].add(new Entry<>(provider, available));
-                    result.available[pressure] += available;
-                }
+                result.providers[pressure].add(new Entry<>(provider, available));
+                result.available[pressure] += available;
             }
         }
         return result;
@@ -312,11 +310,9 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
             for (int pressure = range[0]; pressure <= range[1]; pressure++) {
                 long demand = Math.min(Math.max(0L, receiver.getDemand(type, pressure)),
                         Math.max(0L, receiver.getReceiverSpeed(type, pressure)));
-                if (demand > 0L) {
-                    result.receivers[pressure].get(priority).add(new Entry<>(receiver, demand));
-                    result.demand[pressure].put(priority, result.demand[pressure].get(priority) + demand);
-                    result.totalDemand[pressure] += demand;
-                }
+                result.receivers[pressure].get(priority).add(new Entry<>(receiver, demand));
+                result.demand[pressure].put(priority, result.demand[pressure].get(priority) + demand);
+                result.totalDemand[pressure] += demand;
             }
         }
         return result;
@@ -333,17 +329,15 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
                 continue;
             }
 
-            long priorityUsed = 0L;
-            long priorityBudget = Math.min(toTransfer, priorityDemand);
+            long priorityBudget = Math.min(priorityDemand, toTransfer);
             for (Entry<HbmFluidReceiver> entry : priorityReceivers) {
                 double weight = (double) entry.amount / (double) priorityDemand;
-                long toSend = (long) Math.min(Math.max(priorityBudget * weight, 0D), entry.amount);
+                long toSend = (long) Math.max(priorityBudget * weight, 0D);
                 long accepted = toSend - entry.value.transferFluid(type, pressure, toSend);
-                priorityUsed += accepted;
+                used += accepted;
             }
 
-            used += priorityUsed;
-            toTransfer -= priorityUsed;
+            toTransfer -= used;
         }
         return used;
     }
@@ -367,9 +361,6 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
             provider.useUpFluid(type, pressure, toUse);
             requestedUse += toUse;
             leftover -= toUse;
-            if (toUse <= 0L) {
-                break;
-            }
         }
         return new ProviderRemovalStats(requestedUse, Math.max(0L, leftover));
     }

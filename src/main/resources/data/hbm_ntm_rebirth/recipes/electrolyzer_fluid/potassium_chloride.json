@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:electrolyzer_fluid",
+  "input": { "fluid": "POTASSIUM_CHLORIDE", "amount": 250 },
+  "output1": { "fluid": "CHLORINE", "amount": 125 },
+  "output2": { "fluid": "NONE", "amount": 0 },
+  "byproducts": [
+    { "item": "hbm_ntm_rebirth:dust" }
+  ],
+  "duration": 20
+}

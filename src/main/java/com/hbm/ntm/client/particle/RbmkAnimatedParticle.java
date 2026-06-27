@@ -108,10 +108,12 @@ public class RbmkAnimatedParticle extends TextureSheetParticle implements HbmDef
             corner.rotate(rotation).add(x, y, z);
         }
         Uv uv = frameUv(renderAge);
-        consumer.vertex(corners[0].x(), corners[0].y(), corners[0].z()).uv(uv.u1, uv.v1).color(1.0F, 1.0F, 1.0F, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        consumer.vertex(corners[1].x(), corners[1].y(), corners[1].z()).uv(uv.u1, uv.v0).color(1.0F, 1.0F, 1.0F, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        consumer.vertex(corners[2].x(), corners[2].y(), corners[2].z()).uv(uv.u0, uv.v0).color(1.0F, 1.0F, 1.0F, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        consumer.vertex(corners[3].x(), corners[3].y(), corners[3].z()).uv(uv.u0, uv.v1).color(1.0F, 1.0F, 1.0F, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, LightTexture.FULL_BRIGHT,
+                corners[0], uv.u1, uv.v1,
+                corners[1], uv.u1, uv.v0,
+                corners[2], uv.u0, uv.v0,
+                corners[3], uv.u0, uv.v1,
+                1.0F, 1.0F, 1.0F, alpha);
     }
 
     private Uv frameUv(float renderAge) {

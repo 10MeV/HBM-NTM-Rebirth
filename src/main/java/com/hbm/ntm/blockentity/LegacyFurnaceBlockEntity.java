@@ -130,7 +130,7 @@ public class LegacyFurnaceBlockEntity extends BlockEntity implements MenuProvide
             furnace.setChanged();
         }
         furnace.networkPackNT(25);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }

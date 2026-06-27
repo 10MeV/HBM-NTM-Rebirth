@@ -1,6 +1,6 @@
 {
   "loader": "forge:obj",
-  "model": "hbm_ntm_rebirth:models/block/reactors/zirnox_destroyed.obj",
+  "model": "hbm_ntm_rebirth:models/zirnox_destroyed.obj",
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",

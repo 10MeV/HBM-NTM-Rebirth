@@ -19,6 +19,7 @@ import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModCreativeTabs;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModEntityTypes;
+import com.hbm.ntm.registry.ModFeatures;
 import com.hbm.ntm.registry.ModFluids;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
@@ -59,6 +60,7 @@ public class HbmNtm {
         ModSounds.register(modBus);
         ModEffects.register(modBus);
         ModEntityTypes.register(modBus);
+        ModFeatures.register(modBus);
         ModParticleTypes.PARTICLE_TYPES.register(modBus);
         ModCreativeTabs.register(modBus);
         RBMKDialRuntime.bootstrap();

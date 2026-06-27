@@ -34,8 +34,14 @@ public class BreedingReactorBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && !player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
-                && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof BreedingReactorBlockEntity breeder) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(level, pos);
+        if (!(blockEntity instanceof BreedingReactorBlockEntity breeder)) {
+            return InteractionResult.PASS;
+        }
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             NetworkHooks.openScreen(serverPlayer, breeder, breeder.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

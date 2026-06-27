@@ -5,7 +5,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.fluid.FluidType;
-import com.hbm.ntm.fluid.HbmFluidPortMachine;
+import com.hbm.ntm.fluid.HbmFluidPortSubscriptionTracker;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -41,6 +41,8 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity
     private static final String TAG_REDSTONE = "redstone";
 
     private final HbmFluidTank tank;
+    private final HbmFluidPortSubscriptionTracker inputPortSubscriptions = new HbmFluidPortSubscriptionTracker();
+    private final HbmFluidPortSubscriptionTracker outputPortSubscriptions = new HbmFluidPortSubscriptionTracker();
     private int bufferSize = DEFAULT_BUFFER_SIZE;
     private HbmEnergyReceiver.ConnectionPriority priority = HbmEnergyReceiver.ConnectionPriority.NORMAL;
     private boolean redstone;
@@ -70,7 +72,7 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity
 
         pump.refreshPumpPorts();
 
-        if (changed || level.getGameTime() % 15L == 0L) {
+        if (changed) {
             pump.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -301,15 +303,34 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private void refreshPumpPorts() {
-        if (level == null || level.isClientSide || tank.getTankType() == HbmFluids.NONE) {
+        if (level == null || level.isClientSide) {
             return;
         }
-        HbmFluidPortMachine.refreshReceiverPorts(level, worldPosition, List.of(port(inputSide())),
+        inputPortSubscriptions.refreshReceiver(level, worldPosition, List.of(port(inputSide())),
                 getReceivingTanks(), this);
-        if (!redstone && tank.getFill() > 0) {
-            HbmFluidPortMachine.refreshProviderPorts(level, worldPosition, List.of(port(outputSide())),
-                    getSendingTanks(), this);
+        Iterable<HbmFluidTank> activeSendingTanks = !redstone && tank.getFill() > 0 ? getSendingTanks() : List.of();
+        outputPortSubscriptions.refreshProvider(level, worldPosition, List.of(port(outputSide())),
+                activeSendingTanks, this);
+    }
+
+    @Override
+    public void setRemoved() {
+        detachPumpPortSubscriptions();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        detachPumpPortSubscriptions();
+        super.onChunkUnloaded();
+    }
+
+    private void detachPumpPortSubscriptions() {
+        if (level == null || level.isClientSide) {
+            return;
         }
+        inputPortSubscriptions.detachAllDetailed(level, worldPosition, List.of(port(inputSide())), this, null);
+        outputPortSubscriptions.detachAllDetailed(level, worldPosition, List.of(port(outputSide())), null, this);
     }
 
     private boolean normalizeBuffer() {

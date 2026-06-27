@@ -56,6 +56,10 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation FUSION_COMPONENT = hbm("fusion_component");
     public static final ResourceLocation ITEM_SECRET = hbm("item_secret");
     public static final ResourceLocation MOTOR = hbm("motor");
+    public static final ResourceLocation MOTOR_DESH = hbm("motor_desh");
+    public static final ResourceLocation REACTOR_CORE = hbm("reactor_core");
+    public static final ResourceLocation INGOT_CFT = hbm("ingot_cft");
+    public static final ResourceLocation ROD_QUAD_EMPTY = hbm("rod_quad_empty");
 
     private static final Map<ResourceLocation, LinkedHashMap<Integer, RegistryObject<Item>>> ITEM_VARIANTS = new LinkedHashMap<>();
 
@@ -206,6 +210,14 @@ public final class LegacyMetaItemMappings {
                 2, requireLegacyItem("item_secret_selenium_steel")));
         registerSparse(MOTOR, Map.of(
                 0, ModItems.MOTOR));
+        registerSparse(MOTOR_DESH, Map.of(
+                -1, requireLegacyItem("motor_desh")));
+        registerSparse(REACTOR_CORE, Map.of(
+                -1, requireLegacyItem("reactor_core")));
+        registerSparse(INGOT_CFT, Map.of(
+                -1, requireLegacyItem("ingot_cft")));
+        registerSparse(ROD_QUAD_EMPTY, Map.of(
+                -1, requireLegacyItem("rod_quad_empty")));
         registerSparse(FUEL_ADDITIVE, Map.of(
                 0, requireLegacyItem("fuel_additive_antiknock"),
                 1, requireLegacyItem("fuel_additive_deicer")));

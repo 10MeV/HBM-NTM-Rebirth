@@ -38,6 +38,8 @@ public final class HbmFluidContainerRegistry {
             direct(ContainerSource.BUILTIN_FIXED, new ItemStack(Items.GLASS_BOTTLE), new ItemStack(Items.EXPERIENCE_BOTTLE), HbmFluids.XPJUICE, 100));
     private static final List<ContainerEntry> EXTERNAL_ENTRIES = new CopyOnWriteArrayList<>();
     private static final List<HbmFluidContainerRegisterListener> LISTENERS = new CopyOnWriteArrayList<>();
+    private static final Object RELOAD_LOCK = new Object();
+    private static @Nullable List<ContainerEntry> reloadPendingEntries;
     private static volatile int lastInvokedListeners;
     private static volatile int lastRegisteredContainers;
     private static volatile int lastSkippedContainers;
@@ -128,6 +130,9 @@ public final class HbmFluidContainerRegistry {
         }
         if (input.getItem() instanceof HbmFluidContainerItem container && !(container instanceof HbmInfiniteFluidItem)) {
             FluidType contained = container.getFirstFluidType(input);
+            if (!isRegistryDynamicContainer(container, contained)) {
+                return new FluidContentLookupReport(requested, HbmFluids.NONE, true, input, 0, 0, null, null);
+            }
             int fill = contained == requested ? container.getFill(input) : 0;
             return new FluidContentLookupReport(requested, contained, true, input, fill,
                     container.getPressure(input), ContainerSource.KIND_DYNAMIC, null);
@@ -148,6 +153,9 @@ public final class HbmFluidContainerRegistry {
         }
         if (input.getItem() instanceof HbmFluidContainerItem container && !(container instanceof HbmInfiniteFluidItem)) {
             FluidType type = container.getFirstFluidType(input);
+            if (!isRegistryDynamicContainer(container, type)) {
+                return new FluidTypeLookupReport(true, input, HbmFluids.NONE, 0, 0, null, null);
+            }
             int fill = container.getFill(input);
             return new FluidTypeLookupReport(true, input, fill > 0 ? type : HbmFluids.NONE,
                     fill, container.getPressure(input), ContainerSource.KIND_DYNAMIC, null);
@@ -168,6 +176,9 @@ public final class HbmFluidContainerRegistry {
         }
         if (input.getItem() instanceof HbmFluidContainerItem container && !(container instanceof HbmInfiniteFluidItem)) {
             FluidType type = container.getFirstFluidType(input);
+            if (!isRegistryDynamicContainer(container, type)) {
+                return new FullContainerLookupReport(true, input, HbmFluids.NONE, 0, 0, null, null, ItemStack.EMPTY);
+            }
             int fill = container.getFill(input);
             ItemStack empty = fill <= 0 ? ItemStack.EMPTY : emptyContainer(container.getContainerKind());
             return new FullContainerLookupReport(true, input, fill > 0 ? type : HbmFluids.NONE,
@@ -248,25 +259,43 @@ public final class HbmFluidContainerRegistry {
             lastSkippedContainers++;
             return false;
         }
-        EXTERNAL_ENTRIES.add(direct(source, emptyContainer == null ? ItemStack.EMPTY : emptyContainer.copy(),
-                fullContainer.copy(), type, content));
+        ContainerEntry entry = direct(source, emptyContainer == null ? ItemStack.EMPTY : emptyContainer.copy(),
+                fullContainer.copy(), type, content);
+        synchronized (RELOAD_LOCK) {
+            List<ContainerEntry> pending = reloadPendingEntries;
+            if (pending != null) {
+                pending.add(entry);
+            } else {
+                EXTERNAL_ENTRIES.add(entry);
+            }
+        }
         lastRegisteredContainers++;
         return true;
     }
 
     public static void reloadExternalContainers(java.nio.file.Path configDir) {
-        EXTERNAL_ENTRIES.clear();
-        lastInvokedListeners = 0;
-        lastRegisteredContainers = 0;
-        lastSkippedContainers = 0;
-        HbmFluidContainerConfig.initialize(configDir);
-        for (HbmFluidContainerRegisterListener listener : LISTENERS) {
+        synchronized (RELOAD_LOCK) {
+            reloadPendingEntries = new ArrayList<>();
+            lastInvokedListeners = 0;
+            lastRegisteredContainers = 0;
+            lastSkippedContainers = 0;
             try {
-                listener.onFluidContainersLoad();
-                lastInvokedListeners++;
-            } catch (RuntimeException ex) {
-                lastSkippedContainers++;
-                HbmNtm.LOGGER.warn("HBM fluid container register listener failed.", ex);
+                HbmFluidContainerConfig.initialize(configDir);
+                for (HbmFluidContainerRegisterListener listener : LISTENERS) {
+                    int before = reloadPendingEntries.size();
+                    try {
+                        listener.onFluidContainersLoad();
+                        lastInvokedListeners++;
+                    } catch (RuntimeException ex) {
+                        truncatePendingReloadEntries(before);
+                        lastSkippedContainers++;
+                        HbmNtm.LOGGER.warn("HBM fluid container register listener failed.", ex);
+                    }
+                }
+                EXTERNAL_ENTRIES.clear();
+                EXTERNAL_ENTRIES.addAll(reloadPendingEntries);
+            } finally {
+                reloadPendingEntries = null;
             }
         }
     }
@@ -316,6 +345,10 @@ public final class HbmFluidContainerRegistry {
         return ItemStack.isSameItemSameTags(original, container) ? ItemStack.EMPTY : container.copy();
     }
 
+    private static boolean isRegistryDynamicContainer(HbmFluidContainerItem container, FluidType type) {
+        return container != null && HbmFluidContainerRules.accepts(container.getContainerKind(), type);
+    }
+
     private static List<ContainerEntry> directEntries() {
         List<ContainerEntry> entries = new ArrayList<>(DIRECT_ENTRIES);
         addLegacyDirect(entries, "cell_empty", "cell_deuterium", HbmFluids.DEUTERIUM, 1000);
@@ -336,6 +369,7 @@ public final class HbmFluidContainerRegistry {
         addLegacyDirectBlock(entries, "tank_steel", "pink_barrel", HbmFluids.KEROSENE, 10000);
         addLegacyDirectBlock(entries, "tank_steel", "lox_barrel", HbmFluids.OXYGEN, 10000);
         addLegacyDirect(entries, Items.BUCKET, "bucket_mud", HbmFluids.WATZ, 1000);
+        addLegacyDirect(entries, Items.BUCKET, "bucket_acid", HbmFluids.PEROXIDE, 1000);
         addLegacyDirect(entries, Items.BUCKET, "bucket_schrabidic_acid", HbmFluids.SCHRABIDIC, 1000);
         addLegacyDirect(entries, Items.BUCKET, "bucket_sulfuric_acid", HbmFluids.SULFURIC_ACID, 1000);
         addLegacyDirect(entries, Items.GLASS_BOTTLE, "bottle_mercury", HbmFluids.MERCURY, 1000);
@@ -400,6 +434,15 @@ public final class HbmFluidContainerRegistry {
     private static void register(HbmFluidContainerRules.ContainerKind kind, RegistryObject<Item> empty, RegistryObject<Item> full) {
         EMPTY_ITEMS.put(kind, empty);
         FULL_ITEMS.put(kind, full);
+    }
+
+    private static void truncatePendingReloadEntries(int size) {
+        if (reloadPendingEntries == null) {
+            return;
+        }
+        while (reloadPendingEntries.size() > size) {
+            reloadPendingEntries.remove(reloadPendingEntries.size() - 1);
+        }
     }
 
     private static ItemStack safeSingleCopy(ItemStack stack) {

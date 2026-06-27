@@ -108,10 +108,6 @@ public class RadioTorchCounterBlockEntity extends RadioTorchBlockEntity {
             if (!radio.channel(i).isEmpty()) {
                 lines.add(LegacyLookOverlayLines.freq(i + 1, radio.channel(i)));
                 lines.add(LegacyLookOverlayLines.signal(i + 1, radio.lastCount(i)));
-                if (!filterItems.getStackInSlot(i).isEmpty()) {
-                    lines.add(Component.literal(filterItems.getStackInSlot(i).getHoverName().getString()));
-                    lines.add(Component.literal(matcher.label(i)));
-                }
             }
         }
         return LegacyLookOverlay.forBlock(this, lines);

@@ -1320,7 +1320,8 @@ public final class ArmorModItems {
                 ScannerTarget.legacy("stone_gneiss", 5000, "Schist", 0x8080ff),
                 ScannerTarget.legacy("ore_australium", 1000, "Australium", 0xffff00),
                 ScannerTarget.vanilla(Blocks.END_PORTAL_FRAME, 1, "End Portal", 0x40b080),
-                ScannerTarget.legacy("bobblehead", 1, "A Treasure!", 0xff0000)
+                ScannerTarget.legacy("bobblehead", 1, "A Treasure!", 0xff0000),
+                ScannerTarget.legacy("ore_bedrock", 1, "Bedrock Ore", 0xff0000)
         );
 
         public NeutrinoLens(Item.Properties properties) {

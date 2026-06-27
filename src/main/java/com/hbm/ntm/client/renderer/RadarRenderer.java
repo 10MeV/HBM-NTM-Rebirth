@@ -6,7 +6,6 @@ import com.hbm.ntm.blockentity.RadarBlockEntity;
 import com.hbm.ntm.blockentity.RadarLargeBlockEntity;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -53,19 +52,17 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
 
     private static void renderSmall(RadarBlockEntity radar, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        BlockState state = radar.getBlockState();
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(radar, packedLight);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        SMALL_MODEL.renderOnlyInCallOrder(context, SMALL_BASE);
+        SMALL_MODEL.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, SMALL_BASE);
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YN.rotationDegrees(interpolatedRotation(radar, partialTick)));
         poseStack.translate(-0.125D, 0.0D, 0.0D);
-        SMALL_MODEL.renderOnlyInCallOrder(context, SMALL_DISH);
+        SMALL_MODEL.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, SMALL_DISH);
         poseStack.popPose();
 
         poseStack.popPose();
@@ -80,7 +77,6 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
 
         LegacyMachineDefinition definition = block.definition();
         int modelLight = LegacyRenderLighting.resolveMachineLight(radar, state, definition, packedLight);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -89,11 +85,13 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), context, LARGE_RADAR);
+        LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+                LARGE_RADAR);
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YN.rotationDegrees(interpolatedRotation(radar, partialTick)));
-        LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), context, LARGE_DISH);
+        LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+                LARGE_DISH);
         poseStack.popPose();
 
         poseStack.popPose();

@@ -33,7 +33,7 @@ public final class ObjVehicleModels {
     public static LegacyWavefrontModel model(String modelName, ResourceLocation texture) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/vehicles/" + modelName + ".obj"),
-                texture);
+                texture).asVBO();
     }
 
     public static ResourceLocation texture(String name) {

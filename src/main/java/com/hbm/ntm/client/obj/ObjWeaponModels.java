@@ -440,6 +440,8 @@ public final class ObjWeaponModels {
             N_I_4_N_I.prepareRenderOnlyInCallOrder("CylinderHighlights");
     private static final LegacyWavefrontModel.SelectionHandle N_I_4_N_I_FRAME_DARK =
             N_I_4_N_I.prepareRenderOnlyInCallOrder("FrameDark");
+    private static final LegacyWavefrontModel.SelectionHandle LANCE_SPEAR =
+            LANCE.prepareRenderOnlyInCallOrder("Spear");
     private static final LegacyWavefrontModel.SelectionHandle ABERRATOR_AKIMBO =
             ABERRATOR.prepareRenderOnly("Gun", "Hammer", "Magazine", "Slide", "Sight");
     private static final LegacyWavefrontModel.SelectionHandle ABERRATOR_AKIMBO_FIRST_PERSON =
@@ -576,7 +578,7 @@ public final class ObjWeaponModels {
     public static LegacyWavefrontModel model(String name) {
         return new LegacyWavefrontModel(
                 modelLocation(name),
-                texture(name));
+                texture(name)).asVBO();
     }
 
     private static ResourceLocation modelLocation(String name) {
@@ -613,8 +615,8 @@ public final class ObjWeaponModels {
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         PreparedPart prepared = preparedPart(model, partName);
         if (prepared != null) {
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
-            prepared.model().renderOnlyInCallOrder(texture, context, prepared.selection());
+            prepared.model().renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                    prepared.selection());
             return;
         }
         model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
@@ -625,8 +627,8 @@ public final class ObjWeaponModels {
             String... partNames) {
         PreparedPart prepared = preparedOnly(model, partNames);
         if (prepared != null) {
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay);
-            prepared.model().renderOnlyInCallOrder(texture, context, prepared.selection());
+            prepared.model().renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                    prepared.selection());
             return;
         }
         model.renderOnly(texture, poseStack, buffer, packedLight, packedOverlay, partNames);
@@ -637,9 +639,8 @@ public final class ObjWeaponModels {
             int red, int green, int blue, int alpha) {
         PreparedPart prepared = preparedPart(model, partName);
         if (prepared != null) {
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
-                    .withRgba(red, green, blue, alpha);
-            prepared.model().renderOnlyInCallOrder(texture, context, prepared.selection());
+            prepared.model().renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha, false, prepared.selection());
             return;
         }
         model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay,
@@ -652,15 +653,41 @@ public final class ObjWeaponModels {
             float rotationDegrees, float uTranslate, float vTranslate) {
         PreparedPart prepared = preparedPart(model, partName);
         if (prepared != null) {
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight, packedOverlay)
-                    .withRgba(red, green, blue, alpha)
-                    .withGlintEqualDepth()
-                    .withLegacyTextureMatrix(uScale, vScale, rotationDegrees, uTranslate, vTranslate);
-            prepared.model().renderOnlyInCallOrder(texture, context, prepared.selection());
+            prepared.model().renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha, false, LegacyTexturedRenderMode.GLINT_EQUAL_DEPTH,
+                    legacyTextureMatrix(uScale, vScale, rotationDegrees, uTranslate, vTranslate),
+                    prepared.selection());
             return;
         }
         model.renderPartGlintWithLegacyTextureMatrix(partName, texture, poseStack, buffer, packedLight, packedOverlay,
                 red, green, blue, alpha, uScale, vScale, rotationDegrees, uTranslate, vTranslate);
+    }
+
+    public static void renderLanceSpear(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay) {
+        LANCE.renderOnlyInCallOrder(LANCE_TEXTURE, poseStack, buffer, packedLight, packedOverlay, LANCE_SPEAR);
+    }
+
+    public static void renderLanceSpearAdditive(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, int red, int green, int blue, int alpha) {
+        LANCE.renderOnlyInCallOrder(LANCE_TEXTURE, poseStack, buffer, packedLight, packedOverlay,
+                red, green, blue, alpha, false, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                LegacyWavefrontModel.UvTransform.DEFAULT, LANCE_SPEAR);
+    }
+
+    private static LegacyWavefrontModel.UvTransform legacyTextureMatrix(float uScale, float vScale,
+            float rotationDegrees, float uTranslate, float vTranslate) {
+        float radians = (float) Math.toRadians(rotationDegrees);
+        float cos = (float) Math.cos(radians);
+        float sin = (float) Math.sin(radians);
+        return LegacyWavefrontModel.UvTransform.dynamic(
+                uScale * cos,
+                -uScale * sin,
+                vScale * sin,
+                vScale * cos,
+                uScale * (cos * uTranslate - sin * vTranslate),
+                vScale * (sin * uTranslate + cos * vTranslate),
+                0.0F);
     }
 
     private static PreparedPart preparedPart(LegacyWavefrontModel model, String partName) {

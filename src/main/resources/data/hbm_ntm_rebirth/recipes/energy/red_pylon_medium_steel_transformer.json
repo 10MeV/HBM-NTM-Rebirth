@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:red_pylon_medium_steel" },
+    { "item": "hbm_ntm_rebirth:plate_polymer" },
+    { "item": "hbm_ntm_rebirth:coil_copper" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:red_pylon_medium_steel_transformer"
+  }
+}

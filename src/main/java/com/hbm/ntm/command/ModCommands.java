@@ -58,6 +58,7 @@ import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerConfig;
 import com.hbm.ntm.fluid.HbmFluidForgeAliasConfig;
 import com.hbm.ntm.fluid.HbmFluidForgeMappings;
+import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.fluid.HbmFluidTypeConfig;
 import com.hbm.ntm.fluid.HbmFluidTraitConfig;
@@ -70,6 +71,7 @@ import com.hbm.ntm.network.LegacyNetworkDispatcher;
 import com.hbm.ntm.network.LegacyPacketThreading;
 import com.hbm.ntm.network.LegacyRawBufferNetwork;
 import com.hbm.ntm.network.LegacyTargetPoint;
+import com.hbm.ntm.network.LoadedTileAccessCache;
 import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
@@ -111,6 +113,7 @@ import com.hbm.ntm.uninos.HbmNodespace;
 import com.hbm.ntm.uninos.HbmUninosDiagnostics;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNodespace;
 import com.hbm.ntm.util.HbmLegacyLootUtil;
+import com.hbm.ntm.util.HbmMachinePerformanceCounters;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -1290,7 +1293,7 @@ public final class ModCommands {
     }
 
     private static int worldSavedDataAnnihilatorFluidAmount(CommandSourceStack source, String pool, String fluidName) {
-        FluidType type = HbmFluids.fromName(fluidName);
+        FluidType type = parseFluid(fluidName);
         if (type == HbmFluids.NONE) {
             source.sendFailure(Component.literal("Unknown HBM fluid: " + fluidName));
             return 0;
@@ -2560,6 +2563,14 @@ public final class ModCommands {
 
     private static LiteralArgumentBuilder<CommandSourceStack> machineCommand() {
         return Commands.literal("machine")
+                .then(Commands.literal("perf")
+                        .executes(context -> getMachinePerformanceCounters(context.getSource()))
+                        .then(Commands.literal("enable")
+                                .executes(context -> setMachinePerformanceCounters(context.getSource(), true)))
+                        .then(Commands.literal("disable")
+                                .executes(context -> setMachinePerformanceCounters(context.getSource(), false)))
+                        .then(Commands.literal("reset")
+                                .executes(context -> resetMachinePerformanceCounters(context.getSource()))))
                 .then(Commands.literal("assembly")
                         .then(Commands.literal("recipes")
                                 .executes(context -> listAssemblyRecipes(context.getSource())))
@@ -2585,6 +2596,40 @@ public final class ModCommands {
                                 .executes(context -> clearAssemblyRecipe(
                                                 context.getSource(),
                                                 BlockPosArgument.getLoadedBlockPos(context, "pos"))))));
+    }
+
+    private static int getMachinePerformanceCounters(CommandSourceStack source) {
+        HbmMachinePerformanceCounters.Snapshot snapshot = HbmMachinePerformanceCounters.snapshot();
+        source.sendSuccess(() -> Component.literal("Machine perf: enabled=" + snapshot.enabled()
+                + " loadedTileCache=" + LoadedTileAccessCache.size()), false);
+        source.sendSuccess(() -> Component.literal("Fluid: networkTicks=" + snapshot.fluidNetworkTicks()
+                + " nodeRefreshes=" + snapshot.fluidNodeRefreshes()
+                + " subscriptionRefreshes=" + snapshot.fluidSubscriptionRefreshes()
+                + " portChecks=" + snapshot.fluidPortChecks()
+                + " subscriptions=" + snapshot.fluidPortSubscriptions()
+                + " transfers=" + snapshot.fluidPortTransfers()), false);
+        source.sendSuccess(() -> Component.literal("Energy: portChecks=" + snapshot.energyPortChecks()
+                + " subscriptions=" + snapshot.energyPortSubscriptions()), false);
+        source.sendSuccess(() -> Component.literal("LoadedTileCache: hits=" + snapshot.tileCacheHits()
+                + " misses=" + snapshot.tileCacheMisses()
+                + " invalidations=" + snapshot.tileCacheInvalidations()), false);
+        source.sendSuccess(() -> Component.literal("Sync: networkPackBytes=" + snapshot.networkPackBytes()
+                + " sent=" + snapshot.networkPackSent()
+                + " skipped=" + snapshot.networkPackSkipped()
+                + " blockUpdates=" + snapshot.blockUpdates()), false);
+        return snapshot.enabled() ? 1 : 0;
+    }
+
+    private static int setMachinePerformanceCounters(CommandSourceStack source, boolean enabled) {
+        HbmMachinePerformanceCounters.setEnabled(enabled);
+        source.sendSuccess(() -> Component.literal("Machine perf counters enabled: " + enabled), true);
+        return enabled ? 1 : 0;
+    }
+
+    private static int resetMachinePerformanceCounters(CommandSourceStack source) {
+        HbmMachinePerformanceCounters.reset();
+        source.sendSuccess(() -> Component.literal("Machine perf counters reset."), true);
+        return 1;
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> recipeCommand() {
@@ -4506,7 +4551,7 @@ public final class ModCommands {
     }
 
     private static int getCompatSteamFluid(CommandSourceStack source, String fluidName) {
-        FluidType type = HbmFluids.fromName(fluidName);
+        FluidType type = parseFluid(fluidName);
         if (type == HbmFluids.NONE) {
             source.sendFailure(Component.literal("Unknown HBM fluid: " + fluidName));
             return 0;
@@ -6141,7 +6186,7 @@ public final class ModCommands {
     }
 
     private static FluidType parseFluid(String value) {
-        return HbmFluids.fromName(value);
+        return HbmFluidJsonUtil.readFluidReference(value);
     }
 
     private static Direction parseDirection(String value) {

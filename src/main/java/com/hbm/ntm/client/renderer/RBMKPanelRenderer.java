@@ -2,8 +2,6 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.RBMKPanelBlock;
 import com.hbm.ntm.blockentity.RBMKPanelBlockEntity;
-import com.hbm.ntm.client.obj.ObjRenderContext;
-import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -29,22 +27,28 @@ public class RBMKPanelRenderer implements BlockEntityRenderer<RBMKPanelBlockEnti
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, light, packedOverlay);
         switch (panel.panelType()) {
-            case GAUGE -> LegacyRbmkPanelRenderer.renderGauges(context, panel.gauges(), partialTick);
-            case GRAPH -> LegacyRbmkPanelRenderer.renderGraphs(context, panel.graphs());
-            case INDICATOR -> LegacyRbmkPanelRenderer.renderIndicators(context, panel.indicators());
-            case KEYPAD -> LegacyRbmkPanelRenderer.renderKeys(context, panel.keys());
-            case LEVER -> LegacyRbmkPanelRenderer.renderLevers(context, panel.levers(), partialTick);
-            case NUMITRON -> LegacyRbmkPanelRenderer.renderNumitrons(context, panel.numitrons());
+            case GAUGE -> LegacyRbmkPanelRenderer.renderGauges(poseStack, buffer, light, packedOverlay,
+                    panel.gauges(), partialTick);
+            case GRAPH -> LegacyRbmkPanelRenderer.renderGraphs(poseStack, buffer, light, packedOverlay,
+                    panel.graphs());
+            case INDICATOR -> LegacyRbmkPanelRenderer.renderIndicators(poseStack, buffer, light, packedOverlay,
+                    panel.indicators());
+            case KEYPAD -> LegacyRbmkPanelRenderer.renderKeys(poseStack, buffer, light, packedOverlay,
+                    panel.keys());
+            case LEVER -> LegacyRbmkPanelRenderer.renderLevers(poseStack, buffer, light, packedOverlay,
+                    panel.levers(), partialTick);
+            case NUMITRON -> LegacyRbmkPanelRenderer.renderNumitrons(poseStack, buffer, light, packedOverlay,
+                    panel.numitrons());
             case TERMINAL -> {
                 Font font = Minecraft.getInstance().font;
-                LegacyRbmkMachineRenderer.renderTerminalModel(context);
-                LegacyRbmkMachineRenderer.renderTerminalText(font, context.fullBright(), panel.terminal(), "",
+                LegacyRbmkMachineRenderer.renderTerminalModel(poseStack, buffer, light, packedOverlay);
+                LegacyRbmkMachineRenderer.renderTerminalText(font, poseStack, buffer, panel.terminal(), "",
                         (System.currentTimeMillis() / 500L) % 2L == 0L);
             }
             case DISPLAY -> {
-                LegacyRbmkDisplayRenderer.renderDisplay(context, panel.displayColumns());
+                LegacyRbmkDisplayRenderer.renderDisplay(poseStack, buffer, light, packedOverlay,
+                        panel.displayColumns());
             }
         }
         poseStack.popPose();

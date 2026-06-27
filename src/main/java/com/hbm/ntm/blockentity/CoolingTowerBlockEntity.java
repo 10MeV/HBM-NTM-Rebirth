@@ -68,7 +68,7 @@ public abstract class CoolingTowerBlockEntity extends HbmFluidNetworkBlockEntity
             tower.tryProvideFluidToPorts(tower.outputTank.getTankType(), tower.outputTank.getPressure(), tower);
         }
 
-        if (convert > 0 || level.getGameTime() % 20L == 0L) {
+        if (convert > 0) {
             tower.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

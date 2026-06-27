@@ -1,7 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.fluid.IFillableItem;
 import com.hbm.ntm.block.RefuelerBlock;
 import com.hbm.ntm.fluid.FluidType;
@@ -14,7 +12,6 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -75,8 +72,7 @@ public class RefuelerBlockEntity extends HbmFluidNetworkBlockEntity implements H
         }
 
         refueler.networkPackNT(150);
-        if (previousOperating != refueler.isOperating || previousFill != refueler.tank.getFill()
-                || level.getGameTime() % 20L == 0L) {
+        if (previousOperating != refueler.isOperating || previousFill != refueler.tank.getFill()) {
             refueler.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -131,13 +127,6 @@ public class RefuelerBlockEntity extends HbmFluidNetworkBlockEntity implements H
         return true;
     }
 
-    @Override
-    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        ArrayList<net.minecraft.network.chat.Component> lines = new ArrayList<>();
-        lines.add(LegacyLookOverlayLines.tank(true, tank));
-        return LegacyLookOverlay.forBlock(this, lines);
-    }
-
     private boolean fillNearbyPlayers(Level level, BlockPos pos) {
         boolean filled = false;
         for (Player player : level.getEntitiesOfClass(Player.class, fillBox(pos))) {
@@ -146,7 +135,6 @@ public class RefuelerBlockEntity extends HbmFluidNetworkBlockEntity implements H
             filled |= fillStack(player.getItemBySlot(EquipmentSlot.LEGS));
             filled |= fillStack(player.getItemBySlot(EquipmentSlot.FEET));
             filled |= fillStack(player.getMainHandItem());
-            filled |= fillStack(player.getOffhandItem());
         }
         if (filled) {
             onFluidContentsChanged();

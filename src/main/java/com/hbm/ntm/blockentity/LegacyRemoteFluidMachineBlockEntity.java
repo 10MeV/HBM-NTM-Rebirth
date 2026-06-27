@@ -2,7 +2,6 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -101,7 +100,7 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
         if (networkRange > 0) {
             blockEntity.networkPackNT(networkRange);
         }
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             blockEntity.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -152,12 +151,7 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        List<Component> lines = new ArrayList<>();
-        if (getMaxPower() > 0L) {
-            lines.add(LegacyLookOverlayLines.energyStored(getPower(), getMaxPower()));
-        }
-        lines.addAll(LegacyLookOverlayLines.allCompactFluidUserTanks(this));
-        return LegacyLookOverlay.forBlock(this, lines);
+        return null;
     }
 
     @Override

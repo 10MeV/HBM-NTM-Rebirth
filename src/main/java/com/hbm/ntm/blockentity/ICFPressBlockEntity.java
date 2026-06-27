@@ -1,6 +1,8 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
+import com.hbm.ntm.api.tile.IInfoProviderEC;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -37,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
-        implements MenuProvider, HbmStandardFluidTransceiver {
+        implements MenuProvider, HbmStandardFluidTransceiver, IInfoProviderEC {
     public static final int SLOT_EMPTY = 0;
     public static final int SLOT_OUTPUT = 1;
     public static final int SLOT_MUON = 2;
@@ -108,7 +110,7 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
         HbmFluidNetworkBlockEntity.serverTick(level, pos, state, press);
         changed |= press.tickServer(level);
         press.networkPackNT(15);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             press.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -130,13 +132,20 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
         return muon;
     }
 
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, canPressNow());
+        data.putInt(CompatEnergyControl.I_MUON, muon);
+        data.putDouble(CompatEnergyControl.S_LEVEL_PERCENT, muon * 100.0D / MAX_MUON);
+    }
+
     public List<ItemStack> getDrops() {
         return HbmInventoryMenuHelper.clearToDrops(items);
     }
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.machineICFPress", "ICF Fuel Press");
+        return Component.translatableWithFallback("container.machineICFPress", "ICF Fuel Pellet Maker");
     }
 
     @Nullable
@@ -306,15 +315,11 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private boolean press() {
-        if (!items.getStackInSlot(SLOT_EMPTY).is(ModItems.ICF_PELLET_EMPTY.get())
-                || !items.getStackInSlot(SLOT_OUTPUT).isEmpty()) {
+        if (!canPressNow()) {
             return false;
         }
         FuelChoice first = chooseFuel(deuteriumTank, items.getStackInSlot(SLOT_FUEL_1));
         FuelChoice second = chooseFuel(tritiumTank, items.getStackInSlot(SLOT_FUEL_2));
-        if (first == null || second == null || first.type == second.type) {
-            return false;
-        }
         items.setStackInSlot(SLOT_OUTPUT, ICFPelletItem.setup(first.type, second.type, muon > 0));
         items.extractItem(SLOT_EMPTY, 1, false);
         consumeFuel(first, deuteriumTank, SLOT_FUEL_1);
@@ -323,6 +328,16 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
             muon--;
         }
         return true;
+    }
+
+    private boolean canPressNow() {
+        if (!items.getStackInSlot(SLOT_EMPTY).is(ModItems.ICF_PELLET_EMPTY.get())
+                || !items.getStackInSlot(SLOT_OUTPUT).isEmpty()) {
+            return false;
+        }
+        FuelChoice first = chooseFuel(deuteriumTank, items.getStackInSlot(SLOT_FUEL_1));
+        FuelChoice second = chooseFuel(tritiumTank, items.getStackInSlot(SLOT_FUEL_2));
+        return first != null && second != null && first.type != second.type;
     }
 
     private FuelChoice chooseFuel(HbmFluidTank tank, ItemStack solid) {

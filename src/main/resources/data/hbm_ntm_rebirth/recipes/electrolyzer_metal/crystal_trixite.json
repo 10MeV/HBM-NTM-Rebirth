@@ -1,0 +1,28 @@
+{
+    "type":  "hbm_ntm_rebirth:electrolyzer_metal",
+    "input":  {
+                  "ingredient":  {
+                                     "item":  "hbm_ntm_rebirth:crystal_trixite"
+                                 },
+                  "count":  1
+              },
+    "output1":  {
+                    "material":  "Plutonium",
+                    "amount":  216
+                },
+    "output2":  {
+                    "material":  "Cobalt",
+                    "amount":  288
+                },
+    "byproducts":  [
+                       {
+                           "item":  "hbm_ntm_rebirth:powder_niobium",
+                           "count":  4
+                       },
+                       {
+                           "item":  "hbm_ntm_rebirth:powder_nitan_mix",
+                           "count":  2
+                       }
+                   ],
+    "duration":  600
+}

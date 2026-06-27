@@ -10,7 +10,14 @@ public class FluidLoaderStandard extends FluidLoadingHandler {
         if (!valid(slots, in, out) || tank == null) {
             return false;
         }
-        return HbmFluidItemTransfer.unloadTankToSlot(wrap(slots), in, out, tank);
+        if (tank.getPressure() != 0) {
+            return false;
+        }
+        if (slots[in] == null || slots[in].isEmpty()) {
+            return true;
+        }
+        HbmFluidItemTransfer.unloadTankToStandardContainerSlot(wrap(slots), in, out, tank);
+        return false;
     }
 
     @Override
@@ -18,6 +25,9 @@ public class FluidLoaderStandard extends FluidLoadingHandler {
         if (!valid(slots, in, out) || tank == null) {
             return false;
         }
-        return HbmFluidItemTransfer.loadTankFromSlot(wrap(slots), in, out, tank);
+        if (slots[in] == null || slots[in].isEmpty()) {
+            return true;
+        }
+        return HbmFluidItemTransfer.loadTankFromStandardContainerSlot(wrap(slots), in, out, tank);
     }
 }

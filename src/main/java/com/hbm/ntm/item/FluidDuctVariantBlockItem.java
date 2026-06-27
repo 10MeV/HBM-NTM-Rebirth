@@ -50,6 +50,15 @@ public class FluidDuctVariantBlockItem extends BlockItem {
         return FluidDuctBoxBlock.clampLegacyMetadata(meta);
     }
 
+    public BlockState stateForLegacyMetadata(int metadata) {
+        return getBlock().defaultBlockState().setValue(FluidDuctBoxBlock.LEGACY_METADATA,
+                FluidDuctBoxBlock.clampLegacyMetadata(metadata));
+    }
+
+    public BlockState stateForStack(ItemStack stack) {
+        return stateForLegacyMetadata(getLegacyMetadata(stack));
+    }
+
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
         com.hbm.ntm.client.renderer.LegacyItemRendererBridge.accept(consumer,

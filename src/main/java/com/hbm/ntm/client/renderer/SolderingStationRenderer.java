@@ -5,7 +5,6 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.SolderingStationBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -52,9 +51,8 @@ public class SolderingStationRenderer implements BlockEntityRenderer<SolderingSt
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay)
-                .withRenderMode(LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
-        MODEL.renderAll(definition.textureLocation(), context);
+        MODEL.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+                LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
         renderOutputItem(blockEntity, poseStack, buffer, packedLight);
 
         poseStack.popPose();

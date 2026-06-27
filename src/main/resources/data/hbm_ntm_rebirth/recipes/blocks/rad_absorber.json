@@ -1,5 +1,5 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "hbm_ntm_rebirth:shaped_nbt",
   "category": "redstone",
   "pattern": [
     "ICI",

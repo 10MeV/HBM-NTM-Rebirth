@@ -4,7 +4,6 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.FusionBreederBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjFusionModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -36,8 +35,7 @@ public class FusionBreederRenderer implements BlockEntityRenderer<FusionBreederB
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
         ObjFusionModels.renderBreederPart(ObjFusionModels.BREEDER_TEXTURE,
-                new ObjRenderContext(poseStack, buffer, state, light, packedOverlay)
-                        .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL), "Breeder");
+                poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Breeder");
         poseStack.popPose();
     }
 

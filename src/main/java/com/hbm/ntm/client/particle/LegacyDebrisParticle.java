@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.particle;
 
+import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -148,18 +149,16 @@ public class LegacyDebrisParticle extends Particle {
     }
 
     private void putFace(VertexConsumer consumer, int light, DebrisCell cell, Vector3f a, Vector3f b, Vector3f c, Vector3f d) {
-        putVertex(consumer, cell, a, cell.u0, cell.v1, light);
-        putVertex(consumer, cell, b, cell.u0, cell.v0, light);
-        putVertex(consumer, cell, c, cell.u1, cell.v0, light);
-        putVertex(consumer, cell, d, cell.u1, cell.v1, light);
+        LegacyTexturedQuadRenderer.emitParticleQuadIdentity(consumer, light,
+                particleVertex(cell, a, cell.u0, cell.v1),
+                particleVertex(cell, b, cell.u0, cell.v0),
+                particleVertex(cell, c, cell.u1, cell.v0),
+                particleVertex(cell, d, cell.u1, cell.v1));
     }
 
-    private void putVertex(VertexConsumer consumer, DebrisCell cell, Vector3f pos, float u, float v, int light) {
-        consumer.vertex(pos.x(), pos.y(), pos.z())
-                .uv(u, v)
-                .color(cell.red, cell.green, cell.blue, this.alpha)
-                .uv2(light)
-                .endVertex();
+    private LegacyTexturedQuadRenderer.Vertex particleVertex(DebrisCell cell, Vector3f pos, float u, float v) {
+        return LegacyTexturedQuadRenderer.vertexRgbaF(pos.x(), pos.y(), pos.z(), u, v,
+                cell.red, cell.green, cell.blue, this.alpha);
     }
 
     private static DebrisCell[] makeCells(BlockState[] states, int debrisSize) {

@@ -10,6 +10,7 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmMathUtil;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -73,7 +74,7 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         }
         boiler.heat = 0;
 
-        if (process > 0 || level.getGameTime() % 20L == 0L) {
+        if (process > 0) {
             boiler.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -126,7 +127,7 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         lines.add(LegacyLookOverlayLines.compactTank(false, steamTank));
         if (display < 1) {
             lines.add(Component.literal("Too cold!")
-                    .withStyle((level.getGameTime() / 10L) % 2L == 0L ? ChatFormatting.RED : ChatFormatting.YELLOW));
+                    .withStyle(HbmMathUtil.getBlink() ? ChatFormatting.RED : ChatFormatting.YELLOW));
         }
         return LegacyLookOverlay.forBlock(this, lines);
     }

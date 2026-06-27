@@ -3,5 +3,6 @@
   "output": { "fluid": "hbm_ntm_rebirth:oxyhydrogen", "amount": 1000 },
   "input1": { "fluid": "hbm_ntm_rebirth:hydrogen", "amount": 500 },
   "input2": { "fluid": "hbm_ntm_rebirth:oxygen", "amount": 500 },
-  "duration": 50
+  "duration": 50,
+  "source_order": 1
 }

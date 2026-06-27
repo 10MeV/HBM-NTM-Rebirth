@@ -5,7 +5,6 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.PyroOvenBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import java.util.IdentityHashMap;
@@ -61,47 +60,48 @@ public class PyroOvenRenderer implements BlockEntityRenderer<PyroOvenBlockEntity
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
-        renderModelPart(model, "Oven", definition.textureLocation(), context);
+        renderModelPart(model, "Oven", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
 
         LegacyTileRenderPlans.PyroOvenPlan plan = LegacyTileRenderPlans.pyroOvenPlan(anim);
-        renderTranslatedPart(model, plan.slider(), definition.textureLocation(), poseStack, context);
-        renderRotatingPart(model, plan.fan(), definition.textureLocation(), poseStack, context);
+        renderTranslatedPart(model, plan.slider(), definition.textureLocation(), poseStack, buffer, modelLight,
+                packedOverlay);
+        renderRotatingPart(model, plan.fan(), definition.textureLocation(), poseStack, buffer, modelLight,
+                packedOverlay);
 
         poseStack.popPose();
     }
 
     private static void renderTranslatedPart(LegacyWavefrontModel model,
             LegacyTileRenderPlans.TranslatedModelPartPlan part, ResourceLocation texture,
-            PoseStack poseStack, ObjRenderContext context) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!part.active()) {
             return;
         }
         poseStack.pushPose();
         poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-        renderModelPart(model, part.partName(), texture, context);
+        renderModelPart(model, part.partName(), texture, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
     private static void renderRotatingPart(LegacyWavefrontModel model,
             LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
-            PoseStack poseStack, ObjRenderContext context) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
         poseStack.mulPose(Axis.YP.rotationDegrees((float) part.angleDegrees()));
         poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        renderModelPart(model, part.partName(), texture, context);
+        renderModelPart(model, part.partName(), texture, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
     public static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
-            ObjRenderContext context) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyWavefrontModel.SelectionHandle handle = pyroOvenHandle(model, partName);
         if (handle != null) {
-            ObjMachineModels.PYROOVEN.renderOnlyInCallOrder(texture, context, handle);
+            model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, handle);
             return;
         }
-        model.renderPart(partName, texture, context);
+        model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static LegacyWavefrontModel.SelectionHandle pyroOvenHandle(LegacyWavefrontModel model, String partName) {

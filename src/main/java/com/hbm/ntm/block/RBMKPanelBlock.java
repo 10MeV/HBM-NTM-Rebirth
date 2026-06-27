@@ -6,12 +6,16 @@ import com.hbm.ntm.neutron.RBMKPanelBlockPlanner;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -47,6 +51,22 @@ public class RBMKPanelBlock extends BaseEntityBlock implements Toolable {
 
     public RBMKPanelPlanner.PanelType panelType() {
         return panelType;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        LegacyStandardInfoTooltip.append(tooltip, switch (panelType) {
+            case DISPLAY -> "rbmk_display";
+            case GAUGE -> "rbmk_gauge";
+            case GRAPH -> "rbmk_graph";
+            case INDICATOR -> "rbmk_indicator";
+            case KEYPAD -> "rbmk_key_pad";
+            case LEVER -> "rbmk_lever";
+            case NUMITRON -> "rbmk_numitron";
+            case TERMINAL -> "rbmk_terminal";
+        });
     }
 
     @Nullable
@@ -91,6 +111,14 @@ public class RBMKPanelBlock extends BaseEntityBlock implements Toolable {
         if (tool == ToolType.SCREWDRIVER) {
             return onToolUse(level, player, pos, hit.getDirection(), hit.getLocation(), tool)
                     ? InteractionResult.sidedSuccess(level.isClientSide) : InteractionResult.PASS;
+        }
+        if (panelType != RBMKPanelPlanner.PanelType.TERMINAL
+                && panelType != RBMKPanelPlanner.PanelType.KEYPAD
+                && panelType != RBMKPanelPlanner.PanelType.LEVER) {
+            return InteractionResult.PASS;
+        }
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
         }
         RBMKPanelBlockEntity panel = level.isClientSide ? null : resolvePanel(level, pos);
         if (!level.isClientSide && panel != null) {

@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.api.tile.HeatSource;
@@ -12,7 +11,9 @@ import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
+import java.util.Locale;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -70,8 +71,7 @@ public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
         }
 
         heater.networkPackNT(25);
-        if (oldActive != heater.active || oldHeat != heater.heatEnergy || oldPower != heater.energy.getPower()
-                || level.getGameTime() % 20L == 0L) {
+        if (oldActive != heater.active || oldHeat != heater.heatEnergy || oldPower != heater.energy.getPower()) {
             heater.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -154,9 +154,11 @@ public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.heatTu(heatEnergy),
-                Component.literal("-> " + getConsumption() + " HE/t"),
-                Component.literal("<- " + getHeatGen() + " TU/t")));
+                Component.literal(String.format(Locale.US, "%,d", heatEnergy) + " TU"),
+                Component.literal("-> ").withStyle(ChatFormatting.GREEN)
+                        .append(Component.literal(getConsumption() + " HE/t").withStyle(ChatFormatting.RESET)),
+                Component.literal("<- ").withStyle(ChatFormatting.RED)
+                        .append(Component.literal(getHeatGen() + " TU/t").withStyle(ChatFormatting.RESET))));
     }
 
     @Override

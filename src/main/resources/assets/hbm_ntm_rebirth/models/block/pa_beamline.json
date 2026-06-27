@@ -1,6 +1,6 @@
 {
   "loader": "forge:obj",
-  "model": "hbm_ntm_rebirth:models/block/particleaccelerator/beamline.obj",
+  "model": "hbm_ntm_rebirth:models/particleaccelerator/beamline.obj",
   "automatic_culling": false,
   "flip_v": true,
   "textures": { "particle": "hbm_ntm_rebirth:block/particleaccelerator/beamline", "default": "hbm_ntm_rebirth:block/particleaccelerator/beamline" }

@@ -3,7 +3,6 @@ package com.hbm.ntm.client.particle;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -170,11 +169,9 @@ public class SkeletonParticle extends Particle {
             MultiBufferSource buffer, int packedLight, int red, int green, int blue, int alpha) {
         LegacyWavefrontModel.SelectionHandle handle = skeletonHandle(partName);
         if (handle != null) {
-            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, null, packedLight,
-                    OverlayTexture.NO_OVERLAY)
-                    .withRgba(red, green, blue, alpha)
-                    .withRenderMode(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
-            MODEL.renderOnlyInCallOrder(texture, context, handle);
+            MODEL.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
+                    red, green, blue, alpha, false, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
+                    LegacyWavefrontModel.UvTransform.DEFAULT, handle);
             return;
         }
         MODEL.renderPartTranslucent(partName, texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,

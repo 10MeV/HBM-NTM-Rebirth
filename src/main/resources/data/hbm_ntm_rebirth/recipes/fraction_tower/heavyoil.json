@@ -1,0 +1,15 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:fraction_tower",
+    "output1":  {
+                    "fluid":  "hbm_ntm_rebirth:bitumen",
+                    "amount":  30
+                },
+    "input":  {
+                  "fluid":  "hbm_ntm_rebirth:heavyoil",
+                  "amount":  100
+              },
+    "output2":  {
+                    "fluid":  "hbm_ntm_rebirth:smear",
+                    "amount":  70
+                }
+}

@@ -40,9 +40,14 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
         if (tickPlan.syncBeforeReset()) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
-        screen.snapshot = tickPlan.nextSnapshot();
-        screen.setChanged();
-        screen.networkPackNT(100);
+        RadarScreenSnapshot nextSnapshot = tickPlan.nextSnapshot();
+        if (!nextSnapshot.equals(screen.snapshot)) {
+            screen.snapshot = nextSnapshot;
+            screen.setChanged();
+            screen.networkPackNT(100);
+        } else if (level.getGameTime() % RadarScreenDisplayProfile.SERVER_SYNC_INTERVAL_TICKS == 0L) {
+            screen.networkPackNT(100);
+        }
     }
 
     public void receiveRadarUpdate(RadarBlockEntity radar) {

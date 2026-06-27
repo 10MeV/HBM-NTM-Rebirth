@@ -2,8 +2,8 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.RBMKConsoleBlock;
 import com.hbm.ntm.blockentity.RBMKConsoleBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjRbmkModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -29,8 +29,8 @@ public class RBMKConsoleRenderer implements BlockEntityRenderer<RBMKConsoleBlock
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
         poseStack.translate(0.5D, 0.0D, 0.0D);
-        ObjRbmkModels.CONSOLE.renderAll(ObjRbmkModels.CONSOLE_TEXTURE,
-                new ObjRenderContext(poseStack, buffer, state, light, packedOverlay));
+        ObjRbmkModels.CONSOLE.renderAll(ObjRbmkModels.CONSOLE_TEXTURE, poseStack, buffer, light, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_CULL);
         poseStack.popPose();
     }
 

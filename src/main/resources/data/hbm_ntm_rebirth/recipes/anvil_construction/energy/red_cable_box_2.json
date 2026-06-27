@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "tag": "forge:ingots/mingrade" },
+      "count": 1,
+      "legacy_ore": "ingotMingrade"
+    },
+    { "ingredient": { "item": "hbm_ntm_rebirth:plate_polymer" }, "count": 1 }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:red_cable_box",
+    "count": 16,
+    "nbt": "{hbmLegacyVariant:2}"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

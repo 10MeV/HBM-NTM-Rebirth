@@ -10,7 +10,9 @@ import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -18,6 +20,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -135,6 +138,15 @@ public class FluidValveBlock extends HbmFluidNodeBlock {
     public net.minecraft.world.phys.shapes.VoxelShape getCollisionShape(BlockState state, BlockGetter level,
             BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) {
         return FULL_SHAPE;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        if (kind == Kind.COUNTER) {
+            LegacyStandardInfoTooltip.append(tooltip, "fluid_counter_valve");
+        }
     }
 
     private InteractionResult useFluidIdentifier(BlockState state, Level level, BlockPos pos, Player player,

@@ -63,8 +63,7 @@ public class IntakeBlockEntity extends HbmEnergyAndFluidBlockEntity implements H
             intake.tryProvideFluidToPorts(intake.compressedAir.getTankType(), intake.compressedAir.getPressure(), intake);
         }
 
-        if (previousFill != intake.compressedAir.getFill() || previousPower != intake.getPower()
-                || level.getGameTime() % 20L == 0L) {
+        if (previousFill != intake.compressedAir.getFill() || previousPower != intake.getPower()) {
             intake.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

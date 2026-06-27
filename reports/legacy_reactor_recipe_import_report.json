@@ -1,14 +1,20 @@
 {
   "handlers": [
     {
+      "external_template_status": "missing",
       "legacy_file": "hbmBreeder.json",
+      "main_resource_recipe_count": 31,
+      "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/breeding_reactor",
       "modern_recipe_type": "breeding_reactor",
-      "status": "missing_template"
+      "status": "main_resources_only"
     },
     {
+      "external_template_status": "missing",
       "legacy_file": "hbmFuelpool.json",
+      "main_resource_recipe_count": 31,
+      "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/fuel_pool",
       "modern_recipe_type": "fuel_pool",
-      "status": "missing_template"
+      "status": "main_resources_only"
     }
   ],
   "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes"

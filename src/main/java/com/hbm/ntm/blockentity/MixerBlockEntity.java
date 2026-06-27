@@ -152,7 +152,7 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || !oldOutput.equals(mixer.outputTank.snapshot());
 
         mixer.networkPackNT(25);
-        if (changed || level.getGameTime() % 20L == 0L) {
+        if (changed) {
             mixer.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

@@ -1,5 +1,7 @@
 package com.hbm.ntm.client.particle;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
@@ -55,6 +57,15 @@ public class FluidFillParticle extends TextureSheetParticle {
     @Override
     public float getQuadSize(float partialTick) {
         return this.quadSize * Mth.clamp(((float) this.age + partialTick) / (float) this.lifetime * 32.0F, 0.0F, 1.0F);
+    }
+
+    @Override
+    public void render(VertexConsumer consumer, Camera camera, float partialTick) {
+        HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(consumer, camera, partialTick,
+                this.xo, this.yo, this.zo, this.x, this.y, this.z,
+                this.oRoll, this.roll, this.getQuadSize(partialTick),
+                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
     }
 
     @Override

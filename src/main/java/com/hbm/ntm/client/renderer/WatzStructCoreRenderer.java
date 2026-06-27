@@ -4,7 +4,9 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.WatzStructCoreBlockEntity;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -14,11 +16,11 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 
 public class WatzStructCoreRenderer implements BlockEntityRenderer<WatzStructCoreBlockEntity> {
-    private static final ResourceLocation ELEMENT_TOP = blockTexture("legacy_blocks/watz_element_top");
-    private static final ResourceLocation ELEMENT_SIDE = blockTexture("legacy_blocks/watz_element_side");
-    private static final ResourceLocation COOLER_TOP = blockTexture("legacy_blocks/watz_cooler_top");
-    private static final ResourceLocation COOLER_SIDE = blockTexture("legacy_blocks/watz_cooler_side");
-    private static final ResourceLocation RIVETED_END = blockTexture("legacy_blocks/watz_casing_bolted");
+    private static final TextureAtlasSprite ELEMENT_TOP = sprite("legacy_blocks/watz_element_top");
+    private static final TextureAtlasSprite ELEMENT_SIDE = sprite("legacy_blocks/watz_element_side");
+    private static final TextureAtlasSprite COOLER_TOP = sprite("legacy_blocks/watz_cooler_top");
+    private static final TextureAtlasSprite COOLER_SIDE = sprite("legacy_blocks/watz_cooler_side");
+    private static final TextureAtlasSprite RIVETED_END = sprite("legacy_blocks/watz_casing_bolted");
 
     private static final int[][] ELEMENT_OFFSETS = {
             {1, 0}, {2, 0}, {0, 1}, {0, 2}, {-1, 0}, {-2, 0}, {0, -1}, {0, -2},
@@ -44,48 +46,51 @@ public class WatzStructCoreRenderer implements BlockEntityRenderer<WatzStructCor
     @Override
     public void render(WatzStructCoreBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, blockEntity.getBlockState(),
-                LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight), OverlayTexture.NO_OVERLAY)
-                .withTranslucencyNoDepthWrite()
-                .withColor(0xFFFFFF, LegacyAtlasCuboidRenderer.SMALL_BLOCK_GHOST_ALPHA);
+        int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
 
-        renderPillar(context, COOLER_TOP, COOLER_SIDE, 0, 1, 0);
-        renderPillar(context, COOLER_TOP, COOLER_SIDE, 0, 2, 0);
+        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                queuedPose -> renderPreview(queuedPose, buffer, light));
+    }
+
+    private static void renderPreview(PoseStack poseStack, MultiBufferSource buffer, int light) {
+        renderPillar(poseStack, buffer, light, COOLER_TOP, COOLER_SIDE, 0, 1, 0);
+        renderPillar(poseStack, buffer, light, COOLER_TOP, COOLER_SIDE, 0, 2, 0);
 
         for (int y = 0; y < 3; y++) {
             for (int[] offset : ELEMENT_OFFSETS) {
-                renderPillar(context, ELEMENT_TOP, ELEMENT_SIDE, offset[0], y, offset[1]);
+                renderPillar(poseStack, buffer, light, ELEMENT_TOP, ELEMENT_SIDE, offset[0], y, offset[1]);
             }
             for (int[] offset : COOLER_OFFSETS) {
-                renderPillar(context, COOLER_TOP, COOLER_SIDE, offset[0], y, offset[1]);
+                renderPillar(poseStack, buffer, light, COOLER_TOP, COOLER_SIDE, offset[0], y, offset[1]);
             }
             for (int z = -1; z < 2; z++) {
-                renderCube(context, RIVETED_END, 3, y, z);
-                renderCube(context, RIVETED_END, z, y, 3);
-                renderCube(context, RIVETED_END, -3, y, z);
-                renderCube(context, RIVETED_END, z, y, -3);
+                renderCube(poseStack, buffer, light, RIVETED_END, 3, y, z);
+                renderCube(poseStack, buffer, light, RIVETED_END, z, y, 3);
+                renderCube(poseStack, buffer, light, RIVETED_END, -3, y, z);
+                renderCube(poseStack, buffer, light, RIVETED_END, z, y, -3);
             }
-            renderCube(context, RIVETED_END, 2, y, 2);
-            renderCube(context, RIVETED_END, 2, y, -2);
-            renderCube(context, RIVETED_END, -2, y, 2);
-            renderCube(context, RIVETED_END, -2, y, -2);
+            renderCube(poseStack, buffer, light, RIVETED_END, 2, y, 2);
+            renderCube(poseStack, buffer, light, RIVETED_END, 2, y, -2);
+            renderCube(poseStack, buffer, light, RIVETED_END, -2, y, 2);
+            renderCube(poseStack, buffer, light, RIVETED_END, -2, y, -2);
         }
     }
 
-    private static void renderPillar(ObjRenderContext context, ResourceLocation topBottom, ResourceLocation side,
-            double x, double y, double z) {
-        TextureAtlasSprite top = LegacyTexturedQuadRenderer.blockSprite(topBottom);
-        TextureAtlasSprite sideSprite = LegacyTexturedQuadRenderer.blockSprite(side);
-        LegacyAtlasCuboidRenderer.smallBlock(top, top, sideSprite, sideSprite, sideSprite, sideSprite,
-                context, x, y, z);
+    private static void renderPillar(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            TextureAtlasSprite top, TextureAtlasSprite side, double x, double y, double z) {
+        LegacyAtlasCuboidRenderer.smallBlock(top, top, side, side, side, side, poseStack, buffer, packedLight,
+                OverlayTexture.NO_OVERLAY, 0xFFFFFF, LegacyAtlasCuboidRenderer.SMALL_BLOCK_GHOST_ALPHA,
+                LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE, x, y, z);
     }
 
-    private static void renderCube(ObjRenderContext context, ResourceLocation texture, double x, double y, double z) {
-        TextureAtlasSprite sprite = LegacyTexturedQuadRenderer.blockSprite(texture);
-        LegacyAtlasCuboidRenderer.smallBlock(sprite, sprite, sprite, sprite, sprite, sprite, context, x, y, z);
+    private static void renderCube(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            TextureAtlasSprite texture, double x, double y, double z) {
+        LegacyAtlasCuboidRenderer.smallBlock(texture, texture, texture, texture, texture, texture, poseStack, buffer,
+                packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFF, LegacyAtlasCuboidRenderer.SMALL_BLOCK_GHOST_ALPHA,
+                LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE, x, y, z);
     }
 
-    private static ResourceLocation blockTexture(String name) {
-        return new ResourceLocation(HbmNtm.MOD_ID, "block/" + name);
+    private static TextureAtlasSprite sprite(String name) {
+        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + name));
     }
 }

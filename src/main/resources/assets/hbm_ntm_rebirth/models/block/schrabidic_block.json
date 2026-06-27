@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "hbm_ntm_rebirth:block/schrabidic_acid_still",
+    "up": "hbm_ntm_rebirth:block/schrabidic_acid_still",
+    "north": "hbm_ntm_rebirth:block/schrabidic_acid_flowing",
+    "south": "hbm_ntm_rebirth:block/schrabidic_acid_flowing",
+    "west": "hbm_ntm_rebirth:block/schrabidic_acid_flowing",
+    "east": "hbm_ntm_rebirth:block/schrabidic_acid_flowing",
+    "particle": "hbm_ntm_rebirth:block/schrabidic_acid_still"
+  }
+}

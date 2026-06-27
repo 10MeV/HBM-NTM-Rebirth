@@ -10,7 +10,8 @@ import com.hbm.ntm.blockentity.OrbusBlockEntity;
 import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -76,8 +77,10 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
                             modelLight, packedOverlay);
                 }
                 if (plan.renderDangerDiamonds()) {
-                    LegacyFluidTankRenderHelper.renderBat9000Diamonds(blockEntity.getTank().getTankType(),
-                            poseStack, buffer, modelLight, packedOverlay);
+                    var tankType = blockEntity.getTank().getTankType();
+                    LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                            queuedPose -> LegacyFluidTankRenderHelper.renderBat9000Diamonds(tankType,
+                                    queuedPose, buffer, modelLight, packedOverlay));
                 }
             }
             case BIG_ASS_TANK -> {
@@ -88,13 +91,21 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
                                     : blockEntity.getLevel().getGameTime() + partialTick);
                 }
                 if (plan.renderDangerDiamonds()) {
-                    LegacyFluidTankRenderHelper.renderBigAssTankDiamonds(blockEntity.getTank().getTankType(),
-                            poseStack, buffer, modelLight, packedOverlay);
+                    var tankType = blockEntity.getTank().getTankType();
+                    LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                            queuedPose -> LegacyFluidTankRenderHelper.renderBigAssTankDiamonds(tankType,
+                                    queuedPose, buffer, modelLight, packedOverlay));
                 }
             }
-            case SMALL_TANK -> LegacyFluidTankRenderHelper.renderSmallTank(ObjModelLibrary.MACHINE_FLUIDTANK,
-                    ObjModelLibrary.MACHINE_FLUIDTANK_EXPLODED, blockEntity.getTank(), plan.exploded(),
-                    poseStack, buffer, modelLight, packedOverlay);
+            case SMALL_TANK -> {
+                LegacyFluidTankRenderHelper.renderSmallTankBody(ObjModelLibrary.MACHINE_FLUIDTANK,
+                        ObjModelLibrary.MACHINE_FLUIDTANK_EXPLODED, blockEntity.getTank(), plan.exploded(),
+                        poseStack, buffer, modelLight, packedOverlay);
+                var tankType = blockEntity.getTank().getTankType();
+                LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                        queuedPose -> LegacyFluidTankRenderHelper.renderSmallTankDiamonds(tankType,
+                                queuedPose, buffer, modelLight, packedOverlay));
+            }
         }
         poseStack.popPose();
     }
@@ -117,25 +128,31 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
             poseStack.popPose();
         }
 
-        ObjModelLibrary.MACHINE_ORBUS.renderAll(new ObjRenderContext(poseStack, buffer,
-                blockEntity.getBlockState(), packedLight, packedOverlay)
-                .withRenderMode(LegacyTexturedRenderMode.CUTOUT_CULL));
+        ObjModelLibrary.MACHINE_ORBUS.renderAll(ObjModelLibrary.MACHINE_ORBUS.textureLocation(), poseStack, buffer,
+                packedLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
 
         if (fill <= 0 || scale <= 0.0D) {
             return;
         }
         long gameTime = blockEntity.getLevel() == null ? 0L : blockEntity.getLevel().getGameTime();
+        LegacyBeamRenderer.BeamPlan spiralBeam = LegacyBeamRenderer.beamPlan(
+                0.0D, 3.0D, 0.0D, LegacyBeamRenderer.WaveType.SPIRAL, LegacyBeamRenderer.BeamType.SOLID,
+                0x101020, 0x101020, 0, 1, 0.0F, 6, (float) scale * 0.5F);
+        LegacyBeamRenderer.BeamPlan randomBeamA = LegacyBeamRenderer.beamPlan(
+                0.0D, 3.0D, 0.0D, LegacyBeamRenderer.WaveType.RANDOM, LegacyBeamRenderer.BeamType.SOLID,
+                0x202060, 0x202060, (int) (gameTime / 2L % 1000L), 6, (float) scale, 2,
+                0.0625F * (float) scale);
+        LegacyBeamRenderer.BeamPlan randomBeamB = LegacyBeamRenderer.beamPlan(
+                0.0D, 3.0D, 0.0D, LegacyBeamRenderer.WaveType.RANDOM, LegacyBeamRenderer.BeamType.SOLID,
+                0x202060, 0x202060, (int) (gameTime / 4L % 1000L), 6, (float) scale, 2,
+                0.0625F * (float) scale);
         poseStack.pushPose();
         poseStack.translate(0.0D, 1.0D, 0.0D);
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, 0.0D, 3.0D, 0.0D,
-                LegacyBeamRenderer.WaveType.SPIRAL, 0x101020, 0x101020,
-                0, 1, 0.0F, 6, (float) scale * 0.5F);
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, 0.0D, 3.0D, 0.0D,
-                LegacyBeamRenderer.WaveType.RANDOM, 0x202060, 0x202060,
-                (int) (gameTime / 2L % 1000L), 6, (float) scale, 2, 0.0625F * (float) scale);
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, 0.0D, 3.0D, 0.0D,
-                LegacyBeamRenderer.WaveType.RANDOM, 0x202060, 0x202060,
-                (int) (gameTime / 4L % 1000L), 6, (float) scale, 2, 0.0625F * (float) scale);
+        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
+            LegacyBeamRenderer.beam(queuedPose, buffer, spiralBeam);
+            LegacyBeamRenderer.beam(queuedPose, buffer, randomBeamA);
+            LegacyBeamRenderer.beam(queuedPose, buffer, randomBeamB);
+        });
         poseStack.popPose();
     }
 }

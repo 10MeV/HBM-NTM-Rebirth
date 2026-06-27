@@ -18,7 +18,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -37,10 +36,6 @@ public class FusionCouplerBlockEntity extends BlockEntity
     public static void serverTick(Level level, BlockPos pos, BlockState state, FusionCouplerBlockEntity coupler) {
         coupler.ensureNodes(level);
         coupler.networkPackNT(100);
-        if (level.getGameTime() % 20L == 0L) {
-            coupler.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-        }
     }
 
     @Override

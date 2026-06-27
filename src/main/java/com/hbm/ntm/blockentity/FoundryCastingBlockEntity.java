@@ -2,14 +2,18 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.Mats.MaterialStack;
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.item.FoundryMoldItem;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -20,7 +24,9 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class FoundryCastingBlockEntity extends FoundryBaseBlockEntity {
+public class FoundryCastingBlockEntity extends FoundryBaseBlockEntity implements LegacyLookOverlayProvider {
+    private static final int FOUNDRY_TITLE_COLOR = 0xFF4000;
+    private static final int FOUNDRY_TITLE_SHADOW_COLOR = 0x401000;
     public static final int SLOT_MOLD = 0;
     public static final int SLOT_OUTPUT = 1;
     private static final String TAG_ITEMS = "items";
@@ -65,7 +71,7 @@ public class FoundryCastingBlockEntity extends FoundryBaseBlockEntity {
         int oldAmount = casting.amount;
         Object oldType = casting.type;
         casting.tickServer();
-        if (oldAmount != casting.amount || oldType != casting.type || level.getGameTime() % 20L == 0L) {
+        if (oldAmount != casting.amount || oldType != casting.type) {
             casting.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -149,6 +155,26 @@ public class FoundryCastingBlockEntity extends FoundryBaseBlockEntity {
         return moldSize == 0
                 ? 0.125D + amount * 0.25D / capacity
                 : 0.125D + amount * 0.75D / capacity;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        List<Component> lines = new ArrayList<>();
+        ItemStack moldStack = getMoldStack();
+        if (moldStack.isEmpty()) {
+            lines.add(Component.translatable("foundry.noCast").withStyle(ChatFormatting.RED));
+        } else {
+            FoundryMoldItem.Mold mold = FoundryMoldItem.getMold(moldStack);
+            if (mold != null) {
+                lines.add(mold.title().copy().withStyle(ChatFormatting.BLUE));
+            }
+        }
+        if (type != null && amount > 0) {
+            lines.add(Component.literal(type.names[0] + ": " + amount + " / " + getCapacity())
+                    .withStyle(ChatFormatting.YELLOW));
+        }
+        return LegacyLookOverlay.withTitle(Component.translatable(getBlockState().getBlock().getDescriptionId()),
+                FOUNDRY_TITLE_COLOR, FOUNDRY_TITLE_SHADOW_COLOR, lines);
     }
 
     @Override
