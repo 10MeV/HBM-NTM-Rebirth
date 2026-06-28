@@ -62,27 +62,30 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
                 key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()).asVBO());
         float anim = Mth.lerp(partialTick, chemicalPlant.getPrevAnim(), chemicalPlant.getAnim());
 
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
-        Vec3 translation = definition.modelTranslation(state);
-        poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
-        ResourceLocation texture = definition.textureLocation();
+        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+                LegacyRenderLighting.pushModelViewSampling(chemicalPlant, poseStack.last().pose())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            Vec3 translation = definition.modelTranslation(state);
+            poseStack.translate(translation.x, translation.y, translation.z);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+            ResourceLocation texture = definition.textureLocation();
 
-        renderModelPart(model, "Base", texture, poseStack, buffer, modelLight, packedOverlay);
-        if (chemicalPlant.shouldRenderFrame()) {
-            renderModelPart(model, "Frame", texture, poseStack, buffer, modelLight, packedOverlay);
+            renderModelPart(model, "Base", texture, poseStack, buffer, modelLight, packedOverlay);
+            if (chemicalPlant.shouldRenderFrame()) {
+                renderModelPart(model, "Frame", texture, poseStack, buffer, modelLight, packedOverlay);
+            }
+
+            LegacyTileRenderPlans.ChemicalPlantMachinePlan machinePlan =
+                    LegacyTileRenderPlans.chemicalPlantMachinePlan(anim);
+            renderTranslatedPart(model, machinePlan.slider(), texture, poseStack, buffer, modelLight, packedOverlay);
+            renderRotatingPart(model, machinePlan.spinner(), texture, poseStack, buffer, modelLight, packedOverlay);
+
+            renderProcessingFluid(chemicalPlant, model, poseStack, buffer, modelLight, packedOverlay, anim);
+
+            poseStack.popPose();
         }
-
-        LegacyTileRenderPlans.ChemicalPlantMachinePlan machinePlan =
-                LegacyTileRenderPlans.chemicalPlantMachinePlan(anim);
-        renderTranslatedPart(model, machinePlan.slider(), texture, poseStack, buffer, modelLight, packedOverlay);
-        renderRotatingPart(model, machinePlan.spinner(), texture, poseStack, buffer, modelLight, packedOverlay);
-
-        renderProcessingFluid(chemicalPlant, model, poseStack, buffer, modelLight, packedOverlay, anim);
-
-        poseStack.popPose();
     }
 
     private static void renderTranslatedPart(LegacyWavefrontModel model,

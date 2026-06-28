@@ -4,6 +4,7 @@ import com.hbm.ntm.blockentity.BedrockOreDepositBlockEntity;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -43,7 +44,9 @@ public class SurveyScannerItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (!level.isClientSide) {
-            scan(level, player);
+            if (!scan(level, player)) {
+                send(player, "No survey targets found.", ChatFormatting.GRAY);
+            }
         }
         player.swing(hand, true);
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
@@ -57,13 +60,15 @@ public class SurveyScannerItem extends Item {
         }
         Level level = context.getLevel();
         if (!level.isClientSide) {
-            scan(level, player);
+            if (!scan(level, player)) {
+                send(player, "No survey targets found.", ChatFormatting.GRAY);
+            }
         }
         player.swing(context.getHand(), true);
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    private static void scan(Level level, Player player) {
+    private static boolean scan(Level level, Player player) {
         int x = player.getBlockX();
         int y = player.getBlockY();
         int z = player.getBlockZ();
@@ -76,6 +81,7 @@ public class SurveyScannerItem extends Item {
         boolean hasDepth = false;
         boolean hasSchist = false;
         boolean hasAussie = false;
+        boolean found = false;
         BedrockOreDepositBlockEntity bedrockOre = null;
 
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
@@ -109,33 +115,41 @@ public class SurveyScannerItem extends Item {
 
         if (hasOil) {
             send(player, "Found OIL!", ChatFormatting.BLACK);
+            found = true;
         }
         if (hasBedrockOil) {
             send(player, "Found BEDROCK OIL!", ChatFormatting.BLACK);
+            found = true;
         }
         if (hasColtan) {
             send(player, "Found COLTAN!", ChatFormatting.GOLD);
+            found = true;
         }
         if (hasDepth) {
             send(player, "Found DEPTH ROCK!", ChatFormatting.GRAY);
+            found = true;
         }
         if (hasSchist) {
             send(player, "Found SCHIST!", ChatFormatting.DARK_AQUA);
+            found = true;
         }
         if (hasAussie) {
             send(player, "Found AUSTRALIUM!", ChatFormatting.YELLOW);
+            found = true;
         }
         if (bedrockOre != null) {
             ItemStack resource = bedrockOre.getResource();
             if (!resource.isEmpty()) {
                 send(player, "Found BEDROCK ORE for " + resource.getHoverName().getString() + "!",
                         ChatFormatting.RED);
+                found = true;
             }
         }
+        return found;
     }
 
     private static void send(Player player, String message, ChatFormatting color) {
-        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message).withStyle(color));
+        player.sendSystemMessage(Component.literal(message).withStyle(color));
     }
 
     private static boolean isLegacyBlock(Block block, String legacyName) {

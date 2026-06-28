@@ -27,7 +27,7 @@ public class TownAuraParticle extends TextureSheetParticle {
         this.xd *= 0.019999999552965164D;
         this.yd *= 0.019999999552965164D;
         this.zd *= 0.019999999552965164D;
-        float color = 0.08F + random.nextFloat() * 0.12F;
+        float color = 0.85F + random.nextFloat() * 0.15F;
         this.rCol = color;
         this.gCol = color;
         this.bCol = color;

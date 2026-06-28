@@ -30,7 +30,7 @@ public final class HbmRenderFrameFlags {
         boolean gpuBackendAllowed = gpuBackendRequested
                 && (!shaderActive || !HbmClientConfig.disableGpuBackendWithShaders());
         boolean instancingShaderReady = HbmOptimizedRenderShaders.instancingShaderReady();
-        boolean instancingEnabled = (HbmClientConfig.experimentalInstancing() || safeGpuBackend) && gpuBackendAllowed
+        boolean instancingEnabled = HbmClientConfig.experimentalInstancing() && gpuBackendAllowed
                 && instancingShaderReady;
         boolean mdiEnabled = HbmClientConfig.experimentalMdi() && instancingEnabled;
         boolean occlusionCullingEnabled = HbmClientConfig.experimentalOcclusionCulling();

@@ -48,30 +48,33 @@ public class ChungusRenderer implements BlockEntityRenderer<ChungusBlockEntity> 
         LegacyMachineDefinition definition = block.definition();
         int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
 
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
-        Vec3 translation = definition.modelTranslation(state);
-        poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+                LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            Vec3 translation = definition.modelTranslation(state);
+            poseStack.translate(translation.x, translation.y, translation.z);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        renderPart(BODY, poseStack, buffer, modelLight, packedOverlay);
+            renderPart(BODY, poseStack, buffer, modelLight, packedOverlay);
 
-        poseStack.pushPose();
-        poseStack.translate(0.0D, 0.0D, 4.5D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(blockEntity.getLeverAngle()));
-        poseStack.translate(0.0D, 0.0D, -4.5D);
-        renderPart(LEVER, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.translate(0.0D, 0.0D, 4.5D);
+            poseStack.mulPose(Axis.XP.rotationDegrees(blockEntity.getLeverAngle()));
+            poseStack.translate(0.0D, 0.0D, -4.5D);
+            renderPart(LEVER, poseStack, buffer, modelLight, packedOverlay);
+            poseStack.popPose();
 
-        poseStack.pushPose();
-        poseStack.translate(0.0D, 2.5D, 0.0D);
-        poseStack.mulPose(Axis.ZN.rotationDegrees(blockEntity.getRotor(partialTick)));
-        poseStack.translate(0.0D, -2.5D, 0.0D);
-        renderPart(BLADES, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.translate(0.0D, 2.5D, 0.0D);
+            poseStack.mulPose(Axis.ZN.rotationDegrees(blockEntity.getRotor(partialTick)));
+            poseStack.translate(0.0D, -2.5D, 0.0D);
+            renderPart(BLADES, poseStack, buffer, modelLight, packedOverlay);
+            poseStack.popPose();
 
-        poseStack.popPose();
+            poseStack.popPose();
+        }
     }
 
     private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,

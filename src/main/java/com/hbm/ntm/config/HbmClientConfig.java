@@ -26,6 +26,7 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.BooleanValue RENDER_SAFE_OBJ_STATIC_BATCHING;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_GPU_BACKEND;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_INSTANCING;
+    public static final ForgeConfigSpec.BooleanValue RENDER_INSTANCE_VBO_ORPHAN_BEFORE_UPLOAD;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_MDI;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_OCCLUSION_CULLING;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_IRIS_EXTENDED_SHADER_PATH;
@@ -102,14 +103,17 @@ public final class HbmClientConfig {
 
         builder.push("rendering");
         RENDER_SAFE_OBJ_STATIC_BATCHING = builder
-                .comment("Enables the OBJ GPU mesh and static instancing path for world renderers without shader packs.")
+                .comment("Enables the source-backed safe OBJ GPU mesh cache for world renderers without shader packs. Hardware instancing/MDI still require their explicit experimental switches.")
                 .define("safeObjStaticBatching", true);
         RENDER_EXPERIMENTAL_GPU_BACKEND = builder
                 .comment("Modernized render pipeline: enables the experimental OBJ GPU backend once a real backend is available. CPU fallback remains authoritative.")
                 .define("experimentalGpuBackend", false);
         RENDER_EXPERIMENTAL_INSTANCING = builder
-                .comment("Modernized render pipeline: enables experimental static part instancing once the GPU backend supports it.")
-                .define("experimentalInstancing", false);
+                .comment("Modernized render pipeline: enables static OBJ part instancing. Matches HBM-Modernized's default enabled instanced batching; CPU fallback remains authoritative.")
+                .define("experimentalInstancing", true);
+        RENDER_INSTANCE_VBO_ORPHAN_BEFORE_UPLOAD = builder
+                .comment("Modernized render pipeline: orphan the OBJ instancing instance VBO before uploading per-frame instance data to avoid driver stalls.")
+                .define("instanceVboOrphanBeforeUpload", true);
         RENDER_EXPERIMENTAL_MDI = builder
                 .comment("Modernized render pipeline: enables experimental multi-draw indirect batching for eligible instanced OBJ parts when the GPU supports it.")
                 .define("experimentalMdi", false);
@@ -188,7 +192,11 @@ public final class HbmClientConfig {
     }
 
     public static boolean experimentalInstancing() {
-        return booleanValue(RENDER_EXPERIMENTAL_INSTANCING, false);
+        return booleanValue(RENDER_EXPERIMENTAL_INSTANCING, true);
+    }
+
+    public static boolean instanceVboOrphanBeforeUpload() {
+        return booleanValue(RENDER_INSTANCE_VBO_ORPHAN_BEFORE_UPLOAD, true);
     }
 
     public static boolean experimentalMdi() {

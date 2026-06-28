@@ -298,42 +298,45 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
                 key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()).asVBO());
 
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
-        Vec3 translation = definition.modelTranslation(state);
-        poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+                LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            Vec3 translation = definition.modelTranslation(state);
+            poseStack.translate(translation.x, translation.y, translation.z);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
-        if (definition.renderProfile() == LegacyMachineRenderProfile.DEFAULT) {
-            if (definition.renderAll()) {
-                model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
-                        renderMode);
-            } else {
-                renderParts(definition, model, poseStack, buffer, modelLight, packedOverlay);
-            }
-        } else {
-            if (definition.renderAll()) {
-                if (!renderProfileDirect(blockEntity, partialTick, definition, model, poseStack, buffer,
-                        modelLight, packedOverlay, renderMode)) {
+            LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
+            if (definition.renderProfile() == LegacyMachineRenderProfile.DEFAULT) {
+                if (definition.renderAll()) {
                     model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
                             renderMode);
                 } else {
-                    poseStack.popPose();
-                    return;
-                }
-            } else {
-                if (!renderProfileDirect(blockEntity, partialTick, definition, model, poseStack, buffer,
-                        modelLight, packedOverlay, renderMode)) {
                     renderParts(definition, model, poseStack, buffer, modelLight, packedOverlay);
                 }
+            } else {
+                if (definition.renderAll()) {
+                    if (!renderProfileDirect(blockEntity, partialTick, definition, model, poseStack, buffer,
+                            modelLight, packedOverlay, renderMode)) {
+                        model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+                                renderMode);
+                    } else {
+                        poseStack.popPose();
+                        return;
+                    }
+                } else {
+                    if (!renderProfileDirect(blockEntity, partialTick, definition, model, poseStack, buffer,
+                            modelLight, packedOverlay, renderMode)) {
+                        renderParts(definition, model, poseStack, buffer, modelLight, packedOverlay);
+                    }
+                }
             }
+
+            renderFelBeam(blockEntity, poseStack, buffer);
+
+            poseStack.popPose();
         }
-
-        renderFelBeam(blockEntity, poseStack, buffer);
-
-        poseStack.popPose();
         renderSolarBoilerBeams(blockEntity, poseStack, buffer);
     }
 

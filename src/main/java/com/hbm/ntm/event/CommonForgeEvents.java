@@ -112,9 +112,9 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -475,11 +475,10 @@ public final class CommonForgeEvents {
         if (level.getGameTime() % ServerConfig.droppedItemHazardTickRate() != 0L) {
             return;
         }
-        for (Iterator<Integer> iterator = tracked.iterator(); iterator.hasNext();) {
-            Integer entityId = iterator.next();
+        for (Integer entityId : new ArrayList<>(tracked)) {
             Entity trackedEntity = level.getEntity(entityId);
             if (!(trackedEntity instanceof ItemEntity itemEntity) || itemEntity.isRemoved()) {
-                iterator.remove();
+                tracked.remove(entityId);
                 continue;
             }
             long lastTick = itemEntity.getPersistentData().getLong(HAZARD_ENTITY_TICK_KEY);

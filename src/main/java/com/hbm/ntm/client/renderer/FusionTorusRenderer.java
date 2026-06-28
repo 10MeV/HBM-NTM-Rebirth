@@ -36,60 +36,63 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
 
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        if (blockEntity.isTilted()) {
-            poseStack.translate(0.0D, -1.0D, 0.0D);
-            poseStack.mulPose(Axis.ZP.rotationDegrees(10.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(5.0F));
-        }
-        ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_LEGACY, ObjFusionModels.TORUS_TEXTURE,
-                poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Torus");
+        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+                LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            if (blockEntity.isTilted()) {
+                poseStack.translate(0.0D, -1.0D, 0.0D);
+                poseStack.mulPose(Axis.ZP.rotationDegrees(10.0F));
+                poseStack.mulPose(Axis.YP.rotationDegrees(5.0F));
+            }
+            ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_LEGACY, ObjFusionModels.TORUS_TEXTURE,
+                    poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Torus");
 
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(blockEntity.getMagnet(partialTick)));
-        ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_LEGACY, ObjFusionModels.TORUS_TEXTURE,
-                poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Magnet");
-        poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.mulPose(Axis.YP.rotationDegrees(blockEntity.getMagnet(partialTick)));
+            ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_LEGACY, ObjFusionModels.TORUS_TEXTURE,
+                    poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Magnet");
+            poseStack.popPose();
 
-        if (blockEntity.getConnection(0)) {
-            renderSolidPart(poseStack, buffer, light, packedOverlay, "Bolts2");
-        }
-        if (blockEntity.getConnection(1)) {
-            renderSolidPart(poseStack, buffer, light, packedOverlay, "Bolts4");
-        }
-        if (blockEntity.getConnection(2)) {
-            renderSolidPart(poseStack, buffer, light, packedOverlay, "Bolts3");
-        }
-        if (blockEntity.getConnection(3)) {
-            renderSolidPart(poseStack, buffer, light, packedOverlay, "Bolts1");
-        }
+            if (blockEntity.getConnection(0)) {
+                renderSolidPart(poseStack, buffer, light, packedOverlay, "Bolts2");
+            }
+            if (blockEntity.getConnection(1)) {
+                renderSolidPart(poseStack, buffer, light, packedOverlay, "Bolts4");
+            }
+            if (blockEntity.getConnection(2)) {
+                renderSolidPart(poseStack, buffer, light, packedOverlay, "Bolts3");
+            }
+            if (blockEntity.getConnection(3)) {
+                renderSolidPart(poseStack, buffer, light, packedOverlay, "Bolts1");
+            }
 
-        if (blockEntity.getPlasmaEnergy() > 0L) {
-            long time = Util.getMillis() + visualTimeOffset(blockEntity);
-            float alpha = 0.35F + (float) Math.sin(time / 1000.0D) * 0.25F;
-            float mainOsc = positiveUnit(sps(time / 1000.0D));
-            float glowOsc = positiveUnit(Math.sin(time / 2000.0D));
-            float glowExtra = positiveUnit(time / 10000.0D);
-            float sparkleSpin = positiveUnit(time / 500.0D * -1.0D);
-            float sparkleOsc = positiveUnit(Math.sin(time / 1000.0D) * 0.5D);
-            float red = blockEntity.getPlasmaR();
-            float green = blockEntity.getPlasmaG();
-            float blue = blockEntity.getPlasmaB();
-            boolean renderExtraLayers = shouldRenderExtraPlasmaLayers(blockEntity);
-            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
-                renderPlasmaLayer(ObjFusionModels.PLASMA_TEXTURE, queuedPose, buffer, packedOverlay,
-                        red, green, blue, alpha, 0.0F, mainOsc);
-                if (renderExtraLayers) {
-                    renderPlasmaLayer(ObjFusionModels.PLASMA_GLOW_TEXTURE, queuedPose, buffer, packedOverlay,
-                            red * 2.0F, green * 2.0F, blue * 2.0F, alpha * 2.0F,
-                            0.0F, positiveUnit(glowOsc + glowExtra));
-                    renderPlasmaLayer(ObjFusionModels.PLASMA_SPARKLE_TEXTURE, queuedPose, buffer, packedOverlay,
-                            red * 2.0F, green * 2.0F, blue * 2.0F, 0.75F, sparkleSpin, sparkleOsc);
-                }
-            });
+            if (blockEntity.getPlasmaEnergy() > 0L) {
+                long time = Util.getMillis() + visualTimeOffset(blockEntity);
+                float alpha = 0.35F + (float) Math.sin(time / 1000.0D) * 0.25F;
+                float mainOsc = positiveUnit(sps(time / 1000.0D));
+                float glowOsc = positiveUnit(Math.sin(time / 2000.0D));
+                float glowExtra = positiveUnit(time / 10000.0D);
+                float sparkleSpin = positiveUnit(time / 500.0D * -1.0D);
+                float sparkleOsc = positiveUnit(Math.sin(time / 1000.0D) * 0.5D);
+                float red = blockEntity.getPlasmaR();
+                float green = blockEntity.getPlasmaG();
+                float blue = blockEntity.getPlasmaB();
+                boolean renderExtraLayers = shouldRenderExtraPlasmaLayers(blockEntity);
+                LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
+                    renderPlasmaLayer(ObjFusionModels.PLASMA_TEXTURE, queuedPose, buffer, packedOverlay,
+                            red, green, blue, alpha, 0.0F, mainOsc);
+                    if (renderExtraLayers) {
+                        renderPlasmaLayer(ObjFusionModels.PLASMA_GLOW_TEXTURE, queuedPose, buffer, packedOverlay,
+                                red * 2.0F, green * 2.0F, blue * 2.0F, alpha * 2.0F,
+                                0.0F, positiveUnit(glowOsc + glowExtra));
+                        renderPlasmaLayer(ObjFusionModels.PLASMA_SPARKLE_TEXTURE, queuedPose, buffer, packedOverlay,
+                                red * 2.0F, green * 2.0F, blue * 2.0F, 0.75F, sparkleSpin, sparkleOsc);
+                    }
+                });
+            }
+            poseStack.popPose();
         }
-        poseStack.popPose();
     }
 
     private static void renderSolidPart(PoseStack poseStack, MultiBufferSource buffer, int packedLight,

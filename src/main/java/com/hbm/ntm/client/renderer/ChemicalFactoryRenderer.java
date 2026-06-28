@@ -57,24 +57,27 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
         float anim = Mth.lerp(partialTick, chemicalFactory.getPrevAnim(), chemicalFactory.getAnim());
         LegacyTileRenderPlans.ChemicalFactoryPlan plan = LegacyTileRenderPlans.chemicalFactoryPlan(anim);
 
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
-        Vec3 translation = definition.modelTranslation(state);
-        poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
-        ResourceLocation texture = definition.textureLocation();
+        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+                LegacyRenderLighting.pushModelViewSampling(chemicalFactory, poseStack.last().pose())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            Vec3 translation = definition.modelTranslation(state);
+            poseStack.translate(translation.x, translation.y, translation.z);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+            ResourceLocation texture = definition.textureLocation();
 
-        renderModelPart(model, "Base", texture, poseStack, buffer, modelLight, packedOverlay);
-        if (chemicalFactory.shouldRenderFrame()) {
-            renderModelPart(model, "Frame", texture, poseStack, buffer, modelLight, packedOverlay);
+            renderModelPart(model, "Base", texture, poseStack, buffer, modelLight, packedOverlay);
+            if (chemicalFactory.shouldRenderFrame()) {
+                renderModelPart(model, "Frame", texture, poseStack, buffer, modelLight, packedOverlay);
+            }
+
+            for (LegacyTileRenderPlans.RotatingModelPartPlan fan : plan.fans()) {
+                renderRotatingPart(model, fan, texture, poseStack, buffer, modelLight, packedOverlay);
+            }
+
+            poseStack.popPose();
         }
-
-        for (LegacyTileRenderPlans.RotatingModelPartPlan fan : plan.fans()) {
-            renderRotatingPart(model, fan, texture, poseStack, buffer, modelLight, packedOverlay);
-        }
-
-        poseStack.popPose();
     }
 
     private static void renderRotatingPart(LegacyWavefrontModel model,

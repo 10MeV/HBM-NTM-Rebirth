@@ -29,11 +29,14 @@ public class ICFReactorRenderer implements BlockEntityRenderer<ICFReactorBlockEn
     public void render(ICFReactorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(rotation(blockEntity.getBlockState())));
-        ObjReactorModels.ICF.renderAll(ObjReactorModels.ICF_TEXTURE, poseStack, buffer, light, packedOverlay);
-        poseStack.popPose();
+        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+                LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(rotation(blockEntity.getBlockState())));
+            ObjReactorModels.ICF.renderAll(ObjReactorModels.ICF_TEXTURE, poseStack, buffer, light, packedOverlay);
+            poseStack.popPose();
+        }
     }
 
     private static float rotation(BlockState state) {

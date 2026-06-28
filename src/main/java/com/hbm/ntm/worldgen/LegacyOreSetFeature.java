@@ -1,5 +1,6 @@
 package com.hbm.ntm.worldgen;
 
+import com.hbm.config.GeneralConfig;
 import com.hbm.ntm.blockentity.BedrockOreDepositBlockEntity;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -16,19 +17,17 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.levelgen.LegacyRandomSource;
-import net.minecraft.world.level.levelgen.WorldgenRandom;
-import net.minecraft.world.level.levelgen.synth.PerlinSimplexNoise;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.LegacyRandomSource;
+import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
 import net.minecraft.world.level.levelgen.structure.templatesystem.BlockMatchTest;
 import net.minecraft.world.level.levelgen.structure.templatesystem.RuleTest;
 import net.minecraft.world.level.levelgen.structure.templatesystem.TagMatchTest;
@@ -37,7 +36,7 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configuration> {
@@ -48,12 +47,16 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
     private static final double SCHIST_SCALE = 0.01D;
     private static final double ORE_CAVE_SCALE = 0.01D;
     private static final int SCHIST_THRESHOLD = 5;
-    private static final double LEGACY_PERLIN_VALUE_SCALE = 15.0D;
     private static final int OIL_BUBBLE_FREQUENCY = 100;
     private static final int BEDROCK_OIL_FREQUENCY = 200;
     private static final int OIL_SAND_FREQUENCY = 200;
     private static final int NEW_BEDROCK_ORE_FREQUENCY = 10;
     private static final int BEDROCK_ORE_COLOR = 0xD78A16;
+    private static final int LIMESTONE_MODERN_MIN_Y = -40;
+    private static final long OIL_BUBBLE_RANDOM_SALT = 0x48424d4f494c31L;
+    private static final long OIL_SAND_RANDOM_SALT = 0x48424d4f494c32L;
+    private static final long BEDROCK_OIL_RANDOM_SALT = 0x48424d4f494c33L;
+    private static final long DEPTH_DEPOSIT_RANDOM_SALT = 0x48424d44455031L;
 
     private static final List<OreEntry> OVERWORLD = List.of(
             stoneOre("ore_uranium", "deepslate_ore_uranium", 7, 5, 5, 20),
@@ -76,7 +79,7 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             stoneOre("cluster_titanium", null, 2, 6, 15, 30),
             stoneOre("cluster_aluminium", null, 3, 6, 15, 35),
             stoneOre("cluster_copper", null, 4, 6, 15, 20),
-            stoneOre("stone_resource_limestone", null, 1, 16, 25, 30)
+            baseStoneOre("stone_resource_limestone", 1, 16, 25, 30)
     );
 
     private static final List<OreEntry> NETHER = List.of(
@@ -114,6 +117,8 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             oreCave("stone_resource_asbestos", "stalactite_asbestos", "stalagmite_asbestos", 1.75D, 20, 20, 25, false)
     );
 
+    // oldMinY is a 1.7.10 bottom-relative coordinate. DepthDeposit skips old y=0, so the
+    // modern bottom deposit layer starts one block above the current dimension min build height.
     private static final List<DepthDepositEntry> OVERWORLD_DEPTH_DEPOSITS = List.of(
             depthDeposit("cluster_depth_iron", "stone_depth", 24, 5, 0.6D, 0, 3, false),
             depthDeposit("cluster_depth_titanium", "stone_depth", 32, 5, 0.6D, 0, 3, false),
@@ -128,9 +133,9 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             depthDeposit("ore_depth_nether_neodymium", "stone_depth_nether", 16, 7, 0.6D, 125, 3, true)
     );
 
-    private final Map<Long, PerlinSimplexNoise> schistNoises = new ConcurrentHashMap<>();
+    private final Map<Long, LegacyPerlinNoise2D> schistNoises = new ConcurrentHashMap<>();
     private final Map<ResourceNoiseKey, ResourceLayerNoise> resourceLayerNoises = new ConcurrentHashMap<>();
-    private final Map<OreCaveNoiseKey, PerlinSimplexNoise> oreCaveNoises = new ConcurrentHashMap<>();
+    private final Map<OreCaveNoiseKey, LegacyPerlinNoise2D> oreCaveNoises = new ConcurrentHashMap<>();
 
     public LegacyOreSetFeature(Codec<Configuration> codec) {
         super(codec);
@@ -177,26 +182,32 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             return false;
         }
         WorldGenLevel level = context.level();
-        RandomSource random = context.random();
-        BlockPos origin = context.origin();
-        Holder<Biome> biome = level.getBiome(origin);
-        int frequency = OIL_BUBBLE_FREQUENCY;
-        Biome.ClimateSettings climate = biome.value().getModifiedClimateSettings();
-        if (climate.temperature() >= 2.0F && climate.downfall() < 0.1F) {
-            frequency /= 3;
-        }
-        frequency = Math.max(1, frequency);
-        if (random.nextInt(frequency) != frequency - 1) {
-            return false;
-        }
+        ChunkBounds bounds = chunkBounds(context.origin());
+        boolean placedAny = false;
+        for (SourceChunk source : sourceChunks(bounds, 32)) {
+            ChunkBounds sourceBounds = source.bounds();
+            Holder<Biome> biome = level.getBiome(new BlockPos(sourceBounds.minX(), level.getSeaLevel(), sourceBounds.minZ()));
+            int frequency = OIL_BUBBLE_FREQUENCY;
+            Biome.ClimateSettings climate = biome.value().getModifiedClimateSettings();
+            if (climate.temperature() >= 2.0F && climate.downfall() < 0.1F) {
+                frequency /= 3;
+            }
+            frequency = Math.max(1, frequency);
+            RandomSource random = sourceRandom(level.getSeed(), source.chunkX(), source.chunkZ(), OIL_BUBBLE_RANDOM_SALT);
+            if (random.nextInt(frequency) != frequency - 1) {
+                continue;
+            }
 
-        int centerX = origin.getX() + 8 + random.nextInt(16);
-        int centerZ = origin.getZ() + 8 + random.nextInt(16);
-        int centerY = mapLegacyOreY(level, 15 + random.nextInt(25));
-        boolean placedAny = placeOilBubbleShape(level, random, origin, centerX, centerY, centerZ,
-                oil.get().defaultBlockState(), 8, 16, false, OilBubbleTarget.STONE);
-        placedAny |= addSurfaceOilDamage(level, random, centerX, centerZ, 7, 150, true);
-        placedAny |= addOilSpotHole(level, centerX, centerZ);
+            int centerX = sourceBounds.randomX(random);
+            int centerZ = sourceBounds.randomZ(random);
+            int centerY = mapLegacyOreY(level, 15 + random.nextInt(25));
+            double radius = random.nextInt(16 - 8) + 8;
+            placedAny |= placeOilBubbleShapeSlice(level, bounds, centerX, centerY, centerZ, radius,
+                    oil.get().defaultBlockState(), false, OilBubbleTarget.STONE, level.getSeed());
+            placedAny |= addSurfaceOilDamage(level, sourceRandom(level.getSeed(), source.chunkX(), source.chunkZ(),
+                            OIL_BUBBLE_RANDOM_SALT + 1), bounds, centerX, centerZ, 7, 150, true);
+            placedAny |= addOilSpotHole(level, bounds, centerX, centerZ);
+        }
         return placedAny;
     }
 
@@ -206,72 +217,84 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             return false;
         }
         WorldGenLevel level = context.level();
-        RandomSource random = context.random();
-        BlockPos origin = context.origin();
-        Holder<Biome> biome = level.getBiome(origin);
-        Biome.ClimateSettings climate = biome.value().getModifiedClimateSettings();
-        if (biome.value().hasPrecipitation() || climate.temperature() < 1.5F) {
-            return false;
-        }
-        if (random.nextInt(OIL_SAND_FREQUENCY) != OIL_SAND_FREQUENCY - 1) {
-            return false;
-        }
+        ChunkBounds bounds = chunkBounds(context.origin());
+        boolean placedAny = false;
+        for (SourceChunk source : sourceChunks(bounds, 64)) {
+            ChunkBounds sourceBounds = source.bounds();
+            Holder<Biome> biome = level.getBiome(new BlockPos(sourceBounds.minX(), level.getSeaLevel(), sourceBounds.minZ()));
+            Biome.ClimateSettings climate = biome.value().getModifiedClimateSettings();
+            if (biome.value().hasPrecipitation() || climate.temperature() < 1.5F) {
+                continue;
+            }
+            RandomSource random = sourceRandom(level.getSeed(), source.chunkX(), source.chunkZ(), OIL_SAND_RANDOM_SALT);
+            if (random.nextInt(OIL_SAND_FREQUENCY) != OIL_SAND_FREQUENCY - 1) {
+                continue;
+            }
 
-        int centerX = origin.getX() + 8 + random.nextInt(16);
-        int centerZ = origin.getZ() + 8 + random.nextInt(16);
-        int centerY = findSurfaceSandY(level, centerX, centerZ);
-        return placeOilBubbleShape(level, random, origin, centerX, centerY, centerZ,
-                oilSand.get().defaultBlockState(), 16, 48, true, OilBubbleTarget.SAND);
+            int centerX = sourceBounds.randomX(random);
+            int centerZ = sourceBounds.randomZ(random);
+            int centerY = findSurfaceSandY(level, centerX, centerZ);
+            double radius = random.nextInt(48 - 16) + 16;
+            placedAny |= placeOilBubbleShapeSlice(level, bounds, centerX, centerY, centerZ, radius,
+                    oilSand.get().defaultBlockState(), true, OilBubbleTarget.SAND, level.getSeed());
+        }
+        return placedAny;
     }
 
     private boolean placeBedrockOil(FeaturePlaceContext<Configuration> context) {
         RegistryObject<? extends Block> bedrockOil = ModBlocks.legacyBlock("ore_bedrock_oil");
-        if (bedrockOil == null || context.random().nextInt(BEDROCK_OIL_FREQUENCY) != BEDROCK_OIL_FREQUENCY - 2) {
+        if (bedrockOil == null) {
             return false;
         }
         WorldGenLevel level = context.level();
-        RandomSource random = context.random();
-        BlockPos origin = context.origin();
-        int centerX = origin.getX() + 8 + random.nextInt(16);
-        int centerZ = origin.getZ() + 8 + random.nextInt(16);
+        ChunkBounds bounds = chunkBounds(context.origin());
         int minY = level.getMinBuildHeight();
         BlockState bedrockOilState = bedrockOil.get().defaultBlockState();
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         boolean placedAny = false;
-        for (int x = origin.getX() + 8; x < origin.getX() + 24; x++) {
-            for (int z = origin.getZ() + 8; z < origin.getZ() + 24; z++) {
-                for (int yOffset = 0; yOffset < 5; yOffset++) {
-                    int y = minY + yOffset;
-                    cursor.set(x, y, z);
-                    if (level.isOutsideBuildHeight(cursor)) {
-                        continue;
-                    }
-                    BlockState target = level.getBlockState(cursor);
-                    int dx = x - centerX;
-                    int dz = z - centerZ;
-                    if ((target.is(Blocks.BEDROCK) || isOilStoneReplaceable(level, cursor, target))
-                            && Math.abs(dx) < 5 && Math.abs(dz) < 5
-                            && Math.abs(dx) + Math.abs(yOffset) + Math.abs(dz) <= 6) {
-                        placedAny |= level.setBlock(cursor, bedrockOilState, Block.UPDATE_CLIENTS);
+        for (SourceChunk source : sourceChunks(bounds, 32)) {
+            RandomSource random = sourceRandom(level.getSeed(), source.chunkX(), source.chunkZ(), BEDROCK_OIL_RANDOM_SALT);
+            if (random.nextInt(BEDROCK_OIL_FREQUENCY) != BEDROCK_OIL_FREQUENCY - 2) {
+                continue;
+            }
+            ChunkBounds sourceBounds = source.bounds();
+            int centerX = sourceBounds.randomX(random);
+            int centerZ = sourceBounds.randomZ(random);
+            for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+                for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                    for (int yOffset = 0; yOffset < 5; yOffset++) {
+                        int y = minY + yOffset;
+                        cursor.set(x, y, z);
+                        if (level.isOutsideBuildHeight(cursor)) {
+                            continue;
+                        }
+                        BlockState target = level.getBlockState(cursor);
+                        int dx = x - centerX;
+                        int dz = z - centerZ;
+                        if ((target.is(Blocks.BEDROCK) || isOilStoneReplaceable(level, cursor, target))
+                                && Math.abs(dx) < 5 && Math.abs(dz) < 5
+                                && Math.abs(dx) + Math.abs(yOffset) + Math.abs(dz) <= 6) {
+                            placedAny |= level.setBlock(cursor, bedrockOilState, Block.UPDATE_CLIENTS);
+                        }
                     }
                 }
             }
+            placedAny |= addSurfaceOilDamage(level, sourceRandom(level.getSeed(), source.chunkX(), source.chunkZ(),
+                    BEDROCK_OIL_RANDOM_SALT + 1), bounds, centerX, centerZ, 5, 50, false);
         }
-        placedAny |= addSurfaceOilDamage(level, random, centerX, centerZ, 5, 50, false);
         return placedAny;
     }
 
-    private boolean placeOilBubbleShape(WorldGenLevel level, RandomSource random, BlockPos origin, int centerX,
-            int centerY, int centerZ, BlockState result, int minSize, int maxSize, boolean fuzzy,
-            OilBubbleTarget targetType) {
-        double radius = random.nextInt(maxSize - minSize) + minSize;
+    private boolean placeOilBubbleShapeSlice(WorldGenLevel level, ChunkBounds bounds, int centerX,
+            int centerY, int centerZ, double radius, BlockState result, boolean fuzzy,
+            OilBubbleTarget targetType, long seed) {
         double radiusSqr = (radius * radius) / 2.0D;
         int yMin = Math.max(level.getMinBuildHeight(), Mth.floor(centerY - radius));
         int yMax = Math.min(level.getMaxBuildHeight() - 1, Mth.ceil(centerY + radius));
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         boolean placedAny = false;
-        for (int x = origin.getX() + 8; x < origin.getX() + 24; x++) {
-            for (int z = origin.getZ() + 8; z < origin.getZ() + 24; z++) {
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
                 for (int y = yMin; y <= yMax; y++) {
                     cursor.set(x, y, z);
                     BlockState target = level.getBlockState(cursor);
@@ -283,7 +306,7 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
                     int dz = z - centerZ;
                     double dist = dx * dx + dz * dz + dy * dy * 3.0D;
                     if (fuzzy) {
-                        dist -= random.nextDouble() * radiusSqr / 3.0D;
+                        dist -= blockRandomDouble(seed, x, y, z, OIL_SAND_RANDOM_SALT) * radiusSqr / 3.0D;
                     }
                     if (dist < radiusSqr) {
                         placedAny |= level.setBlock(cursor, result, Block.UPDATE_CLIENTS);
@@ -319,8 +342,8 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         return Mth.clamp(surfaceY - 1, level.getMinBuildHeight(), level.getMaxBuildHeight() - 1);
     }
 
-    private boolean addSurfaceOilDamage(WorldGenLevel level, RandomSource random, int centerX, int centerZ, int width,
-            int count, boolean normalBubbleGradient) {
+    private boolean addSurfaceOilDamage(WorldGenLevel level, RandomSource random, ChunkBounds bounds, int centerX,
+            int centerZ, int width, int count, boolean normalBubbleGradient) {
         RegistryObject<? extends Block> dirtDead = ModBlocks.legacyBlock("dirt_dead");
         RegistryObject<? extends Block> dirtOily = ModBlocks.legacyBlock("dirt_oily");
         RegistryObject<? extends Block> sandDirty = ModBlocks.legacyBlock("sand_dirty");
@@ -338,6 +361,9 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             int offZ = (int) (random.nextGaussian() * width);
             int x = centerX + offX;
             int z = centerZ + offZ;
+            if (!bounds.contains(x, z)) {
+                continue;
+            }
             int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z);
             for (int y = surfaceY; y > surfaceY - 4 && y >= level.getMinBuildHeight(); y--) {
                 cursor.set(x, y, z);
@@ -369,17 +395,24 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         return placedAny;
     }
 
-    private boolean addOilSpotHole(WorldGenLevel level, int centerX, int centerZ) {
+    private boolean addOilSpotHole(WorldGenLevel level, ChunkBounds bounds, int centerX, int centerZ) {
         RegistryObject<? extends Block> stoneCracked = ModBlocks.legacyBlock("stone_cracked");
         RegistryObject<? extends Block> oilSpill = ModBlocks.legacyBlock("oil_spill");
         if (stoneCracked == null || oilSpill == null) {
             return false;
         }
-        boolean placedAny = addOilSpotHoleColumn(level, centerX, centerZ, true, stoneCracked.get().defaultBlockState(),
-                oilSpill.get().defaultBlockState());
+        boolean placedAny = false;
+        if (bounds.contains(centerX, centerZ)) {
+            placedAny |= addOilSpotHoleColumn(level, centerX, centerZ, true,
+                    stoneCracked.get().defaultBlockState(), oilSpill.get().defaultBlockState());
+        }
         for (Direction direction : Direction.Plane.HORIZONTAL) {
-            placedAny |= addOilSpotHoleColumn(level, centerX + direction.getStepX(), centerZ + direction.getStepZ(),
-                    false, stoneCracked.get().defaultBlockState(), oilSpill.get().defaultBlockState());
+            int x = centerX + direction.getStepX();
+            int z = centerZ + direction.getStepZ();
+            if (bounds.contains(x, z)) {
+                placedAny |= addOilSpotHoleColumn(level, x, z, false, stoneCracked.get().defaultBlockState(),
+                        oilSpill.get().defaultBlockState());
+            }
         }
         return placedAny;
     }
@@ -427,6 +460,9 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         if (ore == null || entry.veinCount() <= 0) {
             return false;
         }
+        if ("ore_nether_plutonium".equals(entry.blockName()) && !GeneralConfig.enablePlutoniumOre) {
+            return false;
+        }
         if (entry.rarity() > 1 && context.random().nextInt(entry.rarity()) != 0) {
             return false;
         }
@@ -438,18 +474,81 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             int x = origin.getX() + random.nextInt(16);
             int z = origin.getZ() + random.nextInt(16);
             int oldY = entry.oldMinY() + (entry.oldVariance() > 0 ? random.nextInt(entry.oldVariance()) : 0);
-            int y = mapLegacyOreY(level, oldY);
-            List<OreConfiguration.TargetBlockState> targets = new ArrayList<>();
-            targets.add(OreConfiguration.target(entry.target(), ore.get().defaultBlockState()));
-            if (entry.deepslateBlockName() != null) {
+            int y = entry.limestoneDeepExtension() ? randomLimestoneY(level, random) : mapLegacyOreY(level, oldY);
+            List<LegacyOreTarget> targets = new ArrayList<>();
+            if (entry.baseStoneTarget()) {
+                targets.add(LegacyOreTarget.baseStone(ore.get().defaultBlockState()));
+            } else {
+                targets.add(LegacyOreTarget.rule(entry.target(), ore.get().defaultBlockState()));
+            }
+            if (!entry.baseStoneTarget() && entry.deepslateBlockName() != null) {
                 RegistryObject<? extends Block> deepslate = ModBlocks.legacyBlock(entry.deepslateBlockName());
                 if (deepslate != null) {
-                    targets.add(OreConfiguration.target(DEEPSLATE_REPLACEABLES, deepslate.get().defaultBlockState()));
+                    targets.add(LegacyOreTarget.rule(DEEPSLATE_REPLACEABLES, deepslate.get().defaultBlockState()));
                 }
             }
-            OreConfiguration oreConfig = new OreConfiguration(targets, entry.size());
-            placedAny |= Feature.ORE.place(new FeaturePlaceContext<>(
-                    Optional.empty(), level, context.chunkGenerator(), random, new BlockPos(x, y, z), oreConfig));
+            placedAny |= placeLegacyMinable(level, random, new BlockPos(x, y, z), targets, entry.size());
+        }
+        return placedAny;
+    }
+
+    private static boolean placeLegacyMinable(WorldGenLevel level, RandomSource random, BlockPos origin,
+                                              List<LegacyOreTarget> targets, int size) {
+        float angle = random.nextFloat() * (float) Math.PI;
+        double xRadius = (double) size / 8.0D;
+        double minX = (double) (origin.getX() + 8) + Math.sin(angle) * xRadius;
+        double maxX = (double) (origin.getX() + 8) - Math.sin(angle) * xRadius;
+        double minZ = (double) (origin.getZ() + 8) + Math.cos(angle) * xRadius;
+        double maxZ = (double) (origin.getZ() + 8) - Math.cos(angle) * xRadius;
+        double minY = origin.getY() + random.nextInt(3) - 2;
+        double maxY = origin.getY() + random.nextInt(3) - 2;
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        boolean placedAny = false;
+
+        for (int step = 0; step < size; step++) {
+            float progress = (float) step / (float) size;
+            double centerX = minX + (maxX - minX) * progress;
+            double centerY = minY + (maxY - minY) * progress;
+            double centerZ = minZ + (maxZ - minZ) * progress;
+            double randomRadius = random.nextDouble() * (double) size / 16.0D;
+            double radius = ((double) (Mth.sin((float) Math.PI * progress) + 1.0F) * randomRadius + 1.0D) / 2.0D;
+
+            int startX = Mth.floor(centerX - radius);
+            int startY = Mth.floor(centerY - radius);
+            int startZ = Mth.floor(centerZ - radius);
+            int endX = Mth.floor(centerX + radius);
+            int endY = Mth.floor(centerY + radius);
+            int endZ = Mth.floor(centerZ + radius);
+
+            for (int x = startX; x <= endX; x++) {
+                double normalizedX = ((double) x + 0.5D - centerX) / radius;
+                if (normalizedX * normalizedX >= 1.0D) {
+                    continue;
+                }
+                for (int y = startY; y <= endY; y++) {
+                    if (level.isOutsideBuildHeight(y)) {
+                        continue;
+                    }
+                    double normalizedY = ((double) y + 0.5D - centerY) / radius;
+                    if (normalizedX * normalizedX + normalizedY * normalizedY >= 1.0D) {
+                        continue;
+                    }
+                    for (int z = startZ; z <= endZ; z++) {
+                        double normalizedZ = ((double) z + 0.5D - centerZ) / radius;
+                        if (normalizedX * normalizedX + normalizedY * normalizedY + normalizedZ * normalizedZ >= 1.0D) {
+                            continue;
+                        }
+                        cursor.set(x, y, z);
+                        BlockState targetState = level.getBlockState(cursor);
+                        for (LegacyOreTarget target : targets) {
+                            if (target.test(level, cursor, targetState, random)) {
+                                placedAny |= level.setBlock(cursor, target.state, Block.UPDATE_CLIENTS);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
         return placedAny;
     }
@@ -461,13 +560,14 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         }
         WorldGenLevel level = context.level();
         BlockState gneissState = gneiss.get().defaultBlockState();
-        PerlinSimplexNoise noise = schistNoise(level.getSeed());
+        LegacyPerlinNoise2D noise = schistNoise(level.getSeed());
         BlockPos origin = context.origin();
+        ChunkBounds bounds = legacyDecorateBounds(origin);
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         boolean placedAny = false;
-        for (int x = origin.getX() + 8; x < origin.getX() + 24; x++) {
-            for (int z = origin.getZ() + 8; z < origin.getZ() + 24; z++) {
-                double n = noise.getValue(x * SCHIST_SCALE, z * SCHIST_SCALE, false) * LEGACY_PERLIN_VALUE_SCALE;
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                double n = noise.getValue(x * SCHIST_SCALE, z * SCHIST_SCALE);
                 if (n <= SCHIST_THRESHOLD) {
                     continue;
                 }
@@ -478,16 +578,17 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
                 if (range < 0) {
                     continue;
                 }
-                int minY = mapLegacyOreY(level, 30 - range);
-                int maxY = mapLegacyOreY(level, 30 + range);
-                for (int y = minY; y <= maxY; y++) {
-                    cursor.set(x, y, z);
-                    if (level.isOutsideBuildHeight(cursor)) {
-                        continue;
-                    }
-                    BlockState target = level.getBlockState(cursor);
-                    if (isSchistReplaceable(level, cursor, target)) {
-                        placedAny |= level.setBlock(cursor, gneissState, Block.UPDATE_CLIENTS);
+                for (int oldY = 30 - range; oldY <= 30 + range; oldY++) {
+                    LegacyYSpan span = mapLegacyOreYSpan(level, oldY);
+                    for (int y = span.minY(); y <= span.maxY(); y++) {
+                        cursor.set(x, y, z);
+                        if (level.isOutsideBuildHeight(cursor)) {
+                            continue;
+                        }
+                        BlockState target = level.getBlockState(cursor);
+                        if (isSchistReplaceable(level, cursor, target)) {
+                            placedAny |= level.setBlock(cursor, gneissState, Block.UPDATE_CLIENTS);
+                        }
                     }
                 }
             }
@@ -495,9 +596,9 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         return placedAny;
     }
 
-    private PerlinSimplexNoise schistNoise(long seed) {
+    private LegacyPerlinNoise2D schistNoise(long seed) {
         return schistNoises.computeIfAbsent(seed, key ->
-                new PerlinSimplexNoise(new WorldgenRandom(new LegacyRandomSource(key)), List.of(-3, -2, -1, 0)));
+                new LegacyPerlinNoise2D(key, 4));
     }
 
     private static boolean isSchistReplaceable(WorldGenLevel level, BlockPos pos, BlockState target) {
@@ -519,15 +620,17 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         }
         WorldGenLevel level = context.level();
         BlockPos origin = context.origin();
+        ChunkBounds bounds = legacyDecorateBounds(origin);
         BlockState resourceState = resource.get().defaultBlockState();
         ResourceLayerNoise noise = resourceLayerNoise(level.getSeed(), entry.id());
         double[][] cacheX = new double[16][65];
         double[][] cacheZ = new double[16][65];
+        boolean[][] passes = new boolean[16][65];
         for (int o = 0; o < 16; o++) {
             for (int oldY = 64; oldY > 5; oldY--) {
-                cacheX[o][oldY] = legacyPerlin2D(noise.x(), oldY * entry.scaleV(),
-                        (origin.getZ() + 8 + o) * entry.scaleH());
-                cacheZ[o][oldY] = legacyPerlin2D(noise.z(), (origin.getX() + 8 + o) * entry.scaleH(),
+                cacheX[o][oldY] = noise.x().getValue(oldY * entry.scaleV(),
+                        (bounds.minZ() + o) * entry.scaleH());
+                cacheZ[o][oldY] = noise.z().getValue((bounds.minX() + o) * entry.scaleH(),
                         oldY * entry.scaleV());
             }
         }
@@ -535,24 +638,33 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         boolean placedAny = false;
         for (int ox = 0; ox < 16; ox++) {
-            int x = origin.getX() + 8 + ox;
+            int x = bounds.minX() + ox;
             for (int oz = 0; oz < 16; oz++) {
-                int z = origin.getZ() + 8 + oz;
-                double ny = legacyPerlin2D(noise.y(), x * entry.scaleH(), z * entry.scaleH());
+                int z = bounds.minZ() + oz;
+                double ny = noise.y().getValue(x * entry.scaleH(), z * entry.scaleH());
                 for (int oldY = 64; oldY > 5; oldY--) {
                     double nx = cacheX[oz][oldY];
                     double nz = cacheX[ox][oldY];
-                    if (nx * ny * nz <= entry.threshold()) {
+                    passes[oz][oldY] = nx * ny * nz > entry.threshold();
+                }
+                for (int oldY = 64; oldY > 5; oldY--) {
+                    if (!passes[oz][oldY]) {
                         continue;
                     }
-                    int y = mapLegacyOreY(level, oldY);
-                    cursor.set(x, y, z);
-                    if (level.isOutsideBuildHeight(cursor)) {
-                        continue;
+                    int minY = mapLegacyOreY(level, oldY);
+                    int maxY = minY;
+                    if (oldY < 64 && passes[oz][oldY + 1]) {
+                        maxY = Math.max(maxY, mapLegacyOreY(level, oldY + 1) - 1);
                     }
-                    BlockState target = level.getBlockState(cursor);
-                    if (isResourceLayerReplaceable(level, cursor, target)) {
-                        placedAny |= level.setBlock(cursor, resourceState, Block.UPDATE_CLIENTS);
+                    for (int y = minY; y <= maxY; y++) {
+                        cursor.set(x, y, z);
+                        if (level.isOutsideBuildHeight(cursor)) {
+                            continue;
+                        }
+                        BlockState target = level.getBlockState(cursor);
+                        if (isResourceLayerReplaceable(level, cursor, target)) {
+                            placedAny |= level.setBlock(cursor, resourceState, Block.UPDATE_CLIENTS);
+                        }
                     }
                 }
             }
@@ -562,17 +674,9 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
 
     private ResourceLayerNoise resourceLayerNoise(long seed, int id) {
         return resourceLayerNoises.computeIfAbsent(new ResourceNoiseKey(seed, id), key -> new ResourceLayerNoise(
-                legacyPerlinNoise(seed + 101 + id),
-                legacyPerlinNoise(seed + 102 + id),
-                legacyPerlinNoise(seed + 103 + id)));
-    }
-
-    private static PerlinSimplexNoise legacyPerlinNoise(long seed) {
-        return new PerlinSimplexNoise(new WorldgenRandom(new LegacyRandomSource(seed)), List.of(-3, -2, -1, 0));
-    }
-
-    private static double legacyPerlin2D(PerlinSimplexNoise noise, double x, double z) {
-        return noise.getValue(x, z, false) * LEGACY_PERLIN_VALUE_SCALE;
+                new LegacyPerlinNoise2D(seed + 101 + id, 4),
+                new LegacyPerlinNoise2D(seed + 102 + id, 4),
+                new LegacyPerlinNoise2D(seed + 103 + id, 4)));
     }
 
     private static boolean isResourceLayerReplaceable(WorldGenLevel level, BlockPos pos, BlockState target) {
@@ -597,17 +701,18 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         WorldGenLevel level = context.level();
         RandomSource random = context.random();
         BlockPos origin = context.origin();
+        ChunkBounds bounds = legacyDecorateBounds(origin);
         BlockState resourceState = resource.get().defaultBlockState();
         BlockState stalactiteState = stalactite.get().defaultBlockState();
         BlockState stalagmiteState = stalagmite.get().defaultBlockState();
         BlockState fluidState = entry.hasFluid() ? ModBlocks.SULFURIC_ACID_BLOCK.get().defaultBlockState() : null;
-        PerlinSimplexNoise noise = oreCaveNoise(level.getSeed(), entry.yLevel());
+        LegacyPerlinNoise2D noise = oreCaveNoise(level.getSeed(), entry.yLevel());
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         boolean placedAny = false;
 
-        for (int x = origin.getX() + 8; x < origin.getX() + 24; x++) {
-            for (int z = origin.getZ() + 8; z < origin.getZ() + 24; z++) {
-                double n = noise.getValue(x * ORE_CAVE_SCALE, z * ORE_CAVE_SCALE, false) * LEGACY_PERLIN_VALUE_SCALE;
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                double n = noise.getValue(x * ORE_CAVE_SCALE, z * ORE_CAVE_SCALE);
                 if (n <= entry.threshold()) {
                     continue;
                 }
@@ -647,10 +752,9 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         return placedAny;
     }
 
-    private PerlinSimplexNoise oreCaveNoise(long seed, int yLevel) {
+    private LegacyPerlinNoise2D oreCaveNoise(long seed, int yLevel) {
         return oreCaveNoises.computeIfAbsent(new OreCaveNoiseKey(seed, yLevel),
-                key -> new PerlinSimplexNoise(new WorldgenRandom(new LegacyRandomSource(seed + yLevel)),
-                        List.of(-1, 0)));
+                key -> new LegacyPerlinNoise2D(seed + yLevel, 2));
     }
 
     private static boolean isOreCaveReplaceable(WorldGenLevel level, BlockPos pos, BlockState target) {
@@ -756,10 +860,8 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             int z = origin.getZ() + random.nextInt(16);
             int oldY = entry.oldMinY() + (entry.oldVariance() > 0 ? random.nextInt(entry.oldVariance()) : 0);
             int y = mapLegacyOreY(level, oldY);
-            OreConfiguration oreConfig = new OreConfiguration(
-                    List.of(OreConfiguration.target(gneissTarget, ore.get().defaultBlockState())), entry.size());
-            placedAny |= Feature.ORE.place(new FeaturePlaceContext<>(
-                    Optional.empty(), level, context.chunkGenerator(), random, new BlockPos(x, y, z), oreConfig));
+            placedAny |= placeLegacyMinable(level, random, new BlockPos(x, y, z),
+                    List.of(LegacyOreTarget.rule(gneissTarget, ore.get().defaultBlockState())), entry.size());
         }
         return placedAny;
     }
@@ -775,7 +877,7 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
 
     private boolean placeDepthDeposit(FeaturePlaceContext<Configuration> context, DepthDepositEntry entry,
                                       boolean overworld) {
-        if (entry.chance() <= 0 || context.random().nextInt(entry.chance()) != 0) {
+        if (entry.chance() <= 0) {
             return false;
         }
         RegistryObject<? extends Block> ore = ModBlocks.legacyBlock(entry.blockName());
@@ -784,27 +886,37 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             return false;
         }
         WorldGenLevel level = context.level();
-        RandomSource random = context.random();
-        BlockPos origin = context.origin();
-        int centerX = origin.getX() + random.nextInt(16) + 8;
-        int centerY = mapLegacyDepthY(level, entry.oldMinY(), entry.oldYDev(), entry.fromTop(), random);
-        int centerZ = origin.getZ() + random.nextInt(16) + 8;
-        return generateDepthDeposit(level, random, centerX, centerY, centerZ, entry.size(), entry.fill(),
-                ore.get().defaultBlockState(), filler.get().defaultBlockState(), overworld);
+        ChunkBounds bounds = chunkBounds(context.origin());
+        boolean placedAny = false;
+        for (SourceChunk source : sourceChunks(bounds, entry.size())) {
+            RandomSource random = sourceRandom(level.getSeed(), source.chunkX(), source.chunkZ(),
+                    DEPTH_DEPOSIT_RANDOM_SALT + entry.blockName().hashCode());
+            if (random.nextInt(entry.chance()) != 0) {
+                continue;
+            }
+            ChunkBounds sourceBounds = source.bounds();
+            int centerX = sourceBounds.randomDecorateX(random);
+            int centerY = mapLegacyDepthDepositY(level, entry.oldMinY(), entry.oldYDev(), entry.fromTop(), random);
+            int centerZ = sourceBounds.randomDecorateZ(random);
+            placedAny |= generateDepthDeposit(level, bounds, centerX, centerY, centerZ, entry.size(), entry.fill(),
+                    ore.get().defaultBlockState(), filler.get().defaultBlockState(), overworld,
+                    level.getSeed() ^ entry.blockName().hashCode());
+        }
+        return placedAny;
     }
 
-    private static boolean generateDepthDeposit(WorldGenLevel level, RandomSource random, int centerX, int centerY,
-                                                int centerZ, int size, double fill, BlockState ore,
-                                                BlockState filler, boolean overworld) {
+    private static boolean generateDepthDeposit(WorldGenLevel level, ChunkBounds bounds,
+                                                int centerX, int centerY, int centerZ, int size, double fill, BlockState ore,
+                                                BlockState filler, boolean overworld, long seed) {
         boolean placedAny = false;
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        for (int x = centerX - size; x <= centerX + size; x++) {
+        for (int x = Math.max(bounds.minX(), centerX - size); x <= Math.min(bounds.maxX(), centerX + size); x++) {
             for (int y = centerY - size; y <= centerY + size; y++) {
-                cursor.set(centerX, y, centerZ);
-                if (level.isOutsideBuildHeight(cursor)) {
+                cursor.set(x, y, centerZ);
+                if (level.isOutsideBuildHeight(cursor) || y <= level.getMinBuildHeight()) {
                     continue;
                 }
-                for (int z = centerZ - size; z <= centerZ + size; z++) {
+                for (int z = Math.max(bounds.minZ(), centerZ - size); z <= Math.min(bounds.maxZ(), centerZ + size); z++) {
                     cursor.set(x, y, z);
                     BlockState target = level.getBlockState(cursor);
                     if (!isDepthReplaceable(target, overworld)) {
@@ -814,9 +926,9 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
                     int dy = centerY - y;
                     int dz = centerZ - z;
                     double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                    if (len + random.nextInt(2) < size * fill) {
+                    if (len + blockRandomInt(seed, x, y, z, 2, 0x31L) < size * fill) {
                         placedAny |= level.setBlock(cursor, ore, Block.UPDATE_CLIENTS);
-                    } else if (len + random.nextInt(2) <= size) {
+                    } else if (len + blockRandomInt(seed, x, y, z, 2, 0x32L) <= size) {
                         placedAny |= level.setBlock(cursor, filler, Block.UPDATE_CLIENTS);
                     }
                 }
@@ -843,8 +955,9 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         WorldGenLevel level = context.level();
         RandomSource random = context.random();
         BlockPos origin = context.origin();
-        int centerX = origin.getX() + random.nextInt(2) + 8;
-        int centerZ = origin.getZ() + random.nextInt(2) + 8;
+        ChunkBounds bounds = chunkBounds(origin);
+        int centerX = origin.getX() + 8 + random.nextInt(2);
+        int centerZ = origin.getZ() + 8 + random.nextInt(2);
         int minY = level.getMinBuildHeight();
         ItemStack resource = new ItemStack(ModItems.BEDROCK_ORE_BASE.get());
         BedrockOreBaseItem.setOreAmount(resource, centerX, centerZ, 1.0D);
@@ -854,8 +967,8 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         BlockState depthState = depthRock.get().defaultBlockState();
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         boolean placedAny = false;
-        for (int x = centerX - 1; x <= centerX + 1; x++) {
-            for (int z = centerZ - 1; z <= centerZ + 1; z++) {
+        for (int x = Math.max(bounds.minX(), centerX - 1); x <= Math.min(bounds.maxX(), centerX + 1); x++) {
+            for (int z = Math.max(bounds.minZ(), centerZ - 1); z <= Math.min(bounds.maxZ(), centerZ + 1); z++) {
                 cursor.set(x, minY, z);
                 if (level.isOutsideBuildHeight(cursor) || !level.getBlockState(cursor).is(Blocks.BEDROCK)) {
                     continue;
@@ -872,8 +985,8 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             }
         }
 
-        for (int x = centerX - 3; x <= centerX + 3; x++) {
-            for (int z = centerZ - 3; z <= centerZ + 3; z++) {
+        for (int x = Math.max(bounds.minX(), centerX - 3); x <= Math.min(bounds.maxX(), centerX + 3); x++) {
+            for (int z = Math.max(bounds.minZ(), centerZ - 3); z <= Math.min(bounds.maxZ(), centerZ + 3); z++) {
                 for (int yOffset = 1; yOffset < 7; yOffset++) {
                     int y = minY + yOffset;
                     cursor.set(x, y, z);
@@ -908,12 +1021,11 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
                 continue;
             }
             int y = mapLegacyOreY(level, 15 + random.nextInt(15));
-            OreConfiguration oreConfig = new OreConfiguration(List.of(
-                    OreConfiguration.target(STONE_REPLACEABLES, australium.get().defaultBlockState()),
-                    OreConfiguration.target(DEEPSLATE_REPLACEABLES, australium.get().defaultBlockState())
-            ), 50);
-            placedAny |= Feature.ORE.place(new FeaturePlaceContext<>(
-                    Optional.empty(), level, context.chunkGenerator(), random, new BlockPos(x, y, z), oreConfig));
+            List<LegacyOreTarget> targets = List.of(
+                    LegacyOreTarget.rule(STONE_REPLACEABLES, australium.get().defaultBlockState()),
+                    LegacyOreTarget.rule(DEEPSLATE_REPLACEABLES, australium.get().defaultBlockState())
+            );
+            placedAny |= placeLegacyMinable(level, random, new BlockPos(x, y, z), targets, 50);
         }
         return placedAny;
     }
@@ -946,30 +1058,50 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         return Mth.clamp(minY + offset, minY, level.getMaxBuildHeight() - 1);
     }
 
-    private static int mapLegacyDepthY(WorldGenLevel level, int oldMinY, int oldYDev, boolean fromTop,
-                                       RandomSource random) {
+    private static LegacyYSpan mapLegacyOreYSpan(WorldGenLevel level, int oldY) {
+        int minY = mapLegacyOreY(level, oldY);
+        int nextY = mapLegacyOreY(level, oldY + 1);
+        int maxY = Math.max(minY, nextY - 1);
+        return new LegacyYSpan(minY, maxY);
+    }
+
+    private static int randomLimestoneY(WorldGenLevel level, RandomSource random) {
+        int minY = Math.max(level.getMinBuildHeight(), LIMESTONE_MODERN_MIN_Y);
+        int maxY = Math.max(minY, mapLegacyOreY(level, 54));
+        return minY + random.nextInt(maxY - minY + 1);
+    }
+
+    private static int mapLegacyDepthDepositY(WorldGenLevel level, int oldMinY, int oldYDev, boolean fromTop,
+                                              RandomSource random) {
         int offset = oldMinY + (oldYDev > 0 ? random.nextInt(oldYDev) : 0);
         if (fromTop) {
-            return Mth.clamp(level.getMaxBuildHeight() - 128 + offset, level.getMinBuildHeight(),
+            return Mth.clamp(level.getMaxBuildHeight() - 128 + offset, level.getMinBuildHeight() + 1,
                     level.getMaxBuildHeight() - 1);
         }
-        return Mth.clamp(level.getMinBuildHeight() + offset, level.getMinBuildHeight(),
+        return Mth.clamp(level.getMinBuildHeight() + 1 + offset, level.getMinBuildHeight() + 1,
                 level.getMaxBuildHeight() - 1);
     }
 
     private static OreEntry stoneOre(String blockName, String deepslateBlockName, int veinCount, int size,
                                      int oldMinY, int oldVariance) {
-        return new OreEntry(blockName, deepslateBlockName, STONE_REPLACEABLES, 1, veinCount, size, oldMinY, oldVariance);
+        return new OreEntry(blockName, deepslateBlockName, STONE_REPLACEABLES, false, false, 1, veinCount, size,
+                oldMinY, oldVariance);
     }
 
     private static OreEntry rareStoneOre(String blockName, String deepslateBlockName, int rarity, int size,
                                          int oldMinY, int oldVariance) {
-        return new OreEntry(blockName, deepslateBlockName, STONE_REPLACEABLES, rarity, 1, size, oldMinY, oldVariance);
+        return new OreEntry(blockName, deepslateBlockName, STONE_REPLACEABLES, false, false, rarity, 1, size, oldMinY,
+                oldVariance);
     }
 
     private static OreEntry ore(String blockName, RuleTest target, int veinCount, int size, int oldMinY,
                                 int oldVariance) {
-        return new OreEntry(blockName, null, target, 1, veinCount, size, oldMinY, oldVariance);
+        return new OreEntry(blockName, null, target, false, false, 1, veinCount, size, oldMinY, oldVariance);
+    }
+
+    private static OreEntry baseStoneOre(String blockName, int veinCount, int size, int oldMinY, int oldVariance) {
+        return new OreEntry(blockName, null, null, true, "stone_resource_limestone".equals(blockName), 1, veinCount,
+                size, oldMinY, oldVariance);
     }
 
     private static DepthDepositEntry depthDeposit(String blockName, String fillerBlockName, int chance, int size,
@@ -992,8 +1124,9 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
                 yLevel, hasFluid);
     }
 
-    private record OreEntry(String blockName, String deepslateBlockName, RuleTest target, int rarity, int veinCount,
-                            int size, int oldMinY, int oldVariance) {
+    private record OreEntry(String blockName, String deepslateBlockName, RuleTest target, boolean baseStoneTarget,
+                            boolean limestoneDeepExtension, int rarity, int veinCount, int size, int oldMinY,
+                            int oldVariance) {
     }
 
     private record GneissOreEntry(String blockName, int veinCount, int size, int oldMinY, int oldVariance) {
@@ -1017,7 +1150,24 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         SAND
     }
 
-    private record ResourceLayerNoise(PerlinSimplexNoise x, PerlinSimplexNoise y, PerlinSimplexNoise z) {
+    private record ResourceLayerNoise(LegacyPerlinNoise2D x, LegacyPerlinNoise2D y, LegacyPerlinNoise2D z) {
+    }
+
+    private record LegacyOreTarget(RuleTest rule, BlockState state, boolean baseStoneOverworld) {
+        static LegacyOreTarget rule(RuleTest rule, BlockState state) {
+            return new LegacyOreTarget(rule, state, false);
+        }
+
+        static LegacyOreTarget baseStone(BlockState state) {
+            return new LegacyOreTarget(null, state, true);
+        }
+
+        boolean test(WorldGenLevel level, BlockPos pos, BlockState target, RandomSource random) {
+            if (baseStoneOverworld) {
+                return target.is(BlockTags.BASE_STONE_OVERWORLD) && target.isCollisionShapeFullBlock(level, pos);
+            }
+            return rule.test(target, random);
+        }
     }
 
     private record DepthDepositEntry(String blockName, String fillerBlockName, int chance, int size, double fill,
@@ -1025,6 +1175,203 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
     }
 
     private record BedrockBoreRequirement(int tier, FluidType fluid, int amount) {
+    }
+
+    private static ChunkBounds chunkBounds(BlockPos origin) {
+        int chunkX = Math.floorDiv(origin.getX(), 16);
+        int chunkZ = Math.floorDiv(origin.getZ(), 16);
+        return chunkBounds(chunkX, chunkZ);
+    }
+
+    private static ChunkBounds legacyDecorateBounds(BlockPos origin) {
+        ChunkBounds base = chunkBounds(origin);
+        return new ChunkBounds(base.minX() + 8, base.maxX() + 8, base.minZ() + 8, base.maxZ() + 8);
+    }
+
+    private static ChunkBounds chunkBounds(int chunkX, int chunkZ) {
+        int minX = chunkX * 16;
+        int minZ = chunkZ * 16;
+        return new ChunkBounds(minX, minX + 15, minZ, minZ + 15);
+    }
+
+    private static List<SourceChunk> sourceChunks(ChunkBounds target, int reach) {
+        int minChunkX = Math.floorDiv(target.minX() - reach, 16);
+        int maxChunkX = Math.floorDiv(target.maxX() + reach, 16);
+        int minChunkZ = Math.floorDiv(target.minZ() - reach, 16);
+        int maxChunkZ = Math.floorDiv(target.maxZ() + reach, 16);
+        List<SourceChunk> chunks = new ArrayList<>();
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                chunks.add(new SourceChunk(chunkX, chunkZ, chunkBounds(chunkX, chunkZ)));
+            }
+        }
+        return chunks;
+    }
+
+    private static RandomSource sourceRandom(long worldSeed, int chunkX, int chunkZ, long salt) {
+        WorldgenRandom seeder = new WorldgenRandom(new LegacyRandomSource(worldSeed ^ salt));
+        long xSeed = seeder.nextLong() | 1L;
+        long zSeed = seeder.nextLong() | 1L;
+        return RandomSource.create((long) chunkX * xSeed ^ (long) chunkZ * zSeed ^ worldSeed ^ salt);
+    }
+
+    private static double blockRandomDouble(long seed, int x, int y, int z, long salt) {
+        long mixed = mixBlockSeed(seed, x, y, z, salt);
+        return (double) ((mixed >>> 11) & ((1L << 53) - 1)) / (double) (1L << 53);
+    }
+
+    private static int blockRandomInt(long seed, int x, int y, int z, int bound, long salt) {
+        if (bound <= 1) {
+            return 0;
+        }
+        long mixed = mixBlockSeed(seed, x, y, z, salt);
+        return Math.floorMod((int) (mixed >>> 32), bound);
+    }
+
+    private static long mixBlockSeed(long seed, int x, int y, int z, long salt) {
+        long mixed = seed ^ salt;
+        mixed ^= (long) x * 0x9E3779B97F4A7C15L;
+        mixed ^= (long) y * 0xC2B2AE3D27D4EB4FL;
+        mixed ^= (long) z * 0x165667B19E3779F9L;
+        mixed ^= mixed >>> 33;
+        mixed *= 0xff51afd7ed558ccdL;
+        mixed ^= mixed >>> 33;
+        mixed *= 0xc4ceb9fe1a85ec53L;
+        mixed ^= mixed >>> 33;
+        return mixed;
+    }
+
+    private record ChunkBounds(int minX, int maxX, int minZ, int maxZ) {
+        int randomX(RandomSource random) {
+            return minX + random.nextInt(16);
+        }
+
+        int randomZ(RandomSource random) {
+            return minZ + random.nextInt(16);
+        }
+
+        int randomDecorateX(RandomSource random) {
+            return minX + 8 + random.nextInt(16);
+        }
+
+        int randomDecorateZ(RandomSource random) {
+            return minZ + 8 + random.nextInt(16);
+        }
+
+        boolean contains(int x, int z) {
+            return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
+        }
+    }
+
+    private record SourceChunk(int chunkX, int chunkZ, ChunkBounds bounds) {
+    }
+
+    private record LegacyYSpan(int minY, int maxY) {
+    }
+
+    private static final class LegacyPerlinNoise2D {
+        private final LegacySimplexNoise2D[] levels;
+
+        private LegacyPerlinNoise2D(long seed, int octaves) {
+            Random random = new Random(seed);
+            this.levels = new LegacySimplexNoise2D[octaves];
+            for (int i = 0; i < octaves; i++) {
+                this.levels[i] = new LegacySimplexNoise2D(random);
+            }
+        }
+
+        private double getValue(double x, double y) {
+            double value = 0.0D;
+            double scale = 1.0D;
+            for (LegacySimplexNoise2D level : levels) {
+                value += level.getValue(x * scale, y * scale) / scale;
+                scale /= 2.0D;
+            }
+            return value;
+        }
+    }
+
+    private static final class LegacySimplexNoise2D {
+        private static final int[][] GRADIENTS = {
+                {1, 1, 0}, {-1, 1, 0}, {1, -1, 0}, {-1, -1, 0},
+                {1, 0, 1}, {-1, 0, 1}, {1, 0, -1}, {-1, 0, -1},
+                {0, 1, 1}, {0, -1, 1}, {0, 1, -1}, {0, -1, -1}
+        };
+        private static final double SQRT_3 = Math.sqrt(3.0D);
+        private static final double F2 = 0.5D * (SQRT_3 - 1.0D);
+        private static final double G2 = (3.0D - SQRT_3) / 6.0D;
+        private final int[] permutation = new int[512];
+        private final double xOffset;
+        private final double yOffset;
+        private final double zOffset;
+
+        private LegacySimplexNoise2D(Random random) {
+            this.xOffset = random.nextDouble() * 256.0D;
+            this.yOffset = random.nextDouble() * 256.0D;
+            this.zOffset = random.nextDouble() * 256.0D;
+            int[] source = new int[256];
+            for (int i = 0; i < 256; i++) {
+                source[i] = i;
+            }
+            for (int i = 0; i < 256; i++) {
+                int swapIndex = random.nextInt(256 - i) + i;
+                int value = source[i];
+                source[i] = source[swapIndex];
+                source[swapIndex] = value;
+                permutation[i] = source[i];
+                permutation[i + 256] = permutation[i];
+            }
+        }
+
+        private double getValue(double x, double y) {
+            x += xOffset;
+            y += yOffset;
+            double skew = (x + y) * F2;
+            int cellX = fastFloor(x + skew);
+            int cellY = fastFloor(y + skew);
+            double unskew = (cellX + cellY) * G2;
+            double originX = cellX - unskew;
+            double originY = cellY - unskew;
+            double x0 = x - originX;
+            double y0 = y - originY;
+
+            int stepX;
+            int stepY;
+            if (x0 > y0) {
+                stepX = 1;
+                stepY = 0;
+            } else {
+                stepX = 0;
+                stepY = 1;
+            }
+
+            double x1 = x0 - stepX + G2;
+            double y1 = y0 - stepY + G2;
+            double x2 = x0 - 1.0D + 2.0D * G2;
+            double y2 = y0 - 1.0D + 2.0D * G2;
+            int ii = cellX & 255;
+            int jj = cellY & 255;
+            int gi0 = permutation[ii + permutation[jj]] % 12;
+            int gi1 = permutation[ii + stepX + permutation[jj + stepY]] % 12;
+            int gi2 = permutation[ii + 1 + permutation[jj + 1]] % 12;
+
+            return 70.0D * (corner(gi0, x0, y0) + corner(gi1, x1, y1) + corner(gi2, x2, y2));
+        }
+
+        private static int fastFloor(double value) {
+            int floor = (int) value;
+            return value < floor ? floor - 1 : floor;
+        }
+
+        private static double corner(int gradient, double x, double y) {
+            double t = 0.5D - x * x - y * y;
+            if (t < 0.0D) {
+                return 0.0D;
+            }
+            t *= t;
+            int[] grad = GRADIENTS[gradient];
+            return t * t * (grad[0] * x + grad[1] * y);
+        }
     }
 
     public record Configuration(String dimension) implements FeatureConfiguration {

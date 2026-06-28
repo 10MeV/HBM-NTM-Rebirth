@@ -9,6 +9,7 @@ import com.hbm.ntm.client.render.shader.HbmIrisExtendedShaderAccess;
 import com.hbm.ntm.client.render.shader.HbmIrisRenderBatch;
 import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.hbm.ntm.client.renderer.LegacyRenderLighting;
+import com.hbm.ntm.config.HbmClientConfig;
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -4055,9 +4056,9 @@ public final class LegacyWavefrontModel {
             InstancedBatchKey key = new InstancedBatchKey(mesh.key(), textureLocation, renderMode);
             InstancedBatch batch = pendingInstancedBatches.computeIfAbsent(key,
                     ignored -> new InstancedBatch(mesh, textureLocation, renderMode));
-            batch.instances().add(InstancedInstance.from(poseStack.last().pose(),
-                    LegacyRenderLighting.currentInstanceLightProbe(packedLight), packedOverlay, red, green, blue,
-                    alpha));
+            Matrix4f modelView = poseStack.last().pose();
+            batch.instances().add(InstancedInstance.from(modelView,
+                    mesh.sampleLightProbe(modelView, packedLight), packedOverlay, red, green, blue, alpha));
             batch.fallbacks().add(InstancedFallbackInstance.from(poseStack.last(), buffer, packedLight, packedOverlay,
                     red, green, blue, alpha, uvTransform));
             instancedQueuedInstances.incrementAndGet();
@@ -4181,8 +4182,9 @@ public final class LegacyWavefrontModel {
 
         private InstancedMesh uploadInstancedMesh(InstancedMeshKey key, VertexFormat.Mode sourceMode,
                 boolean smoothing, List<PreparedVertex> vertices) {
+            InstancedMeshBounds bounds = InstancedMeshBounds.of(vertices);
             ByteBuffer vertexBytes = buildInstancedVertexBytes(key.kind(), sourceMode, vertices, smoothing,
-                    key.sprite());
+                    key.sprite(), bounds);
             int vao = 0;
             int vbo = 0;
             int instanceVbo = 0;
@@ -4215,7 +4217,8 @@ public final class LegacyWavefrontModel {
                     GL33.glVertexAttribDivisor(attribute, 1);
                 }
                 GL30.glBindVertexArray(0);
-                return new InstancedMesh(key, sourceMode, List.copyOf(vertices), vao, vbo, instanceVbo,
+                return new InstancedMesh(key, sourceMode, List.copyOf(vertices), bounds, lightSampleKey(key),
+                        vao, vbo, instanceVbo,
                         vertexBytes.limit() / vertexStride, vertexBytes.limit());
             } catch (RuntimeException exception) {
                 if (vao != 0) {
@@ -4235,9 +4238,9 @@ public final class LegacyWavefrontModel {
         }
 
         private ByteBuffer buildInstancedVertexBytes(GpuMeshKind kind, VertexFormat.Mode sourceMode,
-                List<PreparedVertex> vertices, boolean smoothing, TextureAtlasSprite sprite) {
+                List<PreparedVertex> vertices, boolean smoothing, TextureAtlasSprite sprite,
+                InstancedMeshBounds bounds) {
             int outputVertices = sourceMode == VertexFormat.Mode.QUADS ? vertices.size() / 4 * 6 : vertices.size();
-            InstancedMeshBounds bounds = InstancedMeshBounds.of(vertices);
             ByteBuffer bytes = ByteBuffer.allocateDirect(Math.max(1, outputVertices) * INSTANCED_VERTEX_STRIDE_BYTES)
                     .order(ByteOrder.nativeOrder());
             if (sourceMode == VertexFormat.Mode.QUADS) {
@@ -4730,9 +4733,10 @@ public final class LegacyWavefrontModel {
                 GL30.glBindVertexArray(vao);
                 GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
                 GL15.glBufferData(GL15.GL_ARRAY_BUFFER, vertexBytes, GL15.GL_STATIC_DRAW);
+                InstancedMeshBounds bounds = InstancedMeshBounds.of(triangleVertices);
                 IrisCompanionMesh mesh = new IrisCompanionMesh(key, vao, vbo, drawState.vertexCount(),
                         Math.max(0L, vertexBytes.limit()), actualFormat,
-                        buildIrisCompanionLightWeights(triangleVertices));
+                        buildIrisCompanionLightWeights(triangleVertices, bounds), bounds, lightSampleKey(key));
                 mesh.bindStandardAttributes();
                 GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
                 GL30.glBindVertexArray(0);
@@ -4751,11 +4755,11 @@ public final class LegacyWavefrontModel {
             }
         }
 
-        private static float[] buildIrisCompanionLightWeights(List<PreparedVertex> vertices) {
+        private static float[] buildIrisCompanionLightWeights(List<PreparedVertex> vertices,
+                InstancedMeshBounds bounds) {
             if (vertices.isEmpty()) {
                 return new float[0];
             }
-            InstancedMeshBounds bounds = InstancedMeshBounds.of(vertices);
             float[] weights = new float[vertices.size() * 3];
             for (int i = 0; i < vertices.size(); i++) {
                 Vector3f position = vertices.get(i).position();
@@ -4818,8 +4822,12 @@ public final class LegacyWavefrontModel {
                 }
                 mesh.bind();
                 mesh.prepareForShader(shader);
+                int lightmapSlot = preparedLightmapSlot;
+                if (!shadowPass && lightmapSlot < 0) {
+                    lightmapSlot = mesh.preparePerVertexLightmapSlot(modelView, packedLight);
+                }
                 mesh.applyDrawAttributes(packedLight, packedOverlay, red, green, blue, alpha, !shadowPass,
-                        preparedLightmapSlot);
+                        lightmapSlot);
                 HbmIrisRenderBatch.uploadDrawMatrices(modelView);
                 GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, mesh.vertexCount());
                 HbmIrisRenderBatch.recordDraw(shadowPass);
@@ -4919,7 +4927,8 @@ public final class LegacyWavefrontModel {
             int[] slots = new int[instances.size()];
             Arrays.fill(slots, -1);
             for (int i = 0; i < instances.size(); i++) {
-                slots[i] = mesh.preparePerVertexLightmapSlot(instances.get(i).packedLight());
+                IrisCompanionQueuedInstance instance = instances.get(i);
+                slots[i] = mesh.preparePerVertexLightmapSlot(instance.position(), instance.packedLight());
             }
             return slots;
         }
@@ -5149,9 +5158,11 @@ public final class LegacyWavefrontModel {
                 GL30.glBindVertexArray(mdiAtlas.vaoId());
                 GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, mdiAtlas.instanceVboId());
                 mdiAtlas.ensureInstanceCapacity(prepared.instanceBytes().limit());
+                mdiAtlas.orphanInstanceBufferIfConfigured();
                 GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0L, prepared.instanceBytes());
                 GL15.glBindBuffer(GL40.GL_DRAW_INDIRECT_BUFFER, mdiAtlas.indirectBufferId());
                 mdiAtlas.ensureIndirectCapacity(prepared.commandBytes().limit());
+                mdiAtlas.orphanIndirectBufferIfConfigured();
                 GL15.glBufferSubData(GL40.GL_DRAW_INDIRECT_BUFFER, 0L, prepared.commandBytes());
                 if (mdiMultiDrawIndirectSupported) {
                     if (GL.getCapabilities().glMultiDrawArraysIndirect != 0L) {
@@ -5384,7 +5395,12 @@ public final class LegacyWavefrontModel {
                 for (int start = 0; start < instanceCount; start += MAX_INSTANCED_INSTANCES_PER_DRAW) {
                     int end = Math.min(start + MAX_INSTANCED_INSTANCES_PER_DRAW, instanceCount);
                     ByteBuffer instanceBytes = instancedSliceBytes(batch, start, end);
-                    GL15.glBufferData(GL15.GL_ARRAY_BUFFER, instanceBytes, GL15.GL_STREAM_DRAW);
+                    if (HbmClientConfig.instanceVboOrphanBeforeUpload()) {
+                        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, (long) instanceBytes.limit(), GL15.GL_STREAM_DRAW);
+                        GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0L, instanceBytes);
+                    } else {
+                        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, instanceBytes, GL15.GL_STREAM_DRAW);
+                    }
                     GL31.glDrawArraysInstanced(GL11.GL_TRIANGLES, 0, mesh.vertexCount(), end - start);
                     recordInstancedDrawCall(batch.renderMode());
                 }
@@ -6023,7 +6039,7 @@ public final class LegacyWavefrontModel {
                     return existing;
                 }
                 ByteBuffer vertexBytes = buildInstancedVertexBytes(mesh.key().kind(), mesh.sourceMode(),
-                        mesh.sourceVertices(), mesh.key().smoothing(), mesh.key().sprite());
+                        mesh.sourceVertices(), mesh.key().smoothing(), mesh.key().sprite(), mesh.bounds());
                 if (!ensureVertexCapacity(vertexBytes.limit())) {
                     return null;
                 }
@@ -6059,7 +6075,7 @@ public final class LegacyWavefrontModel {
                 for (MdiSlot slot : slots.values()) {
                     ByteBuffer bytes = buildInstancedVertexBytes(slot.mesh().key().kind(),
                             slot.mesh().sourceMode(), slot.mesh().sourceVertices(),
-                            slot.mesh().key().smoothing(), slot.mesh().key().sprite());
+                            slot.mesh().key().smoothing(), slot.mesh().key().sprite(), slot.mesh().bounds());
                     int firstVertex = (int) (vertexUsedBytes / INSTANCED_VERTEX_STRIDE_BYTES);
                     GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, vertexUsedBytes, bytes);
                     slot.update(firstVertex, bytes.limit() / INSTANCED_VERTEX_STRIDE_BYTES, bytes.limit());
@@ -6087,6 +6103,14 @@ public final class LegacyWavefrontModel {
                 GL15.glBufferData(GL15.GL_ARRAY_BUFFER, instanceCapacityBytes, GL15.GL_STREAM_DRAW);
             }
 
+            private void orphanInstanceBufferIfConfigured() {
+                if (!HbmClientConfig.instanceVboOrphanBeforeUpload()) {
+                    return;
+                }
+                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, instanceVboId);
+                GL15.glBufferData(GL15.GL_ARRAY_BUFFER, instanceCapacityBytes, GL15.GL_STREAM_DRAW);
+            }
+
             private void ensureIndirectCapacity(int requiredBytes) {
                 if (requiredBytes <= indirectCapacityBytes) {
                     return;
@@ -6102,6 +6126,14 @@ public final class LegacyWavefrontModel {
                     newCapacity = MAX_INDIRECT_BYTES;
                 }
                 indirectCapacityBytes = newCapacity;
+                GL15.glBindBuffer(GL40.GL_DRAW_INDIRECT_BUFFER, indirectBufferId);
+                GL15.glBufferData(GL40.GL_DRAW_INDIRECT_BUFFER, indirectCapacityBytes, GL15.GL_STREAM_DRAW);
+            }
+
+            private void orphanIndirectBufferIfConfigured() {
+                if (!HbmClientConfig.instanceVboOrphanBeforeUpload()) {
+                    return;
+                }
                 GL15.glBindBuffer(GL40.GL_DRAW_INDIRECT_BUFFER, indirectBufferId);
                 GL15.glBufferData(GL40.GL_DRAW_INDIRECT_BUFFER, indirectCapacityBytes, GL15.GL_STREAM_DRAW);
             }
@@ -6264,6 +6296,8 @@ public final class LegacyWavefrontModel {
             private final long byteSize;
             private final VertexFormat format;
             private final float[] lightWeights;
+            private final InstancedMeshBounds bounds;
+            private final long lightSampleKey;
             private final Map<String, Integer> elementOffsets = new LinkedHashMap<>();
             private final Map<String, VertexFormatElement> elementByName = new LinkedHashMap<>();
             private final int[] cachedPrograms = new int[CACHED_PROGRAM_SLOTS];
@@ -6286,7 +6320,8 @@ public final class LegacyWavefrontModel {
             private int nextProgramSlot;
 
             private IrisCompanionMesh(IrisCompanionMeshKey key, int vaoId, int vboId, int vertexCount,
-                    long byteSize, VertexFormat format, float[] lightWeights) {
+                    long byteSize, VertexFormat format, float[] lightWeights, InstancedMeshBounds bounds,
+                    long lightSampleKey) {
                 this.key = key;
                 this.vaoId = vaoId;
                 this.vboId = vboId;
@@ -6294,6 +6329,8 @@ public final class LegacyWavefrontModel {
                 this.byteSize = byteSize;
                 this.format = format;
                 this.lightWeights = lightWeights;
+                this.bounds = bounds;
+                this.lightSampleKey = lightSampleKey;
                 Arrays.fill(this.cachedPrograms, -1);
                 captureElementOffsets(format);
             }
@@ -6381,25 +6418,15 @@ public final class LegacyWavefrontModel {
                 if (uv2Location >= 0) {
                     if (allowPerVertexLightmap && preparedLightmapSlot >= 0) {
                         bindLightmapSlot(preparedLightmapSlot);
-                    } else if (!allowPerVertexLightmap || !applyPerVertexLightmap(
-                            LegacyRenderLighting.currentInstanceLightProbe(packedLight))) {
+                    } else {
                         GL20.glDisableVertexAttribArray(uv2Location);
                         HbmIrisRenderBatch.applyConstantLightmap(uv2Location, packedLight);
                     }
                 }
             }
 
-            private boolean applyPerVertexLightmap(LegacyRenderLighting.LightProbe probe) {
-                int slot = preparePerVertexLightmapSlot(probe);
-                if (slot < 0) {
-                    return false;
-                }
-                bindLightmapSlot(slot);
-                return true;
-            }
-
-            private int preparePerVertexLightmapSlot(int packedLight) {
-                return preparePerVertexLightmapSlot(LegacyRenderLighting.currentInstanceLightProbe(packedLight));
+            private int preparePerVertexLightmapSlot(Matrix4f modelView, int packedLight) {
+                return preparePerVertexLightmapSlot(bounds.sampleLightProbe(modelView, lightSampleKey, packedLight));
             }
 
             private int preparePerVertexLightmapSlot(LegacyRenderLighting.LightProbe probe) {
@@ -7409,6 +7436,37 @@ public final class LegacyWavefrontModel {
         }
     }
 
+    private static long lightSampleKey(InstancedMeshKey key) {
+        long hash = 0xD6E8FEB86659FD93L;
+        hash = mixLightSampleKey(hash, key.kind().ordinal());
+        hash = mixLightSampleKey(hash, key.stablePartKey() == null ? 0 : key.stablePartKey().hashCode());
+        hash = mixLightSampleKey(hash, System.identityHashCode(key.sprite()));
+        hash = mixLightSampleKey(hash, key.sourceVertices());
+        hash = mixLightSampleKey(hash, key.sourceMode().ordinal());
+        hash = mixLightSampleKey(hash, key.smoothing() ? 1 : 0);
+        return hash == 0L ? 1L : hash;
+    }
+
+    private static long lightSampleKey(IrisCompanionMeshKey key) {
+        long hash = 0xA0761D6478BD642FL;
+        hash = mixLightSampleKey(hash, key.kind().ordinal());
+        hash = mixLightSampleKey(hash, key.stablePartKey() == null ? 0 : key.stablePartKey().hashCode());
+        hash = mixLightSampleKey(hash, System.identityHashCode(key.sprite()));
+        hash = mixLightSampleKey(hash, key.sourceVertices());
+        hash = mixLightSampleKey(hash, key.sourceMode().ordinal());
+        hash = mixLightSampleKey(hash, key.smoothing() ? 1 : 0);
+        hash = mixLightSampleKey(hash, key.uvTransform().hashCode());
+        return hash == 0L ? 1L : hash;
+    }
+
+    private static long mixLightSampleKey(long hash, long value) {
+        hash ^= value + 0x9E3779B97F4A7C15L + (hash << 6) + (hash >>> 2);
+        hash ^= hash >>> 33;
+        hash *= 0xff51afd7ed558ccdL;
+        hash ^= hash >>> 33;
+        return hash;
+    }
+
     private record IrisCompanionMeshKey(GpuMeshKind kind, String stablePartKey, TextureAtlasSprite sprite,
                                         int sourceVertices, VertexFormat.Mode sourceMode, boolean smoothing,
                                         UvTransform uvTransform) {
@@ -7619,8 +7677,13 @@ public final class LegacyWavefrontModel {
     }
 
     private record InstancedMesh(InstancedMeshKey key, VertexFormat.Mode sourceMode,
-                                 List<PreparedVertex> sourceVertices, int vaoId, int vboId, int instanceVboId,
+                                 List<PreparedVertex> sourceVertices, InstancedMeshBounds bounds,
+                                 long lightSampleKey, int vaoId, int vboId, int instanceVboId,
                                  int vertexCount, long byteSize) {
+        private LegacyRenderLighting.LightProbe sampleLightProbe(Matrix4f modelView, int packedLight) {
+            return bounds.sampleLightProbe(modelView, lightSampleKey, packedLight);
+        }
+
         private void close() {
             if (vaoId != 0) {
                 GL30.glDeleteVertexArrays(vaoId);
@@ -7635,6 +7698,7 @@ public final class LegacyWavefrontModel {
     }
 
     private record InstancedMeshBounds(float minX, float minY, float minZ,
+                                       float maxX, float maxY, float maxZ,
                                        float invSizeX, float invSizeY, float invSizeZ) {
         private static final float MIN_EXTENT = 1.0E-5F;
 
@@ -7656,12 +7720,24 @@ public final class LegacyWavefrontModel {
             }
             if (!Float.isFinite(minX) || !Float.isFinite(minY) || !Float.isFinite(minZ)
                     || !Float.isFinite(maxX) || !Float.isFinite(maxY) || !Float.isFinite(maxZ)) {
-                return new InstancedMeshBounds(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+                return new InstancedMeshBounds(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
+                        0.0F, 0.0F, 0.0F);
             }
-            return new InstancedMeshBounds(minX, minY, minZ,
+            return new InstancedMeshBounds(minX, minY, minZ, maxX, maxY, maxZ,
                     inverseExtent(maxX - minX),
                     inverseExtent(maxY - minY),
                     inverseExtent(maxZ - minZ));
+        }
+
+        private LegacyRenderLighting.LightProbe sampleLightProbe(Matrix4f modelView, int packedLight) {
+            return LegacyRenderLighting.sampleModelViewLight(modelView, minX, minY, minZ, maxX, maxY, maxZ,
+                    packedLight);
+        }
+
+        private LegacyRenderLighting.LightProbe sampleLightProbe(Matrix4f modelView, long partIdentityHash,
+                int packedLight) {
+            return LegacyRenderLighting.sampleModelViewLight(modelView, partIdentityHash, minX, minY, minZ,
+                    maxX, maxY, maxZ, packedLight);
         }
 
         private static float inverseExtent(float extent) {

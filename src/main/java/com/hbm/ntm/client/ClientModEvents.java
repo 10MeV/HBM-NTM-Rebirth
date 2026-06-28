@@ -44,6 +44,7 @@ import com.hbm.ntm.client.renderer.ArtilleryShellRenderer;
 import com.hbm.ntm.client.renderer.ArcFurnaceRenderer;
 import com.hbm.ntm.client.renderer.AutosawRenderer;
 import com.hbm.ntm.client.renderer.BalefireBombRenderer;
+import com.hbm.ntm.client.renderer.BedrockOreDepositRenderer;
 import com.hbm.ntm.client.renderer.BasicMachineRenderer;
 import com.hbm.ntm.client.renderer.BombMultiRenderer;
 import com.hbm.ntm.client.renderer.BreedingReactorRenderer;
@@ -583,6 +584,7 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.DEUTERIUM_TOWER.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.GAS_CENT.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.ORE_SLOPPER.get(), OreSlopperRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.BEDROCK_ORE_DEPOSIT.get(), BedrockOreDepositRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SILEX.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.CYCLOTRON.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FEL.get(), LegacyVisibleMachineRenderer::new);

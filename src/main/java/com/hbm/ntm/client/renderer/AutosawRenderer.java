@@ -47,25 +47,28 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = autosaw.getBlockState();
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(autosaw, packedLight);
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
-        LegacyTileRenderPlans.AutosawPlan plan = LegacyTileRenderPlans.autosawPlan(
-                autosaw.getLastYaw(), autosaw.getYaw(),
-                autosaw.getLastPitch(), autosaw.getPitch(),
-                autosaw.getLastSpin(), autosaw.getSpin(),
-                autosaw.isOn(), worldTime(autosaw), partialTick);
-        renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.mulPose(Axis.YN.rotationDegrees((float) plan.turnDegrees()));
-        renderPart(MAIN, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.translate(0.0D, plan.engineTranslateY(), 0.0D);
-        renderPart(ENGINE, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.translate(0.0D, -plan.engineTranslateY(), 0.0D);
-        renderPart(plan.armUpper(), ARM_UPPER, poseStack, buffer, modelLight, packedOverlay);
-        renderPart(plan.armLower(), ARM_LOWER, poseStack, buffer, modelLight, packedOverlay);
-        renderPart(plan.armTip(), ARM_TIP, poseStack, buffer, modelLight, packedOverlay);
-        renderPart(plan.sawBlade(), SAWBLADE, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
+        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+                LegacyRenderLighting.pushModelViewSampling(autosaw, poseStack.last().pose())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
+            LegacyTileRenderPlans.AutosawPlan plan = LegacyTileRenderPlans.autosawPlan(
+                    autosaw.getLastYaw(), autosaw.getYaw(),
+                    autosaw.getLastPitch(), autosaw.getPitch(),
+                    autosaw.getLastSpin(), autosaw.getSpin(),
+                    autosaw.isOn(), worldTime(autosaw), partialTick);
+            renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
+            poseStack.mulPose(Axis.YN.rotationDegrees((float) plan.turnDegrees()));
+            renderPart(MAIN, poseStack, buffer, modelLight, packedOverlay);
+            poseStack.translate(0.0D, plan.engineTranslateY(), 0.0D);
+            renderPart(ENGINE, poseStack, buffer, modelLight, packedOverlay);
+            poseStack.translate(0.0D, -plan.engineTranslateY(), 0.0D);
+            renderPart(plan.armUpper(), ARM_UPPER, poseStack, buffer, modelLight, packedOverlay);
+            renderPart(plan.armLower(), ARM_LOWER, poseStack, buffer, modelLight, packedOverlay);
+            renderPart(plan.armTip(), ARM_TIP, poseStack, buffer, modelLight, packedOverlay);
+            renderPart(plan.sawBlade(), SAWBLADE, poseStack, buffer, modelLight, packedOverlay);
+            poseStack.popPose();
+        }
     }
 
     private static void renderPart(LegacyTileRenderPlans.PivotedModelPartPlan part,

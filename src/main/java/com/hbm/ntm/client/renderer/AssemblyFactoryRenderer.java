@@ -89,39 +89,42 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
         LegacyMachineDefinition definition = block.definition();
         int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
 
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
-        Vec3 translation = definition.modelTranslation(state);
-        poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
-        ResourceLocation texture = definition.textureLocation();
+        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+                LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            Vec3 translation = definition.modelTranslation(state);
+            poseStack.translate(translation.x, translation.y, translation.z);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+            ResourceLocation texture = definition.textureLocation();
 
-        renderModelPart("Base", texture, poseStack, buffer, modelLight, packedOverlay);
-        if (blockEntity.shouldRenderFrame()) {
-            renderModelPart("Frame", texture, poseStack, buffer, modelLight, packedOverlay);
+            renderModelPart("Base", texture, poseStack, buffer, modelLight, packedOverlay);
+            if (blockEntity.shouldRenderFrame()) {
+                renderModelPart("Frame", texture, poseStack, buffer, modelLight, packedOverlay);
+            }
+
+            double slide1 = blockEntity.getAnimation(0).getSlider(partialTick);
+            double slide2 = blockEntity.getAnimation(1).getSlider(partialTick);
+            double[] arm1 = blockEntity.getAnimation(0).striker.getPositions(partialTick);
+            double[] arm2 = blockEntity.getAnimation(0).saw.getPositions(partialTick);
+            double[] arm3 = blockEntity.getAnimation(1).striker.getPositions(partialTick);
+            double[] arm4 = blockEntity.getAnimation(1).saw.getPositions(partialTick);
+
+            LegacyTileRenderPlans.AssemblyFactoryPlan plan = LegacyTileRenderPlans.assemblyFactoryPlan(
+                    slide1, slide2, arm1, arm2, arm3, arm4);
+            for (LegacyTileRenderPlans.AssemblyArmPlan slider : plan.sliders()) {
+                renderArmPlan(poseStack, texture, buffer, modelLight, packedOverlay, slider);
+            }
+
+            if (LegacyRecipeIconRenderer.shouldRender(blockEntity)) {
+                renderRecipeIcons(blockEntity, poseStack, buffer, packedLight);
+                renderSparks(blockEntity, partialTick, poseStack, buffer, packedLight, packedOverlay,
+                        slide1, slide2, arm2, arm4);
+            }
+
+            poseStack.popPose();
         }
-
-        double slide1 = blockEntity.getAnimation(0).getSlider(partialTick);
-        double slide2 = blockEntity.getAnimation(1).getSlider(partialTick);
-        double[] arm1 = blockEntity.getAnimation(0).striker.getPositions(partialTick);
-        double[] arm2 = blockEntity.getAnimation(0).saw.getPositions(partialTick);
-        double[] arm3 = blockEntity.getAnimation(1).striker.getPositions(partialTick);
-        double[] arm4 = blockEntity.getAnimation(1).saw.getPositions(partialTick);
-
-        LegacyTileRenderPlans.AssemblyFactoryPlan plan = LegacyTileRenderPlans.assemblyFactoryPlan(
-                slide1, slide2, arm1, arm2, arm3, arm4);
-        for (LegacyTileRenderPlans.AssemblyArmPlan slider : plan.sliders()) {
-            renderArmPlan(poseStack, texture, buffer, modelLight, packedOverlay, slider);
-        }
-
-        if (LegacyRecipeIconRenderer.shouldRender(blockEntity)) {
-            renderRecipeIcons(blockEntity, poseStack, buffer, packedLight);
-            renderSparks(blockEntity, partialTick, poseStack, buffer, packedLight, packedOverlay,
-                    slide1, slide2, arm2, arm4);
-        }
-
-        poseStack.popPose();
     }
 
     private static void renderRecipeIcons(AssemblyFactoryBlockEntity blockEntity, PoseStack poseStack,
