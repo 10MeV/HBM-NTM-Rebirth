@@ -109,8 +109,8 @@ public final class HbmClientConfig {
                 .comment("Modernized render pipeline: enables the experimental OBJ GPU backend once a real backend is available. CPU fallback remains authoritative.")
                 .define("experimentalGpuBackend", false);
         RENDER_EXPERIMENTAL_INSTANCING = builder
-                .comment("Modernized render pipeline: enables static OBJ part instancing. Matches HBM-Modernized's default enabled instanced batching; CPU fallback remains authoritative.")
-                .define("experimentalInstancing", true);
+                .comment("Modernized render pipeline: enables static OBJ part instancing. Experimental; keep disabled by default until packaged-jar rendering is validated.")
+                .define("experimentalInstancing", false);
         RENDER_INSTANCE_VBO_ORPHAN_BEFORE_UPLOAD = builder
                 .comment("Modernized render pipeline: orphan the OBJ instancing instance VBO before uploading per-frame instance data to avoid driver stalls.")
                 .define("instanceVboOrphanBeforeUpload", true);
@@ -192,7 +192,7 @@ public final class HbmClientConfig {
     }
 
     public static boolean experimentalInstancing() {
-        return booleanValue(RENDER_EXPERIMENTAL_INSTANCING, true);
+        return booleanValue(RENDER_EXPERIMENTAL_INSTANCING, false);
     }
 
     public static boolean instanceVboOrphanBeforeUpload() {

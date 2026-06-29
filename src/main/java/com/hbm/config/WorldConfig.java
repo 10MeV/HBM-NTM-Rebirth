@@ -8,7 +8,7 @@ public final class WorldConfig {
     public static boolean overworldOre = true;
     public static boolean netherOre = true;
     public static boolean endOre = true;
-    public static int uraniumSpawn = 7;
+    public static int uraniumSpawn = 6;
     public static int thoriumSpawn = 7;
     public static int titaniumSpawn = 8;
     public static int sulfurSpawn = 5;
@@ -20,7 +20,7 @@ public final class WorldConfig {
     public static int leadSpawn = 6;
     public static int berylliumSpawn = 6;
     public static int ligniteSpawn = 2;
-    public static int asbestosSpawn = 2;
+    public static int asbestosSpawn = 4;
     public static int rareSpawn = 6;
     public static int lithiumSpawn = 6;
     public static int cinnebarSpawn = 1;

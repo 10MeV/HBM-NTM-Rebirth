@@ -59,7 +59,7 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
     private static final long DEPTH_DEPOSIT_RANDOM_SALT = 0x48424d44455031L;
 
     private static final List<OreEntry> OVERWORLD = List.of(
-            stoneOre("ore_uranium", "deepslate_ore_uranium", 7, 5, 5, 20),
+            stoneOre("ore_uranium", "deepslate_ore_uranium", 6, 5, 5, 20),
             stoneOre("ore_thorium", "deepslate_ore_thorium", 7, 5, 5, 25),
             stoneOre("ore_titanium", "deepslate_ore_titanium", 8, 6, 5, 30),
             stoneOre("ore_sulfur", "deepslate_ore_sulfur", 5, 8, 5, 30),
@@ -71,7 +71,7 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             stoneOre("ore_beryllium", "deepslate_ore_beryllium", 6, 4, 5, 30),
             stoneOre("ore_rare", "deepslate_ore_rare", 6, 5, 5, 20),
             stoneOre("ore_lignite", "deepslate_ore_lignite", 2, 24, 35, 25),
-            stoneOre("ore_asbestos", "deepslate_ore_asbestos", 2, 4, 16, 16),
+            stoneOre("ore_asbestos", "deepslate_ore_asbestos", 4, 4, 16, 16),
             stoneOre("ore_cinnebar", "deepslate_ore_cinnebar", 1, 4, 8, 16),
             stoneOre("ore_cobalt", "deepslate_ore_cobalt", 2, 4, 4, 8),
             rareStoneOre("ore_alexandrite", "deepslate_ore_alexandrite", 100, 3, 10, 5),
@@ -99,8 +99,8 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
     private static final List<GneissOreEntry> GNEISS_ORES = List.of(
             gneissOre("ore_gneiss_iron", 25, 6, 30, 10),
             gneissOre("ore_gneiss_gold", 10, 6, 30, 10),
-            gneissOre("ore_gneiss_uranium", 21, 6, 30, 10),
-            gneissOre("ore_gneiss_asbestos", 6, 6, 30, 10),
+            gneissOre("ore_gneiss_uranium", 18, 6, 30, 10),
+            gneissOre("ore_gneiss_asbestos", 12, 6, 30, 10),
             gneissOre("ore_gneiss_lithium", 6, 6, 30, 10),
             gneissOre("ore_gneiss_rare", 6, 6, 30, 10),
             gneissOre("ore_gneiss_gas", 15, 10, 30, 10)
@@ -153,8 +153,8 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         if ("overworld".equals(context.config().dimension())) {
             placedAny |= placeOilTerrain(context);
             placedAny |= placeSchistStratum(context);
-            placedAny |= placeResourceLayers(context);
             placedAny |= placeOreCaves(context);
+            placedAny |= placeResourceLayers(context);
             placedAny |= placeDepthDeposits(context, OVERWORLD_DEPTH_DEPOSITS, true);
             placedAny |= placeGneissOres(context);
             placedAny |= placeNewBedrockOres(context);
@@ -578,17 +578,15 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
                 if (range < 0) {
                     continue;
                 }
-                for (int oldY = 30 - range; oldY <= 30 + range; oldY++) {
-                    LegacyYSpan span = mapLegacyOreYSpan(level, oldY);
-                    for (int y = span.minY(); y <= span.maxY(); y++) {
-                        cursor.set(x, y, z);
-                        if (level.isOutsideBuildHeight(cursor)) {
-                            continue;
-                        }
-                        BlockState target = level.getBlockState(cursor);
-                        if (isSchistReplaceable(level, cursor, target)) {
-                            placedAny |= level.setBlock(cursor, gneissState, Block.UPDATE_CLIENTS);
-                        }
+                int centerY = mapLegacyOreY(level, 30);
+                for (int y = centerY - range; y <= centerY + range; y++) {
+                    cursor.set(x, y, z);
+                    if (level.isOutsideBuildHeight(cursor)) {
+                        continue;
+                    }
+                    BlockState target = level.getBlockState(cursor);
+                    if (isSchistReplaceable(level, cursor, target)) {
+                        placedAny |= level.setBlock(cursor, gneissState, Block.UPDATE_CLIENTS);
                     }
                 }
             }
@@ -859,7 +857,7 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             int x = origin.getX() + random.nextInt(16);
             int z = origin.getZ() + random.nextInt(16);
             int oldY = entry.oldMinY() + (entry.oldVariance() > 0 ? random.nextInt(entry.oldVariance()) : 0);
-            int y = mapLegacyOreY(level, oldY);
+            int y = mapLegacySchistOreY(level, oldY);
             placedAny |= placeLegacyMinable(level, random, new BlockPos(x, y, z),
                     List.of(LegacyOreTarget.rule(gneissTarget, ore.get().defaultBlockState())), entry.size());
         }
@@ -1058,17 +1056,15 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         return Mth.clamp(minY + offset, minY, level.getMaxBuildHeight() - 1);
     }
 
-    private static LegacyYSpan mapLegacyOreYSpan(WorldGenLevel level, int oldY) {
-        int minY = mapLegacyOreY(level, oldY);
-        int nextY = mapLegacyOreY(level, oldY + 1);
-        int maxY = Math.max(minY, nextY - 1);
-        return new LegacyYSpan(minY, maxY);
-    }
-
     private static int randomLimestoneY(WorldGenLevel level, RandomSource random) {
         int minY = Math.max(level.getMinBuildHeight(), LIMESTONE_MODERN_MIN_Y);
         int maxY = Math.max(minY, mapLegacyOreY(level, 54));
         return minY + random.nextInt(maxY - minY + 1);
+    }
+
+    private static int mapLegacySchistOreY(WorldGenLevel level, int oldY) {
+        int y = mapLegacyOreY(level, 30) + oldY - 30;
+        return Mth.clamp(y, level.getMinBuildHeight(), level.getMaxBuildHeight() - 1);
     }
 
     private static int mapLegacyDepthDepositY(WorldGenLevel level, int oldMinY, int oldYDev, boolean fromTop,
@@ -1264,9 +1260,6 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
     }
 
     private record SourceChunk(int chunkX, int chunkZ, ChunkBounds bounds) {
-    }
-
-    private record LegacyYSpan(int minY, int maxY) {
     }
 
     private static final class LegacyPerlinNoise2D {
