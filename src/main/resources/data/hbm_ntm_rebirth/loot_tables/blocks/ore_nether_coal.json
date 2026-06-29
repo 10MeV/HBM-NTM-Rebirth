@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "hbm_ntm_rebirth:ore_nether_coal"
+          "name": "hbm_ntm_rebirth:coal_infernal"
         }
       ],
       "conditions": [

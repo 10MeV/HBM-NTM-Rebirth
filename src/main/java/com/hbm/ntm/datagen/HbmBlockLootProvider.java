@@ -273,8 +273,10 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         addLegacyFortuneOreDrop("ore_sulfur", "sulfur", 2.0F, 4.0F);
         addLegacyFortuneOreDrop("ore_nether_sulfur", "sulfur", 2.0F, 4.0F);
         addLegacySingleOreDrop("ore_lignite", "lignite");
+        addLegacySingleOreDrop("ore_nether_coal", "coal_infernal");
         addLegacySingleOreDrop("ore_cinnebar", "cinnebar");
         addLegacySingleOreDrop("ore_coltan", "fragment_coltan");
+        addLegacySingleOreDrop("deepslate_ore_coltan", "fragment_coltan");
         addLegacyFortuneOreDrop("ore_cobalt", "fragment_cobalt", 4.0F, 9.0F);
         addLegacyFortuneOreDrop("ore_nether_cobalt", "fragment_cobalt", 5.0F, 12.0F);
         addLegacyFortuneOreDrop("stone_resource_malachite", "chunk_ore_malachite", 3.0F, 4.0F);

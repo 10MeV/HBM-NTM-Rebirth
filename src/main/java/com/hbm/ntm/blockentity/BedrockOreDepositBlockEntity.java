@@ -1,20 +1,26 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class BedrockOreDepositBlockEntity extends BlockEntity {
+public class BedrockOreDepositBlockEntity extends BlockEntity implements com.hbm.ntm.api.block.LegacyLookOverlayProvider {
     private static final String TAG_RESOURCE = "resource";
     private static final String TAG_REQUIRED_FLUID = "required_fluid";
     private static final String TAG_REQUIRED_FLUID_AMOUNT = "required_fluid_amount";
@@ -66,6 +72,22 @@ public class BedrockOreDepositBlockEntity extends BlockEntity {
 
     public int getShape() {
         return shape;
+    }
+
+    @Nullable
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        List<Component> lines = new ArrayList<>();
+        if (!resource.isEmpty()) {
+            lines.add(resource.getHoverName());
+        }
+        lines.add(Component.literal("Tier: " + tier));
+        if (requiredFluid != HbmFluids.NONE && requiredFluidAmount > 0) {
+            MutableComponent requirement = Component.literal("Requires: " + requiredFluidAmount + "mB ");
+            requirement.append(requiredFluid.getDisplayName());
+            lines.add(requirement);
+        }
+        return LegacyLookOverlay.forBlock(this, lines);
     }
 
     @Override

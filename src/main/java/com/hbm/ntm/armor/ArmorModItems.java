@@ -1317,11 +1317,13 @@ public final class ArmorModItems {
                 ScannerTarget.legacy("ore_oil", 300, "Oil", 0xa0a0a0),
                 ScannerTarget.legacy("ore_bedrock_oil", 300, "Bedrock Oil", 0xa0a0a0),
                 ScannerTarget.legacy("ore_coltan", 5, "Coltan", 0xa0a000),
+                ScannerTarget.legacy("deepslate_ore_coltan", 5, "Coltan", 0xa0a000),
                 ScannerTarget.legacy("stone_gneiss", 5000, "Schist", 0x8080ff),
                 ScannerTarget.legacy("ore_australium", 1000, "Australium", 0xffff00),
                 ScannerTarget.vanilla(Blocks.END_PORTAL_FRAME, 1, "End Portal", 0x40b080),
                 ScannerTarget.legacy("bobblehead", 1, "A Treasure!", 0xff0000),
-                ScannerTarget.legacy("ore_bedrock", 1, "Bedrock Ore", 0xff0000)
+                ScannerTarget.legacy("ore_bedrock", 1, "Bedrock Ore", 0xff0000),
+                ScannerTarget.legacy("ore_bedrock_coltan", 1, "Bedrock Coltan", 0xa0a000)
         );
 
         public NeutrinoLens(Item.Properties properties) {

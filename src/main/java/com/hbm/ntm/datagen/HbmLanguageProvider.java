@@ -1441,6 +1441,10 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.particle_digamma.desc.half_particle", "Particle half-life: 1.67*10^21 years");
         add("item.hbm_ntm_rebirth.particle_digamma.desc.half_player", "Player half-life: %s");
         add("item.hbm_ntm_rebirth.particle_digamma.desc.digamma", "%s mDRX/s");
+        add("item.hbm_ntm_rebirth.cell_antimatter.desc.1", "Warning: Exposure to matter will");
+        add("item.hbm_ntm_rebirth.cell_antimatter.desc.2", "lead to violent annihilation!");
+        add("item.hbm_ntm_rebirth.cell_anti_schrabidium.desc.1", "Warning: Exposure to matter will");
+        add("item.hbm_ntm_rebirth.cell_anti_schrabidium.desc.2", "create a f\u00f3lkvangr field!");
         add("item.hbm_ntm_rebirth.pellet_antimatter.desc.1", "Very heavy antimatter cluster.");
         add("item.hbm_ntm_rebirth.pellet_antimatter.desc.2", "Gets rid of black holes.");
         add("item.hbm_ntm_rebirth.trait.drop", "[Drops when dropped]");
@@ -2477,6 +2481,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.nugget_les", "Low Enriched Schrabidium Fuel Nugget");
         add("item.hbm_ntm_rebirth.billet_les", "Low Enriched Schrabidium Fuel Billet");
         add("item.hbm_ntm_rebirth.dust", "Dust");
+        add("item.hbm_ntm_rebirth.coltan_tool", "Coltass");
         add("item.hbm_ntm_rebirth.fragment_coltan", "Coltan");
         add("item.hbm_ntm_rebirth.powder_coltan", "Purified Tantalite");
         add("item.hbm_ntm_rebirth.gem_tantalium", "Tantalum Polycrystal");
@@ -3262,6 +3267,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.boy_shielding", "Neutron Shielding");
         add("item.hbm_ntm_rebirth.boy_target", "Subcritical U235 Target");
         add("item.hbm_ntm_rebirth.cell_balefire", "Gaseous Balefire Cell");
+        add("item.hbm_ntm_rebirth.cell_antimatter", "Antimatter Cell");
+        add("item.hbm_ntm_rebirth.cell_anti_schrabidium", "Antischrabidium Cell");
         add("item.hbm_ntm_rebirth.cell_empty", "Empty Cell");
         add("item.hbm_ntm_rebirth.cell_sas3", "Schrabidium Trisulfide Cell");
         add("item.hbm_ntm_rebirth.cell_tritium", "Tritium Cell");

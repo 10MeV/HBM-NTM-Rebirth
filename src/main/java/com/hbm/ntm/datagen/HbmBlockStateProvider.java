@@ -453,6 +453,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem("sand_dirty", "sand_dirty");
         simpleCubeWithItem("sand_dirty_red", "sand_dirty_red");
         simpleCubeWithItem("stone_cracked", "stone_cracked");
+        simpleCubeWithItem("deepslate_ore_coltan", "deepslate_ore_coltan");
         radAbsorberWithItem();
         simpleCubeWithItem(ModBlocks.DUMMY_BLOCK, "block_steel");
         steelScaffoldWithItem();
@@ -470,6 +471,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         sellafieldWithItem();
         sellafieldSlakedWithItem(ModBlocks.SELLAFIELD_SLAKED, "sellafield_slaked");
         sellafieldSlakedWithItem(ModBlocks.SELLAFIELD_BEDROCK, "sellafield_bedrock");
+        bedrockOreDeposit("ore_bedrock_coltan");
         sellafieldOreWithItem(ModBlocks.ORE_SELLAFIELD_DIAMOND, LegacySellafieldOreBlock.Kind.DIAMOND);
         sellafieldOreWithItem(ModBlocks.ORE_SELLAFIELD_EMERALD, LegacySellafieldOreBlock.Kind.EMERALD);
         sellafieldOreWithItem(ModBlocks.ORE_SELLAFIELD_URANIUM_SCORCHED, LegacySellafieldOreBlock.Kind.URANIUM_SCORCHED);
@@ -1084,6 +1086,26 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .renderType("minecraft:cutout");
         simpleBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
+    }
+
+    private void simpleCube(String legacyName, String textureName) {
+        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(legacyName);
+        if (block == null) {
+            throw new IllegalStateException("Missing legacy block hbm_ntm_rebirth:" + legacyName);
+        }
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
+        simpleBlock(block.get(), model);
+    }
+
+    private void bedrockOreDeposit(String legacyName) {
+        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(legacyName);
+        if (block == null) {
+            throw new IllegalStateException("Missing legacy block hbm_ntm_rebirth:" + legacyName);
+        }
+        String blockName = block.getId().getPath();
+        ModelFile model = models().withExistingParent(blockName, new ResourceLocation("minecraft", "block/bedrock"));
+        simpleBlock(block.get(), model);
     }
 
     private void glowingMushWithItem() {

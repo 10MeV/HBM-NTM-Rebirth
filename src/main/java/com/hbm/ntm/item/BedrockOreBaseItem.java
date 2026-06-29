@@ -5,6 +5,7 @@ import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -70,9 +71,16 @@ public class BedrockOreBaseItem extends Item {
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         for (BedrockOreType type : BedrockOreType.values()) {
             double amount = getOreAmount(stack, type);
-            tooltip.add(Component.translatable(type.translationKey())
-                    .append(Component.literal(": " + ((int) (amount * 100.0D)) / 100.0D))
-                    .withStyle(ChatFormatting.GRAY));
+            MutableComponent line = Component.translatable(type.translationKey())
+                    .append(Component.literal(": " + truncate(amount) + " ("))
+                    .append(Component.translatable(OreDensityScannerItem.translateDensity(amount))
+                            .withStyle(OreDensityScannerItem.getColor(amount)))
+                    .append(Component.literal(")"));
+            tooltip.add(line.withStyle(ChatFormatting.GRAY));
         }
+    }
+
+    private static double truncate(double amount) {
+        return ((int) (amount * 100.0D)) / 100.0D;
     }
 }

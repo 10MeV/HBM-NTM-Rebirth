@@ -92,7 +92,7 @@ public class SurveyScannerItem extends Item {
                     Block block = level.getBlockState(cursor).getBlock();
                     if (isLegacyBlock(block, "ore_oil")) {
                         hasOil = true;
-                    } else if (isLegacyBlock(block, "ore_coltan")) {
+                    } else if (isLegacyBlock(block, "ore_coltan") || isLegacyBlock(block, "deepslate_ore_coltan")) {
                         hasColtan = true;
                     } else if (isLegacyBlock(block, "ore_bedrock_oil")) {
                         hasBedrockOil = true;
@@ -174,7 +174,8 @@ public class SurveyScannerItem extends Item {
             if (level.isOutsideBuildHeight(cursor)) {
                 continue;
             }
-            if (isLegacyBlock(level.getBlockState(cursor).getBlock(), "ore_bedrock")
+            if ((isLegacyBlock(level.getBlockState(cursor).getBlock(), "ore_bedrock")
+                    || isLegacyBlock(level.getBlockState(cursor).getBlock(), "ore_bedrock_coltan"))
                     && level.getBlockEntity(cursor) instanceof BedrockOreDepositBlockEntity deposit) {
                 return deposit;
             }

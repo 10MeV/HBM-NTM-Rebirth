@@ -1830,6 +1830,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_analog_circuit", has(forgeTag("circuits/analog")))
                 .save(consumer, id("tools/oil_detector"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.COLTAN_TOOL.get())
+                .pattern("ACA")
+                .pattern("CXC")
+                .pattern("ACA")
+                .define('A', forgeTag("ingots/copper"))
+                .define('C', forgeTag("crystals/cinnabar"))
+                .define('X', Items.COMPASS)
+                .unlockedBy("has_cinnabar", has(forgeTag("crystals/cinnabar")))
+                .save(consumer, id("tools/coltan_tool"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.ORE_DENSITY_SCANNER.get())
                 .pattern("VVV")
                 .pattern("CSC")

@@ -275,7 +275,7 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
                     }
                     BlockPos target = new BlockPos(x, y, z);
                     BlockState state = level.getBlockState(target);
-                    if (state.is(ModBlocks.ORE_BEDROCK.get())) {
+                    if (state.is(ModBlocks.ORE_BEDROCK.get()) || state.is(ModBlocks.ORE_BEDROCK_COLTAN.get())) {
                         combinedHardness = 5.0F * 60.0F * 20.0F;
                         bedrockOre = target;
                         bedrockDrilling = true;

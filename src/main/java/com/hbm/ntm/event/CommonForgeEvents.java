@@ -20,6 +20,7 @@ import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.explosion.ExplosionChaos;
 import com.hbm.ntm.explosion.ExplosionNukeSmall;
+import com.hbm.ntm.explosion.NuclearExplosionUtil;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.item.EuphemiumArmorItem;
@@ -526,12 +527,27 @@ public final class CommonForgeEvents {
             }
         }
 
+        if (stack.is(ModItems.CELL_ANTIMATTER.get()) && itemEntity.onGround()
+                && WeaponConfig.droppedAntimatterCellsEnabled() && itemEntity.level() instanceof ServerLevel level) {
+            itemEntity.discard();
+            WeaponExplosionUtil.antimatter(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(),
+                    3.0F, itemEntity, 50.0F).explode();
+        }
+
         if (stack.is(ModItems.PELLET_ANTIMATTER.get()) && itemEntity.onGround()
                 && WeaponConfig.droppedAntimatterCellsEnabled() && itemEntity.level() instanceof ServerLevel level) {
             itemEntity.discard();
-            WeaponExplosionUtil.antimatter(level, itemEntity.getX(),
-                    itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(),
+            WeaponExplosionUtil.antimatter(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(),
                     20.0F, itemEntity, 50.0F).explode();
+        }
+
+        if (stack.is(ModItems.CELL_ANTI_SCHRABIDIUM.get()) && itemEntity.onGround()
+                && WeaponConfig.droppedAntimatterCellsEnabled() && itemEntity.level() instanceof ServerLevel level) {
+            itemEntity.discard();
+            if (NuclearExplosionUtil.spawnAntiSchrabidium(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ())) {
+                LegacySoundPlayer.playSoundEffect(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(),
+                        "random.explode", 100.0F, level.random.nextFloat() * 0.1F + 0.9F);
+            }
         }
 
         if (itemEntity.onGround() && WeaponConfig.droppedXenCrystalsEnabled()

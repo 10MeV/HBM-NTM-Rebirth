@@ -18,6 +18,7 @@ import com.hbm.ntm.item.AmsCatalystItem;
 import com.hbm.ntm.item.AmsCoreItem;
 import com.hbm.ntm.item.AmsLensItem;
 import com.hbm.ntm.item.ArtilleryDesignatorItem;
+import com.hbm.ntm.item.AntimatterCellItem;
 import com.hbm.ntm.item.BedrockOreBaseItem;
 import com.hbm.ntm.item.BedrockOreFragmentItem;
 import com.hbm.ntm.item.BedrockOreItem;
@@ -36,6 +37,7 @@ import com.hbm.ntm.item.BjArmorItem;
 import com.hbm.ntm.item.CasingBagItem;
 import com.hbm.ntm.item.ChemthrowerItem;
 import com.hbm.ntm.item.ChocolateItem;
+import com.hbm.ntm.item.ColtanCompassItem;
 import com.hbm.ntm.item.DigammaParticleItem;
 import com.hbm.ntm.item.DigammaDiagnosticItem;
 import com.hbm.ntm.item.DrillGunItem;
@@ -716,6 +718,8 @@ public final class ModItems {
             () -> new DosimeterItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> OIL_DETECTOR = registerLegacy("oil_detector",
             () -> new OilDetectorItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> COLTAN_TOOL = registerLegacy("coltan_tool",
+            () -> new ColtanCompassItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> DIGAMMA_DIAGNOSTIC = ITEMS.register("digamma_diagnostic",
             () -> new DigammaDiagnosticItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> POLLUTION_DETECTOR = registerLegacy("pollution_detector",
@@ -1608,6 +1612,13 @@ public final class ModItems {
             () -> new Item(new Item.Properties().craftRemainder(PARTICLE_EMPTY.get())));
     public static final RegistryObject<Item> PARTICLE_DIGAMMA = registerLegacy("particle_digamma",
             () -> new DigammaParticleItem(new Item.Properties().craftRemainder(PARTICLE_EMPTY.get()), 60));
+    public static final RegistryObject<Item> CELL_EMPTY = simpleItem("cell_empty");
+    public static final RegistryObject<Item> CELL_ANTIMATTER = registerLegacy("cell_antimatter",
+            () -> new AntimatterCellItem(new Item.Properties().craftRemainder(CELL_EMPTY.get()),
+                    "item.hbm_ntm_rebirth.cell_antimatter"));
+    public static final RegistryObject<Item> CELL_ANTI_SCHRABIDIUM = registerLegacy("cell_anti_schrabidium",
+            () -> new AntimatterCellItem(new Item.Properties().craftRemainder(CELL_EMPTY.get()),
+                    "item.hbm_ntm_rebirth.cell_anti_schrabidium"));
     public static final RegistryObject<Item> PELLET_ANTIMATTER = registerLegacy("pellet_antimatter",
             () -> new AntimatterClusterItem(new Item.Properties()));
     public static final RegistryObject<Item> CUSTOM_TNT = simpleItem("custom_tnt");
@@ -2439,7 +2450,6 @@ public final class ModItems {
             "ingot_mud",
             "ingot_cft",
             "fallout",
-            "cell_empty",
             "cell_sas3",
             "tank_steel",
             "nuclear_waste_long",
@@ -2661,6 +2671,9 @@ public final class ModItems {
             PARTICLE_STRANGE,
             PARTICLE_SPARKTICLE,
             PARTICLE_DIGAMMA,
+            CELL_EMPTY,
+            CELL_ANTIMATTER,
+            CELL_ANTI_SCHRABIDIUM,
             PELLET_ANTIMATTER
     );
 
@@ -2711,7 +2724,8 @@ public final class ModItems {
             WRENCH,
             BLOWTORCH,
             BOLTGUN,
-            DEFUSER
+            DEFUSER,
+            COLTAN_TOOL
     );
 
     public static final List<RegistryObject<Item>> DRILLBIT_ITEMS = List.of(

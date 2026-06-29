@@ -1437,7 +1437,8 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<BedrockOreDepositBlockEntity>> BEDROCK_ORE_DEPOSIT =
             BLOCK_ENTITIES.register("ore_bedrock", () ->
                     BlockEntityType.Builder.of(BedrockOreDepositBlockEntity::new,
-                            ModBlocks.ORE_BEDROCK.get()).build(null));
+                            ModBlocks.ORE_BEDROCK.get(),
+                            ModBlocks.ORE_BEDROCK_COLTAN.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<VendingMachineBlockEntity>> VENDING_MACHINE =
             BLOCK_ENTITIES.register("vending_machine", () ->

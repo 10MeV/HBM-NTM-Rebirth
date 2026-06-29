@@ -39,6 +39,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/schrabidium"), forgeItemTag("ores/schrabidium"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/lignite"), forgeItemTag("ores/lignite"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/asbestos"), forgeItemTag("ores/asbestos"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/coltan"), forgeItemTag("ores/coltan"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/coal"), forgeItemTag("ores/coal"));
         copy(HbmBlockTagsProvider.forgeBlockTag("glass"), forgeItemTag("glass"));
 

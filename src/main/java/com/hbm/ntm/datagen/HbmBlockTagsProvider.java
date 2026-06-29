@@ -101,8 +101,9 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 "ore_aluminium", "deepslate_ore_aluminium", "ore_fluorite", "deepslate_ore_fluorite",
                 "ore_niter", "deepslate_ore_niter", "ore_tungsten", "deepslate_ore_tungsten",
                 "ore_lead", "deepslate_ore_lead", "ore_beryllium", "deepslate_ore_beryllium",
-                "ore_rare", "deepslate_ore_rare", "ore_lignite", "deepslate_ore_lignite",
+                "ore_rare", "deepslate_ore_rare", "ore_lignite",
                 "ore_asbestos", "deepslate_ore_asbestos", "ore_cinnebar", "deepslate_ore_cinnebar",
+                "ore_coltan", "deepslate_ore_coltan", "ore_bedrock_coltan",
                 "ore_cobalt", "deepslate_ore_cobalt", "ore_alexandrite", "deepslate_ore_alexandrite",
                 "stone_gneiss", "ore_gneiss_iron", "ore_gneiss_gold", "ore_gneiss_uranium",
                 "ore_gneiss_uranium_scorched", "ore_gneiss_copper", "ore_gneiss_asbestos",
@@ -119,8 +120,9 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 "ore_aluminium", "deepslate_ore_aluminium", "ore_fluorite", "deepslate_ore_fluorite",
                 "ore_niter", "deepslate_ore_niter", "ore_tungsten", "deepslate_ore_tungsten",
                 "ore_lead", "deepslate_ore_lead", "ore_beryllium", "deepslate_ore_beryllium",
-                "ore_rare", "deepslate_ore_rare", "ore_lignite", "deepslate_ore_lignite",
+                "ore_rare", "deepslate_ore_rare", "ore_lignite",
                 "ore_asbestos", "deepslate_ore_asbestos", "ore_cinnebar", "deepslate_ore_cinnebar",
+                "ore_coltan", "deepslate_ore_coltan", "ore_bedrock_coltan",
                 "ore_cobalt", "deepslate_ore_cobalt", "ore_alexandrite", "deepslate_ore_alexandrite",
                 "stone_gneiss", "ore_gneiss_iron", "ore_gneiss_gold", "ore_gneiss_uranium",
                 "ore_gneiss_uranium_scorched", "ore_gneiss_copper", "ore_gneiss_asbestos",
@@ -197,9 +199,10 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         addLegacyForgeOreTag("beryllium", "ore_beryllium", "deepslate_ore_beryllium");
         addLegacyForgeOreTag("rare_earth", "ore_rare", "deepslate_ore_rare");
         addLegacyForgeOreTag("schrabidium", "ore_schrabidium", "ore_nether_schrabidium", "ore_gneiss_schrabidium");
-        addLegacyForgeOreTag("lignite", "ore_lignite", "deepslate_ore_lignite");
+        addLegacyForgeOreTag("lignite", "ore_lignite");
         addLegacyForgeOreTag("asbestos", "ore_asbestos", "deepslate_ore_asbestos", "ore_gneiss_asbestos", "stone_resource_asbestos");
         addLegacyForgeOreTag("cinnebar", "ore_cinnebar", "deepslate_ore_cinnebar");
+        addLegacyForgeOreTag("coltan", "ore_coltan", "deepslate_ore_coltan");
         addLegacyForgeOreTag("cobalt", "ore_cobalt", "deepslate_ore_cobalt", "ore_nether_cobalt");
         addLegacyForgeOreTag("alexandrite", "ore_alexandrite", "deepslate_ore_alexandrite");
         addLegacyForgeOreTag("hematite", "stone_resource_hematite");

@@ -52,6 +52,7 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
     private static final int OIL_SAND_FREQUENCY = 200;
     private static final int NEW_BEDROCK_ORE_FREQUENCY = 10;
     private static final int BEDROCK_ORE_COLOR = 0xD78A16;
+    private static final int BEDROCK_COLTAN_COLOR = 0xA0A000;
     private static final int LIMESTONE_MODERN_MIN_Y = -40;
     private static final long OIL_BUBBLE_RANDOM_SALT = 0x48424d4f494c31L;
     private static final long OIL_SAND_RANDOM_SALT = 0x48424d4f494c32L;
@@ -70,7 +71,7 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             stoneOre("ore_lead", "deepslate_ore_lead", 6, 9, 5, 30),
             stoneOre("ore_beryllium", "deepslate_ore_beryllium", 6, 4, 5, 30),
             stoneOre("ore_rare", "deepslate_ore_rare", 6, 5, 5, 20),
-            stoneOre("ore_lignite", "deepslate_ore_lignite", 2, 24, 35, 25),
+            stoneOre("ore_lignite", null, 2, 24, 35, 25),
             stoneOre("ore_asbestos", "deepslate_ore_asbestos", 4, 4, 16, 16),
             stoneOre("ore_cinnebar", "deepslate_ore_cinnebar", 1, 4, 8, 16),
             stoneOre("ore_cobalt", "deepslate_ore_cobalt", 2, 4, 4, 8),
@@ -79,7 +80,7 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             stoneOre("cluster_titanium", null, 2, 6, 15, 30),
             stoneOre("cluster_aluminium", null, 3, 6, 15, 35),
             stoneOre("cluster_copper", null, 4, 6, 15, 20),
-            baseStoneOre("stone_resource_limestone", 1, 16, 25, 30)
+            baseStoneOre("stone_resource_limestone", 5, 16, 25, 30)
     );
 
     private static final List<OreEntry> NETHER = List.of(
@@ -158,6 +159,8 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             placedAny |= placeDepthDeposits(context, OVERWORLD_DEPTH_DEPOSITS, true);
             placedAny |= placeGneissOres(context);
             placedAny |= placeNewBedrockOres(context);
+            placedAny |= placeColtanOres(context);
+            placedAny |= placeBedrockColtanOres(context);
             placedAny |= placeAustraliumDeposit(context);
         } else if ("nether".equals(context.config().dimension())) {
             placedAny |= placeDepthDeposits(context, NETHER_DEPTH_DEPOSITS, false);
@@ -843,6 +846,54 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         return placedAny;
     }
 
+    private boolean placeColtanOres(FeaturePlaceContext<Configuration> context) {
+        RegistryObject<? extends Block> coltan = ModBlocks.legacyBlock("ore_coltan");
+        if (coltan == null) {
+            return false;
+        }
+        WorldGenLevel level = context.level();
+        RandomSource random = context.random();
+        BlockPos origin = context.origin();
+        List<LegacyOreTarget> targets = coltanOreTargets(coltan);
+        boolean placedAny = false;
+
+        if (GeneralConfig.enableColtanSpawning || GeneralConfig.enable528ColtanSpawn) {
+            int attempts = Math.max(0, Math.max(GeneralConfig.oreColtanFrequency, GeneralConfig.coltanRate));
+            for (int attempt = 0; attempt < attempts; attempt++) {
+                int x = origin.getX() + random.nextInt(16);
+                int z = origin.getZ() + random.nextInt(16);
+                int y = mapLegacyOreY(level, 15 + random.nextInt(40));
+                placedAny |= placeLegacyMinable(level, random, new BlockPos(x, y, z), targets, 4);
+            }
+        }
+
+        if (GeneralConfig.enableColtanDepsoit || GeneralConfig.enableColtanDeposit
+                || GeneralConfig.enable528ColtanDeposit) {
+            for (int attempt = 0; attempt < 2; attempt++) {
+                for (int ring = 1; ring <= 5; ring++) {
+                    int x = origin.getX() + random.nextInt(16);
+                    int z = origin.getZ() + random.nextInt(16);
+                    if (!ColtanDepositUtil.isInsideDepositRing(level.getSeed(), x, z, ring)) {
+                        continue;
+                    }
+                    int y = mapLegacyOreY(level, 15 + random.nextInt(25));
+                    placedAny |= placeLegacyMinable(level, random, new BlockPos(x, y, z), targets, 4);
+                }
+            }
+        }
+        return placedAny;
+    }
+
+    private static List<LegacyOreTarget> coltanOreTargets(RegistryObject<? extends Block> coltan) {
+        List<LegacyOreTarget> targets = new ArrayList<>();
+        targets.add(LegacyOreTarget.rule(STONE_REPLACEABLES, coltan.get().defaultBlockState()));
+        RegistryObject<? extends Block> deepslate = ModBlocks.legacyBlock("deepslate_ore_coltan");
+        if (deepslate != null) {
+            targets.add(LegacyOreTarget.rule(DEEPSLATE_REPLACEABLES, deepslate.get().defaultBlockState()));
+        }
+        return targets;
+    }
+
     private boolean placeGneissOre(FeaturePlaceContext<Configuration> context, GneissOreEntry entry,
                                    RuleTest gneissTarget) {
         RegistryObject<? extends Block> ore = ModBlocks.legacyBlock(entry.blockName());
@@ -985,6 +1036,72 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
 
         for (int x = Math.max(bounds.minX(), centerX - 3); x <= Math.min(bounds.maxX(), centerX + 3); x++) {
             for (int z = Math.max(bounds.minZ(), centerZ - 3); z <= Math.min(bounds.maxZ(), centerZ + 3); z++) {
+                for (int yOffset = 1; yOffset < 7; yOffset++) {
+                    int y = minY + yOffset;
+                    cursor.set(x, y, z);
+                    if (level.isOutsideBuildHeight(cursor)) {
+                        continue;
+                    }
+                    BlockState target = level.getBlockState(cursor);
+                    if ((yOffset < 3 || target.is(Blocks.BEDROCK))
+                            && (target.is(Blocks.BEDROCK) || isDepthReplaceable(target, true))) {
+                        placedAny |= level.setBlock(cursor, depthState, Block.UPDATE_CLIENTS);
+                    }
+                }
+            }
+        }
+        return placedAny;
+    }
+
+    private boolean placeBedrockColtanOres(FeaturePlaceContext<Configuration> context) {
+        RegistryObject<? extends Block> bedrockColtan = ModBlocks.legacyBlock("ore_bedrock_coltan");
+        RegistryObject<? extends Block> depthRock = ModBlocks.legacyBlock("stone_depth");
+        if (bedrockColtan == null || depthRock == null) {
+            return false;
+        }
+
+        WorldGenLevel level = context.level();
+        RandomSource random = context.random();
+        BlockPos origin = context.origin();
+        int centerX = origin.getX() + 8 + random.nextInt(2);
+        int centerZ = origin.getZ() + 8 + random.nextInt(2);
+        boolean inDeposit = ColtanDepositUtil.isInsideDeposit(level.getSeed(), centerX, centerZ);
+        boolean depositEnabled = GeneralConfig.enableBedrockDepsoit && inDeposit;
+        boolean randomEnabled = GeneralConfig.enableBedrockSpawning;
+        if (!depositEnabled && !randomEnabled) {
+            return false;
+        }
+        int frequency = Math.max(1, GeneralConfig.bedrockColtanFrequency);
+        if (random.nextInt(frequency) != 0) {
+            return false;
+        }
+
+        int minY = level.getMinBuildHeight();
+        BlockState oreState = bedrockColtan.get().defaultBlockState();
+        BlockState depthState = depthRock.get().defaultBlockState();
+        ItemStack resource = new ItemStack(ModItems.legacyItem("fragment_coltan").get());
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        boolean placedAny = false;
+        for (int x = centerX - 1; x <= centerX + 1; x++) {
+            for (int z = centerZ - 1; z <= centerZ + 1; z++) {
+                cursor.set(x, minY, z);
+                if (level.isOutsideBuildHeight(cursor) || !level.getBlockState(cursor).is(Blocks.BEDROCK)) {
+                    continue;
+                }
+                if ((x == centerX && z == centerZ) || random.nextBoolean()) {
+                    if (level.setBlock(cursor, oreState, Block.UPDATE_CLIENTS)) {
+                        if (level.getBlockEntity(cursor) instanceof BedrockOreDepositBlockEntity deposit) {
+                            deposit.configure(resource, HbmFluids.NONE, 0, 1, BEDROCK_COLTAN_COLOR,
+                                    random.nextInt(10));
+                        }
+                        placedAny = true;
+                    }
+                }
+            }
+        }
+
+        for (int x = centerX - 3; x <= centerX + 3; x++) {
+            for (int z = centerZ - 3; z <= centerZ + 3; z++) {
                 for (int yOffset = 1; yOffset < 7; yOffset++) {
                     int y = minY + yOffset;
                     cursor.set(x, y, z);

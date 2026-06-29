@@ -128,6 +128,7 @@ import com.hbm.ntm.block.LegacyBasaltOreBlock;
 import com.hbm.ntm.block.LegacyNuclearWasteBlock;
 import com.hbm.ntm.block.LegacyLargePylonBlock;
 import com.hbm.ntm.block.LegacyMediumPylonBlock;
+import com.hbm.ntm.block.LegacyNetherCoalOreBlock;
 import com.hbm.ntm.block.LegacyOreBlock;
 import com.hbm.ntm.block.LegacyOutgasBlock;
 import com.hbm.ntm.block.OldBoilerBlock;
@@ -1112,6 +1113,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> SELLAFIELD_SLAKED = sellafieldSlaked("sellafield_slaked");
     public static final RegistryObject<Block> SELLAFIELD_BEDROCK = sellafieldBedrock("sellafield_bedrock");
     public static final RegistryObject<Block> ORE_BEDROCK = bedrockOreDeposit("ore_bedrock");
+    public static final RegistryObject<Block> ORE_BEDROCK_COLTAN = bedrockOreDeposit("ore_bedrock_coltan");
     public static final RegistryObject<Block> ORE_SELLAFIELD_DIAMOND = sellafieldOre("ore_sellafield_diamond", LegacySellafieldOreBlock.Kind.DIAMOND);
     public static final RegistryObject<Block> ORE_SELLAFIELD_EMERALD = sellafieldOre("ore_sellafield_emerald", LegacySellafieldOreBlock.Kind.EMERALD);
     public static final RegistryObject<Block> ORE_SELLAFIELD_URANIUM_SCORCHED = sellafieldOre("ore_sellafield_uranium_scorched", LegacySellafieldOreBlock.Kind.URANIUM_SCORCHED);
@@ -1679,6 +1681,7 @@ public final class ModBlocks {
             "ore_cinnebar:ore_cinnebar",
             "deepslate_ore_cinnebar:cinnabar_ore_deepslate",
             "ore_coltan:ore_coltan",
+            "deepslate_ore_coltan:deepslate_ore_coltan",
             "ore_oil:ore_oil",
             "ore_oil_empty:ore_oil_empty",
             "ore_oil_sand:ore_oil_sand_alt",
@@ -7451,6 +7454,7 @@ public final class ModBlocks {
                     "ore_sulfur", "deepslate_ore_sulfur", "ore_nether_sulfur", "ore_lignite",
                     "deepslate_ore_lignite", "ore_nether_fire", "ore_cobalt", "deepslate_ore_cobalt",
                     "ore_nether_cobalt", "ore_cinnebar", "deepslate_ore_cinnebar", "ore_coltan",
+                    "deepslate_ore_coltan",
                     "ore_oil", "ore_oil_empty", "ore_oil_sand", "block_trinitite", "block_meteor",
                     "block_meteor_cobble" ->
                     new LegacyOreBlock(name, simpleResourceProperties(name, textureName));
@@ -7474,7 +7478,7 @@ public final class ModBlocks {
             case "block_corium_cobble" ->
                     new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_RADON::get, true, true);
             case "ore_nether_coal" ->
-                    new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName), GAS_MONOXIDE::get, true, false);
+                    new LegacyNetherCoalOreBlock(name, simpleResourceProperties(name, textureName), GAS_MONOXIDE::get, true, false);
             case "ore_asbestos", "deepslate_ore_asbestos", "ore_gneiss_asbestos", "stone_resource_asbestos",
                     "block_asbestos", "deco_asbestos", "brick_asbestos", "tile_lab_broken" ->
                     new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_ASBESTOS::get, true, false, true);

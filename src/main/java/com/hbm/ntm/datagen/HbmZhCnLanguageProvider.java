@@ -1439,6 +1439,10 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.particle_digamma.desc.half_particle", "\u7c92\u5b50\u534a\u8870\u671f\uff1a1.67*10^21 \u5e74");
         add("item.hbm_ntm_rebirth.particle_digamma.desc.half_player", "\u73a9\u5bb6\u534a\u8870\u671f\uff1a%s");
         add("item.hbm_ntm_rebirth.particle_digamma.desc.digamma", "%s mDRX/s");
+        add("item.hbm_ntm_rebirth.cell_antimatter.desc.1", "Warning: Exposure to matter will");
+        add("item.hbm_ntm_rebirth.cell_antimatter.desc.2", "lead to violent annihilation!");
+        add("item.hbm_ntm_rebirth.cell_anti_schrabidium.desc.1", "Warning: Exposure to matter will");
+        add("item.hbm_ntm_rebirth.cell_anti_schrabidium.desc.2", "create a f\u00f3lkvangr field!");
         add("item.hbm_ntm_rebirth.pellet_antimatter.desc.1", "\u975e\u5e38\u91cd\u7684\u53cd\u7269\u8d28\u56e2\u3002");
         add("item.hbm_ntm_rebirth.pellet_antimatter.desc.2", "\u53ef\u4ee5\u6d88\u9664\u9ed1\u6d1e\u3002");
         add("item.hbm_ntm_rebirth.trait.drop", "[\u4e22\u51fa\u65f6\u4f1a\u6389\u843d]");
@@ -2475,6 +2479,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.nugget_les", "\u4f4e\u6d53\u5ea6Sa326\u71c3\u6599\u7c92");
         add("item.hbm_ntm_rebirth.billet_les", "\u4f4e\u6d53\u7f29\u5ea6Sa326\u71c3\u6599\u576f\u6599");
         add("item.hbm_ntm_rebirth.dust", "\u7070\u5c18");
+        add("item.hbm_ntm_rebirth.coltan_tool", "\u94b6\u94bd\u94c1\u77ff\u6307\u9488");
         add("item.hbm_ntm_rebirth.fragment_coltan", "\u94b6\u94bd\u94c1\u77ff\u788e\u7247");
         add("item.hbm_ntm_rebirth.powder_coltan", "\u7eaf\u94bd\u94c1\u77ff");
         add("item.hbm_ntm_rebirth.gem_tantalium", "\u94bd\u6676\u4f53");
@@ -3253,6 +3258,8 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.boy_shielding", "\u4e2d\u5b50\u5c4f\u853d\u7f69");
         add("item.hbm_ntm_rebirth.boy_target", "\u6b21\u4e34\u754c\u94c0-235\u6807\u9776");
         add("item.hbm_ntm_rebirth.cell_balefire", "\u6c14\u6001\u91ce\u706b\u5355\u5143");
+        add("item.hbm_ntm_rebirth.cell_antimatter", "\u53cd\u7269\u8d28\u5355\u5143");
+        add("item.hbm_ntm_rebirth.cell_anti_schrabidium", "\u53cdSa326\u5355\u5143");
         add("item.hbm_ntm_rebirth.cell_empty", "\u7a7a\u5355\u5143");
         add("item.hbm_ntm_rebirth.cell_sas3", "\u4e09\u786b\u5316Sa\u5355\u5143");
         add("item.hbm_ntm_rebirth.cell_tritium", "\u6c1a\u5355\u5143");

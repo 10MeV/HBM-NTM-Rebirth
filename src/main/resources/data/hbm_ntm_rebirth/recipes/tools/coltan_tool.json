@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "pattern": [
+    "ACA",
+    "CXC",
+    "ACA"
+  ],
+  "key": {
+    "A": { "tag": "forge:ingots/copper" },
+    "C": { "tag": "forge:crystals/cinnabar" },
+    "X": { "item": "minecraft:compass" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:coltan_tool"
+  }
+}
