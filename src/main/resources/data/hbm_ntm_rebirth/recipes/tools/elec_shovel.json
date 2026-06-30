@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:battery_lead"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "R": {
+      "tag": "forge:bolts/dura_steel"
+    }
+  },
+  "pattern": [
+    "  P",
+    "RRM",
+    "  B"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:elec_shovel"
+  },
+  "show_notification": true
+}

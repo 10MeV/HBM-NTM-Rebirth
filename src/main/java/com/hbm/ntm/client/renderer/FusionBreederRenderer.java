@@ -29,6 +29,11 @@ public class FusionBreederRenderer implements BlockEntityRenderer<FusionBreederB
     @Override
     public void render(FusionBreederBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
+
         BlockState state = blockEntity.getBlockState();
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();

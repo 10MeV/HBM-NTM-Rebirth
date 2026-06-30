@@ -1,0 +1,10 @@
+# Material for Forge OBJ loader. Texture is supplied by the model JSON.
+newmtl Material.001
+Ns 32
+Ni 1.5
+d 1
+illum 2
+Kd 0.8 0.8 0.8
+Ka 0.0 0.0 0.0
+Ks 0.2 0.2 0.2
+map_Kd #default

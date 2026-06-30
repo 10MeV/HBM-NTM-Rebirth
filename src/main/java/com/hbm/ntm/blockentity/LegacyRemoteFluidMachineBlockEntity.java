@@ -96,6 +96,7 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, blockEntity);
         boolean changed = blockEntity.tickLegacyMachine(level, pos, state);
         blockEntity.refreshFluidPorts();
+        changed |= blockEntity.provideSendingTanksToPorts(level);
         int networkRange = blockEntity.legacyNetworkPackRange();
         if (networkRange > 0) {
             blockEntity.networkPackNT(networkRange);
@@ -108,6 +109,23 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
 
     protected boolean tickLegacyMachine(Level level, BlockPos pos, BlockState state) {
         return false;
+    }
+
+    protected boolean shouldProvideSendingTanksToPorts(Level level) {
+        return true;
+    }
+
+    protected boolean provideSendingTanksToPorts(Level level) {
+        if (!shouldProvideSendingTanksToPorts(level)) {
+            return false;
+        }
+        boolean touched = false;
+        for (HbmFluidTank tank : sendingTanks) {
+            if (tank.getFill() > 0 && tryProvideFluidToPorts(tank.getTankType(), tank.getPressure(), this) > 0) {
+                touched = true;
+            }
+        }
+        return touched;
     }
 
     protected int legacyNetworkPackRange() {
@@ -186,6 +204,11 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return sendingTanks;
+    }
+
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return null;
     }
 
     @Override

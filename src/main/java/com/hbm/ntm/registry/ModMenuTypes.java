@@ -78,6 +78,7 @@ import com.hbm.ntm.menu.OilDrillMenu;
 import com.hbm.ntm.menu.OilburnerMenu;
 import com.hbm.ntm.menu.OreSlopperMenu;
 import com.hbm.ntm.menu.ParticleAcceleratorMenu;
+import com.hbm.ntm.menu.PneumaticTubeMenu;
 import com.hbm.ntm.menu.PWRMenu;
 import com.hbm.ntm.menu.PyroOvenMenu;
 import com.hbm.ntm.menu.PrecassMenu;
@@ -409,6 +410,9 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<FluidPumpMenu>> FLUID_PUMP =
             MENUS.register("fluid_pump", () -> IForgeMenuType.create(FluidPumpMenu::new));
+
+    public static final RegistryObject<MenuType<PneumaticTubeMenu>> PNEUMATIC_TUBE =
+            MENUS.register("pneumatic_tube", () -> IForgeMenuType.create(PneumaticTubeMenu::new));
 
     public static final RegistryObject<MenuType<RemoteFluidMachineMenu>> REMOTE_FLUID_MACHINE =
             MENUS.register("remote_fluid_machine", () -> IForgeMenuType.create(RemoteFluidMachineMenu::new));

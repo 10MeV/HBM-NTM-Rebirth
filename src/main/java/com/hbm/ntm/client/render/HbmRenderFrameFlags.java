@@ -24,15 +24,23 @@ public final class HbmRenderFrameFlags {
         boolean irisExtendedShaderPathEnabled = HbmClientConfig.experimentalIrisExtendedShaderPath()
                 && irisExtendedShaderAvailable;
         boolean safeObjStaticBatching = HbmClientConfig.safeObjStaticBatching();
+        boolean vboGeometryEnabled = HbmShaderCompatibilityDetector.useVboGeometry();
         boolean safeGpuBackend = safeObjStaticBatching && !shaderActive;
         boolean experimentalGpuBackend = HbmClientConfig.experimentalGpuBackend();
-        boolean gpuBackendRequested = experimentalGpuBackend || safeGpuBackend;
+        boolean experimentalInstancing = HbmClientConfig.experimentalInstancing();
+        boolean gpuBackendRequested = experimentalGpuBackend || safeGpuBackend || experimentalInstancing;
         boolean gpuBackendAllowed = gpuBackendRequested
                 && (!shaderActive || !HbmClientConfig.disableGpuBackendWithShaders());
         boolean instancingShaderReady = HbmOptimizedRenderShaders.instancingShaderReady();
-        boolean instancingEnabled = HbmClientConfig.experimentalInstancing() && gpuBackendAllowed
-                && instancingShaderReady;
-        boolean mdiEnabled = HbmClientConfig.experimentalMdi() && instancingEnabled;
+        boolean instancingGlReady = HbmInstancedGlCompat.supportsDrawArraysInstancing();
+        boolean safeInstancing = safeGpuBackend;
+        boolean instancingRequested = experimentalInstancing || safeInstancing;
+        boolean instancingEnabled = instancingRequested && gpuBackendAllowed
+                && instancingShaderReady && instancingGlReady;
+        int maxInstancedInstancesPerDraw = HbmClientConfig.maxInstancedInstancesPerDraw();
+        boolean instanceVboOrphanBeforeUpload = HbmClientConfig.instanceVboOrphanBeforeUpload();
+        boolean mdiRequested = HbmClientConfig.experimentalMdi();
+        boolean mdiEnabled = mdiRequested && instancingEnabled;
         boolean occlusionCullingEnabled = HbmClientConfig.experimentalOcclusionCulling();
         Snapshot snapshot = new Snapshot(
                 FRAME_GENERATION.incrementAndGet(),
@@ -45,10 +53,18 @@ public final class HbmRenderFrameFlags {
                 HbmClientConfig.coolingTowerParticles(),
                 gpuBackendRequested,
                 safeObjStaticBatching,
+                vboGeometryEnabled,
+                experimentalInstancing,
+                safeInstancing,
+                instancingRequested,
                 instancingEnabled,
+                maxInstancedInstancesPerDraw,
+                instanceVboOrphanBeforeUpload,
+                mdiRequested,
                 mdiEnabled,
                 occlusionCullingEnabled,
                 instancingShaderReady,
+                instancingGlReady,
                 shaderActive,
                 gpuBackendAllowed,
                 HbmShaderCompatibilityDetector.isRenderingShadowPass(),
@@ -78,10 +94,18 @@ public final class HbmRenderFrameFlags {
             boolean coolingTowerParticles,
             boolean experimentalGpuBackendEnabled,
             boolean safeObjStaticBatchingEnabled,
+            boolean vboGeometryEnabled,
+            boolean experimentalInstancingRequested,
+            boolean safeInstancingRequested,
+            boolean instancingRequested,
             boolean instancingEnabled,
+            int maxInstancedInstancesPerDraw,
+            boolean instanceVboOrphanBeforeUpload,
+            boolean mdiRequested,
             boolean mdiEnabled,
             boolean occlusionCullingEnabled,
             boolean instancingShaderReady,
+            boolean instancingGlReady,
             boolean shaderPackDetected,
             boolean gpuBackendAllowed,
             boolean shaderShadowPass,
@@ -90,7 +114,10 @@ public final class HbmRenderFrameFlags {
             boolean irisExtendedShaderPathEnabled) {
         private static Snapshot initial() {
             return new Snapshot(0L, 0.0F, 0, false, false, true, false, true,
-                    false, false, false, false, false, false, false, false, false, 0L, false, false);
+                    false, false, true, false, false, false, false,
+                    HbmClientConfig.maxInstancedInstancesPerDraw(),
+                    HbmClientConfig.instanceVboOrphanBeforeUpload(), false, false, false, false, false, false, false,
+                    false, 0L, false, false);
         }
     }
 }

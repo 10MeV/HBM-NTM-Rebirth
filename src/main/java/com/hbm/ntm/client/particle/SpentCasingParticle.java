@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.particle;
 
 import com.hbm.ntm.HbmNtm;
-import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.sound.LegacySoundPlayer;
@@ -273,6 +272,8 @@ public class SpentCasingParticle extends Particle {
         float timeAlpha = 1.0F - this.age / (float) Math.max(1, this.maxSmokeGen);
         PoseStack poseStack = new PoseStack();
         MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+        VertexConsumer smokeConsumer = buffer.getBuffer(LegacyUntexturedQuadRenderer.translucentNoCullType());
+        PoseStack.Pose pose = poseStack.last();
         for (int i = 0; i + 1 < this.smokeNodes.size(); i++) {
             SmokeNode node = this.smokeNodes.get(i);
             SmokeNode past = this.smokeNodes.get(i + 1);
@@ -284,14 +285,14 @@ public class SpentCasingParticle extends Particle {
             double pastX = originX + past.x;
             double pastY = originY + past.y;
             double pastZ = originZ + past.z;
-            LegacyUntexturedQuadRenderer.quad(poseStack, buffer, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
+            LegacyUntexturedQuadRenderer.quad(smokeConsumer, pose,
                     nodeX, nodeY, nodeZ,
                     nodeX + offX, nodeY, nodeZ + offZ,
                     pastX + offX, pastY, pastZ + offZ,
                     pastX, pastY, pastZ,
                     0xFFFFFF, nodeAlpha, 0, 0, pastAlpha);
 
-            LegacyUntexturedQuadRenderer.quad(poseStack, buffer, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
+            LegacyUntexturedQuadRenderer.quad(smokeConsumer, pose,
                     nodeX, nodeY, nodeZ,
                     nodeX - offX, nodeY, nodeZ - offZ,
                     pastX - offX, pastY, pastZ - offZ,

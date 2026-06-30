@@ -37,6 +37,10 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
     @Override
     public void render(T blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         LegacyMachineDefinition definition = state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block
                 ? block.definition()
@@ -52,6 +56,11 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
+        if (blockEntity instanceof BigAssTankBlockEntity bigAssTank && bigAssTank.isTilted()) {
+            poseStack.translate(0.0D, -1.0D, 0.0D);
+            poseStack.mulPose(Axis.ZP.rotationDegrees(10.0F));
+            poseStack.mulPose(Axis.YP.rotationDegrees(5.0F));
+        }
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
         if (definition != null) {
             Vec3 translation = definition.modelTranslation(state);

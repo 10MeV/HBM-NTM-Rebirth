@@ -188,6 +188,7 @@
                    "hbm_ntm_rebirth:machine_dineutronium_battery",
                    "hbm_ntm_rebirth:machine_battery_redd",
                    "hbm_ntm_rebirth:machine_battery_socket",
+                   "hbm_ntm_rebirth:hev_battery",
                    "hbm_ntm_rebirth:crate_iron",
                    "hbm_ntm_rebirth:crate_steel",
                    "hbm_ntm_rebirth:crate_desh",

@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": {
+    "fluid": "hbm_ntm_rebirth:chlorocalcite_solution",
+    "amount": 500
+  },
+  "input1": {
+    "fluid": "hbm_ntm_rebirth:water",
+    "amount": 250
+  },
+  "input2": {
+    "fluid": "hbm_ntm_rebirth:nitric_acid",
+    "amount": 250
+  },
+  "solid_input": {
+    "ingredient": {
+      "tag": "forge:dusts/chlorocalcite"
+    },
+    "count": 1,
+    "legacy_ore": "dustChlorocalcite"
+  },
+  "duration": 50
+}

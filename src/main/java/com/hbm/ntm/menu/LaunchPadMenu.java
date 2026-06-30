@@ -1,7 +1,10 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
+import com.hbm.ntm.api.item.DesignatorItem;
+import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.item.missile.MissileItem;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -9,15 +12,15 @@ import com.hbm.ntm.util.HbmMenuDataSlots;
 import java.util.List;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.items.SlotItemHandler;
 
 public class LaunchPadMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = LaunchPadBlockEntity.SLOT_COUNT;
@@ -42,25 +45,17 @@ public class LaunchPadMenu extends AbstractContainerMenu {
         super(ModMenuTypes.LAUNCH_PAD.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), LaunchPadBlockEntity.SLOT_MISSILE, 26, 36) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return blockEntity.isMissileValid(stack);
-            }
-        });
-        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                LaunchPadBlockEntity.SLOT_MISSILE, 26, 36));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 LaunchPadBlockEntity.SLOT_DESIGNATOR, 26, 72));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), LaunchPadBlockEntity.SLOT_BATTERY, 107, 90) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
-            }
-        });
-        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                LaunchPadBlockEntity.SLOT_BATTERY, 107, 90));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 LaunchPadBlockEntity.SLOT_FUEL_INPUT, 125, 90));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
                 LaunchPadBlockEntity.SLOT_FUEL_OUTPUT, 125, 108));
-        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 LaunchPadBlockEntity.SLOT_OXIDIZER_INPUT, 143, 90));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
                 LaunchPadBlockEntity.SLOT_OXIDIZER_OUTPUT, 143, 108));
@@ -123,14 +118,56 @@ public class LaunchPadMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        ItemStack moved = HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                LaunchPadBlockEntity.SLOT_MISSILE, LaunchPadBlockEntity.SLOT_MISSILE + 1,
-                LaunchPadBlockEntity.SLOT_DESIGNATOR, LaunchPadBlockEntity.SLOT_DESIGNATOR + 1,
-                LaunchPadBlockEntity.SLOT_BATTERY, LaunchPadBlockEntity.SLOT_BATTERY + 1,
-                LaunchPadBlockEntity.SLOT_FUEL_INPUT, LaunchPadBlockEntity.SLOT_FUEL_INPUT + 1,
-                LaunchPadBlockEntity.SLOT_OXIDIZER_INPUT, LaunchPadBlockEntity.SLOT_OXIDIZER_INPUT + 1);
-        return moved;
+        if (index < 0 || index >= slots.size()) {
+            return ItemStack.EMPTY;
+        }
+        Slot slot = slots.get(index);
+        if (slot == null || !slot.hasItem()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack stack = slot.getItem();
+        ItemStack result = stack.copy();
+        boolean moved;
+        if (index < MACHINE_SLOT_COUNT) {
+            moved = moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_SLOT_END, true);
+        } else if (HbmInventoryMenuHelper.isLegacyBatteryItem(result)) {
+            moved = moveItemStackTo(stack, LaunchPadBlockEntity.SLOT_BATTERY,
+                    LaunchPadBlockEntity.SLOT_BATTERY + 1, false);
+        } else if (blockEntity.isMissileValid(result)) {
+            moved = moveItemStackTo(stack, LaunchPadBlockEntity.SLOT_MISSILE,
+                    LaunchPadBlockEntity.SLOT_MISSILE + 1, false);
+        } else if (result.is(ModItems.FLUID_BARREL_INFINITE.get())) {
+            moved = moveItemStackTo(stack, LaunchPadBlockEntity.SLOT_FUEL_INPUT,
+                    LaunchPadBlockEntity.SLOT_FUEL_INPUT + 1, false)
+                    || moveItemStackTo(stack, LaunchPadBlockEntity.SLOT_OXIDIZER_INPUT,
+                            LaunchPadBlockEntity.SLOT_OXIDIZER_INPUT + 1, false);
+        } else if (HbmFluidContainerRegistry.getFluidContent(result, blockEntity.fuelTank().getTankType()) > 0) {
+            moved = moveItemStackTo(stack, LaunchPadBlockEntity.SLOT_FUEL_INPUT,
+                    LaunchPadBlockEntity.SLOT_FUEL_INPUT + 1, false);
+        } else if (HbmFluidContainerRegistry.getFluidContent(result, blockEntity.oxidizerTank().getTankType()) > 0) {
+            moved = moveItemStackTo(stack, LaunchPadBlockEntity.SLOT_OXIDIZER_INPUT,
+                    LaunchPadBlockEntity.SLOT_OXIDIZER_INPUT + 1, false);
+        } else if (isDesignatorStack(result)) {
+            moved = moveItemStackTo(stack, LaunchPadBlockEntity.SLOT_DESIGNATOR,
+                    LaunchPadBlockEntity.SLOT_DESIGNATOR + 1, false);
+        } else {
+            moved = false;
+        }
+        if (!moved) {
+            return ItemStack.EMPTY;
+        }
+
+        HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+        return result;
+    }
+
+    private static boolean isDesignatorStack(ItemStack stack) {
+        if (stack.getItem() instanceof DesignatorItem) {
+            return true;
+        }
+        CompoundTag tag = stack.getTag();
+        return tag != null && tag.contains("xCoord") && tag.contains("zCoord");
     }
 
     public ItemStack getMissileStack() {

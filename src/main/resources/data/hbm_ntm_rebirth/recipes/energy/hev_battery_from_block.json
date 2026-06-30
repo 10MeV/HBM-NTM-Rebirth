@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:hev_battery_block"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:hev_battery"
+  },
+  "show_notification": true
+}

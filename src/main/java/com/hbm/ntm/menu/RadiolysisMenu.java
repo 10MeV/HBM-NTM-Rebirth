@@ -1,15 +1,12 @@
 package com.hbm.ntm.menu;
 
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.RadiolysisBlockEntity;
-import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
-import com.hbm.ntm.util.RtgPelletRuntime;
 import java.util.List;
-import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -18,7 +15,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 
 public class RadiolysisMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = RadiolysisBlockEntity.SLOT_COUNT;
@@ -111,27 +107,9 @@ public class RadiolysisMenu extends AbstractContainerMenu {
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END);
         }
         ItemStack stack = slots.get(index).getItem();
-        if (stack.getItem() instanceof HbmBatteryItem
-                || stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent()) {
-            return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                    MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                    RadiolysisBlockEntity.SLOT_BATTERY, RadiolysisBlockEntity.SLOT_BATTERY + 1);
-        }
-        if (rtgHeat(stack) > 0) {
-            return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                    MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                    RadiolysisBlockEntity.SLOT_RTG_START, RadiolysisBlockEntity.SLOT_RTG_END + 1);
-        }
-        if (stack.getItem() instanceof IFluidIdentifierItem) {
-            return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                    MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                    RadiolysisBlockEntity.SLOT_FLUID_ID_INPUT,
-                    RadiolysisBlockEntity.SLOT_FLUID_ID_INPUT + 1);
-        }
         return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                 MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                RadiolysisBlockEntity.SLOT_STERILIZE_INPUT,
-                RadiolysisBlockEntity.SLOT_STERILIZE_INPUT + 1);
+                RadiolysisBlockEntity.SLOT_RTG_START, MACHINE_SLOT_COUNT);
     }
 
     private void addDataSlots() {
@@ -142,10 +120,6 @@ public class RadiolysisMenu extends AbstractContainerMenu {
         inputTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getInputTank());
         outputTank1 = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getOutputTank1());
         outputTank2 = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getOutputTank2());
-    }
-
-    private static int rtgHeat(ItemStack stack) {
-        return RtgPelletRuntime.heat(stack);
     }
 
     private static RadiolysisBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

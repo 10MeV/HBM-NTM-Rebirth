@@ -1,7 +1,5 @@
 package com.hbm.ntm.item;
 
-import com.hbm.ntm.client.renderer.GeigerItemRenderer;
-import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
 import java.util.function.Consumer;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
@@ -14,6 +12,6 @@ public class GeigerBlockItem extends BlockItem {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        LegacyItemRendererBridge.accept(consumer, () -> GeigerItemRenderer.INSTANCE);
+        ClientItemRendererBridge.accept("acceptGeiger", consumer);
     }
 }

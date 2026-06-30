@@ -326,6 +326,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("dust", "dusts", "sulfur", "Sulfur");
         addLegacyMaterialAliases("dust", "dusts", "niter", "Saltpeter", "Niter");
         addLegacyMaterialAliases("dust", "dusts", "fluorite", "Fluorite");
+        addLegacyMaterialAliases("dust", "dusts", "powder_chlorocalcite", "Chlorocalcite");
 
         addLegacyMaterialAliases("plate", "plates", "plate_iron", "Iron");
         addLegacyMaterialAliases("plate", "plates", "plate_gold", "Gold");

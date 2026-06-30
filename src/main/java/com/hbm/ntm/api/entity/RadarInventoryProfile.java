@@ -17,10 +17,10 @@ public final class RadarInventoryProfile {
     }
 
     public static boolean isValidStack(int slot, ItemStack stack) {
-        return (slot == 0 && HbmInventoryMenuHelper.isBatteryLike(stack))
+        return (slot == 0 && HbmInventoryMenuHelper.isLegacyBatteryItem(stack))
                 || (slot >= 0 && slot < COMMAND_LINK_SLOT_COUNT && isCommandLinkItem(stack))
                 || (slot == SLOT_LINKER && isRadarLinker(stack))
-                || (slot == SLOT_BATTERY && HbmInventoryMenuHelper.isBatteryLike(stack));
+                || (slot == SLOT_BATTERY && HbmInventoryMenuHelper.isLegacyBatteryItem(stack));
     }
 
     public static boolean isCommandLinkItem(ItemStack stack) {
@@ -45,7 +45,7 @@ public final class RadarInventoryProfile {
         if (stack != null && stack.is(ModItems.SAT_RELAY.get())) {
             return QuickMovePlan.toCommandLinks();
         }
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return QuickMovePlan.toBattery();
         }
         return QuickMovePlan.none();

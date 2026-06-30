@@ -2,14 +2,13 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.CombustionEngineBlockEntity;
-import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.item.PistonSetItem;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
 import java.util.List;
-import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -18,7 +17,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 
 public class CombustionEngineMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = 5;
@@ -45,7 +43,7 @@ public class CombustionEngineMenu extends AbstractContainerMenu {
                 CombustionEngineBlockEntity.SLOT_FLUID_INPUT, 17, 17));
         addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
                 CombustionEngineBlockEntity.SLOT_FLUID_OUTPUT, 17, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 CombustionEngineBlockEntity.SLOT_PISTON, 88, 71));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
                 CombustionEngineBlockEntity.SLOT_ENERGY_OUTPUT, 143, 71));
@@ -116,7 +114,7 @@ public class CombustionEngineMenu extends AbstractContainerMenu {
         if (stack.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        if (stack.getItem() instanceof HbmBatteryItem || stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent()) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
                     CombustionEngineBlockEntity.SLOT_ENERGY_OUTPUT,

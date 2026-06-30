@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:fusion_core"
+    },
+    {
+      "item": "hbm_ntm_rebirth:fuse"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:energy_core"
+  }
+}

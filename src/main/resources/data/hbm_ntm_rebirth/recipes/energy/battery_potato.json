@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:shapeless_nbt",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "minecraft:potato"
+    },
+    {
+      "item": "hbm_ntm_rebirth:wire_fine_aluminium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:wire_fine_copper"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:battery_potato",
+    "nbt": "{charge:1000L}"
+  }
+}

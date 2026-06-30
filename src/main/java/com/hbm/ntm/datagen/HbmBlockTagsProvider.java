@@ -1,7 +1,9 @@
 package com.hbm.ntm.datagen;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
@@ -185,7 +187,41 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 ModBlocks.GLASS_BORON.get(), ModBlocks.GLASS_LEAD.get(), ModBlocks.GLASS_URANIUM.get(),
                 ModBlocks.GLASS_POLONIUM.get(), ModBlocks.GLASS_QUARTZ.get(), ModBlocks.GLASS_TRINITITE.get(),
                 ModBlocks.REINFORCED_LAMINATE.get());
-        tag(forgeBlockTag("glass_panes")).add(ModBlocks.REINFORCED_LAMINATE_PANE.get());
+        tag(forgeBlockTag("glass_panes")).add(Blocks.GLASS_PANE, Blocks.WHITE_STAINED_GLASS_PANE,
+                Blocks.ORANGE_STAINED_GLASS_PANE, Blocks.MAGENTA_STAINED_GLASS_PANE,
+                Blocks.LIGHT_BLUE_STAINED_GLASS_PANE, Blocks.YELLOW_STAINED_GLASS_PANE,
+                Blocks.LIME_STAINED_GLASS_PANE, Blocks.PINK_STAINED_GLASS_PANE,
+                Blocks.GRAY_STAINED_GLASS_PANE, Blocks.LIGHT_GRAY_STAINED_GLASS_PANE,
+                Blocks.CYAN_STAINED_GLASS_PANE, Blocks.PURPLE_STAINED_GLASS_PANE,
+                Blocks.BLUE_STAINED_GLASS_PANE, Blocks.BROWN_STAINED_GLASS_PANE,
+                Blocks.GREEN_STAINED_GLASS_PANE, Blocks.RED_STAINED_GLASS_PANE,
+                Blocks.BLACK_STAINED_GLASS_PANE, ModBlocks.REINFORCED_LAMINATE_PANE.get());
+        tag(hbmBlockTag("non_occluding"))
+                .addTag(forgeBlockTag("glass"))
+                .addTag(forgeBlockTag("glass_panes"))
+                .addTag(BlockTags.FENCES)
+                .addTag(BlockTags.FENCE_GATES)
+                .addTag(BlockTags.WALLS)
+                .addTag(BlockTags.DOORS)
+                .addTag(BlockTags.TRAPDOORS)
+                .addTag(BlockTags.BUTTONS)
+                .addTag(BlockTags.PRESSURE_PLATES)
+                .addTag(BlockTags.RAILS)
+                .addTag(BlockTags.STAIRS)
+                .addTag(BlockTags.SLABS)
+                .addTag(BlockTags.CORAL_PLANTS)
+                .addTag(BlockTags.LEAVES)
+                .addTag(BlockTags.SAPLINGS)
+                .addTag(BlockTags.FLOWERS)
+                .addTag(BlockTags.SIGNS)
+                .addTag(BlockTags.BANNERS)
+                .addTag(BlockTags.CANDLES)
+                .addTag(BlockTags.CLIMBABLE)
+                .add(Blocks.IRON_BARS, Blocks.CHAIN, Blocks.LANTERN, Blocks.SOUL_LANTERN,
+                        Blocks.TORCH, Blocks.SOUL_TORCH, Blocks.REDSTONE_TORCH, Blocks.BREWING_STAND,
+                        Blocks.ENCHANTING_TABLE, Blocks.END_ROD, Blocks.LIGHTNING_ROD, Blocks.HOPPER,
+                        Blocks.COBWEB, Blocks.SCAFFOLDING, Blocks.LEVER, Blocks.TRIPWIRE,
+                        Blocks.TRIPWIRE_HOOK, Blocks.CAMPFIRE);
 
         addLegacyForgeOreTag("uranium", "ore_uranium", "deepslate_ore_uranium", "ore_uranium_scorched", "ore_nether_uranium", "ore_nether_uranium_scorched", "ore_gneiss_uranium", "ore_gneiss_uranium_scorched");
         addLegacyForgeOreTag("thorium", "ore_thorium", "deepslate_ore_thorium");
@@ -246,5 +282,9 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
 
     static TagKey<Block> forgeBlockTag(String path) {
         return BlockTags.create(new ResourceLocation("forge", path));
+    }
+
+    private static TagKey<Block> hbmBlockTag(String path) {
+        return TagKey.create(Registries.BLOCK, new ResourceLocation(HbmNtm.MOD_ID, path));
     }
 }

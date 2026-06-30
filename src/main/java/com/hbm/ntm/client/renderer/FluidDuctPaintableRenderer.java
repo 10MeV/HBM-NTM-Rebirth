@@ -28,7 +28,7 @@ public class FluidDuctPaintableRenderer<T extends BlockEntity & PaintableDuctBlo
 
     @Override
     public int getViewDistance() {
-        return 96;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     @Override

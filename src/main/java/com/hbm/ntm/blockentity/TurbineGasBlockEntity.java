@@ -122,6 +122,7 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     private int instantPowerOutput;
     private double waterToBoil;
     private double fuelToConsume;
+    private long powerBeforeNet;
     private int rpmLast;
     private int tempLast;
     private Object audioLoop;
@@ -159,6 +160,7 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
         int oldState = turbine.state;
         int oldSlider = turbine.sliderPos;
         boolean oldAuto = turbine.autoMode;
+        long oldPowerBeforeNet = turbine.powerBeforeNet;
 
         turbine.waterToBoil = 0.0D;
         turbine.throttle = turbine.sliderPos * 100 / 60;
@@ -181,6 +183,7 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
             }
         }
 
+        turbine.powerBeforeNet = Math.min(turbine.energy.getPower(), MAX_POWER);
         HbmEnergyUtil.chargeItemFromStorage(turbine.items.getStackInSlot(SLOT_BATTERY),
                 turbine.energy, turbine.energy.getProviderSpeed());
         turbine.tryProvideEnergyToPorts();
@@ -197,7 +200,8 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldTemp != turbine.temp
                 || oldState != turbine.state
                 || oldSlider != turbine.sliderPos
-                || oldAuto != turbine.autoMode;
+                || oldAuto != turbine.autoMode
+                || oldPowerBeforeNet != turbine.powerBeforeNet;
         turbine.networkPackNT(150);
         if (changed) {
             turbine.setChanged();
@@ -464,6 +468,10 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
         return energy.getPower();
     }
 
+    public long getClientDisplayPower() {
+        return powerBeforeNet;
+    }
+
     public long getMaxPower() {
         return energy.getMaxPower();
     }
@@ -595,6 +603,11 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of(steamTank);
+    }
+
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return null;
     }
 
     @Override
@@ -804,6 +817,7 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
         instantPowerOutput = tag.contains("instPwr") ? tag.getInt("instPwr") : tag.getInt("instpwr");
         counter = tag.getInt("counter");
         fuelToConsume = tag.getDouble("fuelToConsume");
+        powerBeforeNet = Math.min(energy.getPower(), MAX_POWER);
         normalizeTankTypes();
     }
 
@@ -830,7 +844,7 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = new CompoundTag();
-        tag.putLong("power", energy.getPower());
+        tag.putLong("power", powerBeforeNet);
         tag.putInt("rpm", rpm);
         tag.putInt("temperature", temp);
         tag.putInt("state", state);
@@ -852,7 +866,8 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
         if (tag.contains("power")) {
-            energy.setPower(tag.getLong("power"));
+            powerBeforeNet = tag.getLong("power");
+            energy.setPower(powerBeforeNet);
         }
         rpm = tag.getInt("rpm");
         temp = tag.contains("temperature") ? tag.getInt("temperature") : 20;

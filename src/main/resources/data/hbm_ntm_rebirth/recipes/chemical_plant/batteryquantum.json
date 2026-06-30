@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 100,
+  "input_fluids": [
+    { "fluid": "hbm_ntm_rebirth:perfluoromethyl_cold", "amount": 8000 }
+  ],
+  "input_items": [
+    { "count": 24, "ingredient": { "tag": "forge:dense_wires/bscco" } },
+    { "count": 32, "ingredient": { "item": "hbm_ntm_rebirth:pellet_charged" } },
+    { "count": 16, "ingredient": { "item": "hbm_ntm_rebirth:ingot_cft" } }
+  ],
+  "internal_name": "chem.batteryquantum",
+  "output_fluids": [
+    { "fluid": "hbm_ntm_rebirth:perfluoromethyl", "amount": 8000 }
+  ],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:battery_quantum" }
+  ],
+  "pools": [],
+  "power": 100000,
+  "source_order": 32
+}

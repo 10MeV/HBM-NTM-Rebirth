@@ -91,7 +91,8 @@ public class FluidTankMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity,
+                HbmInventoryMenuHelper.LEGACY_MACHINE_USE_DISTANCE_SQR);
     }
 
     @Override

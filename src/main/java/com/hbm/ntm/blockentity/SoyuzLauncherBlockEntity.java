@@ -46,7 +46,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +94,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
                 case SLOT_DESIGNATOR -> stack.getItem() instanceof DesignatorItem || hasLegacyDesignatorCoords(stack);
                 case SLOT_SATELLITE -> Satellite.getTypeFromStack(stack).isPresent();
                 case SLOT_ORBITAL -> stack.is(ModItems.MISSILE_SOYUZ_LANDER.get());
-                case SLOT_BATTERY -> stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 default -> true;
             };
         }

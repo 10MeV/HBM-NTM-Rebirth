@@ -35,6 +35,7 @@ import com.hbm.ntm.client.particle.TownAuraParticle;
 import com.hbm.ntm.client.render.HbmBlackHoleEffects;
 import com.hbm.ntm.client.render.HbmOptimizedRenderShaders;
 import com.hbm.ntm.client.render.HbmRenderEffects;
+import com.hbm.ntm.client.render.shader.HbmIrisExtendedShaderAccess;
 import com.hbm.ntm.client.particle.RocketFlameParticle;
 import com.hbm.ntm.client.renderer.AssemblyFactoryRenderer;
 import com.hbm.ntm.client.renderer.AssemblyMachineRenderer;
@@ -221,6 +222,7 @@ import com.hbm.ntm.client.screen.ForceFieldScreen;
 import com.hbm.ntm.client.screen.FunnelScreen;
 import com.hbm.ntm.client.screen.FluidTankScreen;
 import com.hbm.ntm.client.screen.FluidPumpScreen;
+import com.hbm.ntm.client.screen.PneumaticTubeScreen;
 import com.hbm.ntm.client.renderer.FoundryRenderer;
 import com.hbm.ntm.client.screen.FusionBreederScreen;
 import com.hbm.ntm.client.screen.FusionKlystronScreen;
@@ -457,6 +459,7 @@ public final class ClientModEvents {
             MenuScreens.register(ModMenuTypes.HEATER_HEATEX.get(), HeaterHeatexScreen::new);
             MenuScreens.register(ModMenuTypes.FLUID_TANK.get(), FluidTankScreen::new);
             MenuScreens.register(ModMenuTypes.FLUID_PUMP.get(), FluidPumpScreen::new);
+            MenuScreens.register(ModMenuTypes.PNEUMATIC_TUBE.get(), PneumaticTubeScreen::new);
             MenuScreens.register(ModMenuTypes.REMOTE_FLUID_MACHINE.get(), RemoteFluidMachineScreen::new);
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY.get(), MachineBatteryScreen::new);
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY_SOCKET.get(), MachineBatterySocketScreen::new);
@@ -841,6 +844,9 @@ public final class ClientModEvents {
                 ModBlocks.ORE_SELLAFIELD_DIAMOND.get().asItem(), ModBlocks.ORE_SELLAFIELD_EMERALD.get().asItem(),
                 ModBlocks.ORE_SELLAFIELD_URANIUM_SCORCHED.get().asItem(), ModBlocks.ORE_SELLAFIELD_SCHRABIDIUM.get().asItem(),
                 ModBlocks.ORE_SELLAFIELD_RADGEM.get().asItem());
+        event.register((stack, tintIndex) -> tintIndex == 0 ? GrassColor.getDefaultColor() : 0xFFFFFF,
+                ModBlocks.PLANT_FLOWER_TOBACCO.get().asItem(),
+                ModBlocks.PLANT_FLOWER_WEED.get().asItem());
     }
 
     @SubscribeEvent
@@ -869,6 +875,9 @@ public final class ClientModEvents {
             return crater >= 0 ? crater : fallbackFoliageColor(level, pos);
         }, Blocks.OAK_LEAVES, Blocks.SPRUCE_LEAVES, Blocks.BIRCH_LEAVES, Blocks.JUNGLE_LEAVES, Blocks.ACACIA_LEAVES,
                 Blocks.DARK_OAK_LEAVES, Blocks.MANGROVE_LEAVES);
+        event.register((state, level, pos, tintIndex) -> tintIndex == 0 ? fallbackGrassColor(level, pos) : 0xFFFFFF,
+                ModBlocks.PLANT_FLOWER_TOBACCO.get(),
+                ModBlocks.PLANT_FLOWER_WEED.get());
         event.register((state, level, pos, tintIndex) ->
                 tintIndex == 0 && state.hasProperty(LegacySellafieldSlakedBlock.LEVEL)
                         ? sellafieldLevelTint(state.getValue(LegacySellafieldSlakedBlock.LEVEL))
@@ -950,6 +959,7 @@ public final class ClientModEvents {
 
     @SubscribeEvent
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
+        HbmIrisExtendedShaderAccess.invalidateShaderCache();
         LegacyWavefrontModel.clearRenderBackend(RenderBackendClearReason.SHADER_RELOAD);
         HbmOptimizedRenderShaders.registerShaders(event);
         HbmRenderEffects.registerShaders(event);

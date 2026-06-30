@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:battery_lead"
+    },
+    "D": {
+      "tag": "forge:ingots/dura_steel"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "R": {
+      "tag": "forge:bolts/dura_steel"
+    }
+  },
+  "pattern": [
+    "RDM",
+    " PB",
+    " P "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:elec_pickaxe"
+  },
+  "show_notification": true
+}

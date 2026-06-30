@@ -2,7 +2,6 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.WoodBurnerBlockEntity;
-import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
@@ -18,7 +17,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 
 public class WoodBurnerMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = 6;
@@ -121,7 +119,7 @@ public class WoodBurnerMenu extends AbstractContainerMenu {
         if (stack.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        if (stack.getItem() instanceof HbmBatteryItem || stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent()) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
                     WoodBurnerBlockEntity.SLOT_BATTERY, WoodBurnerBlockEntity.SLOT_BATTERY + 1);

@@ -15,6 +15,7 @@ import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.menu.ParticleAcceleratorMenu;
+import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -37,6 +38,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -48,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class PABlockEntity extends BlockEntity implements MenuProvider, HbmLegacyLoadedTile,
-        HbmEnergyReceiver, HbmStandardFluidTransceiver {
+        HbmEnergyReceiver, HbmStandardFluidTransceiver, LegacyProxyDelegateProvider {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_TANK_COLD = "t0";
     private static final String TAG_TANK_HOT = "t1";
@@ -66,7 +68,7 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
     protected final HbmFluidTank coldCoolant = new HbmFluidTank(HbmFluids.PERFLUOROMETHYL_COLD, 4_000).withPressure(0);
     protected final HbmFluidTank hotCoolant = new HbmFluidTank(HbmFluids.PERFLUOROMETHYL, 4_000).withPressure(0);
     protected final ItemStackHandler items;
-    private final LazyOptional<IItemHandler> itemHandler;
+    private final LazyOptional<IItemHandler> coreItemHandler;
     private final LazyOptional<IEnergyStorage> energyHandler;
     private final LazyOptional<IFluidHandler> fluidHandler;
     private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
@@ -93,7 +95,7 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
                 return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
             }
         };
-        this.itemHandler = LazyOptional.of(() -> items);
+        this.coreItemHandler = LazyOptional.of(this::createCoreItemHandler);
         this.energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
         this.fluidHandler = LazyOptional.of(() -> ForgeRecipeFluidHandlerAdapter.create(
                 List.of(coldCoolant), List.of(hotCoolant), 0, this::onFluidChanged));
@@ -161,7 +163,7 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
     }
 
     protected boolean isItemValid(int slot, ItemStack stack) {
-        return slot == 0 && HbmInventoryMenuHelper.isBatteryLike(stack);
+        return slot == 0 && HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
     }
 
     public abstract List<EnergyPort> energyPorts();
@@ -193,6 +195,59 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
 
     public ItemStackHandler getItems() {
         return items;
+    }
+
+    private IItemHandler createCoreItemHandler() {
+        return switch (variant) {
+            case SOURCE -> new PaItemHandler(new int[]{PASourceBlockEntity.SLOT_CONTAINER_1,
+                    PASourceBlockEntity.SLOT_CONTAINER_2});
+            case DETECTOR -> new PaItemHandler(new int[]{PADetectorBlockEntity.SLOT_CONTAINER_1,
+                    PADetectorBlockEntity.SLOT_CONTAINER_2, PADetectorBlockEntity.SLOT_OUTPUT_1,
+                    PADetectorBlockEntity.SLOT_OUTPUT_2});
+            default -> throw new IllegalStateException("PA variant has no core item automation: " + variant);
+        };
+    }
+
+    private boolean hasCoreItemCapability() {
+        return variant == ParticleAcceleratorBlock.Variant.SOURCE
+                || variant == ParticleAcceleratorBlock.Variant.DETECTOR;
+    }
+
+    @Nullable
+    @Override
+    public ICapabilityProvider getLegacyProxyDelegate(BlockPos proxyPos) {
+        if (variant == ParticleAcceleratorBlock.Variant.SOURCE) {
+            int inputSlot = sourceInputSlotForProxy(proxyPos);
+            int[] slots = inputSlot == PASourceBlockEntity.SLOT_INPUT_1
+                    ? new int[]{PASourceBlockEntity.SLOT_INPUT_1, PASourceBlockEntity.SLOT_CONTAINER_1,
+                            PASourceBlockEntity.SLOT_CONTAINER_2}
+                    : inputSlot == PASourceBlockEntity.SLOT_INPUT_2
+                    ? new int[]{PASourceBlockEntity.SLOT_INPUT_2, PASourceBlockEntity.SLOT_CONTAINER_1,
+                            PASourceBlockEntity.SLOT_CONTAINER_2}
+                    : new int[]{PASourceBlockEntity.SLOT_CONTAINER_1, PASourceBlockEntity.SLOT_CONTAINER_2};
+            return new PaProxyProvider(new PaItemHandler(slots));
+        }
+        if (variant == ParticleAcceleratorBlock.Variant.DETECTOR) {
+            return new PaProxyProvider(new PaItemHandler(new int[]{PADetectorBlockEntity.SLOT_CONTAINER_1,
+                    PADetectorBlockEntity.SLOT_CONTAINER_2, PADetectorBlockEntity.SLOT_OUTPUT_1,
+                    PADetectorBlockEntity.SLOT_OUTPUT_2}));
+        }
+        return null;
+    }
+
+    private int sourceInputSlotForProxy(BlockPos proxyPos) {
+        BlockPos offset = proxyPos.subtract(worldPosition);
+        Direction forward = facing();
+        Direction side = forward.getClockWise();
+        if (offset.equals(rel(forward, 1).offset(rel(side, -2)))
+                || offset.equals(rel(forward, -1).offset(rel(side, 2)))) {
+            return PASourceBlockEntity.SLOT_INPUT_2;
+        }
+        if (offset.equals(rel(forward, -1).offset(rel(side, -2)))
+                || offset.equals(rel(forward, 1).offset(rel(side, 2)))) {
+            return PASourceBlockEntity.SLOT_INPUT_1;
+        }
+        return -1;
     }
 
     public HbmFluidTank getColdCoolant() {
@@ -332,7 +387,7 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
     public void setRemoved() {
         fluidPortSubscriptions.detachAllDetailed(level, worldPosition, fluidPorts(), this, this);
         super.setRemoved();
-        itemHandler.invalidate();
+        coreItemHandler.invalidate();
         energyHandler.invalidate();
         fluidHandler.invalidate();
     }
@@ -345,8 +400,8 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
 
     @Override
     public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-        if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+        if (capability == ForgeCapabilities.ITEM_HANDLER && hasCoreItemCapability()) {
+            return coreItemHandler.cast();
         }
         if (capability == ForgeCapabilities.ENERGY) {
             return energyHandler.cast();
@@ -380,5 +435,81 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
             return null;
         }
         return com.hbm.ntm.multiblock.MultiblockHelper.resolveCoreBlockEntity(level, pos);
+    }
+
+    private class PaProxyProvider implements ICapabilityProvider {
+        private final LazyOptional<IItemHandler> proxyItemHandler;
+
+        private PaProxyProvider(IItemHandler itemHandler) {
+            this.proxyItemHandler = LazyOptional.of(() -> itemHandler);
+        }
+
+        @Override
+        public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
+                @Nullable Direction side) {
+            if (capability == ForgeCapabilities.ITEM_HANDLER) {
+                return proxyItemHandler.cast();
+            }
+            return PABlockEntity.this.getCapability(capability, side);
+        }
+    }
+
+    private class PaItemHandler implements IItemHandler {
+        private final int[] slots;
+
+        private PaItemHandler(int[] slots) {
+            this.slots = slots;
+        }
+
+        @Override
+        public int getSlots() {
+            return slots.length;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return items.getStackInSlot(toItemSlot(slot));
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            int itemSlot = toItemSlot(slot);
+            return canInsertItem(itemSlot, stack) ? items.insertItem(itemSlot, stack, simulate) : stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            int itemSlot = toItemSlot(slot);
+            return canExtractItem(itemSlot) ? items.extractItem(itemSlot, amount, simulate) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return items.getSlotLimit(toItemSlot(slot));
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            int itemSlot = toItemSlot(slot);
+            return canInsertItem(itemSlot, stack);
+        }
+
+        private int toItemSlot(int slot) {
+            if (slot < 0 || slot >= slots.length) {
+                throw new RuntimeException("Slot " + slot + " not in valid range - [0," + slots.length + ")");
+            }
+            return slots[slot];
+        }
+    }
+
+    private boolean canInsertItem(int slot, ItemStack stack) {
+        return (slot == PASourceBlockEntity.SLOT_INPUT_1 || slot == PASourceBlockEntity.SLOT_INPUT_2
+                || slot == PADetectorBlockEntity.SLOT_CONTAINER_1 || slot == PADetectorBlockEntity.SLOT_CONTAINER_2)
+                && isItemValid(slot, stack);
+    }
+
+    private boolean canExtractItem(int slot) {
+        return slot == PASourceBlockEntity.SLOT_CONTAINER_1 || slot == PASourceBlockEntity.SLOT_CONTAINER_2
+                || slot == PADetectorBlockEntity.SLOT_OUTPUT_1 || slot == PADetectorBlockEntity.SLOT_OUTPUT_2;
     }
 }

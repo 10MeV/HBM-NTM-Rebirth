@@ -399,6 +399,11 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return null;
+    }
+
+    @Override
     public long transferFluid(FluidType type, int pressure, long amount) {
         long leftover = HbmStandardFluidTransceiver.super.transferFluid(type, pressure, amount);
         if (leftover != amount) {

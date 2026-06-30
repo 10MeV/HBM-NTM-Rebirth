@@ -91,7 +91,7 @@ public class FusionTorusMenu extends AbstractContainerMenu {
         ItemStack original = stack.copy();
         if (index < MACHINE_SLOT_COUNT) {
             if (!moveItemStackTo(stack, PLAYER_START, PLAYER_END, true)) return ItemStack.EMPTY;
-        } else if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        } else if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             if (!moveItemStackTo(stack, FusionTorusBlockEntity.SLOT_BATTERY, FusionTorusBlockEntity.SLOT_BATTERY + 1, false)) return ItemStack.EMPTY;
         } else if (stack.is(ModItems.BLUEPRINTS.get())) {
             if (!moveItemStackTo(stack, FusionTorusBlockEntity.SLOT_BLUEPRINT, FusionTorusBlockEntity.SLOT_BLUEPRINT + 1, false)) return ItemStack.EMPTY;

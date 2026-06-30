@@ -91,7 +91,7 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
                 return CyclotronRecipeRuntime.isValidInput(stack);
             }
             if (slot == SLOT_BATTERY) {
-                return HbmInventoryMenuHelper.isBatteryLike(stack);
+                return HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
             }
             if (slot == SLOT_UPGRADE_0 || slot == SLOT_UPGRADE_1) {
                 return stack.getItem() instanceof ItemMachineUpgrade;
@@ -111,7 +111,7 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
                     : ItemStack.EMPTY;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(CoreItemHandler::new);
     private final LazyOptional<IItemHandler>[] laneItemHandlers;
     private final LazyOptional<IEnergyStorage> energyHandler =
             LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
@@ -638,6 +638,52 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
                 case 2 -> SLOT_OUTPUT_START;
                 case 3 -> SLOT_OUTPUT_START + 1;
                 case 4 -> SLOT_OUTPUT_START + 2;
+                default -> -1;
+            };
+        }
+    }
+
+    private class CoreItemHandler implements IItemHandler {
+        @Override
+        public int getSlots() {
+            return 3;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            int mapped = mapSlot(slot);
+            return mapped < 0 ? ItemStack.EMPTY : items.getStackInSlot(mapped);
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            int mapped = mapSlot(slot);
+            return mapped >= SLOT_OUTPUT_START && mapped < SLOT_OUTPUT_START + 3
+                    ? items.extractItem(mapped, amount, simulate)
+                    : ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            int mapped = mapSlot(slot);
+            return mapped < 0 ? 0 : items.getSlotLimit(mapped);
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return false;
+        }
+
+        private int mapSlot(int slot) {
+            return switch (slot) {
+                case 0 -> SLOT_OUTPUT_START;
+                case 1 -> SLOT_OUTPUT_START + 1;
+                case 2 -> SLOT_OUTPUT_START + 2;
                 default -> -1;
             };
         }

@@ -3,6 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.ICFReactorBlockEntity;
 import com.hbm.ntm.client.obj.ObjReactorModels;
+import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -17,7 +18,7 @@ public class ICFReactorRenderer implements BlockEntityRenderer<ICFReactorBlockEn
 
     @Override
     public boolean shouldRenderOffScreen(ICFReactorBlockEntity blockEntity) {
-        return false;
+        return HbmShaderCompatibilityDetector.shouldRenderBlockEntityOffScreen();
     }
 
     @Override
@@ -28,6 +29,10 @@ public class ICFReactorRenderer implements BlockEntityRenderer<ICFReactorBlockEn
     @Override
     public void render(ICFReactorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         try (LegacyRenderLighting.ModelViewSamplingScope ignored =
                 LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {

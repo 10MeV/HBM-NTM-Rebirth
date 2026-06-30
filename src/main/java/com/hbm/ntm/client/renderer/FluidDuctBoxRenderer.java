@@ -30,7 +30,7 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
 
     @Override
     public int getViewDistance() {
-        return 96;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     @Override

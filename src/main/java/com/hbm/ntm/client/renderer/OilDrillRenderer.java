@@ -50,6 +50,11 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
     @Override
     public void render(OilDrillBlockEntity drill, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(drill, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(drill);
+
         BlockState state = drill.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;

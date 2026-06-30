@@ -121,6 +121,11 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
         return items != null && setFluidTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER, inputTank);
     }
 
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return inputTank;
+    }
+
     private boolean processFluidContainers() {
         ItemStackHandler items = getItems();
         return items != null && processFluidItemTransfers(items, HbmFluidItemTransfer.combineTransfers(

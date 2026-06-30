@@ -95,6 +95,7 @@ import com.hbm.ntm.block.GasFlareBlock;
 import com.hbm.ntm.block.GeigerBlock;
 import com.hbm.ntm.block.HeatBoilerBlock;
 import com.hbm.ntm.block.HeaterHeatexBlock;
+import com.hbm.ntm.block.HevBatteryBlock;
 import com.hbm.ntm.block.HephaestusBlock;
 import com.hbm.ntm.block.HexafluorideTankBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
@@ -128,6 +129,7 @@ import com.hbm.ntm.block.LegacyBasaltOreBlock;
 import com.hbm.ntm.block.LegacyNuclearWasteBlock;
 import com.hbm.ntm.block.LegacyLargePylonBlock;
 import com.hbm.ntm.block.LegacyMediumPylonBlock;
+import com.hbm.ntm.block.LegacyNtmFlowerBlock;
 import com.hbm.ntm.block.LegacyNetherCoalOreBlock;
 import com.hbm.ntm.block.LegacyOreBlock;
 import com.hbm.ntm.block.LegacyOutgasBlock;
@@ -626,6 +628,15 @@ public final class ModBlocks {
             machineBattery("machine_schrabidium_battery", 25_000_000_000L);
     public static final RegistryObject<Block> MACHINE_DINEUTRONIUM_BATTERY =
             machineBattery("machine_dineutronium_battery", 1_000_000_000_000L);
+    public static final RegistryObject<Block> HEV_BATTERY =
+            registerBlockWithItemName("hev_battery", "hev_battery_block",
+                    () -> new HevBatteryBlock(BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.METAL)
+                            .strength(0.5F, 0.25F)
+                            .sound(SoundType.METAL)
+                            .lightLevel(state -> 10)
+                            .noOcclusion()
+                            .requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> MACHINE_FENSU = machineFensu("machine_fensu");
     public static final RegistryObject<Block> MACHINE_BATTERY_REDD = batteryReddMachine("machine_battery_redd",
             batteryReddDefinition());
@@ -1081,6 +1092,25 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MUSH = glowingMush("mush");
     public static final RegistryObject<Block> MUSH_BLOCK = hugeMush("mush_block");
     public static final RegistryObject<Block> MUSH_BLOCK_STEM = hugeMush("mush_block_stem");
+    public static final RegistryObject<Block> PLANT_FLOWER_FOXGLOVE =
+            ntmFlower("plant_flower_foxglove", LegacyNtmFlowerBlock.Kind.FOXGLOVE);
+    public static final RegistryObject<Block> PLANT_FLOWER_TOBACCO =
+            ntmFlower("plant_flower_tobacco", LegacyNtmFlowerBlock.Kind.TOBACCO);
+    public static final RegistryObject<Block> PLANT_FLOWER_NIGHTSHADE =
+            ntmFlower("plant_flower_nightshade", LegacyNtmFlowerBlock.Kind.NIGHTSHADE);
+    public static final RegistryObject<Block> PLANT_FLOWER_WEED =
+            ntmFlower("plant_flower_weed", LegacyNtmFlowerBlock.Kind.WEED);
+    public static final RegistryObject<Block> PLANT_FLOWER_CD0 =
+            ntmFlower("plant_flower_cd0", LegacyNtmFlowerBlock.Kind.CD0);
+    public static final RegistryObject<Block> PLANT_FLOWER_CD1 =
+            ntmFlower("plant_flower_cd1", LegacyNtmFlowerBlock.Kind.CD1);
+    public static final List<RegistryObject<Block>> PLANT_FLOWER_BLOCKS = List.of(
+            PLANT_FLOWER_FOXGLOVE,
+            PLANT_FLOWER_TOBACCO,
+            PLANT_FLOWER_NIGHTSHADE,
+            PLANT_FLOWER_WEED,
+            PLANT_FLOWER_CD0,
+            PLANT_FLOWER_CD1);
     public static final RegistryObject<Block> WASTE_LEAVES = registerBlockWithItem("waste_leaves", () -> new LegacyWasteLeavesBlock(BlockBehaviour.Properties.of()
             .mapColor(MapColor.PLANT)
             .strength(0.1F)
@@ -1315,6 +1345,7 @@ public final class ModBlocks {
             CRANE_SPLITTER,
             MACHINE_BATTERY_REDD,
             MACHINE_BATTERY_SOCKET,
+            HEV_BATTERY,
             CRATE_IRON,
             CRATE_STEEL,
             CRATE_DESH,
@@ -1848,6 +1879,8 @@ public final class ModBlocks {
             SELLAFIELD_BEDROCK, ORE_SELLAFIELD_DIAMOND, ORE_SELLAFIELD_EMERALD, ORE_SELLAFIELD_URANIUM_SCORCHED,
             ORE_SELLAFIELD_SCHRABIDIUM, ORE_SELLAFIELD_RADGEM, WASTE_TRINITITE, WASTE_TRINITITE_RED, GLASS_TRINITITE,
             MOON_TURF, REINFORCED_LAMINATE, REINFORCED_LAMINATE_PANE, MUSH,
+            PLANT_FLOWER_FOXGLOVE, PLANT_FLOWER_TOBACCO, PLANT_FLOWER_NIGHTSHADE, PLANT_FLOWER_WEED,
+            PLANT_FLOWER_CD0, PLANT_FLOWER_CD1,
             BLOCK_CAP_NUKA, BLOCK_CAP_QUANTUM, BLOCK_CAP_SPARKLE, BLOCK_CAP_RAD, BLOCK_CAP_KORL, BLOCK_CAP_FRITZ,
             ASH_DIGAMMA, BALEFIRE, PRIBRIS, PRIBRIS_BURNING, PRIBRIS_RADIATING, PRIBRIS_DIGAMMA,
             ORE_BASALT, VOLCANIC_LAVA_BLOCK, RAD_LAVA_BLOCK, BLOCK_FOAM, MUD_BLOCK,
@@ -6933,6 +6966,19 @@ public final class ModBlocks {
                 .lightLevel(state -> 15)));
     }
 
+    private static RegistryObject<Block> ntmFlower(String name, LegacyNtmFlowerBlock.Kind kind) {
+        return registerBlockWithItem(name, () -> new LegacyNtmFlowerBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.PLANT)
+                .strength(0.0F)
+                .sound(SoundType.GRASS)
+                .noOcclusion()
+                .noCollission()
+                .isValidSpawn((state, level, pos, type) -> false)
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false),
+                kind));
+    }
+
     private static RegistryObject<Block> falloutLayer(String name) {
         RegistryObject<Block> block = BLOCKS.register(name, () -> new FalloutLayerBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.SAND)
@@ -7629,6 +7675,14 @@ public final class ModBlocks {
         RegistryObject<T> block = BLOCKS.register(name, blockSupplier);
         BLOCKS_BY_LEGACY_NAME.put(name, block);
         ModItems.registerBlockItem(name, () -> itemFactory.apply(block));
+        return block;
+    }
+
+    private static <T extends Block> RegistryObject<T> registerBlockWithItemName(String blockName, String itemName,
+            Supplier<T> blockSupplier) {
+        RegistryObject<T> block = BLOCKS.register(blockName, blockSupplier);
+        BLOCKS_BY_LEGACY_NAME.put(blockName, block);
+        ModItems.registerBlockItem(itemName, () -> new BlockItem(block.get(), new Item.Properties()));
         return block;
     }
 

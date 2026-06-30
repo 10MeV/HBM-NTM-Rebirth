@@ -1,7 +1,5 @@
 package com.hbm.ntm.energy;
 
-import com.hbm.ntm.client.renderer.BatteryPackItemRenderer;
-import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -10,6 +8,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -46,7 +45,19 @@ public class HbmBatteryPackItem extends HbmBatteryItem {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        LegacyItemRendererBridge.accept(consumer, () -> BatteryPackItemRenderer.INSTANCE);
+        acceptClientExtensions("com.hbm.ntm.client.renderer.BatteryPackItemRendererBridge", consumer);
+    }
+
+    private static void acceptClientExtensions(String className, Consumer<IClientItemExtensions> consumer) {
+        try {
+            Class<?> bridge = Class.forName(className);
+            bridge.getMethod("accept", Consumer.class).invoke(null, consumer);
+        } catch (ReflectiveOperationException exception) {
+            Throwable cause = exception instanceof InvocationTargetException invocation && invocation.getCause() != null
+                    ? invocation.getCause()
+                    : exception;
+            throw new IllegalStateException("Unable to initialize battery pack client renderer", cause);
+        }
     }
 
     @Override

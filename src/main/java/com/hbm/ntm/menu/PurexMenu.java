@@ -129,7 +129,7 @@ public class PurexMenu extends AbstractContainerMenu {
         if (stack.getItem() instanceof ItemMachineUpgrade) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 2, 4);
         }
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 0, 1);
         }
         return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 4, 7);

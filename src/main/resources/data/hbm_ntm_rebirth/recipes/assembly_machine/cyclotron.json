@@ -1,0 +1,61 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.cyclotron",
+  "duration": 600,
+  "power": 100,
+  "input_items": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:battery_lithium"
+      },
+      "count": 1,
+      "legacy_id": "hbm:battery_pack",
+      "legacy_meta": 2
+    },
+    {
+      "ingredient": {
+        "tag": "forge:dense_wires/neodymium"
+      },
+      "count": 32,
+      "legacy_ore": "wireDenseNeodymium"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:cast_plates/steel"
+      },
+      "count": 16,
+      "legacy_ore": "plateCastSteel"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "count": 24,
+      "legacy_ore": "ingotAnyPlastic"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "count": 24,
+      "legacy_ore": "ingotRubber"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_basic"
+      },
+      "count": 16,
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 8
+    }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_cyclotron"
+    }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 147
+}

@@ -839,7 +839,15 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("desc.item.pipette.laboratory", "\u73b0\u5728\u7cbe\u5ea6\u63d0\u9ad8\u4e8650\u500d\uff01");
         add("desc.item.pipette.noCorrosive", "\u00a7e\u65e0\u6cd5\u5904\u7406\u8150\u8680\u6027\u6db2\u4f53\u3002");
         add("desc.item.pipette.noEmpty", "\u00a7e\u79fb\u6db2\u7ba1\u672a\u6392\u7a7a");
+        add("item.hbm_ntm_rebirth.cube_power", "\u7535\u5b50\u5757");
         add("item.hbm_ntm_rebirth.battery_potato", "\u9a6c\u94c3\u85af\u7535\u6c60");
+        add("item.hbm_ntm_rebirth.battery_potatos", "\u9a6c\u94c3\u85afOS");
+        add("item.hbm_ntm_rebirth.hev_battery", "\u5957\u88c5\u7535\u6c60");
+        add("block.hbm_ntm_rebirth.hev_battery", "\u76d4\u7532\u7535\u6c60");
+        add("item.hbm_ntm_rebirth.hev_battery_block", "\u76d4\u7532\u7535\u6c60");
+        add("item.hbm_ntm_rebirth.fusion_core", "\u805a\u53d8\u80fd\u6e90\u6838\u5fc3");
+        add("item.hbm_ntm_rebirth.energy_core", "\u4e34\u65f6\u80fd\u6e90\u6838\u5fc3");
+        add("item.hbm_ntm_rebirth.fuse", "\u4fdd\u9669\u4e1d");
         add("item.hbm_ntm_rebirth.battery_creative", "\u65e0\u9650\u7535\u6c60");
         add("item.hbm_ntm_rebirth.battery_redstone", "\u7ea2\u77f3\u7535\u6c60");
         add("item.hbm_ntm_rebirth.battery_lead", "\u94c5\u9178\u7535\u6c60");
@@ -2067,6 +2075,12 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.waste_earth", "\u6b7b\u4ea1\u8349\u5730");
         add("block.hbm_ntm_rebirth.waste_mycelium", "\u53d1\u5149\u83cc\u4e1d");
         add("block.hbm_ntm_rebirth.mush", "\u53d1\u5149\u771f\u83cc");
+        add("block.hbm_ntm_rebirth.plant_flower_foxglove", "\u6bdb\u5730\u9ec4");
+        add("block.hbm_ntm_rebirth.plant_flower_tobacco", "\u70df\u8349");
+        add("block.hbm_ntm_rebirth.plant_flower_nightshade", "\u98a0\u8304");
+        add("block.hbm_ntm_rebirth.plant_flower_weed", "\u5927\u9ebb");
+        add("block.hbm_ntm_rebirth.plant_flower_cd0", "\u82a5\u5b50\u67f3");
+        add("block.hbm_ntm_rebirth.plant_flower_cd1", "\u82a5\u5b50\u67f3");
         add("block.hbm_ntm_rebirth.waste_leaves", "\u67af\u53f6");
         add("block.hbm_ntm_rebirth.waste_log", "\u70e7\u7126\u539f\u6728");
         add("item.hbm_ntm_rebirth.burnt_bark", "\u70e7\u7126\u6811\u76ae");
@@ -3590,6 +3604,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.powder_calcium", "\u9499\u7c89");
         add("item.hbm_ntm_rebirth.powder_australium", "\u5965\u65af\u7c89");
         add("item.hbm_ntm_rebirth.powder_borax", "\u7851\u7802");
+        add("item.hbm_ntm_rebirth.powder_chlorocalcite", "\u6c2f\u65b9\u89e3\u77f3");
         add("item.hbm_ntm_rebirth.powder_flux", "\u52a9\u7194\u5242");
         add("item.hbm_ntm_rebirth.powder_tennessine", "Ts\u7c89");
         add("item.hbm_ntm_rebirth.powder_cement", "\u6c34\u6ce5");

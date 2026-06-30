@@ -81,6 +81,11 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
     }
 
     @Override
+    protected boolean shouldProvideSendingTanksToPorts(Level level) {
+        return level != null && level.getGameTime() % 10L == 0L;
+    }
+
+    @Override
     public boolean canSetInputTypeWithIdentifier() {
         return true;
     }
@@ -93,6 +98,11 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
         inputTank.conform(new HbmFluidStack(type, 0));
         onFluidContentsChanged();
         return true;
+    }
+
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return inputTank;
     }
 
     private boolean setupTanks(PairRecipe recipe) {

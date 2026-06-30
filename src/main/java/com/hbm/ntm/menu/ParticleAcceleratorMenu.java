@@ -119,7 +119,7 @@ public class ParticleAcceleratorMenu extends AbstractContainerMenu {
                     machineSlotCount, playerStart, hotbarEnd, 0, machineSlotCount);
         }
         ItemStack stack = slots.get(index).getItem();
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 0, 1)
                     ? finishMove(index, stack) : ItemStack.EMPTY;
         }
@@ -147,27 +147,27 @@ public class ParticleAcceleratorMenu extends AbstractContainerMenu {
     private void addMachineSlots(Inventory inventory) {
         switch (getVariant()) {
             case SOURCE -> {
-                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 8, 72));
-                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 62, 18));
-                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 2, 80, 18));
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 0, 8, 72));
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 1, 62, 18));
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 2, 80, 18));
                 addSlot(HbmInventoryMenuHelper.takeOnlySlot(blockEntity.getItems(), 3, 62, 45));
                 addSlot(HbmInventoryMenuHelper.takeOnlySlot(blockEntity.getItems(), 4, 80, 45));
             }
             case DETECTOR -> {
-                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 8, 72));
-                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 62, 18));
-                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 2, 80, 18));
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 0, 8, 72));
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 1, 62, 18));
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 2, 80, 18));
                 addSlot(HbmInventoryMenuHelper.craftingOutputSlot(inventory.player, blockEntity.getItems(), 3, 62, 45));
                 addSlot(HbmInventoryMenuHelper.craftingOutputSlot(inventory.player, blockEntity.getItems(), 4, 80, 45));
             }
-            case RFC -> addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 53, 72));
+            case RFC -> addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 0, 53, 72));
             case QUADRUPOLE -> {
-                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 26, 72));
-                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 71, 36));
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 0, 26, 72));
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 1, 71, 36));
             }
             case DIPOLE -> {
-                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 8, 72));
-                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 89, 26));
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 0, 8, 72));
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 1, 89, 26));
             }
             case BEAMLINE -> {
             }

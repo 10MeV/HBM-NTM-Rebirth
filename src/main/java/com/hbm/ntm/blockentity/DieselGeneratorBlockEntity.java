@@ -5,6 +5,7 @@ import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
+import com.hbm.ntm.energy.IBatteryItem;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
@@ -18,6 +19,7 @@ import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait;
 import com.hbm.ntm.menu.DieselGeneratorMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.EnumMap;
@@ -85,7 +87,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
                 case SLOT_FLUID_INPUT -> HbmFluidItemTransfer.getItemFluid(stack).amount() > 0;
-                case SLOT_BATTERY -> stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 case SLOT_IDENTIFIER -> true;
                 default -> false;
             };
@@ -302,17 +304,13 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return null;
+    }
+
+    @Override
     public boolean pasteFluidSettings(CompoundTag tag, int index, @Nullable Player player, boolean recursive) {
-        if (tag == null || !tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
-            return false;
-        }
-        java.util.OptionalInt id = HbmFluidCopiable.copiedFluidIdAt(tag, index);
-        if (id.isEmpty()) {
-            return false;
-        }
-        tank.setTankType(HbmFluids.fromId(id.getAsInt()));
-        onFluidContentsChanged();
-        return true;
+        return false;
     }
 
     @Override
@@ -458,7 +456,9 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            return items.extractItem(slots[slot], amount, simulate);
+            int itemSlot = slots[slot];
+            ItemStack stack = items.getStackInSlot(itemSlot);
+            return canExtractFromLegacySide(itemSlot, stack) ? items.extractItem(itemSlot, amount, simulate) : ItemStack.EMPTY;
         }
 
         @Override
@@ -469,6 +469,20 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return allowInsert && items.isItemValid(slots[slot], stack);
+        }
+
+        private static boolean canExtractFromLegacySide(int slot, ItemStack stack) {
+            if (stack.isEmpty()) {
+                return false;
+            }
+            if (slot == SLOT_FLUID_OUTPUT) {
+                var steelTank = ModItems.legacyItem("tank_steel");
+                return stack.is(ModItems.CANISTER_EMPTY.get()) || steelTank != null && stack.is(steelTank.get());
+            }
+            if (slot == SLOT_BATTERY && stack.getItem() instanceof IBatteryItem battery) {
+                return battery.getCharge(stack) == battery.getMaxCharge(stack);
+            }
+            return false;
         }
     }
 }

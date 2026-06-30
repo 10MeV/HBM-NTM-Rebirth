@@ -17,10 +17,13 @@ import java.io.IOException;
 public final class HbmOptimizedRenderShaders {
     private static final ResourceLocation BLOCK_LIT_INSTANCED =
             new ResourceLocation(HbmNtm.MOD_ID, "block_lit_instanced");
+    private static final ResourceLocation BLOCK_LIT_STATIC =
+            new ResourceLocation(HbmNtm.MOD_ID, "block_lit_static");
     private static final ResourceLocation BLOCK_UNTEXTURED_INSTANCED =
             new ResourceLocation(HbmNtm.MOD_ID, "block_untextured_instanced");
 
     private static ShaderInstance blockLitInstancedShader;
+    private static ShaderInstance blockLitStaticShader;
     private static ShaderInstance blockUntexturedInstancedShader;
 
     private HbmOptimizedRenderShaders() {
@@ -28,21 +31,31 @@ public final class HbmOptimizedRenderShaders {
 
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         blockLitInstancedShader = null;
+        blockLitStaticShader = null;
         blockUntexturedInstancedShader = null;
         event.registerShader(new ShaderInstance(event.getResourceProvider(), BLOCK_LIT_INSTANCED,
                 blockLitInstancedFormat()), shader -> {
-                    blockLitInstancedShader = shader;
-                    HbmNtm.LOGGER.info("Registered HBM optimized block_lit_instanced shader.");
-                });
+            blockLitInstancedShader = shader;
+            HbmNtm.LOGGER.info("Registered HBM optimized block_lit_instanced shader.");
+        });
+        event.registerShader(new ShaderInstance(event.getResourceProvider(), BLOCK_LIT_STATIC,
+                DefaultVertexFormat.NEW_ENTITY), shader -> {
+            blockLitStaticShader = shader;
+            HbmNtm.LOGGER.info("Registered HBM optimized block_lit_static shader.");
+        });
         event.registerShader(new ShaderInstance(event.getResourceProvider(), BLOCK_UNTEXTURED_INSTANCED,
                 blockLitInstancedFormat()), shader -> {
-                    blockUntexturedInstancedShader = shader;
-                    HbmNtm.LOGGER.info("Registered HBM optimized block_untextured_instanced shader.");
-                });
+            blockUntexturedInstancedShader = shader;
+            HbmNtm.LOGGER.info("Registered HBM optimized block_untextured_instanced shader.");
+        });
     }
 
     public static ShaderInstance blockLitInstancedShader() {
         return blockLitInstancedShader;
+    }
+
+    public static ShaderInstance blockLitStaticShader() {
+        return blockLitStaticShader;
     }
 
     public static ShaderInstance blockUntexturedInstancedShader() {

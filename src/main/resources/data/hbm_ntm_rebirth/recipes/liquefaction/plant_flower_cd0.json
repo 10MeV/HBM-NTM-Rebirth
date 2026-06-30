@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:liquefaction",
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:plant_flower_cd0"
+  },
+  "output": {
+    "amount": 50,
+    "fluid": "ETHANOL",
+    "pressure": 0
+  }
+}

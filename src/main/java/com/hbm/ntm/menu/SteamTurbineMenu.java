@@ -34,17 +34,17 @@ public class SteamTurbineMenu extends AbstractContainerMenu {
     public SteamTurbineMenu(int containerId, Inventory playerInventory, SteamTurbineBlockEntity blockEntity) {
         super(ModMenuTypes.STEAM_TURBINE.get(), containerId);
         this.blockEntity = blockEntity;
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 SteamTurbineBlockEntity.SLOT_IDENTIFIER, 8, 17));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
                 SteamTurbineBlockEntity.SLOT_IDENTIFIER_OUTPUT, 8, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 SteamTurbineBlockEntity.SLOT_INPUT_CONTAINER, 44, 17));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
                 SteamTurbineBlockEntity.SLOT_INPUT_CONTAINER_OUTPUT, 44, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 SteamTurbineBlockEntity.SLOT_BATTERY, 98, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 SteamTurbineBlockEntity.SLOT_OUTPUT_CONTAINER, 152, 17));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
                 SteamTurbineBlockEntity.SLOT_OUTPUT_CONTAINER_OUTPUT, 152, 53));

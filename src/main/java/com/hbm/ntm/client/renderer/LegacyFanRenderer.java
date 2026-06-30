@@ -36,13 +36,16 @@ public class LegacyFanRenderer implements BlockEntityRenderer<LegacyFanBlockEnti
         }
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        applyLegacyFacingTransform(poseStack, state.getValue(LegacyFanBlock.FACING));
-        renderPart(FRAME, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.mulPose(Axis.YN.rotationDegrees(blockEntity.spin(partialTick)));
-        renderPart(BLADES, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
+        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+                LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            applyLegacyFacingTransform(poseStack, state.getValue(LegacyFanBlock.FACING));
+            renderPart(FRAME, poseStack, buffer, modelLight, packedOverlay);
+            poseStack.mulPose(Axis.YN.rotationDegrees(blockEntity.spin(partialTick)));
+            renderPart(BLADES, poseStack, buffer, modelLight, packedOverlay);
+            poseStack.popPose();
+        }
     }
 
     public static void renderItemModel(PoseStack poseStack, MultiBufferSource buffer, int packedLight,

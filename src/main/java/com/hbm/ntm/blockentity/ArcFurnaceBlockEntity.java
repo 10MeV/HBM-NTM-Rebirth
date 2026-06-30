@@ -89,7 +89,7 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
                 return isFreshElectrode(stack);
             }
             if (slot == SLOT_BATTERY) {
-                return HbmInventoryMenuHelper.isBatteryLike(stack);
+                return HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
             }
             if (slot == SLOT_UPGRADE) {
                 return stack.getItem() instanceof ItemMachineUpgrade upgrade

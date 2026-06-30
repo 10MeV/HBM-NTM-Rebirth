@@ -31,8 +31,13 @@ public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnc
     }
 
     @Override
+    public boolean shouldRenderOffScreen(FluidPipeAnchorBlockEntity anchor) {
+        return true;
+    }
+
+    @Override
     public int getViewDistance() {
-        return 96;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     @Override

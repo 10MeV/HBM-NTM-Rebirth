@@ -278,7 +278,7 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
                 ParticleUtil.spawnGiblets(entity, ParticleUtil.GIBLET_MEAT, 5);
                 LegacySoundPlayer.playSoundAtEntity(entity, "mob.zombie.woodbreak", SoundSource.NEUTRAL, 2.0F,
                         0.95F + level.random.nextFloat() * 0.2F);
-                bloodTank.setFill(bloodTank.getFill() + 50);
+                bloodTank.setFill(Math.min(bloodTank.getFill() + 50, bloodTank.getMaxFill()));
                 showBlood = true;
             }
         }
@@ -452,17 +452,13 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return null;
+    }
+
+    @Override
     public boolean pasteFluidSettings(CompoundTag tag, int index, @Nullable Player player, boolean recursive) {
-        if (tag == null || !tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
-            return false;
-        }
-        java.util.OptionalInt id = HbmFluidCopiable.copiedFluidIdAt(tag, index);
-        if (id.isEmpty()) {
-            return false;
-        }
-        fuelTank.setTankType(HbmFluids.fromId(id.getAsInt()));
-        onFluidContentsChanged();
-        return true;
+        return false;
     }
 
     @Override

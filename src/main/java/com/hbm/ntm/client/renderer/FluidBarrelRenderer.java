@@ -40,6 +40,10 @@ public class FluidBarrelRenderer implements BlockEntityRenderer<FluidBarrelBlock
         if (type == null || type == HbmFluids.NONE || barrel.getTank().getFill() <= 0) {
             return;
         }
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(barrel, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(barrel);
 
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(barrel, packedLight);
         ResourceLocation barrelTexture = barrelTexture(barrel.getVariant());

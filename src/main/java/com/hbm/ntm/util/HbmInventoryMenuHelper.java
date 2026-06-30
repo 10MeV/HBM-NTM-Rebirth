@@ -33,6 +33,7 @@ import java.util.function.IntConsumer;
 public final class HbmInventoryMenuHelper {
     public static final String LEGACY_ITEMS_TAG = HbmItemStackUtil.LEGACY_ITEMS_TAG;
     public static final String LEGACY_SLOT_TAG = HbmItemStackUtil.LEGACY_SLOT_TAG;
+    public static final double LEGACY_MACHINE_USE_DISTANCE_SQR = 128.0D;
 
     private HbmInventoryMenuHelper() {
     }

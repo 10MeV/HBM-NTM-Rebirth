@@ -12,7 +12,6 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
-import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.MixerMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
@@ -79,13 +78,7 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
-                case SLOT_SOLID_INPUT -> isValidSolidInput(stack);
-                case SLOT_FLUID_ID -> true;
-                case SLOT_UPGRADE_1, SLOT_UPGRADE_2 -> stack.getItem() instanceof ItemMachineUpgrade;
-                default -> false;
-            };
+            return slot >= 0 && slot < SLOT_COUNT;
         }
 
         @Override
@@ -506,7 +499,9 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return slot == 0 ? items.insertItem(SLOT_SOLID_INPUT, stack, simulate) : stack;
+            return slot == 0 && isValidSolidInput(stack)
+                    ? items.insertItem(SLOT_SOLID_INPUT, stack, simulate)
+                    : stack;
         }
 
         @Override
@@ -521,7 +516,7 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot == 0 && items.isItemValid(SLOT_SOLID_INPUT, stack);
+            return slot == 0 && isValidSolidInput(stack);
         }
     }
 }

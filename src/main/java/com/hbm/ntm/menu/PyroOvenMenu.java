@@ -1,7 +1,9 @@
 package com.hbm.ntm.menu;
 
+import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.PyroOvenBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -13,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -89,11 +92,40 @@ public class PyroOvenMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                PyroOvenBlockEntity.SLOT_BATTERY, PyroOvenBlockEntity.SLOT_BATTERY + 1,
-                PyroOvenBlockEntity.SLOT_IDENTIFIER, PyroOvenBlockEntity.SLOT_IDENTIFIER + 1,
-                PyroOvenBlockEntity.SLOT_UPGRADE_1, PyroOvenBlockEntity.SLOT_UPGRADE_2 + 1,
+        if (index < 0 || index >= slots.size()) {
+            return ItemStack.EMPTY;
+        }
+        Slot slot = slots.get(index);
+        if (slot == null || !slot.hasItem()) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack stack = slot.getItem();
+        ItemStack original = stack.copy();
+        if (index < MACHINE_SLOT_COUNT) {
+            if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_SLOT_END, true)) {
+                return ItemStack.EMPTY;
+            }
+        } else if (!movePlayerStackToMachine(stack)) {
+            return ItemStack.EMPTY;
+        }
+        HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+        return original;
+    }
+
+    private boolean movePlayerStackToMachine(ItemStack stack) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    PyroOvenBlockEntity.SLOT_BATTERY, PyroOvenBlockEntity.SLOT_BATTERY + 1);
+        }
+        if (stack.getItem() instanceof IFluidIdentifierItem) {
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    PyroOvenBlockEntity.SLOT_IDENTIFIER, PyroOvenBlockEntity.SLOT_IDENTIFIER + 1);
+        }
+        if (stack.getItem() instanceof ItemMachineUpgrade) {
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    PyroOvenBlockEntity.SLOT_UPGRADE_1, PyroOvenBlockEntity.SLOT_UPGRADE_2 + 1);
+        }
+        return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                 PyroOvenBlockEntity.SLOT_INPUT, PyroOvenBlockEntity.SLOT_INPUT + 1);
     }
 

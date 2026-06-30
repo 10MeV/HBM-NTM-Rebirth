@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": {
+    "fluid": "hbm_ntm_rebirth:bauxite_solution",
+    "amount": 300
+  },
+  "input1": {
+    "fluid": "hbm_ntm_rebirth:lye",
+    "amount": 50
+  },
+  "solid_input": {
+    "item": "hbm_ntm_rebirth:stone_resource_bauxite"
+  },
+  "duration": 80
+}

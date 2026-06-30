@@ -56,6 +56,11 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
     @Override
     public void render(OreSlopperBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
+
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;

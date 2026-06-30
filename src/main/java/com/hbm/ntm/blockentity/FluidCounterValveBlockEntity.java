@@ -37,7 +37,10 @@ public class FluidCounterValveBlockEntity extends FluidValveBlockEntity
         if (level.isClientSide) {
             return;
         }
-        counterValve.refreshFluidNode();
+        if (counterValve.getFluidNode() == null && counterValve.isOpen()
+                && counterValve.getFluidType() != HbmFluids.NONE) {
+            counterValve.refreshFluidNode();
+        }
         long oldCounter = counterValve.counter;
         if (counterValve.getFluidType() != HbmFluids.NONE) {
             HbmFluidNet net = counterValve.getFluidNet();

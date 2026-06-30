@@ -3,6 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -19,7 +20,7 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
 
     @Override
     public boolean shouldRenderOffScreen(BasicMachineBlockEntity blockEntity) {
-        return false;
+        return HbmShaderCompatibilityDetector.shouldRenderBlockEntityOffScreen();
     }
 
     @Override
@@ -30,6 +31,10 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
     @Override
     public void render(BasicMachineBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         ItemStack stack = blockEntity.getRenderStack();
         LegacyTileRenderPlans.BasicPressPlan plan = LegacyTileRenderPlans.basicPressPlan(!stack.isEmpty(),

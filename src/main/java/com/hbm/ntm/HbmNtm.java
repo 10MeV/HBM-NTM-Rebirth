@@ -14,6 +14,7 @@ import com.hbm.ntm.fluid.HbmFluidForgeAliasConfig;
 import com.hbm.ntm.fluid.HbmFluidForgeMappings;
 import com.hbm.ntm.fluid.HbmFluidTypeConfig;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.gametest.EnergyMk2GameTests;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModCreativeTabs;
@@ -68,6 +69,7 @@ public class HbmNtm {
 
         modBus.addListener(this::commonSetup);
         modBus.addListener(HbmDataGenerators::gatherData);
+        modBus.addListener(EnergyMk2GameTests::register);
 
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, HbmCommonConfig.SPEC, "hbm_ntm_rebirth-common.toml");
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, HbmClientConfig.SPEC, "hbm_ntm_rebirth-client.toml");

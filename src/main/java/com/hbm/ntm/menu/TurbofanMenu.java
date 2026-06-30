@@ -2,14 +2,13 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.TurbofanBlockEntity;
-import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.item.ItemMachineUpgrade;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
 import java.util.List;
-import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -18,7 +17,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 
 public class TurbofanMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = TurbofanBlockEntity.SLOT_COUNT;
@@ -119,8 +117,7 @@ public class TurbofanMenu extends AbstractContainerMenu {
         if (stack.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        if (stack.getItem() instanceof HbmBatteryItem
-                || stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent()) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
                     TurbofanBlockEntity.SLOT_BATTERY, TurbofanBlockEntity.SLOT_BATTERY + 1);

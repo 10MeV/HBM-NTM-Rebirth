@@ -27,6 +27,11 @@ public class FusionBoilerRenderer implements BlockEntityRenderer<FusionBoilerBlo
     @Override
     public void render(FusionBoilerBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
+
         BlockState state = blockEntity.getBlockState();
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();

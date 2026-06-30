@@ -49,9 +49,9 @@ public class CyclotronMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.craftingOutputSlot(inventory.player, blockEntity.getItems(), 6, 131, 18));
         addSlot(HbmInventoryMenuHelper.craftingOutputSlot(inventory.player, blockEntity.getItems(), 7, 131, 36));
         addSlot(HbmInventoryMenuHelper.craftingOutputSlot(inventory.player, blockEntity.getItems(), 8, 131, 54));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 9, 168, 83));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 10, 60, 81));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 11, 78, 81));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 9, 168, 83));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 10, 60, 81));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 11, 78, 81));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 15, 133, 191);
 
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
@@ -120,7 +120,7 @@ public class CyclotronMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        } else if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             if (!moveItemStackTo(stack, CyclotronBlockEntity.SLOT_BATTERY,
                     CyclotronBlockEntity.SLOT_BATTERY + 1, false)) {
                 return ItemStack.EMPTY;

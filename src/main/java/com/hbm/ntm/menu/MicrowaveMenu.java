@@ -33,9 +33,9 @@ public class MicrowaveMenu extends AbstractContainerMenu {
     public MicrowaveMenu(int containerId, Inventory playerInventory, MicrowaveBlockEntity blockEntity) {
         super(ModMenuTypes.MICROWAVE.get(), containerId);
         this.blockEntity = blockEntity;
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MicrowaveBlockEntity.SLOT_INPUT, 80, 35));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), MicrowaveBlockEntity.SLOT_OUTPUT, 140, 35));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MicrowaveBlockEntity.SLOT_BATTERY, 8, 53));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getMenuItems(), MicrowaveBlockEntity.SLOT_INPUT, 80, 35));
+        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getMenuItems(), MicrowaveBlockEntity.SLOT_OUTPUT, 140, 35));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getMenuItems(), MicrowaveBlockEntity.SLOT_BATTERY, 8, 53));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
         addDataSlots();
     }

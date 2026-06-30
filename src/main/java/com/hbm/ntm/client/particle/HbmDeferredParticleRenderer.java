@@ -1,7 +1,5 @@
 package com.hbm.ntm.client.particle;
 
-import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
-import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -16,7 +14,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -74,10 +71,6 @@ public final class HbmDeferredParticleRenderer {
     private static final Map<ResourceLocation, RenderType> TEXTURED_DEPTH_WRITE = new ConcurrentHashMap<>();
     private static final Map<ResourceLocation, RenderType> TEXTURED_NO_DEPTH_WRITE = new ConcurrentHashMap<>();
     private static final Map<ResourceLocation, RenderType> TEXTURED_ADDITIVE_NO_DEPTH_WRITE = new ConcurrentHashMap<>();
-    private static final Set<ResourceLocation> LEGACY_TRANSIENT_TEXTURED_NO_DEPTH_WRITE =
-            ConcurrentHashMap.newKeySet();
-    private static final Set<ResourceLocation> LEGACY_TRANSIENT_TEXTURED_ADDITIVE_NO_DEPTH_WRITE =
-            ConcurrentHashMap.newKeySet();
     private static final List<Entry> QUEUE = new ArrayList<>();
     private static final Set<DeferredParticle> SEEN =
             Collections.newSetFromMap(new IdentityHashMap<>());
@@ -90,6 +83,8 @@ public final class HbmDeferredParticleRenderer {
     private static final AtomicLong lastRenderQueuedParticles = new AtomicLong();
     private static final AtomicLong lastRenderSubmittedParticles = new AtomicLong();
     private static final AtomicLong lastClearQueuedParticles = new AtomicLong();
+    private static final AtomicLong directTexturedNoDepthWriteQuads = new AtomicLong();
+    private static final AtomicLong directTexturedAdditiveNoDepthWriteQuads = new AtomicLong();
 
     private HbmDeferredParticleRenderer() {
     }
@@ -170,11 +165,15 @@ public final class HbmDeferredParticleRenderer {
             double x2, double y2, double z2, float u2, float v2,
             double x3, double y3, double z3, float u3, float v3,
             int color, int alpha) {
-        LEGACY_TRANSIENT_TEXTURED_NO_DEPTH_WRITE.add(texture);
-        return renderLegacyTexturedTransientQuad(texture, buffer, packedLight,
-                LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE, normalX, normalY, normalZ,
-                x0, y0, z0, u0, v0, x1, y1, z1, u1, v1,
-                x2, y2, z2, u2, v2, x3, y3, z3, u3, v3, color, alpha);
+        VertexConsumer consumer = buffer.getBuffer(texturedNoDepthWrite(texture));
+        emitTexturedParticleQuad(consumer, packedLight,
+                x0, y0, z0, u0, v0,
+                x1, y1, z1, u1, v1,
+                x2, y2, z2, u2, v2,
+                x3, y3, z3, u3, v3,
+                color, alpha);
+        directTexturedNoDepthWriteQuads.incrementAndGet();
+        return true;
     }
 
     public static boolean renderTexturedAdditiveNoDepthWriteQuad(ResourceLocation texture, MultiBufferSource buffer,
@@ -184,11 +183,15 @@ public final class HbmDeferredParticleRenderer {
             double x2, double y2, double z2, float u2, float v2,
             double x3, double y3, double z3, float u3, float v3,
             int color, int alpha) {
-        LEGACY_TRANSIENT_TEXTURED_ADDITIVE_NO_DEPTH_WRITE.add(texture);
-        return renderLegacyTexturedTransientQuad(texture, buffer, packedLight,
-                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, normalX, normalY, normalZ,
-                x0, y0, z0, u0, v0, x1, y1, z1, u1, v1,
-                x2, y2, z2, u2, v2, x3, y3, z3, u3, v3, color, alpha);
+        VertexConsumer consumer = buffer.getBuffer(texturedAdditiveNoDepthWrite(texture));
+        emitTexturedParticleQuad(consumer, packedLight,
+                x0, y0, z0, u0, v0,
+                x1, y1, z1, u1, v1,
+                x2, y2, z2, u2, v2,
+                x3, y3, z3, u3, v3,
+                color, alpha);
+        directTexturedAdditiveNoDepthWriteQuads.incrementAndGet();
+        return true;
     }
 
     public static void emitParticleSheetQuad(VertexConsumer consumer, int packedLight,
@@ -269,8 +272,8 @@ public final class HbmDeferredParticleRenderer {
                 TEXTURED_DEPTH_WRITE.size(),
                 TEXTURED_NO_DEPTH_WRITE.size(),
                 TEXTURED_ADDITIVE_NO_DEPTH_WRITE.size(),
-                LEGACY_TRANSIENT_TEXTURED_NO_DEPTH_WRITE.size(),
-                LEGACY_TRANSIENT_TEXTURED_ADDITIVE_NO_DEPTH_WRITE.size());
+                directTexturedNoDepthWriteQuads.get(),
+                directTexturedAdditiveNoDepthWriteQuads.get());
     }
 
     private static void recordPeakQueueSize(int size) {
@@ -295,28 +298,6 @@ public final class HbmDeferredParticleRenderer {
         for (RenderType renderType : TEXTURED_ADDITIVE_NO_DEPTH_WRITE.values()) {
             buffer.endBatch(renderType);
         }
-        for (ResourceLocation texture : LEGACY_TRANSIENT_TEXTURED_NO_DEPTH_WRITE) {
-            buffer.endBatch(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE.renderType(texture));
-        }
-        for (ResourceLocation texture : LEGACY_TRANSIENT_TEXTURED_ADDITIVE_NO_DEPTH_WRITE) {
-            buffer.endBatch(LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE.renderType(texture));
-        }
-    }
-
-    private static boolean renderLegacyTexturedTransientQuad(ResourceLocation texture, MultiBufferSource buffer,
-            int packedLight, LegacyTexturedRenderMode renderMode, float normalX, float normalY, float normalZ,
-            double x0, double y0, double z0, float u0, float v0,
-            double x1, double y1, double z1, float u1, float v1,
-            double x2, double y2, double z2, float u2, float v2,
-            double x3, double y3, double z3, float u3, float v3,
-            int color, int alpha) {
-        return LegacyWavefrontModel.renderTexturedTransientQuad(texture, new PoseStack(), buffer, packedLight,
-                OverlayTexture.NO_OVERLAY, renderMode, normalX, normalY, normalZ,
-                x0, y0, z0, u0, v0,
-                x1, y1, z1, u1, v1,
-                x2, y2, z2, u2, v2,
-                x3, y3, z3, u3, v3,
-                color, alpha);
     }
 
     private static void emitParticleSheetVertex(VertexConsumer consumer, int packedLight,
@@ -327,6 +308,24 @@ public final class HbmDeferredParticleRenderer {
                 .color(red, green, blue, alpha)
                 .uv2(packedLight)
                 .endVertex();
+    }
+
+    private static void emitTexturedParticleQuad(VertexConsumer consumer, int packedLight,
+            double x0, double y0, double z0, float u0, float v0,
+            double x1, double y1, double z1, float u1, float v1,
+            double x2, double y2, double z2, float u2, float v2,
+            double x3, double y3, double z3, float u3, float v3,
+            int color, int alpha) {
+        float red = ((color >> 16) & 0xFF) / 255.0F;
+        float green = ((color >> 8) & 0xFF) / 255.0F;
+        float blue = (color & 0xFF) / 255.0F;
+        float alphaF = Mth.clamp(alpha, 0, 255) / 255.0F;
+        emitParticleSheetQuad(consumer, packedLight,
+                x0, y0, z0, u0, v0,
+                x1, y1, z1, u1, v1,
+                x2, y2, z2, u2, v2,
+                x3, y3, z3, u3, v3,
+                red, green, blue, alphaF);
     }
 
     private static RenderType createRenderType(String name, ResourceLocation texture,
@@ -366,8 +365,8 @@ public final class HbmDeferredParticleRenderer {
             int texturedDepthWriteTypes,
             int texturedNoDepthWriteTypes,
             int texturedAdditiveNoDepthWriteTypes,
-            int legacyTransientTexturedNoDepthWriteTypes,
-            int legacyTransientTexturedAdditiveNoDepthWriteTypes) {
+            long directTexturedNoDepthWriteQuads,
+            long directTexturedAdditiveNoDepthWriteQuads) {
     }
 
     private record Entry(DeferredParticle particle, double distanceToCameraSqr) {

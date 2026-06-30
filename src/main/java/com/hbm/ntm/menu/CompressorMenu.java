@@ -110,7 +110,7 @@ public class CompressorMenu extends AbstractContainerMenu implements LegacyUpgra
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 128.0D);
     }
 
     @Override

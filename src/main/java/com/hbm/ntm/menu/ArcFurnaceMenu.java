@@ -55,9 +55,9 @@ public class ArcFurnaceMenu extends AbstractContainerMenu {
         for (int i = 0; i < 3; i++) {
             addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), i, 62 + i * 18, 22));
         }
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 ArcFurnaceBlockEntity.SLOT_BATTERY, 8, 108));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 ArcFurnaceBlockEntity.SLOT_UPGRADE, 152, 108));
         for (int row = 0; row < 4; row++) {
             for (int column = 0; column < 5; column++) {
@@ -187,7 +187,7 @@ public class ArcFurnaceMenu extends AbstractContainerMenu {
     }
 
     private boolean movePlayerStackToMachine(ItemStack stack) {
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     ArcFurnaceBlockEntity.SLOT_BATTERY, ArcFurnaceBlockEntity.SLOT_BATTERY + 1);
         }

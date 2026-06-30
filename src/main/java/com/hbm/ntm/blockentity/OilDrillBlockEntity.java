@@ -110,8 +110,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
-                case SLOT_OIL_CONTAINER, SLOT_GAS_CONTAINER,
+                case SLOT_BATTERY, SLOT_OIL_CONTAINER, SLOT_GAS_CONTAINER,
                      SLOT_UPGRADE_START, SLOT_UPGRADE_START + 1, SLOT_UPGRADE_END -> true;
                 default -> false;
             };

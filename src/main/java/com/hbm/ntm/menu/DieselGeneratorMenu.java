@@ -1,8 +1,6 @@
 package com.hbm.ntm.menu;
 
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.DieselGeneratorBlockEntity;
-import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -16,7 +14,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 
 public class DieselGeneratorMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = DieselGeneratorBlockEntity.SLOT_COUNT;
@@ -98,26 +95,29 @@ public class DieselGeneratorMenu extends AbstractContainerMenu {
             return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END);
         }
-        ItemStack stack = slots.get(index).getItem();
-        if (stack.isEmpty()) {
+        if (index < 0 || index >= slots.size()) {
             return ItemStack.EMPTY;
         }
-        if (stack.getItem() instanceof HbmBatteryItem || stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent()) {
-            return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                    MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                    DieselGeneratorBlockEntity.SLOT_BATTERY,
-                    DieselGeneratorBlockEntity.SLOT_BATTERY + 1);
+        var slot = slots.get(index);
+        if (slot == null || !slot.hasItem()) {
+            return ItemStack.EMPTY;
         }
-        if (stack.getItem() instanceof IFluidIdentifierItem) {
-            return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                    MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                    DieselGeneratorBlockEntity.SLOT_IDENTIFIER,
-                    DieselGeneratorBlockEntity.SLOT_IDENTIFIER + 1);
-        }
-        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
+        ItemStack stack = slot.getItem();
+        ItemStack result = stack.copy();
+        if (!HbmInventoryMenuHelper.legacyMergeItemStack(slots, stack,
                 DieselGeneratorBlockEntity.SLOT_FLUID_INPUT,
-                DieselGeneratorBlockEntity.SLOT_FLUID_INPUT + 1);
+                DieselGeneratorBlockEntity.SLOT_FLUID_INPUT + 1, false)) {
+            if (!HbmInventoryMenuHelper.legacyMergeItemStack(slots, stack,
+                    DieselGeneratorBlockEntity.SLOT_BATTERY,
+                    DieselGeneratorBlockEntity.SLOT_BATTERY + 1, false)
+                    && !HbmInventoryMenuHelper.legacyMergeItemStack(slots, stack,
+                    DieselGeneratorBlockEntity.SLOT_IDENTIFIER_OUTPUT,
+                    DieselGeneratorBlockEntity.SLOT_IDENTIFIER_OUTPUT + 1, false)) {
+                return ItemStack.EMPTY;
+            }
+        }
+        HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+        return result;
     }
 
     private void addDataSlots() {

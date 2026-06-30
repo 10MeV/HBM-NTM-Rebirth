@@ -40,6 +40,10 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
     @Override
     public void render(LiquefactorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;

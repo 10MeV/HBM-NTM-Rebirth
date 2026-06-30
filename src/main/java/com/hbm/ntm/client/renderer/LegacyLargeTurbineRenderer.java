@@ -39,6 +39,11 @@ public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLar
     @Override
     public void render(LegacyLargeTurbineBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
+
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;

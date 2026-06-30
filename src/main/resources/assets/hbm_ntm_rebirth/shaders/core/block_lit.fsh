@@ -19,7 +19,7 @@ void main() {
     vec4 baseColor = texture(Sampler0, texCoord) * vertexColor;
     vec3 lightColor = texture(Sampler2, lightmapUV).rgb;
     baseColor.rgb = mix(overlayColor.rgb, baseColor.rgb, overlayColor.a);
-    vec3 litColor = baseColor.rgb * lightColor * 0.8;
+    vec3 litColor = baseColor.rgb * lightColor;
 
     float alpha = baseColor.a * vFadeAlpha;
     if (alpha < 0.01) {

@@ -41,13 +41,13 @@ public class ExposureChamberMenu extends AbstractContainerMenu {
     }
 
     private void addMachineSlots(Inventory playerInventory) {
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ExposureChamberBlockEntity.SLOT_PARTICLE, 8, 18));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ExposureChamberBlockEntity.SLOT_PARTICLE, 8, 18));
         addSlot(HbmInventoryMenuHelper.takeOnlySlot(blockEntity.getItems(), ExposureChamberBlockEntity.SLOT_CONTAINER, 8, 54));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ExposureChamberBlockEntity.SLOT_INGREDIENT, 80, 36));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ExposureChamberBlockEntity.SLOT_INGREDIENT, 80, 36));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), ExposureChamberBlockEntity.SLOT_OUTPUT, 116, 36));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ExposureChamberBlockEntity.SLOT_BATTERY, 152, 54));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), ExposureChamberBlockEntity.SLOT_UPGRADE_0, 44, 54));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), ExposureChamberBlockEntity.SLOT_UPGRADE_1, 62, 54));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ExposureChamberBlockEntity.SLOT_BATTERY, 152, 54));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ExposureChamberBlockEntity.SLOT_UPGRADE_0, 44, 54));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), ExposureChamberBlockEntity.SLOT_UPGRADE_1, 62, 54));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 104, 162);
     }
 
@@ -118,7 +118,7 @@ public class ExposureChamberMenu extends AbstractContainerMenu {
         if (stack.getItem() instanceof ItemMachineUpgrade) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 5, 7);
         }
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 4, 5);
         }
         if (blockEntity.getItems().isItemValid(ExposureChamberBlockEntity.SLOT_PARTICLE, stack)) {

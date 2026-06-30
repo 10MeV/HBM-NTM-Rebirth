@@ -79,8 +79,7 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_FLUID_INPUT, SLOT_ENERGY_OUTPUT, SLOT_IDENTIFIER -> true;
-                case SLOT_PISTON -> stack.getItem() instanceof PistonSetItem;
+                case SLOT_FLUID_INPUT, SLOT_PISTON, SLOT_ENERGY_OUTPUT, SLOT_IDENTIFIER -> true;
                 default -> false;
             };
         }

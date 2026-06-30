@@ -273,7 +273,7 @@ public class ElectrolyserMenu extends AbstractContainerMenu {
     }
 
     private boolean movePlayerStackToMachine(ItemStack stack) {
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     ElectrolyserBlockEntity.SLOT_BATTERY, ElectrolyserBlockEntity.SLOT_BATTERY + 1);
         }
@@ -286,14 +286,12 @@ public class ElectrolyserMenu extends AbstractContainerMenu {
                     ElectrolyserBlockEntity.SLOT_FLUID_ID_INPUT,
                     ElectrolyserBlockEntity.SLOT_FLUID_ID_INPUT + 1);
         }
-        if (blockEntity.getItems().isItemValid(ElectrolyserBlockEntity.SLOT_METAL_INPUT, stack)) {
+        if (isMetalMode()) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     ElectrolyserBlockEntity.SLOT_METAL_INPUT,
                     ElectrolyserBlockEntity.SLOT_METAL_INPUT + 1);
         }
-        return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
-                ElectrolyserBlockEntity.SLOT_INPUT_CONTAINER,
-                ElectrolyserBlockEntity.SLOT_INPUT_CONTAINER + 1);
+        return false;
     }
 
     private static ElectrolyserBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

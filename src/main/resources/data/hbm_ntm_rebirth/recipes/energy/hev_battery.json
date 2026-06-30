@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:powder_cobalt"
+    },
+    "E": {
+      "item": "minecraft:redstone"
+    },
+    "I": {
+      "item": "hbm_ntm_rebirth:plate_polymer"
+    },
+    "W": {
+      "tag": "forge:wires/gold"
+    }
+  },
+  "pattern": [
+    " W ",
+    "IEI",
+    "ICI"
+  ],
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:hev_battery"
+  },
+  "show_notification": true
+}

@@ -28,6 +28,10 @@ public class ZirnoxReactorRenderer implements BlockEntityRenderer<ZirnoxReactorB
     @Override
     public void render(ZirnoxReactorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);

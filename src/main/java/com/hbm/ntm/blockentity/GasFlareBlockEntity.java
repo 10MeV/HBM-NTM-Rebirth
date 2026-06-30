@@ -364,7 +364,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean consumeFluid(Level level, BlockPos pos) {
-        if (!on || tank.isEmpty()) {
+        if (!on || tank.isEmpty() || isTilted()) {
             return false;
         }
         FluidType type = tank.getTankType();
@@ -387,7 +387,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             fluidUsed = eject;
             if (level.getGameTime() % 7L == 0L) {
                 LegacySoundPlayer.playSoundEffect(level, pos.getX(), pos.getY() + 11.0D, pos.getZ(),
-                        "random.fizz", SoundSource.BLOCKS, 1.5F, 0.5F);
+                        "random.fizz", SoundSource.BLOCKS, getVolume(1.5F), 0.5F);
             }
             return true;
         }
@@ -406,17 +406,16 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || type.hasTrait(SimpleFluidTraits.GaseousAtRoomTemperature.class) ? 5 : 10;
         powerProduced /= penalty;
         powerProduced += powerProduced * effectLevel / 3L;
+        lastOutput = (int) powerProduced;
         if (powerProduced > 0L) {
-            long before = energy.getPower();
-            energy.setPower(Math.min(MAX_POWER, before + powerProduced));
-            lastOutput = (int) Math.min(Integer.MAX_VALUE, energy.getPower() - before);
+            energy.setPower(Math.min(MAX_POWER, energy.getPower() + powerProduced));
         }
         fluidUsed = eject;
         ParticleUtil.spawnGasFlareBurnFlame(level, pos);
         burnEntities(level, pos);
         if (level.getGameTime() % 3L == 0L) {
             LegacySoundPlayer.playSoundEffect(level, pos.getX(), pos.getY() + 11.0D, pos.getZ(),
-                    "hbm:weapon.flamethrowerShoot", SoundSource.BLOCKS, 1.5F, 0.75F);
+                    "hbm:weapon.flamethrowerShoot", SoundSource.BLOCKS, getVolume(1.5F), 0.75F);
         }
         return true;
     }

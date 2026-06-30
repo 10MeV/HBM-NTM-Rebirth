@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "I": {
+      "item": "hbm_ntm_rebirth:plate_steel"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:plate_polymer"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:block_copper"
+    }
+  },
+  "pattern": [
+    "IRI",
+    "PRP",
+    "IRI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:capacitor_copper"
+  },
+  "show_notification": true
+}

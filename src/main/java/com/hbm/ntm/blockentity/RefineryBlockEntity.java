@@ -1,6 +1,5 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
@@ -113,10 +112,9 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
-                case SLOT_INPUT_CONTAINER, SLOT_HEAVY_CONTAINER, SLOT_NAPHTHA_CONTAINER, SLOT_LIGHT_CONTAINER,
-                     SLOT_PETROLEUM_CONTAINER -> true;
-                default -> slot == SLOT_BATTERY && stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
+                case SLOT_BATTERY, SLOT_INPUT_CONTAINER, SLOT_HEAVY_CONTAINER, SLOT_NAPHTHA_CONTAINER,
+                     SLOT_LIGHT_CONTAINER, SLOT_PETROLEUM_CONTAINER, SLOT_IDENTIFIER -> true;
+                default -> false;
             };
         }
 
@@ -148,6 +146,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
             changed = refinery.burnResidualFluid();
         } else if (!refinery.exploded) {
             changed |= refinery.tickRefinery();
+            changed |= refinery.provideOutputTanksToPorts();
         }
         if (changed) {
             refinery.setChanged();
@@ -188,6 +187,11 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return exploded ? List.of() : getAllTanks().subList(1, 5);
+    }
+
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return null;
     }
 
     @Override
@@ -604,6 +608,16 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
                 List.of(), recipe == null ? List.of() : List.of(recipe.outputs()),
                 List.of(), getAllTanks().subList(1, 5)).changed();
+    }
+
+    private boolean provideOutputTanksToPorts() {
+        boolean touched = false;
+        for (HbmFluidTank tank : getSendingTanks()) {
+            if (tank.getFill() > 0 && tryProvideFluidToPorts(tank.getTankType(), tank.getPressure(), this) > 0) {
+                touched = true;
+            }
+        }
+        return touched;
     }
 
     private void addSolid(ItemStack stack) {

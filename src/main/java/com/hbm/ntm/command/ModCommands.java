@@ -25,15 +25,6 @@ import com.hbm.ntm.blockentity.RadioTorchCounterBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchDeviceBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchLogicBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchReaderBlockEntity;
-import com.hbm.ntm.client.ClientBinaryData;
-import com.hbm.ntm.client.ClientBiomeSyncData;
-import com.hbm.ntm.client.ClientInformMessages;
-import com.hbm.ntm.client.ClientMuzzleFlashEffects;
-import com.hbm.ntm.client.ClientPanelData;
-import com.hbm.ntm.client.ClientPermaSyncData;
-import com.hbm.ntm.client.ClientHbmPlayerProperties;
-import com.hbm.ntm.client.ClientHbmLivingProperties;
-import com.hbm.ntm.client.ClientTileBinaryData;
 import com.hbm.ntm.compat.Compat;
 import com.hbm.ntm.compat.CompatCustomWarheadRegistry;
 import com.hbm.ntm.compat.CompatEnergyControl;
@@ -6072,31 +6063,75 @@ public final class ModCommands {
                 + LegacyPacketThreading.legacyCommandInfoSummary()), false);
         source.sendSuccess(() -> Component.literal("Tile binary control uploads: pending="
                 + ServerTileBinaryControlTransfers.pendingTransfers()), false);
-        source.sendSuccess(() -> Component.literal("Client resync cooldowns: tile="
-                + TileSyncPacket.pendingClientResyncRequests()
-                + " tileBinary=" + ClientTileBinaryData.pendingClientResyncRequests()
-                + " entity=" + EntitySyncPacket.pendingClientResyncRequests()
-                + " cooldownTicks=" + TileSyncPacket.clientResyncRequestCooldownTicks()), false);
-        source.sendSuccess(() -> Component.literal("Client network caches: binaryChannels="
-                + ClientBinaryData.channelCount()
-                + " binaryEntries=" + ClientBinaryData.entryCount()
-                + " readyChannels=" + ClientBinaryData.readyChannelCount()
-                + " binaryTransfers=" + ClientBinaryData.pendingTransfers()
-                + " tileBinaryTransfers=" + ClientTileBinaryData.pendingTransfers()
-                + " tileBinaryChunks=" + ClientTileBinaryData.pendingChunkCount()), false);
-        source.sendSuccess(() -> Component.literal("Client sync caches: biomeChunks="
-                + ClientBiomeSyncData.chunkCount()
-                + " panelTypes=" + ClientPanelData.panelCount()
-                + " playerData=" + ClientHbmPlayerProperties.syncedEntryCount()
-                + " permaKeys=" + ClientPermaSyncData.keyCount()
-                + " radiationEffects=" + ClientHbmLivingProperties.getContaminationCount()), false);
-        source.sendSuccess(() -> Component.literal("Client transient effects: notices="
-                + ClientInformMessages.noticeCount()
-                + " muzzleFlashes=" + ClientMuzzleFlashEffects.flashCount()), false);
+        sendClientPacketThreadingStats(source);
         if (!snapshot.lastFailureMessage().isBlank()) {
             source.sendSuccess(() -> Component.literal("Last packet threading issue: " + snapshot.lastFailureMessage()), false);
         }
         return snapshot.pending();
+    }
+
+    private static void sendClientPacketThreadingStats(CommandSourceStack source) {
+        ClientStatValue tileBinaryResync = clientStat("ClientTileBinaryData", "pendingClientResyncRequests");
+        source.sendSuccess(() -> Component.literal("Client resync cooldowns: tile="
+                + TileSyncPacket.pendingClientResyncRequests()
+                + " tileBinary=" + tileBinaryResync.text()
+                + " entity=" + EntitySyncPacket.pendingClientResyncRequests()
+                + " cooldownTicks=" + TileSyncPacket.clientResyncRequestCooldownTicks()), false);
+
+        ClientStatValue binaryChannels = clientStat("ClientBinaryData", "channelCount");
+        ClientStatValue binaryEntries = clientStat("ClientBinaryData", "entryCount");
+        ClientStatValue readyChannels = clientStat("ClientBinaryData", "readyChannelCount");
+        ClientStatValue binaryTransfers = clientStat("ClientBinaryData", "pendingTransfers");
+        ClientStatValue tileBinaryTransfers = clientStat("ClientTileBinaryData", "pendingTransfers");
+        ClientStatValue tileBinaryChunks = clientStat("ClientTileBinaryData", "pendingChunkCount");
+        source.sendSuccess(() -> Component.literal("Client network caches: binaryChannels="
+                + binaryChannels.text()
+                + " binaryEntries=" + binaryEntries.text()
+                + " readyChannels=" + readyChannels.text()
+                + " binaryTransfers=" + binaryTransfers.text()
+                + " tileBinaryTransfers=" + tileBinaryTransfers.text()
+                + " tileBinaryChunks=" + tileBinaryChunks.text()), false);
+
+        ClientStatValue biomeChunks = clientStat("ClientBiomeSyncData", "chunkCount");
+        ClientStatValue panelTypes = clientStat("ClientPanelData", "panelCount");
+        ClientStatValue playerData = clientStat("ClientHbmPlayerProperties", "syncedEntryCount");
+        ClientStatValue permaKeys = clientStat("ClientPermaSyncData", "keyCount");
+        ClientStatValue radiationEffects = clientStat("ClientHbmLivingProperties", "getContaminationCount");
+        source.sendSuccess(() -> Component.literal("Client sync caches: biomeChunks="
+                + biomeChunks.text()
+                + " panelTypes=" + panelTypes.text()
+                + " playerData=" + playerData.text()
+                + " permaKeys=" + permaKeys.text()
+                + " radiationEffects=" + radiationEffects.text()), false);
+
+        ClientStatValue notices = clientStat("ClientInformMessages", "noticeCount");
+        ClientStatValue muzzleFlashes = clientStat("ClientMuzzleFlashEffects", "flashCount");
+        source.sendSuccess(() -> Component.literal("Client transient effects: notices="
+                + notices.text()
+                + " muzzleFlashes=" + muzzleFlashes.text()), false);
+    }
+
+    private static ClientStatValue clientStat(String simpleClassName, String methodName) {
+        try {
+            Class<?> type = Class.forName("com.hbm.ntm.client." + simpleClassName);
+            Object value = type.getMethod(methodName).invoke(null);
+            if (value instanceof Number number) {
+                return ClientStatValue.available(Long.toString(number.longValue()));
+            }
+            return ClientStatValue.available(String.valueOf(value));
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            return ClientStatValue.unavailable();
+        }
+    }
+
+    private record ClientStatValue(String text) {
+        static ClientStatValue available(String text) {
+            return new ClientStatValue(text);
+        }
+
+        static ClientStatValue unavailable() {
+            return new ClientStatValue("n/a");
+        }
     }
 
     private static int getPacketThreadingPrepareStats(CommandSourceStack source) {

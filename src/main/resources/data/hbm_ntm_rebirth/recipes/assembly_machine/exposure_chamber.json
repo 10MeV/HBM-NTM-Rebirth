@@ -1,0 +1,73 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.exposurechamber",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    {
+      "ingredient": {
+        "tag": "forge:cast_plates/aluminium"
+      },
+      "count": 12,
+      "legacy_ore": "plateCastAluminum"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_resistant_alloy"
+      },
+      "count": 4,
+      "legacy_ore": "ingotAnyResistantAlloy"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      },
+      "count": 12,
+      "legacy_ore": "ingotAnyHardPlastic"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:dense_wires/gold"
+      },
+      "count": 32,
+      "legacy_ore": "wireDenseGold"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor_desh"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_bismoid"
+      },
+      "count": 4,
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 11
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:capacitor_tantalum"
+      },
+      "count": 1,
+      "legacy_id": "hbm:battery_pack",
+      "legacy_meta": 9
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:glass_quartz"
+      },
+      "count": 16
+    }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_exposure_chamber"
+    }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 158
+}

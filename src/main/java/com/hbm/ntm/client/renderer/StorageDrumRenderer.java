@@ -21,6 +21,11 @@ public class StorageDrumRenderer implements BlockEntityRenderer<StorageDrumBlock
     @Override
     public void render(StorageDrumBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
+
         render(poseStack, buffer, LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight),
                 packedOverlay);
     }

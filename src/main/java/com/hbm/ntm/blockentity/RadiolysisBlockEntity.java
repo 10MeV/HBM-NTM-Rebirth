@@ -75,10 +75,7 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            if (slot >= SLOT_RTG_START && slot <= SLOT_RTG_END) {
-                return rtgHeat(stack) > 0;
-            }
-            return slot == SLOT_FLUID_ID_INPUT || slot == SLOT_STERILIZE_INPUT || slot == SLOT_BATTERY;
+            return isLegacyManualInputSlot(slot);
         }
 
         @Override
@@ -488,11 +485,19 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             int mapped = map(slot);
-            return mapped >= 0 && items.isItemValid(mapped, stack);
+            return (mapped >= SLOT_RTG_START && mapped <= SLOT_RTG_END && rtgHeat(stack) > 0)
+                    || mapped == SLOT_STERILIZE_INPUT;
         }
 
         private int map(int slot) {
             return slot >= 0 && slot < SLOT_IO.length ? SLOT_IO[slot] : -1;
         }
+    }
+
+    private static boolean isLegacyManualInputSlot(int slot) {
+        return (slot >= SLOT_RTG_START && slot <= SLOT_RTG_END)
+                || slot == SLOT_FLUID_ID_INPUT
+                || slot == SLOT_STERILIZE_INPUT
+                || slot == SLOT_BATTERY;
     }
 }

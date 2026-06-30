@@ -51,6 +51,10 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
     @Override
     public void render(ChemicalPlantBlockEntity chemicalPlant, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(chemicalPlant, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(chemicalPlant);
         BlockState state = chemicalPlant.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;

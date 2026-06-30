@@ -113,9 +113,6 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
             }
         }
 
-        if (outputTank.getFill() > 0) {
-            tryProvideFluidToPorts(outputTank.getTankType(), outputTank.getPressure(), this);
-        }
         if (wasOn && level.getGameTime() % 2L == 0L) {
             ParticleUtil.spawnCokerChimneySmoke(level, pos);
         }

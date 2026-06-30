@@ -27,10 +27,14 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_GPU_BACKEND;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_INSTANCING;
     public static final ForgeConfigSpec.BooleanValue RENDER_INSTANCE_VBO_ORPHAN_BEFORE_UPLOAD;
+    public static final ForgeConfigSpec.IntValue RENDER_MAX_INSTANCED_INSTANCES_PER_DRAW;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_MDI;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_OCCLUSION_CULLING;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_IRIS_EXTENDED_SHADER_PATH;
     public static final ForgeConfigSpec.BooleanValue RENDER_DISABLE_GPU_BACKEND_WITH_SHADERS;
+    public static final ForgeConfigSpec.BooleanValue RENDER_BACKEND_DIAGNOSTICS;
+    public static final ForgeConfigSpec.BooleanValue RENDER_MDI_DEBUG_LOG_DISPATCH;
+    public static final ForgeConfigSpec.BooleanValue RENDER_MDI_VERBOSE_SUBDRAWS;
     public static final ForgeConfigSpec.BooleanValue ITEM_TOOLTIP_SHOW_TAGS;
     public static final ForgeConfigSpec.BooleanValue ITEM_TOOLTIP_SHOW_CUSTOM_NUKE;
     public static final ForgeConfigSpec.BooleanValue NEI_HIDE_SECRETS;
@@ -103,17 +107,20 @@ public final class HbmClientConfig {
 
         builder.push("rendering");
         RENDER_SAFE_OBJ_STATIC_BATCHING = builder
-                .comment("Enables the source-backed safe OBJ GPU mesh cache for world renderers without shader packs. Hardware instancing/MDI still require their explicit experimental switches.")
+                .comment("Enables the source-backed safe OBJ GPU mesh cache and ordinary static OBJ instancing for world renderers without shader packs. Disable this if packaged-jar validation finds rendering regressions.")
                 .define("safeObjStaticBatching", true);
         RENDER_EXPERIMENTAL_GPU_BACKEND = builder
-                .comment("Modernized render pipeline: enables the experimental OBJ GPU backend once a real backend is available. CPU fallback remains authoritative.")
+                .comment("Modernized render pipeline: enables the experimental OBJ GPU backend. CPU fallback remains authoritative.")
                 .define("experimentalGpuBackend", false);
         RENDER_EXPERIMENTAL_INSTANCING = builder
-                .comment("Modernized render pipeline: enables static OBJ part instancing. Experimental; keep disabled by default until packaged-jar rendering is validated.")
+                .comment("Modernized render pipeline: explicitly requests the OBJ GPU backend and static OBJ part hardware instancing outside the safe no-shader route. The default safe route can enable ordinary instancing through safeObjStaticBatching.")
                 .define("experimentalInstancing", false);
         RENDER_INSTANCE_VBO_ORPHAN_BEFORE_UPLOAD = builder
                 .comment("Modernized render pipeline: orphan the OBJ instancing instance VBO before uploading per-frame instance data to avoid driver stalls.")
                 .define("instanceVboOrphanBeforeUpload", true);
+        RENDER_MAX_INSTANCED_INSTANCES_PER_DRAW = builder
+                .comment("Modernized render pipeline: maximum OBJ instances uploaded per ordinary instanced draw slice. Higher values reduce draw slices in large machine fields at the cost of larger transient instance uploads.")
+                .defineInRange("maxInstancedInstancesPerDraw", 4096, 256, 16384);
         RENDER_EXPERIMENTAL_MDI = builder
                 .comment("Modernized render pipeline: enables experimental multi-draw indirect batching for eligible instanced OBJ parts when the GPU supports it.")
                 .define("experimentalMdi", false);
@@ -121,11 +128,20 @@ public final class HbmClientConfig {
                 .comment("Modernized render pipeline: enables experimental ray-cache occlusion culling for eligible visible machine block entity renderers.")
                 .define("experimentalOcclusionCulling", false);
         RENDER_EXPERIMENTAL_IRIS_EXTENDED_SHADER_PATH = builder
-                .comment("Modernized render pipeline: enables the future Iris/Oculus ExtendedShader companion path once companion meshes are wired.")
+                .comment("Modernized render pipeline: enables the experimental Iris/Oculus ExtendedShader companion path for eligible OBJ companion meshes.")
                 .define("experimentalIrisExtendedShaderPath", false);
         RENDER_DISABLE_GPU_BACKEND_WITH_SHADERS = builder
-                .comment("Disables experimental GPU/instancing paths while Iris/Oculus shader packs are active until a compatible companion path exists.")
+                .comment("Disables vanilla-unsafe experimental GPU/instancing paths while Iris/Oculus shader packs are active; the explicit experimental Iris/Oculus companion path can still be used when enabled.")
                 .define("disableGpuBackendWithShaders", true);
+        RENDER_BACKEND_DIAGNOSTICS = builder
+                .comment("Logs low-frequency Modernized-style OBJ render backend diagnostics for packaged-jar instancing/MDI/Iris validation.")
+                .define("renderBackendDiagnostics", false);
+        RENDER_MDI_DEBUG_LOG_DISPATCH = builder
+                .comment("Modernized render pipeline: logs each successful OBJ MDI dispatch summary for packaged-jar MDI validation.")
+                .define("mdiDebugLogDispatch", false);
+        RENDER_MDI_VERBOSE_SUBDRAWS = builder
+                .comment("Modernized render pipeline: logs every OBJ MDI sub-draw at info level when dispatch diagnostics are needed.")
+                .define("mdiVerboseSubdraws", false);
         builder.pop();
 
         builder.push("tooltips");
@@ -199,6 +215,10 @@ public final class HbmClientConfig {
         return booleanValue(RENDER_INSTANCE_VBO_ORPHAN_BEFORE_UPLOAD, true);
     }
 
+    public static int maxInstancedInstancesPerDraw() {
+        return Math.max(256, Math.min(16384, intValue(RENDER_MAX_INSTANCED_INSTANCES_PER_DRAW, 4096)));
+    }
+
     public static boolean experimentalMdi() {
         return booleanValue(RENDER_EXPERIMENTAL_MDI, false);
     }
@@ -213,6 +233,18 @@ public final class HbmClientConfig {
 
     public static boolean disableGpuBackendWithShaders() {
         return booleanValue(RENDER_DISABLE_GPU_BACKEND_WITH_SHADERS, true);
+    }
+
+    public static boolean renderBackendDiagnostics() {
+        return booleanValue(RENDER_BACKEND_DIAGNOSTICS, false);
+    }
+
+    public static boolean mdiDebugLogDispatch() {
+        return booleanValue(RENDER_MDI_DEBUG_LOG_DISPATCH, false);
+    }
+
+    public static boolean mdiVerboseSubdraws() {
+        return booleanValue(RENDER_MDI_VERBOSE_SUBDRAWS, false);
     }
 
     public static boolean nukeHudFlash() {

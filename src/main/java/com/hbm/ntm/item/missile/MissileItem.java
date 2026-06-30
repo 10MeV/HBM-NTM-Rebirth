@@ -1,7 +1,5 @@
 package com.hbm.ntm.item.missile;
 
-import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
-import com.hbm.ntm.client.renderer.MissileItemRenderer;
 import com.hbm.ntm.api.entity.LegacyMissileRadarProfile;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -12,6 +10,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -58,7 +57,19 @@ public class MissileItem extends Item {
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
         if (usesObjItemRenderer()) {
-            LegacyItemRendererBridge.accept(consumer, () -> MissileItemRenderer.INSTANCE);
+            acceptClientExtensions("com.hbm.ntm.client.renderer.MissileItemRendererBridge", consumer);
+        }
+    }
+
+    private static void acceptClientExtensions(String className, Consumer<IClientItemExtensions> consumer) {
+        try {
+            Class<?> bridge = Class.forName(className);
+            bridge.getMethod("acceptMissile", Consumer.class).invoke(null, consumer);
+        } catch (ReflectiveOperationException exception) {
+            Throwable cause = exception instanceof InvocationTargetException invocation && invocation.getCause() != null
+                    ? invocation.getCause()
+                    : exception;
+            throw new IllegalStateException("Unable to initialize missile item client renderer", cause);
         }
     }
 

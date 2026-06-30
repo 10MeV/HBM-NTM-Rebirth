@@ -61,8 +61,7 @@ public class FluidDuctVariantBlockItem extends BlockItem {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        com.hbm.ntm.client.renderer.LegacyItemRendererBridge.accept(consumer,
-                () -> com.hbm.ntm.client.renderer.FluidDuctItemRenderer.INSTANCE);
+        ClientItemRendererBridge.accept("acceptFluidDuct", consumer);
     }
 
     public static ItemStack createStack(FluidDuctVariantBlockItem item, int legacyMetadata) {

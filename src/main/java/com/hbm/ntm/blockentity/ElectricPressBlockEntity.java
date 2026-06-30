@@ -71,11 +71,11 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 case SLOT_STAMP -> stack.getItem() instanceof ItemPressStamp;
                 case SLOT_INPUT -> !(stack.getItem() instanceof ItemPressStamp)
                         && !(stack.getItem() instanceof ItemMachineUpgrade)
-                        && !HbmInventoryMenuHelper.isBatteryLike(stack);
+                        && !HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 case SLOT_UPGRADE -> stack.getItem() instanceof ItemMachineUpgrade upgrade
                         && upgrade.getUpgradeType() == UpgradeType.SPEED;
                 default -> false;

@@ -27,7 +27,7 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
 
     @Override
     public int getViewDistance() {
-        return 96;
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
 
     @Override

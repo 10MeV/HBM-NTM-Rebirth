@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.hbm.ntm.client.render.HbmOptimizedRenderShaders;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
@@ -68,18 +69,20 @@ public enum LegacyTexturedRenderMode {
             new RenderStateShard.TexturingStateShard("hbm_legacy_front_face_cw",
                     () -> GL11.glFrontFace(GL11.GL_CW),
                     () -> GL11.glFrontFace(GL11.GL_CCW));
+    private static final RenderStateShard.ShaderStateShard BLOCK_LIT_SHADER =
+            new RenderStateShard.ShaderStateShard(HbmOptimizedRenderShaders::blockLitStaticShader);
     private static final int LEGACY_OBJ_BUFFER_SIZE = 1_048_576;
     private static final Map<Key, RenderType> CACHE = new ConcurrentHashMap<>();
 
     public RenderType renderType(ResourceLocation texture) {
-        return CACHE.computeIfAbsent(new Key(this, texture, VertexFormat.Mode.QUADS), Key::create);
+        return CACHE.computeIfAbsent(new Key(this, texture, VertexFormat.Mode.QUADS, useWorldBlockLitShader()), Key::create);
     }
 
     public RenderType renderType(ResourceLocation texture, VertexFormat.Mode drawMode) {
         if (drawMode == VertexFormat.Mode.QUADS) {
             return renderType(texture);
         }
-        return CACHE.computeIfAbsent(new Key(this, texture, drawMode), Key::create);
+        return CACHE.computeIfAbsent(new Key(this, texture, drawMode, useWorldBlockLitShader()), Key::create);
     }
 
     public static void clearCachedRenderTypes() {
@@ -126,21 +129,26 @@ public enum LegacyTexturedRenderMode {
 
     private static RenderType createCustom(String name, ResourceLocation texture,
             RenderStateShard.TransparencyStateShard transparency, boolean depthWrite) {
-        return createCustom(name, texture, transparency, depthWrite, LEQUAL_DEPTH_TEST, false, VertexFormat.Mode.QUADS);
+        return createCustom(name, texture, transparency, depthWrite, LEQUAL_DEPTH_TEST, false, VertexFormat.Mode.QUADS,
+                useWorldBlockLitShader());
     }
 
     private static RenderType createCustom(String name, ResourceLocation texture,
             RenderStateShard.TransparencyStateShard transparency, boolean depthWrite,
             RenderStateShard.DepthTestStateShard depthTest) {
-        return createCustom(name, texture, transparency, depthWrite, depthTest, false, VertexFormat.Mode.QUADS);
+        return createCustom(name, texture, transparency, depthWrite, depthTest, false, VertexFormat.Mode.QUADS,
+                useWorldBlockLitShader());
     }
 
     private static RenderType createCustom(String name, ResourceLocation texture,
             RenderStateShard.TransparencyStateShard transparency, boolean depthWrite,
-            RenderStateShard.DepthTestStateShard depthTest, boolean cull, VertexFormat.Mode drawMode) {
+            RenderStateShard.DepthTestStateShard depthTest, boolean cull, VertexFormat.Mode drawMode,
+            boolean blockLitShader) {
         return RenderType.create(name, DefaultVertexFormat.NEW_ENTITY, drawMode, LEGACY_OBJ_BUFFER_SIZE,
                 false, true, RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityTranslucentShader))
+                        .setShaderState(!blockLitShader || glintTransparency(transparency)
+                                ? new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityTranslucentShader)
+                                : BLOCK_LIT_SHADER)
                         .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
                         .setTransparencyState(transparency)
                         .setDepthTestState(depthTest)
@@ -152,9 +160,11 @@ public enum LegacyTexturedRenderMode {
     }
 
     private static RenderType createCutout(String name, ResourceLocation texture, boolean cull,
-            boolean reversedFrontFace, VertexFormat.Mode drawMode) {
+            boolean reversedFrontFace, VertexFormat.Mode drawMode, boolean blockLitShader) {
         RenderType.CompositeState.CompositeStateBuilder builder = RenderType.CompositeState.builder()
-                .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityCutoutShader))
+                .setShaderState(blockLitShader
+                        ? BLOCK_LIT_SHADER
+                        : new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityCutoutShader))
                 .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
                 .setDepthTestState(LEQUAL_DEPTH_TEST)
                 .setCullState(new RenderStateShard.CullStateShard(cull))
@@ -168,23 +178,36 @@ public enum LegacyTexturedRenderMode {
                 true, false, builder.createCompositeState(false));
     }
 
-    private record Key(LegacyTexturedRenderMode mode, ResourceLocation texture, VertexFormat.Mode drawMode) {
+    private static boolean glintTransparency(RenderStateShard.TransparencyStateShard transparency) {
+        return transparency == GLINT_TRANSPARENCY;
+    }
+
+    private static boolean useWorldBlockLitShader() {
+        // Keep legacy OBJ rendering on vanilla entity shaders until block_lit_static
+        // has a separate visual validation pass; mismatched shader state makes large
+        // OBJ batches render transparent or corrupted.
+        return false;
+    }
+
+    private record Key(LegacyTexturedRenderMode mode, ResourceLocation texture, VertexFormat.Mode drawMode,
+                       boolean blockLitShader) {
         private RenderType create() {
             String name = "hbm_legacy_textured_" + mode.name().toLowerCase() + "_" + texture.toString()
-                    .replace(':', '_').replace('/', '_').replace('.', '_') + "_" + drawMode.name().toLowerCase();
+                    .replace(':', '_').replace('/', '_').replace('.', '_') + "_" + drawMode.name().toLowerCase()
+                    + (blockLitShader ? "_block_lit" : "_entity_lit");
             return switch (mode) {
-                case CUTOUT_NO_CULL -> createCutout(name, texture, false, false, drawMode);
-                case CUTOUT_DOUBLE_SIDED -> createCutout(name, texture, false, false, drawMode);
-                case CUTOUT_REVERSED_CULL -> createCutout(name, texture, true, true, drawMode);
-                case CUTOUT_CULL -> createCutout(name, texture, true, false, drawMode);
-                case TRANSLUCENT -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode);
-                case TRANSLUCENT_NO_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, false, drawMode);
-                case TRANSLUCENT_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode);
-                case ADDITIVE_NO_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, false, drawMode);
-                case ADDITIVE_CULL_NO_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, true, drawMode);
-                case ADDITIVE_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode);
-                case GLINT_NO_DEPTH_WRITE -> createCustom(name, texture, GLINT_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, false, drawMode);
-                case GLINT_EQUAL_DEPTH -> createCustom(name, texture, GLINT_TRANSPARENCY, false, EQUAL_DEPTH_TEST, false, drawMode);
+                case CUTOUT_NO_CULL -> createCutout(name, texture, false, false, drawMode, blockLitShader);
+                case CUTOUT_DOUBLE_SIDED -> createCutout(name, texture, false, false, drawMode, blockLitShader);
+                case CUTOUT_REVERSED_CULL -> createCutout(name, texture, true, true, drawMode, blockLitShader);
+                case CUTOUT_CULL -> createCutout(name, texture, true, false, drawMode, blockLitShader);
+                case TRANSLUCENT -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode, blockLitShader);
+                case TRANSLUCENT_NO_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, false, drawMode, blockLitShader);
+                case TRANSLUCENT_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode, blockLitShader);
+                case ADDITIVE_NO_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, false, drawMode, blockLitShader);
+                case ADDITIVE_CULL_NO_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, true, drawMode, blockLitShader);
+                case ADDITIVE_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode, blockLitShader);
+                case GLINT_NO_DEPTH_WRITE -> createCustom(name, texture, GLINT_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, false, drawMode, false);
+                case GLINT_EQUAL_DEPTH -> createCustom(name, texture, GLINT_TRANSPARENCY, false, EQUAL_DEPTH_TEST, false, drawMode, false);
             };
         }
     }

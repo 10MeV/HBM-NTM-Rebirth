@@ -29,6 +29,11 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
     @Override
     public void render(MachineLpw2BlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
+
         BlockState state = blockEntity.getBlockState();
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)

@@ -1,7 +1,5 @@
 package com.hbm.ntm.item;
 
-import com.hbm.ntm.client.renderer.LegacyFanItemRenderer;
-import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 
@@ -14,6 +12,6 @@ public class LegacyFanBlockItem extends LegacyLoreBlockItem {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        LegacyItemRendererBridge.accept(consumer, () -> LegacyFanItemRenderer.INSTANCE);
+        ClientItemRendererBridge.accept("acceptLegacyFan", consumer);
     }
 }

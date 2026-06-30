@@ -43,9 +43,9 @@ public class OilDrillMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.outputSlot(items, OilDrillBlockEntity.SLOT_OIL_CONTAINER_OUTPUT, 80, 53));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_GAS_CONTAINER, 125, 17));
         addSlot(HbmInventoryMenuHelper.outputSlot(items, OilDrillBlockEntity.SLOT_GAS_CONTAINER_OUTPUT, 125, 53));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_START, 152, 17));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_START + 1, 152, 35));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_END, 152, 53));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_START, 152, 17));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_START + 1, 152, 35));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_END, 152, 53));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
         addDataSlots();
     }
@@ -85,7 +85,8 @@ public class OilDrillMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity,
+                HbmInventoryMenuHelper.LEGACY_MACHINE_USE_DISTANCE_SQR);
     }
 
     @Override

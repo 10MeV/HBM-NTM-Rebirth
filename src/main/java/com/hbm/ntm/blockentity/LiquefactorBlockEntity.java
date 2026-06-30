@@ -271,9 +271,6 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         if (customName != null && !customName.isBlank()) {
             tag.putString(TAG_CUSTOM_NAME, customName);
         }
-        tag.putInt(TAG_PROGRESS, progress);
-        tag.putInt(TAG_USAGE, usage);
-        tag.putInt(TAG_PROCESS_TIME, processTime);
         tank.writeToNbt(tag, TAG_LEGACY_TANK);
     }
 
@@ -282,9 +279,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         super.load(tag);
         loadInventory(tag);
         customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
-        progress = tag.getInt(TAG_PROGRESS);
-        usage = tag.contains(TAG_USAGE) ? tag.getInt(TAG_USAGE) : USAGE_BASE;
-        processTime = tag.contains(TAG_PROCESS_TIME) ? tag.getInt(TAG_PROCESS_TIME) : PROCESS_TIME_BASE;
+        readRuntimeSyncTag(tag);
         if (hasTankTag(tag, TAG_LEGACY_TANK)) {
             tank.readFromNbt(tag, TAG_LEGACY_TANK);
         }
@@ -292,7 +287,20 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        writeRuntimeSyncTag(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readRuntimeSyncTag(tag);
     }
 
     @Nullable
@@ -355,6 +363,18 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
 
     private static boolean hasTankTag(CompoundTag tag, String key) {
         return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
+    }
+
+    private void writeRuntimeSyncTag(CompoundTag tag) {
+        tag.putInt(TAG_PROGRESS, progress);
+        tag.putInt(TAG_USAGE, usage);
+        tag.putInt(TAG_PROCESS_TIME, processTime);
+    }
+
+    private void readRuntimeSyncTag(CompoundTag tag) {
+        progress = tag.contains(TAG_PROGRESS, Tag.TAG_INT) ? tag.getInt(TAG_PROGRESS) : 0;
+        usage = tag.contains(TAG_USAGE, Tag.TAG_INT) ? tag.getInt(TAG_USAGE) : USAGE_BASE;
+        processTime = tag.contains(TAG_PROCESS_TIME, Tag.TAG_INT) ? tag.getInt(TAG_PROCESS_TIME) : PROCESS_TIME_BASE;
     }
 
     private boolean updateUpgrades() {

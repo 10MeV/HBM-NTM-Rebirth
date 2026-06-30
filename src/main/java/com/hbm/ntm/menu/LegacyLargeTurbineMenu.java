@@ -35,17 +35,17 @@ public class LegacyLargeTurbineMenu extends AbstractContainerMenu {
             LegacyLargeTurbineBlockEntity blockEntity) {
         super(ModMenuTypes.LEGACY_LARGE_TURBINE.get(), containerId);
         this.blockEntity = blockEntity;
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 LegacyLargeTurbineBlockEntity.SLOT_IDENTIFIER, 8, 17));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
                 LegacyLargeTurbineBlockEntity.SLOT_IDENTIFIER_OUTPUT, 8, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 LegacyLargeTurbineBlockEntity.SLOT_INPUT_CONTAINER, 44, 17));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
                 LegacyLargeTurbineBlockEntity.SLOT_INPUT_CONTAINER_OUTPUT, 44, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 LegacyLargeTurbineBlockEntity.SLOT_BATTERY, 98, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 LegacyLargeTurbineBlockEntity.SLOT_OUTPUT_CONTAINER, 152, 17));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
                 LegacyLargeTurbineBlockEntity.SLOT_OUTPUT_CONTAINER_OUTPUT, 152, 53));
@@ -91,7 +91,8 @@ public class LegacyLargeTurbineMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity,
+                HbmInventoryMenuHelper.LEGACY_MACHINE_USE_DISTANCE_SQR);
     }
 
     @Override

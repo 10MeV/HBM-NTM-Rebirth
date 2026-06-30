@@ -57,6 +57,10 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
     @Override
     public void render(AssemblyMachineBlockEntity assembler, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(assembler, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(assembler);
         BlockState state = assembler.getBlockState();
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(assembler, packedLight);
 

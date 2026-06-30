@@ -6,6 +6,7 @@ import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.ObjReactorModels;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
+import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import java.util.concurrent.ThreadLocalRandom;
@@ -25,7 +26,7 @@ public class ResearchReactorRenderer implements BlockEntityRenderer<ResearchReac
 
     @Override
     public boolean shouldRenderOffScreen(ResearchReactorBlockEntity blockEntity) {
-        return false;
+        return HbmShaderCompatibilityDetector.shouldRenderBlockEntityOffScreen();
     }
 
     @Override
@@ -36,6 +37,10 @@ public class ResearchReactorRenderer implements BlockEntityRenderer<ResearchReac
     @Override
     public void render(ResearchReactorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         int light = LegacyRenderLighting.resolveBoundsLight(blockEntity, blockEntity.getRenderBoundingBox(), packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);

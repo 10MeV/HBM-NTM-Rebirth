@@ -56,13 +56,13 @@ public class SolderingStationMenu extends AbstractContainerMenu {
         }
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
                 SolderingStationBlockEntity.SLOT_OUTPUT, 107, 27));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 SolderingStationBlockEntity.SLOT_BATTERY, 152, 72));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 SolderingStationBlockEntity.SLOT_IDENTIFIER, 17, 63));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 SolderingStationBlockEntity.SLOT_UPGRADE_0, 89, 63));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 SolderingStationBlockEntity.SLOT_UPGRADE_1, 107, 63));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 122, 180);
     }
@@ -147,7 +147,7 @@ public class SolderingStationMenu extends AbstractContainerMenu {
     }
 
     private boolean movePlayerStackToMachine(ItemStack stack) {
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     SolderingStationBlockEntity.SLOT_BATTERY,
                     SolderingStationBlockEntity.SLOT_BATTERY + 1);

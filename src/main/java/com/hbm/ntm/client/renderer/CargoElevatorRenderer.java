@@ -38,6 +38,11 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
     @Override
     public void render(CargoElevatorBlockEntity elevator, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(elevator, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(elevator);
+
         int modelLight = LegacyRenderLighting.resolveBoundsLight(elevator, elevator.getRenderBoundingBox(),
                 packedLight);
         poseStack.pushPose();

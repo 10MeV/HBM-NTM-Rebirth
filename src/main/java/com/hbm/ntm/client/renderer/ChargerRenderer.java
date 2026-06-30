@@ -40,30 +40,37 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
     @Override
     public void render(ChargerBlockEntity charger, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(charger, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(charger);
         BlockState state = charger.getBlockState();
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(charger, packedLight);
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.5D, 0.5D);
-        orient(poseStack, state.hasProperty(ChargerBlock.FACING) ? state.getValue(ChargerBlock.FACING) : Direction.NORTH);
-        poseStack.translate(-0.5D, -0.5D, -0.5D);
-        float time = charger.getSlide(partialTick);
-        double extend = Math.min(1.0D, time * 2.0D);
-        double swivel = Math.max(0.0D, (time - 0.5D) * 2.0D);
+        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+                LegacyRenderLighting.pushModelViewSampling(charger, poseStack.last().pose())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.5D, 0.5D);
+            orient(poseStack, state.hasProperty(ChargerBlock.FACING) ? state.getValue(ChargerBlock.FACING) : Direction.NORTH);
+            poseStack.translate(-0.5D, -0.5D, -0.5D);
+            float time = charger.getSlide(partialTick);
+            double extend = Math.min(1.0D, time * 2.0D);
+            double swivel = Math.max(0.0D, (time - 0.5D) * 2.0D);
 
-        renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.pushPose();
-        applySlideFrame(poseStack, extend);
-        renderArm(poseStack, buffer, modelLight, packedOverlay, LEFT, 30.0D * swivel);
-        renderArm(poseStack, buffer, modelLight, packedOverlay, RIGHT, -30.0D * swivel);
-        poseStack.popPose();
+            renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
+            poseStack.pushPose();
+            applySlideFrame(poseStack, extend);
+            renderArm(poseStack, buffer, modelLight, packedOverlay, LEFT, 30.0D * swivel);
+            renderArm(poseStack, buffer, modelLight, packedOverlay, RIGHT, -30.0D * swivel);
+            poseStack.popPose();
 
-        ObjMachineModels.CHARGER.renderOnlyUntextured(poseStack, buffer, 255, 191, 0, 255, LIGHT);
+            ObjMachineModels.CHARGER.renderOnlyUntextured(poseStack, buffer, 255, 191, 0, 255, LIGHT);
 
-        poseStack.pushPose();
-        applySlideFrame(poseStack, extend);
-        renderPart(SLIDE, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
-        poseStack.popPose();
+            poseStack.pushPose();
+            applySlideFrame(poseStack, extend);
+            renderPart(SLIDE, poseStack, buffer, modelLight, packedOverlay);
+            poseStack.popPose();
+            poseStack.popPose();
+        }
     }
 
     private static void applySlideFrame(PoseStack poseStack, double extend) {

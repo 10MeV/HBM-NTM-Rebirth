@@ -94,7 +94,7 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
                 case SLOT_PCB_0, SLOT_PCB_1 -> isUniqueInput(slot, stack, SLOT_PCB_0, SLOT_PCB_1)
                         && (level == null || SolderingStationRecipeRuntime.isPcb(level, stack));
                 case SLOT_SOLDER -> level == null || SolderingStationRecipeRuntime.isSolder(level, stack);
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
                 case SLOT_UPGRADE_0, SLOT_UPGRADE_1 -> stack.getItem() instanceof ItemMachineUpgrade upgrade
                         && VALID_UPGRADES.containsKey(upgrade.getUpgradeType());

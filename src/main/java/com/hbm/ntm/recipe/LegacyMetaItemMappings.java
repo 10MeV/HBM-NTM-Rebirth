@@ -29,6 +29,7 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation POWDER_ASH = hbm("powder_ash");
     public static final ResourceLocation CHUNK_ORE = hbm("chunk_ore");
     public static final ResourceLocation PLANT_ITEM = hbm("plant_item");
+    public static final ResourceLocation PLANT_FLOWER = hbm("plant_flower");
     public static final ResourceLocation PARTS_LEGENDARY = hbm("parts_legendary");
     public static final ResourceLocation PART_GENERIC = hbm("part_generic");
     public static final ResourceLocation ITEM_EXPENSIVE = hbm("item_expensive");
@@ -144,6 +145,13 @@ public final class LegacyMetaItemMappings {
                 0, requireLegacyItem("plant_item_tobacco"),
                 1, requireLegacyItem("plant_item_rope"),
                 2, requireLegacyItem("plant_item_mustardwillow")));
+        registerSparse(PLANT_FLOWER, Map.of(
+                0, requireLegacyItem("plant_flower_foxglove"),
+                1, requireLegacyItem("plant_flower_tobacco"),
+                2, requireLegacyItem("plant_flower_nightshade"),
+                3, requireLegacyItem("plant_flower_weed"),
+                4, requireLegacyItem("plant_flower_cd0"),
+                5, requireLegacyItem("plant_flower_cd1")));
         registerSparse(PARTS_LEGENDARY, Map.of(
                 0, requireLegacyItem("parts_legendary_tier1"),
                 1, requireLegacyItem("parts_legendary_tier2"),

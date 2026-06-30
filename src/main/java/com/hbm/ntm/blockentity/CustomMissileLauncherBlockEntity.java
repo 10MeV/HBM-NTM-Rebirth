@@ -86,7 +86,7 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
                 case SLOT_DESIGNATOR -> stack.getItem() instanceof DesignatorItem || hasLegacyDesignatorCoords(stack);
                 case SLOT_FUEL_OUTPUT, SLOT_OXIDIZER_OUTPUT -> false;
                 case SLOT_SOLID_FUEL -> isRocketFuel(stack);
-                case SLOT_BATTERY -> stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 default -> true;
             };
         }
@@ -97,7 +97,7 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
         }
     };
 
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new EmptyExternalItemHandler());
     private MissileMultipartSnapshot clientMultipart = MissileMultipartSnapshot.EMPTY;
     private boolean redstonePowered;
     private boolean prevRedstonePowered;
@@ -656,5 +656,37 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
             return legacyName != null && legacyName.contains("_long_") ? 7.0D : 4.0D;
         }
         return 10.0D;
+    }
+
+    private final class EmptyExternalItemHandler implements IItemHandler {
+        @Override
+        public int getSlots() {
+            return 1;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return slot == 0 ? items.getStackInSlot(SLOT_MISSILE) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return slot == 0 ? items.getSlotLimit(SLOT_MISSILE) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return false;
+        }
     }
 }

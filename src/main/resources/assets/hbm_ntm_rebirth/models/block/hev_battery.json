@@ -1,0 +1,21 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/hev_battery",
+    "all": "hbm_ntm_rebirth:block/hev_battery"
+  },
+  "elements": [
+    {
+      "from": [6, 0, 6],
+      "to": [10, 6, 10],
+      "faces": {
+        "down": { "texture": "#all" },
+        "up": { "texture": "#all" },
+        "north": { "texture": "#all" },
+        "south": { "texture": "#all" },
+        "west": { "texture": "#all" },
+        "east": { "texture": "#all" }
+      }
+    }
+  ]
+}

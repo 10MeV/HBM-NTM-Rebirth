@@ -31,6 +31,10 @@ public class TeslaRenderer implements BlockEntityRenderer<TeslaBlockEntity> {
     @Override
     public void render(TeslaBlockEntity tesla, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(tesla, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(tesla);
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(tesla, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);

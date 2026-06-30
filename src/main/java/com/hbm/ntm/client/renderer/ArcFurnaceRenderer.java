@@ -6,6 +6,7 @@ import com.hbm.ntm.blockentity.ArcFurnaceBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
+import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import java.util.List;
@@ -23,7 +24,7 @@ public class ArcFurnaceRenderer implements BlockEntityRenderer<ArcFurnaceBlockEn
 
     @Override
     public boolean shouldRenderOffScreen(ArcFurnaceBlockEntity blockEntity) {
-        return false;
+        return HbmShaderCompatibilityDetector.shouldRenderBlockEntityOffScreen();
     }
 
     @Override
@@ -34,33 +35,40 @@ public class ArcFurnaceRenderer implements BlockEntityRenderer<ArcFurnaceBlockEn
     @Override
     public void render(ArcFurnaceBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
         }
         LegacyMachineDefinition definition = block.definition();
         int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
-        Vec3 translation = definition.modelTranslation(state);
-        poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+                LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            Vec3 translation = definition.modelTranslation(state);
+            poseStack.translate(translation.x, translation.y, translation.z);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
-        LegacyArcFurnaceRenderHelper.renderPlan(MODEL,
-                LegacyTileRenderPlans.arcFurnacePlan(
-                        blockEntity.getPreviousLid(),
-                        blockEntity.getLid(),
-                        blockEntity.isProgressing(),
-                        blockEntity.getLevel() == null ? 0L : blockEntity.getLevel().getGameTime(),
-                        partialTick,
-                        blockEntity.getLiquidAmount(),
-                        blockEntity.getMaxLiquid(),
-                        blockEntity.hasMaterial(),
-                        electrodeStates(blockEntity)),
-                poseStack, buffer, modelLight, packedOverlay, renderMode);
-        poseStack.popPose();
+            LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
+            LegacyArcFurnaceRenderHelper.renderPlan(MODEL,
+                    LegacyTileRenderPlans.arcFurnacePlan(
+                            blockEntity.getPreviousLid(),
+                            blockEntity.getLid(),
+                            blockEntity.isProgressing(),
+                            blockEntity.getLevel() == null ? 0L : blockEntity.getLevel().getGameTime(),
+                            partialTick,
+                            blockEntity.getLiquidAmount(),
+                            blockEntity.getMaxLiquid(),
+                            blockEntity.hasMaterial(),
+                            electrodeStates(blockEntity)),
+                    poseStack, buffer, modelLight, packedOverlay, renderMode);
+            poseStack.popPose();
+        }
     }
 
     private static List<LegacyTileRenderPlans.ArcElectrodeState> electrodeStates(ArcFurnaceBlockEntity blockEntity) {

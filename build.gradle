@@ -18,6 +18,7 @@ java {
 minecraft {
     mappings channel: mapping_channel, version: mapping_version
     copyIdeResources = true
+    def gameTestNamespaces = "${mod_id},minecraft"
 
     runs {
         configureEach {
@@ -33,16 +34,16 @@ minecraft {
         }
 
         client {
-            property 'forge.enabledGameTestNamespaces', mod_id
+            property 'forge.enabledGameTestNamespaces', gameTestNamespaces
         }
 
         server {
-            property 'forge.enabledGameTestNamespaces', mod_id
+            property 'forge.enabledGameTestNamespaces', gameTestNamespaces
             args '--nogui'
         }
 
         gameTestServer {
-            property 'forge.enabledGameTestNamespaces', mod_id
+            property 'forge.enabledGameTestNamespaces', gameTestNamespaces
         }
 
         data {
@@ -90,4 +91,20 @@ tasks.named('processResources', ProcessResources).configure {
     filesMatching(['META-INF/mods.toml']) {
         expand replaceProperties
     }
+}
+
+tasks.register('runEnergyMk2SelfTest', JavaExec) {
+    group = 'verification'
+    description = 'Runs pure Energy MK2 regression checks without starting a Forge server.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.hbm.ntm.gametest.EnergyMk2GameTests'
+}
+
+tasks.register('copyGameTestStructures', Copy) {
+    from file('src/gametest/resources/gameteststructures')
+    into file('run/gameteststructures')
+}
+
+tasks.matching { it.name == 'prepareRunGameTestServer' || it.name == 'runGameTestServer' }.configureEach {
+    dependsOn tasks.named('copyGameTestStructures')
 }

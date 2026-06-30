@@ -1,8 +1,6 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
-import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
-import com.hbm.ntm.client.renderer.LegacyVisibleMachineItemRenderer;
 import com.hbm.ntm.multiblock.LegacyMultiblockPlaceable;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
@@ -34,7 +32,7 @@ public class MultiblockBlockItem extends BlockItem {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        LegacyItemRendererBridge.accept(consumer, () -> LegacyVisibleMachineItemRenderer.INSTANCE);
+        ClientItemRendererBridge.accept("acceptVisibleMachine", consumer);
     }
 
     @Override

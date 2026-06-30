@@ -16,7 +16,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class SoyuzLauncherMenu extends AbstractContainerMenu {
@@ -69,7 +68,7 @@ public class SoyuzLauncherMenu extends AbstractContainerMenu {
         addSlot(new SlotItemHandler(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_BATTERY, 44, 108) {
             @Override
             public boolean mayPlace(ItemStack stack) {
-                return stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
+                return HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
             }
         });
         HbmInventoryMenuHelper.addSlots(this::addSlot, blockEntity.getItems(),

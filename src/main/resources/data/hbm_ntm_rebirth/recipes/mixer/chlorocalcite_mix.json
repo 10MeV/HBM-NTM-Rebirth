@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:mixer",
+  "output": {
+    "fluid": "hbm_ntm_rebirth:chlorocalcite_mix",
+    "amount": 1000
+  },
+  "input1": {
+    "fluid": "hbm_ntm_rebirth:chlorocalcite_solution",
+    "amount": 500
+  },
+  "input2": {
+    "fluid": "hbm_ntm_rebirth:sulfuric_acid",
+    "amount": 500
+  },
+  "solid_input": {
+    "item": "hbm_ntm_rebirth:powder_flux"
+  },
+  "duration": 50
+}

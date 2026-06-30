@@ -602,7 +602,8 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public boolean canReceiveLegacyButton(ServerPlayer player, int value, int id) {
-        return id == CONTROL_MODE;
+        return id == CONTROL_MODE && HbmInventoryMenuHelper.stillValidBlockEntity(player, this,
+                HbmInventoryMenuHelper.LEGACY_MACHINE_USE_DISTANCE_SQR);
     }
 
     @Override

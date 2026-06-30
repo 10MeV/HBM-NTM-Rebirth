@@ -106,7 +106,27 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
     }
 
     protected void refreshFluidNodeState() {
-        refreshFluidNodeStateReport();
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        if (!shouldCreateFluidNode()) {
+            removeFluidNode();
+            updateFluidNodeRefreshBookkeeping();
+            HbmMachinePerformanceCounters.fluidNodeRefresh();
+            return;
+        }
+        List<FluidType> nodeTypes = getFluidNodeTypes();
+        for (FluidType type : nodeTypes) {
+            HbmFluidNode existing = getFluidNode(type);
+            if (existing == null || existing.isExpired()) {
+                HbmFluidNode created = createFluidNode(type);
+                HbmFluidNode node = HbmFluidNodespace.createNode(level, created);
+                setFluidNode(node);
+            }
+        }
+        removeObsoleteFluidNodes(nodeTypes);
+        updateFluidNodeRefreshBookkeeping();
+        HbmMachinePerformanceCounters.fluidNodeRefresh();
     }
 
     protected FluidNodeStateReport refreshFluidNodeStateReport() {
@@ -234,16 +254,16 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
                     fluidNet.addProvider(provider);
                     localProviderSubscriptions++;
                 }
-                remoteProviderPorts += HbmFluidUtil.subscribeProviderToPortsReport(
-                        level, worldPosition, getNetworkFluidPorts(type), type, provider).subscribedPorts();
+                remoteProviderPorts += HbmFluidUtil.subscribeProviderToPorts(
+                        level, worldPosition, getNetworkFluidPorts(type), type, provider);
             }
             if (activeReceiverTypes.contains(type)) {
                 if (hasLocalNet && receiver != null) {
                     fluidNet.addReceiver(receiver);
                     localReceiverSubscriptions++;
                 }
-                remoteReceiverPorts += HbmFluidUtil.subscribeReceiverToPortsReport(
-                        level, worldPosition, getNetworkFluidPorts(type), type, receiver).subscribedPorts();
+                remoteReceiverPorts += HbmFluidUtil.subscribeReceiverToPorts(
+                        level, worldPosition, getNetworkFluidPorts(type), type, receiver);
             }
         }
 
@@ -390,10 +410,9 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         if (fluidSubscriptionDirty) {
             return true;
         }
-        Set<FluidType> activeProviderTypes = activeProviderSubscriptionTypes(getFluidNodeTypes());
-        Set<FluidType> activeReceiverTypes = activeReceiverSubscriptionTypes(getFluidNodeTypes());
-        int providerSignature = activeProviderTypes.hashCode();
-        int receiverSignature = activeReceiverTypes.hashCode();
+        List<FluidType> nodeTypes = getFluidNodeTypes();
+        int providerSignature = activeProviderSubscriptionSignature(nodeTypes);
+        int receiverSignature = activeReceiverSubscriptionSignature(nodeTypes);
         if (providerSignature != lastFluidProviderSubscriptionSignature
                 || receiverSignature != lastFluidReceiverSubscriptionSignature) {
             return true;
@@ -432,7 +451,16 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
     }
 
     private int fluidNodeTypesSignature() {
-        return getFluidNodeTypes().hashCode();
+        int signature = 1;
+        List<HbmFluidTank> tanks = getAllTanks();
+        for (int i = 0; i < tanks.size(); i++) {
+            HbmFluidTank tank = tanks.get(i);
+            FluidType type = tank.getTankType();
+            if (type != HbmFluids.NONE && !containsFluidTypeBefore(tanks, i, type)) {
+                signature = 31 * signature + type.hashCode();
+            }
+        }
+        return signature;
     }
 
     private static int fluidPortShapeSignature(Iterable<FluidPort> ports) {
@@ -465,8 +493,40 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         return active;
     }
 
+    private int activeProviderSubscriptionSignature(List<FluidType> nodeTypes) {
+        int signature = 0;
+        for (FluidType type : nodeTypes) {
+            if (shouldSubscribeAsFluidProvider(type)) {
+                signature += type.hashCode();
+            }
+        }
+        return signature;
+    }
+
+    private int activeReceiverSubscriptionSignature(List<FluidType> nodeTypes) {
+        int signature = 0;
+        for (FluidType type : nodeTypes) {
+            if (shouldSubscribeAsFluidReceiver(type)) {
+                signature += type.hashCode();
+            }
+        }
+        return signature;
+    }
+
+    private static boolean containsFluidTypeBefore(List<HbmFluidTank> tanks, int beforeIndex, FluidType type) {
+        for (int i = 0; i < beforeIndex; i++) {
+            if (tanks.get(i).getTankType() == type) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private NetworkFluidSubscriptionDetachReport detachObsoleteNetworkProviderSubscriptions(
             Set<FluidType> activeTypes, HbmFluidProvider provider) {
+        if (networkProviderSubscriptions.isEmpty()) {
+            return new NetworkFluidSubscriptionDetachReport(0, 0, 0);
+        }
         Set<FluidType> staleTypes = new HashSet<>(networkProviderSubscriptions);
         staleTypes.removeAll(activeTypes);
         int detachedTypes = 0;
@@ -479,8 +539,8 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
                 }
                 fluidNet.removeProvider(provider);
             }
-            detachedPorts += HbmFluidUtil.unsubscribeProviderFromPortsReport(
-                    level, worldPosition, getNetworkFluidPorts(type), type, provider).unsubscribedPorts();
+            detachedPorts += HbmFluidUtil.unsubscribeProviderFromPorts(
+                    level, worldPosition, getNetworkFluidPorts(type), type, provider);
         }
         return new NetworkFluidSubscriptionDetachReport(staleTypes.size(), detachedTypes, detachedPorts);
     }
@@ -515,6 +575,9 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
 
     private NetworkFluidSubscriptionDetachReport detachObsoleteNetworkReceiverSubscriptions(
             Set<FluidType> activeTypes, HbmFluidReceiver receiver) {
+        if (networkReceiverSubscriptions.isEmpty()) {
+            return new NetworkFluidSubscriptionDetachReport(0, 0, 0);
+        }
         Set<FluidType> staleTypes = new HashSet<>(networkReceiverSubscriptions);
         staleTypes.removeAll(activeTypes);
         int detachedTypes = 0;
@@ -527,8 +590,8 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
                 }
                 fluidNet.removeReceiver(receiver);
             }
-            detachedPorts += HbmFluidUtil.unsubscribeReceiverFromPortsReport(
-                    level, worldPosition, getNetworkFluidPorts(type), type, receiver).unsubscribedPorts();
+            detachedPorts += HbmFluidUtil.unsubscribeReceiverFromPorts(
+                    level, worldPosition, getNetworkFluidPorts(type), type, receiver);
         }
         return new NetworkFluidSubscriptionDetachReport(staleTypes.size(), detachedTypes, detachedPorts);
     }
@@ -580,6 +643,19 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
             }
         }
         return new FluidNodeObsoleteRemovalReport(removedTypes);
+    }
+
+    private int removeObsoleteFluidNodes(List<FluidType> activeTypes) {
+        int removedTypes = 0;
+        List<FluidType> active = activeTypes == null ? List.of() : activeTypes;
+        for (FluidType type : getTrackedFluidNodeTypes()) {
+            if (!active.contains(type)) {
+                HbmFluidNodespace.destroyNode(level, worldPosition, type);
+                removeFluidNode(type);
+                removedTypes++;
+            }
+        }
+        return removedTypes;
     }
 
     protected HbmFluidNode createFluidNode(FluidType type) {

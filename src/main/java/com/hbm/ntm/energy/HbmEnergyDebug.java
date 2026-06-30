@@ -54,24 +54,7 @@ public final class HbmEnergyDebug {
             return;
         }
 
-        double sign = provider ? 1.0D : -1.0D;
-        double x = origin.getX() + 0.5D + side.getStepX() * 0.5D + (serverLevel.random.nextDouble() - 0.5D) * 0.3D;
-        double y = origin.getY() + 0.5D + side.getStepY() * 0.5D + (serverLevel.random.nextDouble() - 0.5D) * 0.3D;
-        double z = origin.getZ() + 0.5D + side.getStepZ() * 0.5D + (serverLevel.random.nextDouble() - 0.5D) * 0.3D;
-        double dx = side.getStepX() * sign * 0.05D;
-        double dy = side.getStepY() * sign * 0.05D;
-        double dz = side.getStepZ() * sign * 0.05D;
-
-        CompoundTag data = new CompoundTag();
-        data.putString("type", ParticleUtil.TYPE_DEBUG_DRONE);
-        data.putDouble("mX", dx * 8.0D);
-        data.putDouble("mY", dy * 8.0D);
-        data.putDouble("mZ", dz * 8.0D);
-        data.putString("role", provider ? "provider" : "receiver");
-        data.putBoolean("connected", connected);
-        data.putString("side", side.getName());
-        data.putInt("color", connected ? (provider ? 0x66FF66 : 0x66AAFF) : 0x808080);
-        ParticleUtil.spawnAux(serverLevel, x, y, z, data, 25.0D);
+        spawnLegacyPowerPacket(serverLevel, origin.relative(side), side, connected, provider);
     }
 
     private static void spawnRemote(Level level, BlockPos conductorPos, Direction portDirection, boolean connected, boolean provider) {
@@ -79,28 +62,30 @@ public final class HbmEnergyDebug {
             return;
         }
 
-        double sideSign = provider ? -1.0D : 1.0D;
+        spawnLegacyPowerPacket(serverLevel, conductorPos, portDirection, connected, provider);
+    }
+
+    private static void spawnLegacyPowerPacket(ServerLevel level, BlockPos conductorPos, Direction directionFromMachine,
+            boolean connected, boolean provider) {
+        double positionSign = provider ? -1.0D : 1.0D;
         double motionSign = provider ? 1.0D : -1.0D;
-        double x = conductorPos.getX() + 0.5D + portDirection.getStepX() * sideSign * 0.5D
-                + (serverLevel.random.nextDouble() - 0.5D) * 0.3D;
-        double y = conductorPos.getY() + 0.5D + portDirection.getStepY() * sideSign * 0.5D
-                + (serverLevel.random.nextDouble() - 0.5D) * 0.3D;
-        double z = conductorPos.getZ() + 0.5D + portDirection.getStepZ() * sideSign * 0.5D
-                + (serverLevel.random.nextDouble() - 0.5D) * 0.3D;
-        double dx = portDirection.getStepX() * motionSign * 0.05D;
-        double dy = portDirection.getStepY() * motionSign * 0.05D;
-        double dz = portDirection.getStepZ() * motionSign * 0.05D;
+        double speed = connected ? 0.025D : 0.1D;
+        double x = conductorPos.getX() + 0.5D + directionFromMachine.getStepX() * positionSign * 0.5D
+                + level.random.nextDouble() * 0.5D - 0.25D;
+        double y = conductorPos.getY() + 0.5D + directionFromMachine.getStepY() * positionSign * 0.5D
+                + level.random.nextDouble() * 0.5D - 0.25D;
+        double z = conductorPos.getZ() + 0.5D + directionFromMachine.getStepZ() * positionSign * 0.5D
+                + level.random.nextDouble() * 0.5D - 0.25D;
+        double dx = directionFromMachine.getStepX() * motionSign * speed;
+        double dy = directionFromMachine.getStepY() * motionSign * speed;
+        double dz = directionFromMachine.getStepZ() * motionSign * speed;
 
         CompoundTag data = new CompoundTag();
-        data.putString("type", ParticleUtil.TYPE_DEBUG_DRONE);
-        data.putDouble("mX", dx * 8.0D);
-        data.putDouble("mY", dy * 8.0D);
-        data.putDouble("mZ", dz * 8.0D);
-        data.putString("role", provider ? "provider" : "receiver");
-        data.putBoolean("connected", connected);
-        data.putString("side", portDirection.getName());
-        data.putBoolean("remotePort", true);
-        data.putInt("color", connected ? (provider ? 0x66FF66 : 0x66AAFF) : 0x808080);
-        ParticleUtil.spawnAux(serverLevel, x, y, z, data, 25.0D);
+        data.putString("type", ParticleUtil.TYPE_NETWORK);
+        data.putString("mode", "power");
+        data.putDouble("mX", dx);
+        data.putDouble("mY", dy);
+        data.putDouble("mZ", dz);
+        ParticleUtil.spawnAux(level, x, y, z, data, 25.0D);
     }
 }

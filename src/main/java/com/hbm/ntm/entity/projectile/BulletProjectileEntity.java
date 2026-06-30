@@ -96,6 +96,7 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
     private double velocityY;
     private double velocityZ;
     private long forcedChunk = Long.MIN_VALUE;
+    private int visualOnlyBeamTicks;
     public float overrideDamage;
 
     public BulletProjectileEntity(EntityType<? extends BulletProjectileEntity> type, Level level) {
@@ -139,6 +140,20 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
             }
         }
         return spawned;
+    }
+
+    public static boolean spawnVisualOnlyBeam(Level level, BulletLaunchUtil.LaunchPlan plan, double beamLength) {
+        if (level == null || plan == null || !plan.valid() || level.isClientSide()) {
+            return false;
+        }
+        BulletConfig config = plan.config();
+        if (config == null || config.plink() != BulletPlink.ENERGY) {
+            return false;
+        }
+        BulletProjectileEntity bullet = fromLaunchPlan(level, plan, null);
+        bullet.visualOnlyBeamTicks = Math.max(1, config.maxAge() + 2);
+        bullet.setBeamLength(beamLength);
+        return level.addFreshEntity(bullet);
     }
 
     public static int executeNpcAttack(Level level, BulletNpcLaunchUtil.NpcAttackRequest request,
@@ -201,6 +216,13 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         }
         if (level().isClientSide()) {
             tickClientServerInterpolationOnly(currentConfig, previousPosition);
+            return;
+        }
+        if (visualOnlyBeamTicks > 0) {
+            visualOnlyBeamTicks--;
+            if (visualOnlyBeamTicks <= 0) {
+                discard();
+            }
             return;
         }
         if (currentConfig.chunkloads()) {
@@ -329,6 +351,10 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
 
     public float beamLength() {
         return entityData.get(BEAM_LENGTH);
+    }
+
+    private void setBeamLength(double beamLength) {
+        entityData.set(BEAM_LENGTH, (float) Math.max(0.0D, beamLength));
     }
 
     public void setStuckIn(int side) {

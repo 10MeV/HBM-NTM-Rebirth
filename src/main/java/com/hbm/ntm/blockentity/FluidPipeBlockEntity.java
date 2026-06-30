@@ -5,6 +5,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.FluidPipeAnchorBlock;
 import com.hbm.ntm.block.HbmFluidNodeBlock;
+import com.hbm.ntm.client.ClientGeometryInvalidationBridge;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidNet;
@@ -164,10 +165,14 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
 
     @Override
     public void load(CompoundTag tag) {
+        FluidType previous = type;
         super.load(tag);
         type = HbmFluidJsonUtil.readFluidReference(tag.getString(TAG_TYPE));
         if (type == HbmFluids.NONE && tag.contains(TAG_TYPE + "_id")) {
             type = HbmFluids.fromId(tag.getInt(TAG_TYPE + "_id"));
+        }
+        if (level != null && level.isClientSide && previous != type) {
+            ClientGeometryInvalidationBridge.schedule(worldPosition);
         }
     }
 
@@ -186,6 +191,9 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
     public void onLoad() {
         super.onLoad();
         refreshFluidNode();
+        if (level != null && level.isClientSide) {
+            ClientGeometryInvalidationBridge.scheduleWithNeighbors(worldPosition);
+        }
     }
 
     @Override

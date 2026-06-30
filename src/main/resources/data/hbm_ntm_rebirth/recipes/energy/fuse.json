@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "tag": "forge:plates/steel"
+    },
+    {
+      "item": "hbm_ntm_rebirth:plate_polymer"
+    },
+    {
+      "tag": "forge:wires/tungsten"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:fuse"
+  }
+}

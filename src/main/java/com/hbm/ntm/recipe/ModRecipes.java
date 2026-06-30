@@ -26,6 +26,8 @@ public final class ModRecipes {
                             RBMKFuelDisassemblyRecipe::new));
     public static final RegistryObject<RecipeSerializer<LegacyNbtShapedRecipe>> LEGACY_NBT_SHAPED =
             SERIALIZERS.register("shaped_nbt", LegacyNbtShapedRecipe.Serializer::new);
+    public static final RegistryObject<RecipeSerializer<LegacyNbtShapelessRecipe>> LEGACY_NBT_SHAPELESS =
+            SERIALIZERS.register("shapeless_nbt", LegacyNbtShapelessRecipe.Serializer::new);
     public static final RecipeHolder<PressRecipe> PRESS = register("press", PressRecipe.Serializer::new);
     public static final RecipeHolder<GenericMachineRecipe> CHEMICAL_PLANT =
             register("chemical_plant", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.CHEMICAL_PLANT));

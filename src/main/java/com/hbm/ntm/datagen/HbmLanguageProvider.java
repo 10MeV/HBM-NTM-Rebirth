@@ -841,7 +841,15 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("desc.item.pipette.laboratory", "Now with 50x more precision!");
         add("desc.item.pipette.noCorrosive", "\u00a7eCannot handle corrosive liquids.");
         add("desc.item.pipette.noEmpty", "\u00a7ePipette not empty!");
+        add("item.hbm_ntm_rebirth.cube_power", "Electronium Cube");
         add("item.hbm_ntm_rebirth.battery_potato", "Potato Battery");
+        add("item.hbm_ntm_rebirth.battery_potatos", "PotatOS");
+        add("item.hbm_ntm_rebirth.hev_battery", "Suit Battery");
+        add("block.hbm_ntm_rebirth.hev_battery", "Suit Battery");
+        add("item.hbm_ntm_rebirth.hev_battery_block", "Suit Battery");
+        add("item.hbm_ntm_rebirth.fusion_core", "Fusion Core");
+        add("item.hbm_ntm_rebirth.energy_core", "Makeshift Energy Core");
+        add("item.hbm_ntm_rebirth.fuse", "Fuse");
         add("item.hbm_ntm_rebirth.battery_creative", "Infinite Battery");
         add("item.hbm_ntm_rebirth.battery_redstone", "Redstone Battery");
         add("item.hbm_ntm_rebirth.battery_lead", "Lead-Acid Battery");
@@ -2069,6 +2077,12 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.waste_earth", "Dead Grass");
         add("block.hbm_ntm_rebirth.waste_mycelium", "Glowing Mycelium");
         add("block.hbm_ntm_rebirth.mush", "Glowing Mushroom");
+        add("block.hbm_ntm_rebirth.plant_flower_foxglove", "Foxglove");
+        add("block.hbm_ntm_rebirth.plant_flower_tobacco", "Tobacco Plant");
+        add("block.hbm_ntm_rebirth.plant_flower_nightshade", "Deadly Nightshade");
+        add("block.hbm_ntm_rebirth.plant_flower_weed", "Hemp");
+        add("block.hbm_ntm_rebirth.plant_flower_cd0", "Mustard Willow");
+        add("block.hbm_ntm_rebirth.plant_flower_cd1", "Mustard Willow");
         add("block.hbm_ntm_rebirth.waste_leaves", "Dead Leaves");
         add("block.hbm_ntm_rebirth.waste_log", "Charred Log");
         add("item.hbm_ntm_rebirth.burnt_bark", "Burnt Bark");
@@ -3599,6 +3613,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.powder_calcium", "Calcium Powder");
         add("item.hbm_ntm_rebirth.powder_australium", "Australium Powder");
         add("item.hbm_ntm_rebirth.powder_borax", "Borax");
+        add("item.hbm_ntm_rebirth.powder_chlorocalcite", "Chlorocalcite");
         add("item.hbm_ntm_rebirth.powder_flux", "Flux");
         add("item.hbm_ntm_rebirth.powder_tennessine", "Tennessine Powder");
         add("item.hbm_ntm_rebirth.powder_cement", "Cement");

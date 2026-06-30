@@ -2,7 +2,6 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.CustomMissileLauncherBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
-import com.hbm.ntm.item.missile.CustomMissileItem;
 import com.hbm.ntm.item.missile.CustomMissilePartProfile.PartSize;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -17,8 +16,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.items.SlotItemHandler;
 
 public abstract class CustomMissileLauncherMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = CustomMissileLauncherBlockEntity.SLOT_COUNT;
@@ -42,29 +39,21 @@ public abstract class CustomMissileLauncherMenu extends AbstractContainerMenu {
         super(type, containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), CustomMissileLauncherBlockEntity.SLOT_MISSILE, 26, 36) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() instanceof CustomMissileItem;
-            }
-        });
-        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                CustomMissileLauncherBlockEntity.SLOT_MISSILE, 26, 36));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 CustomMissileLauncherBlockEntity.SLOT_DESIGNATOR, 26, 72));
-        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 CustomMissileLauncherBlockEntity.SLOT_FUEL_INPUT, 116, 72));
-        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 CustomMissileLauncherBlockEntity.SLOT_OXIDIZER_INPUT, 134, 72));
-        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 CustomMissileLauncherBlockEntity.SLOT_SOLID_FUEL, 152, 90));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), CustomMissileLauncherBlockEntity.SLOT_BATTERY, 116, 108) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
-            }
-        });
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                CustomMissileLauncherBlockEntity.SLOT_BATTERY, 116, 108));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 CustomMissileLauncherBlockEntity.SLOT_FUEL_OUTPUT, 116, 90));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 CustomMissileLauncherBlockEntity.SLOT_OXIDIZER_OUTPUT, 134, 90));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 140, 198);
         addDataSlots();
@@ -152,12 +141,7 @@ public abstract class CustomMissileLauncherMenu extends AbstractContainerMenu {
     public ItemStack quickMoveStack(Player player, int index) {
         return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                 MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                CustomMissileLauncherBlockEntity.SLOT_MISSILE, CustomMissileLauncherBlockEntity.SLOT_MISSILE + 1,
-                CustomMissileLauncherBlockEntity.SLOT_DESIGNATOR, CustomMissileLauncherBlockEntity.SLOT_DESIGNATOR + 1,
-                CustomMissileLauncherBlockEntity.SLOT_FUEL_INPUT, CustomMissileLauncherBlockEntity.SLOT_FUEL_INPUT + 1,
-                CustomMissileLauncherBlockEntity.SLOT_OXIDIZER_INPUT, CustomMissileLauncherBlockEntity.SLOT_OXIDIZER_INPUT + 1,
-                CustomMissileLauncherBlockEntity.SLOT_SOLID_FUEL, CustomMissileLauncherBlockEntity.SLOT_SOLID_FUEL + 1,
-                CustomMissileLauncherBlockEntity.SLOT_BATTERY, CustomMissileLauncherBlockEntity.SLOT_BATTERY + 1);
+                0, MACHINE_SLOT_COUNT);
     }
 
     private void addDataSlots() {

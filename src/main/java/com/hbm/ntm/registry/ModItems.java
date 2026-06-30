@@ -11,6 +11,7 @@ import com.hbm.ntm.ability.WeaponAbilities;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.hbm.ntm.energy.HbmCreativeBatteryItem;
+import com.hbm.ntm.energy.HbmLegacyEnergyCoreItem;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
 import com.hbm.ntm.item.AmmoBagItem;
 import com.hbm.ntm.item.ArcElectrodeItem;
@@ -75,7 +76,9 @@ import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import com.hbm.ntm.item.HbmPoweredAbilitySwordItem;
 import com.hbm.ntm.item.HbmPoweredAbilityToolItem;
+import com.hbm.ntm.item.HbmPotatosItem;
 import com.hbm.ntm.item.HbmRagItem;
+import com.hbm.ntm.item.HbmSuitBatteryItem;
 import com.hbm.ntm.item.HbmToolTiers;
 import com.hbm.ntm.item.HerbalPasteItem;
 import com.hbm.ntm.item.ICFPelletItem;
@@ -1628,8 +1631,19 @@ public final class ModItems {
     public static final RegistryObject<Item> CUSTOM_DIRTY = simpleItem("custom_dirty");
     public static final RegistryObject<Item> CUSTOM_SCHRAB = simpleItem("custom_schrab");
     public static final RegistryObject<Item> CUSTOM_FALL = simpleStackOneItem("custom_fall");
+    public static final RegistryObject<Item> CUBE_POWER = registerLegacy("cube_power",
+            () -> new HbmBatteryItem(new Item.Properties(), 1_000_000_000_000_000_000L,
+                    1_000_000_000_000_000L, 1_000_000_000_000_000L));
     public static final RegistryObject<Item> BATTERY_POTATO = registerLegacy("battery_potato",
             () -> new HbmBatteryItem(new Item.Properties(), 1_000L, 0L, 100L));
+    public static final RegistryObject<Item> BATTERY_POTATOS = registerLegacy("battery_potatos",
+            () -> new HbmPotatosItem(new Item.Properties(), 500_000L, 0L, 100L));
+    public static final RegistryObject<Item> HEV_BATTERY = registerLegacy("hev_battery",
+            () -> new HbmSuitBatteryItem(new Item.Properties().stacksTo(4), 150_000L));
+    public static final RegistryObject<Item> FUSION_CORE = registerLegacy("fusion_core",
+            () -> new HbmSuitBatteryItem(new Item.Properties().stacksTo(1), 2_500_000L));
+    public static final RegistryObject<Item> ENERGY_CORE = registerLegacy("energy_core",
+            () -> new HbmLegacyEnergyCoreItem(new Item.Properties(), 10_000_000L, 0L, 1_000L));
     public static final RegistryObject<Item> BATTERY_CREATIVE = registerLegacy("battery_creative",
             () -> new HbmCreativeBatteryItem(new Item.Properties()));
     public static final RegistryObject<Item> BATTERY_REDSTONE = batteryPack("battery_redstone", 0, 100L, false);
@@ -2309,6 +2323,7 @@ public final class ModItems {
             "seg_20",
             "crystal_diamond",
             "crystal_rare",
+            "fuse",
             "safety_fuse",
             "hazmat_cloth",
             "hazmat_cloth_red",
@@ -2431,6 +2446,7 @@ public final class ModItems {
             "powder_australium",
             "powder_tennessine",
             "powder_flux",
+            "powder_chlorocalcite",
             "powder_borax",
             "powder_balefire",
             "powder_semtex_mix",
@@ -2649,7 +2665,12 @@ public final class ModItems {
     )).toList();
 
     private static final List<RegistryObject<Item>> CONTROL_BATTERY_ITEMS = Stream.concat(Stream.of(
+            CUBE_POWER,
             BATTERY_POTATO,
+            BATTERY_POTATOS,
+            HEV_BATTERY,
+            FUSION_CORE,
+            ENERGY_CORE,
             BATTERY_CREATIVE
     ), Stream.concat(BATTERY_PACK_ITEMS.stream(), BATTERY_SC_ITEMS.stream())).toList();
 

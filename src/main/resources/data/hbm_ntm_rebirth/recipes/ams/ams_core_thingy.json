@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "N": {
+      "item": "minecraft:gold_nugget"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:battery_quantum"
+    }
+  },
+  "pattern": [
+    "NSN",
+    "NGN",
+    "G G"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ams_core_thingy"
+  },
+  "show_notification": true
+}

@@ -41,6 +41,10 @@ public class DfcMachineRenderer<T extends BlockEntity> implements BlockEntityRen
     @Override
     public void render(T blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)

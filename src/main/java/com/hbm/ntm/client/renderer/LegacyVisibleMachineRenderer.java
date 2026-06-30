@@ -46,6 +46,8 @@ import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
+import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling.MachineRenderRoute;
+import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.hbm.ntm.energy.HbmEnergyConnectionUtil;
 import com.hbm.ntm.energy.HbmEnergyConnector;
 import com.hbm.ntm.item.LaserWavelength;
@@ -76,9 +78,12 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import net.minecraftforge.registries.ForgeRegistries;
 
 public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements BlockEntityRenderer<T> {
     private static final Map<LegacyMachineDefinition, LegacyWavefrontModel> MODELS = new IdentityHashMap<>();
@@ -271,7 +276,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     @Override
     public boolean shouldRenderOffScreen(T blockEntity) {
-        return false;
+        return HbmShaderCompatibilityDetector.shouldRenderBlockEntityOffScreen();
     }
 
     @Override
@@ -294,7 +299,6 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         }
 
         int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
-        HbmRenderFrameCulling.recordMachineRendererSubmission(blockEntity, 0);
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
                 key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()).asVBO());
 
@@ -310,25 +314,44 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
             if (definition.renderProfile() == LegacyMachineRenderProfile.DEFAULT) {
                 if (definition.renderAll()) {
+                    HbmRenderFrameCulling.recordMachineRendererSubmission(blockEntity, 0,
+                            MachineRenderRoute.DEFAULT_RENDER_ALL, 0);
                     model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
                             renderMode);
                 } else {
-                    renderParts(definition, model, poseStack, buffer, modelLight, packedOverlay);
+                    LegacyMachinePartRenderSelection.Selection selection =
+                            LegacyMachinePartRenderSelection.world(definition);
+                    HbmRenderFrameCulling.recordMachineRendererSubmission(blockEntity, 0,
+                            MachineRenderRoute.DEFAULT_PARTS, partRunCount(selection));
+                    renderParts(definition, selection, model, poseStack, buffer, modelLight, packedOverlay);
                 }
             } else {
                 if (definition.renderAll()) {
-                    if (!renderProfileDirect(blockEntity, partialTick, definition, model, poseStack, buffer,
-                            modelLight, packedOverlay, renderMode)) {
+                    boolean direct = renderProfileDirect(blockEntity, partialTick, definition, model, poseStack, buffer,
+                            modelLight, packedOverlay, renderMode);
+                    if (!direct) {
+                        HbmRenderFrameCulling.recordMachineRendererSubmission(blockEntity, 0,
+                                MachineRenderRoute.PROFILE_FALLBACK_RENDER_ALL, 0);
                         model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
                                 renderMode);
                     } else {
+                        HbmRenderFrameCulling.recordMachineRendererSubmission(blockEntity, 0,
+                                MachineRenderRoute.PROFILE_DIRECT, 0);
                         poseStack.popPose();
                         return;
                     }
                 } else {
-                    if (!renderProfileDirect(blockEntity, partialTick, definition, model, poseStack, buffer,
-                            modelLight, packedOverlay, renderMode)) {
-                        renderParts(definition, model, poseStack, buffer, modelLight, packedOverlay);
+                    boolean direct = renderProfileDirect(blockEntity, partialTick, definition, model, poseStack, buffer,
+                            modelLight, packedOverlay, renderMode);
+                    if (!direct) {
+                        LegacyMachinePartRenderSelection.Selection selection =
+                                LegacyMachinePartRenderSelection.world(definition);
+                        HbmRenderFrameCulling.recordMachineRendererSubmission(blockEntity, 0,
+                                MachineRenderRoute.PROFILE_FALLBACK_PARTS, partRunCount(selection));
+                        renderParts(definition, selection, model, poseStack, buffer, modelLight, packedOverlay);
+                    } else {
+                        HbmRenderFrameCulling.recordMachineRendererSubmission(blockEntity, 0,
+                                MachineRenderRoute.PROFILE_DIRECT, 0);
                     }
                 }
             }
@@ -456,10 +479,113 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     private static void renderParts(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyMachinePartRenderSelection.Selection selection = LegacyMachinePartRenderSelection.world(definition);
+        renderParts(definition, selection, model, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    private static void renderParts(LegacyMachineDefinition definition,
+            LegacyMachinePartRenderSelection.Selection selection, LegacyWavefrontModel model,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         renderParts(selection.opaqueRuns(), model, poseStack, buffer, packedLight, packedOverlay,
                 LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
         renderParts(selection.translucentRuns(), model, poseStack, buffer, packedLight, packedOverlay,
                 LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
+    }
+
+    private static int partRunCount(LegacyMachinePartRenderSelection.Selection selection) {
+        return selection.opaqueRuns().size() + selection.translucentRuns().size();
+    }
+
+    public static VisibleMachineRouteCoverage routeCoverageSnapshot() {
+        Set<LegacyMachineDefinition> seenDefinitions =
+                Collections.newSetFromMap(new IdentityHashMap<>());
+        int blocks = 0;
+        int defaultRenderAll = 0;
+        int defaultParts = 0;
+        int profileRenderAll = 0;
+        int profileParts = 0;
+        int profileDirect = 0;
+        int profileFallback = 0;
+        int itemPartDefinitions = 0;
+        int partPropertyDefinitions = 0;
+        for (var block : ForgeRegistries.BLOCKS.getValues()) {
+            if (!(block instanceof LegacyVisibleMachineBlock visibleBlock)) {
+                continue;
+            }
+            blocks++;
+            LegacyMachineDefinition definition = visibleBlock.definition();
+            if (definition == null || !seenDefinitions.add(definition)) {
+                continue;
+            }
+            boolean defaultProfile = definition.renderProfile() == LegacyMachineRenderProfile.DEFAULT;
+            if (defaultProfile) {
+                if (definition.renderAll()) {
+                    defaultRenderAll++;
+                } else {
+                    defaultParts++;
+                }
+            } else {
+                if (definition.renderAll()) {
+                    profileRenderAll++;
+                } else {
+                    profileParts++;
+                }
+                if (profileHasDirectRoute(definition.renderProfile())) {
+                    profileDirect++;
+                } else {
+                    profileFallback++;
+                }
+            }
+            if (!definition.itemRenderAll()) {
+                itemPartDefinitions++;
+            }
+            if (!definition.partRenderProperties().isEmpty() || !definition.itemPartRenderProperties().isEmpty()) {
+                partPropertyDefinitions++;
+            }
+        }
+        return new VisibleMachineRouteCoverage(blocks, seenDefinitions.size(), defaultRenderAll, defaultParts,
+                profileRenderAll, profileParts, profileDirect, profileFallback, itemPartDefinitions,
+                partPropertyDefinitions);
+    }
+
+    private static boolean profileHasDirectRoute(LegacyMachineRenderProfile profile) {
+        return switch (profile) {
+            case ANNIHILATOR_UV_SCROLL,
+                    RADGEN_STATIC_SPECIAL,
+                    BATTERY_REDD_STATIC_SPECIAL,
+                    CRYSTALLIZER_STATIC_SPECIAL,
+                    CRYSTALLIZER_RUNNING_PARTS,
+                    FURNACE_IRON_BURN_STATE,
+                    ARC_FURNACE_STATIC_PREVIEW,
+                    COMPRESSOR_RUNNING_PARTS,
+                    COMPRESSOR_COMPACT_RUNNING_FANS,
+                    POWERED_CONDENSER_FANS,
+                    PUMP_RUNNING_PARTS,
+                    DIESEL_GENERATOR_RUNNING_PARTS,
+                    CYCLOTRON_PLUGS,
+                    AMMO_PRESS_RUNNING_PARTS,
+                    ROTARY_FURNACE_PISTON,
+                    RTG_CONNECTORS,
+                    INTAKE_FAN,
+                    STIRLING_RUNNING_PARTS,
+                    SAWMILL_RUNNING_PARTS,
+                    COMBUSTION_ENGINE_DOOR_CANISTER,
+                    ASHPIT_DOOR_INNER,
+                    ARC_WELDER_DISPLAY_OUTPUT,
+                    FURNACE_STEEL_FIRE,
+                    COMBINATION_OVEN_FIRE,
+                    MIXER_RUNNING_PARTS,
+                    STRAND_CASTER_MOLTEN,
+                    CRUCIBLE_MOLTEN,
+                    FIREBOX_HEATER,
+                    PRECASS_RUNNING_PARTS,
+                    PUREX_RUNNING_PARTS,
+                    HEAT_BOILER,
+                    HEPHAESTUS_RUNNING_CORE,
+                    REFINERY_DAMAGE_STATE,
+                    BLAST_FURNACE_TILTED_STATE,
+                    GAS_FLARE_TILTED_STATE -> true;
+            default -> false;
+        };
     }
 
     private static void renderParts(List<LegacyMachinePartRenderSelection.Run> parts, LegacyWavefrontModel model,
@@ -2538,6 +2664,19 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     private record DirectPartRenderState(int packedLight, int red, int green, int blue, int alpha,
             LegacyTexturedRenderMode renderMode) {
+    }
+
+    public record VisibleMachineRouteCoverage(
+            int blockCount,
+            int definitionCount,
+            int defaultRenderAllDefinitions,
+            int defaultPartDefinitions,
+            int profileRenderAllDefinitions,
+            int profilePartDefinitions,
+            int profileDirectDefinitions,
+            int profileFallbackDefinitions,
+            int itemPartDefinitions,
+            int partPropertyDefinitions) {
     }
 
     private static void renderNormalTexturedQuad(ResourceLocation texture,

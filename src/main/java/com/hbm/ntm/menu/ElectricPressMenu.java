@@ -38,15 +38,15 @@ public class ElectricPressMenu extends AbstractContainerMenu implements LegacyUp
         super(ModMenuTypes.ELECTRIC_PRESS.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 ElectricPressBlockEntity.SLOT_BATTERY, 44, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 ElectricPressBlockEntity.SLOT_STAMP, 80, 17));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 ElectricPressBlockEntity.SLOT_INPUT, 80, 53));
         addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
                 ElectricPressBlockEntity.SLOT_OUTPUT, 140, 35));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 ElectricPressBlockEntity.SLOT_UPGRADE, 44, 21));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
         addDataSlots();
@@ -93,7 +93,7 @@ public class ElectricPressMenu extends AbstractContainerMenu implements LegacyUp
                 if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, true)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+            } else if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
                 if (!moveItemStackTo(stack, ElectricPressBlockEntity.SLOT_BATTERY,
                         ElectricPressBlockEntity.SLOT_BATTERY + 1, false)) {
                     return ItemStack.EMPTY;

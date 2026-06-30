@@ -5,6 +5,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.util.concurrent.atomic.AtomicLong;
 import net.minecraftforge.fml.ModList;
 
 /**
@@ -26,6 +27,21 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
     private static Class<?> phaseEnumClass;
     private static volatile Object phaseBlockEntities;
     private static volatile Object phaseNone;
+    private static final AtomicLong pushAttempts = new AtomicLong();
+    private static final AtomicLong activePushes = new AtomicLong();
+    private static final AtomicLong pushFailures = new AtomicLong();
+    private static final AtomicLong restores = new AtomicLong();
+    private static final AtomicLong restoreFailures = new AtomicLong();
+    private static final AtomicLong currentFramePushAttempts = new AtomicLong();
+    private static final AtomicLong currentFrameActivePushes = new AtomicLong();
+    private static final AtomicLong currentFramePushFailures = new AtomicLong();
+    private static final AtomicLong currentFrameRestores = new AtomicLong();
+    private static final AtomicLong currentFrameRestoreFailures = new AtomicLong();
+    private static final AtomicLong lastFramePushAttempts = new AtomicLong();
+    private static final AtomicLong lastFrameActivePushes = new AtomicLong();
+    private static final AtomicLong lastFramePushFailures = new AtomicLong();
+    private static final AtomicLong lastFrameRestores = new AtomicLong();
+    private static final AtomicLong lastFrameRestoreFailures = new AtomicLong();
 
     private final boolean active;
     private final Object previousPhase;
@@ -36,6 +52,8 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
     }
 
     public static HbmIrisPhaseGuard pushBlockEntities() {
+        pushAttempts.incrementAndGet();
+        currentFramePushAttempts.incrementAndGet();
         initialize();
         if (!available) {
             return NOOP;
@@ -50,8 +68,12 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
                 return NOOP;
             }
             invokeSetPhase(pipeline, phaseBlockEntities);
+            activePushes.incrementAndGet();
+            currentFrameActivePushes.incrementAndGet();
             return new HbmIrisPhaseGuard(true, previous);
         } catch (Throwable ignored) {
+            pushFailures.incrementAndGet();
+            currentFramePushFailures.incrementAndGet();
             return NOOP;
         }
     }
@@ -61,9 +83,13 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
         if (!active) {
             return;
         }
+        restores.incrementAndGet();
+        currentFrameRestores.incrementAndGet();
         try {
             Object pipeline = currentPipeline();
             if (pipeline == null) {
+                restoreFailures.incrementAndGet();
+                currentFrameRestoreFailures.incrementAndGet();
                 return;
             }
             if (previousPhase != null) {
@@ -72,7 +98,39 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
                 invokeSetPhase(pipeline, phaseNone);
             }
         } catch (Throwable ignored) {
+            restoreFailures.incrementAndGet();
+            currentFrameRestoreFailures.incrementAndGet();
         }
+    }
+
+    public static void endFrame() {
+        lastFramePushAttempts.set(currentFramePushAttempts.getAndSet(0L));
+        lastFrameActivePushes.set(currentFrameActivePushes.getAndSet(0L));
+        lastFramePushFailures.set(currentFramePushFailures.getAndSet(0L));
+        lastFrameRestores.set(currentFrameRestores.getAndSet(0L));
+        lastFrameRestoreFailures.set(currentFrameRestoreFailures.getAndSet(0L));
+    }
+
+    public static Snapshot snapshot() {
+        return new Snapshot(
+                initialized,
+                available,
+                setPhaseHandle != null && getPipelineManagerHandle != null && getPipelineNullableHandle != null,
+                pushAttempts.get(),
+                activePushes.get(),
+                pushFailures.get(),
+                restores.get(),
+                restoreFailures.get(),
+                currentFramePushAttempts.get(),
+                currentFrameActivePushes.get(),
+                currentFramePushFailures.get(),
+                currentFrameRestores.get(),
+                currentFrameRestoreFailures.get(),
+                lastFramePushAttempts.get(),
+                lastFrameActivePushes.get(),
+                lastFramePushFailures.get(),
+                lastFrameRestores.get(),
+                lastFrameRestoreFailures.get());
     }
 
     private static Object currentPipeline() throws Throwable {
@@ -187,5 +245,26 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
         } catch (IllegalArgumentException exception) {
             return null;
         }
+    }
+
+    public record Snapshot(
+            boolean initialized,
+            boolean available,
+            boolean methodHandlesAvailable,
+            long pushAttempts,
+            long activePushes,
+            long pushFailures,
+            long restores,
+            long restoreFailures,
+            long currentFramePushAttempts,
+            long currentFrameActivePushes,
+            long currentFramePushFailures,
+            long currentFrameRestores,
+            long currentFrameRestoreFailures,
+            long lastFramePushAttempts,
+            long lastFrameActivePushes,
+            long lastFramePushFailures,
+            long lastFrameRestores,
+            long lastFrameRestoreFailures) {
     }
 }

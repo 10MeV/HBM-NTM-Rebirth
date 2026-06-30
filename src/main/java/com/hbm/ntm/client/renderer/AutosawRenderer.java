@@ -45,6 +45,10 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
     @Override
     public void render(AutosawBlockEntity autosaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(autosaw, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(autosaw);
         BlockState state = autosaw.getBlockState();
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(autosaw, packedLight);
         try (LegacyRenderLighting.ModelViewSamplingScope ignored =

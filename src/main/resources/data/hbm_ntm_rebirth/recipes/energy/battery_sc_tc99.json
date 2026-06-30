@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:battery_sc.empty"
+    },
+    {
+      "item": "hbm_ntm_rebirth:billet_technetium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:billet_technetium"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:battery_sc.tc99"
+  }
+}

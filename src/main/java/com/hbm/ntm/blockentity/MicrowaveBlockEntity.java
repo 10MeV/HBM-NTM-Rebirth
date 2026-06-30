@@ -33,6 +33,7 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,6 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
                 case SLOT_INPUT -> hasSmeltingOutput(stack);
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
                 default -> false;
             };
         }
@@ -67,7 +67,7 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> menuItemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> menuItemHandler = LazyOptional.of(MenuItemHandler::new);
     private final LazyOptional<IItemHandler> automationInputHandler = LazyOptional.of(() -> new SidedItemHandler(false));
     private final LazyOptional<IItemHandler> automationOutputHandler = LazyOptional.of(() -> new SidedItemHandler(true));
     private int time;
@@ -131,6 +131,10 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
 
     public ItemStackHandler getItems() {
         return items;
+    }
+
+    public IItemHandler getMenuItems() {
+        return menuItemHandler.orElse(items);
     }
 
     public long getPower() {
@@ -337,6 +341,62 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return slot == 0 && !output && items.isItemValid(SLOT_INPUT, stack);
+        }
+    }
+
+    private final class MenuItemHandler implements IItemHandler {
+        @Override
+        public int getSlots() {
+            return SLOT_COUNT;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return slot >= 0 && slot < SLOT_COUNT ? items.getStackInSlot(slot) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            if (slot != SLOT_INPUT && slot != SLOT_BATTERY) {
+                return stack;
+            }
+            ItemStack existing = items.getStackInSlot(slot);
+            int limit = Math.min(items.getSlotLimit(slot), stack.getMaxStackSize());
+            if (!existing.isEmpty()) {
+                if (!ItemHandlerHelper.canItemStacksStack(existing, stack)) {
+                    return stack;
+                }
+                limit -= existing.getCount();
+            }
+            if (limit <= 0) {
+                return stack;
+            }
+            int transferred = Math.min(limit, stack.getCount());
+            if (!simulate) {
+                if (existing.isEmpty()) {
+                    items.setStackInSlot(slot, ItemHandlerHelper.copyStackWithSize(stack, transferred));
+                } else {
+                    ItemStack merged = existing.copy();
+                    merged.grow(transferred);
+                    items.setStackInSlot(slot, merged);
+                }
+            }
+            return ItemHandlerHelper.copyStackWithSize(stack, stack.getCount() - transferred);
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return slot >= 0 && slot < SLOT_COUNT ? items.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return slot >= 0 && slot < SLOT_COUNT ? items.getSlotLimit(slot) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return slot == SLOT_INPUT || slot == SLOT_BATTERY;
         }
     }
 }

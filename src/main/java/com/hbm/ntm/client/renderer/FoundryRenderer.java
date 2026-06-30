@@ -55,6 +55,11 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
     @Override
     public void render(T blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
+
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
         if (blockEntity instanceof FoundryCastingBlockEntity casting) {

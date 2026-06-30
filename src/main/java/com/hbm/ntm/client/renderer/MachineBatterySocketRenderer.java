@@ -53,6 +53,10 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
     @Override
     public void render(MachineBatterySocketBlockEntity socket, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(socket, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(socket);
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(socket, packedLight);
         poseStack.pushPose();
         BlockState state = socket.getBlockState();

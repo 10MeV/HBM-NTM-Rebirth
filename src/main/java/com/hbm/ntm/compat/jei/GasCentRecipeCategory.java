@@ -1,6 +1,7 @@
 package com.hbm.ntm.compat.jei;
 
 import com.hbm.ntm.blockentity.GasCentBlockEntity;
+import com.hbm.ntm.energy.HbmLegacyBatteryMaps;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModItems;
@@ -63,6 +64,8 @@ public final class GasCentRecipeCategory implements IRecipeCategory<GasCentJeiRe
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, GasCentJeiRecipe recipe, IFocusGroup focuses) {
         addFluidSlot(builder, recipe.inputFluid(), true, 4, 28);
+        builder.addInputSlot(4, 58)
+                .addItemStacks(HbmLegacyBatteryMaps.legacyMachineRecipeBatteryDisplayStacks());
         for (int i = 0; i < recipe.outputs().size(); i++) {
             builder.addOutputSlot(118 + (i % 2) * 20, 14 + (i / 2) * 20)
                     .addItemStack(recipe.outputs().get(i))

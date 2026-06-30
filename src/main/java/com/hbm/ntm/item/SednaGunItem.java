@@ -12,8 +12,6 @@ import com.hbm.ntm.bullet.SednaGunConfig;
 import com.hbm.ntm.bullet.SednaMagazineConfig;
 import com.hbm.ntm.bullet.SednaReceiverConfig;
 import com.hbm.ntm.bullet.SednaWeaponModEvaluator;
-import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
-import com.hbm.ntm.client.renderer.SednaGunItemRenderer;
 import com.hbm.ntm.config.WeaponConfig;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
@@ -56,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -235,7 +234,19 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        LegacyItemRendererBridge.accept(consumer, () -> SednaGunItemRenderer.INSTANCE);
+        acceptClientExtensions("com.hbm.ntm.client.renderer.SednaGunItemRendererBridge", consumer);
+    }
+
+    private static void acceptClientExtensions(String className, Consumer<IClientItemExtensions> consumer) {
+        try {
+            Class<?> bridge = Class.forName(className);
+            bridge.getMethod("accept", Consumer.class).invoke(null, consumer);
+        } catch (ReflectiveOperationException exception) {
+            Throwable cause = exception instanceof InvocationTargetException invocation && invocation.getCause() != null
+                    ? invocation.getCause()
+                    : exception;
+            throw new IllegalStateException("Unable to initialize Sedna gun client renderer", cause);
+        }
     }
 
     private static com.hbm.ntm.api.item.Crosshair toApiCrosshair(SednaGunConfig.Crosshair crosshair) {

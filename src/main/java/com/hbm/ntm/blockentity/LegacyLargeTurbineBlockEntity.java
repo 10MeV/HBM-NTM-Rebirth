@@ -65,7 +65,7 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
                 case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem identifier
                         && isValidTurbineInput(identifier.getIdentifiedFluid(level, worldPosition, stack));
                 case SLOT_INPUT_CONTAINER, SLOT_OUTPUT_CONTAINER -> true;
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 case SLOT_IDENTIFIER_OUTPUT, SLOT_INPUT_CONTAINER_OUTPUT, SLOT_OUTPUT_CONTAINER_OUTPUT -> false;
                 default -> false;
             };

@@ -179,6 +179,10 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         addNoDrop(ModBlocks.BARRICADE.get());
         addNoDrop(ModBlocks.OIL_SPILL.get());
         add(ModBlocks.WASTE_LOG.get(), wasteLogDrop());
+        ModBlocks.PLANT_FLOWER_BLOCKS.stream()
+                .filter(block -> block != ModBlocks.PLANT_FLOWER_CD1)
+                .forEach(block -> dropSelf(block.get()));
+        add(ModBlocks.PLANT_FLOWER_CD1.get(), block -> createSingleItemTable(ModBlocks.PLANT_FLOWER_CD0.get()));
         add(ModBlocks.MUSH_BLOCK.get(), hugeMushDrop());
         add(ModBlocks.MUSH_BLOCK_STEM.get(), hugeMushDrop());
         add(ModBlocks.FROZEN_GRASS.get(), block -> singleItemDrop(Items.SNOWBALL));

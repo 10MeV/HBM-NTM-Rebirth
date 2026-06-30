@@ -41,6 +41,10 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
     @Override
     public void render(FensuBlockEntity fensu, float partialTick, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(fensu, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(fensu);
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(fensu, packedLight);
         BlockState state = fensu.getBlockState();
 

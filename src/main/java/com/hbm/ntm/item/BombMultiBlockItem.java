@@ -1,7 +1,5 @@
 package com.hbm.ntm.item;
 
-import com.hbm.ntm.client.renderer.BombMultiItemRenderer;
-import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
@@ -15,6 +13,6 @@ public class BombMultiBlockItem extends BlockItem {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        LegacyItemRendererBridge.accept(consumer, () -> BombMultiItemRenderer.INSTANCE);
+        ClientItemRendererBridge.accept("acceptBombMulti", consumer);
     }
 }

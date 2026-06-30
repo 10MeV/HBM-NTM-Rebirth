@@ -34,6 +34,11 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
     @Override
     public void render(FusionTorusBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
+
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
 
         try (LegacyRenderLighting.ModelViewSamplingScope ignored =

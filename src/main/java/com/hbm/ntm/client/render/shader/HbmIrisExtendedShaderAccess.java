@@ -1,6 +1,8 @@
 package com.hbm.ntm.client.render.shader;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.render.HbmRenderFrameLight;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -148,7 +150,9 @@ public final class HbmIrisExtendedShaderAccess {
         cachedShadowShader = null;
         cachedMainPassId = -1L;
         cachedShadowPassId = -1L;
+        HbmRenderFrameLight.invalidateCaches();
         HbmIrisRenderBatch.invalidateCaches();
+        LegacyWavefrontModel.invalidateIrisCompanionShaderAttributeCaches();
     }
 
     public static Snapshot snapshot() {

@@ -1,8 +1,6 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.block.LegacyFileCabinetBlock;
-import com.hbm.ntm.client.renderer.LegacyFileCabinetItemRenderer;
-import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
@@ -16,7 +14,7 @@ public class LegacyFileCabinetBlockItem extends LegacyStateBlockItem {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        LegacyItemRendererBridge.accept(consumer, () -> LegacyFileCabinetItemRenderer.INSTANCE);
+        ClientItemRendererBridge.accept("acceptLegacyFileCabinet", consumer);
     }
 
     private static Component variantName(int variant) {

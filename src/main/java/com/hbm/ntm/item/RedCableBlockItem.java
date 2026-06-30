@@ -12,7 +12,6 @@ public class RedCableBlockItem extends BlockItem {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        com.hbm.ntm.client.renderer.LegacyItemRendererBridge.accept(consumer,
-                () -> com.hbm.ntm.client.renderer.RedCableItemRenderer.INSTANCE);
+        ClientItemRendererBridge.accept("acceptRedCable", consumer);
     }
 }

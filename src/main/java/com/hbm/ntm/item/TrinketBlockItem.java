@@ -1,8 +1,6 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.block.TrinketVariant;
-import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
-import com.hbm.ntm.client.renderer.TrinketItemRenderer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -33,7 +31,7 @@ public class TrinketBlockItem extends BlockItem {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        LegacyItemRendererBridge.accept(consumer, () -> TrinketItemRenderer.INSTANCE);
+        ClientItemRendererBridge.accept("acceptTrinket", consumer);
     }
 
     public static int getVariant(ItemStack stack) {

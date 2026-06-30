@@ -45,8 +45,8 @@ public class MixerMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_BATTERY, 23, 77));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_SOLID_INPUT, 43, 77));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_FLUID_ID, 117, 77));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_UPGRADE_1, 137, 24));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_UPGRADE_2, 137, 42));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_UPGRADE_1, 137, 24));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_UPGRADE_2, 137, 42));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 122, 180);
         tanks = HbmFluidGuiHelper.watchTanks(this::addDataSlot, blockEntity.getAllTanks());
         addDataSlots();
@@ -131,7 +131,7 @@ public class MixerMenu extends AbstractContainerMenu {
     }
 
     private boolean movePlayerStackToMachine(ItemStack stack) {
-        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                     MixerBlockEntity.SLOT_BATTERY, MixerBlockEntity.SLOT_BATTERY + 1);
         }
@@ -141,7 +141,7 @@ public class MixerMenu extends AbstractContainerMenu {
         }
         if (stack.getItem() instanceof ItemMachineUpgrade) {
             return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
-                    MixerBlockEntity.SLOT_UPGRADE_1, MixerBlockEntity.SLOT_UPGRADE_2 + 1);
+                    MixerBlockEntity.SLOT_UPGRADE_1, MixerBlockEntity.SLOT_UPGRADE_1 + 1);
         }
         return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
                 MixerBlockEntity.SLOT_SOLID_INPUT, MixerBlockEntity.SLOT_SOLID_INPUT + 1);

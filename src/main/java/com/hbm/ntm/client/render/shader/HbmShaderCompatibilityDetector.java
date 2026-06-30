@@ -3,6 +3,7 @@ package com.hbm.ntm.client.render.shader;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel.RenderBackendClearReason;
+import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
 import com.mojang.blaze3d.systems.RenderSystem;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -50,6 +51,8 @@ public final class HbmShaderCompatibilityDetector {
             if (active != lastShaderActive) {
                 lastShaderActive = active;
                 pendingChunkInvalidation = true;
+                HbmRenderFrameCulling.clearOcclusionCacheForShaderStateChange();
+                HbmIrisExtendedShaderAccess.invalidateShaderCache();
                 LegacyWavefrontModel.clearRenderBackend(RenderBackendClearReason.SHADER_RELOAD);
                 HbmNtm.LOGGER.info("HBM render shader compatibility state changed: {}", active ? "shader pack active" : "shader pack inactive");
             }
@@ -88,6 +91,8 @@ public final class HbmShaderCompatibilityDetector {
                 lastPipelineIdentity = pipeline;
                 long generation = pipelineGeneration.incrementAndGet();
                 pendingChunkInvalidation = true;
+                HbmRenderFrameCulling.clearOcclusionCacheForShaderStateChange();
+                HbmIrisExtendedShaderAccess.invalidateShaderCache();
                 LegacyWavefrontModel.clearRenderBackend(RenderBackendClearReason.SHADER_RELOAD);
                 HbmNtm.LOGGER.info("HBM render shader pipeline generation changed: {}", generation);
             }
@@ -103,6 +108,14 @@ public final class HbmShaderCompatibilityDetector {
 
     public static boolean canUseIrisExtendedShader() {
         return isExternalShaderActive() && HbmIrisExtendedShaderAccess.isReflectionAvailable();
+    }
+
+    public static boolean shouldRenderBlockEntityOffScreen() {
+        return isExternalShaderActive();
+    }
+
+    public static boolean useVboGeometry() {
+        return true;
     }
 
     public static void processPendingChunkInvalidation() {
@@ -133,7 +146,8 @@ public final class HbmShaderCompatibilityDetector {
                 pipelineGeneration.get(),
                 pendingChunkInvalidation,
                 HbmIrisExtendedShaderAccess.isReflectionAvailable(),
-                canUseIrisExtendedShader());
+                canUseIrisExtendedShader(),
+                useVboGeometry());
     }
 
     private static void initialize() {
@@ -232,6 +246,7 @@ public final class HbmShaderCompatibilityDetector {
             long pipelineGeneration,
             boolean pendingChunkInvalidation,
             boolean irisExtendedShaderReflectionAvailable,
-            boolean irisExtendedShaderUsable) {
+            boolean irisExtendedShaderUsable,
+            boolean vboGeometryEnabled) {
     }
 }

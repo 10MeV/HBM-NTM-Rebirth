@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:capacitor_tantalum"
+    },
+    "P": {
+      "tag": "forge:plates/gold"
+    },
+    "W": {
+      "item": "hbm_ntm_rebirth:wire_dense_mingrade"
+    }
+  },
+  "pattern": [
+    "PWP",
+    "PCP",
+    "PWP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:armor_battery_mk3"
+  },
+  "show_notification": true
+}

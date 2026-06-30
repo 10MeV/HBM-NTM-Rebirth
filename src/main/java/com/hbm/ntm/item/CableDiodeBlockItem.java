@@ -13,7 +13,6 @@ public class CableDiodeBlockItem extends BlockItem {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        com.hbm.ntm.client.renderer.LegacyItemRendererBridge.accept(consumer,
-                () -> com.hbm.ntm.client.renderer.CableDiodeItemRenderer.INSTANCE);
+        ClientItemRendererBridge.accept("acceptCableDiode", consumer);
     }
 }

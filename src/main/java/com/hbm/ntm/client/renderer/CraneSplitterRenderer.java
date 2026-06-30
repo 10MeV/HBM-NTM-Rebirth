@@ -59,8 +59,18 @@ public class CraneSplitterRenderer implements BlockEntityRenderer<CraneSplitterB
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.MACHINE;
+    }
+
+    @Override
     public void render(CraneSplitterBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
+
         BlockState state = blockEntity.getBlockState();
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         renderHalf(state, true, 0.0D, 0.0D, poseStack, buffer, modelLight, packedOverlay);

@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.WatzReactorBlockEntity;
 import com.hbm.ntm.client.obj.ObjReactorModels;
+import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -13,7 +14,7 @@ public class WatzReactorRenderer implements BlockEntityRenderer<WatzReactorBlock
 
     @Override
     public boolean shouldRenderOffScreen(WatzReactorBlockEntity blockEntity) {
-        return false;
+        return HbmShaderCompatibilityDetector.shouldRenderBlockEntityOffScreen();
     }
 
     @Override
@@ -24,6 +25,10 @@ public class WatzReactorRenderer implements BlockEntityRenderer<WatzReactorBlock
     @Override
     public void render(WatzReactorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         try (LegacyRenderLighting.ModelViewSamplingScope ignored =
                 LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {

@@ -37,25 +37,33 @@ public class MicrowaveRenderer implements BlockEntityRenderer<MicrowaveBlockEnti
     @Override
     public void render(MicrowaveBlockEntity microwave, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(microwave, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(microwave);
+
         BlockState state = microwave.getBlockState();
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(microwave, packedLight);
-        poseStack.pushPose();
-        poseStack.translate(0.5D, -0.785D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
-        poseStack.translate(-0.5D, 0.0D, 0.65D);
-        MODEL.renderOnlyInCallOrder(ObjMachineModels.MICROWAVE_TEXTURE, poseStack, buffer, modelLight,
-                packedOverlay, MAIN_BODY);
-        MODEL.renderOnlyInCallOrder(ObjMachineModels.MICROWAVE_TEXTURE, poseStack, buffer, modelLight,
-                packedOverlay, WINDOW);
-        if (microwave.getTime() > 0) {
-            double rotation = (System.currentTimeMillis() * microwave.getSpeed() / 10.0D) % 360.0D;
-            poseStack.translate(0.575D, 0.0D, -0.45D);
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) rotation));
-            poseStack.translate(-0.575D, 0.0D, 0.45D);
+        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+                LegacyRenderLighting.pushModelViewSampling(microwave, poseStack.last().pose())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, -0.785D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
+            poseStack.translate(-0.5D, 0.0D, 0.65D);
+            MODEL.renderOnlyInCallOrder(ObjMachineModels.MICROWAVE_TEXTURE, poseStack, buffer, modelLight,
+                    packedOverlay, MAIN_BODY);
+            MODEL.renderOnlyInCallOrder(ObjMachineModels.MICROWAVE_TEXTURE, poseStack, buffer, modelLight,
+                    packedOverlay, WINDOW);
+            if (microwave.getTime() > 0) {
+                double rotation = (System.currentTimeMillis() * microwave.getSpeed() / 10.0D) % 360.0D;
+                poseStack.translate(0.575D, 0.0D, -0.45D);
+                poseStack.mulPose(Axis.YP.rotationDegrees((float) rotation));
+                poseStack.translate(-0.575D, 0.0D, 0.45D);
+            }
+            MODEL.renderOnlyInCallOrder(ObjMachineModels.MICROWAVE_TEXTURE, poseStack, buffer, modelLight,
+                    packedOverlay, PLATE);
+            poseStack.popPose();
         }
-        MODEL.renderOnlyInCallOrder(ObjMachineModels.MICROWAVE_TEXTURE, poseStack, buffer, modelLight,
-                packedOverlay, PLATE);
-        poseStack.popPose();
     }
 
     private static float rotation(BlockState state) {

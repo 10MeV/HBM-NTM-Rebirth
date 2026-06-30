@@ -43,6 +43,10 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
     @Override
     public void render(ThresherBlockEntity thresher, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(thresher, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(thresher);
         BlockState state = thresher.getBlockState();
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(thresher, packedLight);
         poseStack.pushPose();

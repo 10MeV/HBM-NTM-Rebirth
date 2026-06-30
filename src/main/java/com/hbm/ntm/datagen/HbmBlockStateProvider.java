@@ -19,6 +19,7 @@ import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.block.LegacyNtmGlassPaneBlock;
+import com.hbm.ntm.block.LegacyNtmFlowerBlock;
 import com.hbm.ntm.block.MassStorageBlock;
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
 import com.hbm.ntm.block.PowerDetectorBlock;
@@ -464,6 +465,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         existingModelWithItemNoRotation(ModBlocks.POLE_TOP, "pole_top");
         existingModelWithItem(ModBlocks.POLE_SATELLITE_RECEIVER, "pole_satellite_receiver");
         glowingMushWithItem();
+        ntmFlowersWithItem();
         wasteLogWithItem();
         simpleCubeWithItem(ModBlocks.WASTE_PLANKS, "waste_planks");
         leavesLayerWithItem();
@@ -1086,6 +1088,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .renderType("minecraft:cutout");
         simpleBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
+    }
+
+    private void ntmFlowersWithItem() {
+        for (LegacyNtmFlowerBlock.Kind kind : LegacyNtmFlowerBlock.Kind.values()) {
+            RegistryObject<Block> block = ModBlocks.PLANT_FLOWER_BLOCKS.get(kind.legacyMeta());
+            crossWithItem(block, kind.textureName());
+        }
     }
 
     private void simpleCube(String legacyName, String textureName) {

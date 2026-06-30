@@ -73,7 +73,7 @@ public class ExposureChamberBlockEntity extends HbmEnergyBlockEntity implements 
             return switch (slot) {
                 case SLOT_PARTICLE -> isParticleInput(stack);
                 case SLOT_INGREDIENT -> isIngredientInput(stack);
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 case SLOT_UPGRADE_0, SLOT_UPGRADE_1 -> stack.getItem() instanceof ItemMachineUpgrade;
                 default -> false;
             };

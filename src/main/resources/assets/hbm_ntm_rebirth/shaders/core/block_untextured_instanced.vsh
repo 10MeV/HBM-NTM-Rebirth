@@ -22,12 +22,26 @@ out vec4 vertexColor;
 out float vertexDistance;
 out float vFadeAlpha;
 
+float stableFaceShade(vec3 normal) {
+    float len = length(normal);
+    vec3 n = len > 1.0e-5 ? normal / len : vec3(0.0, 1.0, 0.0);
+    vec3 weight = abs(n);
+    float sum = max(weight.x + weight.y + weight.z, 1.0e-5);
+    float yShade = n.y >= 0.0 ? 0.96 : 0.58;
+    float axisShade = (weight.x * 0.76 + weight.y * yShade + weight.z * 0.86) / sum;
+    vec3 keyLight = normalize(vec3(0.20, 1.00, -0.70));
+    vec3 fillLight = normalize(vec3(-0.20, 1.00, 0.70));
+    float fixedDiffuse = max(dot(n, keyLight), 0.0) * 0.60 + max(dot(n, fillLight), 0.0) * 0.40;
+    float detailShade = 0.92 + fixedDiffuse * 0.12;
+    return clamp(axisShade * detailShade, 0.52, 0.98);
+}
+
 void main() {
     mat4 instanceModelView = mat4(InstModel0, InstModel1, InstModel2, InstModel3);
     vec4 viewPos = instanceModelView * vec4(Position, 1.0);
     gl_Position = ProjMat * viewPos;
 
-    vertexColor = InstColor;
+    vertexColor = vec4(InstColor.rgb * stableFaceShade(Normal), InstColor.a);
     vertexDistance = length(viewPos.xyz);
     vFadeAlpha = FadeAlpha;
 }

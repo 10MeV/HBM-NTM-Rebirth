@@ -4,6 +4,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnectionUtil;
 import com.hbm.ntm.fluid.HbmFluidConnectorBlock;
 import com.hbm.ntm.fluid.HbmFluidNodeHost;
+import com.hbm.ntm.client.ClientGeometryInvalidationBridge;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -52,6 +53,9 @@ public abstract class HbmFluidNodeBlock extends BaseEntityBlock implements HbmFl
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (level.isClientSide) {
+            ClientGeometryInvalidationBridge.scheduleWithNeighbors(pos);
+        }
         if (!state.is(oldState.getBlock())) {
             updateConnectionState(level, pos);
             updateNeighborConnectionStates(level, pos);
@@ -63,6 +67,9 @@ public abstract class HbmFluidNodeBlock extends BaseEntityBlock implements HbmFl
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, block, neighborPos, movedByPiston);
+        if (level.isClientSide) {
+            ClientGeometryInvalidationBridge.schedule(pos);
+        }
         updateConnectionState(level, pos);
         refreshNode(level, pos);
         refreshNeighborNodes(level, pos);
@@ -70,6 +77,9 @@ public abstract class HbmFluidNodeBlock extends BaseEntityBlock implements HbmFl
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (level.isClientSide) {
+            ClientGeometryInvalidationBridge.scheduleWithNeighbors(pos);
+        }
         if (!state.is(newState.getBlock())) {
             removeNode(level, pos);
             updateNeighborConnectionStates(level, pos);

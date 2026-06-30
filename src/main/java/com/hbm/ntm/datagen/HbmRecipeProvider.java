@@ -186,6 +186,53 @@ public final class HbmRecipeProvider extends RecipeProvider {
         selfChargingConversion(consumer, legacySelfChargingBattery(7), "battery_sc_au198", item("billet_au198"));
         selfChargingConversion(consumer, legacySelfChargingBattery(8), "battery_sc_pb209", item("billet_pb209"));
         selfChargingConversion(consumer, legacySelfChargingBattery(9), "battery_sc_am241", item("billet_am241"));
+        legacyFullBatteryShapelessRecipe(consumer, id("energy/battery_potato"), ModItems.BATTERY_POTATO.get(), 1_000L,
+                ingredientItem(Items.POTATO),
+                ingredientItem(item("wire_fine_aluminium")),
+                ingredientItem(item("wire_fine_copper")));
+        legacyFullBatteryShapelessRecipe(consumer, id("energy/battery_potatos"), ModItems.BATTERY_POTATOS.get(), 500_000L,
+                ingredientNbtItem(ModItems.BATTERY_POTATO.get(), "{charge:1000L}"),
+                ingredientItem(ModItems.TURRET_CHIP.get()),
+                ingredientItem(Items.REDSTONE));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, item("fuse"))
+                .requires(forgeTag("plates/steel"))
+                .requires(item("plate_polymer"))
+                .requires(forgeTag("wires/tungsten"))
+                .unlockedBy("has_tungsten_wire", has(forgeTag("wires/tungsten")))
+                .save(consumer, id("energy/fuse"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, ModItems.ENERGY_CORE.get())
+                .requires(ModItems.FUSION_CORE.get())
+                .requires(item("fuse"))
+                .unlockedBy("has_fusion_core", has(ModItems.FUSION_CORE.get()))
+                .save(consumer, id("energy/energy_core"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.HEV_BATTERY.get(), 4)
+                .pattern(" W ")
+                .pattern("IEI")
+                .pattern("ICI")
+                .define('W', forgeTag("wires/gold"))
+                .define('I', item("plate_polymer"))
+                .define('E', Items.REDSTONE)
+                .define('C', item("powder_cobalt"))
+                .unlockedBy("has_plate_polymer", has(item("plate_polymer")))
+                .save(consumer, id("energy/hev_battery"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.HEV_BATTERY.get(), 4)
+                .pattern(" W ")
+                .pattern("ICI")
+                .pattern("IEI")
+                .define('W', forgeTag("wires/gold"))
+                .define('I', item("plate_polymer"))
+                .define('E', Items.REDSTONE)
+                .define('C', item("powder_cobalt"))
+                .unlockedBy("has_plate_polymer", has(item("plate_polymer")))
+                .save(consumer, id("energy/hev_battery_reversed"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, ModItems.HEV_BATTERY.get())
+                .requires(item("hev_battery_block"))
+                .unlockedBy("has_hev_battery_block", has(item("hev_battery_block")))
+                .save(consumer, id("energy/hev_battery_from_block"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, item("hev_battery_block"))
+                .requires(ModItems.HEV_BATTERY.get())
+                .unlockedBy("has_hev_battery", has(ModItems.HEV_BATTERY.get()))
+                .save(consumer, id("energy/hev_battery_block"));
         energyNetworkRecipes(consumer);
         redstoneOverRadioRecipes(consumer);
         rbmkRecipes(consumer);
@@ -4724,6 +4771,55 @@ public final class HbmRecipeProvider extends RecipeProvider {
         return object;
     }
 
+    private static JsonObject ingredientNbtItem(ItemLike item, String nbt) {
+        JsonObject object = ingredientItem(item);
+        object.addProperty("type", "forge:nbt");
+        object.addProperty("nbt", nbt);
+        return object;
+    }
+
+    private static void legacyFullBatteryShapelessRecipe(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId,
+            ItemLike resultItem, long charge, JsonObject... ingredients) {
+        consumer.accept(new FinishedRecipe() {
+            @Override
+            public void serializeRecipeData(JsonObject json) {
+                json.addProperty("category", "redstone");
+                JsonArray ingredientArray = new JsonArray();
+                for (JsonObject ingredient : ingredients) {
+                    ingredientArray.add(ingredient.deepCopy());
+                }
+                json.add("ingredients", ingredientArray);
+
+                JsonObject result = new JsonObject();
+                result.addProperty("item", HbmRegistryUtil.itemKey(resultItem.asItem()).toString());
+                result.addProperty("nbt", "{charge:" + charge + "L}");
+                json.add("result", result);
+            }
+
+            @Override
+            public ResourceLocation getId() {
+                return recipeId;
+            }
+
+            @Override
+            public RecipeSerializer<?> getType() {
+                return ModRecipes.LEGACY_NBT_SHAPELESS.get();
+            }
+
+            @Nullable
+            @Override
+            public JsonObject serializeAdvancement() {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public ResourceLocation getAdvancementId() {
+                return null;
+            }
+        });
+    }
+
     private static void reactorAssemblyRecipes(Consumer<FinishedRecipe> consumer) {
         GenericMachineRecipeBuilder.assembly("ass.breedingreactor", 200, 100)
                 .inputItem(item("reactor_core"), 1)
@@ -6319,6 +6415,10 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("liquefaction/ender_pearl"));
         LiquefactionRecipeBuilder.liquefaction(Items.SUGAR, HbmFluids.ETHANOL, 100)
                 .save(consumer, id("liquefaction/sugar"));
+        LiquefactionRecipeBuilder.liquefaction(ModBlocks.PLANT_FLOWER_WEED.get(), HbmFluids.ETHANOL, 150)
+                .save(consumer, id("liquefaction/plant_flower_weed"));
+        LiquefactionRecipeBuilder.liquefaction(ModBlocks.PLANT_FLOWER_CD0.get(), HbmFluids.ETHANOL, 50)
+                .save(consumer, id("liquefaction/plant_flower_cd0"));
         LiquefactionRecipeBuilder.liquefaction(Items.WHEAT_SEEDS, HbmFluids.SEEDSLURRY, 50)
                 .save(consumer, id("liquefaction/wheat_seeds"));
         LiquefactionRecipeBuilder.liquefaction(Blocks.VINE, HbmFluids.SEEDSLURRY, 100)
@@ -6652,11 +6752,25 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .input1(HbmFluids.KEROSENE, 900)
                 .input2(HbmFluids.REFORMATE, 100)
                 .save(consumer, id("mixer/kerosene_reform"));
+        MixerRecipeBuilder.mixer(HbmFluids.CHLOROCALCITE_SOLUTION, 500, 50)
+                .input1(HbmFluids.WATER, 250)
+                .input2(HbmFluids.NITRIC_ACID, 250)
+                .solidLegacyOre("dustChlorocalcite", 1)
+                .save(consumer, id("mixer/chlorocalcite_solution"));
+        MixerRecipeBuilder.mixer(HbmFluids.CHLOROCALCITE_MIX, 1_000, 50)
+                .input1(HbmFluids.CHLOROCALCITE_SOLUTION, 500)
+                .input2(HbmFluids.SULFURIC_ACID, 500)
+                .solidItem(item("powder_flux"), 1)
+                .save(consumer, id("mixer/chlorocalcite_mix"));
         MixerRecipeBuilder.mixer(HbmFluids.PHEROMONE_M, 2_000, 10)
                 .input1(HbmFluids.PHEROMONE, 1_500)
                 .input2(HbmFluids.BLOOD, 500)
                 .solidItem(item("pill_herbal"), 1)
                 .save(consumer, id("mixer/pheromone_m"));
+        MixerRecipeBuilder.mixer(HbmFluids.BAUXITE_SOLUTION, 300, 80)
+                .input1(HbmFluids.LYE, 50)
+                .solidItem(block("stone_resource_bauxite"), 1)
+                .save(consumer, id("mixer/bauxite_solution"));
         MixerRecipeBuilder.mixer(HbmFluids.LYE, 100, 100)
                 .input1(HbmFluids.WATER, 100)
                 .solidItem(item("powder_ash_wood"), 1)

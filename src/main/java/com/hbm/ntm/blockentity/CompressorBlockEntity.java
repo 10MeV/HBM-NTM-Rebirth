@@ -460,7 +460,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
                 && value <= 4
                 && player.distanceToSqr(worldPosition.getX() + 0.5D,
                 worldPosition.getY() + 0.5D,
-                worldPosition.getZ() + 0.5D) <= 64.0D;
+                worldPosition.getZ() + 0.5D) <= 128.0D;
     }
 
     @Override

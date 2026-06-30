@@ -71,10 +71,7 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem identifier
-                        && isValidTurbineInput(identifier.getIdentifiedFluid(level, worldPosition, stack));
-                case SLOT_INPUT_CONTAINER, SLOT_OUTPUT_CONTAINER -> true;
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_IDENTIFIER, SLOT_INPUT_CONTAINER, SLOT_BATTERY, SLOT_OUTPUT_CONTAINER -> true;
                 case SLOT_IDENTIFIER_OUTPUT, SLOT_INPUT_CONTAINER_OUTPUT, SLOT_OUTPUT_CONTAINER_OUTPUT -> false;
                 default -> false;
             };
@@ -398,7 +395,9 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return slot == SLOT_BATTERY ? items.insertItem(slot, stack, simulate) : stack;
+            return slot == SLOT_BATTERY && HbmInventoryMenuHelper.isLegacyBatteryItem(stack)
+                    ? items.insertItem(slot, stack, simulate)
+                    : stack;
         }
 
         @Override
@@ -413,7 +412,7 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot == SLOT_BATTERY && items.isItemValid(slot, stack);
+            return slot == SLOT_BATTERY && HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
         }
     }
 }

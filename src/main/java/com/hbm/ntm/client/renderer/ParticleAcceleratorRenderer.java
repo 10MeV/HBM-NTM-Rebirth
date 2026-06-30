@@ -35,6 +35,11 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
     @Override
     public void render(PABlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
+
         ParticleAcceleratorBlock.Variant variant = blockEntity.getVariant();
         BlockState state = blockEntity.getBlockState();
         poseStack.pushPose();

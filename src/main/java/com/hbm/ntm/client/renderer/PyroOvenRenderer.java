@@ -42,6 +42,11 @@ public class PyroOvenRenderer implements BlockEntityRenderer<PyroOvenBlockEntity
     @Override
     public void render(PyroOvenBlockEntity pyroOven, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(pyroOven, getViewDistance())) {
+            return;
+        }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(pyroOven);
+
         BlockState state = pyroOven.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;

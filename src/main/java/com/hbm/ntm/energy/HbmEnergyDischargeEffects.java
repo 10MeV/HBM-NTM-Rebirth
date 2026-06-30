@@ -9,7 +9,6 @@ import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
@@ -90,24 +89,13 @@ public final class HbmEnergyDischargeEffects {
                 projectile, null, plan.motion(), scan, level.random, SELF_CHARGING_BEAM_DAMAGE, false, 3);
         BulletProjectileEntity.spawnAll(level, hit.spawnRequests());
 
-        Vec3 impact = scan.blockHit() != null ? scan.blockHit().location() : targetPoint;
-        spawnElectricArc(level, beamStart, impact);
+        Vec3 impact = scan.primaryLocation() != null ? scan.primaryLocation() : scan.clippedEnd();
+        double beamLength = beamStart.distanceTo(impact == null ? targetPoint : impact);
+        BulletProjectileEntity.spawnVisualOnlyBeam(level, plan, beamLength);
     }
 
     private static void explodeElectricDischarge(ServerLevel level, Vec3 position) {
         BulletImpactUtil.applyBatterySocketDischarge(level, position, null);
     }
 
-    private static void spawnElectricArc(ServerLevel level, Vec3 start, Vec3 end) {
-        Vec3 delta = end.subtract(start);
-        int steps = Math.max(3, (int) Math.ceil(delta.length() * 2.0D));
-        for (int i = 0; i <= steps; i++) {
-            double progress = (double) i / (double) steps;
-            Vec3 point = start.add(delta.scale(progress)).add(
-                    (level.random.nextDouble() - 0.5D) * 0.12D,
-                    (level.random.nextDouble() - 0.5D) * 0.12D,
-                    (level.random.nextDouble() - 0.5D) * 0.12D);
-            level.sendParticles(ParticleTypes.END_ROD, point.x, point.y, point.z, 1, 0.0D, 0.0D, 0.0D, 0.02D);
-        }
-    }
 }

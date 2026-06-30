@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [
+    { "fluid": "hbm_ntm_rebirth:perfluoromethyl_cold", "amount": 8000 }
+  ],
+  "input_items": [
+    { "count": 12, "ingredient": { "tag": "forge:cast_plates/combine_steel" } },
+    { "count": 32, "ingredient": { "item": "hbm_ntm_rebirth:powder_spark_mix" } },
+    { "count": 32, "ingredient": { "item": "hbm_ntm_rebirth:pellet_charged" } },
+    { "count": 16, "ingredient": { "tag": "forge:circuits/chip_quantum" } }
+  ],
+  "internal_name": "ass.capacitorspark",
+  "output_fluids": [
+    { "fluid": "hbm_ntm_rebirth:perfluoromethyl", "amount": 8000 }
+  ],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:capacitor_spark" }
+  ],
+  "pools": [],
+  "power": 100000,
+  "source_order": 143
+}

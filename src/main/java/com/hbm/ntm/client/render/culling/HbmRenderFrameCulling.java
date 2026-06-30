@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.render.culling;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.hbm.ntm.client.render.HbmRenderFrameFlags;
 import java.util.Iterator;
@@ -7,10 +8,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -22,12 +27,15 @@ import org.joml.Matrix4f;
  * Per-render-frame culling context shared by current CPU renderers and future GPU batching.
  */
 public final class HbmRenderFrameCulling {
+    private static final TagKey<Block> NON_OCCLUDING_BLOCKS = TagKey.create(Registries.BLOCK,
+            new ResourceLocation(HbmNtm.MOD_ID, "non_occluding"));
     private static final double OCCLUSION_NEAR_DISTANCE_SQ = 16.0D;
     private static final double OCCLUSION_CAMERA_REUSE_MAX_DIST_SQ = 0.25D;
     private static final int OCCLUSION_TTL_TICKS = 20;
     private static final int OCCLUSION_MAX_RAY_STEPS = 100;
     private static final int OCCLUSION_MAX_CACHE_ENTRIES = 16384;
     private static final int OCCLUSION_MAX_KEEP_MANHATTAN_BLOCKS = 192;
+    private static final long OCCLUSION_STALE_FRAME_TTL = 600L;
     private static final AtomicLong FRAME_GENERATION = new AtomicLong();
     private static final Map<Long, OcclusionCacheEntry> OCCLUSION_CACHE = new LinkedHashMap<>(1024, 0.75F, true);
     private static final BlockPos.MutableBlockPos RAYCAST_POS = new BlockPos.MutableBlockPos();
@@ -37,6 +45,7 @@ public final class HbmRenderFrameCulling {
     private static volatile long geometryStamp;
     private static volatile FrameStats currentStats = new FrameStats(0L);
     private static volatile Snapshot lastSnapshot = Snapshot.empty();
+    private static final ThreadLocal<MachineRendererScope> MACHINE_RENDERER_SCOPE = new ThreadLocal<>();
 
     private HbmRenderFrameCulling() {
     }
@@ -52,34 +61,7 @@ public final class HbmRenderFrameCulling {
     }
 
     public static void endFrame() {
-        FrameStats stats = currentStats;
-        lastSnapshot = new Snapshot(
-                stats.frameGeneration,
-                projectionCaptured,
-                blockEntityFrustum != null,
-                cameraPosition,
-                stats.visibilityQueries.get(),
-                stats.visibleQueries.get(),
-                stats.frustumCulledQueries.get(),
-                stats.distanceCulledQueries.get(),
-                stats.shadowPassBypassQueries.get(),
-                stats.noFrustumQueries.get(),
-                stats.machineRendererSubmissions.get(),
-                stats.machineRendererVertices.get(),
-                stats.occlusionQueries.get(),
-                stats.occlusionEnabledQueries.get(),
-                stats.occlusionDisabledByConfigQueries.get(),
-                stats.occlusionNoLevelQueries.get(),
-                stats.occlusionNearBypassQueries.get(),
-                stats.occlusionCacheHits.get(),
-                stats.occlusionCacheMisses.get(),
-                stats.occlusionCrossFrameReuses.get(),
-                stats.occlusionRayTests.get(),
-                stats.occlusionRaySteps.get(),
-                stats.occlusionVisibleQueries.get(),
-                stats.occlusionCulledQueries.get(),
-                OCCLUSION_CACHE.size(),
-                geometryStamp);
+        lastSnapshot = snapshotOf(currentStats);
     }
 
     public static void clear() {
@@ -128,10 +110,57 @@ public final class HbmRenderFrameCulling {
     }
 
     public static void recordMachineRendererSubmission(BlockEntity blockEntity, int approximateVertices) {
+        recordMachineRendererSubmission(blockEntity, approximateVertices, MachineRenderRoute.UNKNOWN, 0);
+    }
+
+    public static void recordMachineRendererSubmission(BlockEntity blockEntity, int approximateVertices,
+            MachineRenderRoute route, int partRuns) {
         FrameStats stats = currentStats;
         stats.machineRendererSubmissions.incrementAndGet();
         if (approximateVertices > 0) {
             stats.machineRendererVertices.addAndGet(approximateVertices);
+        }
+        if (partRuns > 0) {
+            stats.machineRendererPartRuns.addAndGet(partRuns);
+        }
+        switch (route == null ? MachineRenderRoute.UNKNOWN : route) {
+            case DEFAULT_RENDER_ALL -> stats.machineRendererDefaultRenderAll.incrementAndGet();
+            case DEFAULT_PARTS -> stats.machineRendererDefaultParts.incrementAndGet();
+            case PROFILE_DIRECT -> stats.machineRendererProfileDirect.incrementAndGet();
+            case PROFILE_FALLBACK_RENDER_ALL, PROFILE_FALLBACK_PARTS ->
+                    stats.machineRendererProfileFallback.incrementAndGet();
+            case UNKNOWN -> {
+            }
+        }
+    }
+
+    public static MachineRendererSubmissionScope pushMachineRendererSubmissionScope(BlockEntity blockEntity) {
+        MachineRendererScope previous = MACHINE_RENDERER_SCOPE.get();
+        MACHINE_RENDERER_SCOPE.set(new MachineRendererScope(blockEntity, previous));
+        return new MachineRendererSubmissionScope(previous);
+    }
+
+    public static void recordObjInstancedQueue(int instances, boolean newBatch) {
+        int safeInstances = Math.max(0, instances);
+        FrameStats stats = currentStats;
+        stats.objInstancedQueueRecords.incrementAndGet();
+        stats.objInstancedQueuedInstances.addAndGet(safeInstances);
+        if (newBatch) {
+            stats.objInstancedQueuedBatches.incrementAndGet();
+        }
+        MachineRendererScope scope = MACHINE_RENDERER_SCOPE.get();
+        if (scope != null) {
+            stats.objInstancedCullingScopedRecords.incrementAndGet();
+            stats.objInstancedCullingScopedInstances.addAndGet(safeInstances);
+            if (newBatch) {
+                stats.objInstancedCullingScopedBatches.incrementAndGet();
+            }
+        } else {
+            stats.objInstancedUnscopedRecords.incrementAndGet();
+            stats.objInstancedUnscopedInstances.addAndGet(safeInstances);
+            if (newBatch) {
+                stats.objInstancedUnscopedBatches.incrementAndGet();
+            }
         }
     }
 
@@ -139,8 +168,16 @@ public final class HbmRenderFrameCulling {
         return lastSnapshot;
     }
 
+    public static Snapshot currentSnapshot() {
+        return snapshotOf(currentStats);
+    }
+
     public static void noteClientGeometryChanged() {
         geometryStamp++;
+        clearOcclusionCache();
+    }
+
+    public static void clearOcclusionCacheForShaderStateChange() {
         clearOcclusionCache();
     }
 
@@ -216,6 +253,11 @@ public final class HbmRenderFrameCulling {
     }
 
     private static boolean canReuseOcclusion(OcclusionCacheEntry cached, Level level) {
+        // Modernized disables cross-frame occlusion reuse while instanced batching is active
+        // to avoid stale visibility causing batched BER flicker.
+        if (HbmRenderFrameFlags.current().instancingEnabled()) {
+            return false;
+        }
         if (!cached.visible || cached.geometryStamp != geometryStamp) {
             return false;
         }
@@ -326,22 +368,32 @@ public final class HbmRenderFrameCulling {
             return false;
         }
         BlockState state = level.getBlockState(pos);
-        return !state.isAir() && state.isSolidRender(level, pos);
+        if (state.isAir() || state.is(NON_OCCLUDING_BLOCKS)) {
+            return false;
+        }
+        return state.isSolidRender(level, pos);
     }
 
     private static void pruneOcclusionCache(Minecraft minecraft) {
-        if (OCCLUSION_CACHE.isEmpty() || minecraft.player == null) {
+        if (OCCLUSION_CACHE.isEmpty()) {
             return;
         }
-        BlockPos playerPos = minecraft.player.blockPosition();
-        int px = playerPos.getX();
-        int py = playerPos.getY();
-        int pz = playerPos.getZ();
-        OCCLUSION_CACHE.entrySet().removeIf(entry -> {
-            BlockPos pos = BlockPos.of(entry.getKey() & ~(1L << 62));
-            int dist = Math.abs(pos.getX() - px) + Math.abs(pos.getY() - py) + Math.abs(pos.getZ() - pz);
-            return dist > OCCLUSION_MAX_KEEP_MANHATTAN_BLOCKS;
-        });
+        long frame = FRAME_GENERATION.get();
+        if (minecraft.player != null) {
+            BlockPos playerPos = minecraft.player.blockPosition();
+            int px = playerPos.getX();
+            int py = playerPos.getY();
+            int pz = playerPos.getZ();
+            OCCLUSION_CACHE.entrySet().removeIf(entry -> {
+                BlockPos pos = BlockPos.of(entry.getKey() & ~(1L << 62));
+                int dist = Math.abs(pos.getX() - px) + Math.abs(pos.getY() - py) + Math.abs(pos.getZ() - pz);
+                return dist > OCCLUSION_MAX_KEEP_MANHATTAN_BLOCKS
+                        || frame - entry.getValue().frame > OCCLUSION_STALE_FRAME_TTL;
+            });
+            return;
+        }
+        OCCLUSION_CACHE.entrySet().removeIf(entry ->
+                frame - entry.getValue().frame > OCCLUSION_STALE_FRAME_TTL);
     }
 
     private static void trimOcclusionCache() {
@@ -360,6 +412,50 @@ public final class HbmRenderFrameCulling {
         OCCLUSION_CACHE.clear();
     }
 
+    private static Snapshot snapshotOf(FrameStats stats) {
+        return new Snapshot(
+                stats.frameGeneration,
+                projectionCaptured,
+                blockEntityFrustum != null,
+                cameraPosition,
+                stats.visibilityQueries.get(),
+                stats.visibleQueries.get(),
+                stats.frustumCulledQueries.get(),
+                stats.distanceCulledQueries.get(),
+                stats.shadowPassBypassQueries.get(),
+                stats.noFrustumQueries.get(),
+                stats.machineRendererSubmissions.get(),
+                stats.machineRendererVertices.get(),
+                stats.machineRendererDefaultRenderAll.get(),
+                stats.machineRendererDefaultParts.get(),
+                stats.machineRendererProfileDirect.get(),
+                stats.machineRendererProfileFallback.get(),
+                stats.machineRendererPartRuns.get(),
+                stats.objInstancedQueueRecords.get(),
+                stats.objInstancedQueuedBatches.get(),
+                stats.objInstancedQueuedInstances.get(),
+                stats.objInstancedCullingScopedRecords.get(),
+                stats.objInstancedCullingScopedBatches.get(),
+                stats.objInstancedCullingScopedInstances.get(),
+                stats.objInstancedUnscopedRecords.get(),
+                stats.objInstancedUnscopedBatches.get(),
+                stats.objInstancedUnscopedInstances.get(),
+                stats.occlusionQueries.get(),
+                stats.occlusionEnabledQueries.get(),
+                stats.occlusionDisabledByConfigQueries.get(),
+                stats.occlusionNoLevelQueries.get(),
+                stats.occlusionNearBypassQueries.get(),
+                stats.occlusionCacheHits.get(),
+                stats.occlusionCacheMisses.get(),
+                stats.occlusionCrossFrameReuses.get(),
+                stats.occlusionRayTests.get(),
+                stats.occlusionRaySteps.get(),
+                stats.occlusionVisibleQueries.get(),
+                stats.occlusionCulledQueries.get(),
+                OCCLUSION_CACHE.size(),
+                geometryStamp);
+    }
+
     private static final class FrameStats {
         private final long frameGeneration;
         private final AtomicLong visibilityQueries = new AtomicLong();
@@ -370,6 +466,20 @@ public final class HbmRenderFrameCulling {
         private final AtomicLong noFrustumQueries = new AtomicLong();
         private final AtomicLong machineRendererSubmissions = new AtomicLong();
         private final AtomicLong machineRendererVertices = new AtomicLong();
+        private final AtomicLong machineRendererDefaultRenderAll = new AtomicLong();
+        private final AtomicLong machineRendererDefaultParts = new AtomicLong();
+        private final AtomicLong machineRendererProfileDirect = new AtomicLong();
+        private final AtomicLong machineRendererProfileFallback = new AtomicLong();
+        private final AtomicLong machineRendererPartRuns = new AtomicLong();
+        private final AtomicLong objInstancedQueueRecords = new AtomicLong();
+        private final AtomicLong objInstancedQueuedBatches = new AtomicLong();
+        private final AtomicLong objInstancedQueuedInstances = new AtomicLong();
+        private final AtomicLong objInstancedCullingScopedRecords = new AtomicLong();
+        private final AtomicLong objInstancedCullingScopedBatches = new AtomicLong();
+        private final AtomicLong objInstancedCullingScopedInstances = new AtomicLong();
+        private final AtomicLong objInstancedUnscopedRecords = new AtomicLong();
+        private final AtomicLong objInstancedUnscopedBatches = new AtomicLong();
+        private final AtomicLong objInstancedUnscopedInstances = new AtomicLong();
         private final AtomicLong occlusionQueries = new AtomicLong();
         private final AtomicLong occlusionEnabledQueries = new AtomicLong();
         private final AtomicLong occlusionDisabledByConfigQueries = new AtomicLong();
@@ -401,6 +511,20 @@ public final class HbmRenderFrameCulling {
             long noFrustumQueries,
             long machineRendererSubmissions,
             long machineRendererVertices,
+            long machineRendererDefaultRenderAll,
+            long machineRendererDefaultParts,
+            long machineRendererProfileDirect,
+            long machineRendererProfileFallback,
+            long machineRendererPartRuns,
+            long objInstancedQueueRecords,
+            long objInstancedQueuedBatches,
+            long objInstancedQueuedInstances,
+            long objInstancedCullingScopedRecords,
+            long objInstancedCullingScopedBatches,
+            long objInstancedCullingScopedInstances,
+            long objInstancedUnscopedRecords,
+            long objInstancedUnscopedBatches,
+            long objInstancedUnscopedInstances,
             long occlusionQueries,
             long occlusionEnabledQueries,
             long occlusionDisabledByConfigQueries,
@@ -416,9 +540,23 @@ public final class HbmRenderFrameCulling {
             int occlusionCacheEntries,
             long occlusionGeometryStamp) {
         private static Snapshot empty() {
-            return new Snapshot(0L, false, false, Vec3.ZERO, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L,
-                    0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0, 0L);
+            return new Snapshot(
+                    0L, false, false, Vec3.ZERO,
+                    0L, 0L, 0L, 0L, 0L, 0L,
+                    0L, 0L, 0L, 0L, 0L, 0L, 0L,
+                    0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L,
+                    0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L,
+                    0, 0L);
         }
+    }
+
+    public enum MachineRenderRoute {
+        UNKNOWN,
+        DEFAULT_RENDER_ALL,
+        DEFAULT_PARTS,
+        PROFILE_DIRECT,
+        PROFILE_FALLBACK_RENDER_ALL,
+        PROFILE_FALLBACK_PARTS
     }
 
     private static final class OcclusionCacheEntry {
@@ -439,6 +577,31 @@ public final class HbmRenderFrameCulling {
             this.cameraY = cameraY;
             this.cameraZ = cameraZ;
             this.geometryStamp = geometryStamp;
+        }
+    }
+
+    private record MachineRendererScope(BlockEntity blockEntity, MachineRendererScope previous) {
+    }
+
+    public static final class MachineRendererSubmissionScope implements AutoCloseable {
+        private final MachineRendererScope previous;
+        private boolean closed;
+
+        private MachineRendererSubmissionScope(MachineRendererScope previous) {
+            this.previous = previous;
+        }
+
+        @Override
+        public void close() {
+            if (closed) {
+                return;
+            }
+            closed = true;
+            if (previous == null) {
+                MACHINE_RENDERER_SCOPE.remove();
+            } else {
+                MACHINE_RENDERER_SCOPE.set(previous);
+            }
         }
     }
 }

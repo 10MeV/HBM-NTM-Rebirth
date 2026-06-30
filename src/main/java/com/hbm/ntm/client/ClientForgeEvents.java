@@ -15,6 +15,7 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel.RenderBackendFlushStage;
 import com.hbm.ntm.client.overlay.ToolAbilityHudRenderer;
 import com.hbm.ntm.client.particle.HbmDeferredParticleRenderer;
 import com.hbm.ntm.client.render.HbmBlackHoleEffects;
+import com.hbm.ntm.client.render.HbmClientGeometryInvalidation;
 import com.hbm.ntm.client.render.HbmOverheadMarkers;
 import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.client.render.HbmRenderFrameLight;
@@ -22,6 +23,7 @@ import com.hbm.ntm.client.render.HbmRenderFrameFlags;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
+import com.hbm.ntm.client.render.shader.HbmIrisRenderBatch;
 import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.hbm.ntm.client.render.LegacyMultiblockHighlightRenderer;
 import com.hbm.ntm.client.renderer.LegacyAccessoryRenderHelper;
@@ -95,6 +97,8 @@ import net.minecraftforge.client.event.sound.PlaySoundEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
+import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -339,6 +343,10 @@ public final class ClientForgeEvents {
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (HbmIrisRenderBatch.isActiveShadowPass() && !HbmShaderCompatibilityDetector.isRenderingShadowPass()) {
+            HbmIrisRenderBatch.closePersistentIfActive();
+        }
+
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) {
             return;
@@ -356,9 +364,11 @@ public final class ClientForgeEvents {
         }
 
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
-            LegacyWavefrontModel.flushRenderBackend(RenderBackendFlushStage.AFTER_BLOCK_ENTITIES);
+            LegacyWavefrontModel.flushRenderBackend(RenderBackendFlushStage.AFTER_BLOCK_ENTITIES,
+                    event.getProjectionMatrix());
             LegacyMachineEffectPresenter.present(PresentStage.AFTER_BLOCK_ENTITIES);
-            LegacyRenderLighting.clearCurrentProbe();
+            LegacyLightSampleCache.endBlockEntityPass();
+            LegacyRenderLighting.endBlockEntityPass();
         }
 
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_WEATHER) {
@@ -409,6 +419,7 @@ public final class ClientForgeEvents {
         HbmOverheadMarkers.tick();
         HbmBlackHoleEffects.tick();
         HbmShaderCompatibilityDetector.processPendingChunkInvalidation();
+        HbmClientGeometryInvalidation.processPendingInvalidations();
         updateSootFog();
         showEmptyGasMaskFilterWarning();
         pruneNetworkTransfers();
@@ -417,6 +428,7 @@ public final class ClientForgeEvents {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
             HbmDeferredParticleRenderer.clear();
+            HbmClientGeometryInvalidation.clearPending();
             HbmRenderFrameCulling.clear();
             LegacyLightSampleCache.clear();
             LegacyMachineEffectPresenter.clear();
@@ -430,6 +442,35 @@ public final class ClientForgeEvents {
         tickClientArmorMods(minecraft.player);
         spawnRadiationAura(minecraft);
         spawnCraterTownAura(minecraft);
+    }
+
+    @SubscribeEvent
+    public static void onClientChunkLoad(ChunkEvent.Load event) {
+        if (event.getLevel().isClientSide()) {
+            HbmClientGeometryInvalidation.noteWorldGeometryChanged();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onClientChunkUnload(ChunkEvent.Unload event) {
+        if (event.getLevel().isClientSide()) {
+            HbmClientGeometryInvalidation.noteWorldGeometryChanged();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onClientLevelLoad(LevelEvent.Load event) {
+        if (event.getLevel().isClientSide()) {
+            HbmClientGeometryInvalidation.noteWorldGeometryChanged();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onClientLevelUnload(LevelEvent.Unload event) {
+        if (event.getLevel().isClientSide()) {
+            HbmClientGeometryInvalidation.clearPending();
+            HbmClientGeometryInvalidation.noteWorldGeometryChanged();
+        }
     }
 
     private static void tickClientArmorMods(Player player) {

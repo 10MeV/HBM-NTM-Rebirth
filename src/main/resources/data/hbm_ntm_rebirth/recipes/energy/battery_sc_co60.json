@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:battery_sc.empty"
+    },
+    {
+      "item": "hbm_ntm_rebirth:billet_co60"
+    },
+    {
+      "item": "hbm_ntm_rebirth:billet_co60"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:battery_sc.co60"
+  }
+}

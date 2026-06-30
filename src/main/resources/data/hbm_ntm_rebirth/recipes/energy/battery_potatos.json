@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:shapeless_nbt",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "type": "forge:nbt",
+      "item": "hbm_ntm_rebirth:battery_potato",
+      "nbt": "{charge:1000L}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:turret_chip"
+    },
+    {
+      "item": "minecraft:redstone"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:battery_potatos",
+    "nbt": "{charge:500000L}"
+  }
+}

@@ -6,6 +6,8 @@ import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
+import com.hbm.ntm.menu.PneumaticTubeMenu;
+import com.hbm.ntm.network.HbmLegacyControlReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticEndpoint;
@@ -15,22 +17,30 @@ import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNode;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNodespace;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticUtil;
 import com.hbm.ntm.util.HbmItemStackUtil;
+import com.hbm.ntm.util.LegacyPatternMatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity implements HbmStandardFluidReceiver, PneumaticEndpoint, PneumaticConnector {
+public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity implements MenuProvider,
+        HbmStandardFluidReceiver, PneumaticEndpoint, PneumaticConnector, HbmLegacyControlReceiver {
     public static final int FILTER_SLOTS = 15;
     public static final int AIR_CAPACITY = 4_000;
     public static final int AIR_COST_PER_SEND = 50;
@@ -48,7 +58,18 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
     private static final String TAG_SEND_COUNTER = "sendCounter";
     private static final String TAG_SOUND_DELAY = "soundDelay";
 
-    private final ItemStack[] filter = new ItemStack[FILTER_SLOTS];
+    private final LegacyPatternMatcher pattern = new LegacyPatternMatcher(FILTER_SLOTS);
+    private final ItemStackHandler filter = new ItemStackHandler(FILTER_SLOTS) {
+        @Override
+        public int getSlotLimit(int slot) {
+            return 1;
+        }
+
+        @Override
+        protected void onContentsChanged(int slot) {
+            setChangedAndUpdate();
+        }
+    };
     private PneumaticNode pneumaticNode;
     private Direction insertionDirection;
     private Direction ejectionDirection;
@@ -65,7 +86,6 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
 
     protected PneumaticTubeBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state, List.of(new HbmFluidTank(HbmFluids.AIR, AIR_CAPACITY).withPressure(1)));
-        Arrays.fill(filter, ItemStack.EMPTY);
         getAllTanks().get(0).withPressure(1);
     }
 
@@ -157,6 +177,18 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         return getAllTanks().get(0);
     }
 
+    public boolean isRedstoneEnabled() {
+        return redstone;
+    }
+
+    public int getSendOrder() {
+        return sendOrder;
+    }
+
+    public int getReceiveOrder() {
+        return receiveOrder;
+    }
+
     public void cycleInsertionDirection() {
         insertionDirection = nextValidInventoryDirection(insertionDirection, ejectionDirection);
         onEndpointDirectionChanged();
@@ -188,15 +220,32 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
     }
 
     public ItemStack getFilterStack(int slot) {
-        return slot >= 0 && slot < filter.length ? filter[slot] : ItemStack.EMPTY;
+        return slot >= 0 && slot < FILTER_SLOTS ? filter.getStackInSlot(slot) : ItemStack.EMPTY;
+    }
+
+    public ItemStackHandler getFilterItems() {
+        return filter;
     }
 
     public void setFilterStack(int slot, ItemStack stack) {
-        if (slot < 0 || slot >= filter.length) {
+        if (slot < 0 || slot >= FILTER_SLOTS) {
             return;
         }
-        filter[slot] = HbmItemStackUtil.carefulCopyWithSize(stack, 1);
-        setChanged();
+        filter.setStackInSlot(slot, HbmItemStackUtil.carefulCopyWithSize(stack, 1));
+    }
+
+    public int getModeIndex(int slot) {
+        return pattern.getModeIndex(getFilterStack(slot), slot);
+    }
+
+    public void nextMode(int slot) {
+        pattern.nextMode(getFilterStack(slot), slot);
+        setChangedAndUpdate();
+    }
+
+    public void updatePatternSlot(int slot, ItemStack stack) {
+        pattern.initPatternSmart(stack, slot);
+        setChangedAndUpdate();
     }
 
     public boolean isCompressor() {
@@ -212,8 +261,9 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         if (stack == null || stack.isEmpty()) {
             return false;
         }
-        for (ItemStack filterStack : filter) {
-            if (!filterStack.isEmpty() && HbmItemStackUtil.doesStackDataMatch(filterStack, stack)) {
+        for (int slot = 0; slot < FILTER_SLOTS; slot++) {
+            ItemStack filterStack = filter.getStackInSlot(slot);
+            if (!filterStack.isEmpty() && pattern.isValidForFilter(filterStack, slot, stack)) {
                 return true;
             }
         }
@@ -288,6 +338,7 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         tag.putInt(TAG_SEND_COUNTER, sendCounter);
         tag.putInt(TAG_SOUND_DELAY, soundDelay);
         HbmItemStackUtil.saveSlottedItemsToTag(tag, TAG_FILTER, TAG_FILTER_SLOT, filter);
+        pattern.writeToNbt(tag);
     }
 
     @Override
@@ -304,6 +355,58 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         sendCounter = tag.getInt(TAG_SEND_COUNTER);
         soundDelay = tag.getInt(TAG_SOUND_DELAY);
         HbmItemStackUtil.loadSlottedItems(tag, TAG_FILTER, TAG_FILTER_SLOT, filter);
+        pattern.readFromNbt(tag);
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatableWithFallback("container.pneumoTube", "Pneumatic Tube");
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
+        return new PneumaticTubeMenu(containerId, inventory, this);
+    }
+
+    @Override
+    public boolean hasPermission(ServerPlayer player) {
+        return player.distanceToSqr(
+                worldPosition.getX() + 0.5D,
+                worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D) <= 128.0D;
+    }
+
+    @Override
+    public void receiveControl(ServerPlayer player, CompoundTag data) {
+        if (data.contains("whitelist")) {
+            whitelist = !whitelist;
+        }
+        if (data.contains("redstone")) {
+            redstone = !redstone;
+        }
+        if (data.contains("pressure")) {
+            int pressure = compair().getPressure() + 1;
+            if (pressure > 5) {
+                pressure = 1;
+            }
+            compair().withPressure(pressure);
+        }
+        if (data.contains("send")) {
+            setSendOrder((byte) (sendOrder + 1));
+        }
+        if (data.contains("receive")) {
+            setReceiveOrder((byte) (receiveOrder + 1));
+        }
+        setChangedAndUpdate();
+    }
+
+    private void setChangedAndUpdate() {
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            BlockState state = getBlockState();
+            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
+        }
     }
 
     @Override

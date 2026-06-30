@@ -31,10 +31,15 @@ public class MassStorageRenderer implements BlockEntityRenderer<MassStorageBlock
     @Override
     public void render(MassStorageBlockEntity storage, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(storage, getViewDistance())) {
+            return;
+        }
+
         ItemStack type = storage.type();
         if (type.isEmpty()) {
             return;
         }
+        LegacyBlockEntityRenderCulling.recordMachineSubmission(storage);
 
         poseStack.pushPose();
         applyFrontPanelTransform(storage.getBlockState(), poseStack);

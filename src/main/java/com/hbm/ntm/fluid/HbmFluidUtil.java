@@ -75,7 +75,19 @@ public final class HbmFluidUtil {
 
     public static int subscribeProviderToPorts(Level level, BlockPos origin, Iterable<FluidPort> ports, FluidType type,
             HbmFluidProvider provider) {
-        return subscribeProviderToPortsReport(level, origin, ports, type, provider).subscribedPorts();
+        if (ports == null) {
+            return 0;
+        }
+        int subscribed = 0;
+        for (FluidPort port : ports) {
+            HbmMachinePerformanceCounters.fluidPortCheck();
+            boolean added = subscribeProviderToPort(level, origin, port, type, provider);
+            HbmMachinePerformanceCounters.fluidPortSubscription(added);
+            if (added) {
+                subscribed++;
+            }
+        }
+        return subscribed;
     }
 
     public static PortSubscribeReport subscribeProviderToPortsReport(Level level, BlockPos origin,
@@ -111,7 +123,19 @@ public final class HbmFluidUtil {
 
     public static int subscribeReceiverToPorts(Level level, BlockPos origin, Iterable<FluidPort> ports, FluidType type,
             HbmFluidReceiver receiver) {
-        return subscribeReceiverToPortsReport(level, origin, ports, type, receiver).subscribedPorts();
+        if (ports == null) {
+            return 0;
+        }
+        int subscribed = 0;
+        for (FluidPort port : ports) {
+            HbmMachinePerformanceCounters.fluidPortCheck();
+            boolean added = subscribeReceiverToPort(level, origin, port, type, receiver);
+            HbmMachinePerformanceCounters.fluidPortSubscription(added);
+            if (added) {
+                subscribed++;
+            }
+        }
+        return subscribed;
     }
 
     public static PortSubscribeReport subscribeReceiverToPortsReport(Level level, BlockPos origin,
@@ -191,7 +215,17 @@ public final class HbmFluidUtil {
 
     public static int unsubscribeProviderFromPorts(Level level, BlockPos origin, Iterable<FluidPort> ports, FluidType type,
             HbmFluidProvider provider) {
-        return unsubscribeProviderFromPortsReport(level, origin, ports, type, provider).unsubscribedPorts();
+        if (ports == null) {
+            return 0;
+        }
+        int unsubscribed = 0;
+        for (FluidPort port : ports) {
+            HbmMachinePerformanceCounters.fluidPortCheck();
+            if (unsubscribeProviderFromPort(level, origin, port, type, provider)) {
+                unsubscribed++;
+            }
+        }
+        return unsubscribed;
     }
 
     public static PortDetachReport unsubscribeProviderFromPortsReport(Level level, BlockPos origin,
@@ -225,7 +259,17 @@ public final class HbmFluidUtil {
 
     public static int unsubscribeReceiverFromPorts(Level level, BlockPos origin, Iterable<FluidPort> ports, FluidType type,
             HbmFluidReceiver receiver) {
-        return unsubscribeReceiverFromPortsReport(level, origin, ports, type, receiver).unsubscribedPorts();
+        if (ports == null) {
+            return 0;
+        }
+        int unsubscribed = 0;
+        for (FluidPort port : ports) {
+            HbmMachinePerformanceCounters.fluidPortCheck();
+            if (unsubscribeReceiverFromPort(level, origin, port, type, receiver)) {
+                unsubscribed++;
+            }
+        }
+        return unsubscribed;
     }
 
     public static PortDetachReport unsubscribeReceiverFromPortsReport(Level level, BlockPos origin,

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:capacitor_niobium"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "W": {
+      "item": "hbm_ntm_rebirth:wire_dense_mingrade"
+    }
+  },
+  "pattern": [
+    "PWP",
+    "PCP",
+    "PWP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:armor_battery_mk2"
+  },
+  "show_notification": true
+}

@@ -66,7 +66,7 @@ public class FusionKlystronMenu extends AbstractContainerMenu {
         ItemStack original = stack.copy();
         if (index < MACHINE_SLOT_COUNT) {
             if (!moveItemStackTo(stack, PLAYER_START, PLAYER_END, true)) return ItemStack.EMPTY;
-        } else if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+        } else if (HbmInventoryMenuHelper.isLegacyBatteryItem(stack)) {
             if (!moveItemStackTo(stack, 0, 1, false)) return ItemStack.EMPTY;
         } else {
             return ItemStack.EMPTY;

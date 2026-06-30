@@ -15,7 +15,6 @@ public class FluidPipeStyleBlockItem extends LegacyStateBlockItem {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        com.hbm.ntm.client.renderer.LegacyItemRendererBridge.accept(consumer,
-                () -> com.hbm.ntm.client.renderer.FluidDuctItemRenderer.INSTANCE);
+        ClientItemRendererBridge.accept("acceptFluidDuct", consumer);
     }
 }
