@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -26,6 +27,11 @@ public class PressMachineBlock extends LegacyXrMultiblockBlock implements Entity
 
     public PressMachineBlock(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Override

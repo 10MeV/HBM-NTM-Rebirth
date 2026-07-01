@@ -48,6 +48,7 @@ public final class HbmRenderFrameFlags {
                 minecraft.options.renderDistance().get(),
                 HbmClientConfig.modelUpdateDistanceBlocks(),
                 HbmClientConfig.modelStaticRenderDistanceBlocks(),
+                HbmClientConfig.useSlicedLight(),
                 particleStatus == ParticleStatus.ALL,
                 particleStatus == ParticleStatus.MINIMAL,
                 HbmClientConfig.nukeWarpShockwaveEnabled(),
@@ -91,6 +92,7 @@ public final class HbmRenderFrameFlags {
             int renderDistanceChunks,
             int modelUpdateDistanceBlocks,
             int modelStaticRenderDistanceBlocks,
+            boolean useSlicedLight,
             boolean allParticles,
             boolean minimalParticles,
             boolean nukeWarpShockwaveEnabled,
@@ -118,7 +120,7 @@ public final class HbmRenderFrameFlags {
             boolean irisExtendedShaderPathEnabled) {
         private static Snapshot initial() {
             return new Snapshot(0L, 0.0F, 0, HbmClientConfig.modelUpdateDistanceBlocks(),
-                    HbmClientConfig.modelStaticRenderDistanceBlocks(),
+                    HbmClientConfig.modelStaticRenderDistanceBlocks(), HbmClientConfig.useSlicedLight(),
                     false, false, true, false, true,
                     false, false, true, false, false, false, false,
                     HbmClientConfig.maxInstancedInstancesPerDraw(),

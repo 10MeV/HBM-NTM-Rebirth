@@ -140,6 +140,6 @@ public class RustedLaunchPadBlock extends LegacyXrMultiblockBlock implements Ent
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 }

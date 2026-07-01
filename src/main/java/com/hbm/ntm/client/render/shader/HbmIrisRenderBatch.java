@@ -41,15 +41,15 @@ public final class HbmIrisRenderBatch {
     private static final AtomicLong shaderRestoreAttempts = new AtomicLong();
     private static final AtomicLong shaderRestoreSuccesses = new AtomicLong();
     private static final AtomicLong shaderRestoreFailures = new AtomicLong();
-    private static final AtomicLong currentFrameBeginCalls = new AtomicLong();
-    private static final AtomicLong currentFrameReuseHits = new AtomicLong();
-    private static final AtomicLong currentFrameEndCalls = new AtomicLong();
-    private static final AtomicLong currentFrameDrawCalls = new AtomicLong();
-    private static final AtomicLong currentFrameShadowDrawCalls = new AtomicLong();
-    private static final AtomicLong currentFrameApplyFailures = new AtomicLong();
-    private static final AtomicLong currentFrameShaderRestoreAttempts = new AtomicLong();
-    private static final AtomicLong currentFrameShaderRestoreSuccesses = new AtomicLong();
-    private static final AtomicLong currentFrameShaderRestoreFailures = new AtomicLong();
+    private static long currentFrameBeginCalls;
+    private static long currentFrameReuseHits;
+    private static long currentFrameEndCalls;
+    private static long currentFrameDrawCalls;
+    private static long currentFrameShadowDrawCalls;
+    private static long currentFrameApplyFailures;
+    private static long currentFrameShaderRestoreAttempts;
+    private static long currentFrameShaderRestoreSuccesses;
+    private static long currentFrameShaderRestoreFailures;
     private static final AtomicLong lastFrameBeginCalls = new AtomicLong();
     private static final AtomicLong lastFrameReuseHits = new AtomicLong();
     private static final AtomicLong lastFrameEndCalls = new AtomicLong();
@@ -121,7 +121,7 @@ public final class HbmIrisRenderBatch {
                 resolvedBaseTexture)) {
             HbmIrisExtendedShaderAccess.setCurrentRenderedBlockEntity(0);
             reuseHits.incrementAndGet();
-            currentFrameReuseHits.incrementAndGet();
+            currentFrameReuseHits++;
             return true;
         }
         endActiveBatch();
@@ -162,7 +162,7 @@ public final class HbmIrisRenderBatch {
                     previousBlendSrcAlpha, previousBlendDstAlpha, new Matrix4f(resolvedProjection),
                     pipelineGeneration, shadowPass, resolvedBaseTexture);
             beginCalls.incrementAndGet();
-            currentFrameBeginCalls.incrementAndGet();
+            currentFrameBeginCalls++;
             return true;
         } finally {
             if (activeBatch == null) {
@@ -177,10 +177,10 @@ public final class HbmIrisRenderBatch {
 
     public static void recordDraw(boolean shadowPass) {
         drawCalls.incrementAndGet();
-        currentFrameDrawCalls.incrementAndGet();
+        currentFrameDrawCalls++;
         if (shadowPass) {
             shadowDrawCalls.incrementAndGet();
-            currentFrameShadowDrawCalls.incrementAndGet();
+            currentFrameShadowDrawCalls++;
         }
     }
 
@@ -261,7 +261,7 @@ public final class HbmIrisRenderBatch {
                     active.previousBlendSrcAlpha(), active.previousBlendDstAlpha());
         }
         endCalls.incrementAndGet();
-        currentFrameEndCalls.incrementAndGet();
+        currentFrameEndCalls++;
     }
 
     /**
@@ -406,16 +406,33 @@ public final class HbmIrisRenderBatch {
     public static void endFrame() {
         closePersistentIfActive();
         HbmIrisPhaseGuard.endFrame();
-        lastFrameBeginCalls.set(currentFrameBeginCalls.getAndSet(0L));
-        lastFrameReuseHits.set(currentFrameReuseHits.getAndSet(0L));
-        lastFrameEndCalls.set(currentFrameEndCalls.getAndSet(0L));
-        lastFrameDrawCalls.set(currentFrameDrawCalls.getAndSet(0L));
-        lastFrameShadowDrawCalls.set(currentFrameShadowDrawCalls.getAndSet(0L));
-        long frameApplyFailures = currentFrameApplyFailures.getAndSet(0L);
+        long frameBeginCalls = currentFrameBeginCalls;
+        long frameReuseHits = currentFrameReuseHits;
+        long frameEndCalls = currentFrameEndCalls;
+        long frameDrawCalls = currentFrameDrawCalls;
+        long frameShadowDrawCalls = currentFrameShadowDrawCalls;
+        long frameApplyFailures = currentFrameApplyFailures;
+        long frameShaderRestoreAttempts = currentFrameShaderRestoreAttempts;
+        long frameShaderRestoreSuccesses = currentFrameShaderRestoreSuccesses;
+        long frameShaderRestoreFailures = currentFrameShaderRestoreFailures;
+        currentFrameBeginCalls = 0L;
+        currentFrameReuseHits = 0L;
+        currentFrameEndCalls = 0L;
+        currentFrameDrawCalls = 0L;
+        currentFrameShadowDrawCalls = 0L;
+        currentFrameApplyFailures = 0L;
+        currentFrameShaderRestoreAttempts = 0L;
+        currentFrameShaderRestoreSuccesses = 0L;
+        currentFrameShaderRestoreFailures = 0L;
+        lastFrameBeginCalls.set(frameBeginCalls);
+        lastFrameReuseHits.set(frameReuseHits);
+        lastFrameEndCalls.set(frameEndCalls);
+        lastFrameDrawCalls.set(frameDrawCalls);
+        lastFrameShadowDrawCalls.set(frameShadowDrawCalls);
         lastFrameApplyFailures.set(frameApplyFailures);
-        lastFrameShaderRestoreAttempts.set(currentFrameShaderRestoreAttempts.getAndSet(0L));
-        lastFrameShaderRestoreSuccesses.set(currentFrameShaderRestoreSuccesses.getAndSet(0L));
-        lastFrameShaderRestoreFailures.set(currentFrameShaderRestoreFailures.getAndSet(0L));
+        lastFrameShaderRestoreAttempts.set(frameShaderRestoreAttempts);
+        lastFrameShaderRestoreSuccesses.set(frameShaderRestoreSuccesses);
+        lastFrameShaderRestoreFailures.set(frameShaderRestoreFailures);
         lastFrameApplyFailureReason = frameApplyFailures > 0L ? currentFrameApplyFailureReason : "none";
         currentFrameApplyFailureReason = "none";
     }
@@ -432,15 +449,15 @@ public final class HbmIrisRenderBatch {
                 shaderRestoreAttempts.get(),
                 shaderRestoreSuccesses.get(),
                 shaderRestoreFailures.get(),
-                currentFrameBeginCalls.get(),
-                currentFrameReuseHits.get(),
-                currentFrameEndCalls.get(),
-                currentFrameDrawCalls.get(),
-                currentFrameShadowDrawCalls.get(),
-                currentFrameApplyFailures.get(),
-                currentFrameShaderRestoreAttempts.get(),
-                currentFrameShaderRestoreSuccesses.get(),
-                currentFrameShaderRestoreFailures.get(),
+                currentFrameBeginCalls,
+                currentFrameReuseHits,
+                currentFrameEndCalls,
+                currentFrameDrawCalls,
+                currentFrameShadowDrawCalls,
+                currentFrameApplyFailures,
+                currentFrameShaderRestoreAttempts,
+                currentFrameShaderRestoreSuccesses,
+                currentFrameShaderRestoreFailures,
                 lastFrameBeginCalls.get(),
                 lastFrameReuseHits.get(),
                 lastFrameEndCalls.get(),
@@ -455,23 +472,23 @@ public final class HbmIrisRenderBatch {
 
     private static void recordApplyFailure() {
         applyFailures.incrementAndGet();
-        currentFrameApplyFailures.incrementAndGet();
+        currentFrameApplyFailures++;
         currentFrameApplyFailureReason = HbmIrisShaderApply.lastFailureReason();
     }
 
     private static void recordShaderRestoreAttempt() {
         shaderRestoreAttempts.incrementAndGet();
-        currentFrameShaderRestoreAttempts.incrementAndGet();
+        currentFrameShaderRestoreAttempts++;
     }
 
     private static void recordShaderRestoreSuccess() {
         shaderRestoreSuccesses.incrementAndGet();
-        currentFrameShaderRestoreSuccesses.incrementAndGet();
+        currentFrameShaderRestoreSuccesses++;
     }
 
     private static void recordShaderRestoreFailure() {
         shaderRestoreFailures.incrementAndGet();
-        currentFrameShaderRestoreFailures.incrementAndGet();
+        currentFrameShaderRestoreFailures++;
     }
 
     public static void uploadDrawMatrices(Matrix4f modelView) {

@@ -24,6 +24,7 @@ public final class LegacyRenderLighting {
     private static final double MAX_INTERPOLATED_EXTENT = 1.05D;
     private static final double MAX_AUTO_ANCHOR_LOCAL_TRANSLATION_SQ = 96.0D * 96.0D;
     private static final double LIGHT_CORNER_DETAIL_MARGIN_BLOCKS = 48.0D;
+    private static final double LIGHT_CORNER_DETAIL_MAX_BASE_BLOCKS = 8.0D * 16.0D;
     private static final float MODEL_SAMPLE_INSET = 1.0F / 64.0F;
     private static final float MODEL_SAMPLE_SHELL = 0.55F;
     private static final long PROBE_CACHE_PRUNE_EVERY_FRAMES = 600L;
@@ -654,16 +655,26 @@ public final class LegacyRenderLighting {
         return x * x + y * y + z * z > detailDistanceSq;
     }
 
+    public static int lightCornerDetailDistanceBlocksForDiagnostics() {
+        double detailBlocks = lightCornerDetailDistanceBlocks();
+        return Double.isFinite(detailBlocks) ? (int) Math.round(detailBlocks) : -1;
+    }
+
     private static double lightCornerDetailDistanceSq() {
+        double detailBlocks = lightCornerDetailDistanceBlocks();
+        if (!Double.isFinite(detailBlocks)) {
+            return Double.POSITIVE_INFINITY;
+        }
+        return detailBlocks * detailBlocks;
+    }
+
+    private static double lightCornerDetailDistanceBlocks() {
         int staticDistanceBlocks = HbmRenderFrameFlags.current().modelStaticRenderDistanceBlocks();
         if (staticDistanceBlocks <= 0) {
             return Double.POSITIVE_INFINITY;
         }
-        double detailBlocks = staticDistanceBlocks - LIGHT_CORNER_DETAIL_MARGIN_BLOCKS;
-        if (detailBlocks <= 0.0D) {
-            return Double.POSITIVE_INFINITY;
-        }
-        return detailBlocks * detailBlocks;
+        double detailBaseBlocks = Math.min(staticDistanceBlocks, LIGHT_CORNER_DETAIL_MAX_BASE_BLOCKS);
+        return Math.max(0.0D, detailBaseBlocks - LIGHT_CORNER_DETAIL_MARGIN_BLOCKS);
     }
 
     private static double insideMax(double max) {

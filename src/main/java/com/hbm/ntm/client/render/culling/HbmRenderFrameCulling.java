@@ -3,6 +3,7 @@ package com.hbm.ntm.client.render.culling;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.hbm.ntm.client.render.HbmRenderFrameFlags;
+import com.hbm.ntm.config.HbmClientConfig;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -36,6 +37,9 @@ public final class HbmRenderFrameCulling {
     private static final int OCCLUSION_MAX_CACHE_ENTRIES = 16384;
     private static final int OCCLUSION_MAX_KEEP_MANHATTAN_BLOCKS = 192;
     private static final long OCCLUSION_STALE_FRAME_TTL = 600L;
+    private static final long HOT_PART_AUTO_SAMPLE_MACHINE_SUBMISSIONS = 32L;
+    private static final long HOT_PART_AUTO_SAMPLE_INTERVAL_FRAMES = 20L;
+    private static final long HOT_PART_AUTO_SAMPLE_RETENTION_FRAMES = 600L;
     private static final double MODEL_FADE_ZONE_BLOCKS = 16.0D;
     private static final AtomicLong FRAME_GENERATION = new AtomicLong();
     private static final Map<Long, OcclusionCacheEntry> OCCLUSION_CACHE = new LinkedHashMap<>(1024, 0.75F, true);
@@ -46,6 +50,8 @@ public final class HbmRenderFrameCulling {
     private static volatile long geometryStamp;
     private static volatile FrameStats currentStats = new FrameStats(0L);
     private static volatile Snapshot lastSnapshot = Snapshot.empty();
+    private static volatile String lastAutoHotPartSummary = "none";
+    private static volatile long lastAutoHotPartSummaryFrame;
     private static final ThreadLocal<MachineRendererScope> MACHINE_RENDERER_SCOPE = new ThreadLocal<>();
 
     private HbmRenderFrameCulling() {
@@ -62,7 +68,9 @@ public final class HbmRenderFrameCulling {
     }
 
     public static void endFrame() {
-        lastSnapshot = snapshotOf(currentStats);
+        FrameStats stats = currentStats;
+        lastSnapshot = snapshotOf(stats);
+        stats.publishObjInstancedHotPartSample();
     }
 
     public static void clear() {
@@ -71,6 +79,8 @@ public final class HbmRenderFrameCulling {
         projectionCaptured = false;
         currentStats = new FrameStats(FRAME_GENERATION.get());
         lastSnapshot = Snapshot.empty();
+        lastAutoHotPartSummary = "none";
+        lastAutoHotPartSummaryFrame = 0L;
         clearOcclusionCache();
     }
 
@@ -79,27 +89,27 @@ public final class HbmRenderFrameCulling {
             return true;
         }
         FrameStats stats = currentStats;
-        stats.visibilityQueries.incrementAndGet();
+        stats.visibilityQueries++;
         if (HbmShaderCompatibilityDetector.isRenderingShadowPass()) {
-            stats.shadowPassBypassQueries.incrementAndGet();
-            stats.visibleQueries.incrementAndGet();
+            stats.shadowPassBypassQueries++;
+            stats.visibleQueries++;
             return true;
         }
         if (maxDistanceSq > 0.0D && distanceToCenterSq(bounds, cameraPosition) > maxDistanceSq) {
-            stats.distanceCulledQueries.incrementAndGet();
+            stats.distanceCulledQueries++;
             return false;
         }
         Frustum frustum = blockEntityFrustum;
         if (frustum == null) {
-            stats.noFrustumQueries.incrementAndGet();
-            stats.visibleQueries.incrementAndGet();
+            stats.noFrustumQueries++;
+            stats.visibleQueries++;
             return true;
         }
         if (!frustum.isVisible(bounds)) {
-            stats.frustumCulledQueries.incrementAndGet();
+            stats.frustumCulledQueries++;
             return false;
         }
-        stats.visibleQueries.incrementAndGet();
+        stats.visibleQueries++;
         return true;
     }
 
@@ -117,19 +127,19 @@ public final class HbmRenderFrameCulling {
     public static void recordMachineRendererSubmission(BlockEntity blockEntity, int approximateVertices,
             MachineRenderRoute route, int partRuns) {
         FrameStats stats = currentStats;
-        stats.machineRendererSubmissions.incrementAndGet();
+        stats.machineRendererSubmissions++;
         if (approximateVertices > 0) {
-            stats.machineRendererVertices.addAndGet(approximateVertices);
+            stats.machineRendererVertices += approximateVertices;
         }
         if (partRuns > 0) {
-            stats.machineRendererPartRuns.addAndGet(partRuns);
+            stats.machineRendererPartRuns += partRuns;
         }
         switch (route == null ? MachineRenderRoute.UNKNOWN : route) {
-            case DEFAULT_RENDER_ALL -> stats.machineRendererDefaultRenderAll.incrementAndGet();
-            case DEFAULT_PARTS -> stats.machineRendererDefaultParts.incrementAndGet();
-            case PROFILE_DIRECT -> stats.machineRendererProfileDirect.incrementAndGet();
+            case DEFAULT_RENDER_ALL -> stats.machineRendererDefaultRenderAll++;
+            case DEFAULT_PARTS -> stats.machineRendererDefaultParts++;
+            case PROFILE_DIRECT -> stats.machineRendererProfileDirect++;
             case PROFILE_FALLBACK_RENDER_ALL, PROFILE_FALLBACK_PARTS ->
-                    stats.machineRendererProfileFallback.incrementAndGet();
+                    stats.machineRendererProfileFallback++;
             case UNKNOWN -> {
             }
         }
@@ -178,32 +188,66 @@ public final class HbmRenderFrameCulling {
     public static void recordObjInstancedQueue(int instances, boolean newBatch, boolean faded) {
         int safeInstances = Math.max(0, instances);
         FrameStats stats = currentStats;
-        stats.objInstancedQueueRecords.incrementAndGet();
-        stats.objInstancedQueuedInstances.addAndGet(safeInstances);
+        stats.objInstancedQueueRecords++;
+        stats.objInstancedQueuedInstances += safeInstances;
         if (newBatch) {
-            stats.objInstancedQueuedBatches.incrementAndGet();
+            stats.objInstancedQueuedBatches++;
         }
         if (faded) {
-            stats.objInstancedFadedRecords.incrementAndGet();
-            stats.objInstancedFadedInstances.addAndGet(safeInstances);
+            stats.objInstancedFadedRecords++;
+            stats.objInstancedFadedInstances += safeInstances;
             if (newBatch) {
-                stats.objInstancedFadedBatches.incrementAndGet();
+                stats.objInstancedFadedBatches++;
             }
         }
         MachineRendererScope scope = MACHINE_RENDERER_SCOPE.get();
         if (scope != null) {
-            stats.objInstancedCullingScopedRecords.incrementAndGet();
-            stats.objInstancedCullingScopedInstances.addAndGet(safeInstances);
+            stats.objInstancedCullingScopedRecords++;
+            stats.objInstancedCullingScopedInstances += safeInstances;
             if (newBatch) {
-                stats.objInstancedCullingScopedBatches.incrementAndGet();
+                stats.objInstancedCullingScopedBatches++;
             }
         } else {
-            stats.objInstancedUnscopedRecords.incrementAndGet();
-            stats.objInstancedUnscopedInstances.addAndGet(safeInstances);
+            stats.objInstancedUnscopedRecords++;
+            stats.objInstancedUnscopedInstances += safeInstances;
             if (newBatch) {
-                stats.objInstancedUnscopedBatches.incrementAndGet();
+                stats.objInstancedUnscopedBatches++;
             }
         }
+    }
+
+    public static void recordObjInstancedQueue(String key, int sourceVertices, int instances,
+            boolean newBatch, boolean faded) {
+        recordObjInstancedQueue(instances, newBatch, faded);
+        if (!shouldRecordObjInstancedHotParts()) {
+            return;
+        }
+        int safeInstances = Math.max(0, instances);
+        if (safeInstances <= 0 || key == null || key.isBlank()) {
+            return;
+        }
+        currentStats.recordObjInstancedHotPart(key, sourceVertices, safeInstances, newBatch);
+    }
+
+    public static boolean shouldRecordObjInstancedHotParts() {
+        FrameStats stats = currentStats;
+        return HbmClientConfig.renderBackendDiagnostics()
+                || (stats.autoHotPartSampleFrame
+                        && stats.machineRendererSubmissions >= HOT_PART_AUTO_SAMPLE_MACHINE_SUBMISSIONS);
+    }
+
+    public static String currentObjInstancedHotPartSummary(int limit) {
+        FrameStats stats = currentStats;
+        String summary = stats.objInstancedHotPartSummary(limit);
+        if (!"none".equals(summary) || HbmClientConfig.renderBackendDiagnostics()) {
+            return summary;
+        }
+        long sampledFrame = lastAutoHotPartSummaryFrame;
+        if (sampledFrame > 0L
+                && stats.frameGeneration - sampledFrame <= HOT_PART_AUTO_SAMPLE_RETENTION_FRAMES) {
+            return lastAutoHotPartSummary;
+        }
+        return "none";
     }
 
     public static float currentStaticModelFade() {
@@ -272,23 +316,23 @@ public final class HbmRenderFrameCulling {
 
     private static boolean shouldRenderOcclusion(BlockEntity blockEntity, AABB bounds) {
         FrameStats stats = currentStats;
-        stats.occlusionQueries.incrementAndGet();
+        stats.occlusionQueries++;
         if (!HbmRenderFrameFlags.current().occlusionCullingEnabled()) {
-            stats.occlusionDisabledByConfigQueries.incrementAndGet();
+            stats.occlusionDisabledByConfigQueries++;
             return true;
         }
-        stats.occlusionEnabledQueries.incrementAndGet();
+        stats.occlusionEnabledQueries++;
         if (blockEntity == null || bounds == null || blockEntity.getLevel() == null) {
-            stats.occlusionNoLevelQueries.incrementAndGet();
+            stats.occlusionNoLevelQueries++;
             return true;
         }
         if (HbmShaderCompatibilityDetector.isRenderingShadowPass()) {
-            stats.shadowPassBypassQueries.incrementAndGet();
+            stats.shadowPassBypassQueries++;
             return true;
         }
         double distSq = distanceToCenterSq(bounds, cameraPosition);
         if (distSq < OCCLUSION_NEAR_DISTANCE_SQ) {
-            stats.occlusionNearBypassQueries.incrementAndGet();
+            stats.occlusionNearBypassQueries++;
             return true;
         }
         BlockPos pos = blockEntity.getBlockPos();
@@ -297,34 +341,34 @@ public final class HbmRenderFrameCulling {
         long frame = FRAME_GENERATION.get();
         OcclusionCacheEntry cached = OCCLUSION_CACHE.get(key);
         if (cached != null && cached.frame == frame) {
-            stats.occlusionCacheHits.incrementAndGet();
+            stats.occlusionCacheHits++;
             if (cached.visible) {
-                stats.occlusionVisibleQueries.incrementAndGet();
+                stats.occlusionVisibleQueries++;
             } else {
-                stats.occlusionCulledQueries.incrementAndGet();
+                stats.occlusionCulledQueries++;
             }
             return cached.visible;
         }
         if (cached != null && canReuseOcclusion(cached, level)) {
-            stats.occlusionCacheHits.incrementAndGet();
-            stats.occlusionCrossFrameReuses.incrementAndGet();
+            stats.occlusionCacheHits++;
+            stats.occlusionCrossFrameReuses++;
             cached.frame = frame;
             if (cached.visible) {
-                stats.occlusionVisibleQueries.incrementAndGet();
+                stats.occlusionVisibleQueries++;
             } else {
-                stats.occlusionCulledQueries.incrementAndGet();
+                stats.occlusionCulledQueries++;
             }
             return cached.visible;
         }
-        stats.occlusionCacheMisses.incrementAndGet();
+        stats.occlusionCacheMisses++;
         boolean visible = raycastVisible(level, bounds, stats);
         OCCLUSION_CACHE.put(key, new OcclusionCacheEntry(visible, frame, level.getGameTime(),
                 cameraPosition.x, cameraPosition.y, cameraPosition.z, geometryStamp));
         trimOcclusionCache();
         if (visible) {
-            stats.occlusionVisibleQueries.incrementAndGet();
+            stats.occlusionVisibleQueries++;
         } else {
-            stats.occlusionCulledQueries.incrementAndGet();
+            stats.occlusionCulledQueries++;
         }
         return visible;
     }
@@ -385,7 +429,7 @@ public final class HbmRenderFrameCulling {
 
     private static boolean isRayOccluded(Level level, AABB bounds, double endX, double endY, double endZ,
             FrameStats stats) {
-        stats.occlusionRayTests.incrementAndGet();
+        stats.occlusionRayTests++;
         double startX = cameraPosition.x;
         double startY = cameraPosition.y;
         double startZ = cameraPosition.z;
@@ -417,7 +461,7 @@ public final class HbmRenderFrameCulling {
         int startBlockY = currentY;
         int startBlockZ = currentZ;
         for (int step = 0; step < OCCLUSION_MAX_RAY_STEPS; step++) {
-            stats.occlusionRaySteps.incrementAndGet();
+            stats.occlusionRaySteps++;
             if (currentX == targetX && currentY == targetY && currentZ == targetZ) {
                 return false;
             }
@@ -507,89 +551,168 @@ public final class HbmRenderFrameCulling {
                 projectionCaptured,
                 blockEntityFrustum != null,
                 cameraPosition,
-                stats.visibilityQueries.get(),
-                stats.visibleQueries.get(),
-                stats.frustumCulledQueries.get(),
-                stats.distanceCulledQueries.get(),
-                stats.shadowPassBypassQueries.get(),
-                stats.noFrustumQueries.get(),
-                stats.machineRendererSubmissions.get(),
-                stats.machineRendererVertices.get(),
-                stats.machineRendererDefaultRenderAll.get(),
-                stats.machineRendererDefaultParts.get(),
-                stats.machineRendererProfileDirect.get(),
-                stats.machineRendererProfileFallback.get(),
-                stats.machineRendererPartRuns.get(),
-                stats.objInstancedQueueRecords.get(),
-                stats.objInstancedQueuedBatches.get(),
-                stats.objInstancedQueuedInstances.get(),
-                stats.objInstancedFadedRecords.get(),
-                stats.objInstancedFadedBatches.get(),
-                stats.objInstancedFadedInstances.get(),
-                stats.objInstancedCullingScopedRecords.get(),
-                stats.objInstancedCullingScopedBatches.get(),
-                stats.objInstancedCullingScopedInstances.get(),
-                stats.objInstancedUnscopedRecords.get(),
-                stats.objInstancedUnscopedBatches.get(),
-                stats.objInstancedUnscopedInstances.get(),
-                stats.occlusionQueries.get(),
-                stats.occlusionEnabledQueries.get(),
-                stats.occlusionDisabledByConfigQueries.get(),
-                stats.occlusionNoLevelQueries.get(),
-                stats.occlusionNearBypassQueries.get(),
-                stats.occlusionCacheHits.get(),
-                stats.occlusionCacheMisses.get(),
-                stats.occlusionCrossFrameReuses.get(),
-                stats.occlusionRayTests.get(),
-                stats.occlusionRaySteps.get(),
-                stats.occlusionVisibleQueries.get(),
-                stats.occlusionCulledQueries.get(),
+                stats.visibilityQueries,
+                stats.visibleQueries,
+                stats.frustumCulledQueries,
+                stats.distanceCulledQueries,
+                stats.shadowPassBypassQueries,
+                stats.noFrustumQueries,
+                stats.machineRendererSubmissions,
+                stats.machineRendererVertices,
+                stats.machineRendererDefaultRenderAll,
+                stats.machineRendererDefaultParts,
+                stats.machineRendererProfileDirect,
+                stats.machineRendererProfileFallback,
+                stats.machineRendererPartRuns,
+                stats.objInstancedQueueRecords,
+                stats.objInstancedQueuedBatches,
+                stats.objInstancedQueuedInstances,
+                stats.objInstancedFadedRecords,
+                stats.objInstancedFadedBatches,
+                stats.objInstancedFadedInstances,
+                stats.objInstancedCullingScopedRecords,
+                stats.objInstancedCullingScopedBatches,
+                stats.objInstancedCullingScopedInstances,
+                stats.objInstancedUnscopedRecords,
+                stats.objInstancedUnscopedBatches,
+                stats.objInstancedUnscopedInstances,
+                stats.occlusionQueries,
+                stats.occlusionEnabledQueries,
+                stats.occlusionDisabledByConfigQueries,
+                stats.occlusionNoLevelQueries,
+                stats.occlusionNearBypassQueries,
+                stats.occlusionCacheHits,
+                stats.occlusionCacheMisses,
+                stats.occlusionCrossFrameReuses,
+                stats.occlusionRayTests,
+                stats.occlusionRaySteps,
+                stats.occlusionVisibleQueries,
+                stats.occlusionCulledQueries,
                 OCCLUSION_CACHE.size(),
                 geometryStamp);
     }
 
     private static final class FrameStats {
         private final long frameGeneration;
-        private final AtomicLong visibilityQueries = new AtomicLong();
-        private final AtomicLong visibleQueries = new AtomicLong();
-        private final AtomicLong frustumCulledQueries = new AtomicLong();
-        private final AtomicLong distanceCulledQueries = new AtomicLong();
-        private final AtomicLong shadowPassBypassQueries = new AtomicLong();
-        private final AtomicLong noFrustumQueries = new AtomicLong();
-        private final AtomicLong machineRendererSubmissions = new AtomicLong();
-        private final AtomicLong machineRendererVertices = new AtomicLong();
-        private final AtomicLong machineRendererDefaultRenderAll = new AtomicLong();
-        private final AtomicLong machineRendererDefaultParts = new AtomicLong();
-        private final AtomicLong machineRendererProfileDirect = new AtomicLong();
-        private final AtomicLong machineRendererProfileFallback = new AtomicLong();
-        private final AtomicLong machineRendererPartRuns = new AtomicLong();
-        private final AtomicLong objInstancedQueueRecords = new AtomicLong();
-        private final AtomicLong objInstancedQueuedBatches = new AtomicLong();
-        private final AtomicLong objInstancedQueuedInstances = new AtomicLong();
-        private final AtomicLong objInstancedFadedRecords = new AtomicLong();
-        private final AtomicLong objInstancedFadedBatches = new AtomicLong();
-        private final AtomicLong objInstancedFadedInstances = new AtomicLong();
-        private final AtomicLong objInstancedCullingScopedRecords = new AtomicLong();
-        private final AtomicLong objInstancedCullingScopedBatches = new AtomicLong();
-        private final AtomicLong objInstancedCullingScopedInstances = new AtomicLong();
-        private final AtomicLong objInstancedUnscopedRecords = new AtomicLong();
-        private final AtomicLong objInstancedUnscopedBatches = new AtomicLong();
-        private final AtomicLong objInstancedUnscopedInstances = new AtomicLong();
-        private final AtomicLong occlusionQueries = new AtomicLong();
-        private final AtomicLong occlusionEnabledQueries = new AtomicLong();
-        private final AtomicLong occlusionDisabledByConfigQueries = new AtomicLong();
-        private final AtomicLong occlusionNoLevelQueries = new AtomicLong();
-        private final AtomicLong occlusionNearBypassQueries = new AtomicLong();
-        private final AtomicLong occlusionCacheHits = new AtomicLong();
-        private final AtomicLong occlusionCacheMisses = new AtomicLong();
-        private final AtomicLong occlusionCrossFrameReuses = new AtomicLong();
-        private final AtomicLong occlusionRayTests = new AtomicLong();
-        private final AtomicLong occlusionRaySteps = new AtomicLong();
-        private final AtomicLong occlusionVisibleQueries = new AtomicLong();
-        private final AtomicLong occlusionCulledQueries = new AtomicLong();
+        private final boolean autoHotPartSampleFrame;
+        private long visibilityQueries;
+        private long visibleQueries;
+        private long frustumCulledQueries;
+        private long distanceCulledQueries;
+        private long shadowPassBypassQueries;
+        private long noFrustumQueries;
+        private long machineRendererSubmissions;
+        private long machineRendererVertices;
+        private long machineRendererDefaultRenderAll;
+        private long machineRendererDefaultParts;
+        private long machineRendererProfileDirect;
+        private long machineRendererProfileFallback;
+        private long machineRendererPartRuns;
+        private long objInstancedQueueRecords;
+        private long objInstancedQueuedBatches;
+        private long objInstancedQueuedInstances;
+        private long objInstancedFadedRecords;
+        private long objInstancedFadedBatches;
+        private long objInstancedFadedInstances;
+        private long objInstancedCullingScopedRecords;
+        private long objInstancedCullingScopedBatches;
+        private long objInstancedCullingScopedInstances;
+        private long objInstancedUnscopedRecords;
+        private long objInstancedUnscopedBatches;
+        private long objInstancedUnscopedInstances;
+        private long occlusionQueries;
+        private long occlusionEnabledQueries;
+        private long occlusionDisabledByConfigQueries;
+        private long occlusionNoLevelQueries;
+        private long occlusionNearBypassQueries;
+        private long occlusionCacheHits;
+        private long occlusionCacheMisses;
+        private long occlusionCrossFrameReuses;
+        private long occlusionRayTests;
+        private long occlusionRaySteps;
+        private long occlusionVisibleQueries;
+        private long occlusionCulledQueries;
+        private final Map<String, ObjInstancedHotPartStats> objInstancedHotParts = new LinkedHashMap<>();
 
         private FrameStats(long frameGeneration) {
             this.frameGeneration = frameGeneration;
+            this.autoHotPartSampleFrame = frameGeneration > 0L
+                    && frameGeneration % HOT_PART_AUTO_SAMPLE_INTERVAL_FRAMES == 0L;
+        }
+
+        private void recordObjInstancedHotPart(String key, int sourceVertices, int instances, boolean newBatch) {
+            synchronized (objInstancedHotParts) {
+                ObjInstancedHotPartStats stats = objInstancedHotParts.computeIfAbsent(key,
+                        ignored -> new ObjInstancedHotPartStats(sourceVertices));
+                stats.record(sourceVertices, instances, newBatch);
+            }
+        }
+
+        private String objInstancedHotPartSummary(int limit) {
+            int safeLimit = Math.max(1, limit);
+            synchronized (objInstancedHotParts) {
+                if (objInstancedHotParts.isEmpty()) {
+                    return "none";
+                }
+                return objInstancedHotParts.entrySet().stream()
+                        .sorted((left, right) -> Long.compare(right.getValue().estimatedVertices(),
+                                left.getValue().estimatedVertices()))
+                        .limit(safeLimit)
+                        .map(entry -> compactHotPartKey(entry.getKey()) + "{i=" + entry.getValue().instances()
+                                + ",b=" + entry.getValue().batches()
+                                + ",v=" + entry.getValue().estimatedVertices() + "}")
+                        .reduce((left, right) -> left + ";" + right)
+                        .orElse("none");
+            }
+        }
+
+        private void publishObjInstancedHotPartSample() {
+            String summary = objInstancedHotPartSummary(5);
+            if ("none".equals(summary)) {
+                return;
+            }
+            lastAutoHotPartSummary = summary;
+            lastAutoHotPartSummaryFrame = frameGeneration;
+        }
+    }
+
+    private static String compactHotPartKey(String key) {
+        String compact = key.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ');
+        return compact.length() <= 120 ? compact : compact.substring(0, 117) + "...";
+    }
+
+    private static final class ObjInstancedHotPartStats {
+        private int sourceVertices;
+        private long instances;
+        private long batches;
+        private long estimatedVertices;
+
+        private ObjInstancedHotPartStats(int sourceVertices) {
+            this.sourceVertices = Math.max(0, sourceVertices);
+        }
+
+        private void record(int sourceVertices, int instances, boolean newBatch) {
+            int safeVertices = Math.max(0, sourceVertices);
+            if (safeVertices > 0) {
+                this.sourceVertices = safeVertices;
+            }
+            this.instances += Math.max(0, instances);
+            if (newBatch) {
+                this.batches++;
+            }
+            this.estimatedVertices += (long) Math.max(0, instances) * Math.max(0, this.sourceVertices);
+        }
+
+        private long instances() {
+            return instances;
+        }
+
+        private long batches() {
+            return batches;
+        }
+
+        private long estimatedVertices() {
+            return estimatedVertices;
         }
     }
 

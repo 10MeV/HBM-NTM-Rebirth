@@ -27,7 +27,11 @@ import org.lwjgl.opengl.GLCapabilities;
 
 public final class HbmRenderBackendDiagnostics {
     private static final long LOG_INTERVAL_FRAMES = 120L;
+    private static final long AUTO_LOG_INTERVAL_FRAMES = 600L;
+    private static final long AUTO_LOG_MACHINE_SUBMISSIONS = 32L;
+    private static final long AUTO_LOG_DRAW_CALLS_WITHOUT_OPTIMIZED_BACKEND = 128L;
     private static long lastLoggedFrame;
+    private static long lastAutoLoggedFrame;
     private static boolean glBannerLogged;
 
     private HbmRenderBackendDiagnostics() {
@@ -35,13 +39,9 @@ public final class HbmRenderBackendDiagnostics {
 
     public static void logEndFrameIfEnabled() {
         boolean configured = HbmClientConfig.renderBackendDiagnostics();
-        if (!configured) {
-            return;
-        }
-
         HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
         long frame = flags.frameGeneration();
-        if (frame <= 0L || frame - lastLoggedFrame < LOG_INTERVAL_FRAMES) {
+        if (frame <= 0L) {
             return;
         }
 
@@ -53,10 +53,30 @@ public final class HbmRenderBackendDiagnostics {
             return;
         }
 
-        lastLoggedFrame = frame;
+        if (configured) {
+            if (frame - lastLoggedFrame < LOG_INTERVAL_FRAMES) {
+                return;
+            }
+            lastLoggedFrame = frame;
+            logGlCapabilityBannerOnce();
+            String message = summary(flags, backend, additive, instancingSnapshot, iris);
+            HbmNtm.LOGGER.info(message);
+            return;
+        }
+
+        String autoReason = autoLogReason(backend, additive, instancingSnapshot, iris);
+        if (autoReason == null
+                || (lastAutoLoggedFrame > 0L && frame - lastAutoLoggedFrame < AUTO_LOG_INTERVAL_FRAMES)) {
+            return;
+        }
+        lastAutoLoggedFrame = frame;
         logGlCapabilityBannerOnce();
-        String message = summary(flags, backend, additive, instancingSnapshot, iris);
-        HbmNtm.LOGGER.info(message);
+        HbmNtm.LOGGER.warn(
+                "[HBM RenderBackend] diagnostics are disabled but OBJ render pressure was detected ({}). "
+                        + "Enable client config rendering.renderBackendDiagnostics=true for continuous 120-frame "
+                        + "summaries. {}",
+                autoReason,
+                summary(flags, backend, additive, instancingSnapshot, iris));
     }
 
     private static boolean hasLastFrameActivity(RenderBackendSnapshot backend, RenderBackendAdditiveSnapshot additive,
@@ -110,6 +130,44 @@ public final class HbmRenderBackendDiagnostics {
                 || culling.machineRendererSubmissions() > 0L
                 || culling.frustumCulledQueries() > 0L
                 || culling.occlusionCulledQueries() > 0L;
+    }
+
+    private static String autoLogReason(RenderBackendSnapshot backend, RenderBackendAdditiveSnapshot additive,
+            RenderBackendInstancingSnapshot instancingSnapshot, RenderBackendIrisSnapshot iris) {
+        InstancedFrameCounts instanced = instancedCounts(backend, additive, instancingSnapshot);
+        MdiFrameCounts mdi = mdiCounts(backend, additive, instancingSnapshot);
+        IrisCompanionQueueSnapshot irisQueue = iris.queuedFlush();
+        HbmRenderFrameCulling.Snapshot culling = HbmRenderFrameCulling.currentSnapshot();
+        long gpuFallbackBatches = backend.lastFrameGpuFallbackBatches()
+                + iris.lastFrameFallbackBatches()
+                + irisQueue.lastFrameFallbackBatches()
+                + instanced.overflowBatches
+                + mdi.noSlotBatches
+                + mdi.partialDrawFailures;
+        long cpuFallbackBatches = backend.lastFrameCpuFallbackBatches();
+        long optimizedDraws = instanced.drawCalls + mdi.drawCalls
+                + iris.lastFrameDrawCalls()
+                + irisQueue.lastFrameDrawCalls();
+        if (gpuFallbackBatches > 0L) {
+            return "gpuFallback=" + gpuFallbackBatches + ",cpuFallback=" + cpuFallbackBatches
+                    + ",lastFallback=" + backend.lastFallbackReason()
+                    + ",detail=" + backend.lastFallbackDetail();
+        }
+        if (cpuFallbackBatches > 0L && optimizedDraws == 0L) {
+            return "cpuFallbackWithoutOptimizedDraws=" + cpuFallbackBatches
+                    + ",machines=" + culling.machineRendererSubmissions()
+                    + ",lastFallback=" + backend.lastFallbackReason();
+        }
+        if (culling.machineRendererSubmissions() >= AUTO_LOG_MACHINE_SUBMISSIONS && optimizedDraws == 0L) {
+            return "machineSubmissionsWithoutOptimizedDraws=" + culling.machineRendererSubmissions()
+                    + ",drawCalls=" + backend.lastFrameEstimatedDrawCalls();
+        }
+        if (backend.lastFrameEstimatedDrawCalls() >= AUTO_LOG_DRAW_CALLS_WITHOUT_OPTIMIZED_BACKEND
+                && optimizedDraws == 0L) {
+            return "drawCallsWithoutOptimizedBackend=" + backend.lastFrameEstimatedDrawCalls()
+                    + ",machines=" + culling.machineRendererSubmissions();
+        }
+        return null;
     }
 
     private static void logGlCapabilityBannerOnce() {
@@ -177,11 +235,12 @@ public final class HbmRenderBackendDiagnostics {
         LegacyRenderLighting.ProbeCacheSnapshot probeCache = LegacyRenderLighting.probeCacheSnapshot();
         ModelCacheSnapshot modelCache = backend.modelCache();
         return String.format(
-                "[HBM RenderBackend] frame=%d backend=%s flags(gpuRequested=%s,gpuAllowed=%s,safeObj=%s,animDist=%d,staticDist=%d,instReq=%s/%s/%s,instancing=%s,instCap=%d,orphan=%s,mdiReq=%s,mdi=%s,occ=%s,shaderPack=%s,shadow=%s,instShader=%s,instGl=%s,irisAvail=%s,irisExt=%s) "
+                "[HBM RenderBackend] frame=%d backend=%s flags(gpuRequested=%s,gpuAllowed=%s,safeObj=%s,animDist=%d,staticDist=%d,lightDetailDist=%d,slicedLight=%s,instReq=%s/%s/%s,instancing=%s,instCap=%d,orphan=%s,mdiReq=%s,mdi=%s,occ=%s,shaderPack=%s,shadow=%s,instShader=%s,instGl=%s,irisAvail=%s,irisExt=%s) "
                         + "shader(api=%s,active=%s,pipeline=%s/%s/%d,ext=%s/%s,vboGeom=%s,keys=%s:%d/%d,cache=%s/%s,beid=%s/%s,phase=%s/%s/%s,push=%d/%d/%d,restore=%d/%d) "
                         + "cache(model=%d/%d/%d/%d,views=%d/%d,geom=%d/%d/%d,sel=%d/%d/%d,build=%d/%d/%d,hit/miss/clear=%d/%d/%d,handle=%d/%d/%d,missing=%d) "
                         + "draws(cpu=%d,gpu=%d,gpuUpload=%d/%d,gpuFallback=%d/%d,lastFallback=%s,detail=%s) "
-                        + "culling(queries=%d,visible=%d,frustum=%d,distance=%d,shadowBypass=%d,noFrustum=%d,machines=%d,vertices=%d,route=%d/%d/%d/%d,partRuns=%d,objInst=%d/%d/%d,fade=%d/%d/%d,scoped=%d/%d/%d,unscoped=%d/%d/%d,occ=%d,occEnabled=%d,occDisabled=%d,occNoLevel=%d,near=%d,hit/miss/reuse=%d/%d/%d,ray=%d/%d,occVisible=%d,occCulled=%d,cache=%d,geom=%d) "
+                        + "culling(queries=%d,visible=%d,frustum=%d,distance=%d,shadowBypass=%d,noFrustum=%d,machines=%d,vertices=%d,route=%d/%d/%d/%d,partRuns=%d,objInst=%d/%d/%d,fade=%d/%d/%d,scoped=%d/%d/%d,unscoped=%d/%d/%d,occ=%d,occEnabled=%d,occDisabled=%d,occNoLevel=%d,near=%d,hit/miss/reuse=%d/%d/%d,ray=%d/%d,occVisible=%d,occCulled=%d,cache=%d,geom=%d,hotObj=%s) "
+                        + "bakedObj(%s) "
                         + "visibleDefs(blocks/defs=%d/%d,default=%d/%d,profile=%d/%d,direct/fallback=%d/%d,itemParts=%d,partProps=%d) "
                         + "instanced(flush=%d/dup=%d/blocked=%d,tookMs=%d,stateRestoreFail=%d,queued=%d/%d,draws=%d,sliceOverflow=%d/%d,dup=%d,stale=%d/%d,irisStale=%d/%d) "
                         + "mdi(available=%s,dispatchDisabled=%s,drawIndirect=%s,multi=%s,baseInstance=%s,eligible=%d,draws=%d,dispatch=%d/%d,commands=%d,noSlot=%d/%d,partialFail=%d,stale=%d/%d,dispatchDisable=%d,repackFail=%d,initFail=%d,atlasParts=%d,atlasBytes=%d) "
@@ -195,6 +254,8 @@ public final class HbmRenderBackendDiagnostics {
                 flags.safeObjStaticBatchingEnabled(),
                 flags.modelUpdateDistanceBlocks(),
                 flags.modelStaticRenderDistanceBlocks(),
+                LegacyRenderLighting.lightCornerDetailDistanceBlocksForDiagnostics(),
+                flags.useSlicedLight(),
                 flags.safeInstancingRequested(),
                 flags.experimentalInstancingRequested(),
                 flags.instancingRequested(),
@@ -302,6 +363,8 @@ public final class HbmRenderBackendDiagnostics {
                 culling.occlusionCulledQueries(),
                 culling.occlusionCacheEntries(),
                 culling.occlusionGeometryStamp(),
+                HbmRenderFrameCulling.currentObjInstancedHotPartSummary(5),
+                HbmBakedObjModelDiagnostics.summary(5),
                 visibleRoutes.blockCount(),
                 visibleRoutes.definitionCount(),
                 visibleRoutes.defaultRenderAllDefinitions(),

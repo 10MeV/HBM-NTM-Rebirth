@@ -2,6 +2,7 @@ package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.shader.HbmIrisExtendedShaderAccess;
+import com.hbm.ntm.client.render.HbmBakedObjModelDiagnostics;
 import com.hbm.ntm.client.render.HbmRenderFrameLight;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
@@ -20,5 +21,6 @@ public final class LegacyModelReloadListener extends SimplePreparableReloadListe
         HbmRenderFrameLight.invalidateCaches();
         LegacyTexturedQuadRenderer.clearSpriteCache();
         LegacyWavefrontModel.reloadAll(resourceManager);
+        HbmBakedObjModelDiagnostics.reload(resourceManager);
     }
 }

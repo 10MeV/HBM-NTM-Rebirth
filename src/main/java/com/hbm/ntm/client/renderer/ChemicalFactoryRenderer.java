@@ -71,6 +71,7 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
             poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
             ResourceLocation texture = definition.textureLocation();
 
+            renderModelPart(model, "Base", texture, poseStack, buffer, modelLight, packedOverlay);
             if (chemicalFactory.shouldRenderFrame()) {
                 renderModelPart(model, "Frame", texture, poseStack, buffer, modelLight, packedOverlay);
             }

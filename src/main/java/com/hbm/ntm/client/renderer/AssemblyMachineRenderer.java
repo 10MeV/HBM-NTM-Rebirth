@@ -68,6 +68,7 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
             poseStack.translate(0.5D, 0.0D, 0.5D);
             poseStack.mulPose(Axis.YP.rotationDegrees(90.0F + blockstateModelYRotation(state)));
 
+            renderModelPart("Base", poseStack, buffer, modelLight, packedOverlay);
             if (assembler.shouldRenderFrame()) {
                 renderModelPart("Frame", poseStack, buffer, modelLight, packedOverlay);
             }

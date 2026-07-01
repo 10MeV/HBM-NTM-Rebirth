@@ -110,6 +110,7 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
             double[] arm4 = blockEntity.getAnimation(1).saw.getPositions(partialTick);
 
             try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+                renderModelPart("Base", texture, poseStack, buffer, modelLight, packedOverlay);
                 if (blockEntity.shouldRenderFrame()) {
                     renderModelPart("Frame", texture, poseStack, buffer, modelLight, packedOverlay);
                 }

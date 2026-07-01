@@ -33,7 +33,7 @@ public class ThresherBlock extends HorizontalMachineBlock implements EntityBlock
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Override

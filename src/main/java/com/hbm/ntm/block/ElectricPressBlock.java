@@ -52,7 +52,7 @@ public class ElectricPressBlock extends LegacyXrMultiblockBlock implements Entit
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Override

@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @OnlyIn(Dist.CLIENT)
 public final class HbmDeferredParticleRenderer {
@@ -74,44 +73,44 @@ public final class HbmDeferredParticleRenderer {
     private static final List<Entry> QUEUE = new ArrayList<>();
     private static final Set<DeferredParticle> SEEN =
             Collections.newSetFromMap(new IdentityHashMap<>());
-    private static final AtomicLong enqueuedParticles = new AtomicLong();
-    private static final AtomicLong duplicateSkips = new AtomicLong();
-    private static final AtomicLong renderPasses = new AtomicLong();
-    private static final AtomicLong renderedParticles = new AtomicLong();
-    private static final AtomicLong clearCalls = new AtomicLong();
-    private static final AtomicLong peakQueueSize = new AtomicLong();
-    private static final AtomicLong lastRenderQueuedParticles = new AtomicLong();
-    private static final AtomicLong lastRenderSubmittedParticles = new AtomicLong();
-    private static final AtomicLong lastClearQueuedParticles = new AtomicLong();
-    private static final AtomicLong directTexturedNoDepthWriteQuads = new AtomicLong();
-    private static final AtomicLong directTexturedAdditiveNoDepthWriteQuads = new AtomicLong();
+    private static long enqueuedParticles;
+    private static long duplicateSkips;
+    private static long renderPasses;
+    private static long renderedParticles;
+    private static long clearCalls;
+    private static long peakQueueSize;
+    private static long lastRenderQueuedParticles;
+    private static long lastRenderSubmittedParticles;
+    private static long lastClearQueuedParticles;
+    private static long directTexturedNoDepthWriteQuads;
+    private static long directTexturedAdditiveNoDepthWriteQuads;
 
     private HbmDeferredParticleRenderer() {
     }
 
     public static void enqueue(DeferredParticle particle, Camera camera, double x, double y, double z) {
         if (!SEEN.add(particle)) {
-            duplicateSkips.incrementAndGet();
+            duplicateSkips++;
             return;
         }
         QUEUE.add(new Entry(particle, camera.getPosition().distanceToSqr(x, y, z)));
-        enqueuedParticles.incrementAndGet();
+        enqueuedParticles++;
         recordPeakQueueSize(QUEUE.size());
     }
 
     public static void renderAfterLevel(Camera camera, float partialTick, MultiBufferSource.BufferSource buffer) {
         if (QUEUE.isEmpty()) {
-            lastRenderQueuedParticles.set(0L);
-            lastRenderSubmittedParticles.set(0L);
+            lastRenderQueuedParticles = 0L;
+            lastRenderSubmittedParticles = 0L;
             return;
         }
 
         List<Entry> entries = new ArrayList<>(QUEUE);
         QUEUE.clear();
         SEEN.clear();
-        renderPasses.incrementAndGet();
-        renderedParticles.addAndGet(entries.size());
-        lastRenderQueuedParticles.set(entries.size());
+        renderPasses++;
+        renderedParticles += entries.size();
+        lastRenderQueuedParticles = entries.size();
 
         PoseStack modelView = RenderSystem.getModelViewStack();
         modelView.pushPose();
@@ -124,7 +123,7 @@ public final class HbmDeferredParticleRenderer {
             for (Entry entry : entries) {
                 entry.particle.renderDeferred(buffer, camera, partialTick);
             }
-            lastRenderSubmittedParticles.set(entries.size());
+            lastRenderSubmittedParticles = entries.size();
             endDeferredBatches(buffer);
         } finally {
             modelView.popPose();
@@ -172,7 +171,7 @@ public final class HbmDeferredParticleRenderer {
                 x2, y2, z2, u2, v2,
                 x3, y3, z3, u3, v3,
                 color, alpha);
-        directTexturedNoDepthWriteQuads.incrementAndGet();
+        directTexturedNoDepthWriteQuads++;
         return true;
     }
 
@@ -190,7 +189,7 @@ public final class HbmDeferredParticleRenderer {
                 x2, y2, z2, u2, v2,
                 x3, y3, z3, u3, v3,
                 color, alpha);
-        directTexturedAdditiveNoDepthWriteQuads.incrementAndGet();
+        directTexturedAdditiveNoDepthWriteQuads++;
         return true;
     }
 
@@ -250,8 +249,8 @@ public final class HbmDeferredParticleRenderer {
     }
 
     public static void clear() {
-        clearCalls.incrementAndGet();
-        lastClearQueuedParticles.set(QUEUE.size());
+        clearCalls++;
+        lastClearQueuedParticles = QUEUE.size();
         QUEUE.clear();
         SEEN.clear();
     }
@@ -260,30 +259,26 @@ public final class HbmDeferredParticleRenderer {
         return new DeferredParticleSnapshot(
                 QUEUE.size(),
                 SEEN.size(),
-                enqueuedParticles.get(),
-                duplicateSkips.get(),
-                renderPasses.get(),
-                renderedParticles.get(),
-                clearCalls.get(),
-                peakQueueSize.get(),
-                lastRenderQueuedParticles.get(),
-                lastRenderSubmittedParticles.get(),
-                lastClearQueuedParticles.get(),
+                enqueuedParticles,
+                duplicateSkips,
+                renderPasses,
+                renderedParticles,
+                clearCalls,
+                peakQueueSize,
+                lastRenderQueuedParticles,
+                lastRenderSubmittedParticles,
+                lastClearQueuedParticles,
                 TEXTURED_DEPTH_WRITE.size(),
                 TEXTURED_NO_DEPTH_WRITE.size(),
                 TEXTURED_ADDITIVE_NO_DEPTH_WRITE.size(),
-                directTexturedNoDepthWriteQuads.get(),
-                directTexturedAdditiveNoDepthWriteQuads.get());
+                directTexturedNoDepthWriteQuads,
+                directTexturedAdditiveNoDepthWriteQuads);
     }
 
     private static void recordPeakQueueSize(int size) {
-        long current;
-        do {
-            current = peakQueueSize.get();
-            if (size <= current) {
-                return;
-            }
-        } while (!peakQueueSize.compareAndSet(current, size));
+        if (size > peakQueueSize) {
+            peakQueueSize = size;
+        }
     }
 
     private static void endDeferredBatches(MultiBufferSource.BufferSource buffer) {

@@ -28,7 +28,7 @@ public class MicrowaveBlock extends HorizontalMachineBlock implements EntityBloc
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Nullable

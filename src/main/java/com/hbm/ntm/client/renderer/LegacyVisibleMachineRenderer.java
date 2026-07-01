@@ -5,6 +5,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyMachinePartRenderProperties;
 import com.hbm.ntm.block.LegacyMachineRenderProfile;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMachineBlock;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.BoilerBlockEntity;
@@ -633,8 +634,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             }
             case CRYSTALLIZER_STATIC_SPECIAL -> {
                 renderVisibleMachineStaticPlan(definition, model,
-                        LegacyTileRenderPlans.crystallizerStaticPlan(false), poseStack, buffer,
-                        packedLight, packedOverlay, renderMode);
+                        LegacyTileRenderPlans.crystallizerStaticPlan(renderChunkBakedStaticsInBer()), poseStack,
+                        buffer, packedLight, packedOverlay, renderMode);
                 return true;
             }
             case CRYSTALLIZER_RUNNING_PARTS -> {
@@ -661,7 +662,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                         ? compressor.getFanSpin(partialTick)
                         : 0.0F;
                 renderCompressorPlan(definition, model, LegacyTileRenderPlans.compressorPlan(lift, fan),
-                        poseStack, buffer, packedLight, packedOverlay, renderMode, blockEntity, false);
+                        poseStack, buffer, packedLight, packedOverlay, renderMode, blockEntity,
+                        renderChunkBakedStaticsInBer());
                 return true;
             }
             case COMPRESSOR_COMPACT_RUNNING_FANS -> {
@@ -669,7 +671,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                         ? compressor.getFanSpin(partialTick)
                         : 0.0F;
                 renderCompressorPlan(definition, model, LegacyTileRenderPlans.compressorCompactPlan(fan),
-                        poseStack, buffer, packedLight, packedOverlay, renderMode, blockEntity, false);
+                        poseStack, buffer, packedLight, packedOverlay, renderMode, blockEntity,
+                        renderChunkBakedStaticsInBer());
                 return true;
             }
             case POWERED_CONDENSER_FANS -> {
@@ -677,13 +680,15 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                         ? condenser.getFanSpin(partialTick)
                         : 0.0F;
                 renderCompressorPlan(definition, model, LegacyTileRenderPlans.compressorCompactPlan(fan),
-                        poseStack, buffer, packedLight, packedOverlay, renderMode, blockEntity, false);
+                        poseStack, buffer, packedLight, packedOverlay, renderMode, blockEntity,
+                        renderChunkBakedStaticsInBer());
                 return true;
             }
             case PUMP_RUNNING_PARTS -> {
                 double rotor = blockEntity instanceof WaterPumpBlockEntity pump ? pump.getRotor(partialTick) : 0.0D;
                 renderPumpPlan(definition, model, LegacyTileRenderPlans.pumpPlan(rotor),
-                        poseStack, buffer, packedLight, packedOverlay, renderMode, blockEntity, false);
+                        poseStack, buffer, packedLight, packedOverlay, renderMode, blockEntity,
+                        renderChunkBakedStaticsInBer());
                 return true;
             }
             case DIESEL_GENERATOR_RUNNING_PARTS -> {
@@ -820,6 +825,10 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
             action.run();
         }
+    }
+
+    private static boolean renderChunkBakedStaticsInBer() {
+        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer();
     }
 
     private static void renderRtgDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,

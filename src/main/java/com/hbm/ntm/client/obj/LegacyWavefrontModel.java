@@ -2974,20 +2974,20 @@ public final class LegacyWavefrontModel {
         private final AtomicLong irisShaderAttributeGenerationInvalidations = new AtomicLong();
         private final AtomicLong irisShaderAttributePrimedSkips = new AtomicLong();
         private final AtomicLong irisShaderAttributeVaoBindFailures = new AtomicLong();
-        private final AtomicLong currentFrameIrisEligibleBatches = new AtomicLong();
-        private final AtomicLong currentFrameIrisDrawCalls = new AtomicLong();
-        private final AtomicLong currentFrameIrisShadowDrawCalls = new AtomicLong();
-        private final AtomicLong currentFrameIrisFallbackBatches = new AtomicLong();
-        private final AtomicLong currentFrameIrisFallbackVertices = new AtomicLong();
-        private final AtomicLong currentFrameIrisLightmapStorageFailures = new AtomicLong();
-        private final AtomicLong currentFrameIrisLightmapSlotReuses = new AtomicLong();
-        private final AtomicLong currentFrameIrisLightmapSlotUploads = new AtomicLong();
-        private final AtomicLong currentFrameIrisLightmapStagingFallbacks = new AtomicLong();
-        private final AtomicLong currentFrameIrisShaderAttributeCacheHits = new AtomicLong();
-        private final AtomicLong currentFrameIrisShaderAttributeCacheMisses = new AtomicLong();
-        private final AtomicLong currentFrameIrisShaderAttributeGenerationInvalidations = new AtomicLong();
-        private final AtomicLong currentFrameIrisShaderAttributePrimedSkips = new AtomicLong();
-        private final AtomicLong currentFrameIrisShaderAttributeVaoBindFailures = new AtomicLong();
+        private long currentFrameIrisEligibleBatches;
+        private long currentFrameIrisDrawCalls;
+        private long currentFrameIrisShadowDrawCalls;
+        private long currentFrameIrisFallbackBatches;
+        private long currentFrameIrisFallbackVertices;
+        private long currentFrameIrisLightmapStorageFailures;
+        private long currentFrameIrisLightmapSlotReuses;
+        private long currentFrameIrisLightmapSlotUploads;
+        private long currentFrameIrisLightmapStagingFallbacks;
+        private long currentFrameIrisShaderAttributeCacheHits;
+        private long currentFrameIrisShaderAttributeCacheMisses;
+        private long currentFrameIrisShaderAttributeGenerationInvalidations;
+        private long currentFrameIrisShaderAttributePrimedSkips;
+        private long currentFrameIrisShaderAttributeVaoBindFailures;
         private final AtomicLong lastFrameIrisEligibleBatches = new AtomicLong();
         private final AtomicLong lastFrameIrisDrawCalls = new AtomicLong();
         private final AtomicLong lastFrameIrisShadowDrawCalls = new AtomicLong();
@@ -3009,13 +3009,13 @@ public final class LegacyWavefrontModel {
         private final AtomicLong irisQueuedFallbackBatches = new AtomicLong();
         private final AtomicLong irisQueuedFallbackInstances = new AtomicLong();
         private final AtomicLong irisQueuedDuplicateInstances = new AtomicLong();
-        private final AtomicLong currentFrameIrisQueuedBatches = new AtomicLong();
-        private final AtomicLong currentFrameIrisQueuedInstances = new AtomicLong();
-        private final AtomicLong currentFrameIrisQueuedFlushes = new AtomicLong();
-        private final AtomicLong currentFrameIrisQueuedDrawCalls = new AtomicLong();
-        private final AtomicLong currentFrameIrisQueuedFallbackBatches = new AtomicLong();
-        private final AtomicLong currentFrameIrisQueuedFallbackInstances = new AtomicLong();
-        private final AtomicLong currentFrameIrisQueuedDuplicateInstances = new AtomicLong();
+        private long currentFrameIrisQueuedBatches;
+        private long currentFrameIrisQueuedInstances;
+        private long currentFrameIrisQueuedFlushes;
+        private long currentFrameIrisQueuedDrawCalls;
+        private long currentFrameIrisQueuedFallbackBatches;
+        private long currentFrameIrisQueuedFallbackInstances;
+        private long currentFrameIrisQueuedDuplicateInstances;
         private final AtomicLong lastFrameIrisQueuedBatches = new AtomicLong();
         private final AtomicLong lastFrameIrisQueuedInstances = new AtomicLong();
         private final AtomicLong lastFrameIrisQueuedFlushes = new AtomicLong();
@@ -3069,28 +3069,28 @@ public final class LegacyWavefrontModel {
         private final AtomicLong mdiAdditiveIndirectCommands = new AtomicLong();
         private final AtomicLong mdiAdditiveNoSlotBatches = new AtomicLong();
         private final AtomicLong mdiAdditiveNoSlotInstances = new AtomicLong();
-        private final AtomicLong currentFrameMdiEligibleFlushes = new AtomicLong();
-        private final AtomicLong currentFrameMdiEligibleBatches = new AtomicLong();
-        private final AtomicLong currentFrameMdiFallbackFlushes = new AtomicLong();
-        private final AtomicLong currentFrameMdiFallbackBatches = new AtomicLong();
-        private final AtomicLong currentFrameMdiDrawCalls = new AtomicLong();
-        private final AtomicLong currentFrameMdiMultiDrawCalls = new AtomicLong();
-        private final AtomicLong currentFrameMdiIndirectCommands = new AtomicLong();
-        private final AtomicLong currentFrameMdiNoSlotBatches = new AtomicLong();
-        private final AtomicLong currentFrameMdiNoSlotInstances = new AtomicLong();
-        private final AtomicLong currentFrameMdiPartialDrawFailures = new AtomicLong();
-        private final AtomicLong currentFrameMdiStalePreparedGroups = new AtomicLong();
-        private final AtomicLong currentFrameMdiStalePreparedCommands = new AtomicLong();
-        private final AtomicLong currentFrameMdiDispatchDisableEvents = new AtomicLong();
-        private final AtomicLong currentFrameMdiAtlasRepackFailures = new AtomicLong();
-        private final AtomicLong currentFrameMdiAtlasInitFailures = new AtomicLong();
-        private final AtomicLong currentFrameOptimizedDrawStateRestoreFailures = new AtomicLong();
-        private final AtomicLong currentFrameMdiAdditiveEligibleBatches = new AtomicLong();
-        private final AtomicLong currentFrameMdiAdditiveFallbackBatches = new AtomicLong();
-        private final AtomicLong currentFrameMdiAdditiveDrawCalls = new AtomicLong();
-        private final AtomicLong currentFrameMdiAdditiveIndirectCommands = new AtomicLong();
-        private final AtomicLong currentFrameMdiAdditiveNoSlotBatches = new AtomicLong();
-        private final AtomicLong currentFrameMdiAdditiveNoSlotInstances = new AtomicLong();
+        private long currentFrameMdiEligibleFlushes;
+        private long currentFrameMdiEligibleBatches;
+        private long currentFrameMdiFallbackFlushes;
+        private long currentFrameMdiFallbackBatches;
+        private long currentFrameMdiDrawCalls;
+        private long currentFrameMdiMultiDrawCalls;
+        private long currentFrameMdiIndirectCommands;
+        private long currentFrameMdiNoSlotBatches;
+        private long currentFrameMdiNoSlotInstances;
+        private long currentFrameMdiPartialDrawFailures;
+        private long currentFrameMdiStalePreparedGroups;
+        private long currentFrameMdiStalePreparedCommands;
+        private long currentFrameMdiDispatchDisableEvents;
+        private long currentFrameMdiAtlasRepackFailures;
+        private long currentFrameMdiAtlasInitFailures;
+        private long currentFrameOptimizedDrawStateRestoreFailures;
+        private long currentFrameMdiAdditiveEligibleBatches;
+        private long currentFrameMdiAdditiveFallbackBatches;
+        private long currentFrameMdiAdditiveDrawCalls;
+        private long currentFrameMdiAdditiveIndirectCommands;
+        private long currentFrameMdiAdditiveNoSlotBatches;
+        private long currentFrameMdiAdditiveNoSlotInstances;
         private final AtomicLong lastFrameMdiEligibleFlushes = new AtomicLong();
         private final AtomicLong lastFrameMdiEligibleBatches = new AtomicLong();
         private final AtomicLong lastFrameMdiFallbackFlushes = new AtomicLong();
@@ -3113,30 +3113,30 @@ public final class LegacyWavefrontModel {
         private final AtomicLong lastFrameMdiAdditiveIndirectCommands = new AtomicLong();
         private final AtomicLong lastFrameMdiAdditiveNoSlotBatches = new AtomicLong();
         private final AtomicLong lastFrameMdiAdditiveNoSlotInstances = new AtomicLong();
-        private final AtomicLong currentFrameInstancedQueuedBatches = new AtomicLong();
-        private final AtomicLong currentFrameInstancedQueuedInstances = new AtomicLong();
-        private final AtomicLong currentFrameInstancedDrawCalls = new AtomicLong();
-        private final AtomicLong currentFrameInstancedFallbackBatches = new AtomicLong();
-        private final AtomicLong currentFrameInstancedFallbackInstances = new AtomicLong();
-        private final AtomicLong currentFrameInstancedOverflowBatches = new AtomicLong();
-        private final AtomicLong currentFrameInstancedOverflowInstances = new AtomicLong();
-        private final AtomicLong currentFrameInstancedDuplicateInstances = new AtomicLong();
-        private final AtomicLong currentFrameOptimizedFlushCalls = new AtomicLong();
-        private final AtomicLong currentFrameOptimizedDuplicateFlushCalls = new AtomicLong();
-        private final AtomicLong currentFrameOptimizedDuplicatePresentSkips = new AtomicLong();
-        private final AtomicLong currentFrameOptimizedAfterBlockEntityPresents = new AtomicLong();
-        private final AtomicLong currentFrameOptimizedFlushNanos = new AtomicLong();
-        private final AtomicLong currentFrameStaleInstancedBatches = new AtomicLong();
-        private final AtomicLong currentFrameStaleInstancedInstances = new AtomicLong();
-        private final AtomicLong currentFrameStaleIrisCompanionBatches = new AtomicLong();
-        private final AtomicLong currentFrameStaleIrisCompanionInstances = new AtomicLong();
-        private final AtomicLong currentFrameInstancedAdditiveQueuedBatches = new AtomicLong();
-        private final AtomicLong currentFrameInstancedAdditiveQueuedInstances = new AtomicLong();
-        private final AtomicLong currentFrameInstancedAdditiveDrawCalls = new AtomicLong();
-        private final AtomicLong currentFrameInstancedAdditiveFallbackBatches = new AtomicLong();
-        private final AtomicLong currentFrameInstancedAdditiveFallbackInstances = new AtomicLong();
-        private final AtomicLong currentFrameInstancedAdditiveOverflowBatches = new AtomicLong();
-        private final AtomicLong currentFrameInstancedAdditiveOverflowInstances = new AtomicLong();
+        private long currentFrameInstancedQueuedBatches;
+        private long currentFrameInstancedQueuedInstances;
+        private long currentFrameInstancedDrawCalls;
+        private long currentFrameInstancedFallbackBatches;
+        private long currentFrameInstancedFallbackInstances;
+        private long currentFrameInstancedOverflowBatches;
+        private long currentFrameInstancedOverflowInstances;
+        private long currentFrameInstancedDuplicateInstances;
+        private long currentFrameOptimizedFlushCalls;
+        private long currentFrameOptimizedDuplicateFlushCalls;
+        private long currentFrameOptimizedDuplicatePresentSkips;
+        private long currentFrameOptimizedAfterBlockEntityPresents;
+        private long currentFrameOptimizedFlushNanos;
+        private long currentFrameStaleInstancedBatches;
+        private long currentFrameStaleInstancedInstances;
+        private long currentFrameStaleIrisCompanionBatches;
+        private long currentFrameStaleIrisCompanionInstances;
+        private long currentFrameInstancedAdditiveQueuedBatches;
+        private long currentFrameInstancedAdditiveQueuedInstances;
+        private long currentFrameInstancedAdditiveDrawCalls;
+        private long currentFrameInstancedAdditiveFallbackBatches;
+        private long currentFrameInstancedAdditiveFallbackInstances;
+        private long currentFrameInstancedAdditiveOverflowBatches;
+        private long currentFrameInstancedAdditiveOverflowInstances;
         private final AtomicLong lastFrameInstancedQueuedBatches = new AtomicLong();
         private final AtomicLong lastFrameInstancedQueuedInstances = new AtomicLong();
         private final AtomicLong lastFrameInstancedDrawCalls = new AtomicLong();
@@ -3160,9 +3160,9 @@ public final class LegacyWavefrontModel {
         private final AtomicLong lastFrameInstancedAdditiveFallbackInstances = new AtomicLong();
         private final AtomicLong lastFrameInstancedAdditiveOverflowBatches = new AtomicLong();
         private final AtomicLong lastFrameInstancedAdditiveOverflowInstances = new AtomicLong();
-        private final AtomicLong currentFrameGpuDrawCalls = new AtomicLong();
-        private final AtomicLong currentFrameGpuFallbackBatches = new AtomicLong();
-        private final AtomicLong currentFrameGpuFallbackVertices = new AtomicLong();
+        private long currentFrameGpuDrawCalls;
+        private long currentFrameGpuFallbackBatches;
+        private long currentFrameGpuFallbackVertices;
         private final AtomicLong lastFrameGpuDrawCalls = new AtomicLong();
         private final AtomicLong lastFrameGpuFallbackBatches = new AtomicLong();
         private final AtomicLong lastFrameGpuFallbackVertices = new AtomicLong();
@@ -3213,11 +3213,6 @@ public final class LegacyWavefrontModel {
                 boolean legacyShadow, boolean smoothing, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
             RenderBackendFallbackReason fallback = unsupportedTexturedReason(batch, alpha, legacyShadow, renderMode, uvTransform);
             if (fallback != RenderBackendFallbackReason.NONE) {
-                if (fallback == RenderBackendFallbackReason.GPU_DISABLED) {
-                    cpuFallback.renderTextured(batch, textureLocation, poseStack, buffer, packedLight, packedOverlay,
-                            red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
-                    return;
-                }
                 renderTexturedCpuFallback(fallback, batch, textureLocation, poseStack, buffer, packedLight, packedOverlay,
                         red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
                 return;
@@ -3364,11 +3359,6 @@ public final class LegacyWavefrontModel {
             RenderBackendFallbackReason fallback = unsupportedSpriteReason(batch, alpha, legacyShadow, renderMode,
                     uvTransform);
             if (fallback != RenderBackendFallbackReason.NONE) {
-                if (fallback == RenderBackendFallbackReason.GPU_DISABLED) {
-                    cpuFallback.renderSprite(batch, sprite, poseStack, buffer, packedLight, packedOverlay,
-                            red, green, blue, alpha, legacyShadow, partBrightness, renderMode, uvTransform);
-                    return;
-                }
                 renderSpriteCpuFallback(fallback, batch, sprite, poseStack, buffer, packedLight, packedOverlay,
                         red, green, blue, alpha, legacyShadow, partBrightness, renderMode, uvTransform);
                 return;
@@ -3498,10 +3488,6 @@ public final class LegacyWavefrontModel {
             LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, poseStack.last().normal());
             RenderBackendFallbackReason fallback = unsupportedUntexturedReason(batch, alpha, resolvedRenderMode);
             if (fallback != RenderBackendFallbackReason.NONE) {
-                if (fallback == RenderBackendFallbackReason.GPU_DISABLED) {
-                    cpuFallback.renderUntextured(batch, poseStack, buffer, red, green, blue, alpha, renderMode);
-                    return;
-                }
                 renderUntexturedCpuFallback(fallback, batch, poseStack, buffer, red, green, blue, alpha, renderMode);
                 return;
             }
@@ -3599,9 +3585,9 @@ public final class LegacyWavefrontModel {
             }
             if (unsupported != RenderBackendFallbackReason.NONE) {
                 if (unsupported == RenderBackendFallbackReason.GPU_DISABLED) {
-                    cpuFallback.renderTexturedTransient(batch, textureLocation, poseStack, buffer, packedLight,
-                            packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, renderMode,
-                            uvTransform, fallbackReason);
+                    renderTexturedTransientGpuDisabledCpuFallback(batch, textureLocation, poseStack, buffer,
+                            packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing,
+                            renderMode, uvTransform, fallbackReason);
                     return;
                 }
                 renderTexturedCpuFallback(unsupported, batch, textureLocation, poseStack, buffer, packedLight,
@@ -3674,8 +3660,8 @@ public final class LegacyWavefrontModel {
             }
             if (unsupported != RenderBackendFallbackReason.NONE) {
                 if (unsupported == RenderBackendFallbackReason.GPU_DISABLED) {
-                    cpuFallback.renderUntexturedTransient(batch, poseStack, buffer, red, green, blue, alpha,
-                            renderMode, fallbackReason);
+                    renderUntexturedTransientGpuDisabledCpuFallback(batch, poseStack, buffer, red, green, blue,
+                            alpha, renderMode, fallbackReason);
                     return;
                 }
                 renderUntexturedCpuFallback(unsupported, batch, poseStack, buffer, red, green, blue, alpha,
@@ -3723,7 +3709,7 @@ public final class LegacyWavefrontModel {
             RenderBackendFallbackReason unsupported = unsupportedUntexturedVertexColorTransientReason();
             if (unsupported != RenderBackendFallbackReason.NONE) {
                 if (unsupported == RenderBackendFallbackReason.GPU_DISABLED) {
-                    cpuFallback.renderUntexturedVertexColorTransient(quad, poseStack, buffer, renderMode,
+                    renderUntexturedVertexColorTransientGpuDisabledCpuFallback(quad, poseStack, buffer, renderMode,
                             fallbackReason);
                     return;
                 }
@@ -3751,7 +3737,8 @@ public final class LegacyWavefrontModel {
             RenderBackendFallbackReason unsupported = unsupportedUntexturedVertexColorTransientReason();
             if (unsupported != RenderBackendFallbackReason.NONE) {
                 if (unsupported == RenderBackendFallbackReason.GPU_DISABLED) {
-                    cpuFallback.renderUntexturedVertexColorTransientTriangle(triangle, poseStack, buffer, renderMode,
+                    renderUntexturedVertexColorTransientTriangleGpuDisabledCpuFallback(triangle, poseStack, buffer,
+                            renderMode,
                             fallbackReason);
                     return;
                 }
@@ -3781,7 +3768,7 @@ public final class LegacyWavefrontModel {
             RenderBackendFallbackReason unsupported = unsupportedUntexturedVertexColorTransientReason();
             if (unsupported != RenderBackendFallbackReason.NONE) {
                 if (unsupported == RenderBackendFallbackReason.GPU_DISABLED) {
-                    cpuFallback.renderUntexturedVertexColorTransientTriangles(triangles, poseStack, buffer,
+                    renderUntexturedVertexColorTransientTrianglesGpuDisabledCpuFallback(triangles, poseStack, buffer,
                             renderMode, fallbackReason);
                     return;
                 }
@@ -3810,7 +3797,7 @@ public final class LegacyWavefrontModel {
             RenderBackendFallbackReason unsupported = unsupportedUntexturedVertexColorTransientReason();
             if (unsupported != RenderBackendFallbackReason.NONE) {
                 if (unsupported == RenderBackendFallbackReason.GPU_DISABLED) {
-                    cpuFallback.renderUntexturedLineTransient(lines, poseStack, buffer, renderMode, lineWidth,
+                    renderUntexturedLineGpuDisabledCpuFallback(lines, poseStack, buffer, renderMode, lineWidth,
                             fallbackReason);
                     return;
                 }
@@ -4240,6 +4227,71 @@ public final class LegacyWavefrontModel {
             return supportsInstancedTail(renderMode);
         }
 
+        private void renderTexturedTransientGpuDisabledCpuFallback(PreparedBatch batch,
+                ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing,
+                LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
+                RenderBackendFallbackReason originalFallbackReason) {
+            recordGpuFallback(RenderBackendFallbackReason.GPU_DISABLED, batch.vertexCount(),
+                    fallbackDetail("gpu-textured-transient:" + originalFallbackReason,
+                            RenderBackendFallbackReason.GPU_DISABLED, batch, textureLocation, renderMode, 1));
+            cpuFallback.renderTextured(batch, textureLocation, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
+        }
+
+        private void renderUntexturedTransientGpuDisabledCpuFallback(PreparedBatch batch,
+                PoseStack poseStack, MultiBufferSource buffer, int red, int green, int blue, int alpha,
+                LegacyTexturedRenderMode renderMode, RenderBackendFallbackReason originalFallbackReason) {
+            recordGpuFallback(RenderBackendFallbackReason.GPU_DISABLED, batch.vertexCount(),
+                    fallbackDetail("gpu-untextured-transient:" + originalFallbackReason,
+                            RenderBackendFallbackReason.GPU_DISABLED, batch, InventoryMenu.BLOCK_ATLAS,
+                            renderMode, 1));
+            cpuFallback.renderUntextured(batch, poseStack, buffer, red, green, blue, alpha, renderMode);
+        }
+
+        private void renderUntexturedVertexColorTransientGpuDisabledCpuFallback(
+                UntexturedVertexColorTransientQuad quad, PoseStack poseStack, MultiBufferSource buffer,
+                LegacyTexturedRenderMode renderMode, RenderBackendFallbackReason originalFallbackReason) {
+            recordGpuFallback(RenderBackendFallbackReason.GPU_DISABLED, 4,
+                    fallbackDetail("gpu-vertex-color-transient:" + originalFallbackReason,
+                            RenderBackendFallbackReason.GPU_DISABLED, "direct_quad", InventoryMenu.BLOCK_ATLAS,
+                            renderMode, 4, 1));
+            renderUntexturedVertexColorTransientCpu(quad, poseStack, buffer, renderMode);
+        }
+
+        private void renderUntexturedVertexColorTransientTriangleGpuDisabledCpuFallback(
+                UntexturedVertexColorTransientTriangle triangle, PoseStack poseStack, MultiBufferSource buffer,
+                LegacyTexturedRenderMode renderMode, RenderBackendFallbackReason originalFallbackReason) {
+            recordGpuFallback(RenderBackendFallbackReason.GPU_DISABLED, 3,
+                    fallbackDetail("gpu-vertex-color-triangle-transient:" + originalFallbackReason,
+                            RenderBackendFallbackReason.GPU_DISABLED, "direct_triangle",
+                            InventoryMenu.BLOCK_ATLAS, renderMode, 3, 1));
+            renderUntexturedVertexColorTransientCpu(triangle, poseStack, buffer, renderMode);
+        }
+
+        private void renderUntexturedVertexColorTransientTrianglesGpuDisabledCpuFallback(
+                List<UntexturedVertexColorTransientTriangle> triangles, PoseStack poseStack,
+                MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
+                RenderBackendFallbackReason originalFallbackReason) {
+            int vertices = triangles.size() * 3;
+            recordGpuFallback(RenderBackendFallbackReason.GPU_DISABLED, vertices,
+                    fallbackDetail("gpu-vertex-color-triangle-batch-transient:" + originalFallbackReason,
+                            RenderBackendFallbackReason.GPU_DISABLED, "direct_triangle_batch",
+                            InventoryMenu.BLOCK_ATLAS, renderMode, vertices, 1));
+            renderUntexturedVertexColorTransientTrianglesCpu(triangles, poseStack, buffer, renderMode);
+        }
+
+        private void renderUntexturedLineGpuDisabledCpuFallback(List<UntexturedLineTransient> lines,
+                PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode, float lineWidth,
+                RenderBackendFallbackReason originalFallbackReason) {
+            int vertices = lines.size() * 2;
+            recordGpuFallback(RenderBackendFallbackReason.GPU_DISABLED, vertices,
+                    fallbackDetail("gpu-line-transient:" + originalFallbackReason,
+                            RenderBackendFallbackReason.GPU_DISABLED, "direct_lines", InventoryMenu.BLOCK_ATLAS,
+                            renderMode, vertices, 1));
+            renderUntexturedLineTransientCpu(lines, poseStack, buffer, renderMode, lineWidth);
+        }
+
         private void renderTexturedCpuFallback(RenderBackendFallbackReason reason, PreparedBatch batch,
                 ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                 int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing,
@@ -4547,25 +4599,37 @@ public final class LegacyWavefrontModel {
             boolean newBatch = batch.instances().isEmpty();
             Matrix4f modelView = poseStack.last().pose();
             batch.instances().add(InstancedInstance.from(modelView,
-                    mesh.sampleSlicedLightProbe(modelView, packedLight), packedOverlay, red, green, blue, alpha,
+                    mesh.sampleInstanceLightProbe(modelView, packedLight), packedOverlay, red, green, blue, alpha,
                     fadeAlpha));
             batch.fallbacks().add(InstancedFallbackInstance.from(poseStack.last(), buffer, packedLight, packedOverlay,
                     red, green, blue, alpha, uvTransform, fadeAlpha));
             instancedQueuedInstances.incrementAndGet();
-            currentFrameInstancedQueuedInstances.incrementAndGet();
+            currentFrameInstancedQueuedInstances++;
             if (isInstancedAdditiveMode(effectiveRenderMode)) {
                 instancedAdditiveQueuedInstances.incrementAndGet();
-                currentFrameInstancedAdditiveQueuedInstances.incrementAndGet();
+                currentFrameInstancedAdditiveQueuedInstances++;
             }
-            HbmRenderFrameCulling.recordObjInstancedQueue(1, newBatch, faded);
+            if (HbmRenderFrameCulling.shouldRecordObjInstancedHotParts()) {
+                HbmRenderFrameCulling.recordObjInstancedQueue(
+                        instancedHotPartKey(mesh, textureLocation, effectiveRenderMode),
+                        mesh.vertexCount(), 1, newBatch, faded);
+            } else {
+                HbmRenderFrameCulling.recordObjInstancedQueue(1, newBatch, faded);
+            }
             if (newBatch) {
                 instancedQueuedBatches.incrementAndGet();
-                currentFrameInstancedQueuedBatches.incrementAndGet();
+                currentFrameInstancedQueuedBatches++;
                 if (isInstancedAdditiveMode(effectiveRenderMode)) {
                     instancedAdditiveQueuedBatches.incrementAndGet();
-                    currentFrameInstancedAdditiveQueuedBatches.incrementAndGet();
+                    currentFrameInstancedAdditiveQueuedBatches++;
                 }
             }
+        }
+
+        private static String instancedHotPartKey(InstancedMesh mesh, ResourceLocation textureLocation,
+                LegacyTexturedRenderMode renderMode) {
+            InstancedMeshKey key = mesh.key();
+            return key.stablePartKey() + "|tex=" + textureLocation + "|mode=" + renderMode;
         }
 
         private static LegacyTexturedRenderMode fadeRenderMode(LegacyTexturedRenderMode renderMode, boolean faded) {
@@ -4653,11 +4717,17 @@ public final class LegacyWavefrontModel {
             batch.instances().add(IrisCompanionQueuedInstance.from(poseStack.last(), buffer, packedLight,
                     packedOverlay, red, green, blue, alpha, fadeAlpha));
             irisQueuedInstances.incrementAndGet();
-            currentFrameIrisQueuedInstances.incrementAndGet();
-            HbmRenderFrameCulling.recordObjInstancedQueue(1, newBatch, faded);
+            currentFrameIrisQueuedInstances++;
+            if (HbmRenderFrameCulling.shouldRecordObjInstancedHotParts()) {
+                HbmRenderFrameCulling.recordObjInstancedQueue(
+                        stablePartKey + "|tex=" + textureLocation + "|mode=" + effectiveRenderMode,
+                        vertices.size(), 1, newBatch, faded);
+            } else {
+                HbmRenderFrameCulling.recordObjInstancedQueue(1, newBatch, faded);
+            }
             if (newBatch) {
                 irisQueuedBatches.incrementAndGet();
-                currentFrameIrisQueuedBatches.incrementAndGet();
+                currentFrameIrisQueuedBatches++;
             }
         }
 
@@ -5201,7 +5271,7 @@ public final class LegacyWavefrontModel {
                 }
             }
             gpuDrawCalls.incrementAndGet();
-            currentFrameGpuDrawCalls.incrementAndGet();
+            currentFrameGpuDrawCalls++;
         }
 
         private boolean drawIrisCompanionBatch(PreparedBatch batch, ResourceLocation textureLocation,
@@ -5240,7 +5310,7 @@ public final class LegacyWavefrontModel {
             }
             boolean drew = false;
             irisEligibleBatches.incrementAndGet();
-            currentFrameIrisEligibleBatches.incrementAndGet();
+            currentFrameIrisEligibleBatches++;
             if (!batch.quadVertices().isEmpty()) {
                 IrisCompanionMesh mesh = irisCompanionMeshFor(batch, VertexFormat.Mode.QUADS, kind, sprite,
                         packedLight, packedOverlay, red, green, blue, alpha, smoothing, uvTransform,
@@ -5283,7 +5353,7 @@ public final class LegacyWavefrontModel {
             }
             boolean drew = false;
             irisEligibleBatches.incrementAndGet();
-            currentFrameIrisEligibleBatches.incrementAndGet();
+            currentFrameIrisEligibleBatches++;
             if (!batch.quadVertices().isEmpty()) {
                 drawIrisTransientCompanionPart(batch, VertexFormat.Mode.QUADS, kind, sprite, textureLocation,
                         poseStack, packedLight, packedOverlay, red, green, blue, alpha, smoothing, renderMode,
@@ -5580,13 +5650,13 @@ public final class LegacyWavefrontModel {
                 GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, mesh.vertexCount());
                 HbmIrisRenderBatch.recordDraw(shadowPass);
                 irisDrawCalls.incrementAndGet();
-                currentFrameIrisDrawCalls.incrementAndGet();
+                currentFrameIrisDrawCalls++;
                 if (shadowPass) {
                     irisShadowDrawCalls.incrementAndGet();
-                    currentFrameIrisShadowDrawCalls.incrementAndGet();
+                    currentFrameIrisShadowDrawCalls++;
                 }
                 gpuDrawCalls.incrementAndGet();
-                currentFrameGpuDrawCalls.incrementAndGet();
+                currentFrameGpuDrawCalls++;
                 success = true;
             } finally {
                 mesh.restoreConstantLightmap();
@@ -5645,7 +5715,7 @@ public final class LegacyWavefrontModel {
             pendingIrisCompanionBatches.clear();
             coalesceDuplicateIrisCompanionInstances(batches);
             irisQueuedFlushes.incrementAndGet();
-            currentFrameIrisQueuedFlushes.incrementAndGet();
+            currentFrameIrisQueuedFlushes++;
             boolean shadowPass = HbmShaderCompatibilityDetector.isRenderingShadowPass();
             ShaderInstance shader = HbmIrisExtendedShaderAccess.getBlockEntityShader(shadowPass);
             if (shader == null) {
@@ -5734,7 +5804,7 @@ public final class LegacyWavefrontModel {
 
         private void recordIrisEligibleBatch() {
             irisEligibleBatches.incrementAndGet();
-            currentFrameIrisEligibleBatches.incrementAndGet();
+            currentFrameIrisEligibleBatches++;
         }
 
         private void collectIrisQueuedDraws(IrisCompanionQueuedBatch batch, List<IrisCompanionQueuedDraw> draws) {
@@ -5817,7 +5887,7 @@ public final class LegacyWavefrontModel {
                     instance.green(), instance.blue(), instance.alpha(), shader, shadowPass,
                     preparedLightmapSlot, projectionMatrix, instance.fadeAlpha());
             irisQueuedDrawCalls.incrementAndGet();
-            currentFrameIrisQueuedDrawCalls.incrementAndGet();
+            currentFrameIrisQueuedDrawCalls++;
         }
 
         private void drawIrisQueuedCpuFallbacks(List<IrisCompanionQueuedBatch> batches,
@@ -5917,8 +5987,8 @@ public final class LegacyWavefrontModel {
             }
             mdiEligibleFlushes.incrementAndGet();
             mdiEligibleBatches.addAndGet(eligibleBatches);
-            currentFrameMdiEligibleFlushes.incrementAndGet();
-            currentFrameMdiEligibleBatches.addAndGet(eligibleBatches);
+            currentFrameMdiEligibleFlushes++;
+            currentFrameMdiEligibleBatches += eligibleBatches;
             recordMdiAdditiveEligible(eligible);
             ensureMdiCapabilities();
             if (!mdiAvailable()) {
@@ -6068,8 +6138,8 @@ public final class LegacyWavefrontModel {
             }
             mdiStalePreparedGroups.addAndGet(staleGroups);
             mdiStalePreparedCommands.addAndGet(staleCommands);
-            currentFrameMdiStalePreparedGroups.addAndGet(staleGroups);
-            currentFrameMdiStalePreparedCommands.addAndGet(staleCommands);
+            currentFrameMdiStalePreparedGroups += staleGroups;
+            currentFrameMdiStalePreparedCommands += staleCommands;
             logMdiStalePreparedGroups(preparedGroups, phase, layoutGeneration, staleGroups, staleCommands);
             return true;
         }
@@ -6231,7 +6301,7 @@ public final class LegacyWavefrontModel {
 
         private void recordMdiPartialDrawFailure() {
             mdiPartialDrawFailures.incrementAndGet();
-            currentFrameMdiPartialDrawFailures.incrementAndGet();
+            currentFrameMdiPartialDrawFailures++;
         }
 
         private void disableMdiDispatchAfterFailure() {
@@ -6240,17 +6310,17 @@ public final class LegacyWavefrontModel {
             }
             mdiDispatchDisabled = true;
             mdiDispatchDisableEvents.incrementAndGet();
-            currentFrameMdiDispatchDisableEvents.incrementAndGet();
+            currentFrameMdiDispatchDisableEvents++;
         }
 
         private void recordMdiAtlasRepackFailure() {
             mdiAtlasRepackFailures.incrementAndGet();
-            currentFrameMdiAtlasRepackFailures.incrementAndGet();
+            currentFrameMdiAtlasRepackFailures++;
         }
 
         private void recordMdiAtlasInitFailure() {
             mdiAtlasInitFailures.incrementAndGet();
-            currentFrameMdiAtlasInitFailures.incrementAndGet();
+            currentFrameMdiAtlasInitFailures++;
         }
 
         private static List<InstancedBatch> submittedMdiBatches(MdiPreparedGroup prepared,
@@ -6432,7 +6502,7 @@ public final class LegacyWavefrontModel {
                 return;
             }
             instancedDuplicateInstances.addAndGet(removed);
-            currentFrameInstancedDuplicateInstances.addAndGet(removed);
+            currentFrameInstancedDuplicateInstances += removed;
             if (HbmClientConfig.renderBackendDiagnostics()) {
                 HbmNtm.LOGGER.debug("Coalesced {} duplicate legacy OBJ instanced submissions in current frame",
                         removed);
@@ -6448,7 +6518,7 @@ public final class LegacyWavefrontModel {
                 return;
             }
             irisQueuedDuplicateInstances.addAndGet(removed);
-            currentFrameIrisQueuedDuplicateInstances.addAndGet(removed);
+            currentFrameIrisQueuedDuplicateInstances += removed;
             if (HbmClientConfig.renderBackendDiagnostics()) {
                 HbmNtm.LOGGER.debug("Coalesced {} duplicate legacy OBJ Iris companion submissions in current frame",
                         removed);
@@ -6477,8 +6547,8 @@ public final class LegacyWavefrontModel {
         private void recordMdiFallback(int eligibleBatches) {
             mdiFallbackFlushes.incrementAndGet();
             mdiFallbackBatches.addAndGet(eligibleBatches);
-            currentFrameMdiFallbackFlushes.incrementAndGet();
-            currentFrameMdiFallbackBatches.addAndGet(eligibleBatches);
+            currentFrameMdiFallbackFlushes++;
+            currentFrameMdiFallbackBatches += eligibleBatches;
         }
 
         private void recordMdiFallback(int eligibleBatches, List<InstancedBatch> batches,
@@ -6498,23 +6568,23 @@ public final class LegacyWavefrontModel {
             int safeDrawCalls = Math.max(1, drawCalls);
             mdiDrawCalls.addAndGet(safeDrawCalls);
             mdiIndirectCommands.addAndGet(commandCount);
-            currentFrameMdiDrawCalls.addAndGet(safeDrawCalls);
-            currentFrameMdiIndirectCommands.addAndGet(commandCount);
+            currentFrameMdiDrawCalls += safeDrawCalls;
+            currentFrameMdiIndirectCommands += commandCount;
             instancedDrawCalls.addAndGet(safeDrawCalls);
-            currentFrameInstancedDrawCalls.addAndGet(safeDrawCalls);
+            currentFrameInstancedDrawCalls += safeDrawCalls;
             gpuDrawCalls.addAndGet(safeDrawCalls);
-            currentFrameGpuDrawCalls.addAndGet(safeDrawCalls);
+            currentFrameGpuDrawCalls += safeDrawCalls;
             if (isInstancedAdditiveMode(renderMode)) {
                 mdiAdditiveDrawCalls.addAndGet(safeDrawCalls);
                 mdiAdditiveIndirectCommands.addAndGet(commandCount);
-                currentFrameMdiAdditiveDrawCalls.addAndGet(safeDrawCalls);
-                currentFrameMdiAdditiveIndirectCommands.addAndGet(commandCount);
+                currentFrameMdiAdditiveDrawCalls += safeDrawCalls;
+                currentFrameMdiAdditiveIndirectCommands += commandCount;
                 instancedAdditiveDrawCalls.addAndGet(safeDrawCalls);
-                currentFrameInstancedAdditiveDrawCalls.addAndGet(safeDrawCalls);
+                currentFrameInstancedAdditiveDrawCalls += safeDrawCalls;
             }
             if (multiDraw) {
                 mdiMultiDrawCalls.incrementAndGet();
-                currentFrameMdiMultiDrawCalls.incrementAndGet();
+                currentFrameMdiMultiDrawCalls++;
             }
         }
 
@@ -6575,7 +6645,7 @@ public final class LegacyWavefrontModel {
                 return;
             }
             mdiAdditiveEligibleBatches.addAndGet(additiveBatches);
-            currentFrameMdiAdditiveEligibleBatches.addAndGet(additiveBatches);
+            currentFrameMdiAdditiveEligibleBatches += additiveBatches;
         }
 
         private void recordMdiAdditiveFallback(List<InstancedBatch> batches) {
@@ -6584,7 +6654,7 @@ public final class LegacyWavefrontModel {
                 return;
             }
             mdiAdditiveFallbackBatches.addAndGet(additiveBatches);
-            currentFrameMdiAdditiveFallbackBatches.addAndGet(additiveBatches);
+            currentFrameMdiAdditiveFallbackBatches += additiveBatches;
         }
 
         private void recordMdiNoSlot(List<InstancedBatch> batches) {
@@ -6609,13 +6679,13 @@ public final class LegacyWavefrontModel {
                     batches, instanceCount);
             mdiNoSlotBatches.addAndGet(batchCount);
             mdiNoSlotInstances.addAndGet(instanceCount);
-            currentFrameMdiNoSlotBatches.addAndGet(batchCount);
-            currentFrameMdiNoSlotInstances.addAndGet(instanceCount);
+            currentFrameMdiNoSlotBatches += batchCount;
+            currentFrameMdiNoSlotInstances += instanceCount;
             if (additiveBatchCount > 0) {
                 mdiAdditiveNoSlotBatches.addAndGet(additiveBatchCount);
                 mdiAdditiveNoSlotInstances.addAndGet(additiveInstanceCount);
-                currentFrameMdiAdditiveNoSlotBatches.addAndGet(additiveBatchCount);
-                currentFrameMdiAdditiveNoSlotInstances.addAndGet(additiveInstanceCount);
+                currentFrameMdiAdditiveNoSlotBatches += additiveBatchCount;
+                currentFrameMdiAdditiveNoSlotInstances += additiveInstanceCount;
             }
         }
 
@@ -6851,12 +6921,12 @@ public final class LegacyWavefrontModel {
 
         private void recordInstancedDrawCall(LegacyTexturedRenderMode renderMode) {
             instancedDrawCalls.incrementAndGet();
-            currentFrameInstancedDrawCalls.incrementAndGet();
+            currentFrameInstancedDrawCalls++;
             gpuDrawCalls.incrementAndGet();
-            currentFrameGpuDrawCalls.incrementAndGet();
+            currentFrameGpuDrawCalls++;
             if (isInstancedAdditiveMode(renderMode)) {
                 instancedAdditiveDrawCalls.incrementAndGet();
-                currentFrameInstancedAdditiveDrawCalls.incrementAndGet();
+                currentFrameInstancedAdditiveDrawCalls++;
             }
         }
 
@@ -6868,13 +6938,13 @@ public final class LegacyWavefrontModel {
             }
             instancedOverflowBatches.incrementAndGet();
             instancedOverflowInstances.addAndGet(overflow);
-            currentFrameInstancedOverflowBatches.incrementAndGet();
-            currentFrameInstancedOverflowInstances.addAndGet(overflow);
+            currentFrameInstancedOverflowBatches++;
+            currentFrameInstancedOverflowInstances += overflow;
             if (isInstancedAdditiveMode(renderMode)) {
                 instancedAdditiveOverflowBatches.incrementAndGet();
                 instancedAdditiveOverflowInstances.addAndGet(overflow);
-                currentFrameInstancedAdditiveOverflowBatches.incrementAndGet();
-                currentFrameInstancedAdditiveOverflowInstances.addAndGet(overflow);
+                currentFrameInstancedAdditiveOverflowBatches++;
+                currentFrameInstancedAdditiveOverflowInstances += overflow;
             }
         }
 
@@ -6959,8 +7029,8 @@ public final class LegacyWavefrontModel {
             lastGpuFallbackDetail = sanitizeFallbackDetail(detail);
             gpuFallbackBatches.incrementAndGet();
             gpuFallbackVertices.addAndGet(vertices);
-            currentFrameGpuFallbackBatches.incrementAndGet();
-            currentFrameGpuFallbackVertices.addAndGet(vertices);
+            currentFrameGpuFallbackBatches++;
+            currentFrameGpuFallbackVertices += vertices;
         }
 
         private void recordIrisFallback(RenderBackendFallbackReason reason, int vertices) {
@@ -6975,8 +7045,8 @@ public final class LegacyWavefrontModel {
             lastGpuFallbackDetail = sanitizeFallbackDetail(detail);
             irisFallbackBatches.incrementAndGet();
             irisFallbackVertices.addAndGet(vertices);
-            currentFrameIrisFallbackBatches.incrementAndGet();
-            currentFrameIrisFallbackVertices.addAndGet(vertices);
+            currentFrameIrisFallbackBatches++;
+            currentFrameIrisFallbackVertices += vertices;
         }
 
         private void clearIrisCompanionFallback() {
@@ -7002,53 +7072,53 @@ public final class LegacyWavefrontModel {
             }
             irisQueuedFallbackBatches.incrementAndGet();
             irisQueuedFallbackInstances.addAndGet(instances);
-            currentFrameIrisQueuedFallbackBatches.incrementAndGet();
-            currentFrameIrisQueuedFallbackInstances.addAndGet(instances);
+            currentFrameIrisQueuedFallbackBatches++;
+            currentFrameIrisQueuedFallbackInstances += instances;
         }
 
         private void recordIrisLightmapStorageFailure() {
             irisLightmapStorageFailures.incrementAndGet();
-            currentFrameIrisLightmapStorageFailures.incrementAndGet();
+            currentFrameIrisLightmapStorageFailures++;
         }
 
         private void recordIrisLightmapSlotReuse() {
             irisLightmapSlotReuses.incrementAndGet();
-            currentFrameIrisLightmapSlotReuses.incrementAndGet();
+            currentFrameIrisLightmapSlotReuses++;
         }
 
         private void recordIrisLightmapSlotUpload() {
             irisLightmapSlotUploads.incrementAndGet();
-            currentFrameIrisLightmapSlotUploads.incrementAndGet();
+            currentFrameIrisLightmapSlotUploads++;
         }
 
         private void recordIrisLightmapStagingFallback() {
             irisLightmapStagingFallbacks.incrementAndGet();
-            currentFrameIrisLightmapStagingFallbacks.incrementAndGet();
+            currentFrameIrisLightmapStagingFallbacks++;
         }
 
         private void recordIrisShaderAttributeCacheHit() {
             irisShaderAttributeCacheHits.incrementAndGet();
-            currentFrameIrisShaderAttributeCacheHits.incrementAndGet();
+            currentFrameIrisShaderAttributeCacheHits++;
         }
 
         private void recordIrisShaderAttributeCacheMiss() {
             irisShaderAttributeCacheMisses.incrementAndGet();
-            currentFrameIrisShaderAttributeCacheMisses.incrementAndGet();
+            currentFrameIrisShaderAttributeCacheMisses++;
         }
 
         private void recordIrisShaderAttributeGenerationInvalidation() {
             irisShaderAttributeGenerationInvalidations.incrementAndGet();
-            currentFrameIrisShaderAttributeGenerationInvalidations.incrementAndGet();
+            currentFrameIrisShaderAttributeGenerationInvalidations++;
         }
 
         private void recordIrisShaderAttributePrimedSkip() {
             irisShaderAttributePrimedSkips.incrementAndGet();
-            currentFrameIrisShaderAttributePrimedSkips.incrementAndGet();
+            currentFrameIrisShaderAttributePrimedSkips++;
         }
 
         private void recordIrisShaderAttributeVaoBindFailure() {
             irisShaderAttributeVaoBindFailures.incrementAndGet();
-            currentFrameIrisShaderAttributeVaoBindFailures.incrementAndGet();
+            currentFrameIrisShaderAttributeVaoBindFailures++;
         }
 
         private void clearInstancedQueueFallback() {
@@ -7099,13 +7169,13 @@ public final class LegacyWavefrontModel {
             lastGpuFallbackDetail = sanitizeFallbackDetail(detail);
             instancedFallbackBatches.incrementAndGet();
             instancedFallbackInstances.addAndGet(instances);
-            currentFrameInstancedFallbackBatches.incrementAndGet();
-            currentFrameInstancedFallbackInstances.addAndGet(instances);
+            currentFrameInstancedFallbackBatches++;
+            currentFrameInstancedFallbackInstances += instances;
             if (additive) {
                 instancedAdditiveFallbackBatches.incrementAndGet();
                 instancedAdditiveFallbackInstances.addAndGet(instances);
-                currentFrameInstancedAdditiveFallbackBatches.incrementAndGet();
-                currentFrameInstancedAdditiveFallbackInstances.addAndGet(instances);
+                currentFrameInstancedAdditiveFallbackBatches++;
+                currentFrameInstancedAdditiveFallbackInstances += instances;
             }
         }
 
@@ -7171,8 +7241,8 @@ public final class LegacyWavefrontModel {
             }
             instancedAdditiveFallbackBatches.incrementAndGet();
             instancedAdditiveFallbackInstances.addAndGet(instances);
-            currentFrameInstancedAdditiveFallbackBatches.incrementAndGet();
-            currentFrameInstancedAdditiveFallbackInstances.addAndGet(instances);
+            currentFrameInstancedAdditiveFallbackBatches++;
+            currentFrameInstancedAdditiveFallbackInstances += instances;
         }
 
         @Override
@@ -7274,16 +7344,16 @@ public final class LegacyWavefrontModel {
 
         private boolean recordOptimizedFlushAttempt(RenderBackendFlushStage stage) {
             optimizedFlushCalls.incrementAndGet();
-            long previousFrameFlushes = currentFrameOptimizedFlushCalls.getAndIncrement();
+            long previousFrameFlushes = currentFrameOptimizedFlushCalls++;
             if (previousFrameFlushes > 0L) {
                 optimizedDuplicateFlushCalls.incrementAndGet();
-                currentFrameOptimizedDuplicateFlushCalls.incrementAndGet();
+                currentFrameOptimizedDuplicateFlushCalls++;
             }
             if (stage == RenderBackendFlushStage.AFTER_BLOCK_ENTITIES) {
-                long previousFramePresents = currentFrameOptimizedAfterBlockEntityPresents.getAndIncrement();
+                long previousFramePresents = currentFrameOptimizedAfterBlockEntityPresents++;
                 if (previousFramePresents > 0L) {
                     optimizedDuplicatePresentSkips.incrementAndGet();
-                    currentFrameOptimizedDuplicatePresentSkips.incrementAndGet();
+                    currentFrameOptimizedDuplicatePresentSkips++;
                     return false;
                 }
             }
@@ -7295,12 +7365,12 @@ public final class LegacyWavefrontModel {
                 return;
             }
             optimizedFlushNanos.addAndGet(nanos);
-            currentFrameOptimizedFlushNanos.addAndGet(nanos);
+            currentFrameOptimizedFlushNanos += nanos;
         }
 
         private void recordOptimizedDrawStateRestoreFailure() {
             optimizedDrawStateRestoreFailures.incrementAndGet();
-            currentFrameOptimizedDrawStateRestoreFailures.incrementAndGet();
+            currentFrameOptimizedDrawStateRestoreFailures++;
         }
 
         private void discardPendingBackendFlush(RenderBackendFlushStage stage, Throwable throwable) {
@@ -7331,10 +7401,10 @@ public final class LegacyWavefrontModel {
             staleInstancedInstances.addAndGet(instancedInstances);
             staleIrisCompanionBatches.addAndGet(irisBatches);
             staleIrisCompanionInstances.addAndGet(irisInstances);
-            currentFrameStaleInstancedBatches.addAndGet(instancedBatches);
-            currentFrameStaleInstancedInstances.addAndGet(instancedInstances);
-            currentFrameStaleIrisCompanionBatches.addAndGet(irisBatches);
-            currentFrameStaleIrisCompanionInstances.addAndGet(irisInstances);
+            currentFrameStaleInstancedBatches += instancedBatches;
+            currentFrameStaleInstancedInstances += instancedInstances;
+            currentFrameStaleIrisCompanionBatches += irisBatches;
+            currentFrameStaleIrisCompanionInstances += irisInstances;
 
             String message = String.format(Locale.ROOT,
                     "Legacy OBJ render backend discarded stale frame-end queues: instanced=%d/%d, irisCompanion=%d/%d",
@@ -7370,80 +7440,146 @@ public final class LegacyWavefrontModel {
         @Override
         public void endFrame() {
             discardStaleOptimizedQueuesAtFrameEnd();
-            lastFrameInstancedQueuedBatches.set(currentFrameInstancedQueuedBatches.getAndSet(0L));
-            lastFrameInstancedQueuedInstances.set(currentFrameInstancedQueuedInstances.getAndSet(0L));
-            lastFrameInstancedDrawCalls.set(currentFrameInstancedDrawCalls.getAndSet(0L));
-            lastFrameInstancedFallbackBatches.set(currentFrameInstancedFallbackBatches.getAndSet(0L));
-            lastFrameInstancedFallbackInstances.set(currentFrameInstancedFallbackInstances.getAndSet(0L));
-            lastFrameInstancedOverflowBatches.set(currentFrameInstancedOverflowBatches.getAndSet(0L));
-            lastFrameInstancedOverflowInstances.set(currentFrameInstancedOverflowInstances.getAndSet(0L));
-            lastFrameInstancedDuplicateInstances.set(currentFrameInstancedDuplicateInstances.getAndSet(0L));
-            lastFrameOptimizedFlushCalls.set(currentFrameOptimizedFlushCalls.getAndSet(0L));
-            lastFrameOptimizedDuplicateFlushCalls.set(currentFrameOptimizedDuplicateFlushCalls.getAndSet(0L));
-            lastFrameOptimizedDuplicatePresentSkips.set(
-                    currentFrameOptimizedDuplicatePresentSkips.getAndSet(0L));
-            currentFrameOptimizedAfterBlockEntityPresents.set(0L);
-            lastFrameOptimizedFlushNanos.set(currentFrameOptimizedFlushNanos.getAndSet(0L));
-            lastFrameOptimizedDrawStateRestoreFailures.set(
-                    currentFrameOptimizedDrawStateRestoreFailures.getAndSet(0L));
-            lastFrameStaleInstancedBatches.set(currentFrameStaleInstancedBatches.getAndSet(0L));
-            lastFrameStaleInstancedInstances.set(currentFrameStaleInstancedInstances.getAndSet(0L));
-            lastFrameStaleIrisCompanionBatches.set(currentFrameStaleIrisCompanionBatches.getAndSet(0L));
-            lastFrameStaleIrisCompanionInstances.set(currentFrameStaleIrisCompanionInstances.getAndSet(0L));
-            lastFrameInstancedAdditiveQueuedBatches.set(currentFrameInstancedAdditiveQueuedBatches.getAndSet(0L));
-            lastFrameInstancedAdditiveQueuedInstances.set(currentFrameInstancedAdditiveQueuedInstances.getAndSet(0L));
-            lastFrameInstancedAdditiveDrawCalls.set(currentFrameInstancedAdditiveDrawCalls.getAndSet(0L));
-            lastFrameInstancedAdditiveFallbackBatches.set(currentFrameInstancedAdditiveFallbackBatches.getAndSet(0L));
-            lastFrameInstancedAdditiveFallbackInstances.set(currentFrameInstancedAdditiveFallbackInstances.getAndSet(0L));
-            lastFrameInstancedAdditiveOverflowBatches.set(currentFrameInstancedAdditiveOverflowBatches.getAndSet(0L));
-            lastFrameInstancedAdditiveOverflowInstances.set(currentFrameInstancedAdditiveOverflowInstances.getAndSet(0L));
-            lastFrameMdiEligibleFlushes.set(currentFrameMdiEligibleFlushes.getAndSet(0L));
-            lastFrameMdiEligibleBatches.set(currentFrameMdiEligibleBatches.getAndSet(0L));
-            lastFrameMdiFallbackFlushes.set(currentFrameMdiFallbackFlushes.getAndSet(0L));
-            lastFrameMdiFallbackBatches.set(currentFrameMdiFallbackBatches.getAndSet(0L));
-            lastFrameMdiDrawCalls.set(currentFrameMdiDrawCalls.getAndSet(0L));
-            lastFrameMdiMultiDrawCalls.set(currentFrameMdiMultiDrawCalls.getAndSet(0L));
-            lastFrameMdiIndirectCommands.set(currentFrameMdiIndirectCommands.getAndSet(0L));
-            lastFrameMdiNoSlotBatches.set(currentFrameMdiNoSlotBatches.getAndSet(0L));
-            lastFrameMdiNoSlotInstances.set(currentFrameMdiNoSlotInstances.getAndSet(0L));
-            lastFrameMdiPartialDrawFailures.set(currentFrameMdiPartialDrawFailures.getAndSet(0L));
-            lastFrameMdiStalePreparedGroups.set(currentFrameMdiStalePreparedGroups.getAndSet(0L));
-            lastFrameMdiStalePreparedCommands.set(currentFrameMdiStalePreparedCommands.getAndSet(0L));
-            lastFrameMdiDispatchDisableEvents.set(currentFrameMdiDispatchDisableEvents.getAndSet(0L));
-            lastFrameMdiAtlasRepackFailures.set(currentFrameMdiAtlasRepackFailures.getAndSet(0L));
-            lastFrameMdiAtlasInitFailures.set(currentFrameMdiAtlasInitFailures.getAndSet(0L));
-            lastFrameMdiAdditiveEligibleBatches.set(currentFrameMdiAdditiveEligibleBatches.getAndSet(0L));
-            lastFrameMdiAdditiveFallbackBatches.set(currentFrameMdiAdditiveFallbackBatches.getAndSet(0L));
-            lastFrameMdiAdditiveDrawCalls.set(currentFrameMdiAdditiveDrawCalls.getAndSet(0L));
-            lastFrameMdiAdditiveIndirectCommands.set(currentFrameMdiAdditiveIndirectCommands.getAndSet(0L));
-            lastFrameMdiAdditiveNoSlotBatches.set(currentFrameMdiAdditiveNoSlotBatches.getAndSet(0L));
-            lastFrameMdiAdditiveNoSlotInstances.set(currentFrameMdiAdditiveNoSlotInstances.getAndSet(0L));
-            lastFrameGpuDrawCalls.set(currentFrameGpuDrawCalls.getAndSet(0L));
-            lastFrameGpuFallbackBatches.set(currentFrameGpuFallbackBatches.getAndSet(0L));
-            lastFrameGpuFallbackVertices.set(currentFrameGpuFallbackVertices.getAndSet(0L));
-            lastFrameIrisEligibleBatches.set(currentFrameIrisEligibleBatches.getAndSet(0L));
-            lastFrameIrisDrawCalls.set(currentFrameIrisDrawCalls.getAndSet(0L));
-            lastFrameIrisShadowDrawCalls.set(currentFrameIrisShadowDrawCalls.getAndSet(0L));
-            lastFrameIrisFallbackBatches.set(currentFrameIrisFallbackBatches.getAndSet(0L));
-            lastFrameIrisFallbackVertices.set(currentFrameIrisFallbackVertices.getAndSet(0L));
-            lastFrameIrisLightmapStorageFailures.set(currentFrameIrisLightmapStorageFailures.getAndSet(0L));
-            lastFrameIrisLightmapSlotReuses.set(currentFrameIrisLightmapSlotReuses.getAndSet(0L));
-            lastFrameIrisLightmapSlotUploads.set(currentFrameIrisLightmapSlotUploads.getAndSet(0L));
-            lastFrameIrisLightmapStagingFallbacks.set(currentFrameIrisLightmapStagingFallbacks.getAndSet(0L));
-            lastFrameIrisShaderAttributeCacheHits.set(currentFrameIrisShaderAttributeCacheHits.getAndSet(0L));
-            lastFrameIrisShaderAttributeCacheMisses.set(currentFrameIrisShaderAttributeCacheMisses.getAndSet(0L));
+            lastFrameInstancedQueuedBatches.set(currentFrameInstancedQueuedBatches);
+            currentFrameInstancedQueuedBatches = 0L;
+            lastFrameInstancedQueuedInstances.set(currentFrameInstancedQueuedInstances);
+            currentFrameInstancedQueuedInstances = 0L;
+            lastFrameInstancedDrawCalls.set(currentFrameInstancedDrawCalls);
+            currentFrameInstancedDrawCalls = 0L;
+            lastFrameInstancedFallbackBatches.set(currentFrameInstancedFallbackBatches);
+            currentFrameInstancedFallbackBatches = 0L;
+            lastFrameInstancedFallbackInstances.set(currentFrameInstancedFallbackInstances);
+            currentFrameInstancedFallbackInstances = 0L;
+            lastFrameInstancedOverflowBatches.set(currentFrameInstancedOverflowBatches);
+            currentFrameInstancedOverflowBatches = 0L;
+            lastFrameInstancedOverflowInstances.set(currentFrameInstancedOverflowInstances);
+            currentFrameInstancedOverflowInstances = 0L;
+            lastFrameInstancedDuplicateInstances.set(currentFrameInstancedDuplicateInstances);
+            currentFrameInstancedDuplicateInstances = 0L;
+            lastFrameOptimizedFlushCalls.set(currentFrameOptimizedFlushCalls);
+            currentFrameOptimizedFlushCalls = 0L;
+            lastFrameOptimizedDuplicateFlushCalls.set(currentFrameOptimizedDuplicateFlushCalls);
+            currentFrameOptimizedDuplicateFlushCalls = 0L;
+            lastFrameOptimizedDuplicatePresentSkips.set(currentFrameOptimizedDuplicatePresentSkips);
+            currentFrameOptimizedDuplicatePresentSkips = 0L;
+            currentFrameOptimizedAfterBlockEntityPresents = 0L;
+            lastFrameOptimizedFlushNanos.set(currentFrameOptimizedFlushNanos);
+            currentFrameOptimizedFlushNanos = 0L;
+            lastFrameOptimizedDrawStateRestoreFailures.set(currentFrameOptimizedDrawStateRestoreFailures);
+            currentFrameOptimizedDrawStateRestoreFailures = 0L;
+            lastFrameStaleInstancedBatches.set(currentFrameStaleInstancedBatches);
+            currentFrameStaleInstancedBatches = 0L;
+            lastFrameStaleInstancedInstances.set(currentFrameStaleInstancedInstances);
+            currentFrameStaleInstancedInstances = 0L;
+            lastFrameStaleIrisCompanionBatches.set(currentFrameStaleIrisCompanionBatches);
+            currentFrameStaleIrisCompanionBatches = 0L;
+            lastFrameStaleIrisCompanionInstances.set(currentFrameStaleIrisCompanionInstances);
+            currentFrameStaleIrisCompanionInstances = 0L;
+            lastFrameInstancedAdditiveQueuedBatches.set(currentFrameInstancedAdditiveQueuedBatches);
+            currentFrameInstancedAdditiveQueuedBatches = 0L;
+            lastFrameInstancedAdditiveQueuedInstances.set(currentFrameInstancedAdditiveQueuedInstances);
+            currentFrameInstancedAdditiveQueuedInstances = 0L;
+            lastFrameInstancedAdditiveDrawCalls.set(currentFrameInstancedAdditiveDrawCalls);
+            currentFrameInstancedAdditiveDrawCalls = 0L;
+            lastFrameInstancedAdditiveFallbackBatches.set(currentFrameInstancedAdditiveFallbackBatches);
+            currentFrameInstancedAdditiveFallbackBatches = 0L;
+            lastFrameInstancedAdditiveFallbackInstances.set(currentFrameInstancedAdditiveFallbackInstances);
+            currentFrameInstancedAdditiveFallbackInstances = 0L;
+            lastFrameInstancedAdditiveOverflowBatches.set(currentFrameInstancedAdditiveOverflowBatches);
+            currentFrameInstancedAdditiveOverflowBatches = 0L;
+            lastFrameInstancedAdditiveOverflowInstances.set(currentFrameInstancedAdditiveOverflowInstances);
+            currentFrameInstancedAdditiveOverflowInstances = 0L;
+            lastFrameMdiEligibleFlushes.set(currentFrameMdiEligibleFlushes);
+            currentFrameMdiEligibleFlushes = 0L;
+            lastFrameMdiEligibleBatches.set(currentFrameMdiEligibleBatches);
+            currentFrameMdiEligibleBatches = 0L;
+            lastFrameMdiFallbackFlushes.set(currentFrameMdiFallbackFlushes);
+            currentFrameMdiFallbackFlushes = 0L;
+            lastFrameMdiFallbackBatches.set(currentFrameMdiFallbackBatches);
+            currentFrameMdiFallbackBatches = 0L;
+            lastFrameMdiDrawCalls.set(currentFrameMdiDrawCalls);
+            currentFrameMdiDrawCalls = 0L;
+            lastFrameMdiMultiDrawCalls.set(currentFrameMdiMultiDrawCalls);
+            currentFrameMdiMultiDrawCalls = 0L;
+            lastFrameMdiIndirectCommands.set(currentFrameMdiIndirectCommands);
+            currentFrameMdiIndirectCommands = 0L;
+            lastFrameMdiNoSlotBatches.set(currentFrameMdiNoSlotBatches);
+            currentFrameMdiNoSlotBatches = 0L;
+            lastFrameMdiNoSlotInstances.set(currentFrameMdiNoSlotInstances);
+            currentFrameMdiNoSlotInstances = 0L;
+            lastFrameMdiPartialDrawFailures.set(currentFrameMdiPartialDrawFailures);
+            currentFrameMdiPartialDrawFailures = 0L;
+            lastFrameMdiStalePreparedGroups.set(currentFrameMdiStalePreparedGroups);
+            currentFrameMdiStalePreparedGroups = 0L;
+            lastFrameMdiStalePreparedCommands.set(currentFrameMdiStalePreparedCommands);
+            currentFrameMdiStalePreparedCommands = 0L;
+            lastFrameMdiDispatchDisableEvents.set(currentFrameMdiDispatchDisableEvents);
+            currentFrameMdiDispatchDisableEvents = 0L;
+            lastFrameMdiAtlasRepackFailures.set(currentFrameMdiAtlasRepackFailures);
+            currentFrameMdiAtlasRepackFailures = 0L;
+            lastFrameMdiAtlasInitFailures.set(currentFrameMdiAtlasInitFailures);
+            currentFrameMdiAtlasInitFailures = 0L;
+            lastFrameMdiAdditiveEligibleBatches.set(currentFrameMdiAdditiveEligibleBatches);
+            currentFrameMdiAdditiveEligibleBatches = 0L;
+            lastFrameMdiAdditiveFallbackBatches.set(currentFrameMdiAdditiveFallbackBatches);
+            currentFrameMdiAdditiveFallbackBatches = 0L;
+            lastFrameMdiAdditiveDrawCalls.set(currentFrameMdiAdditiveDrawCalls);
+            currentFrameMdiAdditiveDrawCalls = 0L;
+            lastFrameMdiAdditiveIndirectCommands.set(currentFrameMdiAdditiveIndirectCommands);
+            currentFrameMdiAdditiveIndirectCommands = 0L;
+            lastFrameMdiAdditiveNoSlotBatches.set(currentFrameMdiAdditiveNoSlotBatches);
+            currentFrameMdiAdditiveNoSlotBatches = 0L;
+            lastFrameMdiAdditiveNoSlotInstances.set(currentFrameMdiAdditiveNoSlotInstances);
+            currentFrameMdiAdditiveNoSlotInstances = 0L;
+            lastFrameGpuDrawCalls.set(currentFrameGpuDrawCalls);
+            currentFrameGpuDrawCalls = 0L;
+            lastFrameGpuFallbackBatches.set(currentFrameGpuFallbackBatches);
+            currentFrameGpuFallbackBatches = 0L;
+            lastFrameGpuFallbackVertices.set(currentFrameGpuFallbackVertices);
+            currentFrameGpuFallbackVertices = 0L;
+            lastFrameIrisEligibleBatches.set(currentFrameIrisEligibleBatches);
+            currentFrameIrisEligibleBatches = 0L;
+            lastFrameIrisDrawCalls.set(currentFrameIrisDrawCalls);
+            currentFrameIrisDrawCalls = 0L;
+            lastFrameIrisShadowDrawCalls.set(currentFrameIrisShadowDrawCalls);
+            currentFrameIrisShadowDrawCalls = 0L;
+            lastFrameIrisFallbackBatches.set(currentFrameIrisFallbackBatches);
+            currentFrameIrisFallbackBatches = 0L;
+            lastFrameIrisFallbackVertices.set(currentFrameIrisFallbackVertices);
+            currentFrameIrisFallbackVertices = 0L;
+            lastFrameIrisLightmapStorageFailures.set(currentFrameIrisLightmapStorageFailures);
+            currentFrameIrisLightmapStorageFailures = 0L;
+            lastFrameIrisLightmapSlotReuses.set(currentFrameIrisLightmapSlotReuses);
+            currentFrameIrisLightmapSlotReuses = 0L;
+            lastFrameIrisLightmapSlotUploads.set(currentFrameIrisLightmapSlotUploads);
+            currentFrameIrisLightmapSlotUploads = 0L;
+            lastFrameIrisLightmapStagingFallbacks.set(currentFrameIrisLightmapStagingFallbacks);
+            currentFrameIrisLightmapStagingFallbacks = 0L;
+            lastFrameIrisShaderAttributeCacheHits.set(currentFrameIrisShaderAttributeCacheHits);
+            currentFrameIrisShaderAttributeCacheHits = 0L;
+            lastFrameIrisShaderAttributeCacheMisses.set(currentFrameIrisShaderAttributeCacheMisses);
+            currentFrameIrisShaderAttributeCacheMisses = 0L;
             lastFrameIrisShaderAttributeGenerationInvalidations.set(
-                    currentFrameIrisShaderAttributeGenerationInvalidations.getAndSet(0L));
-            lastFrameIrisShaderAttributePrimedSkips.set(currentFrameIrisShaderAttributePrimedSkips.getAndSet(0L));
-            lastFrameIrisShaderAttributeVaoBindFailures.set(
-                    currentFrameIrisShaderAttributeVaoBindFailures.getAndSet(0L));
-            lastFrameIrisQueuedBatches.set(currentFrameIrisQueuedBatches.getAndSet(0L));
-            lastFrameIrisQueuedInstances.set(currentFrameIrisQueuedInstances.getAndSet(0L));
-            lastFrameIrisQueuedFlushes.set(currentFrameIrisQueuedFlushes.getAndSet(0L));
-            lastFrameIrisQueuedDrawCalls.set(currentFrameIrisQueuedDrawCalls.getAndSet(0L));
-            lastFrameIrisQueuedFallbackBatches.set(currentFrameIrisQueuedFallbackBatches.getAndSet(0L));
-            lastFrameIrisQueuedFallbackInstances.set(currentFrameIrisQueuedFallbackInstances.getAndSet(0L));
-            lastFrameIrisQueuedDuplicateInstances.set(currentFrameIrisQueuedDuplicateInstances.getAndSet(0L));
+                    currentFrameIrisShaderAttributeGenerationInvalidations);
+            currentFrameIrisShaderAttributeGenerationInvalidations = 0L;
+            lastFrameIrisShaderAttributePrimedSkips.set(currentFrameIrisShaderAttributePrimedSkips);
+            currentFrameIrisShaderAttributePrimedSkips = 0L;
+            lastFrameIrisShaderAttributeVaoBindFailures.set(currentFrameIrisShaderAttributeVaoBindFailures);
+            currentFrameIrisShaderAttributeVaoBindFailures = 0L;
+            lastFrameIrisQueuedBatches.set(currentFrameIrisQueuedBatches);
+            currentFrameIrisQueuedBatches = 0L;
+            lastFrameIrisQueuedInstances.set(currentFrameIrisQueuedInstances);
+            currentFrameIrisQueuedInstances = 0L;
+            lastFrameIrisQueuedFlushes.set(currentFrameIrisQueuedFlushes);
+            currentFrameIrisQueuedFlushes = 0L;
+            lastFrameIrisQueuedDrawCalls.set(currentFrameIrisQueuedDrawCalls);
+            currentFrameIrisQueuedDrawCalls = 0L;
+            lastFrameIrisQueuedFallbackBatches.set(currentFrameIrisQueuedFallbackBatches);
+            currentFrameIrisQueuedFallbackBatches = 0L;
+            lastFrameIrisQueuedFallbackInstances.set(currentFrameIrisQueuedFallbackInstances);
+            currentFrameIrisQueuedFallbackInstances = 0L;
+            lastFrameIrisQueuedDuplicateInstances.set(currentFrameIrisQueuedDuplicateInstances);
+            currentFrameIrisQueuedDuplicateInstances = 0L;
             HbmIrisRenderBatch.endFrame();
             cpuFallback.endFrame();
         }
@@ -7453,7 +7589,7 @@ public final class LegacyWavefrontModel {
             RenderBackendSnapshot cpu = cpuFallback.snapshot();
             boolean experimentalEnabled = HbmRenderFrameFlags.current().experimentalGpuBackendEnabled();
             long totalDrawCalls = cpu.estimatedDrawCalls() + gpuDrawCalls.get();
-            long currentDrawCalls = cpu.currentFrameEstimatedDrawCalls() + currentFrameGpuDrawCalls.get();
+            long currentDrawCalls = cpu.currentFrameEstimatedDrawCalls() + currentFrameGpuDrawCalls;
             long lastDrawCalls = cpu.lastFrameEstimatedDrawCalls() + lastFrameGpuDrawCalls.get();
             return new RenderBackendSnapshot(
                     experimentalEnabled ? "experimental_gpu_mesh_with_cpu_fallback" : cpu.name(),
@@ -7511,8 +7647,8 @@ public final class LegacyWavefrontModel {
                     cpu.currentFrameSpriteVertices(),
                     cpu.currentFrameUntexturedBatches(),
                     cpu.currentFrameUntexturedVertices(),
-                    cpu.currentFrameCpuFallbackBatches() + currentFrameGpuFallbackBatches.get(),
-                    cpu.currentFrameCpuFallbackVertices() + currentFrameGpuFallbackVertices.get(),
+                    cpu.currentFrameCpuFallbackBatches() + currentFrameGpuFallbackBatches,
+                    cpu.currentFrameCpuFallbackVertices() + currentFrameGpuFallbackVertices,
                     cpu.currentFrameBackendFlushes(),
                     currentDrawCalls,
                     cpu.currentFrameTextureSwitches(),
@@ -7546,14 +7682,14 @@ public final class LegacyWavefrontModel {
                     mdiAtlas.byteCapacity(),
                     mdiNoSlotBatches.get(),
                     mdiNoSlotInstances.get(),
-                    currentFrameMdiEligibleFlushes.get(),
-                    currentFrameMdiEligibleBatches.get(),
-                    currentFrameMdiFallbackFlushes.get(),
-                    currentFrameMdiFallbackBatches.get(),
-                    currentFrameMdiDrawCalls.get(),
-                    currentFrameMdiIndirectCommands.get(),
-                    currentFrameMdiNoSlotBatches.get(),
-                    currentFrameMdiNoSlotInstances.get(),
+                    currentFrameMdiEligibleFlushes,
+                    currentFrameMdiEligibleBatches,
+                    currentFrameMdiFallbackFlushes,
+                    currentFrameMdiFallbackBatches,
+                    currentFrameMdiDrawCalls,
+                    currentFrameMdiIndirectCommands,
+                    currentFrameMdiNoSlotBatches,
+                    currentFrameMdiNoSlotInstances,
                     lastFrameMdiEligibleFlushes.get(),
                     lastFrameMdiEligibleBatches.get(),
                     lastFrameMdiFallbackFlushes.get(),
@@ -7562,19 +7698,19 @@ public final class LegacyWavefrontModel {
                     lastFrameMdiIndirectCommands.get(),
                     lastFrameMdiNoSlotBatches.get(),
                     lastFrameMdiNoSlotInstances.get(),
-                    currentFrameInstancedQueuedBatches.get(),
-                    currentFrameInstancedQueuedInstances.get(),
-                    currentFrameInstancedDrawCalls.get(),
-                    currentFrameInstancedOverflowBatches.get(),
-                    currentFrameInstancedOverflowInstances.get(),
+                    currentFrameInstancedQueuedBatches,
+                    currentFrameInstancedQueuedInstances,
+                    currentFrameInstancedDrawCalls,
+                    currentFrameInstancedOverflowBatches,
+                    currentFrameInstancedOverflowInstances,
                     lastFrameInstancedQueuedBatches.get(),
                     lastFrameInstancedQueuedInstances.get(),
                     lastFrameInstancedDrawCalls.get(),
                     lastFrameInstancedOverflowBatches.get(),
                     lastFrameInstancedOverflowInstances.get(),
-                    currentFrameGpuDrawCalls.get(),
-                    currentFrameGpuFallbackBatches.get(),
-                    currentFrameGpuFallbackVertices.get(),
+                    currentFrameGpuDrawCalls,
+                    currentFrameGpuFallbackBatches,
+                    currentFrameGpuFallbackVertices,
                     lastFrameGpuDrawCalls.get(),
                     lastFrameGpuFallbackBatches.get(),
                     lastFrameGpuFallbackVertices.get(),
@@ -7602,13 +7738,13 @@ public final class LegacyWavefrontModel {
                             instancedAdditiveFallbackInstances.get(),
                             instancedAdditiveOverflowBatches.get(),
                             instancedAdditiveOverflowInstances.get(),
-                            currentFrameInstancedAdditiveQueuedBatches.get(),
-                            currentFrameInstancedAdditiveQueuedInstances.get(),
-                            currentFrameInstancedAdditiveDrawCalls.get(),
-                            currentFrameInstancedAdditiveFallbackBatches.get(),
-                            currentFrameInstancedAdditiveFallbackInstances.get(),
-                            currentFrameInstancedAdditiveOverflowBatches.get(),
-                            currentFrameInstancedAdditiveOverflowInstances.get(),
+                            currentFrameInstancedAdditiveQueuedBatches,
+                            currentFrameInstancedAdditiveQueuedInstances,
+                            currentFrameInstancedAdditiveDrawCalls,
+                            currentFrameInstancedAdditiveFallbackBatches,
+                            currentFrameInstancedAdditiveFallbackInstances,
+                            currentFrameInstancedAdditiveOverflowBatches,
+                            currentFrameInstancedAdditiveOverflowInstances,
                             lastFrameInstancedAdditiveQueuedBatches.get(),
                             lastFrameInstancedAdditiveQueuedInstances.get(),
                             lastFrameInstancedAdditiveDrawCalls.get(),
@@ -7623,12 +7759,12 @@ public final class LegacyWavefrontModel {
                             mdiAdditiveIndirectCommands.get(),
                             mdiAdditiveNoSlotBatches.get(),
                             mdiAdditiveNoSlotInstances.get(),
-                            currentFrameMdiAdditiveEligibleBatches.get(),
-                            currentFrameMdiAdditiveFallbackBatches.get(),
-                            currentFrameMdiAdditiveDrawCalls.get(),
-                            currentFrameMdiAdditiveIndirectCommands.get(),
-                            currentFrameMdiAdditiveNoSlotBatches.get(),
-                            currentFrameMdiAdditiveNoSlotInstances.get(),
+                            currentFrameMdiAdditiveEligibleBatches,
+                            currentFrameMdiAdditiveFallbackBatches,
+                            currentFrameMdiAdditiveDrawCalls,
+                            currentFrameMdiAdditiveIndirectCommands,
+                            currentFrameMdiAdditiveNoSlotBatches,
+                            currentFrameMdiAdditiveNoSlotInstances,
                             lastFrameMdiAdditiveEligibleBatches.get(),
                             lastFrameMdiAdditiveFallbackBatches.get(),
                             lastFrameMdiAdditiveDrawCalls.get(),
@@ -7641,55 +7777,55 @@ public final class LegacyWavefrontModel {
         public RenderBackendInstancingSnapshot instancingSnapshot() {
             return new RenderBackendInstancingSnapshot(
                     optimizedFlushCalls.get(),
-                    currentFrameOptimizedFlushCalls.get(),
+                    currentFrameOptimizedFlushCalls,
                     lastFrameOptimizedFlushCalls.get(),
                     optimizedDuplicateFlushCalls.get(),
-                    currentFrameOptimizedDuplicateFlushCalls.get(),
+                    currentFrameOptimizedDuplicateFlushCalls,
                     lastFrameOptimizedDuplicateFlushCalls.get(),
                     optimizedDuplicatePresentSkips.get(),
-                    currentFrameOptimizedDuplicatePresentSkips.get(),
+                    currentFrameOptimizedDuplicatePresentSkips,
                     lastFrameOptimizedDuplicatePresentSkips.get(),
                     optimizedFlushNanos.get(),
-                    currentFrameOptimizedFlushNanos.get(),
+                    currentFrameOptimizedFlushNanos,
                     lastFrameOptimizedFlushNanos.get(),
                     optimizedDrawStateRestoreFailures.get(),
-                    currentFrameOptimizedDrawStateRestoreFailures.get(),
+                    currentFrameOptimizedDrawStateRestoreFailures,
                     lastFrameOptimizedDrawStateRestoreFailures.get(),
                     instancedDuplicateInstances.get(),
-                    currentFrameInstancedDuplicateInstances.get(),
+                    currentFrameInstancedDuplicateInstances,
                     lastFrameInstancedDuplicateInstances.get(),
                     staleInstancedBatches.get(),
                     staleInstancedInstances.get(),
                     staleIrisCompanionBatches.get(),
                     staleIrisCompanionInstances.get(),
-                    currentFrameStaleInstancedBatches.get(),
-                    currentFrameStaleInstancedInstances.get(),
-                    currentFrameStaleIrisCompanionBatches.get(),
-                    currentFrameStaleIrisCompanionInstances.get(),
+                    currentFrameStaleInstancedBatches,
+                    currentFrameStaleInstancedInstances,
+                    currentFrameStaleIrisCompanionBatches,
+                    currentFrameStaleIrisCompanionInstances,
                     lastFrameStaleInstancedBatches.get(),
                     lastFrameStaleInstancedInstances.get(),
                     lastFrameStaleIrisCompanionBatches.get(),
                     lastFrameStaleIrisCompanionInstances.get(),
                     mdiPartialDrawFailures.get(),
-                    currentFrameMdiPartialDrawFailures.get(),
+                    currentFrameMdiPartialDrawFailures,
                     lastFrameMdiPartialDrawFailures.get(),
                     mdiStalePreparedGroups.get(),
-                    currentFrameMdiStalePreparedGroups.get(),
+                    currentFrameMdiStalePreparedGroups,
                     lastFrameMdiStalePreparedGroups.get(),
                     mdiStalePreparedCommands.get(),
-                    currentFrameMdiStalePreparedCommands.get(),
+                    currentFrameMdiStalePreparedCommands,
                     lastFrameMdiStalePreparedCommands.get(),
                     mdiDispatchDisabled,
                     mdiDispatchDisableEvents.get(),
-                    currentFrameMdiDispatchDisableEvents.get(),
+                    currentFrameMdiDispatchDisableEvents,
                     lastFrameMdiDispatchDisableEvents.get(),
-                    currentFrameMdiMultiDrawCalls.get(),
+                    currentFrameMdiMultiDrawCalls,
                     lastFrameMdiMultiDrawCalls.get(),
                     mdiAtlasRepackFailures.get(),
-                    currentFrameMdiAtlasRepackFailures.get(),
+                    currentFrameMdiAtlasRepackFailures,
                     lastFrameMdiAtlasRepackFailures.get(),
                     mdiAtlasInitFailures.get(),
-                    currentFrameMdiAtlasInitFailures.get(),
+                    currentFrameMdiAtlasInitFailures,
                     lastFrameMdiAtlasInitFailures.get());
         }
 
@@ -7719,44 +7855,44 @@ public final class LegacyWavefrontModel {
                         irisFallbackVertices.get(),
                         irisUploadAttempts.get(),
                         irisUploadFailures.get(),
-                        currentFrameIrisEligibleBatches.get(),
-                        currentFrameIrisDrawCalls.get(),
-                        currentFrameIrisFallbackBatches.get(),
-                        currentFrameIrisFallbackVertices.get(),
+                        currentFrameIrisEligibleBatches,
+                        currentFrameIrisDrawCalls,
+                        currentFrameIrisFallbackBatches,
+                        currentFrameIrisFallbackVertices,
                         lastFrameIrisEligibleBatches.get(),
                         lastFrameIrisDrawCalls.get(),
                         lastFrameIrisFallbackBatches.get(),
                         lastFrameIrisFallbackVertices.get(),
                         irisShadowDrawCalls.get(),
-                        currentFrameIrisShadowDrawCalls.get(),
+                        currentFrameIrisShadowDrawCalls,
                         lastFrameIrisShadowDrawCalls.get(),
                         irisLightmapStorageFailures.get(),
-                        currentFrameIrisLightmapStorageFailures.get(),
+                        currentFrameIrisLightmapStorageFailures,
                         lastFrameIrisLightmapStorageFailures.get(),
                         irisLightmapSlotReuses.get(),
-                        currentFrameIrisLightmapSlotReuses.get(),
+                        currentFrameIrisLightmapSlotReuses,
                         lastFrameIrisLightmapSlotReuses.get(),
                         irisLightmapSlotUploads.get(),
-                        currentFrameIrisLightmapSlotUploads.get(),
+                        currentFrameIrisLightmapSlotUploads,
                         lastFrameIrisLightmapSlotUploads.get(),
                         irisLightmapStagingFallbacks.get(),
-                        currentFrameIrisLightmapStagingFallbacks.get(),
+                        currentFrameIrisLightmapStagingFallbacks,
                         lastFrameIrisLightmapStagingFallbacks.get(),
                         new IrisCompanionShaderSnapshot(
                                 irisShaderAttributeCacheHits.get(),
-                                currentFrameIrisShaderAttributeCacheHits.get(),
+                                currentFrameIrisShaderAttributeCacheHits,
                                 lastFrameIrisShaderAttributeCacheHits.get(),
                                 irisShaderAttributeCacheMisses.get(),
-                                currentFrameIrisShaderAttributeCacheMisses.get(),
+                                currentFrameIrisShaderAttributeCacheMisses,
                                 lastFrameIrisShaderAttributeCacheMisses.get(),
                                 irisShaderAttributeGenerationInvalidations.get(),
-                                currentFrameIrisShaderAttributeGenerationInvalidations.get(),
+                                currentFrameIrisShaderAttributeGenerationInvalidations,
                                 lastFrameIrisShaderAttributeGenerationInvalidations.get(),
                                 irisShaderAttributePrimedSkips.get(),
-                                currentFrameIrisShaderAttributePrimedSkips.get(),
+                                currentFrameIrisShaderAttributePrimedSkips,
                                 lastFrameIrisShaderAttributePrimedSkips.get(),
                                 irisShaderAttributeVaoBindFailures.get(),
-                                currentFrameIrisShaderAttributeVaoBindFailures.get(),
+                                currentFrameIrisShaderAttributeVaoBindFailures,
                                 lastFrameIrisShaderAttributeVaoBindFailures.get()),
                         HbmIrisRenderBatch.snapshot(),
                         new IrisCompanionQueueSnapshot(
@@ -7766,14 +7902,14 @@ public final class LegacyWavefrontModel {
                                 irisQueuedDrawCalls.get(),
                                 irisQueuedFallbackBatches.get(),
                                 irisQueuedFallbackInstances.get(),
-                                currentFrameIrisQueuedBatches.get(),
-                                currentFrameIrisQueuedInstances.get(),
-                                currentFrameIrisQueuedFlushes.get(),
-                                currentFrameIrisQueuedDrawCalls.get(),
-                                currentFrameIrisQueuedFallbackBatches.get(),
-                                currentFrameIrisQueuedFallbackInstances.get(),
+                                currentFrameIrisQueuedBatches,
+                                currentFrameIrisQueuedInstances,
+                                currentFrameIrisQueuedFlushes,
+                                currentFrameIrisQueuedDrawCalls,
+                                currentFrameIrisQueuedFallbackBatches,
+                                currentFrameIrisQueuedFallbackInstances,
                                 irisQueuedDuplicateInstances.get(),
-                                currentFrameIrisQueuedDuplicateInstances.get(),
+                                currentFrameIrisQueuedDuplicateInstances,
                                 lastFrameIrisQueuedDuplicateInstances.get(),
                                 lastFrameIrisQueuedBatches.get(),
                                 lastFrameIrisQueuedInstances.get(),
@@ -8794,8 +8930,17 @@ public final class LegacyWavefrontModel {
             }
 
             private int preparePerVertexLightmapSlot(Matrix4f modelView, int packedLight, int requiredSlots) {
-                return preparePerVertexLightmapSlot(bounds.sampleSlicedLightProbe(modelView, lightSampleKey,
-                        packedLight), requiredSlots);
+                return preparePerVertexLightmapSlot(samplePerVertexLightProbe(modelView, packedLight),
+                        requiredSlots);
+            }
+
+            private LegacyRenderLighting.SlicedLightProbe samplePerVertexLightProbe(Matrix4f modelView,
+                    int packedLight) {
+                if (HbmRenderFrameFlags.current().useSlicedLight()) {
+                    return bounds.sampleSlicedLightProbe(modelView, lightSampleKey, packedLight);
+                }
+                return LegacyRenderLighting.SlicedLightProbe.from(bounds.sampleLightProbe(modelView, lightSampleKey,
+                        packedLight));
             }
 
             private int preparePerVertexLightmapSlot(LegacyRenderLighting.SlicedLightProbe probe) {
@@ -9591,17 +9736,17 @@ public final class LegacyWavefrontModel {
         private final AtomicLong untexturedClippedFallbackBatches = new AtomicLong();
         private final AtomicLong untexturedClippedFallbackVertices = new AtomicLong();
         private final AtomicLong frameGeneration = new AtomicLong();
-        private final AtomicLong currentFrameTexturedBatches = new AtomicLong();
-        private final AtomicLong currentFrameTexturedVertices = new AtomicLong();
-        private final AtomicLong currentFrameSpriteBatches = new AtomicLong();
-        private final AtomicLong currentFrameSpriteVertices = new AtomicLong();
-        private final AtomicLong currentFrameUntexturedBatches = new AtomicLong();
-        private final AtomicLong currentFrameUntexturedVertices = new AtomicLong();
-        private final AtomicLong currentFrameCpuFallbackBatches = new AtomicLong();
-        private final AtomicLong currentFrameCpuFallbackVertices = new AtomicLong();
-        private final AtomicLong currentFrameBackendFlushes = new AtomicLong();
-        private final AtomicLong currentFrameEstimatedDrawCalls = new AtomicLong();
-        private final AtomicLong currentFrameTextureSwitches = new AtomicLong();
+        private long currentFrameTexturedBatches;
+        private long currentFrameTexturedVertices;
+        private long currentFrameSpriteBatches;
+        private long currentFrameSpriteVertices;
+        private long currentFrameUntexturedBatches;
+        private long currentFrameUntexturedVertices;
+        private long currentFrameCpuFallbackBatches;
+        private long currentFrameCpuFallbackVertices;
+        private long currentFrameBackendFlushes;
+        private long currentFrameEstimatedDrawCalls;
+        private long currentFrameTextureSwitches;
         private final AtomicLong lastFrameTexturedBatches = new AtomicLong();
         private final AtomicLong lastFrameTexturedVertices = new AtomicLong();
         private final AtomicLong lastFrameSpriteBatches = new AtomicLong();
@@ -9627,8 +9772,8 @@ public final class LegacyWavefrontModel {
             }
             texturedBatches.incrementAndGet();
             texturedVertices.addAndGet(batch.vertexCount());
-            currentFrameTexturedBatches.incrementAndGet();
-            currentFrameTexturedVertices.addAndGet(batch.vertexCount());
+            currentFrameTexturedBatches++;
+            currentFrameTexturedVertices += batch.vertexCount();
             VertexConsumer quadConsumer = null;
             VertexConsumer triangleConsumer = null;
             PoseStack.Pose pose = poseStack.last();
@@ -9666,8 +9811,8 @@ public final class LegacyWavefrontModel {
             }
             spriteBatches.incrementAndGet();
             spriteVertices.addAndGet(batch.vertexCount());
-            currentFrameSpriteBatches.incrementAndGet();
-            currentFrameSpriteVertices.addAndGet(batch.vertexCount());
+            currentFrameSpriteBatches++;
+            currentFrameSpriteVertices += batch.vertexCount();
             VertexConsumer quadConsumer = null;
             VertexConsumer triangleConsumer = null;
             PoseStack.Pose pose = poseStack.last();
@@ -9703,8 +9848,8 @@ public final class LegacyWavefrontModel {
             }
             untexturedBatches.incrementAndGet();
             untexturedVertices.addAndGet(batch.vertexCount());
-            currentFrameUntexturedBatches.incrementAndGet();
-            currentFrameUntexturedVertices.addAndGet(batch.vertexCount());
+            currentFrameUntexturedBatches++;
+            currentFrameUntexturedVertices += batch.vertexCount();
             PoseStack.Pose pose = poseStack.last();
             Matrix4f position = pose.pose();
             LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, pose.normal());
@@ -9750,7 +9895,7 @@ public final class LegacyWavefrontModel {
             RenderBackendFlushStage resolvedStage = stage == null ? RenderBackendFlushStage.MANUAL : stage;
             backendFlushes.incrementAndGet();
             backendFlushGeneration.incrementAndGet();
-            currentFrameBackendFlushes.incrementAndGet();
+            currentFrameBackendFlushes++;
             lastFlushStage = resolvedStage;
             switch (resolvedStage) {
                 case AFTER_BLOCK_ENTITIES -> afterBlockEntitiesFlushes.incrementAndGet();
@@ -9777,15 +9922,15 @@ public final class LegacyWavefrontModel {
                 case NONE -> {
                 }
             }
-            currentFrameCpuFallbackBatches.incrementAndGet();
-            currentFrameCpuFallbackVertices.addAndGet(vertices);
+            currentFrameCpuFallbackBatches++;
+            currentFrameCpuFallbackVertices += vertices;
         }
 
         private void recordTextureAndMode(ResourceLocation textureLocation, LegacyTexturedRenderMode renderMode) {
             ResourceLocation previousTexture = lastTextureLocation;
             if (previousTexture == null || !previousTexture.equals(textureLocation)) {
                 textureSwitches.incrementAndGet();
-                currentFrameTextureSwitches.incrementAndGet();
+                currentFrameTextureSwitches++;
                 lastTextureLocation = textureLocation;
             }
             recordRenderMode(renderMode);
@@ -9795,7 +9940,7 @@ public final class LegacyWavefrontModel {
             TextureAtlasSprite previousSprite = lastSprite;
             if (previousSprite != sprite) {
                 textureSwitches.incrementAndGet();
-                currentFrameTextureSwitches.incrementAndGet();
+                currentFrameTextureSwitches++;
                 lastSprite = sprite;
             }
             recordRenderMode(renderMode);
@@ -9811,32 +9956,43 @@ public final class LegacyWavefrontModel {
 
         private void recordTexturedDrawCall() {
             texturedDrawCalls.incrementAndGet();
-            currentFrameEstimatedDrawCalls.incrementAndGet();
+            currentFrameEstimatedDrawCalls++;
         }
 
         private void recordSpriteDrawCall() {
             spriteDrawCalls.incrementAndGet();
-            currentFrameEstimatedDrawCalls.incrementAndGet();
+            currentFrameEstimatedDrawCalls++;
         }
 
         private void recordUntexturedDrawCall() {
             untexturedDrawCalls.incrementAndGet();
-            currentFrameEstimatedDrawCalls.incrementAndGet();
+            currentFrameEstimatedDrawCalls++;
         }
 
         @Override
         public void endFrame() {
-            lastFrameTexturedBatches.set(currentFrameTexturedBatches.getAndSet(0L));
-            lastFrameTexturedVertices.set(currentFrameTexturedVertices.getAndSet(0L));
-            lastFrameSpriteBatches.set(currentFrameSpriteBatches.getAndSet(0L));
-            lastFrameSpriteVertices.set(currentFrameSpriteVertices.getAndSet(0L));
-            lastFrameUntexturedBatches.set(currentFrameUntexturedBatches.getAndSet(0L));
-            lastFrameUntexturedVertices.set(currentFrameUntexturedVertices.getAndSet(0L));
-            lastFrameCpuFallbackBatches.set(currentFrameCpuFallbackBatches.getAndSet(0L));
-            lastFrameCpuFallbackVertices.set(currentFrameCpuFallbackVertices.getAndSet(0L));
-            lastFrameBackendFlushes.set(currentFrameBackendFlushes.getAndSet(0L));
-            lastFrameEstimatedDrawCalls.set(currentFrameEstimatedDrawCalls.getAndSet(0L));
-            lastFrameTextureSwitches.set(currentFrameTextureSwitches.getAndSet(0L));
+            lastFrameTexturedBatches.set(currentFrameTexturedBatches);
+            currentFrameTexturedBatches = 0L;
+            lastFrameTexturedVertices.set(currentFrameTexturedVertices);
+            currentFrameTexturedVertices = 0L;
+            lastFrameSpriteBatches.set(currentFrameSpriteBatches);
+            currentFrameSpriteBatches = 0L;
+            lastFrameSpriteVertices.set(currentFrameSpriteVertices);
+            currentFrameSpriteVertices = 0L;
+            lastFrameUntexturedBatches.set(currentFrameUntexturedBatches);
+            currentFrameUntexturedBatches = 0L;
+            lastFrameUntexturedVertices.set(currentFrameUntexturedVertices);
+            currentFrameUntexturedVertices = 0L;
+            lastFrameCpuFallbackBatches.set(currentFrameCpuFallbackBatches);
+            currentFrameCpuFallbackBatches = 0L;
+            lastFrameCpuFallbackVertices.set(currentFrameCpuFallbackVertices);
+            currentFrameCpuFallbackVertices = 0L;
+            lastFrameBackendFlushes.set(currentFrameBackendFlushes);
+            currentFrameBackendFlushes = 0L;
+            lastFrameEstimatedDrawCalls.set(currentFrameEstimatedDrawCalls);
+            currentFrameEstimatedDrawCalls = 0L;
+            lastFrameTextureSwitches.set(currentFrameTextureSwitches);
+            currentFrameTextureSwitches = 0L;
             frameGeneration.incrementAndGet();
         }
 
@@ -9896,17 +10052,17 @@ public final class LegacyWavefrontModel {
                     lastFallbackReason,
                     NO_FALLBACK_DETAIL,
                     frameGeneration.get(),
-                    currentFrameTexturedBatches.get(),
-                    currentFrameTexturedVertices.get(),
-                    currentFrameSpriteBatches.get(),
-                    currentFrameSpriteVertices.get(),
-                    currentFrameUntexturedBatches.get(),
-                    currentFrameUntexturedVertices.get(),
-                    currentFrameCpuFallbackBatches.get(),
-                    currentFrameCpuFallbackVertices.get(),
-                    currentFrameBackendFlushes.get(),
-                    currentFrameEstimatedDrawCalls.get(),
-                    currentFrameTextureSwitches.get(),
+                    currentFrameTexturedBatches,
+                    currentFrameTexturedVertices,
+                    currentFrameSpriteBatches,
+                    currentFrameSpriteVertices,
+                    currentFrameUntexturedBatches,
+                    currentFrameUntexturedVertices,
+                    currentFrameCpuFallbackBatches,
+                    currentFrameCpuFallbackVertices,
+                    currentFrameBackendFlushes,
+                    currentFrameEstimatedDrawCalls,
+                    currentFrameTextureSwitches,
                     0,
                     0L,
                     0L,
@@ -10778,8 +10934,11 @@ public final class LegacyWavefrontModel {
             return bounds.sampleLightProbe(modelView, lightSampleKey, packedLight);
         }
 
-        private LegacyRenderLighting.SlicedLightProbe sampleSlicedLightProbe(Matrix4f modelView, int packedLight) {
-            return bounds.sampleSlicedLightProbe(modelView, lightSampleKey, packedLight);
+        private LegacyRenderLighting.SlicedLightProbe sampleInstanceLightProbe(Matrix4f modelView, int packedLight) {
+            if (HbmRenderFrameFlags.current().useSlicedLight()) {
+                return bounds.sampleSlicedLightProbe(modelView, lightSampleKey, packedLight);
+            }
+            return LegacyRenderLighting.SlicedLightProbe.from(sampleLightProbe(modelView, packedLight));
         }
 
         private void enableVertexAttribArraysOnBoundVao() {

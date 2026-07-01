@@ -148,6 +148,6 @@ public class LargeLaunchPadBlock extends LegacyXrMultiblockBlock implements Enti
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 }

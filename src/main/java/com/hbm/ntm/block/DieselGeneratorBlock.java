@@ -30,7 +30,7 @@ public class DieselGeneratorBlock extends LegacyVisibleMachineBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Nullable

@@ -3,7 +3,7 @@
   "model": "hbm_ntm_rebirth:models/block/trinkets/snowglobe.obj",
   "flip_v": true,
   "automatic_culling": false,
-  "render_type": "minecraft:cutout",
+  "render_type": "minecraft:solid",
   "textures": {
     "particle": "hbm_ntm_rebirth:block/trinkets/snowglobe",
     "default": "hbm_ntm_rebirth:block/trinkets/snowglobe",

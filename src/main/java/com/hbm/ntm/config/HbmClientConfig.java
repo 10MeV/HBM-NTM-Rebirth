@@ -25,6 +25,8 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.BooleanValue COOLING_TOWER_PARTICLES;
     public static final ForgeConfigSpec.IntValue RENDER_MODEL_UPDATE_DISTANCE;
     public static final ForgeConfigSpec.IntValue RENDER_MODEL_STATIC_RENDER_DISTANCE;
+    public static final ForgeConfigSpec.BooleanValue RENDER_USE_SLICED_LIGHT;
+    public static final ForgeConfigSpec.BooleanValue RENDER_CHUNK_BAKED_MACHINE_STATICS;
     public static final ForgeConfigSpec.BooleanValue RENDER_SAFE_OBJ_STATIC_BATCHING;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_GPU_BACKEND;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_INSTANCING;
@@ -109,11 +111,17 @@ public final class HbmClientConfig {
 
         builder.push("rendering");
         RENDER_MODEL_UPDATE_DISTANCE = builder
-                .comment("Modernized render pipeline: distance for animated/dynamic OBJ machine model parts, in chunks.")
-                .defineInRange("modelUpdateDistance", 8, 2, 64);
+                .comment("Modernized render pipeline: distance for animated/dynamic OBJ machine model parts, in chunks. The default preserves full-machine visibility at the older 512 block renderer distance.")
+                .defineInRange("modelUpdateDistance", 32, 2, 64);
         RENDER_MODEL_STATIC_RENDER_DISTANCE = builder
                 .comment("Modernized render pipeline: distance for static OBJ machine model rendering, in chunks. The default preserves the existing 512 block renderer distance.")
                 .defineInRange("modelStaticRenderDistance", 32, 2, 64);
+        RENDER_USE_SLICED_LIGHT = builder
+                .comment("Modernized render pipeline: use 2x4x2 sliced light probes for instanced OBJ lighting. Default false matches Modernized; enable only for tall machines that visibly need it.")
+                .define("useSlicedLight", false);
+        RENDER_CHUNK_BAKED_MACHINE_STATICS = builder
+                .comment("Enables experimental Forge chunk-mesh baked static parts for ordinary OBJ machines. Default true preserves full-machine visuals while the BER-only path remains a manual diagnostic switch.")
+                .define("chunkBakedMachineStatics", true);
         RENDER_SAFE_OBJ_STATIC_BATCHING = builder
                 .comment("Enables the source-backed safe OBJ GPU mesh cache and ordinary static OBJ instancing for world renderers without shader packs. Disable this if packaged-jar validation finds rendering regressions.")
                 .define("safeObjStaticBatching", true);
@@ -130,8 +138,8 @@ public final class HbmClientConfig {
                 .comment("Modernized render pipeline: maximum OBJ instances uploaded per ordinary instanced draw slice. Higher values reduce draw slices in large machine fields at the cost of larger transient instance uploads.")
                 .defineInRange("maxInstancedInstancesPerDraw", 4096, 256, 16384);
         RENDER_EXPERIMENTAL_MDI = builder
-                .comment("Modernized render pipeline: enables experimental multi-draw indirect batching for eligible instanced OBJ parts when the GPU supports it.")
-                .define("experimentalMdi", false);
+                .comment("Modernized render pipeline: enables multi-draw indirect batching for eligible instanced OBJ parts when the GPU supports it; falls back to ordinary instancing if unavailable.")
+                .define("experimentalMdi", true);
         RENDER_EXPERIMENTAL_OCCLUSION_CULLING = builder
                 .comment("Modernized render pipeline: enables experimental ray-cache occlusion culling for eligible visible machine block entity renderers.")
                 .define("experimentalOcclusionCulling", false);
@@ -215,8 +223,16 @@ public final class HbmClientConfig {
         return modelStaticRenderDistanceChunks() * 16;
     }
 
+    public static boolean useSlicedLight() {
+        return booleanValue(RENDER_USE_SLICED_LIGHT, false);
+    }
+
+    public static boolean chunkBakedMachineStatics() {
+        return booleanValue(RENDER_CHUNK_BAKED_MACHINE_STATICS, true);
+    }
+
     public static int modelUpdateDistanceChunks() {
-        return Math.max(2, Math.min(64, intValue(RENDER_MODEL_UPDATE_DISTANCE, 8)));
+        return Math.max(2, Math.min(64, intValue(RENDER_MODEL_UPDATE_DISTANCE, 32)));
     }
 
     public static int modelUpdateDistanceBlocks() {
@@ -244,7 +260,7 @@ public final class HbmClientConfig {
     }
 
     public static boolean experimentalMdi() {
-        return booleanValue(RENDER_EXPERIMENTAL_MDI, false);
+        return booleanValue(RENDER_EXPERIMENTAL_MDI, true);
     }
 
     public static boolean experimentalOcclusionCulling() {

@@ -6,24 +6,23 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import org.joml.Matrix4f;
 
 public final class LegacyMachineEffectPresenter {
     private static final Map<PresentStage, List<Runnable>> QUEUES = new EnumMap<>(PresentStage.class);
-    private static final AtomicLong FRAME_GENERATION = new AtomicLong();
-    private static final AtomicLong PRESENT_CALLS = new AtomicLong();
-    private static final AtomicLong AFTER_BLOCK_ENTITIES_PRESENTS = new AtomicLong();
-    private static final AtomicLong AFTER_LEVEL_PRESENTS = new AtomicLong();
-    private static final AtomicLong QUEUED_TASKS = new AtomicLong();
-    private static final AtomicLong PRESENTED_TASKS = new AtomicLong();
-    private static final AtomicLong FAILED_TASKS = new AtomicLong();
-    private static final AtomicLong CLEARS = new AtomicLong();
-    private static final AtomicLong LAST_FRAME_PRESENT_CALLS = new AtomicLong();
-    private static final AtomicLong LAST_FRAME_PRESENTED_TASKS = new AtomicLong();
+    private static long frameGeneration;
+    private static long presentCalls;
+    private static long afterBlockEntitiesPresents;
+    private static long afterLevelPresents;
+    private static long queuedTasks;
+    private static long presentedTasks;
+    private static long failedTasks;
+    private static long clears;
     private static long currentFramePresentCalls;
     private static long currentFramePresentedTasks;
+    private static long lastFramePresentCalls;
+    private static long lastFramePresentedTasks;
     private static volatile PresentStage lastPresentStage = PresentStage.MANUAL;
 
     private LegacyMachineEffectPresenter() {
@@ -35,21 +34,21 @@ public final class LegacyMachineEffectPresenter {
         }
     }
 
-    public static synchronized void beginFrame() {
-        LAST_FRAME_PRESENT_CALLS.set(currentFramePresentCalls);
-        LAST_FRAME_PRESENTED_TASKS.set(currentFramePresentedTasks);
+    public static void beginFrame() {
+        lastFramePresentCalls = currentFramePresentCalls;
+        lastFramePresentedTasks = currentFramePresentedTasks;
         currentFramePresentCalls = 0L;
         currentFramePresentedTasks = 0L;
-        FRAME_GENERATION.incrementAndGet();
+        frameGeneration++;
     }
 
-    public static synchronized void enqueue(PresentStage stage, Runnable task) {
+    public static void enqueue(PresentStage stage, Runnable task) {
         if (task == null) {
             return;
         }
         PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
         QUEUES.get(resolvedStage).add(HbmRenderFrameCulling.captureMachineRendererSubmissionScope(task));
-        QUEUED_TASKS.incrementAndGet();
+        queuedTasks++;
     }
 
     public static void enqueue(PresentStage stage, PoseStack poseStack, Consumer<PoseStack> task) {
@@ -64,14 +63,14 @@ public final class LegacyMachineEffectPresenter {
         });
     }
 
-    public static synchronized void present(PresentStage stage) {
+    public static void present(PresentStage stage) {
         PresentStage resolvedStage = stage == null ? PresentStage.MANUAL : stage;
-        PRESENT_CALLS.incrementAndGet();
+        presentCalls++;
         currentFramePresentCalls++;
         lastPresentStage = resolvedStage;
         switch (resolvedStage) {
-            case AFTER_BLOCK_ENTITIES -> AFTER_BLOCK_ENTITIES_PRESENTS.incrementAndGet();
-            case AFTER_LEVEL -> AFTER_LEVEL_PRESENTS.incrementAndGet();
+            case AFTER_BLOCK_ENTITIES -> afterBlockEntitiesPresents++;
+            case AFTER_LEVEL -> afterLevelPresents++;
             case MANUAL -> {
             }
         }
@@ -84,37 +83,37 @@ public final class LegacyMachineEffectPresenter {
         for (Runnable task : tasks) {
             try {
                 task.run();
-                PRESENTED_TASKS.incrementAndGet();
+                presentedTasks++;
                 currentFramePresentedTasks++;
             } catch (RuntimeException exception) {
-                FAILED_TASKS.incrementAndGet();
+                failedTasks++;
                 throw exception;
             }
         }
     }
 
-    public static synchronized void clear() {
+    public static void clear() {
         for (List<Runnable> queue : QUEUES.values()) {
             queue.clear();
         }
-        CLEARS.incrementAndGet();
+        clears++;
     }
 
     public static Snapshot snapshot() {
         return new Snapshot(
-                FRAME_GENERATION.get(),
-                PRESENT_CALLS.get(),
-                AFTER_BLOCK_ENTITIES_PRESENTS.get(),
-                AFTER_LEVEL_PRESENTS.get(),
-                QUEUED_TASKS.get(),
-                PRESENTED_TASKS.get(),
-                FAILED_TASKS.get(),
-                CLEARS.get(),
+                frameGeneration,
+                presentCalls,
+                afterBlockEntitiesPresents,
+                afterLevelPresents,
+                queuedTasks,
+                presentedTasks,
+                failedTasks,
+                clears,
                 QUEUES.values().stream().mapToInt(List::size).sum(),
                 currentFramePresentCalls,
                 currentFramePresentedTasks,
-                LAST_FRAME_PRESENT_CALLS.get(),
-                LAST_FRAME_PRESENTED_TASKS.get(),
+                lastFramePresentCalls,
+                lastFramePresentedTasks,
                 lastPresentStage);
     }
 

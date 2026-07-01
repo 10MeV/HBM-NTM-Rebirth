@@ -2,7 +2,6 @@ package com.hbm.ntm.client.renderer;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.BlockPos;
@@ -23,73 +22,73 @@ public final class LegacyLightSampleCache {
             Direction.EAST,
             Direction.DOWN
     };
-    private static final AtomicLong FRAME_GENERATION = new AtomicLong();
-    private static final AtomicLong SAMPLES = new AtomicLong();
-    private static final AtomicLong HITS = new AtomicLong();
-    private static final AtomicLong MISSES = new AtomicLong();
-    private static final AtomicLong CLEARS = new AtomicLong();
-    private static final AtomicLong LAST_FRAME_SAMPLES = new AtomicLong();
-    private static final AtomicLong LAST_FRAME_HITS = new AtomicLong();
-    private static final AtomicLong LAST_FRAME_MISSES = new AtomicLong();
+    private static long frameGeneration;
+    private static long samples;
+    private static long hits;
+    private static long misses;
+    private static long clears;
     private static long currentFrameSamples;
     private static long currentFrameHits;
     private static long currentFrameMisses;
+    private static long lastFrameSamples;
+    private static long lastFrameHits;
+    private static long lastFrameMisses;
 
     private LegacyLightSampleCache() {
     }
 
-    public static synchronized void beginFrame() {
-        LAST_FRAME_SAMPLES.set(currentFrameSamples);
-        LAST_FRAME_HITS.set(currentFrameHits);
-        LAST_FRAME_MISSES.set(currentFrameMisses);
+    public static void beginFrame() {
+        lastFrameSamples = currentFrameSamples;
+        lastFrameHits = currentFrameHits;
+        lastFrameMisses = currentFrameMisses;
         currentFrameSamples = 0L;
         currentFrameHits = 0L;
         currentFrameMisses = 0L;
-        long frame = FRAME_GENERATION.incrementAndGet();
-        if (frame % PRUNE_EVERY_FRAMES == 0L) {
-            pruneStale(frame);
+        frameGeneration++;
+        if (frameGeneration % PRUNE_EVERY_FRAMES == 0L) {
+            pruneStale(frameGeneration);
         }
     }
 
-    public static synchronized void endBlockEntityPass() {
-        long frame = FRAME_GENERATION.incrementAndGet();
-        if (frame % PRUNE_EVERY_FRAMES == 0L) {
-            pruneStale(frame);
+    public static void endBlockEntityPass() {
+        frameGeneration++;
+        if (frameGeneration % PRUNE_EVERY_FRAMES == 0L) {
+            pruneStale(frameGeneration);
         }
     }
 
-    public static synchronized void clear() {
+    public static void clear() {
         CACHE.clear();
         NON_SOLID_CACHE.clear();
-        CLEARS.incrementAndGet();
+        clears++;
     }
 
-    public static synchronized int sample(Level level, BlockPos pos) {
-        SAMPLES.incrementAndGet();
+    public static int sample(Level level, BlockPos pos) {
+        samples++;
         currentFrameSamples++;
         long key = pos.asLong();
-        long frame = FRAME_GENERATION.get();
+        long frame = frameGeneration;
         CachedLight cached = CACHE.get(key);
         if (cached != null && cached.frame() == frame) {
-            HITS.incrementAndGet();
+            hits++;
             currentFrameHits++;
             return cached.packedLight();
         }
         int light = LevelRenderer.getLightColor(level, pos);
         CACHE.put(key, new CachedLight(light, frame));
-        MISSES.incrementAndGet();
+        misses++;
         currentFrameMisses++;
         return light;
     }
 
-    public static synchronized int sampleNonSolid(Level level, BlockPos pos, int packedLightFallback) {
-        SAMPLES.incrementAndGet();
+    public static int sampleNonSolid(Level level, BlockPos pos, int packedLightFallback) {
+        samples++;
         currentFrameSamples++;
         long key = pos.asLong();
-        long frame = FRAME_GENERATION.get();
+        long frame = frameGeneration;
         CachedNonSolidLight cached = NON_SOLID_CACHE.get(key);
         if (cached != null && cached.frame() == frame) {
-            HITS.incrementAndGet();
+            hits++;
             currentFrameHits++;
             return cached.resolve(packedLightFallback);
         }
@@ -98,25 +97,25 @@ public final class LegacyLightSampleCache {
                 int neighborLight = brightestNonSolidNeighbor(level, pos);
                 if (neighborLight != SOLID_SAMPLE_SENTINEL) {
                     NON_SOLID_CACHE.put(key, new CachedNonSolidLight(neighborLight, true, frame));
-                    MISSES.incrementAndGet();
+                    misses++;
                     currentFrameMisses++;
                     return brightest(packedLightFallback, neighborLight);
                 }
                 NON_SOLID_CACHE.put(key, CachedNonSolidLight.solid(frame));
-                MISSES.incrementAndGet();
+                misses++;
                 currentFrameMisses++;
                 return packedLightFallback;
             }
         } catch (RuntimeException ignored) {
             NON_SOLID_CACHE.put(key, CachedNonSolidLight.solid(frame));
-            MISSES.incrementAndGet();
+            misses++;
             currentFrameMisses++;
             return packedLightFallback;
         }
         int light = LevelRenderer.getLightColor(level, pos);
         CACHE.put(key, new CachedLight(light, frame));
         NON_SOLID_CACHE.put(key, new CachedNonSolidLight(light, false, frame));
-        MISSES.incrementAndGet();
+        misses++;
         currentFrameMisses++;
         return light;
     }
@@ -130,7 +129,7 @@ public final class LegacyLightSampleCache {
                     continue;
                 }
                 int light = LevelRenderer.getLightColor(level, samplePos);
-                CACHE.put(samplePos.asLong(), new CachedLight(light, FRAME_GENERATION.get()));
+                CACHE.put(samplePos.asLong(), new CachedLight(light, frameGeneration));
                 resolved = resolved == SOLID_SAMPLE_SENTINEL ? light : brightest(resolved, light);
             } catch (RuntimeException ignored) {
                 // Try the remaining sides before falling back to the caller-provided packed light.
@@ -148,23 +147,23 @@ public final class LegacyLightSampleCache {
     private static void pruneStale(long frame) {
         CACHE.entrySet().removeIf(entry -> frame - entry.getValue().frame() > STALE_AFTER_FRAMES);
         NON_SOLID_CACHE.entrySet().removeIf(entry -> frame - entry.getValue().frame() > STALE_AFTER_FRAMES);
-        CLEARS.incrementAndGet();
+        clears++;
     }
 
-    public static synchronized Snapshot snapshot() {
+    public static Snapshot snapshot() {
         return new Snapshot(
-                FRAME_GENERATION.get(),
+                frameGeneration,
                 CACHE.size() + NON_SOLID_CACHE.size(),
-                SAMPLES.get(),
-                HITS.get(),
-                MISSES.get(),
-                CLEARS.get(),
+                samples,
+                hits,
+                misses,
+                clears,
                 currentFrameSamples,
                 currentFrameHits,
                 currentFrameMisses,
-                LAST_FRAME_SAMPLES.get(),
-                LAST_FRAME_HITS.get(),
-                LAST_FRAME_MISSES.get());
+                lastFrameSamples,
+                lastFrameHits,
+                lastFrameMisses);
     }
 
     public record Snapshot(

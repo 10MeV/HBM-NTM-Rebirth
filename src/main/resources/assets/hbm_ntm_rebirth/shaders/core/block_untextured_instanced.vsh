@@ -27,13 +27,15 @@ float stableFaceShade(vec3 normal) {
     vec3 n = len > 1.0e-5 ? normal / len : vec3(0.0, 1.0, 0.0);
     vec3 weight = abs(n);
     float sum = max(weight.x + weight.y + weight.z, 1.0e-5);
-    float yShade = n.y >= 0.0 ? 0.98 : 0.54;
-    float axisShade = (weight.x * 0.72 + weight.y * yShade + weight.z * 0.82) / sum;
+    float yShade = n.y >= 0.0 ? 1.00 : 0.50;
+    float axisShade = (weight.x * 0.72 + weight.y * yShade + weight.z * 0.86) / sum;
     vec3 keyLight = normalize(vec3(0.20, 1.00, -0.70));
     vec3 fillLight = normalize(vec3(-0.20, 1.00, 0.70));
-    float fixedDiffuse = max(dot(n, keyLight), 0.0) * 0.60 + max(dot(n, fillLight), 0.0) * 0.40;
-    float detailShade = 0.84 + fixedDiffuse * 0.20;
-    return clamp(axisShade * detailShade, 0.50, 1.00);
+    float fixedDiffuse = max(dot(n, keyLight), 0.0) * 0.65 + max(dot(n, fillLight), 0.0) * 0.35;
+    float litShade = axisShade * (0.82 + fixedDiffuse * 0.22);
+    float contrastShade = 0.55 + (litShade - 0.55) * 1.25;
+    float shadowWeight = clamp((0.64 - contrastShade) / 0.34, 0.0, 1.0);
+    return clamp(contrastShade - shadowWeight * 0.06, 0.34, 1.00);
 }
 
 void main() {

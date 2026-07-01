@@ -3,7 +3,7 @@
   "model": "hbm_ntm_rebirth:models/block/rbmk/debris.obj",
   "flip_v": true,
   "automatic_culling": false,
-  "render_type": "minecraft:cutout",
+  "render_type": "minecraft:solid",
   "textures": {
     "particle": "hbm_ntm_rebirth:block/rbmk/rbmk_debris_burning",
     "default": "hbm_ntm_rebirth:block/rbmk/rbmk_debris_burning"

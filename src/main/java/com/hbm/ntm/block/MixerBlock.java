@@ -27,7 +27,7 @@ public class MixerBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Nullable
