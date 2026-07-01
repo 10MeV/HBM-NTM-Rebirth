@@ -13,6 +13,8 @@ import com.hbm.ntm.block.HbmEnergyNodeBlock;
 import com.hbm.ntm.block.ICFAssembledBlock;
 import com.hbm.ntm.block.LegacyChargeBlock;
 import com.hbm.ntm.block.LegacyChainBlock;
+import com.hbm.ntm.block.LegacyFanBlock;
+import com.hbm.ntm.block.LegacyFileCabinetBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacyBasaltOreBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
@@ -52,7 +54,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     protected void registerStatesAndModels() {
         existingModelWithItemNoRotation(ModBlocks.MACHINE_PRESS, "machine_press");
         cubeWithItem(ModBlocks.PRESS_PREHEATER, "press_preheater");
-        visibleMachineWithItemRenderer(ModBlocks.MACHINE_EPRESS, "machine_epress");
+        electricPressWithItemRenderer(ModBlocks.MACHINE_EPRESS, "machine_epress");
         difurnaceWithItem(ModBlocks.MACHINE_DIFURNACE_OFF);
         sidedCubeWithItem(ModBlocks.MACHINE_ELECTRIC_FURNACE_OFF,
                 "machine_electric_furnace_bottom",
@@ -72,7 +74,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         hiddenBerBlockWithItem(ModBlocks.REFUELER);
         hiddenBerBlockWithItem(ModBlocks.RADIOBOX);
         hiddenBerBlockWithItem(ModBlocks.RADIOREC);
-        hiddenBerBlockWithItem(ModBlocks.TESLA);
+        teslaStaticWithItemRenderer();
         horizontalBlockNoRotationWithItem(ModBlocks.MACHINE_SHREDDER,
                 "machine_shredder_bottom_alt",
                 "machine_shredder_top_alt",
@@ -109,8 +111,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "armor_table_side",
                 "armor_table_side",
                 "armor_table_side");
-        hiddenBerBlockWithItem(ModBlocks.FAN);
-        hiddenBerBlockWithItem(ModBlocks.FILING_CABINET);
+        fanFrameWithItemRenderer();
+        filingCabinetWithItemRenderer();
         simpleSidedCubeWithItem(ModBlocks.MACHINE_WEAPON_TABLE,
                 "gun_table_bottom",
                 "gun_table_top",
@@ -241,12 +243,12 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.STRUCT_LAUNCHER, "struct_launcher");
         simpleCubeWithItem(ModBlocks.STRUCT_SCAFFOLD, "struct_scaffold");
         simpleCubeWithItem(ModBlocks.STRUCT_SOYUZ_CORE, "struct_soyuz_core");
-        existingModelWithItem(ModBlocks.LAUNCH_PAD, "launch_pad");
-        existingModelWithCustomItem(ModBlocks.LAUNCH_PAD_LARGE, "launch_pad");
-        existingModelWithCustomItem(ModBlocks.LAUNCH_PAD_RUSTED, "launch_pad");
+        existingModelWithCustomItem(ModBlocks.LAUNCH_PAD, "launch_pad");
+        existingModelWithCustomItem(ModBlocks.LAUNCH_PAD_LARGE, "launch_pad_large");
+        existingModelWithCustomItem(ModBlocks.LAUNCH_PAD_RUSTED, "launch_pad_rusted");
         existingModelWithCustomItem(ModBlocks.LAUNCH_TABLE, "launch_table/launch_table_base");
         existingModelWithCustomItem(ModBlocks.COMPACT_LAUNCHER, "launch_table/compact_launcher");
-        existingModelWithCustomItem(ModBlocks.MACHINE_MISSILE_ASSEMBLY, "machine_missile_assembly");
+        missileAssemblyWithCustomItem();
         existingModelWithItem(ModBlocks.RBMK_DISPLAY_BLANK, "rbmk_panel_base");
         existingModelWithItem(ModBlocks.RBMK_DISPLAY, "rbmk_panel_base");
         existingModelWithItem(ModBlocks.RBMK_GAUGE, "rbmk_panel_base");
@@ -298,9 +300,9 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_BAT9000, "machines/bat9000");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_BIGASSTANK, "machines/bigasstank");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_FLUIDTANK, "machines/fluidtank");
-        hiddenBerBlockWithItem(ModBlocks.MACHINE_UF6_TANK);
-        hiddenBerBlockWithItem(ModBlocks.MACHINE_PUF6_TANK);
-        hiddenBerBlockWithItem(ModBlocks.MACHINE_STORAGE_DRUM);
+        hexafluorideTankWithCustomItem(ModBlocks.MACHINE_UF6_TANK, "machine_uf6_tank");
+        hexafluorideTankWithCustomItem(ModBlocks.MACHINE_PUF6_TANK, "machine_puf6_tank");
+        existingModelWithCustomItemNoRotation(ModBlocks.MACHINE_STORAGE_DRUM, "machine_storage_drum");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_WELL, "machines/derrick");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_PUMPJACK, "machines/pumpjack");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_FRACKING_TOWER, "machines/fracking_tower");
@@ -332,7 +334,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_COMPRESSOR_COMPACT, "machines/compressor_compact");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_LPW2, "reactors/lpw2");
         visibleMachineWithItemRenderer(ModBlocks.REACTOR_RESEARCH, "reactors/reactor_small_base");
-        visibleMachineWithItemRenderer(ModBlocks.MACHINE_REACTOR_BREEDING, "reactors/breeder");
+        electricPressWithItemRenderer(ModBlocks.MACHINE_REACTOR_BREEDING, "machine_reactor_breeding");
         simpleCubeWithItem(ModBlocks.STRUCT_WATZ_CORE, "legacy_blocks/struct_watz_core");
         watzPillarWithItem(ModBlocks.WATZ_ELEMENT, "watz_element");
         watzPillarWithItem(ModBlocks.WATZ_COOLER, "watz_cooler");
@@ -383,7 +385,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_ROTARY_FURNACE, "machines/rotary_furnace");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_STEAM_ENGINE, "machines/steam_engine");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SOLAR_BOILER, "machines/solar_boiler");
-        existingModelWithItemNoRotation(ModBlocks.SOLAR_MIRROR, "machines/solar_mirror");
+        solarMirrorBaseWithFullItem(ModBlocks.SOLAR_MIRROR);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TOWER_SMALL, "machines/tower_small");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TOWER_LARGE, "machines/tower_large");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBOFAN, "machines/turbofan");
@@ -625,10 +627,134 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(block.get(), model);
     }
 
+    private void existingModelWithCustomItemNoRotation(RegistryObject<Block> block, String modelName) {
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
+        simpleBlock(block.get(), model);
+        customBlockItem(block);
+    }
+
     private void existingModelWithCustomItem(RegistryObject<Block> block, String modelName) {
         ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
         horizontalBlock(block.get(), model);
         customBlockItem(block);
+    }
+
+    private void electricPressWithItemRenderer(RegistryObject<Block> block, String modelName) {
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .rotationY(electricPressRotation(state.getValue(HorizontalMachineBlock.FACING)))
+                        .build());
+        customBlockItem(block);
+    }
+
+    private void teslaStaticWithItemRenderer() {
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/tesla"));
+        getVariantBuilder(ModBlocks.TESLA.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .rotationY(180)
+                        .build());
+        customBlockItem(ModBlocks.TESLA);
+    }
+
+    private void missileAssemblyWithCustomItem() {
+        ModelFile model = new ModelFile.UncheckedModelFile(
+                new ResourceLocation(HbmNtm.MOD_ID, "block/machine_missile_assembly"));
+        getVariantBuilder(ModBlocks.MACHINE_MISSILE_ASSEMBLY.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .rotationY(missileAssemblyRotation(state.getValue(HorizontalMachineBlock.FACING)))
+                        .build());
+        customBlockItem(ModBlocks.MACHINE_MISSILE_ASSEMBLY);
+    }
+
+    private void hexafluorideTankWithCustomItem(RegistryObject<Block> block, String modelName) {
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .rotationY(hexafluorideTankRotation(state.getValue(HorizontalMachineBlock.FACING)))
+                        .build());
+        customBlockItem(block);
+    }
+
+    private void fanFrameWithItemRenderer() {
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/machines/fan"));
+        getVariantBuilder(ModBlocks.FAN.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .rotationX(rotationX(state.getValue(LegacyFanBlock.FACING)))
+                        .rotationY(rotationY(state.getValue(LegacyFanBlock.FACING)))
+                        .build());
+        customBlockItem(ModBlocks.FAN);
+    }
+
+    private void filingCabinetWithItemRenderer() {
+        ModelFile green = new ModelFile.UncheckedModelFile(
+                new ResourceLocation(HbmNtm.MOD_ID, "block/filing_cabinet"));
+        ModelFile steel = new ModelFile.UncheckedModelFile(
+                new ResourceLocation(HbmNtm.MOD_ID, "block/filing_cabinet_steel"));
+        getVariantBuilder(ModBlocks.FILING_CABINET.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(state.getValue(LegacyFileCabinetBlock.VARIANT) == 1 ? steel : green)
+                        .rotationY(fileCabinetRotation(state.getValue(LegacyFileCabinetBlock.FACING)))
+                        .build());
+        customBlockItem(ModBlocks.FILING_CABINET);
+    }
+
+    private void solarMirrorBaseWithFullItem(RegistryObject<Block> block) {
+        ModelFile model = new ModelFile.UncheckedModelFile(
+                new ResourceLocation(HbmNtm.MOD_ID, "block/machines/solar_mirror_base"));
+        simpleBlock(block.get(), model);
+        itemModels().withExistingParent(block.getId().getPath(),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/machines/solar_mirror"));
+    }
+
+    private static int electricPressRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 90;
+            case WEST -> 180;
+            case SOUTH -> 270;
+            default -> 0;
+        };
+    }
+
+    private static int missileAssemblyRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 180;
+            case EAST -> 90;
+            case WEST -> 270;
+            default -> 0;
+        };
+    }
+
+    private static int vendingMachineRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 90;
+            case WEST -> 180;
+            case SOUTH -> 270;
+            default -> 0;
+        };
+    }
+
+    private static int hexafluorideTankRotation(Direction facing) {
+        return switch (facing) {
+            case WEST -> 90;
+            case SOUTH -> 180;
+            case EAST -> 270;
+            default -> 0;
+        };
+    }
+
+    private static int fileCabinetRotation(Direction facing) {
+        return switch (facing) {
+            case EAST -> 90;
+            case NORTH -> 180;
+            case WEST -> 270;
+            default -> 0;
+        };
     }
 
     private void visibleMachineWithItemRenderer(RegistryObject<Block> block, String modelName) {
@@ -833,12 +959,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     }
 
     private void vendingMachineWithItemRenderer() {
-        ModelFile marker = models().getBuilder(ModBlocks.VENDING_MACHINE.getId().getPath())
-                .texture("particle", modLoc("block/machines/vending_machine"));
+        ModelFile soda = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/vending_machine"));
+        ModelFile obamna = new ModelFile.UncheckedModelFile(
+                new ResourceLocation(HbmNtm.MOD_ID, "block/vending_machine_obamna"));
         getVariantBuilder(ModBlocks.VENDING_MACHINE.get())
                 .forAllStates(state -> ConfiguredModel.builder()
-                        .modelFile(marker)
-                        .rotationY(rotationY(state.getValue(VendingMachineBlock.FACING)))
+                        .modelFile(state.getValue(VendingMachineBlock.VARIANT) == 0 ? soda : obamna)
+                        .rotationY(vendingMachineRotation(state.getValue(VendingMachineBlock.FACING)))
                         .build());
         customBlockItem(ModBlocks.VENDING_MACHINE);
     }

@@ -149,8 +149,13 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         if (level == null || level.isClientSide) {
             return;
         }
+        Set<Direction> connections = collectPneumaticConnections();
+        if (pneumaticNode != null && !pneumaticNode.isExpired()
+                && !pneumaticNode.getConnections().equals(connections)) {
+            removePneumaticNode();
+        }
         if (pneumaticNode == null || pneumaticNode.isExpired()) {
-            pneumaticNode = PneumaticNodespace.createNode(level, new PneumaticNode(worldPosition, collectPneumaticConnections()));
+            pneumaticNode = PneumaticNodespace.createNode(level, new PneumaticNode(worldPosition, connections));
         }
     }
 

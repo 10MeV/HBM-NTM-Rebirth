@@ -12,8 +12,6 @@ import net.minecraft.world.phys.Vec3;
 
 public class SolarMirrorRenderer implements BlockEntityRenderer<SolarMirrorBlockEntity> {
     private static final LegacyWavefrontModel SOLAR_MIRROR = ObjMachineModels.SOLAR_MIRROR_LEGACY;
-    private static final LegacyWavefrontModel.SelectionHandle BASE =
-            SOLAR_MIRROR.prepareRenderOnlyInCallOrder("Base");
     private static final LegacyWavefrontModel.SelectionHandle MIRROR =
             SOLAR_MIRROR.prepareRenderOnlyInCallOrder("Mirror");
 
@@ -27,21 +25,27 @@ public class SolarMirrorRenderer implements BlockEntityRenderer<SolarMirrorBlock
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(SolarMirrorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        SOLAR_MIRROR.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, BASE);
-        if (blockEntity.isTargetAbove()) {
-            Vec3 delta = Vec3.atLowerCornerOf(blockEntity.getTarget().subtract(blockEntity.getBlockPos()));
-            aimAt(delta, poseStack);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                if (blockEntity.isTargetAbove()) {
+                    Vec3 delta = Vec3.atLowerCornerOf(blockEntity.getTarget().subtract(blockEntity.getBlockPos()));
+                    aimAt(delta, poseStack);
+                }
+                SOLAR_MIRROR.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, MIRROR);
+            }
         }
-        SOLAR_MIRROR.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, MIRROR);
         poseStack.popPose();
     }
 

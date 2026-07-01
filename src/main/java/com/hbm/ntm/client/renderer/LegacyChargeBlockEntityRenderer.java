@@ -27,6 +27,9 @@ public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<Lega
     @Override
     public void render(LegacyChargeBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyChargeBlock block)) {
             return;
@@ -36,7 +39,9 @@ public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<Lega
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         applyLegacyRotation(poseStack, state.getValue(LegacyChargeBlock.FACING));
-        model(block.kind()).renderAll(texture(block.kind()), poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            model(block.kind()).renderAll(texture(block.kind()), poseStack, buffer, modelLight, packedOverlay);
+        }
         renderTimer(blockEntity, poseStack, buffer, modelLight);
         poseStack.popPose();
     }
@@ -48,7 +53,7 @@ public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<Lega
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     private static void applyLegacyRotation(PoseStack poseStack, Direction facing) {

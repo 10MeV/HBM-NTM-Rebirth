@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:deco_toaster" },
+    "partial_nbt": "{hbmLegacyVariant:2}"
+  },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_sawdust", "count": 4 },
+    { "item": "hbm_ntm_rebirth:scrap" },
+    { "item": "hbm_ntm_rebirth:coil_tungsten", "count": 4 },
+    { "item": "minecraft:bread", "chance": 0.5 },
+    { "item": "hbm_ntm_rebirth:fusion_core", "chance": 0.5 },
+    { "item": "hbm_ntm_rebirth:fusion_core", "chance": 0.5 },
+    { "item": "hbm_ntm_rebirth:gem_alexandrite", "chance": 0.25 }
+  ],
+  "tier_lower": 2,
+  "overlay": "recycling"
+}

@@ -30,15 +30,15 @@ public class FusionCollectorRenderer implements BlockEntityRenderer<FusionCollec
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
-
         BlockState state = blockEntity.getBlockState();
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
-        ObjFusionModels.COLLECTOR_LEGACY.renderAll(ObjFusionModels.COLLECTOR_TEXTURE,
-                poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            ObjFusionModels.COLLECTOR_LEGACY.renderAll(ObjFusionModels.COLLECTOR_TEXTURE,
+                    poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+        }
         poseStack.popPose();
     }
 }

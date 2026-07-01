@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.obj;
 
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.shader.HbmIrisExtendedShaderAccess;
 import com.hbm.ntm.client.render.HbmRenderFrameLight;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -14,6 +15,7 @@ public final class LegacyModelReloadListener extends SimplePreparableReloadListe
 
     @Override
     protected void apply(Void ignored, ResourceManager resourceManager, ProfilerFiller profiler) {
+        LegacyMachineEffectPresenter.clear();
         HbmIrisExtendedShaderAccess.invalidateShaderCache();
         HbmRenderFrameLight.invalidateCaches();
         LegacyTexturedQuadRenderer.clearSpriteCache();

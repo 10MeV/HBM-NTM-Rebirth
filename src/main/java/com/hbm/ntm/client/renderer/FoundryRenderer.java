@@ -49,7 +49,7 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override

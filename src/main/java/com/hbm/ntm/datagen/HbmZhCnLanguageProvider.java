@@ -157,6 +157,9 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.upgrade_crystallizer", "\u91c7\u77ff\u6fc0\u5149\u5347\u7ea7-\u81ea\u52a8\u7ed3\u6676");
         add("item.hbm_ntm_rebirth.upgrade_screm", "\u91c7\u77ff\u6fc0\u5149\u5347\u7ea7-\u76ee \u529b \u79d1 \u5b66 \u5bb6");
         add("item.hbm_ntm_rebirth.wiring_red_copper", "\u7535\u7f06\u5377");
+        add("item.hbm_ntm_rebirth.power_net_tool", "\u7535\u7f06\u7f51\u7edc\u5206\u6790\u5de5\u5177");
+        add("item.hbm_ntm_rebirth.nuke_electric_kit", "\u7535\u5b50\u5de5\u7a0b\u5e08\u5de5\u5177\u7bb1");
+        add("block.hbm_ntm_rebirth.deco_toaster", "\u574f\u6389\u7684\u70e4\u9762\u5305\u673a");
         add("item.hbm_ntm_rebirth.template_folder", "\u673a\u5668\u6a21\u677f\u6587\u4ef6\u5939");
         add("item.hbm_ntm_rebirth.template_folder.desc", "\u673a\u5668\u6a21\u677f\uff1a\u7eb8\u5f20+\u67d3\u6599$\u953b\u6a21\uff1a\u7a7a\u767d\u953b\u6a21 $\u8b66\u62a5\u58f0\u8f68:\u7edd\u7f18\u4f53+\u94a2\u677f ");
         add("item.hbm_ntm_rebirth.stamp_iron_plate", "\u94c1\u8d28\u677f\u953b\u6a21");
@@ -312,6 +315,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.rag_piss", "\u6cbe\u6709\u5c3f\u7684\u5e03");
         add("item.hbm_ntm_rebirth.rag", "\u5e03");
         add("item.hbm_ntm_rebirth.ingot_dineutronium", "\u53cc\u805a\u4e2d\u5b50\u6001\u7d20\u952d");
+        add("item.hbm_ntm_rebirth.ingot_electronium", "\u7535\u7d20\u952d");
         add("item.hbm_ntm_rebirth.watch", "\u7834\u65e7\u6000\u8868");
         add("item.hbm_ntm_rebirth.hazmat_cloth", "\u9632\u8f90\u5c04\u5e03");
         add("item.hbm_ntm_rebirth.hazmat_cloth_red", "\u9ad8\u7ea7\u9632\u8f90\u5c04\u5e03");
@@ -2356,6 +2360,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.wire_dense_titanium", "\u81f4\u5bc6\u949b\u7ebf");
         add("item.hbm_ntm_rebirth.wire_dense_neodymium", "\u81f4\u5bc6\u9495\u7ebf");
         add("item.hbm_ntm_rebirth.wire_dense_dineutronium", "\u81f4\u5bc6\u53cc\u805a\u4e2d\u5b50\u6001\u7d20\u7ebf");
+        add("item.hbm_ntm_rebirth.wire_dense_magnetized_tungsten", "\u81f4\u5bc64000K\u9ad8\u6e29\u8d85\u5bfc\u4f53\u7ebf");
         add("item.hbm_ntm_rebirth.wire_dense_starmetal", "\u81f4\u5bc6\u661f\u8f89\u7ebf");
         add("item.hbm_ntm_rebirth.pa_coil_gold", "\u5927\u578b\u91d1\u7ebf\u5708");
         add("item.hbm_ntm_rebirth.pa_coil_niobium", "\u5927\u578b\u94cc\u949b\u5408\u91d1\u7ebf\u5708");
@@ -2656,7 +2661,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
             case "ingot_euphemium", "nugget_euphemium", "powder_euphemium",
                  "plate_euphemium" -> true;
             case "ingot_gh336", "nugget_gh336", "billet_gh336" -> true;
-            case "ingot_starmetal", "ingot_chainsteel", "ingot_dineutronium", "crystal_starmetal", "gem_volcanic",
+            case "ingot_starmetal", "ingot_chainsteel", "ingot_dineutronium", "ingot_electronium", "crystal_starmetal", "gem_volcanic",
                  "fragment_neodymium", "fragment_cobalt", "fragment_niobium", "fragment_cerium",
                  "fragment_lanthanium", "fragment_actinium", "fragment_boron", "fragment_meteorite",
                  "scrap", "scrap_plastic", "scrap_oil", "ring_starmetal" -> true;
@@ -2681,6 +2686,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
                   "plate_cast_ferrouranium",
                   "plate_cast_tungsten" -> true;
             case "wire_dense_copper", "wire_dense_titanium", "wire_dense_neodymium", "wire_dense_dineutronium",
+                 "wire_dense_magnetized_tungsten",
                  "wire_dense_mingrade" -> true;
             case "dust", "dust_tiny", "fragment_coltan", "powder_coltan", "gem_tantalium", "powder_tantalium",
                  "nugget_tantalium", "shell_aluminium", "shell_copper" -> true;

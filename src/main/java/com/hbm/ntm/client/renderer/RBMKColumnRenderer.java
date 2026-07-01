@@ -59,9 +59,18 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
     @Override
     public void render(RBMKColumnBlockEntity column, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(column, getViewDistance())) {
+            return;
+        }
         BlockState state = column.getBlockState();
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(column, packedLight);
-        renderStaticSegment(blockRenderer, state, 0, columnHeightAbove(), poseStack, buffer, modelLight);
+        if (state.getBlock() instanceof RBMKColumnBlock block && block.kind().rod()) {
+            try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(column)) {
+                renderStaticSegment(blockRenderer, state, 0, columnHeightAbove(), poseStack, buffer, modelLight);
+            }
+        } else {
+            renderStaticSegment(blockRenderer, state, 0, columnHeightAbove(), poseStack, buffer, modelLight);
+        }
         if (column.getLevel() != null
                 && !MultiblockHelper.isOperationalCoreLayoutComplete(column.getLevel(), column.getBlockPos())) {
             return;
@@ -143,8 +152,10 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
             int red = color >> 16 & 255;
             int green = color >> 8 & 255;
             int blue = color & 255;
-            ObjRbmkModels.renderFuelRodPart(plan.part(), ObjRbmkModels.ELEMENT_FUEL_TEXTURE, poseStack, buffer,
-                    packedLight, packedOverlay, red, green, blue);
+            try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(column)) {
+                ObjRbmkModels.renderFuelRodPart(plan.part(), ObjRbmkModels.ELEMENT_FUEL_TEXTURE, poseStack, buffer,
+                        packedLight, packedOverlay, red, green, blue);
+            }
         }
         if (plan.cherenkov()) {
             int frozenSegmentIndex = segmentIndex;
@@ -173,7 +184,9 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
 
         poseStack.pushPose();
         poseStack.translate(0.5D, plan.lidWorldY() - segmentIndex, 0.5D);
-        ObjRbmkModels.renderControlRodPart(plan.part(), texture, poseStack, buffer, packedLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(column)) {
+            ObjRbmkModels.renderControlRodPart(plan.part(), texture, poseStack, buffer, packedLight, packedOverlay);
+        }
         poseStack.popPose();
     }
 

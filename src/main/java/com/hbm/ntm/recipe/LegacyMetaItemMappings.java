@@ -110,6 +110,7 @@ public final class LegacyMetaItemMappings {
                 4_100, requireLegacyItem("wire_dense_niobium"),
                 7_900, requireLegacyItem("wire_dense_gold"),
                 31, requireLegacyItem("wire_dense_mingrade"),
+                38, requireLegacyItem("wire_dense_magnetized_tungsten"),
                 48, requireLegacyItem("wire_dense_bscco"),
                 6_000, requireLegacyItem("wire_dense_neodymium")));
         registerSparse(PIPE, Map.of(

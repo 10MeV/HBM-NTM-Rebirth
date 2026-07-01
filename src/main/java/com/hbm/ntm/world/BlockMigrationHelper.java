@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraftforge.fml.ModList;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -18,6 +19,12 @@ public final class BlockMigrationHelper {
     private static final AtomicLong CURRENT_BUILD_UNKNOWN_CHUNKS = new AtomicLong();
     private static final AtomicLong FUTURE_MARKER_CHUNKS = new AtomicLong();
     private static final AtomicLong SAVED_CHUNKS = new AtomicLong();
+    private static final AtomicLong MIGRATED_ITEM_STACKS = new AtomicLong();
+    private static final AtomicLong NUMERIC_ITEM_STACKS_WITHOUT_MAP = new AtomicLong();
+    private static final AtomicLong UNKNOWN_NUMERIC_ITEM_STACKS = new AtomicLong();
+    private static volatile LegacyWorldItemIdMap legacyItemIds = LegacyWorldItemIdMap.empty();
+    private static volatile LegacyWorldItemIdMap.LoadResult lastLegacyItemIdMapLoad =
+            LegacyWorldItemIdMap.LoadResult.empty(null, "not_loaded");
     private static volatile MigrationResult lastLoadResult = MigrationResult.unknown();
 
     public static int buildNumber() {
@@ -45,7 +52,7 @@ public final class BlockMigrationHelper {
         if (!marker.needsMigration()) {
             return remember(MigrationResult.upToDate(marker.previousBuild(), marker.currentBuild()));
         }
-        doMigration(chunk, marker.previousBuild(), marker.currentBuild());
+        doMigration(chunk, tag, marker.previousBuild(), marker.currentBuild());
         return remember(MigrationResult.migrated(marker.previousBuild(), marker.currentBuild()));
     }
 
@@ -55,7 +62,32 @@ public final class BlockMigrationHelper {
     }
 
     public static void doMigration(ChunkAccess chunk, int previousBuild, int currentBuild) {
-        // Legacy BlockMigrations had the chunk scan hook but no concrete replacement rules.
+        doMigration(chunk, null, previousBuild, currentBuild);
+    }
+
+    public static void doMigration(ChunkAccess chunk, CompoundTag tag, int previousBuild, int currentBuild) {
+        if (tag != null) {
+            LegacyItemStackMigration.Result result = LegacyItemStackMigration.migrateAll(tag, legacyItemIds);
+            MIGRATED_ITEM_STACKS.addAndGet(result.migrated());
+            NUMERIC_ITEM_STACKS_WITHOUT_MAP.addAndGet(result.numericItemStacksWithoutMap());
+            UNKNOWN_NUMERIC_ITEM_STACKS.addAndGet(result.unknownNumericItemStacks());
+        }
+    }
+
+    public static LegacyWorldItemIdMap.LoadResult loadLegacyItemIds(Path worldRoot) {
+        LegacyWorldItemIdMap.LoadResult result = LegacyWorldItemIdMap.loadFromWorldRoot(worldRoot);
+        legacyItemIds = result.map();
+        lastLegacyItemIdMapLoad = result;
+        return result;
+    }
+
+    public static void setLegacyItemIdsForTesting(LegacyWorldItemIdMap itemIds) {
+        legacyItemIds = itemIds == null ? LegacyWorldItemIdMap.empty() : itemIds;
+        lastLegacyItemIdMapLoad = new LegacyWorldItemIdMap.LoadResult(null, legacyItemIds, null, "test");
+    }
+
+    public static LegacyWorldItemIdMap legacyItemIds() {
+        return legacyItemIds;
     }
 
     public static MigrationMarker inspectTag(CompoundTag tag) {
@@ -94,6 +126,10 @@ public final class BlockMigrationHelper {
                 CURRENT_BUILD_UNKNOWN_CHUNKS.get(),
                 FUTURE_MARKER_CHUNKS.get(),
                 SAVED_CHUNKS.get(),
+                MIGRATED_ITEM_STACKS.get(),
+                NUMERIC_ITEM_STACKS_WITHOUT_MAP.get(),
+                UNKNOWN_NUMERIC_ITEM_STACKS.get(),
+                lastLegacyItemIdMapLoad,
                 lastLoadResult);
     }
 
@@ -104,6 +140,9 @@ public final class BlockMigrationHelper {
         CURRENT_BUILD_UNKNOWN_CHUNKS.set(0L);
         FUTURE_MARKER_CHUNKS.set(0L);
         SAVED_CHUNKS.set(0L);
+        MIGRATED_ITEM_STACKS.set(0L);
+        NUMERIC_ITEM_STACKS_WITHOUT_MAP.set(0L);
+        UNKNOWN_NUMERIC_ITEM_STACKS.set(0L);
         lastLoadResult = MigrationResult.unknown();
     }
 
@@ -202,6 +241,10 @@ public final class BlockMigrationHelper {
 
     public record MigrationDiagnostics(int currentBuild, long freshChunks, long upToDateChunks, long migratedChunks,
                                        long currentBuildUnknownChunks, long futureMarkerChunks, long savedChunks,
+                                       long migratedItemStacks,
+                                       long numericItemStacksWithoutMap,
+                                       long unknownNumericItemStacks,
+                                       LegacyWorldItemIdMap.LoadResult legacyItemIdMapLoad,
                                        MigrationResult lastLoadResult) {
         public long loadedChunks() {
             return freshChunks + upToDateChunks + migratedChunks + currentBuildUnknownChunks + futureMarkerChunks;
@@ -220,7 +263,11 @@ public final class BlockMigrationHelper {
                     + " skipped=" + skippedChunks()
                     + " currentBuildUnknown=" + currentBuildUnknownChunks
                     + " futureMarker=" + futureMarkerChunks
-                    + " saved=" + savedChunks;
+                    + " saved=" + savedChunks
+                    + " migratedItemStacks=" + migratedItemStacks
+                    + " numericItemStacksWithoutMap=" + numericItemStacksWithoutMap
+                    + " unknownNumericItemStacks=" + unknownNumericItemStacks
+                    + " legacyItemIdMap=" + legacyItemIdMapLoad.summary();
         }
     }
 

@@ -4,14 +4,12 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "parts": {
-    "visibility": {
+  "visibility": {
       "Supports": false,
       "Capacitor": false,
       "Battery": true,
       "Socket": false
-    }
-  },
+    },
   "textures": {
     "particle": "hbm_ntm_rebirth:item/battery_lead",
     "default": "hbm_ntm_rebirth:item/battery_lead"

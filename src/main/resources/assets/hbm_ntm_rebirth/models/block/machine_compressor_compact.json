@@ -1,7 +1,21 @@
-﻿{
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/compressor_compact"
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/condenser.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "visibility": {
+      "Fan1": false,
+      "Fan2": false,
+      "Condenser": true
+    },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/compressor_compact",
+    "default": "hbm_ntm_rebirth:block/machines/compressor_compact"
+  }
 }

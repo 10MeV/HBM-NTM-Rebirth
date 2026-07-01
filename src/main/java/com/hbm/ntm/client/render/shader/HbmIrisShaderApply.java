@@ -26,6 +26,7 @@ public final class HbmIrisShaderApply {
             if (isDestroyedGlResource(exception)) {
                 rememberFailure("destroyed GlResource");
                 HbmIrisExtendedShaderAccess.invalidateShaderCache();
+                HbmIrisRenderBatch.invalidateCaches();
                 HbmNtm.LOGGER.debug("HBM Iris/Oculus shader apply failed after destroyed GlResource; caches invalidated.");
             } else {
                 rememberFailure(exception.toString());

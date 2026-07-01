@@ -3,7 +3,6 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.RustedLaunchPadBlock;
 import com.hbm.ntm.blockentity.RustedLaunchPadBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
-import com.hbm.ntm.client.obj.ObjLaunchModels;
 import com.hbm.ntm.client.obj.ObjMissilePartModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -20,8 +19,19 @@ public class RustedLaunchPadRenderer implements BlockEntityRenderer<RustedLaunch
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
     public void render(RustedLaunchPadBlockEntity launchPad, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!launchPad.isMissileLoaded()) {
+            return;
+        }
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(launchPad, getViewDistance())) {
+            return;
+        }
         Direction facing = launchPad.getBlockState().hasProperty(RustedLaunchPadBlock.FACING)
                 ? launchPad.getBlockState().getValue(RustedLaunchPadBlock.FACING)
                 : Direction.NORTH;
@@ -31,9 +41,7 @@ public class RustedLaunchPadRenderer implements BlockEntityRenderer<RustedLaunch
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
-        ObjLaunchModels.MISSILE_PAD.renderAll(ObjLaunchModels.MISSILE_PAD_RUSTED_TEXTURE, poseStack, buffer,
-                modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
-        if (launchPad.isMissileLoaded()) {
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(launchPad)) {
             poseStack.pushPose();
             poseStack.translate(0.0D, 1.0D, 0.0D);
             ObjMissilePartModels.MISSILE_ATLAS.renderAll(

@@ -28,12 +28,17 @@ public class ZirnoxDestroyedRenderer implements BlockEntityRenderer<ZirnoxDestro
     @Override
     public void render(ZirnoxDestroyedBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation(blockEntity.getBlockState())));
-        ObjReactorModels.ZIRNOX_DESTROYED.renderAll(ObjReactorModels.ZIRNOX_DESTROYED_TEXTURE,
-                poseStack, buffer, light, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            ObjReactorModels.ZIRNOX_DESTROYED.renderAll(ObjReactorModels.ZIRNOX_DESTROYED_TEXTURE,
+                    poseStack, buffer, light, packedOverlay);
+        }
         poseStack.popPose();
     }
 

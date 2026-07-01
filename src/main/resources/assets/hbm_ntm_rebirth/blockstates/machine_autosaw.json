@@ -4,13 +4,16 @@
       "model": "hbm_ntm_rebirth:block/machine_autosaw"
     },
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machine_autosaw"
+      "model": "hbm_ntm_rebirth:block/machine_autosaw",
+      "y": 90
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/machine_autosaw"
+      "model": "hbm_ntm_rebirth:block/machine_autosaw",
+      "y": 180
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machine_autosaw"
+      "model": "hbm_ntm_rebirth:block/machine_autosaw",
+      "y": 270
     }
   }
 }

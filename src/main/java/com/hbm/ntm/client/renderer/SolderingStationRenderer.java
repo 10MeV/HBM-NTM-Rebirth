@@ -3,8 +3,6 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.SolderingStationBlockEntity;
-import com.hbm.ntm.client.obj.LegacyWavefrontModel;
-import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -18,8 +16,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class SolderingStationRenderer implements BlockEntityRenderer<SolderingStationBlockEntity> {
-    private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_SOLDERING_STATION;
-
     public SolderingStationRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -30,7 +26,7 @@ public class SolderingStationRenderer implements BlockEntityRenderer<SolderingSt
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -39,14 +35,12 @@ public class SolderingStationRenderer implements BlockEntityRenderer<SolderingSt
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
         }
 
         LegacyMachineDefinition definition = block.definition();
-        int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -54,9 +48,6 @@ public class SolderingStationRenderer implements BlockEntityRenderer<SolderingSt
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
-
-        MODEL.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
-                LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
         renderOutputItem(blockEntity, poseStack, buffer, packedLight);
 
         poseStack.popPose();

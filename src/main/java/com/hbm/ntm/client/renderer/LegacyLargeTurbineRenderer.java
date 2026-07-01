@@ -33,7 +33,7 @@ public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLar
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -42,8 +42,6 @@ public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLar
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
-
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -62,18 +60,22 @@ public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLar
         poseStack.translate(translation.x, translation.y, translation.z + plan.translateZ());
 
         LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
-        MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay, BODY,
-                renderMode);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+                    BODY, renderMode);
 
-        LegacyTileRenderPlans.RotatingModelPartPlan blades = plan.blades();
-        poseStack.pushPose();
-        poseStack.translate(blades.pivotX(), blades.pivotY(), blades.pivotZ());
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) blades.angleDegrees()));
-        poseStack.translate(-blades.pivotX(), -blades.pivotY(), -blades.pivotZ());
-        MODEL.renderOnlyInCallOrder(
-                definition.partTextures().getOrDefault(blades.partName(), definition.textureLocation()),
-                poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay, BLADES, renderMode);
-        poseStack.popPose();
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                LegacyTileRenderPlans.RotatingModelPartPlan blades = plan.blades();
+                poseStack.pushPose();
+                poseStack.translate(blades.pivotX(), blades.pivotY(), blades.pivotZ());
+                poseStack.mulPose(Axis.ZP.rotationDegrees((float) blades.angleDegrees()));
+                poseStack.translate(-blades.pivotX(), -blades.pivotY(), -blades.pivotZ());
+                MODEL.renderOnlyInCallOrder(
+                        definition.partTextures().getOrDefault(blades.partName(), definition.textureLocation()),
+                        poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay, BLADES, renderMode);
+                poseStack.popPose();
+            }
+        }
 
         poseStack.popPose();
     }

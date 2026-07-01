@@ -33,6 +33,9 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
     @Override
     public void render(FluidPipeBlockEntity pipe, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(pipe, getViewDistance())) {
+            return;
+        }
         BlockState state = pipe.getBlockState();
         if (!hasConnectionProperties(state)) {
             return;
@@ -60,7 +63,9 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
 
-        renderParts(mask, style, color, poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(pipe)) {
+            renderParts(mask, style, color, poseStack, buffer, modelLight, packedOverlay);
+        }
 
         poseStack.popPose();
     }

@@ -43,25 +43,25 @@ public class FluidBarrelRenderer implements BlockEntityRenderer<FluidBarrelBlock
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(barrel, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(barrel);
-
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(barrel, packedLight);
         ResourceLocation barrelTexture = barrelTexture(barrel.getVariant());
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        renderConnectorIfConnected(barrel, Direction.EAST, 0.0F, barrelTexture, poseStack, buffer, modelLight,
-                packedOverlay);
-        renderConnectorIfConnected(barrel, Direction.WEST, 180.0F, barrelTexture, poseStack, buffer, modelLight,
-                packedOverlay);
-        renderConnectorIfConnected(barrel, Direction.NORTH, 90.0F, barrelTexture, poseStack, buffer, modelLight,
-                packedOverlay);
-        renderConnectorIfConnected(barrel, Direction.SOUTH, -90.0F, barrelTexture, poseStack, buffer, modelLight,
-                packedOverlay);
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                queuedPose -> LegacyFluidTankRenderHelper.renderDangerDiamonds(
-                        LegacyTileRenderPlans.fluidBarrelDangerDiamondPlan(true), type,
-                        queuedPose, buffer, modelLight, packedOverlay));
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(barrel)) {
+            renderConnectorIfConnected(barrel, Direction.EAST, 0.0F, barrelTexture, poseStack, buffer, modelLight,
+                    packedOverlay);
+            renderConnectorIfConnected(barrel, Direction.WEST, 180.0F, barrelTexture, poseStack, buffer, modelLight,
+                    packedOverlay);
+            renderConnectorIfConnected(barrel, Direction.NORTH, 90.0F, barrelTexture, poseStack, buffer, modelLight,
+                    packedOverlay);
+            renderConnectorIfConnected(barrel, Direction.SOUTH, -90.0F, barrelTexture, poseStack, buffer, modelLight,
+                    packedOverlay);
+            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                    queuedPose -> LegacyFluidTankRenderHelper.renderDangerDiamonds(
+                            LegacyTileRenderPlans.fluidBarrelDangerDiamondPlan(true), type,
+                            queuedPose, buffer, modelLight, packedOverlay));
+        }
         poseStack.popPose();
     }
 

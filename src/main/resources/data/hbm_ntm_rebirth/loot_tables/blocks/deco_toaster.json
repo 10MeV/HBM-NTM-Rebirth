@@ -1,0 +1,74 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:deco_toaster",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:0}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:deco_toaster",
+          "properties": { "variant": "0" }
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:deco_toaster",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:1}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:deco_toaster",
+          "properties": { "variant": "1" }
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:deco_toaster",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:2}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:deco_toaster",
+          "properties": { "variant": "2" }
+        }
+      ]
+    }
+  ]
+}

@@ -4,7 +4,7 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "parts": { "visibility": {
+  "visibility": {
       "Plasma": false,
       "Bolts4": false,
       "Bolts3": false,
@@ -12,6 +12,6 @@
       "Bolts1": true,
       "Magnet": false,
       "Torus": false
-  } },
+  },
   "textures": { "particle": "hbm_ntm_rebirth:block/fusion/torus", "default": "hbm_ntm_rebirth:block/fusion/torus" }
 }

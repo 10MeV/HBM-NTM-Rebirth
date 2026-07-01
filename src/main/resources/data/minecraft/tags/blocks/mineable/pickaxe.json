@@ -416,6 +416,7 @@
                    "hbm_ntm_rebirth:ore_nether_coal",
                    "hbm_ntm_rebirth:ore_nether_cobalt",
                    "hbm_ntm_rebirth:ore_nether_plutonium",
-                   "hbm_ntm_rebirth:ore_tikite"
+                   "hbm_ntm_rebirth:ore_tikite",
+                   "hbm_ntm_rebirth:deco_toaster"
                ]
 }

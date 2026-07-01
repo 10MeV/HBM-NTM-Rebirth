@@ -35,7 +35,7 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -44,8 +44,6 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
-
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -64,8 +62,17 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        renderPlan(MODEL, plan, poseStack, buffer, modelLight, packedOverlay,
-                LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
+        LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            MODEL.renderOnlyInCallOrder(MODEL.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+                    TURBINE, renderMode);
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                renderRotatingPart(MODEL, plan.gauge(), GAUGE, poseStack, buffer, modelLight, packedOverlay,
+                        renderMode);
+                renderRotatingPart(MODEL, plan.flywheel(), FLYWHEEL, poseStack, buffer, modelLight,
+                        packedOverlay, renderMode);
+            }
+        }
 
         poseStack.popPose();
     }

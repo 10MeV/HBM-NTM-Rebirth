@@ -2,11 +2,9 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.TeslaBlockEntity;
 import com.hbm.ntm.client.obj.LegacyBeamRenderer;
-import com.hbm.ntm.client.obj.ObjUtilityModels;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -34,14 +32,6 @@ public class TeslaRenderer implements BlockEntityRenderer<TeslaBlockEntity> {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(tesla, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(tesla);
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(tesla, packedLight);
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        ObjUtilityModels.TESLA.renderAll(ObjUtilityModels.TESLA_TEXTURE, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
-
         Level level = tesla.getLevel();
         if (level == null || tesla.getTargets().isEmpty()) {
             return;

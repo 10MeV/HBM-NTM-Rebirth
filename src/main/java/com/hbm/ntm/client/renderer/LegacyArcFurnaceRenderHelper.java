@@ -52,7 +52,18 @@ public final class LegacyArcFurnaceRenderHelper {
     public static void renderPlan(LegacyWavefrontModel model, LegacyTileRenderPlans.ArcFurnacePlan plan,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode) {
+        renderStaticShell(model, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderAnimatedPlan(model, plan, poseStack, buffer, packedLight, packedOverlay, renderMode);
+    }
+
+    public static void renderStaticShell(LegacyWavefrontModel model, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
         renderPart(model, "Furnace", poseStack, buffer, packedLight, packedOverlay, renderMode);
+    }
+
+    public static void renderAnimatedPlan(LegacyWavefrontModel model, LegacyTileRenderPlans.ArcFurnacePlan plan,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
         renderTranslatedPart(model, plan.contentsHot(), poseStack, buffer,
                 fullbrightLight(packedLight, plan.fullbright()), packedOverlay, renderMode);
         renderTranslatedPart(model, plan.contentsCold(), poseStack, buffer, packedLight, packedOverlay, renderMode);

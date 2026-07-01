@@ -1,5 +1,7 @@
 # Blender 3.2.0
 # www.blender.org
+mtllib hbm_default.mtl
+usemtl default
 o Cabinet
 v -0.312500 0.000000 0.250000
 v -0.312500 1.000000 0.250000

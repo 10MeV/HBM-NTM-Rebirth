@@ -39,7 +39,7 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -48,7 +48,6 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(chemicalFactory, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(chemicalFactory);
         BlockState state = chemicalFactory.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -61,7 +60,8 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
         float anim = Mth.lerp(partialTick, chemicalFactory.getPrevAnim(), chemicalFactory.getAnim());
         LegacyTileRenderPlans.ChemicalFactoryPlan plan = LegacyTileRenderPlans.chemicalFactoryPlan(anim);
 
-        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(chemicalFactory);
+                LegacyRenderLighting.ModelViewSamplingScope ignored =
                 LegacyRenderLighting.pushModelViewSampling(chemicalFactory, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -71,13 +71,14 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
             poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
             ResourceLocation texture = definition.textureLocation();
 
-            renderModelPart(model, "Base", texture, poseStack, buffer, modelLight, packedOverlay);
             if (chemicalFactory.shouldRenderFrame()) {
                 renderModelPart(model, "Frame", texture, poseStack, buffer, modelLight, packedOverlay);
             }
 
-            for (LegacyTileRenderPlans.RotatingModelPartPlan fan : plan.fans()) {
-                renderRotatingPart(model, fan, texture, poseStack, buffer, modelLight, packedOverlay);
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(chemicalFactory)) {
+                for (LegacyTileRenderPlans.RotatingModelPartPlan fan : plan.fans()) {
+                    renderRotatingPart(model, fan, texture, poseStack, buffer, modelLight, packedOverlay);
+                }
             }
 
             poseStack.popPose();

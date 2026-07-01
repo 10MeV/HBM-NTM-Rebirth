@@ -35,7 +35,7 @@ public class TurbofanRenderer implements BlockEntityRenderer<TurbofanBlockEntity
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -44,7 +44,6 @@ public class TurbofanRenderer implements BlockEntityRenderer<TurbofanBlockEntity
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -60,19 +59,21 @@ public class TurbofanRenderer implements BlockEntityRenderer<TurbofanBlockEntity
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        renderPart(BODY, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                poseStack.pushPose();
+                poseStack.translate(0.0D, LegacyTileRenderPlans.TURBOFAN_BLADE_PIVOT_Y, 0.0D);
+                poseStack.mulPose(Axis.ZN.rotationDegrees(blockEntity.getBladeSpin(partialTick)));
+                poseStack.translate(0.0D, -LegacyTileRenderPlans.TURBOFAN_BLADE_PIVOT_Y, 0.0D);
+                renderPart(BLADES, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+                poseStack.popPose();
+            }
 
-        poseStack.pushPose();
-        poseStack.translate(0.0D, LegacyTileRenderPlans.TURBOFAN_BLADE_PIVOT_Y, 0.0D);
-        poseStack.mulPose(Axis.ZN.rotationDegrees(blockEntity.getBladeSpin(partialTick)));
-        poseStack.translate(0.0D, -LegacyTileRenderPlans.TURBOFAN_BLADE_PIVOT_Y, 0.0D);
-        renderPart(BLADES, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
-
-        ResourceLocation afterburnerTexture = blockEntity.getAfterburner() == 0
-                ? ObjMachineModels.TURBOFAN_BACK_TEXTURE
-                : ObjMachineModels.TURBOFAN_AFTERBURNER_TEXTURE;
-        renderPart(AFTERBURNER, afterburnerTexture, poseStack, buffer, modelLight, packedOverlay);
+            ResourceLocation afterburnerTexture = blockEntity.getAfterburner() == 0
+                    ? ObjMachineModels.TURBOFAN_BACK_TEXTURE
+                    : ObjMachineModels.TURBOFAN_AFTERBURNER_TEXTURE;
+            renderPart(AFTERBURNER, afterburnerTexture, poseStack, buffer, modelLight, packedOverlay);
+        }
 
         poseStack.popPose();
     }

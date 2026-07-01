@@ -39,6 +39,9 @@ public class ExcavatorRenderer implements BlockEntityRenderer<ExcavatorBlockEnti
     @Override
     public void render(ExcavatorBlockEntity excavator, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(excavator, getViewDistance())) {
+            return;
+        }
         BlockState state = excavator.getBlockState();
         int light = LegacyRenderLighting.resolveBoundsLight(excavator, excavator.getRenderBoundingBox(), packedLight);
         poseStack.pushPose();
@@ -46,9 +49,11 @@ public class ExcavatorRenderer implements BlockEntityRenderer<ExcavatorBlockEnti
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F + state.getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING).toYRot()));
         poseStack.translate(0.0D, -3.0D, 0.0D);
 
-        MODEL.renderOnlyInCallOrder(TEXTURE, poseStack, buffer, light, packedOverlay, MAIN);
-        renderCrusher(excavator, partialTick, poseStack, buffer, light, packedOverlay);
-        renderDrill(excavator, partialTick, poseStack, buffer, light, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(excavator)) {
+            MODEL.renderOnlyInCallOrder(TEXTURE, poseStack, buffer, light, packedOverlay, MAIN);
+            renderCrusher(excavator, partialTick, poseStack, buffer, light, packedOverlay);
+            renderDrill(excavator, partialTick, poseStack, buffer, light, packedOverlay);
+        }
         renderChute(excavator, poseStack, buffer, light, packedOverlay);
         poseStack.popPose();
     }

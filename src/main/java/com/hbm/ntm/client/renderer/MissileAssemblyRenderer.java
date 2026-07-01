@@ -26,7 +26,7 @@ public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssem
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -35,22 +35,20 @@ public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssem
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
-
         BlockState state = blockEntity.getBlockState();
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
+        CustomMissilePartProfile.Assembly assembly = blockEntity.assemblyForPreview();
+        if (assembly == null) {
+            return;
+        }
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyRotation(facing)));
-        ObjLaunchModels.MISSILE_ASSEMBLY.renderAll(ObjLaunchModels.MISSILE_ASSEMBLY_TEXTURE,
-                poseStack, buffer, modelLight, OverlayTexture.NO_OVERLAY);
-
-        CustomMissilePartProfile.Assembly assembly = blockEntity.assemblyForPreview();
-        if (assembly != null) {
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             renderPreviewMissile(assembly, poseStack, buffer, modelLight);
         }
         poseStack.popPose();

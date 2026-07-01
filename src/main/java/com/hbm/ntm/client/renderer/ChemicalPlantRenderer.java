@@ -45,7 +45,7 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -54,7 +54,6 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(chemicalPlant, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(chemicalPlant);
         BlockState state = chemicalPlant.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -66,7 +65,8 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
                 key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()).asVBO());
         float anim = Mth.lerp(partialTick, chemicalPlant.getPrevAnim(), chemicalPlant.getAnim());
 
-        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(chemicalPlant);
+                LegacyRenderLighting.ModelViewSamplingScope ignored =
                 LegacyRenderLighting.pushModelViewSampling(chemicalPlant, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -76,15 +76,16 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
             poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
             ResourceLocation texture = definition.textureLocation();
 
-            renderModelPart(model, "Base", texture, poseStack, buffer, modelLight, packedOverlay);
             if (chemicalPlant.shouldRenderFrame()) {
                 renderModelPart(model, "Frame", texture, poseStack, buffer, modelLight, packedOverlay);
             }
 
             LegacyTileRenderPlans.ChemicalPlantMachinePlan machinePlan =
                     LegacyTileRenderPlans.chemicalPlantMachinePlan(anim);
-            renderTranslatedPart(model, machinePlan.slider(), texture, poseStack, buffer, modelLight, packedOverlay);
-            renderRotatingPart(model, machinePlan.spinner(), texture, poseStack, buffer, modelLight, packedOverlay);
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(chemicalPlant)) {
+                renderTranslatedPart(model, machinePlan.slider(), texture, poseStack, buffer, modelLight, packedOverlay);
+                renderRotatingPart(model, machinePlan.spinner(), texture, poseStack, buffer, modelLight, packedOverlay);
+            }
 
             renderProcessingFluid(chemicalPlant, model, poseStack, buffer, modelLight, packedOverlay, anim);
 

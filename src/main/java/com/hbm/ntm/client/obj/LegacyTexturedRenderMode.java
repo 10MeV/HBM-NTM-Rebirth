@@ -5,6 +5,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.hbm.ntm.client.render.HbmOptimizedRenderShaders;
+import com.hbm.ntm.client.render.HbmRenderFrameFlags;
+import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
@@ -75,14 +77,14 @@ public enum LegacyTexturedRenderMode {
     private static final Map<Key, RenderType> CACHE = new ConcurrentHashMap<>();
 
     public RenderType renderType(ResourceLocation texture) {
-        return CACHE.computeIfAbsent(new Key(this, texture, VertexFormat.Mode.QUADS, useWorldBlockLitShader()), Key::create);
+        return CACHE.computeIfAbsent(new Key(this, texture, VertexFormat.Mode.QUADS, useWorldBlockLitShader(this)), Key::create);
     }
 
     public RenderType renderType(ResourceLocation texture, VertexFormat.Mode drawMode) {
         if (drawMode == VertexFormat.Mode.QUADS) {
             return renderType(texture);
         }
-        return CACHE.computeIfAbsent(new Key(this, texture, drawMode, useWorldBlockLitShader()), Key::create);
+        return CACHE.computeIfAbsent(new Key(this, texture, drawMode, useWorldBlockLitShader(this)), Key::create);
     }
 
     public static void clearCachedRenderTypes() {
@@ -130,14 +132,14 @@ public enum LegacyTexturedRenderMode {
     private static RenderType createCustom(String name, ResourceLocation texture,
             RenderStateShard.TransparencyStateShard transparency, boolean depthWrite) {
         return createCustom(name, texture, transparency, depthWrite, LEQUAL_DEPTH_TEST, false, VertexFormat.Mode.QUADS,
-                useWorldBlockLitShader());
+                false);
     }
 
     private static RenderType createCustom(String name, ResourceLocation texture,
             RenderStateShard.TransparencyStateShard transparency, boolean depthWrite,
             RenderStateShard.DepthTestStateShard depthTest) {
         return createCustom(name, texture, transparency, depthWrite, depthTest, false, VertexFormat.Mode.QUADS,
-                useWorldBlockLitShader());
+                false);
     }
 
     private static RenderType createCustom(String name, ResourceLocation texture,
@@ -182,11 +184,20 @@ public enum LegacyTexturedRenderMode {
         return transparency == GLINT_TRANSPARENCY;
     }
 
-    private static boolean useWorldBlockLitShader() {
-        // Keep legacy OBJ rendering on vanilla entity shaders until block_lit_static
-        // has a separate visual validation pass; mismatched shader state makes large
-        // OBJ batches render transparent or corrupted.
-        return false;
+    private static boolean useWorldBlockLitShader(LegacyTexturedRenderMode mode) {
+        HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
+        return worldBlockLitEligible(mode)
+                && HbmOptimizedRenderShaders.blockLitStaticShader() != null
+                && HbmRenderFrameCulling.inMachineRendererScope()
+                && !flags.shaderPackDetected()
+                && !flags.shaderShadowPass();
+    }
+
+    private static boolean worldBlockLitEligible(LegacyTexturedRenderMode mode) {
+        return mode == CUTOUT_NO_CULL
+                || mode == CUTOUT_DOUBLE_SIDED
+                || mode == CUTOUT_REVERSED_CULL
+                || mode == CUTOUT_CULL;
     }
 
     private record Key(LegacyTexturedRenderMode mode, ResourceLocation texture, VertexFormat.Mode drawMode,

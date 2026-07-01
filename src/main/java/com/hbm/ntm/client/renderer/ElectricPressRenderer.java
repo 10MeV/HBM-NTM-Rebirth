@@ -26,7 +26,7 @@ public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressB
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -35,7 +35,6 @@ public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressB
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
@@ -43,22 +42,19 @@ public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressB
         float yRotation = 270.0F - facing.toYRot();
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
 
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(yRotation));
-        ObjMachineModels.EPRESS_BODY.renderAll(ObjMachineModels.EPRESS_BODY_TEXTURE,
-                poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
-
-        LegacyTileRenderPlans.ElectricPressPlan plan = LegacyTileRenderPlans.electricPressPlan(
-                blockEntity.getInterpolatedPress(partialTick), ElectricPressBlockEntity.MAX_PRESS);
-        poseStack.pushPose();
-        LegacyTileRenderPlans.TranslatedModelPartPlan head = plan.head();
-        poseStack.translate(0.5D + head.translateX(), head.translateY(), 0.5D + head.translateZ());
-        poseStack.mulPose(Axis.YP.rotationDegrees(yRotation));
-        ObjMachineModels.EPRESS_HEAD.renderAll(ObjMachineModels.EPRESS_HEAD_TEXTURE,
-                poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                LegacyTileRenderPlans.ElectricPressPlan plan = LegacyTileRenderPlans.electricPressPlan(
+                        blockEntity.getInterpolatedPress(partialTick), ElectricPressBlockEntity.MAX_PRESS);
+                poseStack.pushPose();
+                LegacyTileRenderPlans.TranslatedModelPartPlan head = plan.head();
+                poseStack.translate(0.5D + head.translateX(), head.translateY(), 0.5D + head.translateZ());
+                poseStack.mulPose(Axis.YP.rotationDegrees(yRotation));
+                ObjMachineModels.EPRESS_HEAD.renderAll(ObjMachineModels.EPRESS_HEAD_TEXTURE,
+                        poseStack, buffer, modelLight, packedOverlay);
+                poseStack.popPose();
+            }
+        }
 
         renderInputItem(blockEntity, yRotation, poseStack, buffer, packedLight);
     }

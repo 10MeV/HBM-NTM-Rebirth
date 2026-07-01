@@ -32,7 +32,7 @@ public class AutosawBlock extends HorizontalMachineBlock implements EntityBlock 
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return RenderShape.MODEL;
     }
 
     @Override

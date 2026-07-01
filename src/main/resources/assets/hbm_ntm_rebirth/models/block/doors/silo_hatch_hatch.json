@@ -4,12 +4,10 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "parts": {
-    "visibility": {
+  "visibility": {
       "Hatch": true,
       "Frame": false
-    }
-  },
+    },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/doors/silo_hatch",
     "default": "hbm_ntm_rebirth:block/doors/silo_hatch"

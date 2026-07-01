@@ -1,9 +1,12 @@
 {
-  "multipart": [
-    {
-      "apply": {
-        "model": "hbm_ntm_rebirth:block/vending_machine"
-      }
-    }
-  ]
+  "variants": {
+    "facing=north,variant=0": { "model": "hbm_ntm_rebirth:block/vending_machine", "y": 90 },
+    "facing=east,variant=0": { "model": "hbm_ntm_rebirth:block/vending_machine" },
+    "facing=south,variant=0": { "model": "hbm_ntm_rebirth:block/vending_machine", "y": 270 },
+    "facing=west,variant=0": { "model": "hbm_ntm_rebirth:block/vending_machine", "y": 180 },
+    "facing=north,variant=1": { "model": "hbm_ntm_rebirth:block/vending_machine_obamna", "y": 90 },
+    "facing=east,variant=1": { "model": "hbm_ntm_rebirth:block/vending_machine_obamna" },
+    "facing=south,variant=1": { "model": "hbm_ntm_rebirth:block/vending_machine_obamna", "y": 270 },
+    "facing=west,variant=1": { "model": "hbm_ntm_rebirth:block/vending_machine_obamna", "y": 180 }
+  }
 }

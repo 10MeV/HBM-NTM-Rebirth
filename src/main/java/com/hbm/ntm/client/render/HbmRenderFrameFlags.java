@@ -46,6 +46,8 @@ public final class HbmRenderFrameFlags {
                 FRAME_GENERATION.incrementAndGet(),
                 event.getPartialTick(),
                 minecraft.options.renderDistance().get(),
+                HbmClientConfig.modelUpdateDistanceBlocks(),
+                HbmClientConfig.modelStaticRenderDistanceBlocks(),
                 particleStatus == ParticleStatus.ALL,
                 particleStatus == ParticleStatus.MINIMAL,
                 HbmClientConfig.nukeWarpShockwaveEnabled(),
@@ -87,6 +89,8 @@ public final class HbmRenderFrameFlags {
             long frameGeneration,
             float partialTick,
             int renderDistanceChunks,
+            int modelUpdateDistanceBlocks,
+            int modelStaticRenderDistanceBlocks,
             boolean allParticles,
             boolean minimalParticles,
             boolean nukeWarpShockwaveEnabled,
@@ -113,7 +117,9 @@ public final class HbmRenderFrameFlags {
             boolean irisExtendedShaderAvailable,
             boolean irisExtendedShaderPathEnabled) {
         private static Snapshot initial() {
-            return new Snapshot(0L, 0.0F, 0, false, false, true, false, true,
+            return new Snapshot(0L, 0.0F, 0, HbmClientConfig.modelUpdateDistanceBlocks(),
+                    HbmClientConfig.modelStaticRenderDistanceBlocks(),
+                    false, false, true, false, true,
                     false, false, true, false, false, false, false,
                     HbmClientConfig.maxInstancedInstancesPerDraw(),
                     HbmClientConfig.instanceVboOrphanBeforeUpload(), false, false, false, false, false, false, false,

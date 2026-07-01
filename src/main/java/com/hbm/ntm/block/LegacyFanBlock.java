@@ -44,7 +44,7 @@ public class LegacyFanBlock extends BaseEntityBlock implements Toolable {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.INVISIBLE;
+        return RenderShape.MODEL;
     }
 
     @Override

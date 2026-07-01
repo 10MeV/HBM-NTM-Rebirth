@@ -29,8 +29,16 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
     public void render(LegacyLightBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyDirectionalShapeBlock block)) {
             return;
@@ -38,10 +46,12 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
         Direction face = state.getValue(LegacyDirectionalShapeBlock.FACE);
-        if (block.kind() == LegacyDirectionalShapeBlock.Kind.FLOODLIGHT) {
-            renderFloodlight(blockEntity, face, state, poseStack, buffer, modelLight, packedOverlay);
-        } else {
-            renderSpotlight(block.kind(), face, state, poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            if (block.kind() == LegacyDirectionalShapeBlock.Kind.FLOODLIGHT) {
+                renderFloodlight(blockEntity, face, state, poseStack, buffer, modelLight, packedOverlay);
+            } else {
+                renderSpotlight(block.kind(), face, state, poseStack, buffer, modelLight, packedOverlay);
+            }
         }
     }
 

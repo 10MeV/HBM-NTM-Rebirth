@@ -38,8 +38,16 @@ public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEn
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
     public void render(RadioTorchBlockEntity torch, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(torch, getViewDistance())) {
+            return;
+        }
         BlockState state = torch.getBlockState();
         Direction facing = state.hasProperty(RadioTorchBlock.FACING)
                 ? state.getValue(RadioTorchBlock.FACING)
@@ -50,8 +58,10 @@ public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEn
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         Rotation rotation = legacyRotation(facing);
-        MODEL.renderWithSprite(sprite, poseStack, buffer, light, packedOverlay, rotation.yaw(), rotation.pitch(),
-                0.0F, false);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(torch)) {
+            MODEL.renderWithSprite(sprite, poseStack, buffer, light, packedOverlay, rotation.yaw(), rotation.pitch(),
+                    0.0F, false);
+        }
         poseStack.popPose();
     }
 

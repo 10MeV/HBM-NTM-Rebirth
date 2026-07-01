@@ -1,3 +1,25 @@
 {
-  "parent": "hbm_ntm_rebirth:block/empty"
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/machines/autosaw.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+      "Engine": false,
+      "Base": true,
+      "ArmUpper": false,
+      "ArmLower": false,
+      "ArmTip": false,
+      "Sawblade": false,
+      "Main": false
+    },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/autosaw",
+    "default": "hbm_ntm_rebirth:block/machines/autosaw"
+  }
 }

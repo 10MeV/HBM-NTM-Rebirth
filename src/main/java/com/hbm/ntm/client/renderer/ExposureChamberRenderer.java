@@ -20,8 +20,6 @@ import net.minecraft.world.phys.Vec3;
 
 public class ExposureChamberRenderer implements BlockEntityRenderer<ExposureChamberBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_EXPOSURE_CHAMBER;
-    private static final LegacyWavefrontModel.SelectionHandle CHAMBER =
-            MODEL.prepareRenderOnlyInCallOrder("Chamber");
     private static final LegacyWavefrontModel.SelectionHandle MAGNETS =
             MODEL.prepareRenderOnlyInCallOrder("Magnets");
     private static final LegacyWavefrontModel.SelectionHandle CORE =
@@ -37,7 +35,7 @@ public class ExposureChamberRenderer implements BlockEntityRenderer<ExposureCham
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -46,7 +44,6 @@ public class ExposureChamberRenderer implements BlockEntityRenderer<ExposureCham
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -67,23 +64,24 @@ public class ExposureChamberRenderer implements BlockEntityRenderer<ExposureCham
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
-                CHAMBER);
-
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.rotationDegrees()));
-        MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
-                MAGNETS);
-        poseStack.popPose();
-
-        if (plan.on()) {
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             poseStack.pushPose();
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.coreRotationDegrees()));
-            poseStack.translate(0.0D, plan.coreBobY(), 0.0D);
-            MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, LightTexture.FULL_BRIGHT,
-                    packedOverlay, CORE);
+            poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.rotationDegrees()));
+            MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+                    MAGNETS);
             poseStack.popPose();
 
+            if (plan.on()) {
+                poseStack.pushPose();
+                poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.coreRotationDegrees()));
+                poseStack.translate(0.0D, plan.coreBobY(), 0.0D);
+                MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, LightTexture.FULL_BRIGHT,
+                        packedOverlay, CORE);
+                poseStack.popPose();
+            }
+        }
+
+        if (plan.on()) {
             for (LegacyTileRenderPlans.TranslatedBeamPlan beam : plan.beams()) {
                 LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
                     queuedPose.translate(beam.translateX(), beam.translateY(), beam.translateZ());

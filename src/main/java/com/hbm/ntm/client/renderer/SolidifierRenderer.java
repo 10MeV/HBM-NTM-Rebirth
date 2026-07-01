@@ -18,8 +18,6 @@ import net.minecraft.world.phys.Vec3;
 
 public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_SOLIDIFIER;
-    private static final LegacyWavefrontModel.SelectionHandle MAIN =
-            MODEL.prepareRenderOnlyInCallOrder("Main");
     private static final LegacyWavefrontModel.SelectionHandle FLUID =
             MODEL.prepareRenderOnlyInCallOrder("Fluid");
     private static final LegacyWavefrontModel.SelectionHandle GLASS =
@@ -35,7 +33,7 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -44,7 +42,6 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -60,15 +57,16 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        MODEL.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, MAIN);
         LegacyTileRenderPlans.ScaledModelPartPlan fluidPlan = LegacyTileRenderPlans.solidifierFluidPlan(
                 blockEntity.getTank().getFill(), blockEntity.getTank().getMaxFill(),
                 blockEntity.getTank().getTankType().getColor());
         LegacyTileRenderPlans.ModelPartTintPlan glassPlan = LegacyTileRenderPlans.solidifierGlassPlan();
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
-            renderFluid(fluidPlan, queuedPose, buffer, modelLight, packedOverlay);
-            renderTintedPart(glassPlan, queuedPose, buffer, modelLight, packedOverlay);
-        });
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
+                renderFluid(fluidPlan, queuedPose, buffer, modelLight, packedOverlay);
+                renderTintedPart(glassPlan, queuedPose, buffer, modelLight, packedOverlay);
+            });
+        }
 
         poseStack.popPose();
     }

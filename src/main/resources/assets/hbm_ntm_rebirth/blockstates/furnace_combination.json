@@ -1,19 +1,16 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/furnace_combination",
-      "y": 90
+      "model": "hbm_ntm_rebirth:block/furnace_combination"
     },
     "facing=north": {
       "model": "hbm_ntm_rebirth:block/furnace_combination"
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/furnace_combination",
-      "y": 180
+      "model": "hbm_ntm_rebirth:block/furnace_combination"
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/furnace_combination",
-      "y": 270
+      "model": "hbm_ntm_rebirth:block/furnace_combination"
     }
   }
 }

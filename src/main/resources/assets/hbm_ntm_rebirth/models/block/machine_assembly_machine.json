@@ -1,7 +1,30 @@
 {
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/assembly_machine"
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/assembly_machine.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "visibility": {
+      "Ring2": false,
+      "Base": true,
+      "Frame": false,
+      "Spike1": false,
+      "Spike2": false,
+      "Head1": false,
+      "ArmUpper1": false,
+      "ArmUpper2": false,
+      "ArmLower2": false,
+      "ArmLower1": false,
+      "Ring": false,
+      "Head2": false
+    },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/assembly_machine",
+    "default": "hbm_ntm_rebirth:block/machines/assembly_machine"
+  }
 }

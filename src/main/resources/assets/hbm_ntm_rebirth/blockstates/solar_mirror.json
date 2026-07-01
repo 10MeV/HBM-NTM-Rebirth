@@ -1,7 +1,7 @@
 {
   "variants": {
     "": {
-      "model": "hbm_ntm_rebirth:block/machines/solar_mirror"
+      "model": "hbm_ntm_rebirth:block/machines/solar_mirror_base"
     }
   }
 }

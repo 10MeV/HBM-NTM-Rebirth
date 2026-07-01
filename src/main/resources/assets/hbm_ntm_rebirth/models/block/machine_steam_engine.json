@@ -1,7 +1,23 @@
-﻿{
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/steam_engine"
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/steam_engine.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [2.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "visibility": {
+      "Base": true,
+      "Flywheel": false,
+      "Shaft": false,
+      "Transmission": false,
+      "Piston": false
+    },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/steam_engine",
+    "default": "hbm_ntm_rebirth:block/machines/steam_engine"
+  }
 }

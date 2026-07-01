@@ -2,10 +2,11 @@
   "variants": {
     "facing=east": {
       "model": "hbm_ntm_rebirth:block/machine_rtg_grey",
-      "y": 90
+      "y": 180
     },
     "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machine_rtg_grey"
+      "model": "hbm_ntm_rebirth:block/machine_rtg_grey",
+      "y": 180
     },
     "facing=south": {
       "model": "hbm_ntm_rebirth:block/machine_rtg_grey",
@@ -13,7 +14,7 @@
     },
     "facing=west": {
       "model": "hbm_ntm_rebirth:block/machine_rtg_grey",
-      "y": 270
+      "y": 180
     }
   }
 }

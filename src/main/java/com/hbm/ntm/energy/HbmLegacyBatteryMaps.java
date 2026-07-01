@@ -11,34 +11,6 @@ import java.util.List;
 import java.util.Optional;
 
 public final class HbmLegacyBatteryMaps {
-    private static final List<RegistryObject<Item>> BATTERY_PACK_BY_META = List.of(
-            ModItems.BATTERY_REDSTONE,
-            ModItems.BATTERY_LEAD,
-            ModItems.BATTERY_LITHIUM,
-            ModItems.BATTERY_SODIUM,
-            ModItems.BATTERY_SCHRABIDIUM,
-            ModItems.BATTERY_QUANTUM,
-            ModItems.CAPACITOR_COPPER,
-            ModItems.CAPACITOR_GOLD,
-            ModItems.CAPACITOR_NIOBIUM,
-            ModItems.CAPACITOR_TANTALUM,
-            ModItems.CAPACITOR_BISMUTH,
-            ModItems.CAPACITOR_SPARK
-    );
-
-    private static final List<RegistryObject<Item>> SELF_CHARGING_BY_META = List.of(
-            ModItems.BATTERY_SC_EMPTY,
-            ModItems.BATTERY_SC_WASTE,
-            ModItems.BATTERY_SC_RA226,
-            ModItems.BATTERY_SC_TC99,
-            ModItems.BATTERY_SC_CO60,
-            ModItems.BATTERY_SC_PU238,
-            ModItems.BATTERY_SC_PO210,
-            ModItems.BATTERY_SC_AU198,
-            ModItems.BATTERY_SC_PB209,
-            ModItems.BATTERY_SC_AM241
-    );
-
     public static Optional<RegistryObject<Item>> batteryPackByLegacyMeta(int legacyMeta) {
         return LegacyMetaItemMappings.item(LegacyMetaItemMappings.BATTERY_PACK, legacyMeta);
     }
@@ -48,11 +20,11 @@ public final class HbmLegacyBatteryMaps {
     }
 
     public static List<RegistryObject<Item>> batteryPacksByLegacyMeta() {
-        return BATTERY_PACK_BY_META;
+        return LegacyMetaItemMappings.variants(LegacyMetaItemMappings.BATTERY_PACK);
     }
 
     public static List<RegistryObject<Item>> selfChargingByLegacyMeta() {
-        return SELF_CHARGING_BY_META;
+        return LegacyMetaItemMappings.variants(LegacyMetaItemMappings.BATTERY_SC);
     }
 
     public static List<ItemStack> legacyMachineRecipeBatteryDisplayStacks() {
@@ -60,8 +32,8 @@ public final class HbmLegacyBatteryMaps {
         addStack(stacks, ModItems.BATTERY_POTATO);
         addStack(stacks, ModItems.BATTERY_POTATOS);
         addStack(stacks, ModItems.ENERGY_CORE);
-        addStacks(stacks, BATTERY_PACK_BY_META);
-        addStacks(stacks, SELF_CHARGING_BY_META);
+        addStacks(stacks, batteryPacksByLegacyMeta());
+        addStacks(stacks, selfChargingByLegacyMeta());
         addStack(stacks, ModItems.BATTERY_CREATIVE);
         return List.copyOf(stacks);
     }

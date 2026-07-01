@@ -1,8 +1,8 @@
 {
   "variants": {
     "facing=north": { "model": "hbm_ntm_rebirth:block/machine_liquefactor" },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/machine_liquefactor", "y": 90 },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/machine_liquefactor", "y": 180 },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/machine_liquefactor", "y": 270 }
+    "facing=east": { "model": "hbm_ntm_rebirth:block/machine_liquefactor" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/machine_liquefactor" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/machine_liquefactor" }
   }
 }

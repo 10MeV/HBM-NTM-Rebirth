@@ -264,6 +264,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("ingot", "ingots", "ingot_saturnite", "Saturnite");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_meteorite", "Meteorite");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_dineutronium", "Dineutronium");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_electronium", "Electronium");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_cft", "CFT");
         addLegacyMaterialAliases("ingot", "ingots", "fragment_coltan", "Coltan");
         addLegacyMaterialAliases("gem", "gems", "gem_tantalium", "Tantalum");
@@ -492,6 +493,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_bscco", "BSCCO");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_neodymium", "Neodymium");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_dineutronium", "Dineutronium");
+        addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_magnetized_tungsten", "MagnetizedTungsten");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_starmetal", "Starmetal", "Star");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_steel", "Steel");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_copper", "Copper");

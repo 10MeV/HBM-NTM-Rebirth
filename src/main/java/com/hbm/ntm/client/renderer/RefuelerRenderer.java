@@ -28,21 +28,23 @@ public class RefuelerRenderer implements BlockEntityRenderer<RefuelerBlockEntity
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(RefuelerBlockEntity refueler, float partialTick, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(refueler, getViewDistance())) {
+            return;
+        }
         BlockState state = refueler.getBlockState();
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(refueler, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         orient(poseStack, state.hasProperty(RefuelerBlock.FACING) ? state.getValue(RefuelerBlock.FACING) : Direction.NORTH);
 
-        MODEL.renderOnlyInCallOrder(ObjMachineModels.REFUELER_TEXTURE, poseStack, buffer, modelLight,
-                packedOverlay, FUELER);
-        enqueueFluid(refueler, partialTick, poseStack, buffer);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(refueler)) {
+            enqueueFluid(refueler, partialTick, poseStack, buffer);
+        }
         poseStack.popPose();
     }
 

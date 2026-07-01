@@ -34,7 +34,7 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -43,10 +43,10 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(charger, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(charger);
         BlockState state = charger.getBlockState();
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(charger, packedLight);
-        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(charger);
+                LegacyRenderLighting.ModelViewSamplingScope ignored =
                 LegacyRenderLighting.pushModelViewSampling(charger, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.5D, 0.5D);
@@ -57,18 +57,22 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
             double swivel = Math.max(0.0D, (time - 0.5D) * 2.0D);
 
             renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
-            poseStack.pushPose();
-            applySlideFrame(poseStack, extend);
-            renderArm(poseStack, buffer, modelLight, packedOverlay, LEFT, 30.0D * swivel);
-            renderArm(poseStack, buffer, modelLight, packedOverlay, RIGHT, -30.0D * swivel);
-            poseStack.popPose();
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(charger)) {
+                poseStack.pushPose();
+                applySlideFrame(poseStack, extend);
+                renderArm(poseStack, buffer, modelLight, packedOverlay, LEFT, 30.0D * swivel);
+                renderArm(poseStack, buffer, modelLight, packedOverlay, RIGHT, -30.0D * swivel);
+                poseStack.popPose();
+            }
 
             ObjMachineModels.CHARGER.renderOnlyUntextured(poseStack, buffer, 255, 191, 0, 255, LIGHT);
 
-            poseStack.pushPose();
-            applySlideFrame(poseStack, extend);
-            renderPart(SLIDE, poseStack, buffer, modelLight, packedOverlay);
-            poseStack.popPose();
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(charger)) {
+                poseStack.pushPose();
+                applySlideFrame(poseStack, extend);
+                renderPart(SLIDE, poseStack, buffer, modelLight, packedOverlay);
+                poseStack.popPose();
+            }
             poseStack.popPose();
         }
     }

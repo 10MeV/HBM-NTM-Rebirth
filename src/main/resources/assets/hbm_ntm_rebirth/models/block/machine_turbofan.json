@@ -1,7 +1,21 @@
-﻿{
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/turbofan"
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/turbofan.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "visibility": {
+      "Body": true,
+      "Blades": false,
+      "Afterburner": false
+    },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/turbofan",
+    "default": "hbm_ntm_rebirth:block/machines/turbofan"
+  }
 }

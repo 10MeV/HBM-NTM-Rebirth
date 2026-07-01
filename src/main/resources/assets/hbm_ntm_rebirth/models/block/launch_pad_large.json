@@ -1,6 +1,43 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/weapons/launch_pad_erector.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+      "Pad": true,
+      "V2_Erector": false,
+      "V2_Pivot": false,
+      "V2_Rope": false,
+      "V2_Pad": false,
+      "Micro_Pad": false,
+      "Micro_Erector": false,
+      "Micro_Pivot": false,
+      "Micro_Rope": false,
+      "Strong_Erector": false,
+      "Strong_Pivot": false,
+      "Strong_Rope": false,
+      "Strong_Pad": false,
+      "Huge_Pad": false,
+      "Huge_Erector": false,
+      "Huge_Pivot": false,
+      "Huge_Rope": false,
+      "Atlas_Pad": false,
+      "Atlas_Erector": false,
+      "Atlas_Pivot": false,
+      "Atlas_Rope": false,
+      "ABM_Pad": false,
+      "ABM_Erector": false,
+      "ABM_Rope": false,
+      "ABM_Pivot": false
+    },
   "textures": {
-    "all": "hbm_ntm_rebirth:block/block_steel"
+    "particle": "hbm_ntm_rebirth:models/launchpad/pad",
+    "default": "hbm_ntm_rebirth:models/launchpad/pad"
   }
 }

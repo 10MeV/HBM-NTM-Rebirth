@@ -29,7 +29,7 @@ public class ArcFurnaceRenderer implements BlockEntityRenderer<ArcFurnaceBlockEn
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -38,14 +38,14 @@ public class ArcFurnaceRenderer implements BlockEntityRenderer<ArcFurnaceBlockEn
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
         }
         LegacyMachineDefinition definition = block.definition();
         int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
-        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity);
+                LegacyRenderLighting.ModelViewSamplingScope ignored =
                 LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -55,18 +55,22 @@ public class ArcFurnaceRenderer implements BlockEntityRenderer<ArcFurnaceBlockEn
             poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
             LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
-            LegacyArcFurnaceRenderHelper.renderPlan(MODEL,
-                    LegacyTileRenderPlans.arcFurnacePlan(
-                            blockEntity.getPreviousLid(),
-                            blockEntity.getLid(),
-                            blockEntity.isProgressing(),
-                            blockEntity.getLevel() == null ? 0L : blockEntity.getLevel().getGameTime(),
-                            partialTick,
-                            blockEntity.getLiquidAmount(),
-                            blockEntity.getMaxLiquid(),
-                            blockEntity.hasMaterial(),
-                            electrodeStates(blockEntity)),
-                    poseStack, buffer, modelLight, packedOverlay, renderMode);
+            LegacyTileRenderPlans.ArcFurnacePlan plan = LegacyTileRenderPlans.arcFurnacePlan(
+                    blockEntity.getPreviousLid(),
+                    blockEntity.getLid(),
+                    blockEntity.isProgressing(),
+                    blockEntity.getLevel() == null ? 0L : blockEntity.getLevel().getGameTime(),
+                    partialTick,
+                    blockEntity.getLiquidAmount(),
+                    blockEntity.getMaxLiquid(),
+                    blockEntity.hasMaterial(),
+                    electrodeStates(blockEntity));
+            LegacyArcFurnaceRenderHelper.renderStaticShell(MODEL, poseStack, buffer, modelLight, packedOverlay,
+                    renderMode);
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                LegacyArcFurnaceRenderHelper.renderAnimatedPlan(MODEL, plan, poseStack, buffer, modelLight,
+                        packedOverlay, renderMode);
+            }
             poseStack.popPose();
         }
     }

@@ -108,6 +108,8 @@ import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.ChunkDataEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
@@ -637,6 +639,11 @@ public final class CommonForgeEvents {
         return ModList.get().getModContainerById(HbmNtm.MOD_ID)
                 .map(container -> container.getModInfo().getVersion().toString())
                 .orElse("unknown");
+    }
+
+    @SubscribeEvent
+    public static void onServerAboutToStart(ServerAboutToStartEvent event) {
+        BlockMigrationHelper.loadLegacyItemIds(event.getServer().getWorldPath(LevelResource.ROOT));
     }
 
     @SubscribeEvent

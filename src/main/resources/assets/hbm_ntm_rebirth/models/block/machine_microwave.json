@@ -1,3 +1,21 @@
 {
-  "parent": "hbm_ntm_rebirth:block/empty"
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/machines/microwave.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.0, -0.785, 1.15],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+      "mainbody_Cube.001": true,
+      "window_Cube.002": true,
+      "plate_Cylinder": false
+    },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/microwave",
+    "default": "hbm_ntm_rebirth:block/machines/microwave"
+  }
 }

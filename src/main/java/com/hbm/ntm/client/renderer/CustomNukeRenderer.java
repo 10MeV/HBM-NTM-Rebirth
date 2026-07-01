@@ -37,6 +37,6 @@ public class CustomNukeRenderer implements BlockEntityRenderer<CustomNukeBlockEn
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 }

@@ -25,12 +25,15 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(LegacyDemonLampBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyDemonLampBlock)) {
             return;
@@ -41,8 +44,10 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
         poseStack.translate(0.5D, 0.5D, 0.5D);
         LegacyObjTransforms.applySixFaceAttachmentRotation(poseStack, state.getValue(LegacyDemonLampBlock.FACE));
         poseStack.translate(0.0D, -0.5D, 0.0D);
-        ObjLightModels.DEMON_LAMP_LEGACY.renderAll(poseStack, buffer, modelLight, packedOverlay,
-                LegacyTexturedRenderMode.CUTOUT_CULL);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            ObjLightModels.DEMON_LAMP_LEGACY.renderAll(poseStack, buffer, modelLight, packedOverlay,
+                    LegacyTexturedRenderMode.CUTOUT_CULL);
+        }
         LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
                 queuedPose -> renderAura(queuedPose, buffer));
         poseStack.popPose();

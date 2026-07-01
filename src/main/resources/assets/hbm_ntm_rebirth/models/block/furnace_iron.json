@@ -1,7 +1,21 @@
-﻿{
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/furnace_iron"
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/furnace_iron.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.0, 0.0, 0.0],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "visibility": {
+      "Main": true,
+      "On": false,
+      "Off": false
+    },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/furnace_iron",
+    "default": "hbm_ntm_rebirth:block/machines/furnace_iron"
+  }
 }

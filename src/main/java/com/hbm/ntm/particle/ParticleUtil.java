@@ -232,12 +232,16 @@ public final class ParticleUtil {
     }
 
     public static void spawnDebugText(Level level, double x, double y, double z, String text, int color, float scale) {
+        spawnDebugText(level, x, y, z, text, color, scale, 150.0D);
+    }
+
+    public static void spawnDebugText(Level level, double x, double y, double z, String text, int color, float scale, double range) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_DEBUG_TEXT);
         data.putString("text", text == null ? "" : text);
         data.putInt("color", color);
         data.putFloat("scale", scale);
-        spawnAux(level, x, y, z, data, 150.0D);
+        spawnAux(level, x, y, z, data, range);
     }
 
     public static void spawnPowerNetworkDebug(Level level, double x, double y, double z, double motionX, double motionY, double motionZ) {

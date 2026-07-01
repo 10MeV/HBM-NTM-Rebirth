@@ -139,20 +139,26 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
                 powerNet.removeReceiver(receiver);
             }
         }
+        boolean providerSubscribedNow = false;
+        boolean receiverSubscribedNow = false;
         if (providerActive) {
-            if (hasLocalNet) {
+            if (hasLocalNet && provider != null) {
                 powerNet.addProvider(provider);
+                providerSubscribedNow = true;
             }
-            HbmEnergyUtil.subscribeProviderToPorts(level, worldPosition, getNetworkEnergyPorts(), provider);
+            providerSubscribedNow |= HbmEnergyUtil.subscribeProviderToPorts(level,
+                    worldPosition, getNetworkEnergyPorts(), provider) > 0;
         }
         if (receiverActive) {
-            if (hasLocalNet) {
+            if (hasLocalNet && receiver != null) {
                 powerNet.addReceiver(receiver);
+                receiverSubscribedNow = true;
             }
-            HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, getNetworkEnergyPorts(), receiver);
+            receiverSubscribedNow |= HbmEnergyUtil.subscribeReceiverToPorts(level,
+                    worldPosition, getNetworkEnergyPorts(), receiver) > 0;
         }
-        energyProviderSubscribed = providerActive;
-        energyReceiverSubscribed = receiverActive;
+        energyProviderSubscribed = providerSubscribedNow;
+        energyReceiverSubscribed = receiverSubscribedNow;
         updateEnergySubscriptionRefreshBookkeeping();
     }
 

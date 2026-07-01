@@ -33,12 +33,15 @@ public class CustomMissileLauncherRenderer implements BlockEntityRenderer<Custom
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(CustomMissileLauncherBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
@@ -49,11 +52,13 @@ public class CustomMissileLauncherRenderer implements BlockEntityRenderer<Custom
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
-        if (state.getBlock() instanceof CustomMissileLauncherBlock launcher
-                && launcher.kind() == CustomMissileLauncherBlock.Kind.LAUNCH_TABLE) {
-            renderLaunchTable(blockEntity, poseStack, buffer, modelLight);
-        } else {
-            renderCompactLauncher(blockEntity, poseStack, buffer, modelLight);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            if (state.getBlock() instanceof CustomMissileLauncherBlock launcher
+                    && launcher.kind() == CustomMissileLauncherBlock.Kind.LAUNCH_TABLE) {
+                renderLaunchTable(blockEntity, poseStack, buffer, modelLight);
+            } else {
+                renderCompactLauncher(blockEntity, poseStack, buffer, modelLight);
+            }
         }
         poseStack.popPose();
     }

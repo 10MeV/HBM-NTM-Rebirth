@@ -39,6 +39,9 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
     @Override
     public void render(RadarScreenBlockEntity screen, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(screen, getViewDistance())) {
+            return;
+        }
         BlockState state = screen.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -54,8 +57,10 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        ObjModelLibrary.MACHINE_RADAR_SCREEN_LEGACY.renderAll(definition.textureLocation(),
-                poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(screen)) {
+            ObjModelLibrary.MACHINE_RADAR_SCREEN_LEGACY.renderAll(definition.textureLocation(),
+                    poseStack, buffer, modelLight, packedOverlay);
+        }
 
         RadarScreenSnapshot snapshot = screen.getSnapshot();
         Level level = screen.getLevel();

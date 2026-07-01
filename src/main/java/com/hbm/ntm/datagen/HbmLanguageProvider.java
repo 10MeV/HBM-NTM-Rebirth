@@ -160,6 +160,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.template_folder", "Machine Template Folder");
         add("item.hbm_ntm_rebirth.template_folder.desc", "Machine Templates: Paper + Dye$Press Stamps: Flat Stamp$Siren Tracks: Insulator + Steel Plate");
         add("item.hbm_ntm_rebirth.wiring_red_copper", "Cable Drum");
+        add("item.hbm_ntm_rebirth.power_net_tool", "Cable Network Analysis Tool");
+        add("item.hbm_ntm_rebirth.nuke_electric_kit", "Electronic Engineer's Kit");
+        add("block.hbm_ntm_rebirth.deco_toaster", "Broken Toaster");
         add("item.hbm_ntm_rebirth.stamp_iron_plate", "Plate Stamp (Iron)");
         add("item.hbm_ntm_rebirth.stamp_iron_flat", "Flat Stamp (Iron)");
         add("item.hbm_ntm_rebirth.stamp_iron_wire", "Wire Stamp (Iron)");
@@ -313,6 +316,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.rag_piss", "Piss-Soaked Rag");
         add("item.hbm_ntm_rebirth.rag", "Cloth");
         add("item.hbm_ntm_rebirth.ingot_dineutronium", "Dineutronium Ingot");
+        add("item.hbm_ntm_rebirth.ingot_electronium", "Electronium Ingot");
         add("item.hbm_ntm_rebirth.watch", "Broken Pocket Watch");
         add("item.hbm_ntm_rebirth.hazmat_cloth", "Hazmat Cloth");
         add("item.hbm_ntm_rebirth.hazmat_cloth_red", "Advanced Hazmat Cloth");
@@ -2358,6 +2362,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.wire_dense_titanium", "Dense Titanium Wire");
         add("item.hbm_ntm_rebirth.wire_dense_neodymium", "Dense Neodymium Wire");
         add("item.hbm_ntm_rebirth.wire_dense_dineutronium", "Dense Dineutronium Wire");
+        add("item.hbm_ntm_rebirth.wire_dense_magnetized_tungsten", "Dense 4000K High Temperature Super Conductor Wire");
         add("item.hbm_ntm_rebirth.wire_dense_starmetal", "Dense Starmetal Wire");
         add("item.hbm_ntm_rebirth.pa_coil_gold", "Large Gold Coil");
         add("item.hbm_ntm_rebirth.pa_coil_niobium", "Large NbTi Coil");
@@ -2910,7 +2915,7 @@ public class HbmLanguageProvider extends LanguageProvider {
             case "ingot_euphemium", "nugget_euphemium", "powder_euphemium",
                  "plate_euphemium" -> true;
             case "ingot_gh336", "nugget_gh336", "billet_gh336" -> true;
-            case "ingot_starmetal", "ingot_chainsteel", "ingot_dineutronium", "crystal_starmetal", "gem_volcanic",
+            case "ingot_starmetal", "ingot_chainsteel", "ingot_dineutronium", "ingot_electronium", "crystal_starmetal", "gem_volcanic",
                  "fragment_neodymium", "fragment_cobalt", "fragment_niobium", "fragment_cerium",
                  "fragment_lanthanium", "fragment_actinium", "fragment_boron", "fragment_meteorite",
                  "scrap", "scrap_plastic", "scrap_oil", "ring_starmetal" -> true;
@@ -2935,6 +2940,7 @@ public class HbmLanguageProvider extends LanguageProvider {
                   "plate_cast_ferrouranium",
                   "plate_cast_tungsten" -> true;
             case "wire_dense_copper", "wire_dense_titanium", "wire_dense_neodymium", "wire_dense_dineutronium",
+                 "wire_dense_magnetized_tungsten",
                  "wire_dense_mingrade" -> true;
             case "dust", "dust_tiny", "fragment_coltan", "powder_coltan", "gem_tantalium", "powder_tantalium",
                  "nugget_tantalium", "shell_aluminium", "shell_copper" -> true;

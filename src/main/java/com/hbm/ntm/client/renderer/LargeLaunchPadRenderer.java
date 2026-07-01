@@ -22,8 +22,16 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
     public void render(LargeLaunchPadBlockEntity launchPad, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(launchPad, getViewDistance())) {
+            return;
+        }
         Direction facing = launchPad.getBlockState().hasProperty(LargeLaunchPadBlock.FACING)
                 ? launchPad.getBlockState().getValue(LargeLaunchPadBlock.FACING)
                 : Direction.NORTH;
@@ -35,9 +43,9 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
 
-        ObjLaunchModels.renderMissileErectorPart("Pad", ObjLaunchModels.MISSILE_ERECTOR_TEXTURE,
-                poseStack, buffer, modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
-        renderFormFactorParts(launchPad, missile, partialTick, poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(launchPad)) {
+            renderFormFactorParts(launchPad, missile, partialTick, poseStack, buffer, modelLight, packedOverlay);
+        }
         poseStack.popPose();
     }
 

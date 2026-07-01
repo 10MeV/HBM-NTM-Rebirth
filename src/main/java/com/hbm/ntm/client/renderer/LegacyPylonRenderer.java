@@ -59,14 +59,19 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(T pylon, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(pylon, getViewDistance())) {
+            return;
+        }
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(pylon, packedLight);
-        renderPylonModel(pylon.getBlockState(), poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(pylon)) {
+            renderPylonModel(pylon.getBlockState(), poseStack, buffer, modelLight, packedOverlay);
+        }
         renderWires(pylon, poseStack, buffer, packedLight, packedOverlay);
     }
 

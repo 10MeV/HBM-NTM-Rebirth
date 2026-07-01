@@ -40,19 +40,20 @@ public class ResearchReactorRenderer implements BlockEntityRenderer<ResearchReac
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         int light = LegacyRenderLighting.resolveBoundsLight(blockEntity, blockEntity.getRenderBoundingBox(), packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        ObjReactorModels.SMALL_BASE.renderAll(ObjReactorModels.SMALL_BASE_TEXTURE, poseStack, buffer,
-                light, packedOverlay);
-        double level = Mth.lerp(partialTick, blockEntity.getLastLevel(), blockEntity.getLevelValue());
-        poseStack.pushPose();
-        poseStack.translate(0.0D, level, 0.0D);
-        ObjReactorModels.SMALL_RODS.renderAll(ObjReactorModels.SMALL_RODS_TEXTURE, poseStack, buffer,
-                light, packedOverlay);
-        poseStack.popPose();
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            ObjReactorModels.SMALL_BASE.renderAll(ObjReactorModels.SMALL_BASE_TEXTURE, poseStack, buffer,
+                    light, packedOverlay);
+            double level = Mth.lerp(partialTick, blockEntity.getLastLevel(), blockEntity.getLevelValue());
+            poseStack.pushPose();
+            poseStack.translate(0.0D, level, 0.0D);
+            ObjReactorModels.SMALL_RODS.renderAll(ObjReactorModels.SMALL_RODS_TEXTURE, poseStack, buffer,
+                    light, packedOverlay);
+            poseStack.popPose();
+        }
         int totalFlux = blockEntity.getTotalFlux();
         if (totalFlux > 10 && blockEntity.isSubmerged()) {
             LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,

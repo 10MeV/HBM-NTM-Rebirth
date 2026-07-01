@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.render;
 
+import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -47,7 +48,7 @@ public final class LegacyMachineEffectPresenter {
             return;
         }
         PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
-        QUEUES.get(resolvedStage).add(task);
+        QUEUES.get(resolvedStage).add(HbmRenderFrameCulling.captureMachineRendererSubmissionScope(task));
         QUEUED_TASKS.incrementAndGet();
     }
 

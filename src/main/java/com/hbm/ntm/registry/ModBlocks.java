@@ -38,10 +38,12 @@ import com.hbm.ntm.block.CoolingTowerBlock;
 import com.hbm.ntm.block.CraneLogisticsBlock;
 import com.hbm.ntm.block.CraneSplitterBlock;
 import com.hbm.ntm.block.CrateBlock;
+import com.hbm.ntm.block.CrystallizerBlock;
 import com.hbm.ntm.block.CrucibleBlock;
 import com.hbm.ntm.block.CustomMissileLauncherBlock;
 import com.hbm.ntm.block.CustomNukeBlock;
 import com.hbm.ntm.block.CyclotronBlock;
+import com.hbm.ntm.block.DecoToasterBlock;
 import com.hbm.ntm.block.DeconBlock;
 import com.hbm.ntm.block.DeuteriumExtractorBlock;
 import com.hbm.ntm.block.DeuteriumTowerBlock;
@@ -326,6 +328,7 @@ import com.hbm.ntm.blockentity.LegacyGenericSelectorMachineBlockEntity;
 import com.hbm.ntm.blockentity.ProcessingMachineBlockEntity;
 import com.hbm.ntm.item.CableDiodeBlockItem;
 import com.hbm.ntm.item.CrateBlockItem;
+import com.hbm.ntm.item.RedCableBoxBlockItem;
 import com.hbm.ntm.item.RedCableBlockItem;
 import com.hbm.ntm.item.TrinketBlockItem;
 import com.hbm.ntm.item.TurretBlockItem;
@@ -471,6 +474,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MACHINE_SIREN = siren("machine_siren");
     public static final RegistryObject<Block> FAN = fan("fan");
     public static final RegistryObject<Block> FILING_CABINET = filingCabinet("filing_cabinet");
+    public static final RegistryObject<Block> DECO_TOASTER = decoToaster("deco_toaster");
     public static final RegistryObject<Block> ANVIL_IRON = anvil("anvil_iron", NTMAnvilBlock.TIER_IRON);
     public static final RegistryObject<Block> ANVIL_LEAD = anvil("anvil_lead", NTMAnvilBlock.TIER_IRON);
     public static final RegistryObject<Block> ANVIL_STEEL = anvil("anvil_steel", NTMAnvilBlock.TIER_STEEL);
@@ -957,8 +961,8 @@ public final class ModBlocks {
             exposureChamberDefinition());
     public static final RegistryObject<Block> MACHINE_CYCLOTRON = cyclotronMachine("machine_cyclotron",
             cyclotronDefinition());
-    public static final RegistryObject<Block> MACHINE_CRYSTALLIZER = processingMachine("machine_crystallizer",
-            crystallizerDefinition(), ProcessingMachineBlockEntity.Kind.CRYSTALLIZER);
+    public static final RegistryObject<Block> MACHINE_CRYSTALLIZER = crystallizerMachine("machine_crystallizer",
+            crystallizerDefinition());
     public static final RegistryObject<Block> MACHINE_ELECTROLYSER = electrolyserMachine("machine_electrolyser",
             electrolyserDefinition());
     public static final RegistryObject<Block> MACHINE_ARC_WELDER = arcWelderMachine("machine_arc_welder",
@@ -1885,7 +1889,7 @@ public final class ModBlocks {
             ASH_DIGAMMA, BALEFIRE, PRIBRIS, PRIBRIS_BURNING, PRIBRIS_RADIATING, PRIBRIS_DIGAMMA,
             ORE_BASALT, VOLCANIC_LAVA_BLOCK, RAD_LAVA_BLOCK, BLOCK_FOAM, MUD_BLOCK,
                     STEEL_SCAFFOLD, STEEL_BEAM, STEEL_GRATE, STEEL_GRATE_WIDE, CHAIN,
-                    POLE_TOP, POLE_SATELLITE_RECEIVER, TEKTITE,
+                    POLE_TOP, POLE_SATELLITE_RECEIVER, DECO_TOASTER, TEKTITE,
                     ORE_TEKTITE_OSMIRIDIUM, BLOCK_GRAPHITE, BLOCK_SEMTEX, BLOCK_C4,
                     STALACTITE_SULFUR, STALACTITE_ASBESTOS, STALAGMITE_SULFUR, STALAGMITE_ASBESTOS),
             EXTRA_BLOCK_TAB_BLOCKS.stream()).toList();
@@ -2374,7 +2378,7 @@ public final class ModBlocks {
         return registerBlockWithItem(
                 name,
                 () -> new RedCableBoxBlock(redCableProperties()),
-                block -> new LegacyStateBlockItem(block.get(), new Item.Properties(), RedCableBoxBlock.SIZE, 5,
+                block -> new RedCableBoxBlockItem(block.get(), new Item.Properties(), RedCableBoxBlock.SIZE, 5,
                         variant -> Component.translatable("block." + HbmNtm.MOD_ID + "." + name)));
     }
 
@@ -2882,6 +2886,19 @@ public final class ModBlocks {
                                 : "block.hbm_ntm_rebirth.vending_machine.snacks")));
     }
 
+    private static RegistryObject<Block> decoToaster(String name) {
+        return registerBlockWithItem(
+                name,
+                () -> new DecoToasterBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 10.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion()),
+                block -> new LegacyStateBlockItem(block.get(), new Item.Properties(), DecoToasterBlock.VARIANT, 3,
+                        variant -> Component.translatable("block.hbm_ntm_rebirth.deco_toaster")));
+    }
+
     private static RegistryObject<Block> visibleMultiblockMachine(String name, LegacyMachineDefinition definition) {
         return registerBlockWithItem(
                 name,
@@ -3182,6 +3199,18 @@ public final class ModBlocks {
                         .sound(SoundType.METAL)
                         .requiresCorrectToolForDrops()
                         .noOcclusion(), definition, kind),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> crystallizerMachine(String name, LegacyMachineDefinition definition) {
+        return registerBlockWithItem(
+                name,
+                () -> new CrystallizerBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 30.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), definition),
                 block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
     }
 

@@ -42,6 +42,8 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_GRATE_WIDE.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_GRATE_WIDE.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.CHAIN.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.DECO_TOASTER.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.DECO_TOASTER.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STRUCT_ICF_CORE.get(),
                 ModBlocks.ICF_COMPONENT_SCAFFOLD.get(),
                 ModBlocks.ICF_COMPONENT_VESSEL.get(),

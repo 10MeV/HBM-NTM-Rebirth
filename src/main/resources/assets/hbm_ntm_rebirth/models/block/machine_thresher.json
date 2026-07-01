@@ -1,3 +1,24 @@
 {
-  "parent": "hbm_ntm_rebirth:block/empty"
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/machines/thresher.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+      "Engine": false,
+      "ArmLower": false,
+      "Front": false,
+      "Base": true,
+      "ArmUpper": false,
+      "Wheel": false
+    },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/thresher",
+    "default": "hbm_ntm_rebirth:block/machines/thresher"
+  }
 }

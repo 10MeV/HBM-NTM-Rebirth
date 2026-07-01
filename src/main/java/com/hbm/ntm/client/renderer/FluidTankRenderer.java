@@ -31,7 +31,7 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -40,7 +40,6 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         LegacyMachineDefinition definition = state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block
                 ? block.definition()
@@ -68,52 +67,54 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
             poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
         }
 
-        if (blockEntity instanceof OrbusBlockEntity orbus) {
-            renderOrbus(orbus, partialTick, poseStack, buffer, modelLight, packedOverlay);
-            poseStack.popPose();
-            return;
-        }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            if (blockEntity instanceof OrbusBlockEntity orbus) {
+                renderOrbus(orbus, partialTick, poseStack, buffer, modelLight, packedOverlay);
+                poseStack.popPose();
+                return;
+            }
 
-        LegacyTileRenderPlans.FluidTankModelPlan plan = LegacyTileRenderPlans.fluidTankModelPlan(
-                blockEntity instanceof Bat9000BlockEntity,
-                blockEntity instanceof BigAssTankBlockEntity,
-                blockEntity.isExploded());
-        switch (plan.kind()) {
-            case BAT9000 -> {
-                ObjModelLibrary.MACHINE_BAT9000.renderAll(poseStack, buffer, modelLight, packedOverlay);
-                if (plan.renderFluidBody()) {
-                    LegacyFluidTankRenderHelper.renderBat9000Fluid(blockEntity.getTank(), state, poseStack, buffer,
-                            modelLight, packedOverlay);
+            LegacyTileRenderPlans.FluidTankModelPlan plan = LegacyTileRenderPlans.fluidTankModelPlan(
+                    blockEntity instanceof Bat9000BlockEntity,
+                    blockEntity instanceof BigAssTankBlockEntity,
+                    blockEntity.isExploded());
+            switch (plan.kind()) {
+                case BAT9000 -> {
+                    ObjModelLibrary.MACHINE_BAT9000.renderAll(poseStack, buffer, modelLight, packedOverlay);
+                    if (plan.renderFluidBody()) {
+                        LegacyFluidTankRenderHelper.renderBat9000Fluid(blockEntity.getTank(), state, poseStack, buffer,
+                                modelLight, packedOverlay);
+                    }
+                    if (plan.renderDangerDiamonds()) {
+                        var tankType = blockEntity.getTank().getTankType();
+                        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                                queuedPose -> LegacyFluidTankRenderHelper.renderBat9000Diamonds(tankType,
+                                        queuedPose, buffer, modelLight, packedOverlay));
+                    }
                 }
-                if (plan.renderDangerDiamonds()) {
+                case BIG_ASS_TANK -> {
+                    ObjModelLibrary.MACHINE_BIGASSTANK.renderAll(poseStack, buffer, modelLight, packedOverlay);
+                    if (plan.renderFluidBody()) {
+                        LegacyFluidTankRenderHelper.renderBigAssTankFluid(blockEntity.getTank(), state, poseStack,
+                                buffer, modelLight, packedOverlay, blockEntity.getLevel() == null ? partialTick
+                                        : blockEntity.getLevel().getGameTime() + partialTick);
+                    }
+                    if (plan.renderDangerDiamonds()) {
+                        var tankType = blockEntity.getTank().getTankType();
+                        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                                queuedPose -> LegacyFluidTankRenderHelper.renderBigAssTankDiamonds(tankType,
+                                        queuedPose, buffer, modelLight, packedOverlay));
+                    }
+                }
+                case SMALL_TANK -> {
+                    LegacyFluidTankRenderHelper.renderSmallTankBody(ObjModelLibrary.MACHINE_FLUIDTANK,
+                            ObjModelLibrary.MACHINE_FLUIDTANK_EXPLODED, blockEntity.getTank(), plan.exploded(),
+                            poseStack, buffer, modelLight, packedOverlay);
                     var tankType = blockEntity.getTank().getTankType();
                     LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                            queuedPose -> LegacyFluidTankRenderHelper.renderBat9000Diamonds(tankType,
+                            queuedPose -> LegacyFluidTankRenderHelper.renderSmallTankDiamonds(tankType,
                                     queuedPose, buffer, modelLight, packedOverlay));
                 }
-            }
-            case BIG_ASS_TANK -> {
-                ObjModelLibrary.MACHINE_BIGASSTANK.renderAll(poseStack, buffer, modelLight, packedOverlay);
-                if (plan.renderFluidBody()) {
-                    LegacyFluidTankRenderHelper.renderBigAssTankFluid(blockEntity.getTank(), state, poseStack, buffer,
-                            modelLight, packedOverlay, blockEntity.getLevel() == null ? partialTick
-                                    : blockEntity.getLevel().getGameTime() + partialTick);
-                }
-                if (plan.renderDangerDiamonds()) {
-                    var tankType = blockEntity.getTank().getTankType();
-                    LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                            queuedPose -> LegacyFluidTankRenderHelper.renderBigAssTankDiamonds(tankType,
-                                    queuedPose, buffer, modelLight, packedOverlay));
-                }
-            }
-            case SMALL_TANK -> {
-                LegacyFluidTankRenderHelper.renderSmallTankBody(ObjModelLibrary.MACHINE_FLUIDTANK,
-                        ObjModelLibrary.MACHINE_FLUIDTANK_EXPLODED, blockEntity.getTank(), plan.exploded(),
-                        poseStack, buffer, modelLight, packedOverlay);
-                var tankType = blockEntity.getTank().getTankType();
-                LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                        queuedPose -> LegacyFluidTankRenderHelper.renderSmallTankDiamonds(tankType,
-                                queuedPose, buffer, modelLight, packedOverlay));
             }
         }
         poseStack.popPose();

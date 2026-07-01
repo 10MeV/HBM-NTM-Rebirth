@@ -86,7 +86,7 @@ public class LiquefactorBlock extends LegacyVisibleMultiblockMachineBlock implem
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return RenderShape.MODEL;
     }
 
     @Override

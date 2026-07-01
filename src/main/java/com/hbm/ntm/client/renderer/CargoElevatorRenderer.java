@@ -32,7 +32,7 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -41,8 +41,6 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(elevator, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(elevator);
-
         int modelLight = LegacyRenderLighting.resolveBoundsLight(elevator, elevator.getRenderBoundingBox(),
                 packedLight);
         poseStack.pushPose();
@@ -51,14 +49,20 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
         LegacyTileRenderPlans.CargoElevatorPlan plan = LegacyTileRenderPlans.cargoElevatorPlan(
                 elevator.shouldRenderPlatform(), elevator.getPrevExtension(), elevator.getExtension(),
                 partialTick, elevator.getHeight());
-        if (plan.renderPlatform()) {
-            renderPart(BASE, poseStack, buffer, modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
-            renderTranslatedParts(plan.platformParts(), poseStack, buffer, modelLight, packedOverlay,
-                    LegacyTexturedRenderMode.CUTOUT_CULL);
-        }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(elevator)) {
+            if (plan.renderPlatform()) {
+                renderPart(BASE, poseStack, buffer, modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+                try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(elevator)) {
+                    renderTranslatedParts(plan.platformParts(), poseStack, buffer, modelLight, packedOverlay,
+                            LegacyTexturedRenderMode.CUTOUT_CULL);
+                }
+            }
 
-        renderTranslatedParts(plan.guides(), poseStack, buffer, modelLight, packedOverlay,
-                LegacyTexturedRenderMode.CUTOUT_CULL);
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(elevator)) {
+                renderTranslatedParts(plan.guides(), poseStack, buffer, modelLight, packedOverlay,
+                        LegacyTexturedRenderMode.CUTOUT_CULL);
+            }
+        }
         poseStack.popPose();
     }
 

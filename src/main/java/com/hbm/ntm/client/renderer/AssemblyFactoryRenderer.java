@@ -76,7 +76,7 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -85,7 +85,6 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -103,11 +102,6 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
             poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
             ResourceLocation texture = definition.textureLocation();
 
-            renderModelPart("Base", texture, poseStack, buffer, modelLight, packedOverlay);
-            if (blockEntity.shouldRenderFrame()) {
-                renderModelPart("Frame", texture, poseStack, buffer, modelLight, packedOverlay);
-            }
-
             double slide1 = blockEntity.getAnimation(0).getSlider(partialTick);
             double slide2 = blockEntity.getAnimation(1).getSlider(partialTick);
             double[] arm1 = blockEntity.getAnimation(0).striker.getPositions(partialTick);
@@ -115,10 +109,18 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
             double[] arm3 = blockEntity.getAnimation(1).striker.getPositions(partialTick);
             double[] arm4 = blockEntity.getAnimation(1).saw.getPositions(partialTick);
 
-            LegacyTileRenderPlans.AssemblyFactoryPlan plan = LegacyTileRenderPlans.assemblyFactoryPlan(
-                    slide1, slide2, arm1, arm2, arm3, arm4);
-            for (LegacyTileRenderPlans.AssemblyArmPlan slider : plan.sliders()) {
-                renderArmPlan(poseStack, texture, buffer, modelLight, packedOverlay, slider);
+            try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+                if (blockEntity.shouldRenderFrame()) {
+                    renderModelPart("Frame", texture, poseStack, buffer, modelLight, packedOverlay);
+                }
+
+                try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                    LegacyTileRenderPlans.AssemblyFactoryPlan plan = LegacyTileRenderPlans.assemblyFactoryPlan(
+                            slide1, slide2, arm1, arm2, arm3, arm4);
+                    for (LegacyTileRenderPlans.AssemblyArmPlan slider : plan.sliders()) {
+                        renderArmPlan(poseStack, texture, buffer, modelLight, packedOverlay, slider);
+                    }
+                }
             }
 
             if (LegacyRecipeIconRenderer.shouldRender(blockEntity)) {

@@ -1,10 +1,10 @@
 {
   "variants": {
-    "facing=down": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=north": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=up": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/empty" }
+    "facing=down": { "model": "hbm_ntm_rebirth:block/machines/fan", "x": 180 },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/machines/fan", "x": 90, "y": 270 },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/machines/fan", "x": 90, "y": 180 },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/machines/fan", "x": 90 },
+    "facing=up": { "model": "hbm_ntm_rebirth:block/machines/fan" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/machines/fan", "x": 90, "y": 90 }
   }
 }

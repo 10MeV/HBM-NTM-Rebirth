@@ -2,8 +2,6 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LaunchPadBlock;
 import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
-import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
-import com.hbm.ntm.client.obj.ObjLaunchModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -19,22 +17,30 @@ public class LaunchPadRenderer implements BlockEntityRenderer<LaunchPadBlockEnti
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
     public void render(LaunchPadBlockEntity launchPad, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ItemStack missile = launchPad.getItems().getStackInSlot(LaunchPadBlockEntity.SLOT_MISSILE);
+        if (missile.isEmpty()) {
+            return;
+        }
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(launchPad, getViewDistance())) {
+            return;
+        }
         Direction facing = launchPad.getBlockState().hasProperty(LaunchPadBlock.FACING)
                 ? launchPad.getBlockState().getValue(LaunchPadBlock.FACING)
                 : Direction.NORTH;
-        ItemStack missile = launchPad.getItems().getStackInSlot(LaunchPadBlockEntity.SLOT_MISSILE);
         int modelLight = LegacyRenderLighting.resolveBoundsLight(launchPad,
-                launchPadLightingBounds(launchPad.getBlockPos(), !missile.isEmpty()), packedLight);
+                launchPadLightingBounds(launchPad.getBlockPos(), true), packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
-        ObjLaunchModels.MISSILE_PAD.renderAll(ObjLaunchModels.MISSILE_PAD_TEXTURE, poseStack, buffer,
-                modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
-
-        if (!missile.isEmpty()) {
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(launchPad)) {
             poseStack.pushPose();
             poseStack.translate(0.0D, 1.0D, 0.0D);
             MissileItemRenderer.renderRawMissile(missile, poseStack, buffer, modelLight, packedOverlay);

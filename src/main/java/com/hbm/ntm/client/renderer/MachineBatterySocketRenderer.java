@@ -47,7 +47,7 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -56,28 +56,34 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(socket, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(socket);
+        ItemStack stack = socket.getBatteryStack();
+        boolean hasFrame = socket.hasFrame();
+        boolean creativeBattery = stack.is(ModItems.BATTERY_CREATIVE.get());
+        if (!hasFrame && stack.isEmpty()) {
+            return;
+        }
+
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(socket, packedLight);
         poseStack.pushPose();
         BlockState state = socket.getBlockState();
         applyLegacySocketTransform(state, poseStack);
 
-        renderModelPart(SOCKET, SOCKET_TEXTURE, poseStack, buffer, modelLight, packedOverlay,
-                LegacyTexturedRenderMode.CUTOUT_CULL);
-        if (socket.hasFrame()) {
-            renderModelPart(SUPPORTS, SOCKET_TEXTURE, poseStack, buffer, modelLight, packedOverlay,
-                    LegacyTexturedRenderMode.CUTOUT_CULL);
-        }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(socket)) {
+            if (hasFrame) {
+                renderModelPart(SUPPORTS, SOCKET_TEXTURE, poseStack, buffer, modelLight, packedOverlay,
+                        LegacyTexturedRenderMode.CUTOUT_CULL);
+            }
 
-        ItemStack stack = socket.getBatteryStack();
-        if (stack.getItem() instanceof HbmBatteryPackItem pack) {
-            ResourceLocation texture = BatteryPackItemRenderer.textureFor(pack);
-            renderModelPart(pack.isCapacitor() ? CAPACITOR : BATTERY, texture, poseStack, buffer, modelLight,
-                    packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
-        } else if (stack.getItem() instanceof HbmSelfChargingBatteryItem) {
-            renderModelPart(BATTERY, SELF_CHARGING_TEXTURE, poseStack, buffer, modelLight, packedOverlay,
-                    LegacyTexturedRenderMode.CUTOUT_CULL);
-        } else if (stack.is(ModItems.BATTERY_CREATIVE.get())) {
+            if (stack.getItem() instanceof HbmBatteryPackItem pack) {
+                ResourceLocation texture = BatteryPackItemRenderer.textureFor(pack);
+                renderModelPart(pack.isCapacitor() ? CAPACITOR : BATTERY, texture, poseStack, buffer, modelLight,
+                        packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+            } else if (stack.getItem() instanceof HbmSelfChargingBatteryItem) {
+                renderModelPart(BATTERY, SELF_CHARGING_TEXTURE, poseStack, buffer, modelLight, packedOverlay,
+                        LegacyTexturedRenderMode.CUTOUT_CULL);
+            }
+        }
+        if (creativeBattery) {
             renderCreativeBatteryEffect(socket, partialTick, poseStack, buffer, modelLight, packedOverlay);
         }
 

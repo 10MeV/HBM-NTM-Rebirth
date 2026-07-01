@@ -4,10 +4,10 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "parts": { "visibility": {
+  "visibility": {
       "Pipes": false,
       "Rotor": true,
       "Klystron": false
-  } },
+  },
   "textures": { "particle": "hbm_ntm_rebirth:block/fusion/klystron_creative", "default": "hbm_ntm_rebirth:block/fusion/klystron_creative" }
 }

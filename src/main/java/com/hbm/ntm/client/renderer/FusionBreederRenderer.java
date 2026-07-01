@@ -32,15 +32,15 @@ public class FusionBreederRenderer implements BlockEntityRenderer<FusionBreederB
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
-
         BlockState state = blockEntity.getBlockState();
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
-        ObjFusionModels.renderBreederPart(ObjFusionModels.BREEDER_TEXTURE,
-                poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Breeder");
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            ObjFusionModels.renderBreederPart(ObjFusionModels.BREEDER_TEXTURE,
+                    poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Breeder");
+        }
         poseStack.popPose();
     }
 

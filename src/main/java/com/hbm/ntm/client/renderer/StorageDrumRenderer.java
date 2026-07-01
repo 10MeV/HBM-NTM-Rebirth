@@ -15,19 +15,13 @@ public class StorageDrumRenderer implements BlockEntityRenderer<StorageDrumBlock
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(StorageDrumBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
-            return;
-        }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
-
-        render(poseStack, buffer, LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight),
-                packedOverlay);
+        // World geometry is baked into the chunk mesh; keep this class for the item BEWLR helper.
     }
 
     public static void renderItem(ItemDisplayContext displayContext, PoseStack poseStack, MultiBufferSource buffer,

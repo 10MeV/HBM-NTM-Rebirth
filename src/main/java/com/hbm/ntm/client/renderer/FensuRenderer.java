@@ -18,8 +18,6 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
     private static final ResourceLocation TEXTURE =
             ObjMachineModels.FENSU_TEXTURE;
     private static final LegacyWavefrontModel MODEL = ObjMachineModels.FENSU_LEGACY;
-    private static final LegacyWavefrontModel.SelectionHandle BASE =
-            MODEL.prepareRenderOnlyInCallOrder("Base");
     private static final LegacyWavefrontModel.SelectionHandle DISC =
             MODEL.prepareRenderOnlyInCallOrder("Disc");
     private static final LegacyWavefrontModel.SelectionHandle LIGHTS =
@@ -35,7 +33,7 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -44,7 +42,6 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(fensu, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(fensu);
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(fensu, packedLight);
         BlockState state = fensu.getBlockState();
 
@@ -52,16 +49,16 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYRotation(state)));
 
-        renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(fensu)) {
+            poseStack.pushPose();
+            poseStack.translate(0.0D, 2.5D, 0.0D);
+            poseStack.mulPose(Axis.XP.rotationDegrees(fensu.getInterpolatedRotation(partialTick)));
+            poseStack.translate(0.0D, -2.5D, 0.0D);
+            renderPart(DISC, poseStack, buffer, modelLight, packedOverlay);
+            poseStack.popPose();
 
-        poseStack.pushPose();
-        poseStack.translate(0.0D, 2.5D, 0.0D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(fensu.getInterpolatedRotation(partialTick)));
-        poseStack.translate(0.0D, -2.5D, 0.0D);
-        renderPart(DISC, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
-
-        renderPart(LIGHTS, poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay);
+            renderPart(LIGHTS, poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay);
+        }
         poseStack.popPose();
     }
 

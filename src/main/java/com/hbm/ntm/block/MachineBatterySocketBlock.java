@@ -76,7 +76,7 @@ public class MachineBatterySocketBlock extends LegacyOffsetMultiblockBlock imple
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return RenderShape.MODEL;
     }
 
     @Override

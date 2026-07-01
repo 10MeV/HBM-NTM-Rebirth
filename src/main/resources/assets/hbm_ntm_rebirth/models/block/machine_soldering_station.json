@@ -1,7 +1,16 @@
-﻿{
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/soldering_station"
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/soldering_station.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.0, 0.0, 1.0],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/soldering_station",
+    "default": "hbm_ntm_rebirth:block/machines/soldering_station"
+  }
 }

@@ -36,6 +36,7 @@ public final class HbmRenderFrameCulling {
     private static final int OCCLUSION_MAX_CACHE_ENTRIES = 16384;
     private static final int OCCLUSION_MAX_KEEP_MANHATTAN_BLOCKS = 192;
     private static final long OCCLUSION_STALE_FRAME_TTL = 600L;
+    private static final double MODEL_FADE_ZONE_BLOCKS = 16.0D;
     private static final AtomicLong FRAME_GENERATION = new AtomicLong();
     private static final Map<Long, OcclusionCacheEntry> OCCLUSION_CACHE = new LinkedHashMap<>(1024, 0.75F, true);
     private static final BlockPos.MutableBlockPos RAYCAST_POS = new BlockPos.MutableBlockPos();
@@ -135,18 +136,59 @@ public final class HbmRenderFrameCulling {
     }
 
     public static MachineRendererSubmissionScope pushMachineRendererSubmissionScope(BlockEntity blockEntity) {
+        return pushMachineRendererSubmissionScope(blockEntity, Float.NaN);
+    }
+
+    public static MachineRendererSubmissionScope pushMachineRendererSubmissionScope(BlockEntity blockEntity,
+            float modelFadeOverride) {
         MachineRendererScope previous = MACHINE_RENDERER_SCOPE.get();
-        MACHINE_RENDERER_SCOPE.set(new MachineRendererScope(blockEntity, previous));
+        MACHINE_RENDERER_SCOPE.set(new MachineRendererScope(blockEntity, modelFadeOverride, previous));
         return new MachineRendererSubmissionScope(previous);
     }
 
+    public static Runnable captureMachineRendererSubmissionScope(Runnable task) {
+        if (task == null) {
+            return null;
+        }
+        MachineRendererScope captured = MACHINE_RENDERER_SCOPE.get();
+        if (captured == null) {
+            return task;
+        }
+        return () -> runWithMachineRendererSubmissionScope(captured, task);
+    }
+
+    private static void runWithMachineRendererSubmissionScope(MachineRendererScope captured, Runnable task) {
+        MachineRendererScope previous = MACHINE_RENDERER_SCOPE.get();
+        MACHINE_RENDERER_SCOPE.set(captured);
+        try {
+            task.run();
+        } finally {
+            if (previous == null) {
+                MACHINE_RENDERER_SCOPE.remove();
+            } else {
+                MACHINE_RENDERER_SCOPE.set(previous);
+            }
+        }
+    }
+
     public static void recordObjInstancedQueue(int instances, boolean newBatch) {
+        recordObjInstancedQueue(instances, newBatch, false);
+    }
+
+    public static void recordObjInstancedQueue(int instances, boolean newBatch, boolean faded) {
         int safeInstances = Math.max(0, instances);
         FrameStats stats = currentStats;
         stats.objInstancedQueueRecords.incrementAndGet();
         stats.objInstancedQueuedInstances.addAndGet(safeInstances);
         if (newBatch) {
             stats.objInstancedQueuedBatches.incrementAndGet();
+        }
+        if (faded) {
+            stats.objInstancedFadedRecords.incrementAndGet();
+            stats.objInstancedFadedInstances.addAndGet(safeInstances);
+            if (newBatch) {
+                stats.objInstancedFadedBatches.incrementAndGet();
+            }
         }
         MachineRendererScope scope = MACHINE_RENDERER_SCOPE.get();
         if (scope != null) {
@@ -162,6 +204,53 @@ public final class HbmRenderFrameCulling {
                 stats.objInstancedUnscopedBatches.incrementAndGet();
             }
         }
+    }
+
+    public static float currentStaticModelFade() {
+        MachineRendererScope scope = MACHINE_RENDERER_SCOPE.get();
+        if (scope == null || scope.blockEntity() == null) {
+            return 1.0F;
+        }
+        if (!Float.isNaN(scope.modelFadeOverride())) {
+            return scope.modelFadeOverride();
+        }
+        return staticModelFade(scope.blockEntity().getBlockPos());
+    }
+
+    public static boolean inMachineRendererScope() {
+        return MACHINE_RENDERER_SCOPE.get() != null;
+    }
+
+    public static float staticModelFade(BlockPos blockPos) {
+        return modelFade(blockPos, HbmRenderFrameFlags.current().modelStaticRenderDistanceBlocks());
+    }
+
+    public static float animatedModelFade(BlockPos blockPos) {
+        return modelFade(blockPos, HbmRenderFrameFlags.current().modelUpdateDistanceBlocks());
+    }
+
+    private static float modelFade(BlockPos blockPos, int maxBlocks) {
+        if (blockPos == null || !projectionCaptured || HbmShaderCompatibilityDetector.isRenderingShadowPass()) {
+            return 1.0F;
+        }
+        if (maxBlocks <= 0) {
+            return -1.0F;
+        }
+        double dx = blockPos.getX() + 0.5D - cameraPosition.x;
+        double dy = blockPos.getY() + 0.5D - cameraPosition.y;
+        double dz = blockPos.getZ() + 0.5D - cameraPosition.z;
+        double distanceSq = dx * dx + dy * dy + dz * dz;
+        double maxDistanceSq = (double) maxBlocks * (double) maxBlocks;
+        if (distanceSq > maxDistanceSq) {
+            return -1.0F;
+        }
+        double fadeStartBlocks = Math.max(0.0D, maxBlocks - MODEL_FADE_ZONE_BLOCKS);
+        double fadeStartSq = fadeStartBlocks * fadeStartBlocks;
+        if (distanceSq <= fadeStartSq) {
+            return 1.0F;
+        }
+        double distance = Math.sqrt(distanceSq);
+        return Mth.clamp((float) ((maxBlocks - distance) / MODEL_FADE_ZONE_BLOCKS), 0.0F, 1.0F);
     }
 
     public static Snapshot snapshot() {
@@ -434,6 +523,9 @@ public final class HbmRenderFrameCulling {
                 stats.objInstancedQueueRecords.get(),
                 stats.objInstancedQueuedBatches.get(),
                 stats.objInstancedQueuedInstances.get(),
+                stats.objInstancedFadedRecords.get(),
+                stats.objInstancedFadedBatches.get(),
+                stats.objInstancedFadedInstances.get(),
                 stats.objInstancedCullingScopedRecords.get(),
                 stats.objInstancedCullingScopedBatches.get(),
                 stats.objInstancedCullingScopedInstances.get(),
@@ -474,6 +566,9 @@ public final class HbmRenderFrameCulling {
         private final AtomicLong objInstancedQueueRecords = new AtomicLong();
         private final AtomicLong objInstancedQueuedBatches = new AtomicLong();
         private final AtomicLong objInstancedQueuedInstances = new AtomicLong();
+        private final AtomicLong objInstancedFadedRecords = new AtomicLong();
+        private final AtomicLong objInstancedFadedBatches = new AtomicLong();
+        private final AtomicLong objInstancedFadedInstances = new AtomicLong();
         private final AtomicLong objInstancedCullingScopedRecords = new AtomicLong();
         private final AtomicLong objInstancedCullingScopedBatches = new AtomicLong();
         private final AtomicLong objInstancedCullingScopedInstances = new AtomicLong();
@@ -519,6 +614,9 @@ public final class HbmRenderFrameCulling {
             long objInstancedQueueRecords,
             long objInstancedQueuedBatches,
             long objInstancedQueuedInstances,
+            long objInstancedFadedRecords,
+            long objInstancedFadedBatches,
+            long objInstancedFadedInstances,
             long objInstancedCullingScopedRecords,
             long objInstancedCullingScopedBatches,
             long objInstancedCullingScopedInstances,
@@ -545,6 +643,7 @@ public final class HbmRenderFrameCulling {
                     0L, 0L, 0L, 0L, 0L, 0L,
                     0L, 0L, 0L, 0L, 0L, 0L, 0L,
                     0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L,
+                    0L, 0L, 0L,
                     0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L,
                     0, 0L);
         }
@@ -580,7 +679,8 @@ public final class HbmRenderFrameCulling {
         }
     }
 
-    private record MachineRendererScope(BlockEntity blockEntity, MachineRendererScope previous) {
+    private record MachineRendererScope(BlockEntity blockEntity, float modelFadeOverride,
+            MachineRendererScope previous) {
     }
 
     public static final class MachineRendererSubmissionScope implements AutoCloseable {

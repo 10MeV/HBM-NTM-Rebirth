@@ -32,7 +32,7 @@ public class SoyuzMultiblockGhostRenderer implements BlockEntityRenderer<SoyuzSt
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override

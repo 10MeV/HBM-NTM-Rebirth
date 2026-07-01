@@ -80,6 +80,10 @@ public final class HbmFluidNodespace {
         return new ForceRebuildResult(result.nodes(), result.oldNetworks(), result.newNetworks(), result.reapTimer());
     }
 
+    public static int rebuildChanged(Level level) {
+        return NODESPACE.rebuildChanged(level);
+    }
+
     public static int getNetworkLinkCount(Level level, BlockPos pos, FluidType type) {
         HbmFluidNet fluidNet = getFluidNet(level, pos, type);
         return fluidNet == null ? 0 : fluidNet.linkCount();

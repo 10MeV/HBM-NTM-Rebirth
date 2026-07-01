@@ -106,6 +106,7 @@ import com.hbm.ntm.item.RangefinderItem;
 import com.hbm.ntm.item.Ni4NiGunItem;
 import com.hbm.ntm.item.NcrpaArmorItem;
 import com.hbm.ntm.item.No9ArmorItem;
+import com.hbm.ntm.item.NukeElectricStarterKitItem;
 import com.hbm.ntm.item.ObjArmorItem;
 import com.hbm.ntm.item.OreByproductItem;
 import com.hbm.ntm.item.OilDetectorItem;
@@ -114,6 +115,7 @@ import com.hbm.ntm.item.PACoilItem;
 import com.hbm.ntm.item.PollutionDetectorItem;
 import com.hbm.ntm.item.PlanCItem;
 import com.hbm.ntm.item.PlasticScrapItem;
+import com.hbm.ntm.item.PowerNetToolItem;
 import com.hbm.ntm.item.PWRFuelItem;
 import com.hbm.ntm.item.PWRPrinterItem;
 import com.hbm.ntm.item.RadawayItem;
@@ -288,6 +290,8 @@ public final class ModItems {
             () -> new TurretChipItem(new Item.Properties()));
     public static final RegistryObject<Item> WIRING_RED_COPPER = registerLegacy("wiring_red_copper",
             () -> new LegacyWiringItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> POWER_NET_TOOL = registerLegacy("power_net_tool",
+            () -> new PowerNetToolItem(new Item.Properties().stacksTo(1)));
 
     public static final RegistryObject<Item> IRON_PLATE_STAMP = ITEMS.register("stamp_iron_plate",
             () -> new ItemPressStamp(new Item.Properties().durability(64), ItemPressStamp.StampType.PLATE));
@@ -2097,6 +2101,7 @@ public final class ModItems {
             "ingot_starmetal",
             "ingot_chainsteel",
             "ingot_dineutronium",
+            "ingot_electronium",
             "ingot_graphite",
             "ingot_firebrick",
             "sulfur",
@@ -2263,6 +2268,7 @@ public final class ModItems {
             "wire_dense_bscco",
             "wire_dense_neodymium",
             "wire_dense_dineutronium",
+            "wire_dense_magnetized_tungsten",
             "wire_dense_starmetal",
             "fins_flat",
             "fins_small_steel",
@@ -2618,6 +2624,8 @@ public final class ModItems {
     public static final RegistryObject<Item> DEMON_CORE_CLOSED = simpleItem("demon_core_closed");
     public static final RegistryObject<Item> BATTERY_SPARK = simpleStackOneItem("battery_spark");
     public static final RegistryObject<Item> BATTERY_TRIXITE = simpleStackOneItem("battery_trixite");
+    public static final RegistryObject<Item> NUKE_ELECTRIC_KIT = registerLegacy("nuke_electric_kit",
+            () -> new NukeElectricStarterKitItem(new Item.Properties()));
 
     public static final List<RegistryObject<Item>> NUKE_TAB_ITEMS = Stream.concat(Stream.concat(simpleParts(
             "early_explosive_lenses",
@@ -3436,6 +3444,8 @@ public final class ModItems {
             DIGAMMA_DIAGNOSTIC,
             POLLUTION_DETECTOR,
             MIRROR_TOOL,
+            POWER_NET_TOOL,
+            NUKE_ELECTRIC_KIT,
             LINKER,
             AMMO_BAG,
             AMMO_BAG_INFINITE,

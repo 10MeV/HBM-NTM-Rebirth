@@ -17,19 +17,24 @@ public class GeigerRenderer implements BlockEntityRenderer<GeigerBlockEntity> {
     @Override
     public void render(GeigerBlockEntity geiger, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(geiger, getViewDistance())) {
+            return;
+        }
         Direction facing = geiger.getBlockState().getValue(GeigerBlock.FACING);
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(geiger, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation(facing)));
-        ObjUtilityModels.GEIGER_COUNTER.renderAll(ObjUtilityModels.GEIGER_TEXTURE,
-                poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(geiger)) {
+            ObjUtilityModels.GEIGER_COUNTER.renderAll(ObjUtilityModels.GEIGER_TEXTURE,
+                    poseStack, buffer, modelLight, packedOverlay);
+        }
         poseStack.popPose();
     }
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     private static float rotation(Direction facing) {

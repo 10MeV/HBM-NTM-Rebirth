@@ -32,19 +32,13 @@ public class VendingMachineRenderer implements BlockEntityRenderer<VendingMachin
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(VendingMachineBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
-            return;
-        }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
-
-        render(blockEntity.getBlockState(), poseStack, buffer,
-                LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight), packedOverlay);
+        // Static Soda/Obamna bodies render through the block model; item rendering still uses render(...).
     }
 
     public static void render(BlockState state, PoseStack poseStack, MultiBufferSource buffer, int packedLight,

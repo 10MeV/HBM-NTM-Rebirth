@@ -44,7 +44,7 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -53,8 +53,6 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(drill, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(drill);
-
         BlockState state = drill.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -65,30 +63,32 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
                 key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()).asVBO());
 
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
-        Vec3 translation = definition.modelTranslation(state);
-        poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(drill)) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            Vec3 translation = definition.modelTranslation(state);
+            poseStack.translate(translation.x, translation.y, translation.z);
+            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        if (drill.getKind() == OilDrillBlockEntity.Kind.PUMPJACK) {
-            renderPumpjack(drill, partialTick, poseStack, buffer, modelLight, packedOverlay, definition, model);
-        } else {
-            if (definition.renderAll()) {
-                model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+            if (drill.getKind() == OilDrillBlockEntity.Kind.PUMPJACK) {
+                renderPumpjack(drill, partialTick, poseStack, buffer, modelLight, packedOverlay, definition, model);
             } else {
-                for (String part : definition.renderParts()) {
-                    renderModelPart(model, part, definition.textureLocation(), poseStack, buffer, modelLight,
-                            packedOverlay);
+                if (definition.renderAll()) {
+                    model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+                } else {
+                    for (String part : definition.renderParts()) {
+                        renderModelPart(model, part, definition.textureLocation(), poseStack, buffer, modelLight,
+                                packedOverlay);
+                    }
+                }
+                if (drill.getKind() == OilDrillBlockEntity.Kind.FRACKING_TOWER) {
+                    renderFrackingPipes(state, poseStack, buffer, modelLight, packedOverlay);
                 }
             }
-            if (drill.getKind() == OilDrillBlockEntity.Kind.FRACKING_TOWER) {
-                renderFrackingPipes(state, poseStack, buffer, modelLight, packedOverlay);
-            }
-        }
 
-        poseStack.popPose();
+            poseStack.popPose();
+        }
     }
 
     private static void renderFrackingPipes(BlockState state, PoseStack poseStack, MultiBufferSource buffer,
@@ -105,15 +105,16 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
             LegacyWavefrontModel model) {
         float rotation = Mth.lerp(partialTick, drill.getPreviousPumpjackRotation(), drill.getPumpjackRotation());
         LegacyTileRenderPlans.PumpjackPlan plan = LegacyTileRenderPlans.pumpjackPlan(rotation);
-        renderModelPart(model, "Base", definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
 
-        renderRotatingPart(model, plan.rotor(), definition.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        renderRotatingPart(model, plan.head(), definition.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        renderTranslatedPart(model, plan.carriage(), definition.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        renderPumpjackRods(plan, poseStack, buffer);
+        try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(drill)) {
+            renderRotatingPart(model, plan.rotor(), definition.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            renderRotatingPart(model, plan.head(), definition.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            renderTranslatedPart(model, plan.carriage(), definition.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            renderPumpjackRods(plan, poseStack, buffer);
+        }
     }
 
     private static void renderRotatingPart(LegacyWavefrontModel model,

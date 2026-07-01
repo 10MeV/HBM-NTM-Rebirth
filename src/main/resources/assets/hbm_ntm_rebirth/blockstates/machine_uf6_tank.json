@@ -1,16 +1,19 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/empty"
+      "model": "hbm_ntm_rebirth:block/machine_uf6_tank",
+      "y": 270
     },
     "facing=north": {
-      "model": "hbm_ntm_rebirth:block/empty"
+      "model": "hbm_ntm_rebirth:block/machine_uf6_tank"
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/empty"
+      "model": "hbm_ntm_rebirth:block/machine_uf6_tank",
+      "y": 180
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/empty"
+      "model": "hbm_ntm_rebirth:block/machine_uf6_tank",
+      "y": 90
     }
   }
 }

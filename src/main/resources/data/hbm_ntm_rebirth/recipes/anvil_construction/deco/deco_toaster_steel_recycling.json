@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:deco_toaster" },
+    "partial_nbt": "{hbmLegacyVariant:1}"
+  },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:plate_steel", "count": 3 },
+    { "item": "hbm_ntm_rebirth:scrap" },
+    { "item": "hbm_ntm_rebirth:coil_tungsten", "count": 2 },
+    { "item": "minecraft:bread", "chance": 0.5 },
+    { "item": "hbm_ntm_rebirth:battery_sc.ra226", "chance": 0.1 },
+    { "item": "hbm_ntm_rebirth:fusion_core", "chance": 0.05 }
+  ],
+  "tier_lower": 2,
+  "overlay": "recycling"
+}

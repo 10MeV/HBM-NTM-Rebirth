@@ -4,6 +4,6 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "parts": { "visibility": { "Wheel": false, "Lights": false, "Plasma": false, "Base": true } },
+  "visibility": { "Wheel": false, "Lights": false, "Plasma": false, "Base": true },
   "textures": { "particle": "hbm_ntm_rebirth:block/machines/fensu2", "default": "hbm_ntm_rebirth:block/machines/fensu2" }
 }

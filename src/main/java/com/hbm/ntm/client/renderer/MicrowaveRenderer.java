@@ -14,10 +14,6 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class MicrowaveRenderer implements BlockEntityRenderer<MicrowaveBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjMachineModels.MICROWAVE;
-    private static final LegacyWavefrontModel.SelectionHandle MAIN_BODY =
-            MODEL.prepareRenderOnlyInCallOrder("mainbody_Cube.001");
-    private static final LegacyWavefrontModel.SelectionHandle WINDOW =
-            MODEL.prepareRenderOnlyInCallOrder("window_Cube.002");
     private static final LegacyWavefrontModel.SelectionHandle PLATE =
             MODEL.prepareRenderOnlyInCallOrder("plate_Cylinder");
 
@@ -31,7 +27,7 @@ public class MicrowaveRenderer implements BlockEntityRenderer<MicrowaveBlockEnti
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -40,20 +36,15 @@ public class MicrowaveRenderer implements BlockEntityRenderer<MicrowaveBlockEnti
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(microwave, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(microwave);
-
         BlockState state = microwave.getBlockState();
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(microwave, packedLight);
-        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(microwave);
+                LegacyRenderLighting.ModelViewSamplingScope ignored =
                 LegacyRenderLighting.pushModelViewSampling(microwave, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, -0.785D, 0.5D);
             poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
             poseStack.translate(-0.5D, 0.0D, 0.65D);
-            MODEL.renderOnlyInCallOrder(ObjMachineModels.MICROWAVE_TEXTURE, poseStack, buffer, modelLight,
-                    packedOverlay, MAIN_BODY);
-            MODEL.renderOnlyInCallOrder(ObjMachineModels.MICROWAVE_TEXTURE, poseStack, buffer, modelLight,
-                    packedOverlay, WINDOW);
             if (microwave.getTime() > 0) {
                 double rotation = (System.currentTimeMillis() * microwave.getSpeed() / 10.0D) % 360.0D;
                 poseStack.translate(0.575D, 0.0D, -0.45D);

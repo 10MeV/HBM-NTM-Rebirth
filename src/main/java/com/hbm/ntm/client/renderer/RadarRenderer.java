@@ -17,13 +17,9 @@ import net.minecraft.world.phys.Vec3;
 
 public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRenderer<T> {
     private static final LegacyWavefrontModel SMALL_MODEL = ObjModelLibrary.MACHINE_RADAR_LEGACY;
-    private static final LegacyWavefrontModel.SelectionHandle SMALL_BASE =
-            SMALL_MODEL.prepareRenderOnlyInCallOrder("Base");
     private static final LegacyWavefrontModel.SelectionHandle SMALL_DISH =
             SMALL_MODEL.prepareRenderOnlyInCallOrder("Dish");
     private static final LegacyWavefrontModel LARGE_MODEL = ObjModelLibrary.MACHINE_RADAR_LARGE_LEGACY;
-    private static final LegacyWavefrontModel.SelectionHandle LARGE_RADAR =
-            LARGE_MODEL.prepareRenderOnlyInCallOrder("Radar");
     private static final LegacyWavefrontModel.SelectionHandle LARGE_DISH =
             LARGE_MODEL.prepareRenderOnlyInCallOrder("Dish");
 
@@ -37,12 +33,15 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(T radar, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(radar, getViewDistance())) {
+            return;
+        }
         if (radar instanceof RadarLargeBlockEntity) {
             renderLarge(radar, partialTick, poseStack, buffer, packedLight, packedOverlay);
         } else {
@@ -57,13 +56,15 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        SMALL_MODEL.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, SMALL_BASE);
-
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.YN.rotationDegrees(interpolatedRotation(radar, partialTick)));
-        poseStack.translate(-0.125D, 0.0D, 0.0D);
-        SMALL_MODEL.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, SMALL_DISH);
-        poseStack.popPose();
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(radar)) {
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(radar)) {
+                poseStack.pushPose();
+                poseStack.mulPose(Axis.YN.rotationDegrees(interpolatedRotation(radar, partialTick)));
+                poseStack.translate(-0.125D, 0.0D, 0.0D);
+                SMALL_MODEL.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, SMALL_DISH);
+                poseStack.popPose();
+            }
+        }
 
         poseStack.popPose();
     }
@@ -85,14 +86,15 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
-                LARGE_RADAR);
-
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.YN.rotationDegrees(interpolatedRotation(radar, partialTick)));
-        LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
-                LARGE_DISH);
-        poseStack.popPose();
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(radar)) {
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(radar)) {
+                poseStack.pushPose();
+                poseStack.mulPose(Axis.YN.rotationDegrees(interpolatedRotation(radar, partialTick)));
+                LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight,
+                        packedOverlay, LARGE_DISH);
+                poseStack.popPose();
+            }
+        }
 
         poseStack.popPose();
     }

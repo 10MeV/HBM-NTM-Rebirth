@@ -29,7 +29,7 @@ public class RadioDecoRenderer<T extends BlockEntity> implements BlockEntityRend
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override

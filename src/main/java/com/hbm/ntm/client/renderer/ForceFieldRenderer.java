@@ -23,12 +23,17 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
     @Override
     public void render(ForceFieldBlockEntity forceField, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(forceField, getViewDistance())) {
+            return;
+        }
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(forceField, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        ObjModelLibrary.MACHINE_RADAR_BODY_LEGACY.renderAll(ObjUtilityModels.FORCEFIELD_BASE_TEXTURE,
-                poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(forceField)) {
+            ObjModelLibrary.MACHINE_RADAR_BODY_LEGACY.renderAll(ObjUtilityModels.FORCEFIELD_BASE_TEXTURE,
+                    poseStack, buffer, modelLight, packedOverlay);
+        }
 
         poseStack.translate(0.0D, 0.5D, 0.0D);
         if (forceField.isOn() && forceField.getHealth() > 0 && forceField.getPower() > 0
@@ -40,8 +45,10 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
         }
 
         poseStack.translate(0.0D, 0.5D, 0.0D);
-        ObjUtilityModels.FORCEFIELD_TOP.renderAll(ObjUtilityModels.FORCEFIELD_TOP_TEXTURE,
-                poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(forceField)) {
+            ObjUtilityModels.FORCEFIELD_TOP.renderAll(ObjUtilityModels.FORCEFIELD_TOP_TEXTURE,
+                    poseStack, buffer, modelLight, packedOverlay);
+        }
         poseStack.popPose();
     }
 
@@ -52,7 +59,7 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     private static void renderSphere(PoseStack poseStack, MultiBufferSource buffer, int latitudes, int segments,

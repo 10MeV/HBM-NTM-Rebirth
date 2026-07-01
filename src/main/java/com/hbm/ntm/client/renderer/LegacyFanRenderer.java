@@ -24,26 +24,31 @@ public class LegacyFanRenderer implements BlockEntityRenderer<LegacyFanBlockEnti
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(LegacyFanBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyFanBlock) || !state.hasProperty(LegacyFanBlock.FACING)) {
             return;
         }
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
-        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity);
+                LegacyRenderLighting.ModelViewSamplingScope ignored =
                 LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
             applyLegacyFacingTransform(poseStack, state.getValue(LegacyFanBlock.FACING));
-            renderPart(FRAME, poseStack, buffer, modelLight, packedOverlay);
-            poseStack.mulPose(Axis.YN.rotationDegrees(blockEntity.spin(partialTick)));
-            renderPart(BLADES, poseStack, buffer, modelLight, packedOverlay);
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                poseStack.mulPose(Axis.YN.rotationDegrees(blockEntity.spin(partialTick)));
+                renderPart(BLADES, poseStack, buffer, modelLight, packedOverlay);
+            }
             poseStack.popPose();
         }
     }

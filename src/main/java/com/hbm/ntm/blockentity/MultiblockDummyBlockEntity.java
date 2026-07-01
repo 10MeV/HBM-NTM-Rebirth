@@ -4,10 +4,12 @@ import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.api.tile.HeatSource;
+import com.hbm.ntm.block.HbmEnergyNodeBlock;
 import com.hbm.ntm.block.HbmFluidNodeBlock;
 import com.hbm.ntm.util.HbmRegistryUtil;
 
 import com.hbm.ntm.energy.HbmEnergyConnector;
+import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnector;
 import com.hbm.ntm.fluid.HbmFluidForgeMappings;
@@ -105,6 +107,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            refreshAdjacentEnergyConnections(previousProxyMode);
             refreshAdjacentFluidConnections(previousProxyMode);
         }
     }
@@ -139,6 +142,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            refreshAdjacentEnergyConnections(previousProxyMode);
             refreshAdjacentFluidConnections(previousProxyMode);
         }
     }
@@ -315,8 +319,30 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
                 && (proxyMode.fluid() || proxyMode.moltenMetal() || proxyMode.allCapabilities());
     }
 
+    private static boolean canProxyEnergy(LegacyProxyMode proxyMode) {
+        return proxyMode != null && proxyMode.isProxy()
+                && (proxyMode.power() || proxyMode.conductor() || proxyMode.allCapabilities());
+    }
+
     private boolean canProxyHeat() {
         return proxyMode.isProxy() && (proxyMode.heat() || proxyMode.allCapabilities());
+    }
+
+    public void refreshAdjacentEnergyConnections() {
+        refreshAdjacentEnergyConnections(LegacyProxyMode.none());
+    }
+
+    private void refreshAdjacentEnergyConnections(LegacyProxyMode previousProxyMode) {
+        if (level == null || level.isClientSide || !canProxyEnergy(previousProxyMode) && !canProxyEnergy(proxyMode)) {
+            return;
+        }
+        HbmEnergyNodespace.markNodeAndNeighborsChanged(level, worldPosition);
+        for (Direction direction : Direction.values()) {
+            BlockPos neighborPos = worldPosition.relative(direction);
+            if (level.getBlockState(neighborPos).getBlock() instanceof HbmEnergyNodeBlock nodeBlock) {
+                nodeBlock.updateEnergyConnectionGraph(level, neighborPos);
+            }
+        }
     }
 
     public void refreshAdjacentFluidConnections() {
@@ -502,6 +528,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
     @Override
     public void onLoad() {
         super.onLoad();
+        refreshAdjacentEnergyConnections();
         refreshAdjacentFluidConnections();
     }
 

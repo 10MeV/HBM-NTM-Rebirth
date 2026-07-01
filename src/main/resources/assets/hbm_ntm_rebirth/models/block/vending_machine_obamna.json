@@ -1,0 +1,20 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/machines/vending_machine.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+      "Soda": false,
+      "Obamna": true
+    },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/vending_machine",
+    "default": "hbm_ntm_rebirth:block/machines/vending_machine"
+  }
+}

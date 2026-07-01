@@ -4,6 +4,6 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "parts": { "visibility": { "Rotor": false, "Core": false, "Main": true } },
+  "visibility": { "Rotor": false, "Core": false, "Main": true },
   "textures": { "particle": "hbm_ntm_rebirth:block/machines/hephaestus", "default": "hbm_ntm_rebirth:block/machines/hephaestus" }
 }

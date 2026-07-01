@@ -4,7 +4,6 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.BreedingReactorBlockEntity;
 import com.hbm.ntm.client.obj.LegacySparkRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
-import com.hbm.ntm.client.obj.ObjReactorModels;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -32,19 +31,19 @@ public class BreedingReactorRenderer implements BlockEntityRenderer<BreedingReac
     @Override
     public void render(BreedingReactorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (blockEntity.getProgress() <= 0.0F) {
+            return;
+        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
-        int light = LegacyRenderLighting.resolveBoundsLight(blockEntity, blockEntity.getRenderBoundingBox(), packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
-        ObjReactorModels.BREEDER.renderAll(ObjReactorModels.BREEDER_TEXTURE, poseStack, buffer, light, packedOverlay);
         enqueueLegacySparks(blockEntity, poseStack, buffer);
         poseStack.popPose();
     }

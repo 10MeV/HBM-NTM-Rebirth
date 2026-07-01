@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "WRW",
+    " I ",
+    " B "
+  ],
+  "key": {
+    "W": {
+      "tag": "forge:wires/mingrade"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "B": {
+      "item": "hbm_ntm_rebirth:battery_lead"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:power_net_tool"
+  }
+}

@@ -67,7 +67,7 @@ public class MultiblockDummyRenderer implements BlockEntityRenderer<MultiblockDu
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     private static MultiblockHelper.CoreLookup resolveColumnCore(Level level, MultiblockDummyBlockEntity dummy) {

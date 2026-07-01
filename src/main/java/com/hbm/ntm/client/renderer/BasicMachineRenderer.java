@@ -25,7 +25,7 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -34,29 +34,24 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         ItemStack stack = blockEntity.getRenderStack();
         LegacyTileRenderPlans.BasicPressPlan plan = LegacyTileRenderPlans.basicPressPlan(!stack.isEmpty(),
                 blockEntity.getInterpolatedPress(partialTick), BasicMachineBlockEntity.MAX_PRESS);
 
-        try (LegacyRenderLighting.ModelViewSamplingScope ignored =
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity);
+                LegacyRenderLighting.ModelViewSamplingScope ignored =
                 LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
-            poseStack.pushPose();
-            poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-            ObjMachineModels.PRESS_BODY_LEGACY.renderAll(ObjMachineModels.PRESS_BODY_TEXTURE, poseStack, buffer,
-                    modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
-            poseStack.popPose();
-
-            poseStack.pushPose();
-            LegacyTileRenderPlans.TranslatedModelPartPlan head = plan.head();
-            poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.scale(0.99F, 1.0F, 0.99F);
-            poseStack.translate(head.translateX(), head.translateY(), head.translateZ());
-            ObjMachineModels.PRESS_HEAD_LEGACY.renderAll(ObjMachineModels.PRESS_HEAD_TEXTURE, poseStack, buffer,
-                    modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
-            poseStack.popPose();
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                poseStack.pushPose();
+                LegacyTileRenderPlans.TranslatedModelPartPlan head = plan.head();
+                poseStack.translate(0.5D, 0.0D, 0.5D);
+                poseStack.scale(0.99F, 1.0F, 0.99F);
+                poseStack.translate(head.translateX(), head.translateY(), head.translateZ());
+                ObjMachineModels.PRESS_HEAD_LEGACY.renderAll(ObjMachineModels.PRESS_HEAD_TEXTURE, poseStack, buffer,
+                        modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+                poseStack.popPose();
+            }
         }
 
         if (!plan.item().active()) {

@@ -207,6 +207,25 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
         return new ForceRebuildResult(reusableNodes, oldNetworks, nodeWorld.activeNetworks.size(), nodeWorld.reapTimer);
     }
 
+    public int rebuildChanged(Level level) {
+        NodeWorld<K, N, T> nodeWorld = worlds.get(level.dimension());
+        if (nodeWorld == null) {
+            return 0;
+        }
+        int rebuilt = 0;
+        for (N node : new LinkedHashSet<>(nodeWorld.nodes.values())) {
+            if (!containsNode(nodeWorld, node)) {
+                continue;
+            }
+            if (!node.hasValidNet() || node.isRecentlyChanged()) {
+                checkNodeConnection(nodeWorld, node);
+                node.clearRecentlyChanged();
+                rebuilt++;
+            }
+        }
+        return rebuilt;
+    }
+
     public Diagnostics getDiagnostics(Level level) {
         NodeWorld<K, N, T> nodeWorld = worlds.get(level.dimension());
         if (nodeWorld == null) {

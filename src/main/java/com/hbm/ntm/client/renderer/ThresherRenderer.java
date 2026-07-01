@@ -37,7 +37,7 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -46,7 +46,6 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(thresher, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(thresher);
         BlockState state = thresher.getBlockState();
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(thresher, packedLight);
         poseStack.pushPose();
@@ -56,14 +55,17 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
                 thresher.getPreviousAngle(), thresher.getAngle(),
                 thresher.getLastSpin(), thresher.getSpin(),
                 thresher.isOn(), worldTime(thresher), partialTick);
-        renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.translate(0.0D, plan.engineTranslateY(), 0.0D);
-        renderPart(ENGINE, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.translate(0.0D, -plan.engineTranslateY(), 0.0D);
-        renderPart(plan.armUpper(), ARM_UPPER, poseStack, buffer, modelLight, packedOverlay);
-        renderPart(plan.armLower(), ARM_LOWER, poseStack, buffer, modelLight, packedOverlay);
-        renderPart(plan.front(), FRONT, poseStack, buffer, modelLight, packedOverlay);
-        renderPart(plan.wheel(), WHEEL, poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(thresher)) {
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(thresher)) {
+                poseStack.translate(0.0D, plan.engineTranslateY(), 0.0D);
+                renderPart(ENGINE, poseStack, buffer, modelLight, packedOverlay);
+                poseStack.translate(0.0D, -plan.engineTranslateY(), 0.0D);
+                renderPart(plan.armUpper(), ARM_UPPER, poseStack, buffer, modelLight, packedOverlay);
+                renderPart(plan.armLower(), ARM_LOWER, poseStack, buffer, modelLight, packedOverlay);
+                renderPart(plan.front(), FRONT, poseStack, buffer, modelLight, packedOverlay);
+                renderPart(plan.wheel(), WHEEL, poseStack, buffer, modelLight, packedOverlay);
+            }
+        }
         poseStack.popPose();
     }
 

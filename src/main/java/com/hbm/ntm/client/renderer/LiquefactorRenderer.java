@@ -17,8 +17,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlockEntity> {
-    private static final LegacyWavefrontModel.SelectionHandle MAIN =
-            ObjModelLibrary.MACHINE_LIQUEFACTOR.prepareRenderOnlyInCallOrder("Main");
     private static final LegacyWavefrontModel.SelectionHandle FLUID =
             ObjModelLibrary.MACHINE_LIQUEFACTOR.prepareRenderOnlyInCallOrder("Fluid");
     private static final LegacyWavefrontModel.SelectionHandle GLASS =
@@ -34,7 +32,7 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -43,7 +41,6 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -59,15 +56,16 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        renderModelPart("Main", poseStack, buffer, modelLight, packedOverlay);
         LegacyTileRenderPlans.ScaledModelPartPlan fluidPlan = LegacyTileRenderPlans.liquefactorFluidPlan(
                 blockEntity.getTank().getFill(), blockEntity.getTank().getMaxFill(),
                 blockEntity.getTank().getTankType().getColor());
         LegacyTileRenderPlans.ModelPartTintPlan glassPlan = LegacyTileRenderPlans.liquefactorGlassPlan();
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
-            renderFluid(fluidPlan, queuedPose, buffer, modelLight, packedOverlay);
-            renderTintedPart(glassPlan, queuedPose, buffer, modelLight, packedOverlay);
-        });
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
+                renderFluid(fluidPlan, queuedPose, buffer, modelLight, packedOverlay);
+                renderTintedPart(glassPlan, queuedPose, buffer, modelLight, packedOverlay);
+            });
+        }
 
         poseStack.popPose();
     }
@@ -160,7 +158,6 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
             return null;
         }
         return switch (partName) {
-            case "Main" -> MAIN;
             case "Fluid" -> FLUID;
             case "Glass" -> GLASS;
             default -> null;

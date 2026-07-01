@@ -31,7 +31,6 @@ public class ZirnoxReactorRenderer implements BlockEntityRenderer<ZirnoxReactorB
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -41,7 +40,10 @@ public class ZirnoxReactorRenderer implements BlockEntityRenderer<ZirnoxReactorB
             poseStack.mulPose(Axis.YP.rotationDegrees(5.0F));
         }
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation(blockEntity.getBlockState())));
-        ObjReactorModels.ZIRNOX.renderAll(ObjReactorModels.ZIRNOX_TEXTURE, poseStack, buffer, light, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            ObjReactorModels.ZIRNOX.renderAll(ObjReactorModels.ZIRNOX_TEXTURE,
+                    poseStack, buffer, light, packedOverlay);
+        }
         poseStack.popPose();
     }
 

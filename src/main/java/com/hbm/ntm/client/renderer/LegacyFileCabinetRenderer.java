@@ -29,30 +29,37 @@ public class LegacyFileCabinetRenderer implements BlockEntityRenderer<LegacyFile
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(LegacyFileCabinetBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(state)));
-        renderModel(poseStack, buffer, texture(blockEntity.variant()), modelLight, packedOverlay,
-                blockEntity.lowerExtent(partialTick), blockEntity.upperExtent(partialTick));
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            renderModel(poseStack, buffer, texture(blockEntity.variant()), modelLight, packedOverlay,
+                    blockEntity.lowerExtent(partialTick), blockEntity.upperExtent(partialTick), false);
+        }
         poseStack.popPose();
     }
 
     public static void renderItemModel(PoseStack poseStack, MultiBufferSource buffer, BlockState state, int variant,
             int packedLight, int packedOverlay) {
-        renderModel(poseStack, buffer, texture(variant), packedLight, packedOverlay, 0.0F, 0.0F);
+        renderModel(poseStack, buffer, texture(variant), packedLight, packedOverlay, 0.0F, 0.0F, true);
     }
 
     private static void renderModel(PoseStack poseStack, MultiBufferSource buffer, ResourceLocation texture,
-            int packedLight, int packedOverlay, float lower, float upper) {
-        renderPart(texture, CABINET, poseStack, buffer, packedLight, packedOverlay);
+            int packedLight, int packedOverlay, float lower, float upper, boolean includeCabinet) {
+        if (includeCabinet) {
+            renderPart(texture, CABINET, poseStack, buffer, packedLight, packedOverlay);
+        }
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, DRAWER_TRAVEL * lower);

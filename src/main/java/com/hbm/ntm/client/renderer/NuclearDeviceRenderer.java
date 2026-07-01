@@ -33,6 +33,9 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
     @Override
     public void render(NuclearDeviceBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         Direction facing = state.hasProperty(NuclearDeviceBlock.FACING)
                 ? state.getValue(NuclearDeviceBlock.FACING)
@@ -43,7 +46,9 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(NuclearDeviceBlock.legacyRenderYaw(blockEntity.kind(), facing)));
         applyLegacyBlockTranslation(blockEntity.kind(), poseStack);
-        renderKind(blockEntity.kind(), poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            renderKind(blockEntity.kind(), poseStack, buffer, modelLight, packedOverlay);
+        }
         poseStack.popPose();
     }
 
@@ -129,6 +134,6 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 }

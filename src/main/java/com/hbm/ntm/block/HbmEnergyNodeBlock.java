@@ -3,6 +3,7 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.energy.HbmEnergyConnectionUtil;
 import com.hbm.ntm.energy.HbmEnergyConnectorBlock;
 import com.hbm.ntm.energy.HbmEnergyNodeHost;
+import com.hbm.ntm.network.LoadedTileAccessCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -52,6 +53,7 @@ public abstract class HbmEnergyNodeBlock extends BaseEntityBlock implements HbmE
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
         if (!state.is(oldState.getBlock())) {
+            LoadedTileAccessCache.invalidate(level, pos);
             updateConnectionState(level, pos);
             updateNeighborConnectionStates(level, pos);
             refreshNode(level, pos);
@@ -70,6 +72,7 @@ public abstract class HbmEnergyNodeBlock extends BaseEntityBlock implements HbmE
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock())) {
+            LoadedTileAccessCache.invalidate(level, pos);
             removeNode(level, pos);
             updateNeighborConnectionStates(level, pos);
             refreshNeighborNodes(level, pos);

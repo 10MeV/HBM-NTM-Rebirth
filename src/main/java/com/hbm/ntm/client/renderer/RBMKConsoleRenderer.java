@@ -19,6 +19,9 @@ public class RBMKConsoleRenderer implements BlockEntityRenderer<RBMKConsoleBlock
     @Override
     public void render(RBMKConsoleBlockEntity console, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(console, getViewDistance())) {
+            return;
+        }
         BlockState state = console.getBlockState();
         Direction facing = state.hasProperty(RBMKConsoleBlock.FACING)
                 ? state.getValue(RBMKConsoleBlock.FACING)
@@ -29,8 +32,10 @@ public class RBMKConsoleRenderer implements BlockEntityRenderer<RBMKConsoleBlock
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
         poseStack.translate(0.5D, 0.0D, 0.0D);
-        ObjRbmkModels.CONSOLE.renderAll(ObjRbmkModels.CONSOLE_TEXTURE, poseStack, buffer, light, packedOverlay,
-                LegacyTexturedRenderMode.CUTOUT_CULL);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(console)) {
+            ObjRbmkModels.CONSOLE.renderAll(ObjRbmkModels.CONSOLE_TEXTURE, poseStack, buffer, light, packedOverlay,
+                    LegacyTexturedRenderMode.CUTOUT_CULL);
+        }
         poseStack.popPose();
     }
 

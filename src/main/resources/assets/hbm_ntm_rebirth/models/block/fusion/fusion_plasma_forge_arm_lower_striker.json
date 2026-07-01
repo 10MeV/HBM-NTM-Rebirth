@@ -4,7 +4,7 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "parts": { "visibility": {
+  "visibility": {
       "Plasma": false,
       "SliderStriker": false,
       "ArmLowerStriker": true,
@@ -19,6 +19,6 @@
       "ArmUpperJet": false,
       "Jet": false,
       "Body": false
-  } },
+  },
   "textures": { "particle": "hbm_ntm_rebirth:block/fusion/plasma_forge", "default": "hbm_ntm_rebirth:block/fusion/plasma_forge" }
 }

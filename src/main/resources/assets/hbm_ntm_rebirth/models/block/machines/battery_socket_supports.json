@@ -4,14 +4,12 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "parts": {
-    "visibility": {
+  "visibility": {
       "Supports": true,
       "Capacitor": false,
       "Battery": false,
       "Socket": false
-    }
-  },
+    },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/battery_socket",
     "default": "hbm_ntm_rebirth:block/machines/battery_socket"

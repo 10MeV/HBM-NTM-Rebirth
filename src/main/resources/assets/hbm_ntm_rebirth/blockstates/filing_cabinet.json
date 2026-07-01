@@ -1,12 +1,12 @@
 {
   "variants": {
-    "facing=east,variant=0": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=east,variant=1": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=north,variant=0": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=north,variant=1": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=south,variant=0": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=south,variant=1": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=west,variant=0": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=west,variant=1": { "model": "hbm_ntm_rebirth:block/empty" }
+    "facing=east,variant=0": { "model": "hbm_ntm_rebirth:block/filing_cabinet", "y": 90 },
+    "facing=east,variant=1": { "model": "hbm_ntm_rebirth:block/filing_cabinet_steel", "y": 90 },
+    "facing=north,variant=0": { "model": "hbm_ntm_rebirth:block/filing_cabinet", "y": 180 },
+    "facing=north,variant=1": { "model": "hbm_ntm_rebirth:block/filing_cabinet_steel", "y": 180 },
+    "facing=south,variant=0": { "model": "hbm_ntm_rebirth:block/filing_cabinet" },
+    "facing=south,variant=1": { "model": "hbm_ntm_rebirth:block/filing_cabinet_steel" },
+    "facing=west,variant=0": { "model": "hbm_ntm_rebirth:block/filing_cabinet", "y": 270 },
+    "facing=west,variant=1": { "model": "hbm_ntm_rebirth:block/filing_cabinet_steel", "y": 270 }
   }
 }

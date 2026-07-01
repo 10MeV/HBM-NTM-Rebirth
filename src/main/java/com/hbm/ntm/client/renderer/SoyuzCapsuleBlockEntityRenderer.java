@@ -14,14 +14,24 @@ public class SoyuzCapsuleBlockEntityRenderer implements BlockEntityRenderer<Soyu
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
     public void render(SoyuzCapsuleBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, -0.25D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(-25.0F));
         poseStack.mulPose(Axis.ZP.rotationDegrees(15.0F));
-        ObjSoyuzModels.renderLanderCapsule(false, poseStack, buffer, modelLight, OverlayTexture.NO_OVERLAY);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            ObjSoyuzModels.renderLanderCapsule(false, poseStack, buffer, modelLight, OverlayTexture.NO_OVERLAY);
+        }
         poseStack.popPose();
     }
 }

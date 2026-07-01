@@ -40,30 +40,32 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
-
         BlockState state = blockEntity.getBlockState();
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
-        if (blockEntity.isConnected()) {
-            poseStack.pushPose();
-            poseStack.translate(-2.0D, 0.0D, 0.0D);
-            ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_TEXTURE, poseStack, buffer, light, packedOverlay,
-                    LegacyTexturedRenderMode.CUTOUT_CULL, "Bolts1");
-            poseStack.popPose();
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            if (blockEntity.isConnected()) {
+                poseStack.pushPose();
+                poseStack.translate(-2.0D, 0.0D, 0.0D);
+                ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_TEXTURE, poseStack, buffer, light,
+                        packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Bolts1");
+                poseStack.popPose();
+            }
+            renderForgePart(poseStack, buffer, light, packedOverlay, "Body");
+            renderLegacyDormantPlasma(blockEntity, poseStack, buffer);
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                renderArticulatedParts(blockEntity, poseStack, buffer, light, packedOverlay, partialTick);
+            }
+            renderLegacyActivePlasma(blockEntity, poseStack, buffer, packedOverlay);
         }
-        renderForgePart(poseStack, buffer, light, packedOverlay, "Body");
-        renderLegacyDormantPlasma(blockEntity, poseStack, buffer);
-        renderArticulatedParts(blockEntity, poseStack, buffer, light, packedOverlay, partialTick);
         GenericMachineRecipe recipe = blockEntity.getSelectedRecipeDefinition();
         if (LegacyRecipeIconRenderer.shouldRenderWithin(blockEntity, 35.0D)) {
             LegacyRecipeIconRenderer.renderPlasmaForgeIcon(recipe, blockEntity.getLevel(), poseStack, buffer,
                     packedLight, partialTick);
         }
-        renderLegacyActivePlasma(blockEntity, poseStack, buffer, packedOverlay);
         if (recipe != null && LegacyRecipeIconRenderer.shouldRenderWithin(blockEntity, 50.0D)) {
             double stellarFluxOffset = stellarFluxOffset(partialTick);
             LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,

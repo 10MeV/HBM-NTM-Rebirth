@@ -1,5 +1,5 @@
 {
   "variants": {
-    "": { "model": "hbm_ntm_rebirth:block/tesla" }
+    "": { "model": "hbm_ntm_rebirth:block/tesla", "y": 180 }
   }
 }

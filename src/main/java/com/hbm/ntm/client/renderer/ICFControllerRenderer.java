@@ -23,7 +23,7 @@ public class ICFControllerRenderer implements BlockEntityRenderer<ICFControllerB
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override

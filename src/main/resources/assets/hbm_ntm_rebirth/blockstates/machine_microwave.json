@@ -1,16 +1,8 @@
 {
   "variants": {
-    "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machine_microwave"
-    },
-    "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machine_microwave"
-    },
-    "facing=south": {
-      "model": "hbm_ntm_rebirth:block/machine_microwave"
-    },
-    "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machine_microwave"
-    }
+    "facing=north": { "model": "hbm_ntm_rebirth:block/machine_microwave" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/machine_microwave", "y": 90 },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/machine_microwave", "y": 180 },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/machine_microwave", "y": 270 }
   }
 }

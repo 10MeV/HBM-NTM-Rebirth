@@ -177,15 +177,15 @@ public final class HbmRenderBackendDiagnostics {
         LegacyRenderLighting.ProbeCacheSnapshot probeCache = LegacyRenderLighting.probeCacheSnapshot();
         ModelCacheSnapshot modelCache = backend.modelCache();
         return String.format(
-                "[HBM RenderBackend] frame=%d backend=%s flags(gpuRequested=%s,gpuAllowed=%s,safeObj=%s,instReq=%s/%s/%s,instancing=%s,instCap=%d,orphan=%s,mdiReq=%s,mdi=%s,occ=%s,shaderPack=%s,shadow=%s,instShader=%s,instGl=%s,irisAvail=%s,irisExt=%s) "
+                "[HBM RenderBackend] frame=%d backend=%s flags(gpuRequested=%s,gpuAllowed=%s,safeObj=%s,animDist=%d,staticDist=%d,instReq=%s/%s/%s,instancing=%s,instCap=%d,orphan=%s,mdiReq=%s,mdi=%s,occ=%s,shaderPack=%s,shadow=%s,instShader=%s,instGl=%s,irisAvail=%s,irisExt=%s) "
                         + "shader(api=%s,active=%s,pipeline=%s/%s/%d,ext=%s/%s,vboGeom=%s,keys=%s:%d/%d,cache=%s/%s,beid=%s/%s,phase=%s/%s/%s,push=%d/%d/%d,restore=%d/%d) "
                         + "cache(model=%d/%d/%d/%d,views=%d/%d,geom=%d/%d/%d,sel=%d/%d/%d,build=%d/%d/%d,hit/miss/clear=%d/%d/%d,handle=%d/%d/%d,missing=%d) "
-                        + "draws(cpu=%d,gpu=%d,gpuFallback=%d/%d,lastFallback=%s,detail=%s) "
-                        + "culling(queries=%d,visible=%d,frustum=%d,distance=%d,shadowBypass=%d,noFrustum=%d,machines=%d,vertices=%d,route=%d/%d/%d/%d,partRuns=%d,occ=%d,occEnabled=%d,occDisabled=%d,occNoLevel=%d,near=%d,hit/miss/reuse=%d/%d/%d,ray=%d/%d,occVisible=%d,occCulled=%d,cache=%d,geom=%d) "
+                        + "draws(cpu=%d,gpu=%d,gpuUpload=%d/%d,gpuFallback=%d/%d,lastFallback=%s,detail=%s) "
+                        + "culling(queries=%d,visible=%d,frustum=%d,distance=%d,shadowBypass=%d,noFrustum=%d,machines=%d,vertices=%d,route=%d/%d/%d/%d,partRuns=%d,objInst=%d/%d/%d,fade=%d/%d/%d,scoped=%d/%d/%d,unscoped=%d/%d/%d,occ=%d,occEnabled=%d,occDisabled=%d,occNoLevel=%d,near=%d,hit/miss/reuse=%d/%d/%d,ray=%d/%d,occVisible=%d,occCulled=%d,cache=%d,geom=%d) "
                         + "visibleDefs(blocks/defs=%d/%d,default=%d/%d,profile=%d/%d,direct/fallback=%d/%d,itemParts=%d,partProps=%d) "
                         + "instanced(flush=%d/dup=%d/blocked=%d,tookMs=%d,stateRestoreFail=%d,queued=%d/%d,draws=%d,sliceOverflow=%d/%d,dup=%d,stale=%d/%d,irisStale=%d/%d) "
                         + "mdi(available=%s,dispatchDisabled=%s,drawIndirect=%s,multi=%s,baseInstance=%s,eligible=%d,draws=%d,dispatch=%d/%d,commands=%d,noSlot=%d/%d,partialFail=%d,stale=%d/%d,dispatchDisable=%d,repackFail=%d,initFail=%d,atlasParts=%d,atlasBytes=%d) "
-                        + "iris(singleDraws=%d,shadowDraws=%d,fallback=%d/%d,lightmapFail=%d,lightmapSlot=%d/%d,lightmapStaging=%d/%d/%d,shaderAttr=%d/%d/%d/%d/%d,queue=%d/%d,queueFlushes=%d,queueDraws=%d,queueFallback=%d/%d,queueDup=%d,persistentBegin=%d,reuse=%d,end=%d,draw=%d,persistentShadow=%d,restore=%d/%d/%d,applyFail=%d,lastApplyFailure=%s) "
+                        + "iris(singleDraws=%d,shadowDraws=%d,upload=%d/%d,fallback=%d/%d,lightmapFail=%d,lightmapSlot=%d/%d,lightmapStaging=%d/%d/%d,shaderAttr=%d/%d/%d/%d/%d,queue=%d/%d,queueFlushes=%d,queueDraws=%d,queueFallback=%d/%d,queueDup=%d,persistentBegin=%d,reuse=%d,end=%d,draw=%d,persistentShadow=%d,restore=%d/%d/%d,applyFail=%d,lastApplyFailure=%s) "
                         + "light(sample=%d/%d/%d,probe=%d/%d/%d,sliced=%d/%d/%d,prune=%d/%d,cache=%d/%d/%d) "
                         + "sampler(invalid=%d/%d/%d)",
                 flags.frameGeneration(),
@@ -193,6 +193,8 @@ public final class HbmRenderBackendDiagnostics {
                 flags.experimentalGpuBackendEnabled(),
                 flags.gpuBackendAllowed(),
                 flags.safeObjStaticBatchingEnabled(),
+                flags.modelUpdateDistanceBlocks(),
+                flags.modelStaticRenderDistanceBlocks(),
                 flags.safeInstancingRequested(),
                 flags.experimentalInstancingRequested(),
                 flags.instancingRequested(),
@@ -255,6 +257,8 @@ public final class HbmRenderBackendDiagnostics {
                 modelCache.missingPartWarningEntries(),
                 backend.lastFrameCpuFallbackBatches(),
                 backend.lastFrameGpuDrawCalls(),
+                backend.gpuUploadAttempts(),
+                backend.gpuUploadFailures(),
                 backend.lastFrameGpuFallbackBatches(),
                 backend.lastFrameGpuFallbackVertices(),
                 backend.lastFallbackReason(),
@@ -272,6 +276,18 @@ public final class HbmRenderBackendDiagnostics {
                 culling.machineRendererProfileDirect(),
                 culling.machineRendererProfileFallback(),
                 culling.machineRendererPartRuns(),
+                culling.objInstancedQueueRecords(),
+                culling.objInstancedQueuedBatches(),
+                culling.objInstancedQueuedInstances(),
+                culling.objInstancedFadedRecords(),
+                culling.objInstancedFadedBatches(),
+                culling.objInstancedFadedInstances(),
+                culling.objInstancedCullingScopedRecords(),
+                culling.objInstancedCullingScopedBatches(),
+                culling.objInstancedCullingScopedInstances(),
+                culling.objInstancedUnscopedRecords(),
+                culling.objInstancedUnscopedBatches(),
+                culling.objInstancedUnscopedInstances(),
                 culling.occlusionQueries(),
                 culling.occlusionEnabledQueries(),
                 culling.occlusionDisabledByConfigQueries(),
@@ -333,6 +349,8 @@ public final class HbmRenderBackendDiagnostics {
                 backend.mdiAtlasBytes(),
                 iris.lastFrameDrawCalls(),
                 iris.lastFrameShadowDrawCalls(),
+                iris.uploadAttempts(),
+                iris.uploadFailures(),
                 iris.lastFrameFallbackBatches(),
                 iris.lastFrameFallbackVertices(),
                 iris.lastFrameLightmapStorageFailures(),

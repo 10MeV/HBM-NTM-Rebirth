@@ -23,7 +23,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -32,8 +32,6 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
-
         BlockState state = blockEntity.getBlockState();
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
@@ -46,50 +44,52 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
 
-        ObjReactorModels.renderLpw2Part("Frame", ObjReactorModels.LPW2_TEXTURE,
-                poseStack, buffer, modelLight, packedOverlay);
-        renderMainAssembly(plan, poseStack, buffer, modelLight, packedOverlay);
-        renderRotating(plan.wireLeft(), poseStack, buffer, modelLight, packedOverlay);
-        renderRotating(plan.wireRight(), poseStack, buffer, modelLight, packedOverlay);
-        renderTranslated(plan.coverPart(), poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            ObjReactorModels.renderLpw2Part("Frame", ObjReactorModels.LPW2_TEXTURE,
+                    poseStack, buffer, modelLight, packedOverlay);
+            renderMainAssembly(plan, poseStack, buffer, modelLight, packedOverlay);
+            renderRotating(plan.wireLeft(), poseStack, buffer, modelLight, packedOverlay);
+            renderRotating(plan.wireRight(), poseStack, buffer, modelLight, packedOverlay);
+            renderTranslated(plan.coverPart(), poseStack, buffer, modelLight, packedOverlay);
 
-        poseStack.pushPose();
-        poseStack.translate(0.0D, 0.0D, 3.5D);
-        poseStack.scale(1.0F, 1.0F,
-                (float) ((3.0D + plan.cover() * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 3.0D));
-        poseStack.translate(0.0D, 0.0D, -3.5D);
-        ObjReactorModels.renderLpw2Part("SuspensionCoverFront", ObjReactorModels.LPW2_TEXTURE,
-                poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.translate(0.0D, 0.0D, 3.5D);
+            poseStack.scale(1.0F, 1.0F,
+                    (float) ((3.0D + plan.cover() * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 3.0D));
+            poseStack.translate(0.0D, 0.0D, -3.5D);
+            ObjReactorModels.renderLpw2Part("SuspensionCoverFront", ObjReactorModels.LPW2_TEXTURE,
+                    poseStack, buffer, modelLight, packedOverlay);
+            poseStack.popPose();
 
-        poseStack.pushPose();
-        poseStack.translate(0.0D, 0.0D, -5.5D);
-        poseStack.scale(1.0F, 1.0F,
-                (float) ((1.5D - plan.cover() * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 1.5D));
-        poseStack.translate(0.0D, 0.0D, 5.5D);
-        ObjReactorModels.renderLpw2Part("SuspensionCoverBack", ObjReactorModels.LPW2_TEXTURE,
-                poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.translate(0.0D, 0.0D, -5.5D);
+            poseStack.scale(1.0F, 1.0F,
+                    (float) ((1.5D - plan.cover() * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 1.5D));
+            poseStack.translate(0.0D, 0.0D, 5.5D);
+            ObjReactorModels.renderLpw2Part("SuspensionCoverBack", ObjReactorModels.LPW2_TEXTURE,
+                    poseStack, buffer, modelLight, packedOverlay);
+            poseStack.popPose();
 
-        poseStack.pushPose();
-        poseStack.translate(0.0D, 0.0D, -9.0D);
-        poseStack.scale(1.0F, 1.0F,
-                (float) ((1.25D - plan.sway() * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 1.25D));
-        poseStack.translate(0.0D, 0.0D, 9.0D);
-        ObjReactorModels.renderLpw2Part("SuspensionBackOuter", ObjReactorModels.LPW2_TEXTURE,
-                poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.translate(0.0D, 0.0D, -9.0D);
+            poseStack.scale(1.0F, 1.0F,
+                    (float) ((1.25D - plan.sway() * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 1.25D));
+            poseStack.translate(0.0D, 0.0D, 9.0D);
+            ObjReactorModels.renderLpw2Part("SuspensionBackOuter", ObjReactorModels.LPW2_TEXTURE,
+                    poseStack, buffer, modelLight, packedOverlay);
+            poseStack.popPose();
 
-        poseStack.pushPose();
-        poseStack.translate(0.0D, 0.0D, -9.5D);
-        poseStack.scale(1.0F, 1.0F,
-                (float) ((1.75D - plan.sway() * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 1.75D));
-        poseStack.translate(0.0D, 0.0D, 9.5D);
-        ObjReactorModels.renderLpw2Part("SuspensionBackCenter", ObjReactorModels.LPW2_TEXTURE,
-                poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.translate(0.0D, 0.0D, -9.5D);
+            poseStack.scale(1.0F, 1.0F,
+                    (float) ((1.75D - plan.sway() * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 1.75D));
+            poseStack.translate(0.0D, 0.0D, 9.5D);
+            ObjReactorModels.renderLpw2Part("SuspensionBackCenter", ObjReactorModels.LPW2_TEXTURE,
+                    poseStack, buffer, modelLight, packedOverlay);
+            poseStack.popPose();
 
-        renderServers(plan.servers(), poseStack, buffer, modelLight, packedOverlay);
+            renderServers(plan.servers(), poseStack, buffer, modelLight, packedOverlay);
+        }
         poseStack.popPose();
     }
 

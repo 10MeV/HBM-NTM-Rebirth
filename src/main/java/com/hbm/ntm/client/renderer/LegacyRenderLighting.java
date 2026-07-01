@@ -655,12 +655,11 @@ public final class LegacyRenderLighting {
     }
 
     private static double lightCornerDetailDistanceSq() {
-        int renderDistanceChunks = HbmRenderFrameFlags.current().renderDistanceChunks();
-        if (renderDistanceChunks <= 0) {
+        int staticDistanceBlocks = HbmRenderFrameFlags.current().modelStaticRenderDistanceBlocks();
+        if (staticDistanceBlocks <= 0) {
             return Double.POSITIVE_INFINITY;
         }
-        double maxBlocks = renderDistanceChunks * 16.0D;
-        double detailBlocks = maxBlocks - LIGHT_CORNER_DETAIL_MARGIN_BLOCKS;
+        double detailBlocks = staticDistanceBlocks - LIGHT_CORNER_DETAIL_MARGIN_BLOCKS;
         if (detailBlocks <= 0.0D) {
             return Double.POSITIVE_INFINITY;
         }

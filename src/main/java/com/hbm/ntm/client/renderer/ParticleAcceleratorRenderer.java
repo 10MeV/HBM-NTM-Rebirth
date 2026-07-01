@@ -29,7 +29,7 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -38,8 +38,6 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
-
         ParticleAcceleratorBlock.Variant variant = blockEntity.getVariant();
         BlockState state = blockEntity.getBlockState();
         poseStack.pushPose();
@@ -51,10 +49,13 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
         LegacyWavefrontModel model = model(variant);
         ResourceLocation texture = texture(variant);
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-        if (blockEntity instanceof PABeamlineBlockEntity beamline) {
-            renderBeamline(beamline, partialTick, texture, poseStack, buffer, modelLight, packedOverlay);
-        } else {
-            model.renderAll(texture, poseStack, buffer, modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            if (blockEntity instanceof PABeamlineBlockEntity beamline) {
+                renderBeamline(beamline, partialTick, texture, poseStack, buffer, modelLight, packedOverlay);
+            } else {
+                model.renderAll(texture, poseStack, buffer, modelLight, packedOverlay,
+                        LegacyTexturedRenderMode.CUTOUT_CULL);
+            }
         }
         poseStack.popPose();
     }

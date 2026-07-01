@@ -4,6 +4,6 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "parts": { "visibility": { "InnerEmpty": false, "InnerBurning": true, "Door": false, "Main": false } },
+  "visibility": { "InnerEmpty": false, "InnerBurning": true, "Door": false, "Main": false },
   "textures": { "particle": "hbm_ntm_rebirth:block/machines/firebox", "default": "hbm_ntm_rebirth:block/machines/firebox" }
 }

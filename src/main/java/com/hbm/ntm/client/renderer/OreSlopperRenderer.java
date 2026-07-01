@@ -25,8 +25,6 @@ import net.minecraft.world.phys.Vec3;
 
 public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_ORE_SLOPPER;
-    private static final LegacyWavefrontModel.SelectionHandle BASE =
-            MODEL.prepareRenderOnlyInCallOrder("Base");
     private static final LegacyWavefrontModel.SelectionHandle SLIDER =
             MODEL.prepareRenderOnlyInCallOrder("Slider");
     private static final LegacyWavefrontModel.SelectionHandle HYDRAULICS =
@@ -50,7 +48,7 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -59,8 +57,6 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
-
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -77,45 +73,47 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
-        renderPart(BASE, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                poseStack.pushPose();
+                poseStack.translate(0.0D, 0.0D, blockEntity.getSlider(partialTick) * -3.0D);
+                renderPart(SLIDER, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
 
-        poseStack.pushPose();
-        poseStack.translate(0.0D, 0.0D, blockEntity.getSlider(partialTick) * -3.0D);
-        renderPart(SLIDER, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+                poseStack.pushPose();
+                double extend = blockEntity.getBucket(partialTick) * 1.5D;
+                poseStack.translate(0.0D, -Mth.clamp(extend - 0.25D, 0.0D, 1.25D), 0.0D);
+                renderPart(HYDRAULICS, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+                poseStack.translate(0.0D, -Mth.clamp(extend, 0.0D, 1.25D), 0.0D);
+                renderPart(BUCKET, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+                if (blockEntity.getAnimation() == SlopperAnimation.LIFTING) {
+                    renderBucketOre(blockEntity, poseStack, buffer, packedLight);
+                }
+                poseStack.popPose();
+                poseStack.popPose();
 
-        poseStack.pushPose();
-        double extend = blockEntity.getBucket(partialTick) * 1.5D;
-        poseStack.translate(0.0D, -Mth.clamp(extend - 0.25D, 0.0D, 1.25D), 0.0D);
-        renderPart(HYDRAULICS, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
-        poseStack.translate(0.0D, -Mth.clamp(extend, 0.0D, 1.25D), 0.0D);
-        renderPart(BUCKET, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
-        if (blockEntity.getAnimation() == SlopperAnimation.LIFTING) {
-            renderBucketOre(blockEntity, poseStack, buffer, packedLight);
+                double blades = blockEntity.getBlades(partialTick);
+                poseStack.pushPose();
+                poseStack.translate(0.375D, 2.75D, 0.0D);
+                poseStack.mulPose(Axis.ZP.rotationDegrees((float) blades));
+                poseStack.translate(-0.375D, -2.75D, 0.0D);
+                renderPart(BLADES_LEFT, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+                poseStack.popPose();
+
+                poseStack.pushPose();
+                poseStack.translate(-0.375D, 2.75D, 0.0D);
+                poseStack.mulPose(Axis.ZN.rotationDegrees((float) blades));
+                poseStack.translate(0.375D, -2.75D, 0.0D);
+                renderPart(BLADES_RIGHT, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+                poseStack.popPose();
+
+                poseStack.pushPose();
+                poseStack.translate(0.0D, 1.875D, -1.0D);
+                poseStack.mulPose(Axis.XN.rotationDegrees((float) blockEntity.getFan(partialTick)));
+                poseStack.translate(0.0D, -1.875D, 1.0D);
+                renderPart(FAN, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+                poseStack.popPose();
+            }
         }
-        poseStack.popPose();
-        poseStack.popPose();
-
-        double blades = blockEntity.getBlades(partialTick);
-        poseStack.pushPose();
-        poseStack.translate(0.375D, 2.75D, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) blades));
-        poseStack.translate(-0.375D, -2.75D, 0.0D);
-        renderPart(BLADES_LEFT, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
-        poseStack.popPose();
-
-        poseStack.pushPose();
-        poseStack.translate(-0.375D, 2.75D, 0.0D);
-        poseStack.mulPose(Axis.ZN.rotationDegrees((float) blades));
-        poseStack.translate(0.375D, -2.75D, 0.0D);
-        renderPart(BLADES_RIGHT, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
-        poseStack.popPose();
-
-        poseStack.pushPose();
-        poseStack.translate(0.0D, 1.875D, -1.0D);
-        poseStack.mulPose(Axis.XN.rotationDegrees((float) blockEntity.getFan(partialTick)));
-        poseStack.translate(0.0D, -1.875D, 1.0D);
-        renderPart(FAN, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
-        poseStack.popPose();
 
         poseStack.popPose();
     }

@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "facing=south,variant=0": { "model": "hbm_ntm_rebirth:block/deco_toaster_iron" },
+    "facing=west,variant=0": { "model": "hbm_ntm_rebirth:block/deco_toaster_iron", "y": 90 },
+    "facing=north,variant=0": { "model": "hbm_ntm_rebirth:block/deco_toaster_iron", "y": 180 },
+    "facing=east,variant=0": { "model": "hbm_ntm_rebirth:block/deco_toaster_iron", "y": 270 },
+    "facing=south,variant=1": { "model": "hbm_ntm_rebirth:block/deco_toaster_steel" },
+    "facing=west,variant=1": { "model": "hbm_ntm_rebirth:block/deco_toaster_steel", "y": 90 },
+    "facing=north,variant=1": { "model": "hbm_ntm_rebirth:block/deco_toaster_steel", "y": 180 },
+    "facing=east,variant=1": { "model": "hbm_ntm_rebirth:block/deco_toaster_steel", "y": 270 },
+    "facing=south,variant=2": { "model": "hbm_ntm_rebirth:block/deco_toaster_wood" },
+    "facing=west,variant=2": { "model": "hbm_ntm_rebirth:block/deco_toaster_wood", "y": 90 },
+    "facing=north,variant=2": { "model": "hbm_ntm_rebirth:block/deco_toaster_wood", "y": 180 },
+    "facing=east,variant=2": { "model": "hbm_ntm_rebirth:block/deco_toaster_wood", "y": 270 }
+  }
+}

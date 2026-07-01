@@ -4,6 +4,15 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+      "Blades": false,
+      "Frame": true
+    },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/fan",
     "default": "hbm_ntm_rebirth:block/machines/fan",

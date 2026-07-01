@@ -1,19 +1,19 @@
 {
   "variants": {
     "facing=east": {
+      "model": "hbm_ntm_rebirth:block/heater_oven"
+    },
+    "facing=north": {
       "model": "hbm_ntm_rebirth:block/heater_oven",
       "y": 90
     },
-    "facing=north": {
-      "model": "hbm_ntm_rebirth:block/heater_oven"
-    },
     "facing=south": {
       "model": "hbm_ntm_rebirth:block/heater_oven",
-      "y": 180
+      "y": 270
     },
     "facing=west": {
       "model": "hbm_ntm_rebirth:block/heater_oven",
-      "y": 270
+      "y": 180
     }
   }
 }

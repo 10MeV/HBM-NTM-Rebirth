@@ -25,6 +25,9 @@ public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlo
     @Override
     public void render(BalefireBombBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof BalefireBombBlock)) {
             return;
@@ -34,13 +37,17 @@ public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlo
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(state)));
-        renderModel(poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            renderModel(poseStack, buffer, modelLight, packedOverlay);
 
+            if (blockEntity.isLoadedSynced()) {
+                float age = glintAge(blockEntity.getLevel(), partialTick);
+                LegacyObjGlintRenderer.renderClassicGlint(ObjBombModels.FSTBMB,
+                        LegacyObjGlintRenderer.BALEFIRE_GLINT_TEXTURE, poseStack, buffer, modelLight, packedOverlay,
+                        ObjBombModels.FSTBMB_BALEFIRE, age, 0.0F, 0.8F, 0.15F, 5.0F, 2.0F);
+            }
+        }
         if (blockEntity.isLoadedSynced()) {
-            float age = glintAge(blockEntity.getLevel(), partialTick);
-            LegacyObjGlintRenderer.renderClassicGlint(ObjBombModels.FSTBMB,
-                    LegacyObjGlintRenderer.BALEFIRE_GLINT_TEXTURE, poseStack, buffer, modelLight, packedOverlay,
-                    ObjBombModels.FSTBMB_BALEFIRE, age, 0.0F, 0.8F, 0.15F, 5.0F, 2.0F);
             renderTimer(blockEntity, poseStack, buffer);
         }
 
@@ -95,6 +102,6 @@ public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlo
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 }

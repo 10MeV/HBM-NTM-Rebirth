@@ -27,23 +27,30 @@ public class FusionMHDTRenderer implements BlockEntityRenderer<FusionMHDTBlockEn
     @Override
     public void render(FusionMHDTBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
-        ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_LEGACY, ObjFusionModels.MHDT_TEXTURE,
-                poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Turbine");
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_LEGACY, ObjFusionModels.MHDT_TEXTURE,
+                    poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Turbine");
 
-        poseStack.pushPose();
-        float rotor = blockEntity.getRotor(partialTick) % 15.0F;
-        poseStack.translate(0.0D, 1.5D, 0.0D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(rotor));
-        poseStack.translate(0.0D, -1.5D, 0.0D);
-        ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_LEGACY, ObjFusionModels.MHDT_TEXTURE,
-                poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Coils");
-        poseStack.popPose();
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                poseStack.pushPose();
+                float rotor = blockEntity.getRotor(partialTick) % 15.0F;
+                poseStack.translate(0.0D, 1.5D, 0.0D);
+                poseStack.mulPose(Axis.XP.rotationDegrees(rotor));
+                poseStack.translate(0.0D, -1.5D, 0.0D);
+                ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_LEGACY, ObjFusionModels.MHDT_TEXTURE,
+                        poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Coils");
+                poseStack.popPose();
+            }
+        }
         poseStack.popPose();
     }
 }

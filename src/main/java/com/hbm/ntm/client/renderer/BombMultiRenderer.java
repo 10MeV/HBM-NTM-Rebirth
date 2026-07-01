@@ -23,6 +23,9 @@ public class BombMultiRenderer implements BlockEntityRenderer<BombMultiBlockEnti
     @Override
     public void render(BombMultiBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof BombMultiBlock)) {
             return;
@@ -33,7 +36,9 @@ public class BombMultiRenderer implements BlockEntityRenderer<BombMultiBlockEnti
         poseStack.translate(0.5D, 0.5D, 0.5D);
         poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(state)));
-        renderModel(poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            renderModel(poseStack, buffer, modelLight, packedOverlay);
+        }
         poseStack.popPose();
     }
 
@@ -70,6 +75,6 @@ public class BombMultiRenderer implements BlockEntityRenderer<BombMultiBlockEnti
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 }

@@ -1,19 +1,19 @@
 {
   "variants": {
     "facing=east": {
+      "model": "hbm_ntm_rebirth:block/machine_solidifier"
+    },
+    "facing=north": {
       "model": "hbm_ntm_rebirth:block/machine_solidifier",
       "y": 90
     },
-    "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machine_solidifier"
-    },
     "facing=south": {
       "model": "hbm_ntm_rebirth:block/machine_solidifier",
-      "y": 180
+      "y": 270
     },
     "facing=west": {
       "model": "hbm_ntm_rebirth:block/machine_solidifier",
-      "y": 270
+      "y": 180
     }
   }
 }

@@ -146,6 +146,6 @@ public class LaunchPadBlock extends LegacyXrMultiblockBlock implements EntityBlo
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.INVISIBLE;
+        return RenderShape.MODEL;
     }
 }

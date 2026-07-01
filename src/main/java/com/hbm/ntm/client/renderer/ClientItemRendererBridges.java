@@ -59,6 +59,10 @@ public final class ClientItemRendererBridges {
         LegacyItemRendererBridge.accept(consumer, () -> RedCableItemRenderer.INSTANCE);
     }
 
+    public static void acceptRedCableBox(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> RedCableBoxItemRenderer.INSTANCE);
+    }
+
     public static void acceptTrinket(Consumer<IClientItemExtensions> consumer) {
         LegacyItemRendererBridge.accept(consumer, () -> TrinketItemRenderer.INSTANCE);
     }

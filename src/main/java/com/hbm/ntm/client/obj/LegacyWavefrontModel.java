@@ -8,6 +8,7 @@ import com.hbm.ntm.client.render.HbmMdiRenderDiag;
 import com.hbm.ntm.client.render.HbmRenderFrameLight;
 import com.hbm.ntm.client.render.HbmRenderFrameFlags;
 import com.hbm.ntm.client.render.HbmRenderBackendDiagnostics;
+import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
 import com.hbm.ntm.client.render.shader.HbmIrisExtendedShaderAccess;
 import com.hbm.ntm.client.render.shader.HbmIrisRenderBatch;
 import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
@@ -34,6 +35,7 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.phys.AABB;
 import org.joml.Matrix3f;
@@ -3237,7 +3239,7 @@ public final class LegacyWavefrontModel {
                         HbmNtm.LOGGER.debug("Failed to draw legacy OBJ Iris glint transient companion mesh",
                                 exception);
                     }
-                    renderTexturedCpuFallback(irisCompanionFallbackReason(
+                    renderTexturedIrisCompanionCpuFallback(irisCompanionFallbackReason(
                             RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED), batch,
                             textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                             legacyShadow, smoothing, renderMode, uvTransform);
@@ -3256,7 +3258,7 @@ public final class LegacyWavefrontModel {
                         HbmNtm.LOGGER.debug("Failed to draw legacy OBJ Iris dynamic-UV transient companion mesh",
                                 exception);
                     }
-                    renderTexturedCpuFallback(irisCompanionFallbackReason(
+                    renderTexturedIrisCompanionCpuFallback(irisCompanionFallbackReason(
                             RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED), batch,
                             textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                             legacyShadow, smoothing, renderMode, uvTransform);
@@ -3267,7 +3269,7 @@ public final class LegacyWavefrontModel {
                             red, green, blue, alpha, smoothing, alphaMode, uvTransform)) {
                         return;
                     }
-                    renderTexturedCpuFallback(RenderBackendFallbackReason.IRIS_COMPANION_UPLOAD_FAILED, batch,
+                    renderTexturedIrisCompanionCpuFallback(RenderBackendFallbackReason.IRIS_COMPANION_UPLOAD_FAILED, batch,
                             textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                             legacyShadow, smoothing, renderMode, uvTransform);
                     return;
@@ -3284,8 +3286,25 @@ public final class LegacyWavefrontModel {
                                 batch.vertexCount());
                         HbmNtm.LOGGER.debug("Failed to draw legacy OBJ Iris companion mesh", exception);
                     }
-                    renderTexturedCpuFallback(irisCompanionFallbackReason(
+                    renderTexturedIrisCompanionCpuFallback(irisCompanionFallbackReason(
                             RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED), batch,
+                            textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                            legacyShadow, smoothing, renderMode, uvTransform);
+                    return;
+                }
+                if (canUseTransientTexturedSingleMeshPath(flags, alphaMode, alpha, legacyShadow, uvTransform)) {
+                    try {
+                        if (drawTransientTexturedSingleMesh(batch, textureLocation, poseStack, packedLight,
+                                packedOverlay, red, green, blue, alpha, smoothing, alphaMode, uvTransform)) {
+                            return;
+                        }
+                    } catch (RuntimeException exception) {
+                        renderTexturedStaticFadeCpuFallback(RenderBackendFallbackReason.GPU_DRAW_FAILED, batch,
+                                textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue,
+                                alpha, legacyShadow, smoothing, renderMode, uvTransform);
+                        return;
+                    }
+                    renderTexturedStaticFadeCpuFallback(RenderBackendFallbackReason.GPU_UPLOAD_FAILED, batch,
                             textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                             legacyShadow, smoothing, renderMode, uvTransform);
                     return;
@@ -3372,7 +3391,7 @@ public final class LegacyWavefrontModel {
                         HbmNtm.LOGGER.debug("Failed to draw legacy OBJ Iris dynamic-UV sprite companion mesh",
                                 exception);
                     }
-                    renderSpriteCpuFallback(irisCompanionFallbackReason(
+                    renderSpriteIrisCompanionCpuFallback(irisCompanionFallbackReason(
                             RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED), batch, sprite,
                             poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow,
                             partBrightness, renderMode, uvTransform);
@@ -3383,7 +3402,7 @@ public final class LegacyWavefrontModel {
                             red, green, blue, alpha, alphaMode, uvTransform)) {
                         return;
                     }
-                    renderSpriteCpuFallback(RenderBackendFallbackReason.IRIS_COMPANION_UPLOAD_FAILED, batch, sprite,
+                    renderSpriteIrisCompanionCpuFallback(RenderBackendFallbackReason.IRIS_COMPANION_UPLOAD_FAILED, batch, sprite,
                             poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow,
                             partBrightness, renderMode, uvTransform);
                     return;
@@ -3401,10 +3420,27 @@ public final class LegacyWavefrontModel {
                                 batch.vertexCount());
                         HbmNtm.LOGGER.debug("Failed to draw legacy OBJ Iris sprite companion mesh", exception);
                     }
-                    renderSpriteCpuFallback(irisCompanionFallbackReason(
+                    renderSpriteIrisCompanionCpuFallback(irisCompanionFallbackReason(
                             RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED), batch, sprite,
                             poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow,
                             partBrightness, renderMode, uvTransform);
+                    return;
+                }
+                if (canUseTransientTexturedSingleMeshPath(flags, alphaMode, alpha, legacyShadow, uvTransform)) {
+                    try {
+                        if (drawTransientSpriteSingleMesh(batch, sprite, poseStack, packedLight, packedOverlay,
+                                red, green, blue, alpha, alphaMode, uvTransform)) {
+                            return;
+                        }
+                    } catch (RuntimeException exception) {
+                        renderSpriteStaticFadeCpuFallback(RenderBackendFallbackReason.GPU_DRAW_FAILED, batch,
+                                sprite, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                                legacyShadow, partBrightness, renderMode, uvTransform);
+                        return;
+                    }
+                    renderSpriteStaticFadeCpuFallback(RenderBackendFallbackReason.GPU_UPLOAD_FAILED, batch,
+                            sprite, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                            legacyShadow, partBrightness, renderMode, uvTransform);
                     return;
                 }
                 if (flags.instancingEnabled() && canUseInstancedPath(alphaMode)) {
@@ -3476,7 +3512,7 @@ public final class LegacyWavefrontModel {
                             resolvedRenderMode)) {
                         return;
                     }
-                    renderUntexturedCpuFallback(RenderBackendFallbackReason.IRIS_COMPANION_UPLOAD_FAILED, batch,
+                    renderUntexturedIrisCompanionCpuFallback(RenderBackendFallbackReason.IRIS_COMPANION_UPLOAD_FAILED, batch,
                             poseStack, buffer, red, green, blue, alpha, renderMode);
                     return;
                 }
@@ -3493,7 +3529,7 @@ public final class LegacyWavefrontModel {
                                 batch.vertexCount());
                         HbmNtm.LOGGER.debug("Failed to draw legacy OBJ Iris untextured companion mesh", exception);
                     }
-                    renderUntexturedCpuFallback(irisCompanionFallbackReason(
+                    renderUntexturedIrisCompanionCpuFallback(irisCompanionFallbackReason(
                             RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED), batch,
                             poseStack, buffer, red, green, blue, alpha, renderMode);
                     return;
@@ -3555,7 +3591,7 @@ public final class LegacyWavefrontModel {
                     recordIrisFallback(RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED, batch.vertexCount());
                     HbmNtm.LOGGER.debug("Failed to draw clipped legacy OBJ Iris companion mesh", exception);
                 }
-                renderTexturedCpuFallback(irisCompanionFallbackReason(
+                renderTexturedIrisCompanionCpuFallback(irisCompanionFallbackReason(
                         RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED), batch,
                         textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                         legacyShadow, smoothing, renderMode, uvTransform);
@@ -3631,7 +3667,7 @@ public final class LegacyWavefrontModel {
                     HbmNtm.LOGGER.debug("Failed to draw clipped legacy OBJ Iris untextured companion mesh",
                             exception);
                 }
-                renderUntexturedCpuFallback(irisCompanionFallbackReason(
+                renderUntexturedIrisCompanionCpuFallback(irisCompanionFallbackReason(
                         RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED), batch,
                         poseStack, buffer, red, green, blue, alpha, renderMode);
                 return;
@@ -3866,6 +3902,9 @@ public final class LegacyWavefrontModel {
             }
             if (!RenderSystem.isOnRenderThread()) {
                 return RenderBackendFallbackReason.GPU_NOT_RENDER_THREAD;
+            }
+            if (canUseTransientTexturedSingleMeshPath(flags, renderMode, alpha, legacyShadow, uvTransform)) {
+                return RenderBackendFallbackReason.NONE;
             }
             if (renderMode.translucent() && !supportsSingleMeshDepthWriteTransparent(renderMode)) {
                 RenderBackendFallbackReason materialReason = instancedTailMaterialFallbackReason(renderMode,
@@ -4139,6 +4178,20 @@ public final class LegacyWavefrontModel {
                     && !HbmShaderCompatibilityDetector.isRenderingShadowPass();
         }
 
+        private static boolean canUseTransientTexturedSingleMeshPath(HbmRenderFrameFlags.Snapshot flags,
+                LegacyTexturedRenderMode renderMode, int alpha, boolean legacyShadow, UvTransform uvTransform) {
+            boolean transientOnlyMaterial = !uvTransform.gpuMeshCacheable() || isGlintRenderMode(renderMode);
+            boolean supportedAlpha = alpha == 255 || renderMode.translucent();
+            return flags.experimentalGpuBackendEnabled()
+                    && flags.gpuBackendAllowed()
+                    && !flags.shaderPackDetected()
+                    && !flags.shaderShadowPass()
+                    && transientOnlyMaterial
+                    && supportedAlpha
+                    && !legacyShadow
+                    && RenderSystem.isOnRenderThread();
+        }
+
         private static boolean supportsIrisCompanionAdditiveTail(LegacyTexturedRenderMode renderMode) {
             return renderMode == LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE
                     || renderMode == LegacyTexturedRenderMode.ADDITIVE_CULL_NO_DEPTH_WRITE;
@@ -4197,6 +4250,29 @@ public final class LegacyWavefrontModel {
                     red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
         }
 
+        private void renderTexturedIrisCompanionCpuFallback(RenderBackendFallbackReason reason, PreparedBatch batch,
+                ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing,
+                LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+            renderTexturedStaticFadeCpuFallback(reason, batch, textureLocation, poseStack, buffer, packedLight,
+                    packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
+        }
+
+        private void renderTexturedStaticFadeCpuFallback(RenderBackendFallbackReason reason, PreparedBatch batch,
+                ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing,
+                LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return;
+            }
+            boolean faded = fadeAlpha < 0.999F;
+            LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, faded);
+            renderTexturedCpuFallback(reason, batch, textureLocation, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, fadedAlpha(alpha, fadeAlpha), legacyShadow, smoothing, effectiveRenderMode,
+                    uvTransform);
+        }
+
         private void renderSpriteCpuFallback(RenderBackendFallbackReason reason, PreparedBatch batch,
                 TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                 int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
@@ -4207,12 +4283,122 @@ public final class LegacyWavefrontModel {
                     red, green, blue, alpha, legacyShadow, partBrightness, renderMode, uvTransform);
         }
 
+        private void renderSpriteIrisCompanionCpuFallback(RenderBackendFallbackReason reason, PreparedBatch batch,
+                TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
+                boolean partBrightness, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+            renderSpriteStaticFadeCpuFallback(reason, batch, sprite, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha, legacyShadow, partBrightness, renderMode, uvTransform);
+        }
+
+        private void renderSpriteStaticFadeCpuFallback(RenderBackendFallbackReason reason, PreparedBatch batch,
+                TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
+                boolean partBrightness, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return;
+            }
+            boolean faded = fadeAlpha < 0.999F;
+            LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, faded);
+            renderSpriteCpuFallback(reason, batch, sprite, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, fadedAlpha(alpha, fadeAlpha), legacyShadow, partBrightness,
+                    effectiveRenderMode, uvTransform);
+        }
+
         private void renderUntexturedCpuFallback(RenderBackendFallbackReason reason, PreparedBatch batch,
                 PoseStack poseStack, MultiBufferSource buffer, int red, int green, int blue, int alpha,
                 LegacyTexturedRenderMode renderMode) {
             recordGpuFallback(reason, batch.vertexCount(),
                     fallbackDetail("gpu-untextured", reason, batch, InventoryMenu.BLOCK_ATLAS, renderMode, 1));
             cpuFallback.renderUntextured(batch, poseStack, buffer, red, green, blue, alpha, renderMode);
+        }
+
+        private void renderUntexturedIrisCompanionCpuFallback(RenderBackendFallbackReason reason, PreparedBatch batch,
+                PoseStack poseStack, MultiBufferSource buffer, int red, int green, int blue, int alpha,
+                LegacyTexturedRenderMode renderMode) {
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return;
+            }
+            boolean faded = fadeAlpha < 0.999F;
+            LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, faded);
+            renderUntexturedCpuFallback(reason, batch, poseStack, buffer, red, green, blue,
+                    fadedAlpha(alpha, fadeAlpha), effectiveRenderMode);
+        }
+
+        private boolean drawTransientTexturedSingleMesh(PreparedBatch batch, ResourceLocation textureLocation,
+                PoseStack poseStack, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+                boolean smoothing, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return true;
+            }
+            boolean faded = fadeAlpha < 0.999F;
+            LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, faded);
+            int effectiveAlpha = fadedAlpha(alpha, fadeAlpha);
+            boolean drew = false;
+            if (!batch.quadVertices().isEmpty()) {
+                GpuMesh mesh = uploadTransientTexturedMesh(VertexFormat.Mode.QUADS, packedLight, packedOverlay,
+                        red, green, blue, effectiveAlpha, smoothing, uvTransform, batch.quadVertices());
+                try {
+                    drawMesh(mesh, effectiveRenderMode.renderType(textureLocation, VertexFormat.Mode.QUADS),
+                            poseStack);
+                } finally {
+                    safeClose(mesh, "transient textured quad mesh");
+                }
+                drew = true;
+            }
+            if (!batch.triangleVertices().isEmpty()) {
+                GpuMesh mesh = uploadTransientTexturedMesh(VertexFormat.Mode.TRIANGLES, packedLight,
+                        packedOverlay, red, green, blue, effectiveAlpha, smoothing, uvTransform,
+                        batch.triangleVertices());
+                try {
+                    drawMesh(mesh, effectiveRenderMode.renderType(textureLocation, VertexFormat.Mode.TRIANGLES),
+                            poseStack);
+                } finally {
+                    safeClose(mesh, "transient textured triangle mesh");
+                }
+                drew = true;
+            }
+            return drew;
+        }
+
+        private boolean drawTransientSpriteSingleMesh(PreparedBatch batch, TextureAtlasSprite sprite,
+                PoseStack poseStack, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+                LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return true;
+            }
+            boolean faded = fadeAlpha < 0.999F;
+            LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, faded);
+            int effectiveAlpha = fadedAlpha(alpha, fadeAlpha);
+            boolean drew = false;
+            if (!batch.quadVertices().isEmpty()) {
+                GpuMesh mesh = uploadTransientSpriteMesh(VertexFormat.Mode.QUADS, sprite, packedLight,
+                        packedOverlay, red, green, blue, effectiveAlpha, uvTransform, batch.quadVertices());
+                try {
+                    drawMesh(mesh, effectiveRenderMode.renderType(InventoryMenu.BLOCK_ATLAS,
+                            VertexFormat.Mode.QUADS), poseStack);
+                } finally {
+                    safeClose(mesh, "transient sprite quad mesh");
+                }
+                drew = true;
+            }
+            if (!batch.triangleVertices().isEmpty()) {
+                GpuMesh mesh = uploadTransientSpriteMesh(VertexFormat.Mode.TRIANGLES, sprite, packedLight,
+                        packedOverlay, red, green, blue, effectiveAlpha, uvTransform,
+                        batch.triangleVertices());
+                try {
+                    drawMesh(mesh, effectiveRenderMode.renderType(InventoryMenu.BLOCK_ATLAS,
+                            VertexFormat.Mode.TRIANGLES), poseStack);
+                } finally {
+                    safeClose(mesh, "transient sprite triangle mesh");
+                }
+                drew = true;
+            }
+            return drew;
         }
 
         private boolean queueInstanced(PreparedBatch batch, ResourceLocation textureLocation, PoseStack poseStack,
@@ -4349,28 +4535,44 @@ public final class LegacyWavefrontModel {
         private void queueInstanced(InstancedMesh mesh, ResourceLocation textureLocation, LegacyTexturedRenderMode renderMode,
                 PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
                 int red, int green, int blue, int alpha, UvTransform uvTransform) {
-            InstancedBatchKey key = new InstancedBatchKey(mesh.key(), textureLocation, renderMode);
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return;
+            }
+            boolean faded = fadeAlpha < 0.999F;
+            LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, faded);
+            InstancedBatchKey key = new InstancedBatchKey(mesh.key(), textureLocation, effectiveRenderMode);
             InstancedBatch batch = pendingInstancedBatches.computeIfAbsent(key,
-                    ignored -> new InstancedBatch(mesh, textureLocation, renderMode));
+                    ignored -> new InstancedBatch(mesh, textureLocation, effectiveRenderMode));
+            boolean newBatch = batch.instances().isEmpty();
             Matrix4f modelView = poseStack.last().pose();
             batch.instances().add(InstancedInstance.from(modelView,
-                    mesh.sampleSlicedLightProbe(modelView, packedLight), packedOverlay, red, green, blue, alpha));
+                    mesh.sampleSlicedLightProbe(modelView, packedLight), packedOverlay, red, green, blue, alpha,
+                    fadeAlpha));
             batch.fallbacks().add(InstancedFallbackInstance.from(poseStack.last(), buffer, packedLight, packedOverlay,
-                    red, green, blue, alpha, uvTransform));
+                    red, green, blue, alpha, uvTransform, fadeAlpha));
             instancedQueuedInstances.incrementAndGet();
             currentFrameInstancedQueuedInstances.incrementAndGet();
-            if (isInstancedAdditiveMode(renderMode)) {
+            if (isInstancedAdditiveMode(effectiveRenderMode)) {
                 instancedAdditiveQueuedInstances.incrementAndGet();
                 currentFrameInstancedAdditiveQueuedInstances.incrementAndGet();
             }
-            if (batch.instances().size() == 1) {
+            HbmRenderFrameCulling.recordObjInstancedQueue(1, newBatch, faded);
+            if (newBatch) {
                 instancedQueuedBatches.incrementAndGet();
                 currentFrameInstancedQueuedBatches.incrementAndGet();
-                if (isInstancedAdditiveMode(renderMode)) {
+                if (isInstancedAdditiveMode(effectiveRenderMode)) {
                     instancedAdditiveQueuedBatches.incrementAndGet();
                     currentFrameInstancedAdditiveQueuedBatches.incrementAndGet();
                 }
             }
+        }
+
+        private static LegacyTexturedRenderMode fadeRenderMode(LegacyTexturedRenderMode renderMode, boolean faded) {
+            if (!faded || renderMode.translucent()) {
+                return renderMode;
+            }
+            return LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE;
         }
 
         private boolean queueIrisCompanion(PreparedBatch batch, ResourceLocation textureLocation, PoseStack poseStack,
@@ -4436,16 +4638,24 @@ public final class LegacyWavefrontModel {
                 LegacyTexturedRenderMode renderMode, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                 int packedOverlay, int red, int green, int blue, int alpha, boolean smoothing,
                 UvTransform uvTransform) {
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return;
+            }
+            boolean faded = fadeAlpha < 0.999F;
+            LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, faded);
             IrisCompanionQueueKey key = new IrisCompanionQueueKey(kind, stablePartKey,
                     sourceGeometryHash(sourceMode, vertices), sprite, vertices.size(), sourceMode, smoothing,
-                    uvTransform, textureLocation, renderMode);
+                    uvTransform, textureLocation, effectiveRenderMode);
             IrisCompanionQueuedBatch batch = pendingIrisCompanionBatches.computeIfAbsent(key,
                     ignored -> new IrisCompanionQueuedBatch(key, List.copyOf(vertices)));
+            boolean newBatch = batch.instances().isEmpty();
             batch.instances().add(IrisCompanionQueuedInstance.from(poseStack.last(), buffer, packedLight,
-                    packedOverlay, red, green, blue, alpha));
+                    packedOverlay, red, green, blue, alpha, fadeAlpha));
             irisQueuedInstances.incrementAndGet();
             currentFrameIrisQueuedInstances.incrementAndGet();
-            if (batch.instances().size() == 1) {
+            HbmRenderFrameCulling.recordObjInstancedQueue(1, newBatch, faded);
+            if (newBatch) {
                 irisQueuedBatches.incrementAndGet();
                 currentFrameIrisQueuedBatches.incrementAndGet();
             }
@@ -4763,6 +4973,19 @@ public final class LegacyWavefrontModel {
             }
         }
 
+        private GpuMesh uploadTransientSpriteMesh(VertexFormat.Mode drawMode, TextureAtlasSprite sprite,
+                int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+                UvTransform uvTransform, List<PreparedVertex> vertices) {
+            gpuUploadAttempts.incrementAndGet();
+            try {
+                return uploadMeshWithSprite(drawMode, sprite, packedLight, packedOverlay, red, green, blue,
+                        alpha, uvTransform, vertices);
+            } catch (RuntimeException exception) {
+                gpuUploadFailures.incrementAndGet();
+                throw exception;
+            }
+        }
+
         private GpuMesh uploadTransientUntexturedMesh(VertexFormat.Mode drawMode, int red, int green,
                 int blue, int alpha, List<PreparedVertex> vertices) {
             gpuUploadAttempts.incrementAndGet();
@@ -5003,11 +5226,16 @@ public final class LegacyWavefrontModel {
                 int red, int green, int blue, int alpha, boolean smoothing, LegacyTexturedRenderMode renderMode,
                 UvTransform uvTransform, boolean shadowPass, GpuMeshKind kind) {
             clearIrisCompanionFallback();
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return true;
+            }
+            LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, fadeAlpha < 0.999F);
             ShaderInstance shader = HbmIrisExtendedShaderAccess.getBlockEntityShader(shadowPass);
             if (shader == null) {
                 recordIrisCompanionFallback(RenderBackendFallbackReason.IRIS_SHADER_UNAVAILABLE, batch.vertexCount(),
                         fallbackDetail("iris-single-shader", RenderBackendFallbackReason.IRIS_SHADER_UNAVAILABLE,
-                                batch, textureLocation, renderMode, 1));
+                                batch, textureLocation, effectiveRenderMode, 1));
                 return false;
             }
             boolean drew = false;
@@ -5017,16 +5245,16 @@ public final class LegacyWavefrontModel {
                 IrisCompanionMesh mesh = irisCompanionMeshFor(batch, VertexFormat.Mode.QUADS, kind, sprite,
                         packedLight, packedOverlay, red, green, blue, alpha, smoothing, uvTransform,
                         batch.quadVertices());
-                drawIrisCompanionMesh(mesh, textureLocation, renderMode, poseStack, packedLight, packedOverlay,
-                        red, green, blue, alpha, shader, shadowPass);
+                drawIrisCompanionMesh(mesh, textureLocation, effectiveRenderMode, poseStack, packedLight,
+                        packedOverlay, red, green, blue, alpha, shader, shadowPass, fadeAlpha);
                 drew = true;
             }
             if (!batch.triangleVertices().isEmpty()) {
                 IrisCompanionMesh mesh = irisCompanionMeshFor(batch, VertexFormat.Mode.TRIANGLES, kind, sprite,
                         packedLight, packedOverlay, red, green, blue, alpha, smoothing, uvTransform,
                         batch.triangleVertices());
-                drawIrisCompanionMesh(mesh, textureLocation, renderMode, poseStack, packedLight, packedOverlay,
-                        red, green, blue, alpha, shader, shadowPass);
+                drawIrisCompanionMesh(mesh, textureLocation, effectiveRenderMode, poseStack, packedLight,
+                        packedOverlay, red, green, blue, alpha, shader, shadowPass, fadeAlpha);
                 drew = true;
             }
             if (drew) {
@@ -5040,12 +5268,17 @@ public final class LegacyWavefrontModel {
                 int red, int green, int blue, int alpha, boolean smoothing, LegacyTexturedRenderMode renderMode,
                 UvTransform uvTransform, GpuMeshKind kind) {
             clearIrisCompanionFallback();
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return true;
+            }
+            LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, fadeAlpha < 0.999F);
             boolean shadowPass = HbmShaderCompatibilityDetector.isRenderingShadowPass();
             ShaderInstance shader = HbmIrisExtendedShaderAccess.getBlockEntityShader(shadowPass);
             if (shader == null) {
                 recordIrisCompanionFallback(RenderBackendFallbackReason.IRIS_SHADER_UNAVAILABLE, batch.vertexCount(),
                         fallbackDetail("iris-transient-shader", RenderBackendFallbackReason.IRIS_SHADER_UNAVAILABLE,
-                                batch, textureLocation, renderMode, 1));
+                                batch, textureLocation, effectiveRenderMode, 1));
                 return false;
             }
             boolean drew = false;
@@ -5054,13 +5287,13 @@ public final class LegacyWavefrontModel {
             if (!batch.quadVertices().isEmpty()) {
                 drawIrisTransientCompanionPart(batch, VertexFormat.Mode.QUADS, kind, sprite, textureLocation,
                         poseStack, packedLight, packedOverlay, red, green, blue, alpha, smoothing, renderMode,
-                        uvTransform, shader, shadowPass, batch.quadVertices());
+                        uvTransform, shader, shadowPass, fadeAlpha, batch.quadVertices());
                 drew = true;
             }
             if (!batch.triangleVertices().isEmpty()) {
                 drawIrisTransientCompanionPart(batch, VertexFormat.Mode.TRIANGLES, kind, sprite, textureLocation,
                         poseStack, packedLight, packedOverlay, red, green, blue, alpha, smoothing, renderMode,
-                        uvTransform, shader, shadowPass, batch.triangleVertices());
+                        uvTransform, shader, shadowPass, fadeAlpha, batch.triangleVertices());
                 drew = true;
             }
             if (drew) {
@@ -5073,7 +5306,8 @@ public final class LegacyWavefrontModel {
                 GpuMeshKind kind, TextureAtlasSprite sprite, ResourceLocation textureLocation, PoseStack poseStack,
                 int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean smoothing,
                 LegacyTexturedRenderMode renderMode, UvTransform uvTransform, ShaderInstance shader,
-                boolean shadowPass, List<PreparedVertex> vertices) {
+                boolean shadowPass, float fadeAlpha, List<PreparedVertex> vertices) {
+            LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, fadeAlpha < 0.999F);
             IrisCompanionMeshKey key = new IrisCompanionMeshKey(kind, "transient:" + batch.stableKey(),
                     sourceGeometryHash(sourceMode, vertices), sprite, vertices.size(), sourceMode, smoothing,
                     uvTransform);
@@ -5091,8 +5325,8 @@ public final class LegacyWavefrontModel {
                 throw exception;
             }
             try {
-                drawIrisCompanionMesh(mesh, textureLocation, renderMode, poseStack, packedLight, packedOverlay,
-                        red, green, blue, alpha, shader, shadowPass);
+                drawIrisCompanionMesh(mesh, textureLocation, effectiveRenderMode, poseStack, packedLight,
+                        packedOverlay, red, green, blue, alpha, shader, shadowPass, fadeAlpha);
             } finally {
                 safeClose(mesh, "transient Iris companion mesh");
             }
@@ -5261,14 +5495,22 @@ public final class LegacyWavefrontModel {
                 LegacyTexturedRenderMode renderMode, PoseStack poseStack, int packedLight, int packedOverlay,
                 int red, int green, int blue, int alpha, ShaderInstance shader, boolean shadowPass) {
             drawIrisCompanionMesh(mesh, textureLocation, renderMode, poseStack.last().pose(), packedLight,
-                    packedOverlay, red, green, blue, alpha, shader, shadowPass, -1);
+                    packedOverlay, red, green, blue, alpha, shader, shadowPass, -1, 1.0F);
+        }
+
+        private void drawIrisCompanionMesh(IrisCompanionMesh mesh, ResourceLocation textureLocation,
+                LegacyTexturedRenderMode renderMode, PoseStack poseStack, int packedLight, int packedOverlay,
+                int red, int green, int blue, int alpha, ShaderInstance shader, boolean shadowPass,
+                float fadeAlpha) {
+            drawIrisCompanionMesh(mesh, textureLocation, renderMode, poseStack.last().pose(), packedLight,
+                    packedOverlay, red, green, blue, alpha, shader, shadowPass, -1, fadeAlpha);
         }
 
         private void drawIrisCompanionMesh(IrisCompanionMesh mesh, ResourceLocation textureLocation,
                 LegacyTexturedRenderMode renderMode, Matrix4f modelView, int packedLight, int packedOverlay,
                 int red, int green, int blue, int alpha, ShaderInstance shader, boolean shadowPass) {
             drawIrisCompanionMesh(mesh, textureLocation, renderMode, modelView, packedLight, packedOverlay,
-                    red, green, blue, alpha, shader, shadowPass, -1);
+                    red, green, blue, alpha, shader, shadowPass, -1, 1.0F);
         }
 
         private void drawIrisCompanionMesh(IrisCompanionMesh mesh, ResourceLocation textureLocation,
@@ -5276,13 +5518,29 @@ public final class LegacyWavefrontModel {
                 int red, int green, int blue, int alpha, ShaderInstance shader, boolean shadowPass,
                 int preparedLightmapSlot) {
             drawIrisCompanionMesh(mesh, textureLocation, renderMode, modelView, packedLight, packedOverlay,
-                    red, green, blue, alpha, shader, shadowPass, preparedLightmapSlot, null);
+                    red, green, blue, alpha, shader, shadowPass, preparedLightmapSlot, null, 1.0F);
+        }
+
+        private void drawIrisCompanionMesh(IrisCompanionMesh mesh, ResourceLocation textureLocation,
+                LegacyTexturedRenderMode renderMode, Matrix4f modelView, int packedLight, int packedOverlay,
+                int red, int green, int blue, int alpha, ShaderInstance shader, boolean shadowPass,
+                int preparedLightmapSlot, float fadeAlpha) {
+            drawIrisCompanionMesh(mesh, textureLocation, renderMode, modelView, packedLight, packedOverlay,
+                    red, green, blue, alpha, shader, shadowPass, preparedLightmapSlot, null, fadeAlpha);
         }
 
         private void drawIrisCompanionMesh(IrisCompanionMesh mesh, ResourceLocation textureLocation,
                 LegacyTexturedRenderMode renderMode, Matrix4f modelView, int packedLight, int packedOverlay,
                 int red, int green, int blue, int alpha, ShaderInstance shader, boolean shadowPass,
                 int preparedLightmapSlot, Matrix4f projectionMatrix) {
+            drawIrisCompanionMesh(mesh, textureLocation, renderMode, modelView, packedLight, packedOverlay,
+                    red, green, blue, alpha, shader, shadowPass, preparedLightmapSlot, projectionMatrix, 1.0F);
+        }
+
+        private void drawIrisCompanionMesh(IrisCompanionMesh mesh, ResourceLocation textureLocation,
+                LegacyTexturedRenderMode renderMode, Matrix4f modelView, int packedLight, int packedOverlay,
+                int red, int green, int blue, int alpha, ShaderInstance shader, boolean shadowPass,
+                int preparedLightmapSlot, Matrix4f projectionMatrix, float fadeAlpha) {
             RenderType renderType = renderMode.renderType(textureLocation, VertexFormat.Mode.TRIANGLES);
             int previousVao = HbmGlVaoSafety.currentBinding();
             int previousArrayBuffer = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
@@ -5316,6 +5574,7 @@ public final class LegacyWavefrontModel {
                 if (!HbmIrisRenderBatch.prepareCompanionDraw()) {
                     throw new IllegalStateException("Iris/Oculus companion shader restore failed before draw");
                 }
+                setIrisCompanionFadeAlpha(shader, fadeAlpha);
                 HbmIrisRenderBatch.uploadDrawMatrices(modelView);
                 mesh.bindVaoIfNeeded();
                 GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, mesh.vertexCount());
@@ -5555,8 +5814,8 @@ public final class LegacyWavefrontModel {
                 boolean shadowPass) {
             drawIrisCompanionMesh(mesh, batch.key().textureLocation(), batch.key().renderMode(),
                     instance.position(), instance.packedLight(), instance.packedOverlay(), instance.red(),
-                    instance.green(), instance.blue(), instance.alpha(), shader, shadowPass, preparedLightmapSlot,
-                    projectionMatrix);
+                    instance.green(), instance.blue(), instance.alpha(), shader, shadowPass,
+                    preparedLightmapSlot, projectionMatrix, instance.fadeAlpha());
             irisQueuedDrawCalls.incrementAndGet();
             currentFrameIrisQueuedDrawCalls.incrementAndGet();
         }
@@ -5612,18 +5871,19 @@ public final class LegacyWavefrontModel {
                     activeBuffer = instance.buffer();
                     consumer = instance.buffer().getBuffer(renderType);
                 }
+                int fadedAlpha = fadedAlpha(instance.alpha(), instance.fadeAlpha());
                 if (untextured) {
                     emitPreparedVerticesUntextured(batch.sourceVertices(), consumer, instance.position(),
-                            instance.red(), instance.green(), instance.blue(), instance.alpha());
+                            instance.red(), instance.green(), instance.blue(), fadedAlpha);
                 } else if (sprite == null) {
                     emitPreparedVertices(batch.sourceVertices(), consumer, instance.position(), instance.normal(),
                             instance.packedLight(), instance.packedOverlay(), instance.red(), instance.green(),
-                            instance.blue(), instance.alpha(), false, batch.key().smoothing(),
+                            instance.blue(), fadedAlpha, false, batch.key().smoothing(),
                             batch.key().uvTransform());
                 } else {
                     emitPreparedVerticesWithSprite(batch.sourceVertices(), sprite, consumer, instance.position(),
                             instance.normal(), instance.packedLight(), instance.packedOverlay(), instance.red(),
-                            instance.green(), instance.blue(), instance.alpha(), false, false,
+                            instance.green(), instance.blue(), fadedAlpha, false, false,
                             batch.key().uvTransform());
                 }
             }
@@ -6643,17 +6903,18 @@ public final class LegacyWavefrontModel {
                     activeBuffer = fallback.buffer();
                     consumer = fallback.buffer().getBuffer(renderType);
                 }
+                int fadedAlpha = fadedAlpha(fallback.alpha(), fallback.fadeAlpha());
                 if (untextured) {
                     emitPreparedVerticesUntextured(mesh.sourceVertices(), consumer, fallback.position(),
-                            fallback.red(), fallback.green(), fallback.blue(), fallback.alpha());
+                            fallback.red(), fallback.green(), fallback.blue(), fadedAlpha);
                 } else if (sprite == null) {
                     emitPreparedVertices(mesh.sourceVertices(), consumer, fallback.position(), fallback.normal(),
                             fallback.packedLight(), fallback.packedOverlay(), fallback.red(), fallback.green(),
-                            fallback.blue(), fallback.alpha(), false, mesh.key().smoothing(), fallback.uvTransform());
+                            fallback.blue(), fadedAlpha, false, mesh.key().smoothing(), fallback.uvTransform());
                 } else {
                     emitPreparedVerticesWithSprite(mesh.sourceVertices(), sprite, consumer, fallback.position(),
                             fallback.normal(), fallback.packedLight(), fallback.packedOverlay(), fallback.red(),
-                            fallback.green(), fallback.blue(), fallback.alpha(), false, false,
+                            fallback.green(), fallback.blue(), fadedAlpha, false, false,
                             fallback.uvTransform());
                 }
             }
@@ -6668,6 +6929,22 @@ public final class LegacyWavefrontModel {
 
         private static int clampedFallbackStart(InstancedBatch batch, int startIndex) {
             return Math.max(0, Math.min(startIndex, batch.fallbacks().size()));
+        }
+
+        private static int fadedAlpha(int alpha, float fadeAlpha) {
+            float clampedFade = clampedFadeAlpha(fadeAlpha);
+            return Mth.clamp(Math.round(alpha * clampedFade), 0, 255);
+        }
+
+        private static void setIrisCompanionFadeAlpha(ShaderInstance shader, float fadeAlpha) {
+            Uniform uniform = shader == null ? null : shader.getUniform("FadeAlpha");
+            if (uniform != null) {
+                uniform.set(clampedFadeAlpha(fadeAlpha));
+            }
+        }
+
+        private static float clampedFadeAlpha(float fadeAlpha) {
+            return Float.isFinite(fadeAlpha) ? Mth.clamp(fadeAlpha, 0.0F, 1.0F) : 1.0F;
         }
 
         private void recordGpuFallback(RenderBackendFallbackReason reason, int vertices) {
@@ -10161,11 +10438,12 @@ public final class LegacyWavefrontModel {
 
     private record IrisCompanionQueuedInstance(Matrix4f position, Matrix3f normal, MultiBufferSource buffer,
                                                int packedLight, int packedOverlay, int red, int green, int blue,
-                                               int alpha, float sortDepthSq) {
+                                               int alpha, float fadeAlpha, float sortDepthSq) {
         private static IrisCompanionQueuedInstance from(PoseStack.Pose pose, MultiBufferSource buffer, int packedLight,
-                int packedOverlay, int red, int green, int blue, int alpha) {
+                int packedOverlay, int red, int green, int blue, int alpha, float fadeAlpha) {
+            float clampedFade = Float.isFinite(fadeAlpha) ? Mth.clamp(fadeAlpha, 0.0F, 1.0F) : 1.0F;
             return new IrisCompanionQueuedInstance(new Matrix4f(pose.pose()), new Matrix3f(pose.normal()), buffer,
-                    packedLight, packedOverlay, red, green, blue, alpha, viewSortDepthSq(pose.pose()));
+                    packedLight, packedOverlay, red, green, blue, alpha, clampedFade, viewSortDepthSq(pose.pose()));
         }
     }
 
@@ -10183,6 +10461,7 @@ public final class LegacyWavefrontModel {
             result = 31 * result + instance.green();
             result = 31 * result + instance.blue();
             result = 31 * result + instance.alpha();
+            result = 31 * result + Float.floatToIntBits(instance.fadeAlpha());
             this.hash = result;
         }
 
@@ -10200,6 +10479,8 @@ public final class LegacyWavefrontModel {
                     && instance.green() == other.instance.green()
                     && instance.blue() == other.instance.blue()
                     && instance.alpha() == other.instance.alpha()
+                    && Float.floatToIntBits(instance.fadeAlpha())
+                    == Float.floatToIntBits(other.instance.fadeAlpha())
                     && matrixEquals(instance.position(), other.instance.position())
                     && matrixEquals(instance.normal(), other.instance.normal());
         }
@@ -10404,7 +10685,7 @@ public final class LegacyWavefrontModel {
 
         private static InstancedInstance from(Matrix4f modelView, LegacyRenderLighting.SlicedLightProbe lightProbe,
                 int packedOverlay,
-                int red, int green, int blue, int alpha) {
+                int red, int green, int blue, int alpha, float fadeAlpha) {
             float[] data = new float[FLOATS];
             data[0] = finiteOrDefault(modelView.m00(), 1.0F);
             data[1] = finiteOrDefault(modelView.m01(), 0.0F);
@@ -10429,13 +10710,20 @@ public final class LegacyWavefrontModel {
             data[35] = alpha / 255.0F;
             data[36] = packedOverlay & 0xFFFF;
             data[37] = packedOverlay >>> 16 & 0xFFFF;
-            data[38] = 0.0F;
+            data[38] = finiteClampedUnitOrDefault(fadeAlpha, 1.0F);
             data[39] = 0.0F;
             return new InstancedInstance(data, viewSortDepthSq(modelView));
         }
 
         private static float finiteOrDefault(float value, float fallback) {
             return Float.isFinite(value) ? value : fallback;
+        }
+
+        private static float finiteClampedUnitOrDefault(float value, float fallback) {
+            if (!Float.isFinite(value)) {
+                return fallback;
+            }
+            return Mth.clamp(value, 0.0F, 1.0F);
         }
 
         private static void writePackedSlicedLight(float[] data, int offset,
@@ -10463,11 +10751,14 @@ public final class LegacyWavefrontModel {
 
     private record InstancedFallbackInstance(Matrix4f position, Matrix3f normal, MultiBufferSource buffer,
                                              int packedLight, int packedOverlay, int red, int green, int blue,
-                                             int alpha, UvTransform uvTransform, float sortDepthSq) {
+                                             int alpha, UvTransform uvTransform, float fadeAlpha,
+                                             float sortDepthSq) {
         private static InstancedFallbackInstance from(PoseStack.Pose pose, MultiBufferSource buffer, int packedLight,
-                int packedOverlay, int red, int green, int blue, int alpha, UvTransform uvTransform) {
+                int packedOverlay, int red, int green, int blue, int alpha, UvTransform uvTransform,
+                float fadeAlpha) {
             return new InstancedFallbackInstance(new Matrix4f(pose.pose()), new Matrix3f(pose.normal()), buffer,
-                    packedLight, packedOverlay, red, green, blue, alpha, uvTransform, viewSortDepthSq(pose.pose()));
+                    packedLight, packedOverlay, red, green, blue, alpha, uvTransform, fadeAlpha,
+                    viewSortDepthSq(pose.pose()));
         }
     }
 

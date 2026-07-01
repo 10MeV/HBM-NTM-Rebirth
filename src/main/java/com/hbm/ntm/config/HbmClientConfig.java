@@ -23,6 +23,8 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.IntValue NUKE_WARP_SHOCKWAVE_MESH_SEGMENTS;
     public static final ForgeConfigSpec.BooleanValue DEBUG_NUKE_WARP_SHOCKWAVE_WIREFRAME;
     public static final ForgeConfigSpec.BooleanValue COOLING_TOWER_PARTICLES;
+    public static final ForgeConfigSpec.IntValue RENDER_MODEL_UPDATE_DISTANCE;
+    public static final ForgeConfigSpec.IntValue RENDER_MODEL_STATIC_RENDER_DISTANCE;
     public static final ForgeConfigSpec.BooleanValue RENDER_SAFE_OBJ_STATIC_BATCHING;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_GPU_BACKEND;
     public static final ForgeConfigSpec.BooleanValue RENDER_EXPERIMENTAL_INSTANCING;
@@ -106,6 +108,12 @@ public final class HbmClientConfig {
         builder.pop();
 
         builder.push("rendering");
+        RENDER_MODEL_UPDATE_DISTANCE = builder
+                .comment("Modernized render pipeline: distance for animated/dynamic OBJ machine model parts, in chunks.")
+                .defineInRange("modelUpdateDistance", 8, 2, 64);
+        RENDER_MODEL_STATIC_RENDER_DISTANCE = builder
+                .comment("Modernized render pipeline: distance for static OBJ machine model rendering, in chunks. The default preserves the existing 512 block renderer distance.")
+                .defineInRange("modelStaticRenderDistance", 32, 2, 64);
         RENDER_SAFE_OBJ_STATIC_BATCHING = builder
                 .comment("Enables the source-backed safe OBJ GPU mesh cache and ordinary static OBJ instancing for world renderers without shader packs. Disable this if packaged-jar validation finds rendering regressions.")
                 .define("safeObjStaticBatching", true);
@@ -197,6 +205,22 @@ public final class HbmClientConfig {
 
     public static boolean coolingTowerParticles() {
         return COOLING_TOWER_PARTICLES == null || COOLING_TOWER_PARTICLES.get();
+    }
+
+    public static int modelStaticRenderDistanceChunks() {
+        return Math.max(2, Math.min(64, intValue(RENDER_MODEL_STATIC_RENDER_DISTANCE, 32)));
+    }
+
+    public static int modelStaticRenderDistanceBlocks() {
+        return modelStaticRenderDistanceChunks() * 16;
+    }
+
+    public static int modelUpdateDistanceChunks() {
+        return Math.max(2, Math.min(64, intValue(RENDER_MODEL_UPDATE_DISTANCE, 8)));
+    }
+
+    public static int modelUpdateDistanceBlocks() {
+        return modelUpdateDistanceChunks() * 16;
     }
 
     public static boolean safeObjStaticBatching() {

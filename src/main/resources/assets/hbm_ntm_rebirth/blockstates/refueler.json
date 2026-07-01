@@ -1,8 +1,8 @@
 {
   "variants": {
     "facing=east": { "model": "hbm_ntm_rebirth:block/refueler" },
-    "facing=north": { "model": "hbm_ntm_rebirth:block/refueler" },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/refueler" },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/refueler" }
+    "facing=north": { "model": "hbm_ntm_rebirth:block/refueler", "y": 90 },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/refueler", "y": 270 },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/refueler", "y": 180 }
   }
 }

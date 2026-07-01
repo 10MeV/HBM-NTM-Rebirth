@@ -21,23 +21,28 @@ public class SoyuzLauncherRenderer implements BlockEntityRenderer<SoyuzLauncherB
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(SoyuzLauncherBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         int modelLight = blockEntity.getBlockState().getBlock() instanceof LegacyVisibleMultiblockMachineBlock machine
                 ? LegacyRenderLighting.resolveMachineLight(blockEntity, blockEntity.getBlockState(),
                         machine.definition(), packedLight)
                 : LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, -4.0D, 0.5D);
-        renderLauncher(blockEntity.getTowerRotation(partialTick), poseStack, buffer, modelLight);
-        if (blockEntity.getRocketType() >= 0) {
-            poseStack.translate(0.0D, 5.0D, 0.0D);
-            ObjSoyuzModels.renderSoyuz(ObjSoyuzModels.textureSetForSkin(blockEntity.getRocketType()), poseStack, buffer,
-                    modelLight, OverlayTexture.NO_OVERLAY);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            renderLauncher(blockEntity.getTowerRotation(partialTick), poseStack, buffer, modelLight);
+            if (blockEntity.getRocketType() >= 0) {
+                poseStack.translate(0.0D, 5.0D, 0.0D);
+                ObjSoyuzModels.renderSoyuz(ObjSoyuzModels.textureSetForSkin(blockEntity.getRocketType()), poseStack,
+                        buffer, modelLight, OverlayTexture.NO_OVERLAY);
+            }
         }
         poseStack.popPose();
     }

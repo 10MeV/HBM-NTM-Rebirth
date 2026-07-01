@@ -67,6 +67,6 @@ public class MissileAssemblyBlock extends HorizontalMachineBlock implements Enti
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return RenderShape.MODEL;
     }
 }

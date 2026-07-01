@@ -193,7 +193,7 @@ public final class MultiblockHelper {
                 complete = false;
             }
         }
-        refreshLayoutFluidProxyNeighbors(level, corePos, fillOffsets);
+        refreshLayoutProxyNeighbors(level, corePos, fillOffsets);
         return complete;
     }
 
@@ -679,12 +679,13 @@ public final class MultiblockHelper {
         return false;
     }
 
-    private static void refreshLayoutFluidProxyNeighbors(Level level, BlockPos corePos, Iterable<BlockPos> offsets) {
+    private static void refreshLayoutProxyNeighbors(Level level, BlockPos corePos, Iterable<BlockPos> offsets) {
         for (BlockPos offset : offsets) {
             if (offset.equals(BlockPos.ZERO)) {
                 continue;
             }
             if (level.getBlockEntity(corePos.offset(offset)) instanceof MultiblockDummyBlockEntity dummy) {
+                dummy.refreshAdjacentEnergyConnections();
                 dummy.refreshAdjacentFluidConnections();
             }
         }

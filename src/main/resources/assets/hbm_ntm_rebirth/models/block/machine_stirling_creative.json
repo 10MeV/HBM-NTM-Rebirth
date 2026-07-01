@@ -1,7 +1,22 @@
-﻿{
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/stirling"
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/stirling.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "visibility": {
+      "Piston": false,
+      "Cog": false,
+      "CogSmall": false,
+      "Base": true
+    },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/stirling_creative",
+    "default": "hbm_ntm_rebirth:block/machines/stirling_creative"
+  }
 }

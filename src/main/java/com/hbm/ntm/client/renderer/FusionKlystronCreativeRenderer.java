@@ -27,6 +27,9 @@ public class FusionKlystronCreativeRenderer implements BlockEntityRenderer<Fusio
     @Override
     public void render(FusionKlystronCreativeBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
 
@@ -34,18 +37,22 @@ public class FusionKlystronCreativeRenderer implements BlockEntityRenderer<Fusio
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
         poseStack.translate(-1.0D, 0.0D, 0.0D);
-        ObjFusionModels.renderKlystronPart(ObjFusionModels.KLYSTRON_LEGACY,
-                ObjFusionModels.KLYSTRON_CREATIVE_TEXTURE, poseStack, buffer, light, packedOverlay,
-                LegacyTexturedRenderMode.CUTOUT_CULL, "Klystron");
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            ObjFusionModels.renderKlystronPart(ObjFusionModels.KLYSTRON_LEGACY,
+                    ObjFusionModels.KLYSTRON_CREATIVE_TEXTURE, poseStack, buffer, light, packedOverlay,
+                    LegacyTexturedRenderMode.CUTOUT_CULL, "Klystron");
 
-        poseStack.pushPose();
-        poseStack.translate(0.0D, 2.5D, 0.0D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(blockEntity.getFan(partialTick)));
-        poseStack.translate(0.0D, -2.5D, 0.0D);
-        ObjFusionModels.renderKlystronPart(ObjFusionModels.KLYSTRON_LEGACY,
-                ObjFusionModels.KLYSTRON_CREATIVE_TEXTURE, poseStack, buffer, light, packedOverlay,
-                LegacyTexturedRenderMode.CUTOUT_CULL, "Rotor");
-        poseStack.popPose();
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                poseStack.pushPose();
+                poseStack.translate(0.0D, 2.5D, 0.0D);
+                poseStack.mulPose(Axis.XP.rotationDegrees(blockEntity.getFan(partialTick)));
+                poseStack.translate(0.0D, -2.5D, 0.0D);
+                ObjFusionModels.renderKlystronPart(ObjFusionModels.KLYSTRON_LEGACY,
+                        ObjFusionModels.KLYSTRON_CREATIVE_TEXTURE, poseStack, buffer, light, packedOverlay,
+                        LegacyTexturedRenderMode.CUTOUT_CULL, "Rotor");
+                poseStack.popPose();
+            }
+        }
         poseStack.popPose();
     }
 }

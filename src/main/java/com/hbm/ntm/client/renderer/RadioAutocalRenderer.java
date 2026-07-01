@@ -27,12 +27,15 @@ public class RadioAutocalRenderer implements BlockEntityRenderer<RadioAutocalBlo
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(RadioAutocalBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
@@ -42,7 +45,9 @@ public class RadioAutocalRenderer implements BlockEntityRenderer<RadioAutocalBlo
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
-        MODEL.renderAll(TEXTURE, poseStack, buffer, light, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            MODEL.renderAll(TEXTURE, poseStack, buffer, light, packedOverlay);
+        }
         poseStack.popPose();
     }
 

@@ -36,7 +36,7 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -45,7 +45,6 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -65,7 +64,14 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        renderPlan(MODEL, plan, poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
+                renderRotatingPart(MODEL, plan.flywheel(), FLYWHEEL, poseStack, buffer, modelLight, packedOverlay);
+                renderRotatingPart(MODEL, plan.shaft(), SHAFT, poseStack, buffer, modelLight, packedOverlay);
+                renderTransmission(MODEL, plan.transmission(), poseStack, buffer, modelLight, packedOverlay);
+                renderTranslatedPart(MODEL, plan.piston(), PISTON, poseStack, buffer, modelLight, packedOverlay);
+            }
+        }
 
         poseStack.popPose();
     }

@@ -60,7 +60,7 @@ public class CraneSplitterRenderer implements BlockEntityRenderer<CraneSplitterB
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -69,13 +69,13 @@ public class CraneSplitterRenderer implements BlockEntityRenderer<CraneSplitterB
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
-
         BlockState state = blockEntity.getBlockState();
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-        renderHalf(state, true, 0.0D, 0.0D, poseStack, buffer, modelLight, packedOverlay);
-        Direction side = CraneSplitterBlock.sideOffset(state);
-        renderHalf(state, false, side.getStepX(), side.getStepZ(), poseStack, buffer, modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            renderHalf(state, true, 0.0D, 0.0D, poseStack, buffer, modelLight, packedOverlay);
+            Direction side = CraneSplitterBlock.sideOffset(state);
+            renderHalf(state, false, side.getStepX(), side.getStepZ(), poseStack, buffer, modelLight, packedOverlay);
+        }
     }
 
     public static void renderItem(ItemDisplayContext displayContext, BlockState state, PoseStack poseStack,

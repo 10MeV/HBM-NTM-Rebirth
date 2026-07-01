@@ -45,6 +45,11 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+    }
+
+    @Override
     public void render(RedCableBlockEntity cable, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = cable.getBlockState();
@@ -60,6 +65,9 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
         if (!(state.getBlock() instanceof RedCableBlock block) || !block.usesBlockEntityRenderer(state)) {
             return;
         }
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(cable, getViewDistance())) {
+            return;
+        }
 
         boolean posX = state.getValue(HbmEnergyNodeBlock.EAST);
         boolean negX = state.getValue(HbmEnergyNodeBlock.WEST);
@@ -68,12 +76,24 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
         boolean posZ = state.getValue(HbmEnergyNodeBlock.SOUTH);
         boolean negZ = state.getValue(HbmEnergyNodeBlock.NORTH);
 
-        renderWorldCable(poseStack, buffer, light, packedOverlay, posX, negX, posY, negY, posZ, negZ);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(cable)) {
+            renderWorldCable(poseStack, buffer, light, packedOverlay, posX, negX, posY, negY, posZ, negZ);
+        }
     }
 
     static void renderItemCable(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ObjBlockModels.CABLE_NEO.renderOnlyInCallOrder(CABLE_TEXTURE, poseStack, buffer, packedLight, packedOverlay,
                 ITEM_HANDLE);
+    }
+
+    static void renderItemBoxCable(int size, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay) {
+        int clampedSize = clampBoxCableSize(size);
+        BoxCableTextures textures = BOX_CABLE_TEXTURES_BY_SIZE[clampedSize];
+        BoxCableBounds bounds = BOX_CABLE_BOUNDS_BY_SIZE[clampedSize];
+        renderBoxCableStraightZ(textures, poseStack, buffer, packedLight, packedOverlay,
+                bounds.lower(), bounds.lower(), 0.0D,
+                bounds.upper(), bounds.upper(), 1.0D);
     }
 
     static void renderCableArms(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,

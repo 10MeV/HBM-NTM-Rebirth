@@ -44,7 +44,6 @@ public class DfcMachineRenderer<T extends BlockEntity> implements BlockEntityRen
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
         BlockState state = blockEntity.getBlockState();
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
@@ -54,21 +53,27 @@ public class DfcMachineRenderer<T extends BlockEntity> implements BlockEntityRen
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(yawForPositiveZ(facing)));
 
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            if (blockEntity instanceof DfcEmitterBlockEntity) {
+                renderModel(ObjMachineModels.DFC_EMITTER, poseStack, buffer, modelLight, packedOverlay);
+            } else if (blockEntity instanceof DfcReceiverBlockEntity) {
+                renderModel(ObjMachineModels.DFC_RECEIVER, poseStack, buffer, modelLight, packedOverlay);
+            } else if (blockEntity instanceof DfcInjectorBlockEntity) {
+                renderModel(ObjMachineModels.DFC_INJECTOR, poseStack, buffer, modelLight, packedOverlay);
+            } else if (blockEntity instanceof DfcStabilizerBlockEntity) {
+                renderModel(ObjMachineModels.DFC_INJECTOR, ObjMachineModels.DFC_STABILIZER_TEXTURE,
+                        poseStack, buffer, modelLight, packedOverlay);
+            }
+        }
         if (blockEntity instanceof DfcEmitterBlockEntity emitter) {
-            renderModel(ObjMachineModels.DFC_EMITTER, poseStack, buffer, modelLight, packedOverlay);
             renderBeam(LegacyTileRenderPlans.dfcEmitterBeamPlan(emitter.getBeam(), gameTime(blockEntity)),
                     poseStack, buffer);
-        } else if (blockEntity instanceof DfcReceiverBlockEntity) {
-            renderModel(ObjMachineModels.DFC_RECEIVER, poseStack, buffer, modelLight, packedOverlay);
         } else if (blockEntity instanceof DfcInjectorBlockEntity injector) {
-            renderModel(ObjMachineModels.DFC_INJECTOR, poseStack, buffer, modelLight, packedOverlay);
             renderBeam(LegacyTileRenderPlans.dfcInjectorBeamPlan(injector.getBeam(),
                     injector.getFuel1().getFill(), injector.getFuel1().getTankType().getColor(),
                     injector.getFuel2().getFill(), injector.getFuel2().getTankType().getColor(),
                     gameTime(blockEntity)), poseStack, buffer);
         } else if (blockEntity instanceof DfcStabilizerBlockEntity stabilizer) {
-            renderModel(ObjMachineModels.DFC_INJECTOR, ObjMachineModels.DFC_STABILIZER_TEXTURE,
-                    poseStack, buffer, modelLight, packedOverlay);
             renderBeam(LegacyTileRenderPlans.dfcStabilizerBeamPlan(stabilizer.getBeam(), gameTime(blockEntity)),
                     poseStack, buffer);
         }

@@ -41,12 +41,15 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
     public void render(MiningLaserBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -68,23 +71,25 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
 
         poseStack.pushPose();
         poseStack.translate(0.5D, -1.0D, 0.5D);
-        renderModelPart("Base", ObjMachineModels.MINING_LASER_BASE_TEXTURE, poseStack, buffer, modelLight,
-                packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            renderModelPart("Base", ObjMachineModels.MINING_LASER_BASE_TEXTURE, poseStack, buffer, modelLight,
+                    packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
 
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) yaw));
-        renderModelPart("Pivot", ObjMachineModels.MINING_LASER_PIVOT_TEXTURE, poseStack, buffer, modelLight,
-                packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
-        poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.mulPose(Axis.YP.rotationDegrees((float) yaw));
+            renderModelPart("Pivot", ObjMachineModels.MINING_LASER_PIVOT_TEXTURE, poseStack, buffer, modelLight,
+                    packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+            poseStack.popPose();
 
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) yaw));
-        poseStack.translate(0.0D, -1.0D, 0.0D);
-        poseStack.mulPose(Axis.XN.rotationDegrees((float) pitch + 90.0F));
-        poseStack.translate(0.0D, 1.0D, 0.0D);
-        renderModelPart("Laser", ObjMachineModels.MINING_LASER_LASER_TEXTURE, poseStack, buffer, modelLight,
-                packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
-        poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.mulPose(Axis.YP.rotationDegrees((float) yaw));
+            poseStack.translate(0.0D, -1.0D, 0.0D);
+            poseStack.mulPose(Axis.XN.rotationDegrees((float) pitch + 90.0F));
+            poseStack.translate(0.0D, 1.0D, 0.0D);
+            renderModelPart("Laser", ObjMachineModels.MINING_LASER_LASER_TEXTURE, poseStack, buffer, modelLight,
+                    packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+            poseStack.popPose();
+        }
 
         if (blockEntity.hasBeam()) {
             poseStack.translate(normal.x, normal.y - 1.0D, normal.z);

@@ -51,7 +51,7 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -60,37 +60,39 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(assembler, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(assembler);
         BlockState state = assembler.getBlockState();
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(assembler, packedLight);
 
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F + blockstateModelYRotation(state)));
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(assembler)) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F + blockstateModelYRotation(state)));
 
-        renderModelPart("Base", poseStack, buffer, modelLight, packedOverlay);
-        if (assembler.shouldRenderFrame()) {
-            renderModelPart("Frame", poseStack, buffer, modelLight, packedOverlay);
+            if (assembler.shouldRenderFrame()) {
+                renderModelPart("Frame", poseStack, buffer, modelLight, packedOverlay);
+            }
+
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(assembler)) {
+                poseStack.pushPose();
+                LegacyTileRenderPlans.AssemblyMachinePlan plan = LegacyTileRenderPlans.assemblyMachinePlan(
+                        assembler.getRing(partialTick),
+                        assembler.getArm(0).getPositions(partialTick),
+                        assembler.getArm(1).getPositions(partialTick));
+                poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.ringDegrees()));
+                renderModelPart("Ring", poseStack, buffer, modelLight, packedOverlay);
+                for (LegacyTileRenderPlans.AssemblyArmPlan arm : plan.arms()) {
+                    renderArmPlan(poseStack, buffer, modelLight, packedOverlay, arm);
+                }
+                poseStack.popPose();
+            }
+
+            if (LegacyRecipeIconRenderer.shouldRender(assembler)) {
+                LegacyRecipeIconRenderer.renderInLegacyMachineSpace(assembler.getSelectedRecipeDefinition(),
+                        assembler.getLevel(), poseStack, buffer, packedLight);
+            }
+
+            poseStack.popPose();
         }
-
-        poseStack.pushPose();
-        LegacyTileRenderPlans.AssemblyMachinePlan plan = LegacyTileRenderPlans.assemblyMachinePlan(
-                assembler.getRing(partialTick),
-                assembler.getArm(0).getPositions(partialTick),
-                assembler.getArm(1).getPositions(partialTick));
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.ringDegrees()));
-        renderModelPart("Ring", poseStack, buffer, modelLight, packedOverlay);
-        for (LegacyTileRenderPlans.AssemblyArmPlan arm : plan.arms()) {
-            renderArmPlan(poseStack, buffer, modelLight, packedOverlay, arm);
-        }
-        poseStack.popPose();
-
-        if (LegacyRecipeIconRenderer.shouldRender(assembler)) {
-            LegacyRecipeIconRenderer.renderInLegacyMachineSpace(assembler.getSelectedRecipeDefinition(),
-                    assembler.getLevel(), poseStack, buffer, packedLight);
-        }
-
-        poseStack.popPose();
     }
 
     private static void renderArmPlan(PoseStack poseStack, MultiBufferSource buffer, int packedLight,

@@ -210,11 +210,11 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         Direction facing = facing();
         Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
-                FluidPort.of(rot.getStepX(), 1, rot.getStepZ(), rot),
-                FluidPort.of(rot.getStepX() + facing.getStepX(), 1,
-                        rot.getStepZ() + facing.getStepZ(), rot),
-                FluidPort.of(rot.getStepX() - facing.getStepX(), 1,
-                        rot.getStepZ() - facing.getStepZ(), rot));
+                FluidPort.of(rot.getStepX() * 2, 1, rot.getStepZ() * 2, rot),
+                FluidPort.of(rot.getStepX() * 2 + facing.getStepX(), 1,
+                        rot.getStepZ() * 2 + facing.getStepZ(), rot),
+                FluidPort.of(rot.getStepX() * 2 - facing.getStepX(), 1,
+                        rot.getStepZ() * 2 - facing.getStepZ(), rot));
     }
 
     @Override
@@ -222,11 +222,11 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         Direction facing = facing();
         Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
-                EnergyPort.of(rot.getStepX(), 1, rot.getStepZ(), rot),
-                EnergyPort.of(rot.getStepX() + facing.getStepX(), 1,
-                        rot.getStepZ() + facing.getStepZ(), rot),
-                EnergyPort.of(rot.getStepX() - facing.getStepX(), 1,
-                        rot.getStepZ() - facing.getStepZ(), rot));
+                EnergyPort.of(rot.getStepX() * 2, 1, rot.getStepZ() * 2, rot),
+                EnergyPort.of(rot.getStepX() * 2 + facing.getStepX(), 1,
+                        rot.getStepZ() * 2 + facing.getStepZ(), rot),
+                EnergyPort.of(rot.getStepX() * 2 - facing.getStepX(), 1,
+                        rot.getStepZ() * 2 - facing.getStepZ(), rot));
     }
 
     @Override

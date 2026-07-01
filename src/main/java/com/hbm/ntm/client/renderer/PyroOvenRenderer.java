@@ -36,7 +36,7 @@ public class PyroOvenRenderer implements BlockEntityRenderer<PyroOvenBlockEntity
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -45,8 +45,6 @@ public class PyroOvenRenderer implements BlockEntityRenderer<PyroOvenBlockEntity
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(pyroOven, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(pyroOven);
-
         BlockState state = pyroOven.getBlockState();
         if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block)) {
             return;
@@ -65,13 +63,15 @@ public class PyroOvenRenderer implements BlockEntityRenderer<PyroOvenBlockEntity
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        renderModelPart(model, "Oven", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
-
-        LegacyTileRenderPlans.PyroOvenPlan plan = LegacyTileRenderPlans.pyroOvenPlan(anim);
-        renderTranslatedPart(model, plan.slider(), definition.textureLocation(), poseStack, buffer, modelLight,
-                packedOverlay);
-        renderRotatingPart(model, plan.fan(), definition.textureLocation(), poseStack, buffer, modelLight,
-                packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(pyroOven)) {
+            LegacyTileRenderPlans.PyroOvenPlan plan = LegacyTileRenderPlans.pyroOvenPlan(anim);
+            try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(pyroOven)) {
+                renderTranslatedPart(model, plan.slider(), definition.textureLocation(), poseStack, buffer, modelLight,
+                        packedOverlay);
+                renderRotatingPart(model, plan.fan(), definition.textureLocation(), poseStack, buffer, modelLight,
+                        packedOverlay);
+            }
+        }
 
         poseStack.popPose();
     }

@@ -20,4 +20,14 @@ final class LegacyBlockEntityRenderCulling {
     static void recordMachineSubmission(BlockEntity blockEntity) {
         HbmRenderFrameCulling.recordMachineRendererSubmission(blockEntity, 0);
     }
+
+    static HbmRenderFrameCulling.MachineRendererSubmissionScope recordMachineSubmissionScope(BlockEntity blockEntity) {
+        recordMachineSubmission(blockEntity);
+        return HbmRenderFrameCulling.pushMachineRendererSubmissionScope(blockEntity);
+    }
+
+    static HbmRenderFrameCulling.MachineRendererSubmissionScope animatedModelFadeScope(BlockEntity blockEntity) {
+        float fade = blockEntity == null ? 1.0F : HbmRenderFrameCulling.animatedModelFade(blockEntity.getBlockPos());
+        return HbmRenderFrameCulling.pushMachineRendererSubmissionScope(blockEntity, fade);
+    }
 }

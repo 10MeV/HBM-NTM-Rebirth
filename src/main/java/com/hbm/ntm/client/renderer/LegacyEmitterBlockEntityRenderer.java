@@ -27,7 +27,7 @@ public class LegacyEmitterBlockEntityRenderer implements BlockEntityRenderer<Leg
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override

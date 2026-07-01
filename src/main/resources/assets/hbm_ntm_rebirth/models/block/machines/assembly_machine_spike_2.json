@@ -4,6 +4,6 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "parts": { "visibility": { "Ring2": false, "Base": false, "Frame": false, "Spike1": false, "Spike2": true, "Head1": false, "ArmUpper1": false, "ArmUpper2": false, "ArmLower2": false, "ArmLower1": false, "Ring": false, "Head2": false } },
+  "visibility": { "Ring2": false, "Base": false, "Frame": false, "Spike1": false, "Spike2": true, "Head1": false, "ArmUpper1": false, "ArmUpper2": false, "ArmLower2": false, "ArmLower1": false, "Ring": false, "Head2": false },
   "textures": { "particle": "hbm_ntm_rebirth:block/machines/assembly_machine", "default": "hbm_ntm_rebirth:block/machines/assembly_machine" }
 }

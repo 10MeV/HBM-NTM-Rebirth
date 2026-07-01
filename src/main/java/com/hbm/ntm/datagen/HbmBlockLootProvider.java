@@ -1,6 +1,7 @@
 package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
+import com.hbm.ntm.block.DecoToasterBlock;
 import com.hbm.ntm.block.FluidDuctBoxBlock;
 import com.hbm.ntm.block.FluidPipeBlock;
 import com.hbm.ntm.block.LegacyFileCabinetBlock;
@@ -103,6 +104,8 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                         HbmFluidDuctVariants.BOX_METADATA_COUNT));
         add(ModBlocks.RAD_ABSORBER.get(),
                 legacyStateVariantDrop(ModBlocks.RAD_ABSORBER.get(), LegacyRadAbsorberBlock.TIER, 4));
+        add(ModBlocks.DECO_TOASTER.get(),
+                legacyStateVariantDrop(ModBlocks.DECO_TOASTER.get(), DecoToasterBlock.VARIANT, 3));
         addNoDrop(ModBlocks.BARREL_STEEL.get());
         addNoDrop(ModBlocks.BARREL_TCALLOY.get());
         addNoDrop(ModBlocks.BARREL_ANTIMATTER.get());
